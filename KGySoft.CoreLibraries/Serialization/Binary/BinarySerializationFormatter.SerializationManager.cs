@@ -1057,13 +1057,13 @@ namespace KGySoft.Serialization.Binary
                 Debug.Assert(GetCollectionDataType(collectionType) == collectionType, "Plain collection type expected");
 
                 Type[] args = type.GetGenericArguments();
-                Type elementType = args[0];
-                DataTypes elementDataType = GetDataType(elementType);
 
                 switch (args.Length)
                 {
                     // generics with 1 argument
                     case 1:
+                        Type elementType = args[0];
+                        DataTypes elementDataType = GetDataType(elementType);
                         if (IsElementType(elementDataType))
                             return new CircularList<DataTypes> { collectionType | elementDataType };
 
@@ -1074,6 +1074,8 @@ namespace KGySoft.Serialization.Binary
 
                     // dictionaries, KeyValuePair, 2-tuples
                     case 2:
+                        elementType = args[0];
+                        elementDataType = GetDataType(elementType);
                         Type valueType = args[1];
                         DataTypes valueDataType = GetDataType(valueType);
 
@@ -1104,7 +1106,29 @@ namespace KGySoft.Serialization.Binary
 
                     // n-tuples
                     default:
-                        throw new NotImplementedException("EncodeGenericCollection for n-tuples");
+                        Debug.Assert(IsTuple(collectionType));
+
+                        var result = new CircularList<DataTypes>(args.Length);
+                        for (int i = 0; i < args.Length; i++)
+                        {
+                            Type itemType = args[i];
+                            DataTypes itemDataType = GetDataType(itemType);
+                            CircularList<DataTypes> itemTypes;
+
+                            if (IsElementType(itemDataType))
+                                itemTypes = new CircularList<DataTypes> { i == 0 ? itemDataType | collectionType : itemDataType };
+                            else
+                            {
+                                Debug.Assert(IsCollectionType(itemDataType), $"Not a collection data type: {itemDataType}");
+                                itemTypes = EncodeDataType(itemType, itemDataType);
+                                if (i == 0)
+                                    itemTypes.AddFirst(collectionType);
+                            }
+
+                            result.AddRange(itemTypes);
+                        }
+
+                        return result;
                 }
             }
 

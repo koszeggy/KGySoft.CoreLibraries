@@ -331,33 +331,30 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 // Reference Tuples
                 Tuple.Create(1),
                 Tuple.Create(1, 2u),
-                //Tuple.Create(1, 2u, 3L),
-                //Tuple.Create(1, 2u, 3L, 4ul),
-                //Tuple.Create(1, 2u, 3L, 4ul, "5"),
-                //Tuple.Create(1, 2u, 3L, 4ul, "5", '6'),
-                //Tuple.Create(1, 2u, 3L, 4ul, "5", '6', 7f),
-                //Tuple.Create(1, 2u, 3L, 4ul, "5", '6', 7f, 8d),
-                //Tuple.Create(1, 2u, 3L, 4ul, "5", '6', Tuple.Create(7.0f, 7.1d, 7.3m), 8d),
-                //Tuple.Create(1, 2u, 3L, 4ul, "5", '6', Tuple.Create(7.0f, 7.1d, 7.3m), Tuple.Create(8.0f, 8.1d, 8.3m)),
-
-                // TODO: remove or move to other tests
-                typeof(Tuple<int>),
-                //TODO: derived tuple
+                Tuple.Create(1, 2u, 3L),
+                Tuple.Create(1, 2u, 3L, 4ul),
+                Tuple.Create(1, 2u, 3L, 4ul, "5"),
+                Tuple.Create(1, 2u, 3L, 4ul, "5", '6'),
+                Tuple.Create(1, 2u, 3L, 4ul, "5", '6', 7f),
+                Tuple.Create(1, 2u, 3L, 4ul, "5", '6', 7f, 8d),
+                Tuple.Create(1, 2u, 3L, 4ul, "5", '6', Tuple.Create(7.0f, 7.1d, 7.3m), 8d),
+                Tuple.Create(1, 2u, 3L, 4ul, "5", '6', Tuple.Create(7.0f, 7.1d, 7.3m), Tuple.Create(8.0f, 8.1d, 8.3m)),
 
 #if NET47_OR_GREATER || NETCOREAPP
-		        // Value Tuples
+                // Value Tuples
                 ValueTuple.Create(),
                 ValueTuple.Create(1),
                 ValueTuple.Create(1, 2u),
-                //ValueTuple.Create(1, 2u, 3L),
-                //ValueTuple.Create(1, 2u, 3L, 4ul),
-                //ValueTuple.Create(1, 2u, 3L, 4ul, "5"),
-                //ValueTuple.Create(1, 2u, 3L, 4ul, "5", '6'),
-                //ValueTuple.Create(1, 2u, 3L, 4ul, "5", '6', 7f),
-                //ValueTuple.Create(1, 2u, 3L, 4ul, "5", '6', 7f, 8d),
-                //ValueTuple.Create(1, 2u, 3L, 4ul, "5", '6', ValueTuple.Create(7.0f, 7.1d, 7.3m), 8d),
-                //ValueTuple.Create(1, 2u, 3L, 4ul, "5", '6', ValueTuple.Create(7.0f, 7.1d, 7.3m), Tuple.Create(8.0f, (8.1d, 8.3m))),
-                //(1, 2u, 3L, 4ul, "5", '6', 7f, 8d, 9m),
+                ValueTuple.Create(1, 2u, 3L),
+                ValueTuple.Create(1, 2u, 3L, 4ul),
+                ValueTuple.Create(1, 2u, 3L, 4ul, "5"),
+                ValueTuple.Create(1, 2u, 3L, 4ul, "5", '6'),
+                ValueTuple.Create(1, 2u, 3L, 4ul, "5", '6', 7f),
+                ValueTuple.Create(1, 2u, 3L, 4ul, "5", '6', 7f, 8d), // TRest is is ValueTuple`1
+                (1, 2u, 3L, 4ul, "5", '6', 7f, 8d, 9m), // TRest is ValueTuple`2
+                new ValueTuple<int, uint, long, ulong, string, char, float, double> { Item1 = 1, Item2 = 2u, Item3 = 3L, Item4 = 4ul, Item5 = "5", Item6 = '6', Item7 = 7f, Rest = 8d, }, // TRest is not a nested tuple
+                ValueTuple.Create(1, 2u, 3L, 4ul, "5", '6', ValueTuple.Create(7.0f, 7.1d, 7.3m), 8d),
+                ValueTuple.Create(1, 2u, 3L, 4ul, "5", '6', ValueTuple.Create(7.0f, 7.1d, 7.3m), Tuple.Create(8.0f, (8.1d, 8.3m))),
 #endif
             };
 
@@ -459,6 +456,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 typeof(List<int[]>),
                 typeof(List<Array[]>),
                 typeof(List<int>).MakeArrayType().MakePointerType().MakeArrayType(2).MakePointerType().MakeByRefType(), // List`1[System.Int32][]*[,]*&
+#if !NET40
+                typeof(Tuple<int>),
+                typeof(Tuple<int, byte, string, bool, decimal, short, long, char>), // invalid (Rest is not tuple)
+#endif
+#if NET47_OR_GREATER || !NETFRAMEWORK
+                typeof(ValueTuple<int>),
+                typeof(ValueTuple<int, byte, string, bool, decimal, short, long, char>), // semi-invalid (Rest is not tuple)
+#endif
 
                 // Nullable "collections"
                 typeof(DictionaryEntry?),
@@ -466,9 +471,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 typeof(KeyValuePair<int, CustomSerializedClass>?), // supported generic with mixed parameters
                 typeof(ArraySegment<int>?[]),
                 typeof(ArraySegment<int?>?[]),
-#if !NET40
-                typeof(Tuple<int>),
-#endif
 
                 // Generic Type Definitions
                 typeof(List<>), // List`1, supported generic type definition
@@ -489,6 +491,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 typeof(KeyValuePair<,>), // supported special type definition
 #if !NET40
                 typeof(Tuple<>),
+                typeof(Tuple<,,,,,,,>),
+#endif
+#if NET47_OR_GREATER || !NETFRAMEWORK
+                typeof(ValueTuple<>),
+                typeof(ValueTuple<,,,,,,,>),
 #endif
 
                 // Generic Type Parameters
