@@ -580,6 +580,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             object[] referenceObjects =
             {
                 new byte[] { 1, 2, 3 }, // single byte array
+                Reflector.EmptyArray<byte>(), // empty array
                 new byte[,] { { 11, 12, 13 }, { 21, 22, 23 } }, // multidimensional byte array
                 new byte[][] { new byte[] { 11, 12, 13 }, new byte[] { 21, 22, 23, 24, 25 }, null }, // jagged byte array
                 new byte[][,] { new byte[,] { { 11, 12, 13 }, { 21, 22, 23 } }, new byte[,] { { 11, 12, 13, 14 }, { 21, 22, 23, 24 }, { 31, 32, 33, 34 } } }, // crazy jagged byte array 1 (2D matrix of 1D arrays)
@@ -608,6 +609,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new short[] { 1, 2 },
                 new ushort[] { 1, 2 },
                 new int[] { 1, 2 },
+                Enumerable.Range(0, 2050).ToArray(), // large primitive non-byte[] array
                 new uint[] { 1, 2 },
                 new long[] { 1, 2 },
                 new ulong[] { 1, 2 },

@@ -42,6 +42,12 @@ namespace KGySoft.Serialization.Binary
     {
         private abstract class SerializationManagerBase
         {
+            #region Constants
+
+            protected const int ArrayAllocationThreshold = 1 << 13;
+
+            #endregion
+
             #region Enumerations
 
             private protected enum GenericTypeSpecifier

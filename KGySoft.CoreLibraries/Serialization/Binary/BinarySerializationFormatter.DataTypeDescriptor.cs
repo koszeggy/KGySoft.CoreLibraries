@@ -44,6 +44,7 @@ namespace KGySoft.Serialization.Binary
         /// Per instance descriptor of a DataTypes encoded type. Used on deserialization, mainly for supported collections.
         /// Static generic type information is in <see cref="CollectionSerializationInfo"/>.
         /// </summary>
+        [SuppressMessage("ReSharper", "MemberHidesStaticFromOuterClass", Justification = "Properties vs the similarly names methods with DataTypes parameter in parent class.")]
         private sealed class DataTypeDescriptor
         {
             #region Fields
@@ -103,36 +104,11 @@ namespace KGySoft.Serialization.Binary
             internal int Rank { get; private set; }
 
             /// <summary>
-            /// The element the element/key descriptor for single collections and dictionaries.
+            /// Descriptors for generic arguments.
             /// </summary>
-            internal DataTypeDescriptor? ElementDescriptor { get; private set; }
+            internal DataTypeDescriptor[] ArgumentDescriptors { get; } = Reflector.EmptyArray<DataTypeDescriptor>();
 
-            /// <summary>
-            /// The value descriptor for dictionaries, KeyValuePairs.
-            /// </summary>
-            internal DataTypeDescriptor? ValueDescriptor { get; }
-
-            /// <summary>
-            /// The item descriptors for collections that have different item types (tuples).
-            /// </summary>
-            internal DataTypeDescriptor[]? ItemDescriptors { get; }
-
-            internal bool CanHaveRecursion
-            {
-                get
-                {
-                    DataTypes dt = ElementDataType;
-                    if (CanHaveRecursion(dt))
-                        return true;
-                    if (ElementDescriptor is { CanHaveRecursion: true })
-                        return true;
-                    if (ValueDescriptor is { CanHaveRecursion: true })
-                        return true;
-                    if (ItemDescriptors != null && Array.Exists(ItemDescriptors, i => i.CanHaveRecursion))
-                        return true;
-                    return false;
-                }
-            }
+            internal bool CanHaveRecursion => CanHaveRecursion(ElementDataType) || Array.Exists(ArgumentDescriptors, i => i.CanHaveRecursion);
 
             #endregion
 
@@ -158,24 +134,20 @@ namespace KGySoft.Serialization.Binary
                 ParentDescriptor = parentDescriptor;
                 this.dataType = dataType;
 
-                if (ElementDataType == DataTypes.GenericTypeDefinition)
+                int elements = GetNumberOfElementTypes(dataType);
+                if (elements == 0 || ElementDataType == DataTypes.GenericTypeDefinition)
                     return;
 
-                // recursion 1: Element type in collections, pointers and ByRef types
-                // (In case of simple collections ElementDescriptor will be created on decode)
-                if (CollectionDataType != DataTypes.Null && ElementDataType == DataTypes.Null || ElementDataType.In(DataTypes.Pointer, DataTypes.ByRef))
-                    ElementDescriptor = new DataTypeDescriptor(this, ReadDataType(reader), reader);
+                ArgumentDescriptors = new DataTypeDescriptor[elements];
 
-                // recursion 2: TValue in dictionaries
-                if (IsDictionary)
-                    ValueDescriptor = new DataTypeDescriptor(this, ReadDataType(reader), reader);
-                else if (IsTuple)
-                {
-                    ItemDescriptors = new DataTypeDescriptor[FixedItemsSize];
-                    ItemDescriptors[0] = ElementDescriptor!; // First item is encoded together with the collection. Actual element type Will be clarified in DecodeType.
-                    for (int i = 1; i < ItemDescriptors.Length; i++)
-                        ItemDescriptors[i] = new DataTypeDescriptor(this, ReadDataType(reader), reader);
-                }
+                // recursion 1: Element type in collections, pointers and ByRef types
+                // (In case of non nested collections/keys/1st tuple element the descriptor will be created on decode)
+                if (CollectionDataType != DataTypes.Null && ElementDataType == DataTypes.Null || ElementDataType is DataTypes.Pointer or DataTypes.ByRef)
+                    ArgumentDescriptors[0] = new DataTypeDescriptor(this, ReadDataType(reader), reader);
+
+                // recursion 2..n: TValue in dictionaries or tuple item2..n
+                for (int i = 1; i < ArgumentDescriptors.Length; i++)
+                    ArgumentDescriptors[i] = new DataTypeDescriptor(this, ReadDataType(reader), reader);
             }
 
             /// <summary>
@@ -190,7 +162,6 @@ namespace KGySoft.Serialization.Binary
                     type = type.GetGenericArguments()[0];
                 }
 
-                // ReSharper disable once AssignNullToNotNullAttribute - false alarm for ReSharper in .NET Core - TODO: remove when fixed
                 dataType |= primitiveTypes.GetValueOrDefault(type);
                 Type = type;
                 StoredType = storedType;
@@ -205,6 +176,7 @@ namespace KGySoft.Serialization.Binary
             /// </summary>
             private DataTypeDescriptor(DataTypes elementDataType, Type type, DataTypeDescriptor parent)
             {
+                Debug.Assert(IsElementType(elementDataType));
                 ParentDescriptor = parent;
                 dataType = elementDataType;
                 Type = type;
@@ -246,36 +218,30 @@ namespace KGySoft.Serialization.Binary
                     result = GetCollectionType(CollectionDataType);
                 else
                 {
-                    // simple collection element/dictionary key: Since in DataTypes the element is encoded together with the collection
+                    // simple collection element/dictionary key/1st tuple element: Since in DataTypes the element is encoded together with the collection
                     // the element type descriptor was not created in the constructor. We create it now.
                     if (ElementDataType != DataTypes.Null)
                     {
-                        ElementDescriptor = new DataTypeDescriptor(ElementDataType, GetElementType(ElementDataType, br, manager, allowOpenTypes, out existingDescriptor), this);
-                        ElementDescriptor.StoredType = existingDescriptor?.StoredType;
+                        ArgumentDescriptors[0] = new DataTypeDescriptor(ElementDataType, GetElementType(ElementDataType, br, manager, allowOpenTypes, out existingDescriptor), this)
+                        {
+                            StoredType = existingDescriptor?.StoredType
+                        };
                     }
                     // complex element type: recursive decoding
                     else
-                        ElementDescriptor!.DecodeType(br, manager, allowOpenTypes);
+                        ArgumentDescriptors[0].DecodeType(br, manager, allowOpenTypes);
 
-                    // Dictionary TValue
-                    if (IsDictionary)
-                        ValueDescriptor!.DecodeType(br, manager, allowOpenTypes);
-                    // Tuple
-                    else if (IsTuple)
-                    {
-                        ItemDescriptors![0] = ElementDescriptor;
-                        ElementDescriptor = null;
-                        for (int i = 1; i < ItemDescriptors.Length; i++)
-                            ItemDescriptors[i].DecodeType(br, manager, allowOpenTypes);
-                    }
+                    // Dictionary TValue/2..n
+                    for (int i = 1; i < ArgumentDescriptors.Length; i++)
+                        ArgumentDescriptors[i].DecodeType(br, manager, allowOpenTypes);
 
                     if (IsArray)
                     {
                         // 0 means zero based 1D array
                         Rank = br.ReadByte();
                         return Type = Rank == 0
-                            ? ElementDescriptor.Type!.MakeArrayType()
-                            : ElementDescriptor.Type!.MakeArrayType(Rank);
+                            ? ArgumentDescriptors[0].Type!.MakeArrayType()
+                            : ArgumentDescriptors[0].Type!.MakeArrayType(Rank);
                     }
 
                     result = GetCollectionType(CollectionDataType);
@@ -284,9 +250,9 @@ namespace KGySoft.Serialization.Binary
                         return Type = result;
 
                     Type typeDef = isNullable ? result.GetGenericArguments()[0] : result;
-                    result = IsTuple ? typeDef.GetGenericType(ItemDescriptors!.Select(d => d.Type!).ToArray())
-                        : !IsDictionary ? typeDef.GetGenericType(ElementDescriptor!.Type!)
-                        : typeDef.GetGenericType(ElementDescriptor!.Type!, ValueDescriptor!.Type);
+                    result = IsTuple ? typeDef.GetGenericType(ArgumentDescriptors.Select(d => d.Type!).ToArray())
+                        : !IsDictionary ? typeDef.GetGenericType(ArgumentDescriptors[0].Type!)
+                        : typeDef.GetGenericType(ArgumentDescriptors[0].Type!, ArgumentDescriptors[1].Type);
                     result = isNullable ? Reflector.NullableType.GetGenericType(result) : result;
                 }
 
@@ -477,9 +443,9 @@ namespace KGySoft.Serialization.Binary
 #endif
 
                     case DataTypes.Pointer:
-                        return ElementDescriptor!.DecodeType(br, manager, allowOpenTypes).MakePointerType();
+                        return ArgumentDescriptors[0].DecodeType(br, manager, allowOpenTypes).MakePointerType();
                     case DataTypes.ByRef:
-                        return ElementDescriptor!.DecodeType(br, manager, allowOpenTypes).MakeByRefType();
+                        return ArgumentDescriptors[0].DecodeType(br, manager, allowOpenTypes).MakeByRefType();
 
                     case DataTypes.BinarySerializable:
                     case DataTypes.RawStruct:

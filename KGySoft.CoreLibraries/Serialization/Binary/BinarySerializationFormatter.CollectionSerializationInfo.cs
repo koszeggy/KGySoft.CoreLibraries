@@ -234,7 +234,7 @@ namespace KGySoft.Serialization.Binary
                 // 2.) Capacity
                 int capacity = HasCapacity ? Read7BitInt(br) : count;
                 if (safeMode && (HasCapacity || CtorArguments?.Contains(CollectionCtorArguments.Capacity) == true))
-                    capacity = Math.Min(count, (capacityThreshold >> (IsDictionary ? 1 : 0)) / descriptor.ElementDescriptor!.Type!.SizeOf());
+                    capacity = Math.Min(count, (capacityThreshold >> (IsDictionary ? 1 : 0)) / descriptor.ArgumentDescriptors[0].Type!.SizeOf());
 
                 // 3.) Case sensitivity
                 bool caseInsensitive = false;

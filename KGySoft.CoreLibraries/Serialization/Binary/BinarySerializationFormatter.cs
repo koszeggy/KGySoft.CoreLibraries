@@ -102,21 +102,20 @@ using KGySoft.Serialization.Xml;
  * 2. Update serializationInfo initializer - mind the groups of 1.
  *    - If new CollectionInfo flag has to be defined, a property in CollectionSerializationInfo might be also needed
  * 3. Add type to supportedCollections
- * 4. Handle type in SerializationManager.GetDictionaryValueTypes - mind non-dictionary/dictionary types
- * 5. Add type to DataTypeDescriptor.GetCollectionType - mind groups
+ * 4. Add type to DataTypeDescriptor.GetCollectionType - mind groups
  *    - If collection has a known fixed size, then FixedItemsSize might be needed to adjusted, too.
- * 6. If needed, update CollectionSerializationInfo.WriteSpecificProperties and InitializeCollection (e.g. new flag in 2.)
- * 7. If collection type is an ordered non-IList collection, or an unordered non-ICollection<T> collection,
+ * 5. If needed, update CollectionSerializationInfo.WriteSpecificProperties and InitializeCollection (e.g. new flag in 2.)
+ * 6. If collection type is an ordered non-IList collection, or an unordered non-ICollection<T> collection,
  *    then handle it in AddCollectionElement/AddDictionaryElement. Add new usage reference if needed.
- * 8. Add type to unit test:
+ * 7. Add type to unit test:
  *    - SerializeSimpleGenericCollections or SerializeSimpleNonGenericCollections
  *    - SerializeNullableArrays (value types)
  *    - SerializeSupportedDictionaries - twice when generic dictionary type; otherwise, only once
  *   [- SerializeComplexGenericCollections - when generic]
  *   [- SerializationSurrogateTest]
- *   [- SerializeCircularReferences - if new usage reference is added in 7. add it to TestData.Box<T>, too]
+ *   [- SerializeCircularReferences - if new usage reference is added in 6. add it to TestData.Box<T>, too]
  *   [- SerializeCircularReferencesBySurrogateSelector - if new usage reference is added in 7. add it to TestData.Box<T>, too]
- * 9. Add type to description - Collections
+ * 8. Add type to description - Collections
  *
  * To debug the serialized stream of the test cases set BinarySerializerTest.dumpDetails and see the console output.
  */
@@ -1347,6 +1346,7 @@ namespace KGySoft.Serialization.Binary
         private static int GetNumberOfElementTypes(DataTypes dt) => IsDictionary(dt) ? 2
             : IsTuple(dt) ? GetNumberOfTupleElements(dt)
             : IsCollectionType(dt) ? 1
+            : dt is DataTypes.Pointer or DataTypes.ByRef ? 1
             : 0;
 
         private static void Write7BitInt(BinaryWriter bw, int value)
@@ -1474,6 +1474,16 @@ namespace KGySoft.Serialization.Binary
 #else
             bw.Write(buffer, 0, len);
 #endif
+        }
+
+        private static void WriteDataType(BinaryWriter bw, DataTypesEnumerator enumerator)
+        {
+            enumerator.Save();
+            do
+            {
+                WriteDataType(bw, enumerator.Current);
+            } while (enumerator.MoveNext());
+            enumerator.Restore();
         }
 
         private static DataTypes ReadDataType(BinaryReader br)

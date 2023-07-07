@@ -33,6 +33,7 @@ namespace KGySoft.Serialization.Binary
             #region Fields
 
             private readonly IList<DataTypes> dataTypes;
+
             private DataTypes current;
             private int index;
             private Stack<(DataTypes, int)>? restorePoints;
@@ -93,15 +94,6 @@ namespace KGySoft.Serialization.Binary
                 return current != DataTypes.Null || MoveNext();
             }
 
-            [System.Obsolete]
-            internal DataTypesEnumerator Clone() =>
-                new DataTypesEnumerator(dataTypes)
-                {
-                    current = current,
-                    index = index
-                };
-
-
             internal void Reset()
             {
                 index = 0;
@@ -122,16 +114,11 @@ namespace KGySoft.Serialization.Binary
                     Throw.InvalidOperationException(Res.InternalError("Restore without Save"));
             }
 
-            internal IList<DataTypes> ExtractCurrentSegment()
+            internal DataTypesEnumerator ReadToNextSegment(bool moveToFirst = true)
             {
-                Save();
-                var result = ReadToNextSegment();
-                Restore();
-                return result.dataTypes; // TODO: just result
-            }
+                if (dataTypes.Count == 1 && dataTypes[0] == current)
+                    return new DataTypesEnumerator(dataTypes, moveToFirst);
 
-            internal DataTypesEnumerator ReadToNextSegment()
-            {
                 Debug.Assert(current != DataTypes.Null || index < dataTypes.Count, "Enumeration is already finished");
                 var result = new List<DataTypes>(dataTypes.Count - index + 1);
                 int skip = 1;
@@ -139,12 +126,20 @@ namespace KGySoft.Serialization.Binary
                 {
                     result.Add(current);
                     skip += IsCollectionType(current)
-                        ? GetNumberOfElementTypes(current) - (GetElementDataType(current) == DataTypes.Null ? 1 : 2)
+                        ? GetNumberOfElementTypes(current) - (GetElementDataType(current) is DataTypes.Null or DataTypes.Pointer or DataTypes.ByRef ? 1 : 2)
                         : -1;
                 } while (MoveNext() && skip > 0);
 
                 Debug.Assert(skip == 0, "Failed to read current segment");
-                return new DataTypesEnumerator(result, true);
+                return new DataTypesEnumerator(result, moveToFirst);
+            }
+
+            internal DataTypesEnumerator ExtractCurrentSegment(bool moveToFirst = true)
+            {
+                Save();
+                DataTypesEnumerator result = ReadToNextSegment(moveToFirst);
+                Restore();
+                return result;
             }
 
             #endregion

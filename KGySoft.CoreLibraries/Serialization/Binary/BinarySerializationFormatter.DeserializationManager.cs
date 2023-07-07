@@ -154,6 +154,7 @@ namespace KGySoft.Serialization.Binary
 
                 internal ArrayUsage(Array target, int[] indices)
                 {
+                    Debug.Assert(indices.Length > 1);
                     this.target = target;
                     this.indices = indices;
                 }
@@ -162,13 +163,7 @@ namespace KGySoft.Serialization.Binary
 
                 #region Methods
 
-                internal override void SetValue(object value)
-                {
-                    if (indices.Length == 1)
-                        target.SetValue(value, indices[0]);
-                    else
-                        target.SetValue(value, indices);
-                }
+                internal override void SetValue(object value) => target.SetValue(value, indices);
 
                 #endregion
             }
@@ -401,12 +396,6 @@ namespace KGySoft.Serialization.Binary
 
             private struct ArrayBuilder
             {
-                #region Constants
-                
-                private const int allocationThreshold = 1 << 13;
-
-                #endregion
-
                 #region Fields
 
                 #region Internal Fields
@@ -469,10 +458,10 @@ namespace KGySoft.Serialization.Binary
                     }
 
                     // trying to allocate the result array at once if possible
-                    Type elementType = descriptor.ElementDescriptor!.Type!;
+                    Type elementType = descriptor.ArgumentDescriptors[0].Type!;
 
                     int elementSize;
-                    if (!safeMode || ((elementSize = elementType.SizeOf()) * (long)TotalLength) <= allocationThreshold)
+                    if (!safeMode || ((elementSize = elementType.SizeOf()) * (long)TotalLength) <= ArrayAllocationThreshold)
                     {
                         Array = Array.CreateInstance(elementType, lengths, lowerBounds);
                         if (rank > 1)
@@ -481,7 +470,7 @@ namespace KGySoft.Serialization.Binary
                     }
 
                     // otherwise, allocating just a List with limited initial capacity
-                    int capacity = Math.Min(TotalLength, allocationThreshold / elementSize);
+                    int capacity = Math.Min(TotalLength, ArrayAllocationThreshold / elementSize);
                     if (elementType.IsPrimitive)
                     {
                         // for primitive types we can use a strictly typed list
@@ -502,7 +491,7 @@ namespace KGySoft.Serialization.Binary
                 
                 internal bool TryReadPrimitive()
                 {
-                    if (Array == null || descriptor.IsTuple || !descriptor.ElementDescriptor!.Type!.IsPrimitive)
+                    if (Array == null || !descriptor.ArgumentDescriptors[0].Type!.IsPrimitive)
                         return false;
                     int length = Buffer.ByteLength(Array);
                     Buffer.BlockCopy(reader.ReadBytes(length), 0, Array, 0, length);
@@ -515,7 +504,7 @@ namespace KGySoft.Serialization.Binary
                         return Array;
 
                     Debug.Assert(builder!.Count == TotalLength);
-                    Array = Array.CreateInstance(descriptor.IsTuple ? Reflector.ObjectType : descriptor.ElementDescriptor!.Type!, lengths, lowerBounds);
+                    Array = Array.CreateInstance(descriptor.ArgumentDescriptors[0].Type!, lengths, lowerBounds);
 
                     // 1D array
                     if (lengths.Length == 1)
@@ -563,19 +552,29 @@ namespace KGySoft.Serialization.Binary
 
                 #region Private Methods
                 
-                private void SetArrayElement(object? value, params int[] indices)
+                private void SetArrayElement(object? value, int[] indices)
                 {
+                    Debug.Assert(indices.Length > 1);
                     UsageReferences? trackedUsages = value == null ? null : ObjectsBeingDeserialized?.GetValueOrDefault(value);
                     if (trackedUsages == null)
                     {
-                        if (indices.Length == 1)
-                            Array!.SetValue(value, indices[0]);
-                        else
-                            Array!.SetValue(value, indices);
+                        Array!.SetValue(value, indices);
                         return;
                     }
 
                     trackedUsages.Add(new ArrayUsage(Array!, indices));
+                }
+
+                private void SetArrayElement(object? value, int index)
+                {
+                    UsageReferences? trackedUsages = value == null ? null : ObjectsBeingDeserialized?.GetValueOrDefault(value);
+                    if (trackedUsages == null)
+                    {
+                        Array!.SetValue(value, index);
+                        return;
+                    }
+
+                    trackedUsages.Add(new ListUsage(Array!, index));
                 }
 
                 #endregion
@@ -1149,7 +1148,7 @@ namespace KGySoft.Serialization.Binary
                 // non-primitive array or cannot read at once in safe mode
                 for (int i = 0; i < builder.TotalLength; i++)
                 {
-                    object? value = ReadElement(br, descriptor.ElementDescriptor!);
+                    object? value = ReadElement(br, descriptor.ArgumentDescriptors[0]);
                     builder.Add(value);
                 }
 
@@ -1181,7 +1180,7 @@ namespace KGySoft.Serialization.Binary
 
                 FieldInfo[] fields = SerializationHelper.GetSerializableFields(type);
                 for (int i = 0; i < fields.Length; i++)
-                    SetField(fields[i], result, ReadElement(br, descriptor.ItemDescriptors![i]));
+                    SetField(fields[i], result, ReadElement(br, descriptor.ArgumentDescriptors[i]));
 
                 return result;
             }
@@ -1227,7 +1226,7 @@ namespace KGySoft.Serialization.Binary
                     // non-primitive array or cannot read at once in safe mode
                     for (int i = 0; i < builder.TotalLength; i++)
                     {
-                        object? value = ReadElement(br, descriptor.ElementDescriptor!);
+                        object? value = ReadElement(br, descriptor.ArgumentDescriptors[0]);
                         builder.Add(value);
                     }
 
@@ -1274,8 +1273,8 @@ namespace KGySoft.Serialization.Binary
                 object result = serInfo.InitializeCollection(br, addToCache, descriptor, this, SafeMode, out int count);
                 if (serInfo.IsSingleElement)
                 {
-                    object? key = ReadElement(br, descriptor.ElementDescriptor!);
-                    object? value = ReadElement(br, descriptor.ValueDescriptor!);
+                    object? key = ReadElement(br, descriptor.ArgumentDescriptors[0]);
+                    object? value = ReadElement(br, descriptor.ArgumentDescriptors[1]);
                     SetKeyValue(result, key, value);
                 }
                 else if (result is IEnumerable collection)
@@ -1283,8 +1282,8 @@ namespace KGySoft.Serialization.Binary
                     MethodAccessor? addMethod = serInfo.SpecificAddMethod == null ? null : serInfo.GetAddMethod(descriptor);
                     for (int i = 0; i < count; i++)
                     {
-                        object? element = ReadElement(br, descriptor.ElementDescriptor!);
-                        object? value = descriptor.IsDictionary ? ReadElement(br, descriptor.ValueDescriptor!) : null;
+                        object? element = ReadElement(br, descriptor.ArgumentDescriptors[0]);
+                        object? value = descriptor.IsDictionary ? ReadElement(br, descriptor.ArgumentDescriptors[1]) : null;
 
                         if (descriptor.IsDictionary)
                         {
