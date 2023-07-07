@@ -15,8 +15,6 @@
 
 #region Usings
 
-using System.Runtime.InteropServices;
-
 #region Used Namespaces
 
 using System;
@@ -34,7 +32,7 @@ using System.Linq;
 using System.Numerics;
 #endif
 using System.Reflection;
-#if NET5_0_OR_GREATER
+#if !(NETFRAMEWORK || NETSTANDARD2_0)
 using System.Runtime.CompilerServices;
 #endif
 using System.Runtime.Serialization;
@@ -436,7 +434,7 @@ namespace KGySoft.Serialization.Binary
 
                 #region Properties
                 
-                internal IList ArrayProxy => (Array ?? builder)!;
+                internal object ArrayProxy => (Array ?? builder)!;
 
                 #endregion
 
@@ -471,31 +469,29 @@ namespace KGySoft.Serialization.Binary
                     }
 
                     // trying to allocate the result array at once if possible
-                    Type elementType = descriptor.IsTuple ? Reflector.ObjectType : descriptor.ElementDescriptor!.Type!;
+                    Type elementType = descriptor.ElementDescriptor!.Type!;
 
-                    // TODO: restore
-                    //int elementSize;
-                    //if (!safeMode || ((elementSize = elementType.SizeOf()) * (long)TotalLength) <= allocationThreshold)
-                    //{
-                    //    Array = Array.CreateInstance(elementType, lengths, lowerBounds);
-                    //    if (rank > 1)
-                    //        arrayIndexer = new ArrayIndexer(lengths, lowerBounds);
-                    //    return;
-                    //}
+                    int elementSize;
+                    if (!safeMode || ((elementSize = elementType.SizeOf()) * (long)TotalLength) <= allocationThreshold)
+                    {
+                        Array = Array.CreateInstance(elementType, lengths, lowerBounds);
+                        if (rank > 1)
+                            arrayIndexer = new ArrayIndexer(lengths, lowerBounds);
+                        return;
+                    }
 
-                    //// otherwise, allocating just a List with limited initial capacity
-                    //int capacity = Math.Min(TotalLength, allocationThreshold / elementSize);
-                    //if (elementType.IsPrimitive)
-                    //{
-                    //    // for primitive types we can use a strictly typed list
-                    //    ConstructorInfo ctor = Reflector.ListGenType.GetGenericType(elementType).GetConstructor(new[] { Reflector.IntType })!;
-                    //    builder = (IList)CreateInstanceAccessor.GetAccessor(ctor).CreateInstance(capacity);
-                    //    return;
-                    //}
+                    // otherwise, allocating just a List with limited initial capacity
+                    int capacity = Math.Min(TotalLength, allocationThreshold / elementSize);
+                    if (elementType.IsPrimitive)
+                    {
+                        // for primitive types we can use a strictly typed list
+                        ConstructorInfo ctor = Reflector.ListGenType.GetGenericType(elementType).GetConstructor(new[] { Reflector.IntType })!;
+                        builder = (IList)CreateInstanceAccessor.GetAccessor(ctor).CreateInstance(capacity);
+                        return;
+                    }
 
-                    //// for all other types using an object list because the elements can be replaced by a surrogate selector or possible IObjectReference proxy
-                    //builder = new List<object>(capacity);
-                    builder = new List<object>();
+                    // for all other types using an object list because the elements can be replaced by a surrogate selector or possible IObjectReference proxy
+                    builder = new List<object>(capacity);
                 }
 
                 #endregion
@@ -788,6 +784,24 @@ namespace KGySoft.Serialization.Binary
             private static object? GetPlaceholderValue(object? value, [NoEnumeration]IEnumerable collection)
                 => value is IObjectReference ? collection.GetType().GetCollectionElementType()!.GetDefaultValue() : value;
 
+            /// <summary>
+            /// Use for known types only
+            /// </summary>
+            [SecurityCritical]
+            private static object CreateKnownEmptyObject(Type type)
+            {
+                if (type.IsValueType)
+                    return Activator.CreateInstance(type);
+
+#if NETFRAMEWORK || NETSTANDARD2_0
+                if (!Reflector.TryCreateUninitializedObject(type, out object? obj))
+                    Throw.SerializationException(Res.BinarySerializationCannotCreateUninitializedObject(type));
+                return obj;
+#else
+                return RuntimeHelpers.GetUninitializedObject(type);
+#endif
+            }
+
             #endregion
 
             #region Instance Methods
@@ -838,11 +852,15 @@ namespace KGySoft.Serialization.Binary
                 if (descriptor.IsArray)
                     return CreateArray(br, addToCache, descriptor);
 
-                // 3/b.) array-backed collection
+                // 3/b.) tuple
+                if (descriptor.IsTuple)
+                    return CreateTuple(br, addToCache, descriptor);
+
+                // 3/c.) array-backed collection
                 if (descriptor.HasBackingArray)
                     return CreateArrayBackedCollection(br, addToCache, descriptor);
 
-                // 3/c.) non-array collection or key-value
+                // 3/d.) other collection or key-value
                 return CreateCollection(br, addToCache, descriptor);
             }
 
@@ -1063,11 +1081,15 @@ namespace KGySoft.Serialization.Binary
                 if (descriptor.IsArray)
                     return CreateArray(br, addToCache, descriptor);
 
-                // 3/b.) array-backed collection
+                // 3/b.) tuple
+                if (descriptor.IsTuple)
+                    return CreateTuple(br, addToCache, descriptor);
+
+                // 3/c.) array-backed collection
                 if (descriptor.HasBackingArray)
                     return CreateArrayBackedCollection(br, addToCache, descriptor);
 
-                // 3/c.) non-array collection or key-value
+                // 3/d.) other collection or key-value
                 return CreateCollection(br, addToCache, descriptor);
             }
 
@@ -1107,7 +1129,7 @@ namespace KGySoft.Serialization.Binary
                 object arrayProxy = builder.ArrayProxy;
 
                 // if the builder uses a proxy, then the references of the array must be tracked because it will be replaced in the end
-                bool trackUsages = arrayProxy is not Array;
+                bool trackUsages = addToCache && arrayProxy is not Array && descriptor.CanHaveRecursion;
                 UsageReferences? usages = null;
                 if (trackUsages)
                     ObjectsBeingDeserialized.Add(arrayProxy, usages = new UsageReferences());
@@ -1148,12 +1170,27 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
+            private object CreateTuple(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor)
+            {
+                Debug.Assert(descriptor.IsTuple);
+                Type type = descriptor.GetTypeToCreate();
+                object result = CreateKnownEmptyObject(type);
+
+                if (addToCache)
+                    AddObjectToCache(result);
+
+                FieldInfo[] fields = SerializationHelper.GetSerializableFields(type);
+                for (int i = 0; i < fields.Length; i++)
+                    SetField(fields[i], result, ReadElement(br, descriptor.ItemDescriptors![i]));
+
+                return result;
+            }
+
+            [SecurityCritical]
             private object CreateArrayBackedCollection(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor)
             {
                 Type type = descriptor.GetTypeToCreate();
                 object result;
-
-                // TODO bool trackUsages = descriptor.CanHaveRecursion;
 
                 // special case: backing array is null so creating a default instance
                 if (descriptor.HasNullableBackingArray && !br.ReadBoolean())
@@ -1165,11 +1202,15 @@ namespace KGySoft.Serialization.Binary
                 }
 
                 var builder = new ArrayBuilder(br, descriptor, SafeMode);
-                IList resultProxy = builder.ArrayProxy;
 
-                // the references of the result must be tracked because it will be replaced in the end
-                var usages = new UsageReferences();
-                ObjectsBeingDeserialized.Add(resultProxy, usages);
+                // Unlike in CreateArray we always use a new object as a proxy here because the array is not the final object
+                // and if the builder returns a real array its reference could mean both the final object and its backing array.
+                // CanHaveRecursion expected to return false if the backing array is just used to create the final object but does it not contain the array (ie if can be an object[] it must be an actual backing array in the result)
+                bool trackUsages = addToCache && descriptor.CanHaveRecursion;
+                object? resultProxy = null;
+                UsageReferences? usages = null;
+                if (trackUsages)
+                    ObjectsBeingDeserialized.Add(resultProxy = new object(), usages = new UsageReferences());
                 builder.ObjectsBeingDeserialized = objectsBeingDeserialized; // using the field here is intended so no unnecessary instance is created
 
                 int id = 0;
@@ -1184,10 +1225,9 @@ namespace KGySoft.Serialization.Binary
                 else
                 {
                     // non-primitive array or cannot read at once in safe mode
-                    bool isTuple = descriptor.IsTuple;
                     for (int i = 0; i < builder.TotalLength; i++)
                     {
-                        object? value = ReadElement(br, isTuple ? descriptor.ItemDescriptors![i] : descriptor.ElementDescriptor!);
+                        object? value = ReadElement(br, descriptor.ElementDescriptor!);
                         builder.Add(value);
                     }
 
@@ -1199,28 +1239,17 @@ namespace KGySoft.Serialization.Binary
                 CreateInstanceAccessor? accessor = callback == null ? CreateInstanceAccessor.GetAccessor(type.GetConstructor(new[] { backingArray.GetType() })!) : null;
                 result = callback?.Invoke(br, type, backingArray) ?? accessor!.CreateInstance(backingArray);
 
-                // actualizing references to the actual result if needed
-                if (usages.Count > 0)
+                // some post administration if the result can recursively contain itself
+                if (trackUsages)
                 {
-                    ApplyPendingUsages(usages, resultProxy, result);
+                    ApplyPendingUsages(usages!, resultProxy!, result);
 
-                    // The pending usage application above sets possible direct references in the backingArray instead of the result, which has to be fixed.
-                    // Only tuples are affected because other array backed known collections may contain themselves only indirectly (eg. ArraySegment in its array field, etc.)
-                    if (descriptor.IsTuple && !ReferenceEquals(resultProxy, backingArray))
-                    {
-                        FieldInfo[]? tupleFields = null;
-                        for (int i = 0; i < resultProxy.Count; i++)
-                        {
-                            if (ReferenceEquals(resultProxy[i], resultProxy))
-                                (tupleFields ??= SerializationHelper.GetSerializableFields(result.GetType()))[i].Set(result, result); //backingArray.SetValue(result, i);
-                        }
-                    }
+                    if (addToCache)
+                        ReplaceObjectInCache(id, result);
+
+                    ObjectsBeingDeserialized.Remove(resultProxy!);
                 }
 
-                if (addToCache)
-                    ReplaceObjectInCache(id, result);
-
-                ObjectsBeingDeserialized.Remove(resultProxy);
                 return result;
             }
 
@@ -1591,7 +1620,7 @@ namespace KGySoft.Serialization.Binary
                 IObjectReference? objRef = IgnoreIObjectReference ? null : obj as IObjectReference;
                 int id = 0;
                 UsageReferences? usages = null;
-                bool trackUsages = useSurrogate || objRef != null;
+                bool trackUsages = addToCache && (useSurrogate || objRef != null);
 
                 // if the object can be possibly changed, then we prepare tracking its usage
                 if (trackUsages)

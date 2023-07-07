@@ -53,14 +53,9 @@ namespace KGySoft.Serialization.Binary
 
             #region Static Fields
 
-            internal static readonly CollectionSerializationInfo Default = new CollectionSerializationInfo();
+            internal static readonly CollectionSerializationInfo Default = new();
 
-            internal static readonly CollectionSerializationInfo Tuple = new CollectionSerializationInfo
-            {
-                Info = CollectionInfo.IsGeneric | CollectionInfo.IsTuple | CollectionInfo.BackingArrayHasKnownSize,
-                GetBackingArray = TupleToArray,
-                CreateInstanceFromArray = ArrayToTuple,
-            };
+            internal static readonly CollectionSerializationInfo Tuple = new() { Info = CollectionInfo.IsGeneric | CollectionInfo.IsTuple };
 
             #endregion
 
@@ -96,13 +91,16 @@ namespace KGySoft.Serialization.Binary
             internal string? SpecificAddMethod { get; set; }
 
             /// <summary>
-            /// Should be specified if the collection is a value type and it has a publicly exposed backing array that can have more elements than the wrapper type (eg. ArraySegment)
+            /// Should be specified if the collection is a value type and it has a publicly exposed backing array that can have more elements than the wrapper type (eg. ArraySegment),
+            /// or, if it does not expose or wrap any array but it can be represented as a (fixed size) array (eg. Vector128).
+            /// If the array is not exposed, then it must not contain any direct circular reference to the object itself because it makes proper deserialization possible (eg. object element type must not be supported by the collection)
             /// </summary>
             internal Func<object, Array?>? GetBackingArray { get; set; }
 
             /// <summary>
             /// Should be specified for any custom data for array backed collections.
-            /// If specified, <see cref="CtorArguments"/> should be null and <see cref="CreateInstanceFromArray"/> should also be specified.
+            /// If specified, <see cref="CtorArguments"/> should be null.
+            /// If the object has no constructor from array, then <see cref="CreateInstanceFromArray"/> should also be specified.
             /// </summary>
             internal Action<BinaryWriter, object>? WriteSpecificParametersForBackingArray { get; set; }
             internal Func<BinaryReader, Type, Array, object>? CreateInstanceFromArray { get; set; }

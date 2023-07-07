@@ -87,10 +87,11 @@ using KGySoft.Serialization.Xml;
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  * When NOT to add
  * - If may contain a delegate or event subscriptions (eg. Cache<TKey, TValue>, ObservableCollection<T>)
- * - If may contain a wrapped collection of any type (eg. Collection<T>, locking collections, BlockingCollection<T>)
- * - If may contain a pointer or a dependency (eg. Memory<T>)
+ * - If may wrap another exposed collection of any type (eg. Collection<T>, exposed by Items)
+ * - If may wrap another collection that is not exposed, though the wrapped collection type may affect the behavior (locking collections, BlockingCollection<T>)
  * When to add with special care and only if really justified
  * - If type is abstract, non-sealed or internal (eg. frozen collections)
+ * - If may contain a dependency that can be extracted legally (eg. underlying array/string/manager of Memory<T> can be extracted by MemoryMarshal)
  * 1. Add type to DataTypes 8-13 bits (adjust free places in comments) or to bits 24..30 (Extended)
  *    - 1..15 << 8: Generic collections
  *    - 16..31 << 8: Non-generic collections
@@ -1498,25 +1499,6 @@ namespace KGySoft.Serialization.Binary
 
             return result;
         }
-
-#if !NET35
-        private static Array TupleToArray(object tuple)
-        {
-            FieldInfo[] fields = SerializationHelper.GetSerializableFields(tuple.GetType());
-            var result = new object?[fields.Length];
-            for (int i = 0; i < fields.Length; i++)
-                result[i] = fields[i].Get(tuple);
-            return result;
-        }
-
-        private static object ArrayToTuple(BinaryReader _, Type type, Array array)
-        {
-            if (array is not object?[] elements)
-                return Throw.InvalidOperationException<object>(Res.InternalError($"object[] expected but {array.GetType().GetName(TypeNameKind.ShortName)} was passed"));
-            ConstructorInfo ctor = type.GetConstructor(type.GetGenericArguments())!;
-            return CreateInstanceAccessor.GetAccessor(ctor).CreateInstance(elements);
-        }
-#endif
 
         /// <summary>
         /// Converts a <see cref="DataTypes"/> enumeration into the corresponding string representation.

@@ -370,7 +370,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             // More complex tuples (safe compare is needed due to embedded collections
             referenceObjects = new object[]
             {
-                (new[]{1, 2}, 1u),
+                //(new[]{1, 2}, 1u),
                 (new KeyValuePair<int, string>(1, "2"), (Tuple.Create(3u), new Dictionary<(int, string), (uint, char)?[]>
                 {
                     [default] = null,
@@ -381,30 +381,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             SystemSerializeObjects(referenceObjects, safeCompare: true);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, safeCompare: true);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, safeCompare: true);
-
-            // TODO: Move to SerializeCircularReferences
-            // Self-referencing tuples
-            var tupleDirectReference = Tuple.Create(1, new object());
-            Reflector.SetField(tupleDirectReference, "m_Item2", tupleDirectReference);
-            object valueTupleDirectReference = (2, new object());
-            Reflector.SetField(valueTupleDirectReference, "Item2", valueTupleDirectReference);
-            referenceObjects = new object[]
-            {
-                tupleDirectReference,
-                valueTupleDirectReference,
-                null // placeholder for indirect reference
-            };
-
-            referenceObjects[2] = (1, referenceObjects);
-
-            SystemSerializeObjects(referenceObjects, safeCompare: true);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, safeCompare: true);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, safeCompare: true);
-
-            // TODO: Move to SerializeCircularReferences
-            IList<object> segment = new ArraySegment<object>(new object[1]);
-            segment[0] = segment;
-            KGySerializeObjects(segment, BinarySerializationOptions.None, safeCompare: true);
         }
 #endif
 
@@ -558,7 +534,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new SystemSerializableClass { IntProp = 3, StringProp = "gamma", Bool = null },
 
                 new KeyValuePair<int, object>(1, new object[] { 1, "alpha", DateTime.Now, null }),
-                //(new BinarySerializableStruct { IntProp = 1, StringProp = "alpha" }, 1),
+                (new BinarySerializableStruct { IntProp = 1, StringProp = "alpha" }, 1),
 
                 new SerializationEventsClass { Name = "Parent" }.AddChild("Child").AddChild("GrandChild").Parent.Parent,
                 new CustomSerializedClass { Name = "Single node" }, // ISerializable
@@ -585,7 +561,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new NonSerializableClass{ IntProp = 3, StringProp = "gamma" },
                 new NonSerializableSealedClass(1, "alpha") { IntProp = 1, StringProp = "alpha" },
                 new NonSerializableStruct{ Bytes3 = new byte[] {1, 2, 3}, IntProp = 1, Str10 = "alpha" },
-                //(new NonSerializableStruct { IntProp = 1, Str10 = "alpha", Bytes3 = new byte[] { 1, 2, 3 } }, 1),
+                (new NonSerializableStruct { IntProp = 1, Str10 = "alpha", Bytes3 = new byte[] { 1, 2, 3 } }, 1),
             };
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback);
@@ -1852,6 +1828,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
+            // Constructed indirect self references
             var root = new CircularReferenceClass { Name = "root" }.AddChild("child").AddChild("grandchild").Parent.Parent;
             root.Children[0].Children[0].Children.Add(root);
             referenceObjects = new object[]
@@ -1859,11 +1836,17 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 root, // grand-grandchild is root again
                 null, // placeholder: DictionaryEntry referencing the referenceObjects and thus itself
                 null, // placeholder: KeyValuePair referencing the referenceObjects and thus itself
-                null, // placeholder: direct reference
+                null, // placeholder: indirect tuple self-reference
+                null, // placeholder: array segment
             };
             referenceObjects[1] = new DictionaryEntry(1, referenceObjects);
-            referenceObjects[2] = new KeyValuePair<int, object>(1, referenceObjects);
-            referenceObjects[3] = referenceObjects;
+            referenceObjects[2] = new KeyValuePair<int, object>(2, referenceObjects);
+            referenceObjects[3] = (3, referenceObjects);
+            var segment = new ArraySegment<object>(new object[2]);
+            object segmentRef = segment;
+            segment.Array![0] = segmentRef;
+            segment.Array![1] = segment.Array;
+            referenceObjects[4] = segmentRef;
 
             SystemSerializeObject(referenceObjects, safeCompare: true);
             SystemSerializeObjects(referenceObjects, safeCompare: true);
@@ -1871,6 +1854,42 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None, safeCompare: true);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, safeCompare: true);
 
+            // Direct self-references
+            referenceObjects = new object[5];
+
+            // tuple
+            var tupleDirectReference = Tuple.Create(1, new object());
+            Reflector.SetField(tupleDirectReference, "m_Item2", tupleDirectReference);
+            referenceObjects[0] = tupleDirectReference;
+
+            // value tuple
+            object valueTupleDirectReference = (2, new object());
+            Reflector.SetField(valueTupleDirectReference, "Item2", valueTupleDirectReference);
+            referenceObjects[1] = valueTupleDirectReference;
+
+            // DictionaryEntry
+            object dictionaryEntryDirectReference = new DictionaryEntry(3, null);
+            Reflector.SetProperty(dictionaryEntryDirectReference, "Value", dictionaryEntryDirectReference);
+            referenceObjects[2] = dictionaryEntryDirectReference;
+
+            // KeyValuePair
+            object kvpDirectReference = new KeyValuePair<int, object>(4, null);
+            Reflector.SetField(kvpDirectReference, "value", kvpDirectReference);
+            referenceObjects[3] = kvpDirectReference;
+
+            // array
+            referenceObjects[4] = (5, referenceObjects);
+
+            SystemSerializeObject(referenceObjects, safeCompare: true);
+            SystemSerializeObjects(referenceObjects, safeCompare: true);
+
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.None, safeCompare: true);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, safeCompare: true);
+
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, safeCompare: true);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, safeCompare: true);
+
+            // Invalid self references
             referenceObjects = new object[]
             {
                 new SelfReferencerIndirect("Default") { UseCustomDeserializer = false, UseValidWay = false },
@@ -1879,8 +1898,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new SelfReferencerInvalid("Custom") { UseCustomDeserializer = true },
             };
 
+#if !NET40_OR_GREATER // Field in TypedReferences cannot be static or init only (SelfReferencerIndirect)
             foreach (object referenceObject in referenceObjects)
                 SystemSerializeObject(referenceObject);
+#endif
 
             foreach (object referenceObject in referenceObjects)
                 Throws<SerializationException>(() => KGySerializeObject(referenceObject, BinarySerializationOptions.None),

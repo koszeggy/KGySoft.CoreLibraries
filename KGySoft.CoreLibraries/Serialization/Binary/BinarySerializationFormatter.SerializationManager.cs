@@ -154,6 +154,7 @@ namespace KGySoft.Serialization.Binary
             /// Retrieves the value type(s) for a dictionary.
             /// </summary>
             [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Very simple method with many common cases")]
+            [Obsolete("Use DataTypesEnumerator.Extract/ReadCurrentSegment instead")]
             private static DataTypesEnumerator GetDictionaryValueTypes(DataTypesEnumerator dataTypes)
             {
                 // descriptor must refer a generic dictionary type here
@@ -1150,7 +1151,14 @@ namespace KGySoft.Serialization.Binary
                 CollectionSerializationInfo serInfo = serializationInfo[collectionDataType];
                 Type type = obj.GetType();
 
-                // II. Array backed types
+                // II. Tuple
+                if (serInfo.IsTuple)
+                {
+                    WriteTuple(bw, obj, collectionDataTypes);
+                    return;
+                }
+
+                // III. Array backed type
                 if (serInfo.GetBackingArray is Func<object, Array?> getBackingArray)
                 {
                     Array? array = getBackingArray.Invoke(obj);
@@ -1159,16 +1167,13 @@ namespace KGySoft.Serialization.Binary
                     if (array == null)
                         return;
 
-                    if (serInfo.IsTuple)
-                        WriteTuple(bw, (object?[])array, type.GetGenericArguments(), collectionDataTypes);
-                    else
-                        WriteArray(bw, array, collectionDataTypes, !serInfo.HasKnownSizedBackingArray);
+                    WriteArray(bw, array, collectionDataTypes, !serInfo.HasKnownSizedBackingArray);
                     serInfo.WriteSpecificParametersForBackingArray?.Invoke(bw, obj);
 
                     return;
                 }
 
-                // III. Other collections
+                // IV. Other collection
                 // 1. Obtaining the elements to write. Handles special cases such as DictionaryEntry, KeyValuePair, ArraySegment, etc.
                 IEnumerable collection = serInfo.GetCollectionToSerialize(obj);
 
@@ -1268,11 +1273,15 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
-            private void WriteTuple(BinaryWriter bw, object?[] items, Type[] itemTypes, DataTypesEnumerator itemDataTypes)
+            private void WriteTuple(BinaryWriter bw, object tuple, DataTypesEnumerator itemDataTypes)
             {
+                Type type = tuple.GetType();
+                Type[] itemTypes = type.GenericTypeArguments;
+                FieldInfo[] fields = SerializationHelper.GetSerializableFields(type);
+
                 itemDataTypes.MoveNextExtracted();
-                for (int i = 0; i < items.Length; i++)
-                    WriteElement(bw, items[i], itemDataTypes.ReadToNextSegment(), itemTypes[i]);
+                for (int i = 0; i < fields.Length; i++)
+                    WriteElement(bw, fields[i].Get(tuple), itemDataTypes.ReadToNextSegment(), itemTypes[i]);
             }
 
             [SecurityCritical]

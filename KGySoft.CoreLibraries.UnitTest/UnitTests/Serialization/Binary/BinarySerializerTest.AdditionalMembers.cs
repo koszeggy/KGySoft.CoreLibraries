@@ -774,7 +774,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             try
             {
                 byte[] serData = SerializeObject(obj, bsf);
+                Console.WriteLine();
                 object deserializedObject = DeserializeObject(serData, bsf);
+                Console.WriteLine();
                 if (safeCompare)
                     AssertDeepEquals(serData, SerializeObject(deserializedObject, bsf));
                 else
@@ -796,7 +798,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             try
             {
                 byte[] serData = SerializeObjects(referenceObjects, bsf);
+                Console.WriteLine();
                 object[] deserializedObjects = DeserializeObjects(serData, bsf);
+                Console.WriteLine();
                 if (safeCompare)
                     AssertItemsEqual(serData, SerializeObjects(deserializedObjects, bsf));
                 else
