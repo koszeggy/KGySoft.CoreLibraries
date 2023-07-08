@@ -66,6 +66,7 @@ namespace KGySoft.Collections
 
         internal ListSegment(IList<T> list, int offset, int? count = null)
         {
+            Debug.Assert(list is not ListSegment<T>, "If this happens legally, extract the original embedded list and adjust offset/count accordingly");
             this.list = list;
             this.offset = offset;
             this.count = count;

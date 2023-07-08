@@ -122,12 +122,6 @@ namespace KGySoft.Collections
 
         #endregion
 
-        #region Internal Properties
-
-        internal ICollection<T> Collection => collection;
-
-        #endregion
-
         #region Private Protected Properties
 
         /// <summary>
