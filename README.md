@@ -275,7 +275,7 @@ In .NET still there is no `ConcurrentHashSet<T>` type. One option is to use a `C
 
 - #### [`StringKeyedDictionary<TValue>`](https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Collections_StringKeyedDictionary_1.htm):
 
-Acts as a regular `IDictionary<string, TValue` but as an [`IStringKeyedDictionary<TValue>`](https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Collections_IStringKeyedDictionary_1.htm) interface implementation, it supports accessing its values also by [`StringSegment`][StringSegment] or `ReadOnlySpan<char>` keys. To use custom string comparison you can pass a [`StringSegmentComparer`](https://docs.kgysoft.net/corelibraries/html/T_KGySoft_CoreLibraries_StringSegmentComparer.htm) instance to the constructors, which allows string comparisons by `string`, [`StringSegment`][StringSegment] and `ReadOnlySpan<char>` instances.
+Acts as a regular `IDictionary<string, TValue>` but as an [`IStringKeyedDictionary<TValue>`](https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Collections_IStringKeyedDictionary_1.htm) interface implementation, it supports accessing its values also by [`StringSegment`][StringSegment] or `ReadOnlySpan<char>` keys. To use custom string comparison you can pass a [`StringSegmentComparer`](https://docs.kgysoft.net/corelibraries/html/T_KGySoft_CoreLibraries_StringSegmentComparer.htm) instance to the constructors, which allows string comparisons by `string`, [`StringSegment`][StringSegment] and `ReadOnlySpan<char>` instances.
 
 - #### [`CircularList<T>`](https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Collections_CircularList_1.htm):
 

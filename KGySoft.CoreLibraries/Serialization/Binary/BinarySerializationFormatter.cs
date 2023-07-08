@@ -230,6 +230,8 @@ namespace KGySoft.Serialization.Binary
     /// <item>Any object that implements the <see cref="IBinarySerializable"/> interface.</item>
     /// <item><see cref="KeyValuePair{TKey,TValue}"/> if <see cref="KeyValuePair{TKey,TValue}.Key"/> and <see cref="KeyValuePair{TKey,TValue}.Value"/> are any of the supported types.</item>
     /// <item><see cref="DictionaryEntry"/> if <see cref="DictionaryEntry.Key"/> and <see cref="DictionaryEntry.Value"/> are any of the supported types.</item>
+    /// <item><see cref="Tuple"/> types if generic arguments are any of the supported types (in .NET Framework 4.0 and above)</item>
+    /// <item><see cref="ValueTuple"/> types if generic arguments are any of the supported types (in .NET Standard 2.0 and above)</item>
     /// </list>
     /// <note>
     /// <list type="bullet">

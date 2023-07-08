@@ -27,6 +27,8 @@
     SYSLIB0011 error in .NET 8 and above. It always has returned a BinarySerializationFormatter instance anyway.
 + BinarySerializationFormatter class:
   + Supporting ArraySegment<T> natively
+  + Supporting the Tuple<...> types natively (.NET Framework 4.0 and above)
+  + Supporting the ValueTuple<...> types natively (.NET Standard 2.0 and above)
   + Supporting the Complex type natively (.NET Framework 4.0 and above)
 * CustomSerializerSurrogateSelector class: The class has been made obsolete
 * NameInvariantSurrogateSelector class: The class has been made obsolete
