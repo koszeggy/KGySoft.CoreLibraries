@@ -367,20 +367,23 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
 
+#if NET47_OR_GREATER || !NETFRAMEWORK
             // More complex tuples (safe compare is needed due to embedded collections
             referenceObjects = new object[]
             {
-                //(new[]{1, 2}, 1u),
+                (new[] { 1, 2 }, 1u),
                 (new KeyValuePair<int, string>(1, "2"), (Tuple.Create(3u), new Dictionary<(int, string), (uint, char)?[]>
                 {
                     [default] = null,
                     [(11, "22")] = new (uint, char)?[] { (33u, '4'), null },
                 })),
+                new (int?, string)?[] { (1, "1"), (null, "2"), (3, null), (null, null), null }
             };
 
             SystemSerializeObjects(referenceObjects, safeCompare: true);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, safeCompare: true);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, safeCompare: true);
+#endif
         }
 #endif
 
@@ -432,7 +435,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 typeof(List<int[]>),
                 typeof(List<Array[]>),
                 typeof(List<int>).MakeArrayType().MakePointerType().MakeArrayType(2).MakePointerType().MakeByRefType(), // List`1[System.Int32][]*[,]*&
-#if !NET40
+#if !NET35
                 typeof(Tuple<int>),
                 typeof(Tuple<int, byte, string, bool, decimal, short, long, char>), // invalid (Rest is not tuple)
 #endif
@@ -465,7 +468,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 typeof(Nullable<>).MakeByRefType(),
                 typeof(Nullable<>).MakePointerType(),
                 typeof(KeyValuePair<,>), // supported special type definition
-#if !NET40
+#if !NET35
                 typeof(Tuple<>),
                 typeof(Tuple<,,,,,,,>),
 #endif
@@ -483,7 +486,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 typeof(List<>).GetGenericArguments()[0].MakeArrayType().MakePointerType().MakeArrayType(2).MakePointerType().MakeByRefType(), // T[]*[,]*&
                 typeof(CustomGenericCollection<>).GetGenericArguments()[0], // T of custom generic type definition argument
                 typeof(CustomGenericCollection<>).GetGenericArguments()[0].MakeArrayType(), // T[]
-#if !NET40
+#if !NET35
                 typeof(Tuple<>).GetGenericArguments()[0], // T of tuple
 #endif
 
@@ -495,7 +498,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 typeof(KeyValuePair<,>).MakeGenericType(typeof(int), typeof(KeyValuePair<,>).GetGenericArguments()[1]), // open constructed generic (KeyValuePair<int, TValue>)
                 typeof(Nullable<>).MakeGenericType(typeof(KeyValuePair<,>)), // open constructed generic (KeyValuePair<,>?)
                 typeof(Nullable<>).MakeGenericType(typeof(KeyValuePair<,>).MakeGenericType(typeof(int), typeof(KeyValuePair<,>).GetGenericArguments()[1])), // open constructed generic (KeyValuePair<int, TValue>?)
-#if !NET40
+#if !NET35
                 typeof(Tuple<>).MakeGenericType(typeof(KeyValuePair<,>)), // Tuple<KeyValuePair<,>>
 #endif
 
@@ -929,8 +932,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new ArraySegment<int>(new[] { 1, 2, 3 }, 1, 2),
                 new ArraySegment<int[]>(new int[][] { new int[] { 1, 2, 3 }, new int[] { 4, 5, 6 }, null }, 1, 2),
                 new ArraySegment<int>(),
-                new ArraySegment<Complex>(new[] { new Complex(1.2, 3.4), new Complex(5.6, 7.8), default }, 1, 2),
 #if !NET35
+                new ArraySegment<Complex>(new[] { new Complex(1.2, 3.4), new Complex(5.6, 7.8), default }, 1, 2),
+
                 new SortedSet<int>(new[] { 1, 2, 3 }),
                 new SortedSet<int[]>(new int[][] { new int[] { 1, 2, 3 }, null }),
                 new SortedSet<string>(StringComparer.CurrentCulture) { "alpha", "Alpha", "ALPHA" },
@@ -1522,8 +1526,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new KeyValuePair<int, object>[] { new KeyValuePair<int, object>(1, "alpha"), new KeyValuePair<int, object>(2, new TestEnumByte[] { TestEnumByte.One, TestEnumByte.Two }), },
 
 #if !NET35
+                Tuple.Create(1, "2"),
                 new BigInteger(1),
                 new Complex(1.2, 3.4),
+#endif
+
+#if NET47_OR_GREATER || !NETFRAMEWORK
+                (1, "2"),
 #endif
 
 #if NETCOREAPP3_0_OR_GREATER
@@ -1859,15 +1868,19 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             // Direct self-references
             referenceObjects = new object[5];
 
+#if !NET35
             // tuple
             var tupleDirectReference = Tuple.Create(1, new object());
             Reflector.SetField(tupleDirectReference, "m_Item2", tupleDirectReference);
             referenceObjects[0] = tupleDirectReference;
+#endif
 
+#if NET47_OR_GREATER || !NETFRAMEWORK
             // value tuple
             object valueTupleDirectReference = (2, new object());
             Reflector.SetField(valueTupleDirectReference, "Item2", valueTupleDirectReference);
             referenceObjects[1] = valueTupleDirectReference;
+#endif
 
             // DictionaryEntry
             object dictionaryEntryDirectReference = new DictionaryEntry(3, null);
@@ -2273,10 +2286,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             string asmName = "System.Design, Version=2.0.0.0, PublicKeyToken=b77a5c561934e089"; 
             string typeName = "System.Windows.Forms.Design.Behavior.SnapLineType";
 #else
-            string asmName = "System.Numerics, Version=4.0.0.0, PublicKeyToken=b77a5c561934e089";
-            string typeName = "System.Numerics.BigInteger";
+            string asmName = "System.Data, Version=4.0.0.0, PublicKeyToken=b77a5c561934e089";
+            string typeName = "System.Data.ConnectionState";
 #endif
-
             if (Reflector.ResolveAssembly(asmName, ResolveAssemblyOptions.AllowPartialMatch) != null)
             {
                 Assert.Inconclusive($"Assembly {asmName} is already loaded, test is ignored. Try to run this test alone.");

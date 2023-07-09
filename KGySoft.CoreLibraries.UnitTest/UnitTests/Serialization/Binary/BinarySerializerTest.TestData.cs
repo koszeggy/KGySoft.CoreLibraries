@@ -1011,6 +1011,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             private readonly HashSet<T> valueHashSet;
             private readonly OrderedDictionary valueOrderedDictionary;
             private readonly ArraySegment<T> valueArraySegment;
+#if !NET35
+            private readonly Tuple<T> tuple;
+#endif
+#if NET47_OR_GREATER || !NETFRAMEWORK
+            private readonly ValueTuple<T> valueTuple;
+#endif
 
             #endregion
 
@@ -1032,6 +1038,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 valueHashSet = new HashSet<T> { value };
                 valueOrderedDictionary = new OrderedDictionary { { value, value } };
                 valueArraySegment = new ArraySegment<T>(new[] { value });
+#if !NET35
+                tuple = new Tuple<T>(value);
+#endif
+#if NET47_OR_GREATER || !NETFRAMEWORK
+                valueTuple = new ValueTuple<T>(value);
+#endif
             }
 
             #endregion
@@ -1051,7 +1063,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 && Equals(((DictionaryEntry)valueDictionaryEntry).Value, ((DictionaryEntry)other.valueDictionaryEntry).Value)
                 && Equals(valueLinkedList.First.Value, other.valueLinkedList.First.Value)
                 && Equals(valueHashSet.First(), other.valueHashSet.First())
-                && Equals(valueOrderedDictionary[Value], other.valueOrderedDictionary[Value]);
+                && Equals(valueOrderedDictionary[Value], other.valueOrderedDictionary[Value])
+#if !NET35
+                && Equals(tuple, other.tuple)
+#endif
+#if NET47_OR_GREATER || !NETFRAMEWORK
+                && Equals(valueTuple, other.valueTuple)
+#endif
+            ;
 
             public override int GetHashCode() => Value?.GetHashCode() ?? 0;
 
