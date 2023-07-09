@@ -205,6 +205,17 @@ namespace KGySoft.Serialization.Binary
                 bw.Write(section.Offset);
             }
 
+            private static void WriteStringSegment(BinaryWriter bw, StringSegment stringSegment)
+            {
+                bw.Write(!stringSegment.IsNull);
+                if (stringSegment.IsNull)
+                    return;
+
+                bw.Write(stringSegment.UnderlyingString!);
+                Write7BitInt(bw, stringSegment.Offset);
+                Write7BitInt(bw, stringSegment.Length);
+            }
+
 #if !NET35
             private static void WriteBigInteger(BinaryWriter bw, BigInteger value)
             {
@@ -691,6 +702,9 @@ namespace KGySoft.Serialization.Binary
                     case DataTypes.RuntimeType:
                         // not passing an actual DataType here because so it will be obtained on demand if needed
                         WriteType(bw, (Type)obj, true);
+                        return;
+                    case DataTypes.StringSegment:
+                        WriteStringSegment(bw, (StringSegment)obj);
                         return;
 
                     // these types have no effective data
@@ -1179,7 +1193,7 @@ namespace KGySoft.Serialization.Binary
             private void WriteTuple(BinaryWriter bw, object tuple, DataTypesEnumerator itemDataTypes)
             {
                 Type type = tuple.GetType();
-                Type[] itemTypes = type.GenericTypeArguments;
+                Type[] itemTypes = type.GetGenericArguments();
                 FieldInfo[] fields = SerializationHelper.GetSerializableFields(type);
 
                 itemDataTypes.MoveNextExtracted();

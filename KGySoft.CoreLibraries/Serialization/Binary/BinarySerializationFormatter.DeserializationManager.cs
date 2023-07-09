@@ -715,6 +715,10 @@ namespace KGySoft.Serialization.Binary
                 return BitVector32.CreateSection(mask, shift);
             }
 
+            private static StringSegment ReadStringSegment(BinaryReader br) => !br.ReadBoolean()
+                ? StringSegment.Null
+                : new StringSegment(br.ReadString(), Read7BitInt(br), Read7BitInt(br));
+
             private static StringBuilder ReadStringBuilder(BinaryReader br)
             {
                 int capacity = Read7BitInt(br);
@@ -1458,6 +1462,8 @@ namespace KGySoft.Serialization.Binary
                             return createdResult = new BitVector32(br.ReadInt32());
                         case DataTypes.BitVector32Section:
                             return createdResult = ReadSection(br);
+                        case DataTypes.StringSegment:
+                            return createdResult = ReadStringSegment(br);
                         case DataTypes.StringBuilder:
                             return TryGetFromCache(out cachedResult) ? cachedResult : createdResult = ReadStringBuilder(br);
                         case DataTypes.RuntimeType:

@@ -20,7 +20,9 @@ using System;
 using System.CodeDom.Compiler;
 #endif
 using System.Collections;
+#if !NET35
 using System.Collections.Concurrent;
+#endif
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
@@ -132,6 +134,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new KeyValuePair<int, string>(1, "alpha"),
                 new BitArray(new[] { true, false, true }),
                 new StringBuilder("alpha"),
+                StringSegment.Null,
+                "123456".AsSegment(1, 2),
 #if !NET35
                 new BigInteger(1),
                 new Complex(1.2, 2.3),
@@ -633,6 +637,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new KeyValuePair<int, string>[] { new KeyValuePair<int, string>(1, "alpha") },
                 new BitArray[] { new BitArray(new[] { true, false, true }), null },
                 new StringBuilder[] { new StringBuilder("alpha"), null },
+                new StringSegment[] { new StringSegment("alpha", 1, 2), null },
 #if !NET35
                 new BigInteger[] { 1, 2 },
                 new Complex[] { new Complex(1.2, 3.4), new Complex(5.6, 7.8) },
@@ -839,6 +844,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new KeyValuePair<int, string>?[] { new KeyValuePair<int, string>(1, "alpha"), null }, // 21
                 new KeyValuePair<int?, int?>?[] { new KeyValuePair<int?, int?>(1, 2), new KeyValuePair<int?, int?>(2, null), null }, // 28
                 new KeyValuePair<KeyValuePair<int?, string>?, KeyValuePair<int?, string>?>?[] { new KeyValuePair<KeyValuePair<int?, string>?, KeyValuePair<int?, string>?>(new KeyValuePair<int?, string>(1, "alpha"), new KeyValuePair<int?, string>(2, "beta")),  }, // 28
+
+                new StringSegment?[] { new StringSegment("123456", 1, 2), StringSegment.Null, null },
 
                 new ArraySegment<int>?[] { new ArraySegment<int>(new[] { 1, 2, 3 }, 1, 2), new ArraySegment<int>(), null },
                 new ArraySegment<int?>?[] { new ArraySegment<int?>(new int?[] { 1, 2, 3, null }, 1, 2), new ArraySegment<int?>(), null },
@@ -1521,6 +1528,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new KeyValuePair<int, string>(1, "alpha"),
                 new BitArray(new[] { true, false, true }),
                 new StringBuilder("alpha"),
+                StringSegment.Null,
+                new StringSegment("12345", 1, 2),
 
                 TestEnumByte.Two,
                 new KeyValuePair<int, object>[] { new KeyValuePair<int, object>(1, "alpha"), new KeyValuePair<int, object>(2, new TestEnumByte[] { TestEnumByte.One, TestEnumByte.Two }), },

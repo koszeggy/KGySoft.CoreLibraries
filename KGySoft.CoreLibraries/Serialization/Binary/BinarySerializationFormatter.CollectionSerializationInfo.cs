@@ -18,9 +18,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-#if !NET35
 using System.Diagnostics.CodeAnalysis;
-#endif
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -41,6 +39,7 @@ namespace KGySoft.Serialization.Binary
         /// <summary>
         /// Static descriptor for collection types. Instance-specific descriptor is in <see cref="DataTypeDescriptor"/>.
         /// </summary>
+        [SuppressMessage("ReSharper", "MemberHidesStaticFromOuterClass", Justification = "Properties vs the similarly named methods with DataTypes parameter in parent class.")]
         private sealed class CollectionSerializationInfo
         {
             #region Constants

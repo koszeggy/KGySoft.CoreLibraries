@@ -114,7 +114,6 @@ using KGySoft.Serialization.Xml;
  *   [- SerializeComplexGenericCollections - when generic]
  *   [- SerializationSurrogateTest]
  *   [- SerializeCircularReferences - if new usage reference is added in 6. add it to TestData.Box<T>, too]
- *   [- SerializeCircularReferencesBySurrogateSelector - if new usage reference is added in 7. add it to TestData.Box<T>, too]
  * 8. Add type to description - Collections
  *
  * To debug the serialized stream of the test cases set BinarySerializerTest.dumpDetails and see the console output.
@@ -214,6 +213,7 @@ namespace KGySoft.Serialization.Binary
     /// <item><see cref="Guid"/></item>
     /// <item><see cref="Uri"/></item>
     /// <item><see cref="StringBuilder"/></item>
+    /// <item><see cref="StringSegment"/></item>
     /// <item><see cref="BigInteger"/> (in .NET Framework 4.0 and above)</item>
     /// <item><see cref="Complex"/> (in .NET Framework 4.0 and above)</item>
     /// <item><see cref="Rune"/> (in .NET Core 3.0 and above)</item>
@@ -456,7 +456,7 @@ namespace KGySoft.Serialization.Binary
 
             RuntimeType = 30, // Non-serializable in .NET Core. Not meant to be combined but it can happen if collection element type is RuntimeType.
 
-            // 31: reserved - TODO: StringSegment
+            StringSegment = 31,
 
             // . . . Non-primitive, platform-dependent pure types (32-48 - up to 16 types) . . .
 
@@ -553,7 +553,7 @@ namespace KGySoft.Serialization.Binary
             // 37-45 << 8 : 9 reserved generic dictionaries
             // TODO Candidates:
             // ThreadSafeDictionary
-            // AllowNullDictionary - if will be public
+            // AllowNullDictionary, TwoWayDictionary - if will be public
 
             KeyValuePair = 46 << 8, // Defined as a collection type so can be encoded the same way as dictionaries
             KeyValuePairNullable = 47 << 8, // The Nullable flag would be used for the key so this is the nullable version of KeyValuePair.
@@ -1139,6 +1139,7 @@ namespace KGySoft.Serialization.Binary
             { Reflector.BitArrayType, DataTypes.BitArray },
             { typeof(BitVector32), DataTypes.BitVector32 },
             { typeof(BitVector32.Section), DataTypes.BitVector32Section },
+            { typeof(StringSegment), DataTypes.StringSegment },
 #if !NET35
             { Reflector.BigIntegerType, DataTypes.BigInteger },
             { typeof(Complex), DataTypes.Complex },

@@ -26,10 +26,11 @@
   ! CreateFormatter method: Return type has been changed to BinarySerializationFormatter from IFormatter to avoid
     SYSLIB0011 error in .NET 8 and above. It always has returned a BinarySerializationFormatter instance anyway.
 + BinarySerializationFormatter class:
-  + Supporting ArraySegment<T> natively
-  + Supporting the Tuple<...> types natively (.NET Framework 4.0 and above)
-  + Supporting the ValueTuple<...> types natively (.NET Standard 2.0 and above)
-  + Supporting the Complex type natively (.NET Framework 4.0 and above)
+  + Supporting StringSegment struct natively
+  + Supporting ArraySegment<T> struct natively
+  + Supporting the Tuple<...> classes natively (.NET Framework 4.0 and above)
+  + Supporting the ValueTuple<...> structs natively (.NET Standard 2.0 and above)
+  + Supporting the Complex struct natively (.NET Framework 4.0 and above)
 * CustomSerializerSurrogateSelector class: The class has been made obsolete
 * NameInvariantSurrogateSelector class: The class has been made obsolete
 

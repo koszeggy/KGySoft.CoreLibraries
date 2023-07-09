@@ -44,7 +44,7 @@ namespace KGySoft.Serialization.Binary
         /// Per instance descriptor of a DataTypes encoded type. Used on deserialization, mainly for supported collections.
         /// Static generic type information is in <see cref="CollectionSerializationInfo"/>.
         /// </summary>
-        [SuppressMessage("ReSharper", "MemberHidesStaticFromOuterClass", Justification = "Properties vs the similarly names methods with DataTypes parameter in parent class.")]
+        [SuppressMessage("ReSharper", "MemberHidesStaticFromOuterClass", Justification = "Properties vs the similarly named methods with DataTypes parameter in parent class.")]
         private sealed class DataTypeDescriptor
         {
             #region Fields
@@ -368,6 +368,8 @@ namespace KGySoft.Serialization.Binary
                         return typeof(BitVector32);
                     case DataTypes.BitVector32Section:
                         return typeof(BitVector32.Section);
+                    case DataTypes.StringSegment:
+                        return typeof(StringSegment);
                     case DataTypes.StringBuilder:
                         return typeof(StringBuilder);
                     case DataTypes.Object:
