@@ -63,7 +63,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
             #region Methods
 
-            public override bool Equals(object obj) => MembersAndItemsEqual(this, obj);
+            public override bool Equals(object obj) => MembersEqual(this, obj);
 
             #endregion
         }

@@ -405,6 +405,14 @@ namespace KGySoft.Reflection
             return fields[(type, fieldType, fieldNamePattern)];
         }
 
+        private static object? GetFieldValue(object obj, string fieldName)
+        {
+            FieldAccessor? field = GetField(obj.GetType(), null, fieldName);
+            if (field == null)
+                Throw.InvalidOperationException(Res.ReflectionInstanceFieldDoesNotExist(fieldName, obj.GetType()));
+            return field.Get(obj);
+        }
+
         private static T? GetFieldValueOrDefault<T>(object obj, T? defaultValue = default, string? fieldNamePattern = null)
         {
             FieldAccessor? field = GetField(obj.GetType(), typeof(T), fieldNamePattern);
@@ -650,6 +658,12 @@ namespace KGySoft.Reflection
 
         internal static bool IsCaseInsensitive([NoEnumeration]this IEnumerable collection)
             => GetFieldValueOrDefault<bool>(collection, false, "caseInsensitive"); // HybridDictionary
+
+        internal static bool UsesBitwiseAndHash([NoEnumeration]this IEnumerable collection)
+        {
+            Debug.Assert(collection.GetType().IsGenericTypeOf(typeof(ThreadSafeHashSet<>)) || collection.GetType().IsGenericTypeOf(typeof(ThreadSafeDictionary<,>)));
+            return (bool)GetFieldValue(collection, "bitwiseAndHash")!; // ThreadSafeHashSet<T>, ThreadSafeDictionary<TKey, TValue>
+        }
 
         internal static object? GetComparer([NoEnumeration]this IEnumerable collection)
         {

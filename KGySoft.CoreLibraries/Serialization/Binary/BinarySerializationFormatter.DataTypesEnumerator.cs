@@ -57,6 +57,12 @@ namespace KGySoft.Serialization.Binary
                     MoveNext();
             }
 
+            internal DataTypesEnumerator(DataTypes dataType)
+            {
+                dataTypes = new[] { dataType };
+                MoveNext();
+            }
+
             #endregion
 
             #region Methods

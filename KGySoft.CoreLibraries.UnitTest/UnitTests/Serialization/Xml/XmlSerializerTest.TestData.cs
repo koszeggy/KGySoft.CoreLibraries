@@ -23,7 +23,6 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Globalization;
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Xml;
 using System.Xml.Serialization;
@@ -241,7 +240,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 writer.WriteElementString("ReadOnlyProperty", RealReadOnlyProperty.ToString(CultureInfo.InvariantCulture));
             }
 
-            public override bool Equals(object obj) => MembersAndItemsEqual(this, obj);
+            public override bool Equals(object obj) => MembersEqual(this, obj);
 
             public override int GetHashCode() => backingFieldOfRealReadOnlyProperty.GetHashCode() ^ ReadWriteProperty.GetHashCode() ^ SemiReadOnlyProperty.GetHashCode();
 
@@ -288,7 +287,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 return this;
             }
 
-            public override bool Equals(object obj) => MembersAndItemsEqual(this, obj);
+            public override bool Equals(object obj) => MembersEqual(this, obj);
 
             #endregion
         }
@@ -632,7 +631,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             /// <summary>
             /// Overridden for the test equality check
             /// </summary>
-            public override bool Equals(object obj) => MembersAndItemsEqual(this, obj);
+            public override bool Equals(object obj) => MembersEqual(this, obj);
 
             #endregion
         }
@@ -675,7 +674,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             /// <summary>
             /// Overridden for the test equality check
             /// </summary>
-            public override bool Equals(object obj) => MembersAndItemsEqual(this, obj);
+            public override bool Equals(object obj) => MembersEqual(this, obj);
 
             #endregion
         }
@@ -732,7 +731,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 
             #region Methods
 
-            public override bool Equals(object obj) => MembersAndItemsEqual(this, obj);
+            public override bool Equals(object obj) => MembersEqual(this, obj);
 
             #endregion
         }
@@ -1003,7 +1002,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             /// <summary>
             /// Overridden for the test equality check
             /// </summary>
-            public override bool Equals(object obj) => MembersAndItemsEqual(this, obj);
+            public override bool Equals(object obj) => MembersEqual(this, obj);
 
             #endregion
         }
@@ -1069,7 +1068,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             /// <summary>
             /// Overridden for the test equality check
             /// </summary>
-            public override bool Equals(object obj) => MembersAndItemsEqual(this, obj);
+            public override bool Equals(object obj) => MembersEqual(this, obj);
 
             #endregion
         }

@@ -94,7 +94,7 @@ using KGySoft.Serialization.Xml;
  * - If may contain a dependency that can be extracted legally (eg. underlying array/string/manager of Memory<T> can be extracted by MemoryMarshal)
  * 1. Add type to DataTypes 8-13 bits (adjust free places in comments) or to bits 24..30 (Extended)
  *    - 1..15 << 8: Generic collections
- *    - 16..31 << 8: Non-generic collections
+ *    - 16..31 << 8: Non-generic collections or special collections
  *    - 32..47 << 8: Generic/specialized dictionaries
  *    - 48..63 << 8: Non-generic dictionaries
  *    - 1..63 << 24: Extended collections. If value type, must be here to use NullableExtendedCollection.
@@ -103,8 +103,9 @@ using KGySoft.Serialization.Xml;
  *    - If new CollectionInfo flag has to be defined, a property in CollectionSerializationInfo might be also needed
  * 3. Add type to supportedCollections
  * 4. Add type to DataTypeDescriptor.GetCollectionType - mind groups
- *    - If collection has a known fixed size, then FixedItemsSize might be needed to adjusted, too.
+ *    - If collection has a known fixed size and is deserialized by a backing array then DataTypeDescriptor.FixedItemsSize might be needed to adjusted, too.
  * 5. If needed, update CollectionSerializationInfo.WriteSpecificProperties and InitializeCollection (e.g. new flag in 2.)
+ *    - If new CtorArguments were added to 2., then check also GetInitializer and CreateCollection
  * 6. If collection type is an ordered non-IList collection, or an unordered non-ICollection<T> collection,
  *    then handle it in AddCollectionElement/AddDictionaryElement. Add new usage reference if needed.
  * 7. Add type to unit test:
@@ -230,6 +231,7 @@ namespace KGySoft.Serialization.Binary
     /// <item>Any object that implements the <see cref="IBinarySerializable"/> interface.</item>
     /// <item><see cref="KeyValuePair{TKey,TValue}"/> if <see cref="KeyValuePair{TKey,TValue}.Key"/> and <see cref="KeyValuePair{TKey,TValue}.Value"/> are any of the supported types.</item>
     /// <item><see cref="DictionaryEntry"/> if <see cref="DictionaryEntry.Key"/> and <see cref="DictionaryEntry.Value"/> are any of the supported types.</item>
+    /// <item><see cref="StrongBox{T}"/> if <see cref="StrongBox{T}.Value"/> is any of the supported types.</item>
     /// <item><see cref="Tuple"/> types if generic arguments are any of the supported types (in .NET Framework 4.0 and above)</item>
     /// <item><see cref="ValueTuple"/> types if generic arguments are any of the supported types (in .NET Standard 2.0 and above)</item>
     /// </list>
@@ -251,6 +253,7 @@ namespace KGySoft.Serialization.Binary
     /// <item><see cref="HashSet{T}"/></item>
     /// <item><see cref="Queue{T}"/></item>
     /// <item><see cref="Stack{T}"/></item>
+    /// <item><see cref="ThreadSafeHashSet{T}"/></item>
     /// <item><see cref="ArraySegment{T}"/></item>
     /// <item><see cref="SortedSet{T}"/> (in .NET Framework 4.0 and above)</item>
     /// <item><see cref="ConcurrentBag{T}"/> (in .NET Framework 4.0 and above)</item>
@@ -517,20 +520,19 @@ namespace KGySoft.Serialization.Binary
             ConcurrentBag = 9 << 8, // Only in .NET Framework 4.0 and above
             ConcurrentQueue = 10 << 8, // Only in .NET Framework 4.0 and above
             ConcurrentStack = 11 << 8, // Only in .NET Framework 4.0 and above
-            // 12-15 << 8: 4 reserved generic collections
-            // TODO Candidates:
-            // StrongBox
-            // ThreadSafeHashSet
-            
-            // ...... non-generic collections:
+            ThreadSafeHashSet = 12 << 8,
+
+            // 13-15 << 8: 3 reserved generic collections
+
+            // ...... non-generic or special collections: ......
             ArrayList = 16 << 8,
             QueueNonGeneric = 17 << 8,
             StackNonGeneric = 18 << 8,
             StringCollection = 19 << 8,
-            
-            // 20 << 8: reserved
 
-            // ...... tuples: - note: ValueTuples are on byte 3 because they can be nullable
+            StrongBox = 20 << 8, // Defined as a collection type so can be encoded the same way as other collections
+
+            // tuples: - note: ValueTuples are on byte 3 because they can be nullable
             Tuple1 = 21 << 8,
             Tuple2 = 22 << 8,
             Tuple3 = 23 << 8,
@@ -550,24 +552,25 @@ namespace KGySoft.Serialization.Binary
             SortedDictionary = 34 << 8,
             CircularSortedList = 35 << 8,
             ConcurrentDictionary = 36 << 8, // Only in .NET Framework 4.0 and above
-            // 37-45 << 8 : 9 reserved generic dictionaries
+            ThreadSafeDictionary = 37 << 8,
+            
+            // 38-45 << 8 : 8 reserved generic dictionaries
             // TODO Candidates:
-            // ThreadSafeDictionary
             // AllowNullDictionary, TwoWayDictionary - if will be public
 
             KeyValuePair = 46 << 8, // Defined as a collection type so can be encoded the same way as dictionaries
             KeyValuePairNullable = 47 << 8, // The Nullable flag would be used for the key so this is the nullable version of KeyValuePair.
 
-            // ...... non-generic or (partly) specialized dictionaries:
+            // ...... non-generic or specialized dictionaries:
             Hashtable = 48 << 8,
             SortedListNonGeneric = 49 << 8,
             ListDictionary = 50 << 8,
             HybridDictionary = 51 << 8,
             OrderedDictionary = 52 << 8,
             StringDictionary = 53 << 8,
-            // 54-60 << 8 : 7 reserved non-generic dictionaries
-            // TODO Candidates:
-            // StringKeyedDictionary
+            StringKeyedDictionary = 54 << 8,
+
+            // 55-60 << 8 : 6 reserved non-generic dictionaries
 
             DictionaryEntry = 61 << 8, // Could be a simple type but keeping consistency with KeyValuePair
             DictionaryEntryNullable = 62 << 8, // The Nullable flag would be used for the key (which is invalid for this type) so this is the nullable version of DictionaryEntry.
@@ -653,7 +656,7 @@ namespace KGySoft.Serialization.Binary
             None = 0,
 
             /// <summary>
-            /// Identifies that the collection has a Capacity property that has to be (re)stored.
+            /// Indicates that the collection has a Capacity property that has to be (re)stored.
             /// If this flag is disabled but there is a constructor with capacity parameter, then the size (Count) will be used at constructor
             /// </summary>
             HasCapacity = 1,
@@ -695,7 +698,7 @@ namespace KGySoft.Serialization.Binary
 
             /// <summary>
             /// Indicates that the "collection" is a single element
-            /// (now for DictionaryEntry, KeyValuePair: special "collections" with exactly two elements, which are easy to encode along with collection types)
+            /// (now for StrongBox, DictionaryEntry, KeyValuePair: special "collections" with exactly one (pair of) elements, whose type are easy to encode along with collection types)
             /// </summary>
             IsSingleElement = 1 << 8,
 
@@ -723,6 +726,21 @@ namespace KGySoft.Serialization.Binary
             /// Indicates that the collection is a tuple
             /// </summary>
             IsTuple = 1 << 13,
+
+            /// <summary>
+            /// Indicates that the collection has a bool field that tells whether the collection uses bitwise AND hash (ThreadSafeHashSet/ThreadSafeDictionary)
+            /// </summary>
+            HasBitwiseAndHash = 1 << 14,
+
+            /// <summary>
+            /// Indicates that the collection has a StringSegmentComparer that can be passed to the constructor
+            /// </summary>
+            HasStringSegmentComparer = 1 << 15,
+
+            /// <summary>
+            /// Indicates that the non-generic collection has string items or keys-values, or that a generic dictionary with only one generic argument has string keys.
+            /// </summary>
+            HasStringItemsOrKeys = 1 << 16,
         }
 
         /// <summary>
@@ -732,7 +750,8 @@ namespace KGySoft.Serialization.Binary
         {
             Capacity,
             Comparer,
-            CaseInsensitivity
+            CaseInsensitivity,
+            HashingStrategy,
         }
 
         /// <summary>
@@ -839,7 +858,7 @@ namespace KGySoft.Serialization.Binary
         {
             #region Generic collections (DataTypes 1..15 << 8)
 
-            { DataTypes.Array, CollectionSerializationInfo.Default }, // Could be IsGeneric, but does not matter as arrays are handled separately
+            { DataTypes.Array, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric } },
             {
                 DataTypes.List, new CollectionSerializationInfo
                 {
@@ -887,6 +906,24 @@ namespace KGySoft.Serialization.Binary
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.HasCapacity,
                     CtorArguments = new[] { CollectionCtorArguments.Capacity }
+                }
+            },
+            {
+                DataTypes.ThreadSafeHashSet, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.HasEqualityComparer | CollectionInfo.UsesComparerHelper | CollectionInfo.HasBitwiseAndHash,
+                    CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer, CollectionCtorArguments.HashingStrategy },
+                    SpecificAddMethod = nameof(ThreadSafeHashSet<_>.Add), // because faster than via ICollection<T>.Add
+                    WriteSpecificPropertiesCallback = (bw, o) =>
+                    {
+                        bw.Write((bool)Accessors.GetPropertyValue(o, nameof(ThreadSafeHashSet<_>.PreserveMergedItems))!);
+                        Write7BitLong(bw, (ulong)((TimeSpan)Accessors.GetPropertyValue(o, nameof(ThreadSafeHashSet<_>.MergeInterval))!).Ticks);
+                    },
+                    RestoreSpecificPropertiesCallback = (br, o) =>
+                    {
+                        Accessors.SetPropertyValue(o, nameof(ThreadSafeHashSet<_>.PreserveMergedItems), br.ReadBoolean());
+                        Accessors.SetPropertyValue(o, nameof(ThreadSafeHashSet<_>.MergeInterval), TimeSpan.FromTicks(Read7BitLong(br)));
+                    }
                 }
             },
 #if !NET35
@@ -948,7 +985,8 @@ namespace KGySoft.Serialization.Binary
                     SpecificAddMethod = nameof(Stack.Push)
                 }
             },
-            { DataTypes.StringCollection, CollectionSerializationInfo.Default },
+            { DataTypes.StringCollection, new CollectionSerializationInfo { Info = CollectionInfo.HasStringItemsOrKeys } },
+            { DataTypes.StrongBox, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.IsSingleElement } },
 #if !NET35
             { DataTypes.Tuple1, CollectionSerializationInfo.Tuple },
             { DataTypes.Tuple2, CollectionSerializationInfo.Tuple },
@@ -994,6 +1032,23 @@ namespace KGySoft.Serialization.Binary
                     CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer }
                 }
             },
+            {
+                DataTypes.ThreadSafeDictionary, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer | CollectionInfo.UsesComparerHelper | CollectionInfo.HasBitwiseAndHash,
+                    CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer, CollectionCtorArguments.HashingStrategy },
+                    WriteSpecificPropertiesCallback = (bw, o) =>
+                    {
+                        bw.Write((bool)Accessors.GetPropertyValue(o, nameof(ThreadSafeDictionary<_,_>.PreserveMergedKeys))!);
+                        Write7BitLong(bw, (ulong)((TimeSpan)Accessors.GetPropertyValue(o, nameof(ThreadSafeDictionary<_,_>.MergeInterval))!).Ticks);
+                    },
+                    RestoreSpecificPropertiesCallback = (br, o) =>
+                    {
+                        Accessors.SetPropertyValue(o, nameof(ThreadSafeDictionary<_,_>.PreserveMergedKeys), br.ReadBoolean());
+                        Accessors.SetPropertyValue(o, nameof(ThreadSafeDictionary<_,_>.MergeInterval), TimeSpan.FromTicks(Read7BitLong(br)));
+                    }
+                }
+            },
 #if !NET35
             {
                 DataTypes.ConcurrentDictionary, new CollectionSerializationInfo
@@ -1010,7 +1065,7 @@ namespace KGySoft.Serialization.Binary
 
             #endregion
 
-            #region Non-generic dictionaries (DataTypes 48..63 << 8)
+            #region Non-generic or specialized dictionaries (DataTypes 48..63 << 8)
 
             {
                 DataTypes.Hashtable, new CollectionSerializationInfo
@@ -1050,8 +1105,15 @@ namespace KGySoft.Serialization.Binary
             {
                 DataTypes.StringDictionary, new CollectionSerializationInfo
                 {
-                    Info = CollectionInfo.IsDictionary,
+                    Info = CollectionInfo.IsDictionary | CollectionInfo.HasStringItemsOrKeys,
                     SpecificAddMethod = nameof(StringDictionary.Add)
+                }
+            },
+            {
+                DataTypes.StringKeyedDictionary, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasStringSegmentComparer | CollectionInfo.HasStringItemsOrKeys,
+                    CtorArguments = new [] { CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer  }
                 }
             },
             { DataTypes.DictionaryEntry, new CollectionSerializationInfo { Info = CollectionInfo.IsDictionary | CollectionInfo.IsSingleElement } },
@@ -1076,12 +1138,12 @@ namespace KGySoft.Serialization.Binary
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.BackingArrayCanBeNull,
                     GetBackingArray = o => (Array?)Accessors.GetPropertyValue(o, nameof(ArraySegment<_>.Array)),
-                    WriteSpecificParametersForBackingArray = (bw, o) =>
+                    WriteSpecificPropertiesCallback = (bw, o) =>
                     {
                         Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(ArraySegment<_>.Offset))!);
                         Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(ArraySegment<_>.Count))!);
                     },
-                    CreateInstanceFromArray = (br, t, a) =>
+                    CreateArrayBackedCollectionInstanceFromArray = (br, t, a) =>
                     {
                         Type[] args = { a.GetType(), Reflector.IntType, Reflector.IntType };
                         ConstructorInfo ctor = t.GetConstructor(args)!;
@@ -1175,6 +1237,8 @@ namespace KGySoft.Serialization.Binary
             { typeof(Stack<>), DataTypes.Stack },
             { typeof(LinkedList<>), DataTypes.LinkedList },
             { typeof(HashSet<>), DataTypes.HashSet },
+            { typeof(CircularList<>), DataTypes.CircularList },
+            { typeof(ThreadSafeHashSet<>), DataTypes.ThreadSafeHashSet },
 #if !NET35
             { typeof(SortedSet<>), DataTypes.SortedSet },
             { typeof(ConcurrentBag<>), DataTypes.ConcurrentBag },
@@ -1191,6 +1255,7 @@ namespace KGySoft.Serialization.Binary
             { typeof(SortedList<,>), DataTypes.SortedList },
             { typeof(SortedDictionary<,>), DataTypes.SortedDictionary },
             { typeof(CircularSortedList<,>), DataTypes.CircularSortedList },
+            { typeof(ThreadSafeDictionary<,>), DataTypes.ThreadSafeDictionary },
 #if !NET35
             { typeof(ConcurrentDictionary<,>), DataTypes.ConcurrentDictionary },
 #endif
@@ -1201,12 +1266,14 @@ namespace KGySoft.Serialization.Binary
             { typeof(HybridDictionary), DataTypes.HybridDictionary },
             { typeof(OrderedDictionary), DataTypes.OrderedDictionary },
             { typeof(StringDictionary), DataTypes.StringDictionary },
+            { typeof(StringKeyedDictionary<>), DataTypes.StringKeyedDictionary },
 
             { typeof(ArraySegment<>), DataTypes.ArraySegment },
 
             // Tuple-like types. Added to collections for practical reasons such as handling generics or encoding type of keys values
             { Reflector.KeyValuePairType, DataTypes.KeyValuePair },
             { Reflector.DictionaryEntryType, DataTypes.DictionaryEntry },
+            { typeof(StrongBox<>), DataTypes.StrongBox },
 #if !NET35
             { typeof(Tuple<>), DataTypes.Tuple1 },
             { typeof(Tuple<,>), DataTypes.Tuple2 },
@@ -1333,6 +1400,10 @@ namespace KGySoft.Serialization.Binary
         private static bool IsExtended(DataTypes dt) => (dt & DataTypes.Extended) != DataTypes.Null;
         private static bool IsTuple(DataTypes dt) => GetUnderlyingCollectionDataType(dt) is >= DataTypes.Tuple1 and <= DataTypes.Tuple8 or >= DataTypes.ValueTuple1 and <= DataTypes.ValueTuple8;
 
+        private static bool HasNonGenericItemOrKey(DataTypes dt) => GetUnderlyingCollectionDataType(dt) is DataTypes.StringKeyedDictionary
+            or >= DataTypes.ArrayList and <= DataTypes.StringCollection
+            or >= DataTypes.Hashtable and <= DataTypes.DictionaryEntryNullable;
+
         private static int GetNumberOfTupleElements(DataTypes dt) => GetUnderlyingCollectionDataType(dt) switch
         {
             DataTypes.Tuple1 or DataTypes.ValueTuple1 => 1,
@@ -1346,7 +1417,7 @@ namespace KGySoft.Serialization.Binary
             _ => 0,
         };
 
-        private static int GetNumberOfElementTypes(DataTypes dt) => IsDictionary(dt) ? 2
+        private static int GetNumberOfElementTypes(DataTypes dt) => IsDictionary(dt) ? HasNonGenericItemOrKey(dt) ? 1 : 2
             : IsTuple(dt) ? GetNumberOfTupleElements(dt)
             : IsCollectionType(dt) ? 1
             : dt is DataTypes.Pointer or DataTypes.ByRef ? 1

@@ -709,7 +709,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             }
         }
 
-        private static void SystemSerializeObject(object obj, string title = null, bool safeCompare = false, SerializationBinder binder = null, ISurrogateSelector surrogateSelector = null)
+        private static void SystemSerializeObject(object obj, string title = null, bool safeCompare = false, bool forceEqualityByMembers = false,
+            SerializationBinder binder = null, ISurrogateSelector surrogateSelector = null)
         {
             using (new TestExecutionContext.IsolatedContext())
             {
@@ -728,7 +729,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                     if (safeCompare)
                         AssertDeepEquals(serData, SerializeObject(deserializedObject, bf));
                     else
-                        AssertDeepEquals(obj, deserializedObject);
+                        AssertDeepEquals(obj, deserializedObject, forceEqualityByMembers);
                 }
                 catch (Exception e)
                 {
@@ -737,7 +738,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             }
         }
 
-        private static void SystemSerializeObjects(IList<object> referenceObjects, string title = null, bool safeCompare = false, SerializationBinder binder = null, ISurrogateSelector surrogateSelector = null)
+        private static void SystemSerializeObjects(IList<object> referenceObjects, string title = null, bool safeCompare = false, bool forceEqualityByMembers = false,
+            SerializationBinder binder = null, ISurrogateSelector surrogateSelector = null)
         {
             if (title == null)
                 title = $"Items Count: {referenceObjects.Count}";
@@ -756,7 +758,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                     if (safeCompare)
                         AssertItemsEqual(serData, SerializeObjects(deserializedObjects, bf));
                     else
-                        AssertItemsEqual(referenceObjects, deserializedObjects);
+                        AssertItemsEqual(referenceObjects, deserializedObjects, forceEqualityByMembers);
                 }
                 catch (Exception e)
                 {
@@ -765,7 +767,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             }
         }
 
-        private  static void KGySerializeObject(object obj, BinarySerializationOptions options, string title = null, bool safeCompare = false, SerializationBinder binder = null, ISurrogateSelector surrogateSelector = null)
+        private  static void KGySerializeObject(object obj, BinarySerializationOptions options, string title = null, bool safeCompare = false, bool forceEqualityByMembers = false,
+            SerializationBinder binder = null, ISurrogateSelector surrogateSelector = null)
         {
             if (title == null)
                 title = obj.GetType().ToString();
@@ -780,7 +783,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 if (safeCompare)
                     AssertDeepEquals(serData, SerializeObject(deserializedObject, bsf));
                 else
-                    AssertDeepEquals(obj, deserializedObject);
+                    AssertDeepEquals(obj, deserializedObject, forceEqualityByMembers);
             }
             catch (Exception e)
             {
@@ -789,7 +792,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             }
         }
 
-        private static void KGySerializeObjects(IList<object> referenceObjects, BinarySerializationOptions options, string title = null, bool safeCompare = false, SerializationBinder binder = null, ISurrogateSelector surrogateSelector = null)
+        private static void KGySerializeObjects(IList<object> referenceObjects, BinarySerializationOptions options, string title = null, bool safeCompare = false, bool forceEqualityByMembers = false,
+            SerializationBinder binder = null, ISurrogateSelector surrogateSelector = null)
         {
             if (title == null)
                 title = $"Items Count: {referenceObjects.Count}";
@@ -804,7 +808,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 if (safeCompare)
                     AssertItemsEqual(serData, SerializeObjects(deserializedObjects, bsf));
                 else
-                    AssertItemsEqual(referenceObjects, deserializedObjects);
+                    AssertItemsEqual(referenceObjects, deserializedObjects, forceEqualityByMembers);
             }
             catch (Exception e)
             {

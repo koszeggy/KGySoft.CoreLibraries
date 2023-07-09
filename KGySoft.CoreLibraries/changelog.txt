@@ -27,7 +27,11 @@
     SYSLIB0011 error in .NET 8 and above. It always has returned a BinarySerializationFormatter instance anyway.
 + BinarySerializationFormatter class:
   + Supporting StringSegment struct natively
+  + Supporting ThreadSafeHashSet<T> class natively
+  + Supporting ThreadSafeDictionary<TKey, TValue> class natively
+  + Supporting StringKeyedDictionary<TValue> class natively
   + Supporting ArraySegment<T> struct natively
+  + Supporting StrongBox<T> class natively
   + Supporting the Tuple<...> classes natively (.NET Framework 4.0 and above)
   + Supporting the ValueTuple<...> structs natively (.NET Standard 2.0 and above)
   + Supporting the Complex struct natively (.NET Framework 4.0 and above)

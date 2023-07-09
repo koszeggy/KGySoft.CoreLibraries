@@ -25,6 +25,7 @@ using System.Collections.Specialized;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 #if !NET35
 using System.Numerics;
 #endif
@@ -51,12 +52,15 @@ namespace KGySoft.Serialization.Binary
 
             private DataTypes dataType;
             private CollectionSerializationInfo? collectionSerializationInfo;
+            private DataTypeDescriptor? keyDescriptor;
+            private DataTypeDescriptor? valueDescriptor;
 
             #endregion
 
             #region Properties
 
             #region Internal Properties
+
             internal DataTypeDescriptor? ParentDescriptor { get; }
             internal DataTypes DataType => dataType;
             internal DataTypes ElementDataType => GetElementDataType(dataType);
@@ -71,6 +75,7 @@ namespace KGySoft.Serialization.Binary
 #endif
             internal bool IsReadOnly { get; set; }
             internal bool IsSingleElement => CollectionSerializationInfo.IsSingleElement;
+            internal bool IsStrongBox => CollectionDataType is DataTypes.StrongBox;
             internal bool IsNullable { get; private set; }
             internal bool HasBackingArray => CollectionSerializationInfo.GetBackingArray != null;
             internal bool HasNullableBackingArray => CollectionSerializationInfo.HasNullableBackingArray;
@@ -103,16 +108,16 @@ namespace KGySoft.Serialization.Binary
             /// </summary>
             internal int Rank { get; private set; }
 
-            /// <summary>
-            /// Descriptors for generic arguments.
-            /// </summary>
-            internal DataTypeDescriptor[] ArgumentDescriptors { get; } = Reflector.EmptyArray<DataTypeDescriptor>();
-
             internal bool CanHaveRecursion => CanHaveRecursion(ElementDataType) || Array.Exists(ArgumentDescriptors, i => i.CanHaveRecursion);
 
             #endregion
 
             #region Private Properties
+
+            /// <summary>
+            /// Descriptors for generic arguments or non-generic elements.
+            /// </summary>
+            private DataTypeDescriptor[] ArgumentDescriptors { get; } = Reflector.EmptyArray<DataTypeDescriptor>();
 
             private CollectionSerializationInfo CollectionSerializationInfo => collectionSerializationInfo ??= CollectionDataType == DataTypes.Null
                 ? Throw.InvalidOperationException<CollectionSerializationInfo>(Res.InternalError($"Not a collection: {dataType}"))
@@ -204,7 +209,8 @@ namespace KGySoft.Serialization.Binary
                 DataTypeDescriptor? existingDescriptor;
 
                 // Simple or impure type. Handling generics occurs in recursive ReadType if needed.
-                if (CollectionDataType == DataTypes.Null)
+                DataTypes collectionDataType = CollectionDataType;
+                if (collectionDataType == DataTypes.Null)
                 {
                     Type = GetElementType(ElementDataType, br, manager, allowOpenTypes, out existingDescriptor);
                     StoredType = existingDescriptor?.StoredType;
@@ -215,7 +221,7 @@ namespace KGySoft.Serialization.Binary
 
                 // generic type definition
                 if (ElementDataType == DataTypes.GenericTypeDefinition)
-                    result = GetCollectionType(CollectionDataType);
+                    result = GetCollectionType(collectionDataType);
                 else
                 {
                     // simple collection element/dictionary key/1st tuple element: Since in DataTypes the element is encoded together with the collection
@@ -244,15 +250,13 @@ namespace KGySoft.Serialization.Binary
                             : ArgumentDescriptors[0].Type!.MakeArrayType(Rank);
                     }
 
-                    result = GetCollectionType(CollectionDataType);
+                    result = GetCollectionType(collectionDataType);
                     bool isNullable = IsNullable = result.IsNullable();
                     if (!result.ContainsGenericParameters)
                         return Type = result;
 
                     Type typeDef = isNullable ? result.GetGenericArguments()[0] : result;
-                    result = IsTuple ? typeDef.GetGenericType(ArgumentDescriptors.Select(d => d.Type!).ToArray())
-                        : !IsDictionary ? typeDef.GetGenericType(ArgumentDescriptors[0].Type!)
-                        : typeDef.GetGenericType(ArgumentDescriptors[0].Type!, ArgumentDescriptors[1].Type);
+                    result = typeDef.GetGenericType(ArgumentDescriptors.Select(d => d.Type!).ToArray());
                     result = isNullable ? Reflector.NullableType.GetGenericType(result) : result;
                 }
 
@@ -304,6 +308,42 @@ namespace KGySoft.Serialization.Binary
                 }
 
                 Debug.Fail($"Unexpected attributes '{attr}' for type {Type}");
+            }
+
+            internal DataTypeDescriptor GetElementDescriptor()
+            {
+                Debug.Assert(IsCollection && !IsDictionary);
+                return ArgumentDescriptors[0];
+            }
+
+            internal DataTypeDescriptor GetKeyDescriptor()
+            {
+                if (keyDescriptor == null)
+                {
+                    Debug.Assert(IsCollection && IsDictionary);
+                    keyDescriptor = CollectionSerializationInfo.HasStringItemsOrKeys
+                        ? new DataTypeDescriptor(DataTypes.String, Reflector.StringType, this)
+                        : ArgumentDescriptors[0];
+                }
+
+                return keyDescriptor;
+            }
+
+            internal DataTypeDescriptor GetValueDescriptor()
+            {
+                if (valueDescriptor == null)
+                {
+                    Debug.Assert(IsCollection && IsDictionary);
+                    valueDescriptor = ArgumentDescriptors[ArgumentDescriptors.Length - 1];
+                }
+
+                return valueDescriptor;
+            }
+
+            internal DataTypeDescriptor GetTupleItemDescriptor(int index)
+            {
+                Debug.Assert(IsTuple);
+                return ArgumentDescriptors[index];
             }
 
             #endregion
@@ -492,6 +532,8 @@ namespace KGySoft.Serialization.Binary
                         return typeof(Stack<>);
                     case DataTypes.CircularList:
                         return typeof(CircularList<>);
+                    case DataTypes.ThreadSafeHashSet:
+                        return typeof(ThreadSafeHashSet<>);
 #if !NET35
                     case DataTypes.SortedSet:
                         return typeof(SortedSet<>);
@@ -513,6 +555,9 @@ namespace KGySoft.Serialization.Binary
                         return typeof(Stack);
                     case DataTypes.StringCollection:
                         return Reflector.StringCollectionType;
+
+                    case DataTypes.StrongBox:
+                        return typeof(StrongBox<>);
 
 #if !NET35
                     case DataTypes.Tuple1:
@@ -541,6 +586,8 @@ namespace KGySoft.Serialization.Binary
                         return typeof(SortedDictionary<,>);
                     case DataTypes.CircularSortedList:
                         return typeof(CircularSortedList<,>);
+                    case DataTypes.ThreadSafeDictionary:
+                        return typeof(ThreadSafeDictionary<,>);
 #if !NET35
                     case DataTypes.ConcurrentDictionary:
                         return typeof(ConcurrentDictionary<,>);
@@ -556,6 +603,8 @@ namespace KGySoft.Serialization.Binary
                         return typeof(OrderedDictionary);
                     case DataTypes.StringDictionary:
                         return typeof(StringDictionary);
+                    case DataTypes.StringKeyedDictionary:
+                        return typeof(StringKeyedDictionary<>);
 
                     case DataTypes.DictionaryEntry:
                         return Reflector.DictionaryEntryType;

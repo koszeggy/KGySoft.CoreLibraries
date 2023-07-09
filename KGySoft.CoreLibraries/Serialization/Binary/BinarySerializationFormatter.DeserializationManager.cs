@@ -32,9 +32,7 @@ using System.Linq;
 using System.Numerics;
 #endif
 using System.Reflection;
-#if !(NETFRAMEWORK || NETSTANDARD2_0)
 using System.Runtime.CompilerServices;
-#endif
 using System.Runtime.Serialization;
 using System.Security;
 using System.Text;
@@ -458,7 +456,7 @@ namespace KGySoft.Serialization.Binary
                     }
 
                     // trying to allocate the result array at once if possible
-                    Type elementType = descriptor.ArgumentDescriptors[0].Type!;
+                    Type elementType = descriptor.GetElementDescriptor().Type!;
 
                     int elementSize;
                     if (!safeMode || ((elementSize = elementType.SizeOf()) * (long)TotalLength) <= ArrayAllocationThreshold)
@@ -491,7 +489,7 @@ namespace KGySoft.Serialization.Binary
                 
                 internal bool TryReadPrimitive()
                 {
-                    if (Array == null || !descriptor.ArgumentDescriptors[0].Type!.IsPrimitive)
+                    if (Array == null || !descriptor.GetElementDescriptor().Type!.IsPrimitive)
                         return false;
                     int length = Buffer.ByteLength(Array);
                     Buffer.BlockCopy(reader.ReadBytes(length), 0, Array, 0, length);
@@ -504,7 +502,7 @@ namespace KGySoft.Serialization.Binary
                         return Array;
 
                     Debug.Assert(builder!.Count == TotalLength);
-                    Array = Array.CreateInstance(descriptor.ArgumentDescriptors[0].Type!, lengths, lowerBounds);
+                    Array = Array.CreateInstance(descriptor.GetElementDescriptor().Type!, lengths, lowerBounds);
 
                     // 1D array
                     if (lengths.Length == 1)
@@ -637,6 +635,30 @@ namespace KGySoft.Serialization.Binary
             #region Methods
 
             #region Static Methods
+
+            #region Internal Methods
+
+            /// <summary>
+            /// Use for known types only
+            /// </summary>
+            [SecurityCritical]
+            internal static object CreateKnownEmptyObject(Type type)
+            {
+                if (type.IsValueType)
+                    return Activator.CreateInstance(type);
+
+#if NETFRAMEWORK || NETSTANDARD2_0
+                if (!Reflector.TryCreateUninitializedObject(type, out object? obj))
+                    Throw.SerializationException(Res.BinarySerializationCannotCreateUninitializedObject(type));
+                return obj;
+#else
+                return RuntimeHelpers.GetUninitializedObject(type);
+#endif
+            }
+
+            #endregion
+
+            #region Private Methods
 
             private static object ReadEnum(BinaryReader br, DataTypeDescriptor descriptor)
             {
@@ -784,26 +806,10 @@ namespace KGySoft.Serialization.Binary
                     usage.SetValue(finalObject);
             }
 
-            private static object? GetPlaceholderValue(object? value, [NoEnumeration]IEnumerable collection)
+            private static object? GetPlaceholderValue(object? value, [NoEnumeration] IEnumerable collection)
                 => value is IObjectReference ? collection.GetType().GetCollectionElementType()!.GetDefaultValue() : value;
 
-            /// <summary>
-            /// Use for known types only
-            /// </summary>
-            [SecurityCritical]
-            private static object CreateKnownEmptyObject(Type type)
-            {
-                if (type.IsValueType)
-                    return Activator.CreateInstance(type);
-
-#if NETFRAMEWORK || NETSTANDARD2_0
-                if (!Reflector.TryCreateUninitializedObject(type, out object? obj))
-                    Throw.SerializationException(Res.BinarySerializationCannotCreateUninitializedObject(type));
-                return obj;
-#else
-                return RuntimeHelpers.GetUninitializedObject(type);
-#endif
-            }
+            #endregion
 
             #endregion
 
@@ -1150,9 +1156,10 @@ namespace KGySoft.Serialization.Binary
                 }
 
                 // non-primitive array or cannot read at once in safe mode
+                DataTypeDescriptor elementDescriptor = descriptor.GetElementDescriptor();
                 for (int i = 0; i < builder.TotalLength; i++)
                 {
-                    object? value = ReadElement(br, descriptor.ArgumentDescriptors[0]);
+                    object? value = ReadElement(br, elementDescriptor);
                     builder.Add(value);
                 }
 
@@ -1184,7 +1191,7 @@ namespace KGySoft.Serialization.Binary
 
                 FieldInfo[] fields = SerializationHelper.GetSerializableFields(type);
                 for (int i = 0; i < fields.Length; i++)
-                    SetField(fields[i], result, ReadElement(br, descriptor.ArgumentDescriptors[i]));
+                    SetField(fields[i], result, ReadElement(br, descriptor.GetTupleItemDescriptor(i)));
 
                 return result;
             }
@@ -1228,9 +1235,10 @@ namespace KGySoft.Serialization.Binary
                 else
                 {
                     // non-primitive array or cannot read at once in safe mode
+                    DataTypeDescriptor elementDescriptor = descriptor.GetElementDescriptor();
                     for (int i = 0; i < builder.TotalLength; i++)
                     {
-                        object? value = ReadElement(br, descriptor.ArgumentDescriptors[0]);
+                        object? value = ReadElement(br, elementDescriptor);
                         builder.Add(value);
                     }
 
@@ -1238,7 +1246,7 @@ namespace KGySoft.Serialization.Binary
                 }
 
                 // creating the actual result
-                Func<BinaryReader, Type, Array, object>? callback = serializationInfo[descriptor.UnderlyingCollectionDataType].CreateInstanceFromArray;
+                Func<BinaryReader, Type, Array, object>? callback = serializationInfo[descriptor.UnderlyingCollectionDataType].CreateArrayBackedCollectionInstanceFromArray;
                 CreateInstanceAccessor? accessor = callback == null ? CreateInstanceAccessor.GetAccessor(type.GetConstructor(new[] { backingArray.GetType() })!) : null;
                 result = callback?.Invoke(br, type, backingArray) ?? accessor!.CreateInstance(backingArray);
 
@@ -1265,35 +1273,34 @@ namespace KGySoft.Serialization.Binary
                 if (!descriptor.IsSingleElement && !Reflector.IEnumerableType.IsAssignableFrom(descriptor.Type))
                     Throw.SerializationException(Res.BinarySerializationIEnumerableExpected(descriptor.Type!));
 
-                // getting whether the current instance is in cache
-                if (descriptor.ParentDescriptor != null && !IsValueType(descriptor))
-                {
-                    if (TryGetCachedObject(br, out object? cachedResult))
-                        return cachedResult!;
-                }
-
                 DataTypes dataType = descriptor.CollectionDataType;
                 CollectionSerializationInfo serInfo = serializationInfo[dataType];
                 object result = serInfo.InitializeCollection(br, addToCache, descriptor, this, SafeMode, out int count);
                 if (serInfo.IsSingleElement)
                 {
-                    object? key = ReadElement(br, descriptor.ArgumentDescriptors[0]);
-                    object? value = ReadElement(br, descriptor.ArgumentDescriptors[1]);
-                    SetKeyValue(result, key, value);
+                    if (descriptor.IsStrongBox)
+                        SetField(descriptor.Type!.GetField(nameof(StrongBox<_>.Value)), result, ReadElement(br, descriptor.GetElementDescriptor()));
+                    else
+                    {
+                        object? key = ReadElement(br, descriptor.GetKeyDescriptor());
+                        object? value = ReadElement(br, descriptor.GetValueDescriptor());
+                        SetKeyValue(result, key, value);
+                    }
                 }
                 else if (result is IEnumerable collection)
                 {
                     MethodAccessor? addMethod = serInfo.SpecificAddMethod == null ? null : serInfo.GetAddMethod(descriptor);
-                    for (int i = 0; i < count; i++)
+                    if (descriptor.IsDictionary)
                     {
-                        object? element = ReadElement(br, descriptor.ArgumentDescriptors[0]);
-                        object? value = descriptor.IsDictionary ? ReadElement(br, descriptor.ArgumentDescriptors[1]) : null;
-
-                        if (descriptor.IsDictionary)
+                        for (int i = 0; i < count; i++)
                         {
+
+                            object? key = ReadElement(br, descriptor.GetKeyDescriptor());
+                            object? value = ReadElement(br, descriptor.GetValueDescriptor());
+
                             if (addMethod != null)
                             {
-                                AddDictionaryElement(collection, addMethod, element, value);
+                                AddDictionaryElement(collection, addMethod, key, value);
                                 continue;
                             }
 
@@ -1301,32 +1308,38 @@ namespace KGySoft.Serialization.Binary
                             if (value != null || !descriptor.IsGenericDictionary)
 #endif
                             {
-                                AddDictionaryElement((IDictionary)collection, element, value);
+                                AddDictionaryElement((IDictionary)collection, key, value);
                                 continue;
                             }
 #if NET35
                             // generic dictionary with null value: calling generic Add because non-generic one may fail in .NET Runtime 2.x
                             addMethod = serInfo.GetAddMethod(descriptor);
-                            AddDictionaryElement(collection, addMethod, element, null);
+                            AddDictionaryElement(collection, addMethod, key, null);
                             continue;
 #endif
                         }
+                    }
+                    else
+                    {
 
-                        if (addMethod != null)
+                        for (int i = 0; i < count; i++)
                         {
-                            AddCollectionElement(collection, addMethod, element);
-                            continue;
-                        }
+                            object? element = ReadElement(br, descriptor.GetElementDescriptor());
+                            if (addMethod != null)
+                            {
+                                AddCollectionElement(collection, addMethod, element);
+                                continue;
+                            }
 
-                        if (collection is IList list)
-                        {
+                            if (collection is IList list)
+                            {
 #if NET35
                             if (element != null || !descriptor.IsGenericCollection)
 #endif
-                            {
-                                AddListElement(list, element);
-                                continue;
-                            }
+                                {
+                                    AddListElement(list, element);
+                                    continue;
+                                }
 
 #if NET35
                             // generic collection with null value: calling generic Add because non-generic one may fail in .NET Runtime 2.x
@@ -1334,10 +1347,11 @@ namespace KGySoft.Serialization.Binary
                             AddCollectionElement(collection, addMethod, null);
                             continue;
 #endif
-                        }
+                            }
 
-                        Debug.Fail($"Define an Add method for type {descriptor.Type} for better performance");
-                        collection.TryAdd(element, false);
+                            Debug.Fail($"Define an Add method for type {descriptor.Type} for better performance");
+                            collection.TryAdd(element, false);
+                        }
                     }
                 }
 

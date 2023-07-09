@@ -882,9 +882,11 @@ namespace KGySoft.Serialization.Binary
                     // recursion for generic arguments
                     if (type.IsGenericType)
                     {
+                        bool isStringKeyedDictionary = enumerator.CurrentSeparated == DataTypes.StringKeyedDictionary;
                         enumerator.MoveNextExtracted();
                         foreach (Type genericArgument in type.GetGenericArguments())
                             WriteTypeNamesAndRanks(bw, genericArgument, enumerator.ReadToNextSegment(false), allowOpenTypes);
+
                         return;
                     }
 
@@ -920,33 +922,15 @@ namespace KGySoft.Serialization.Binary
                 if (IsCollectionType(dataType) && type.IsGenericType || type.ContainsGenericParameters)
                     return EncodeGenericCollection(type, dataType);
 
-                // non-generic types
-                switch (dataType)
-                {
-                    case DataTypes.ArrayList:
-                    case DataTypes.QueueNonGeneric:
-                    case DataTypes.StackNonGeneric:
-                        return new CircularList<DataTypes> { dataType | DataTypes.Object };
+                // element type
+                if (IsElementType(dataType))
+                    return new CircularList<DataTypes> { dataType };
 
-                    case DataTypes.Hashtable:
-                    case DataTypes.SortedListNonGeneric:
-                    case DataTypes.ListDictionary:
-                    case DataTypes.HybridDictionary:
-                    case DataTypes.OrderedDictionary:
-                    case DataTypes.DictionaryEntry:
-                    case DataTypes.DictionaryEntryNullable:
-                        return new CircularList<DataTypes> { dataType | DataTypes.Object, DataTypes.Object };
+                // non-generic collection
+                Debug.Assert(IsCollectionType(dataType) && !type.IsGenericType, $"Unexpected non-element type: {dataType}");
 
-                    case DataTypes.StringCollection:
-                        return new CircularList<DataTypes> { dataType | DataTypes.String };
-
-                    case DataTypes.StringDictionary:
-                        return new CircularList<DataTypes> { dataType | DataTypes.String, DataTypes.String };
-
-                    default:
-                        Debug.Assert(IsElementType(dataType), $"Unexpected non-element type: {dataType}");
-                        return new CircularList<DataTypes> { dataType };
-                }
+                // note: not encoding key/value separately even for dictionaries because they are the same
+                return new() { dataType | (serializationInfo[GetUnderlyingCollectionDataType(dataType)].HasStringItemsOrKeys ? DataTypes.String : DataTypes.Object) };
             }
 
             [SecurityCritical]
@@ -1045,7 +1029,7 @@ namespace KGySoft.Serialization.Binary
                         return;
 
                     WriteArray(bw, array, collectionDataTypes, !serInfo.HasKnownSizedBackingArray);
-                    serInfo.WriteSpecificParametersForBackingArray?.Invoke(bw, obj);
+                    serInfo.WriteSpecificPropertiesCallback?.Invoke(bw, obj);
 
                     return;
                 }
@@ -1078,16 +1062,25 @@ namespace KGySoft.Serialization.Binary
                 if (serInfo.IsGenericDictionary)
                 {
                     Type[] argTypes = type.GetGenericArguments();
-                    elementType = argTypes[0];
-                    dictionaryValueType = argTypes[1];
-                    WriteDictionaryElements(bw, collection, collectionDataTypes, elementType, dictionaryValueType);
+                    if (serInfo.HasStringItemsOrKeys)
+                    {
+                        elementType = Reflector.StringType;
+                        dictionaryValueType = argTypes[0];
+                    }
+                    else
+                    {
+                        elementType = argTypes[0];
+                        dictionaryValueType = argTypes[1];
+                    }
+
+                    WriteDictionaryElements(bw, collection, serInfo, collectionDataTypes, elementType, dictionaryValueType);
                     return;
                 }
 
                 // 3.c.) non-generic collection
                 if (serInfo.IsNonGenericCollection)
                 {
-                    elementType = collectionDataTypes.CurrentSeparated == DataTypes.String ? Reflector.StringType : Reflector.ObjectType;
+                    elementType = serInfo.HasStringItemsOrKeys ? Reflector.StringType : Reflector.ObjectType;
                     WriteCollectionElements(bw, collection, collectionDataTypes, elementType);
                     return;
                 }
@@ -1095,8 +1088,8 @@ namespace KGySoft.Serialization.Binary
                 // 3.d.) non-generic dictionary
                 if (serInfo.IsNonGenericDictionary)
                 {
-                    elementType = dictionaryValueType = collectionDataTypes.CurrentSeparated == DataTypes.String ? Reflector.StringType : Reflector.ObjectType;
-                    WriteDictionaryElements(bw, collection, collectionDataTypes, elementType, dictionaryValueType);
+                    elementType = dictionaryValueType = serInfo.HasStringItemsOrKeys ? Reflector.StringType : Reflector.ObjectType;
+                    WriteDictionaryElements(bw, collection, serInfo, collectionDataTypes, elementType, dictionaryValueType);
                     return;
                 }
 
@@ -1213,17 +1206,17 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
-            private void WriteDictionaryElements(BinaryWriter bw, IEnumerable collection, DataTypesEnumerator collectionDataTypes,
-                Type collectionKeyType, Type collectionValueType)
+            private void WriteDictionaryElements(BinaryWriter bw, IEnumerable collection, CollectionSerializationInfo dictionaryInfo,
+                DataTypesEnumerator keyValueCollectionDataTypes, Type collectionKeyType, Type collectionValueType)
             {
                 if (collection is IDictionary dictionary)
                 {
                     foreach (DictionaryEntry element in dictionary)
                     {
-                        collectionDataTypes.Save();
-                        WriteElement(bw, element.Key, collectionDataTypes.ReadToNextSegment(), collectionKeyType);
-                        WriteElement(bw, element.Value, collectionDataTypes.ReadToNextSegment(), collectionValueType);
-                        collectionDataTypes.Restore();
+                        keyValueCollectionDataTypes.Save();
+                        WriteElement(bw, element.Key, dictionaryInfo.GetKeyDataTypes(keyValueCollectionDataTypes), collectionKeyType);
+                        WriteElement(bw, element.Value, dictionaryInfo.GetValueDataTypes(keyValueCollectionDataTypes), collectionValueType);
+                        keyValueCollectionDataTypes.Restore();
                     }
 
                     return;
@@ -1232,10 +1225,10 @@ namespace KGySoft.Serialization.Binary
                 // If collection cannot be cast to non-generic IDictionary: Key and Value properties must be accessed by name
                 foreach (object element in collection)
                 {
-                    collectionDataTypes.Save();
-                    WriteElement(bw, Accessors.GetPropertyValue(element!, nameof(KeyValuePair<_, _>.Key)), collectionDataTypes.ReadToNextSegment(), collectionKeyType);
-                    WriteElement(bw, Accessors.GetPropertyValue(element!, nameof(KeyValuePair<_, _>.Value)), collectionDataTypes.ReadToNextSegment(), collectionValueType);
-                    collectionDataTypes.Restore();
+                    keyValueCollectionDataTypes.Save();
+                    WriteElement(bw, Accessors.GetPropertyValue(element!, nameof(KeyValuePair<_,_>.Key)), dictionaryInfo.GetKeyDataTypes(keyValueCollectionDataTypes), collectionKeyType);
+                    WriteElement(bw, Accessors.GetPropertyValue(element!, nameof(KeyValuePair<_,_>.Value)), dictionaryInfo.GetValueDataTypes(keyValueCollectionDataTypes), collectionValueType);
+                    keyValueCollectionDataTypes.Restore();
                 }
             }
 
@@ -1475,7 +1468,9 @@ namespace KGySoft.Serialization.Binary
                 if (IsCompressed(dataType))
                     dataType = DataTypes.RecursiveObjectGraph;
 
-                var dataTypes = new DataTypesEnumerator(CanBeEncoded(dataType) ? EncodeDataType(type, dataType) : new[] { dataType }, true);
+                var dataTypes = CanBeEncoded(dataType)
+                    ? new DataTypesEnumerator(EncodeDataType(type, dataType), true)
+                    : new DataTypesEnumerator(dataType);
                 WriteType(bw, type, dataTypes, allowOpenTypes);
             }
 
@@ -1625,7 +1620,9 @@ namespace KGySoft.Serialization.Binary
                 if (encodedDataTypes == null)
                 {
                     dataType = GetDataType(type);
-                    encodedDataTypes = new DataTypesEnumerator(CanBeEncoded(dataType) ? EncodeDataType(type, dataType) : new[] { dataType }, true);
+                    encodedDataTypes = CanBeEncoded(dataType)
+                        ? new DataTypesEnumerator(EncodeDataType(type, dataType), true)
+                        : new DataTypesEnumerator(dataType);
                 }
 
                 dataType = encodedDataTypes.Current;
