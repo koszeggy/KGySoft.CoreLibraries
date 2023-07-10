@@ -776,6 +776,11 @@ namespace KGySoft.Collections
         public int Count => usedCount - deletedCount;
 
         /// <summary>
+        /// Gets the <see cref="StringSegmentComparer"/> that is used to determine equality of keys for this <see cref="StringKeyedDictionary{TValue}"/>.
+        /// </summary>
+        public StringSegmentComparer Comparer => comparer ?? StringSegmentComparer.Ordinal;
+
+        /// <summary>
         /// Gets the keys stored in the dictionary.
         /// </summary>
         /// <remarks>

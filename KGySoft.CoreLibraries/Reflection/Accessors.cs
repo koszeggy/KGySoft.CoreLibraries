@@ -671,7 +671,7 @@ namespace KGySoft.Reflection
             Type type = collection.GetType();
             PropertyAccessor? property =  GetProperty(type, type == typeof(Hashtable)
                 ? "EqualityComparer" // Hashtable
-                : "Comparer"); // Dictionary<TKey, TValue>, HashSet<T>, SortedSet<T>, SortedList<TKey, TValue>, SortedDictionary<TKey, TValue>, CircularSortedList<TKey, TValue>
+                : "Comparer"); // Dictionary<TKey, TValue>, HashSet<T>, SortedSet<T>, SortedList<TKey, TValue>, SortedDictionary<TKey, TValue>, CircularSortedList<TKey, TValue>, ThreadSafeHashSet<T>, ThreadSafeDictionary<TKey, TValue> StringKeyedDictionary<TValue>
             if (property != null)
                 return property.Get(collection);
 
@@ -783,6 +783,14 @@ namespace KGySoft.Reflection
             if (property == null)
                 Throw.InvalidOperationException(Res.ReflectionInstancePropertyDoesNotExist(propertyName, instance.GetType()));
             return property.Get(instance);
+        }
+
+        internal static void SetPropertyValue(object instance, string propertyName, object? value)
+        {
+            PropertyAccessor? property = GetProperty(instance.GetType(), propertyName);
+            if (property == null)
+                Throw.InvalidOperationException(Res.ReflectionInstancePropertyDoesNotExist(propertyName, instance.GetType()));
+            property.Set(instance, value);
         }
 
         /// <summary>

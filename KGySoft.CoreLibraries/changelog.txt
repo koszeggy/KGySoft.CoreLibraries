@@ -14,6 +14,11 @@
 - ByteArrayExtensions class:
   - ToDecimalValuesString method: Fixing result for empty string input.
 
++ KGySoft.Collections namespace:
+================================
++ StringKeyedDictionary class:
+  + New public Comparer property.
+
 ! KGySoft.Resources namespace:
 ==============================
 ! ResXDataNode class:
