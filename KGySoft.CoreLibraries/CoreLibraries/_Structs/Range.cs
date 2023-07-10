@@ -70,7 +70,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>The result of the inequality check.</returns>
         public static bool operator !=(Range<T> left, Range<T> right) => !left.Equals(right);
 
-#if !(NET35 || NET40 || NET45)
+#if NET47_OR_GREATER || !NETFRAMEWORK
         /// <summary>
         /// Performs an implicit conversion from <typeparamref name="T"/> to <see cref="Range{T}"/> using the provided value as upper bound.
         /// </summary>
