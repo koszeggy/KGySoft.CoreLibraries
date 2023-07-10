@@ -14,10 +14,15 @@
 - ByteArrayExtensions class:
   - ToDecimalValuesString method: Fixing result for empty string input.
 
-+ KGySoft.Collections namespace:
+* KGySoft.Collections namespace:
 ================================
-+ StringKeyedDictionary class:
++ StringKeyedDictionary<TValue> class:
   + New public Comparer property.
+- ThreadSafeDictionary<TKey, TValue> class:
+  - Fixing non-generic IDictionary.Add implementation for null values.
+  - Serialization of the PreserveMergedKeys property
+- ThreadSafeHashSet<T> class:
+  - Serialization of the PreserveMergedItems property
 
 ! KGySoft.Resources namespace:
 ==============================

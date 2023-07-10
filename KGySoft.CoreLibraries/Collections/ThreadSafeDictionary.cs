@@ -1544,15 +1544,23 @@ namespace KGySoft.Collections
             if (key == null!)
                 Throw.ArgumentNullException(Argument.key);
             Throw.ThrowIfNullIsInvalid<TValue>(value);
-            if (key is TKey k)
+
+            try
             {
-                if (value is TValue v)
-                    Add(k, v);
-                else
+                TKey typedKey = (TKey)key;
+                try
+                {
+                    Add(typedKey, (TValue)value!);
+                }
+                catch (InvalidCastException)
+                {
                     Throw.ArgumentException(Argument.value, Res.ICollectionNonGenericValueTypeInvalid(value, typeof(TValue)));
+                }
             }
-            else
+            catch (InvalidCastException)
+            {
                 Throw.ArgumentException(Argument.key, Res.IDictionaryNonGenericKeyTypeInvalid(key, typeof(TKey)));
+            }
         }
 
         bool IDictionary.Contains(object key)
@@ -1633,6 +1641,7 @@ namespace KGySoft.Collections
             info.AddValue(nameof(bitwiseAndHash), bitwiseAndHash);
             info.AddValue(nameof(comparer), ComparerHelper<TKey>.IsDefaultComparer(comparer) ? null : comparer);
             info.AddValue(nameof(mergeInterval), mergeInterval);
+            info.AddValue(nameof(preserveMergedKeys), preserveMergedKeys);
             info.AddValue("items", ToArray());
 
             // custom data of a derived class
@@ -1652,6 +1661,7 @@ namespace KGySoft.Collections
             bitwiseAndHash = info.GetBoolean(nameof(bitwiseAndHash));
             comparer = ComparerHelper<TKey>.GetEqualityComparer((IEqualityComparer<TKey>?)info.GetValue(nameof(comparer), typeof(IEqualityComparer<TKey>)));
             mergeInterval = info.GetInt64(nameof(mergeInterval));
+            preserveMergedKeys = info.GetValueOrDefault<bool>(nameof(preserveMergedKeys)); // GetValueOrDefault for compatibility reasons because was added lately
 #pragma warning disable CS0420 // A reference to a volatile field will not be treated as volatile - no problem, deserialization is a single threaded-access
             FixedSizeStorage.TryInitialize(info.GetValueOrDefault<KeyValuePair<TKey, TValue>[]>("items"), bitwiseAndHash, comparer, out fixedSizeStorage);
 #pragma warning restore CS0420

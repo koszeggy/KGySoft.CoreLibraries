@@ -1020,6 +1020,7 @@ namespace KGySoft.Collections
             info.AddValue(nameof(bitwiseAndHash), bitwiseAndHash);
             info.AddValue(nameof(comparer), ComparerHelper<T>.IsDefaultComparer(comparer) ? null : comparer);
             info.AddValue(nameof(mergeInterval), mergeInterval);
+            info.AddValue(nameof(preserveMergedItems), preserveMergedItems);
             info.AddValue("items", ToArray());
 
             // custom data of a derived class
@@ -1039,6 +1040,7 @@ namespace KGySoft.Collections
             bitwiseAndHash = info.GetBoolean(nameof(bitwiseAndHash));
             comparer = ComparerHelper<T>.GetEqualityComparer((IEqualityComparer<T>?)info.GetValue(nameof(comparer), typeof(IEqualityComparer<T>)));
             mergeInterval = info.GetInt64(nameof(mergeInterval));
+            preserveMergedItems = info.GetValueOrDefault<bool>(nameof(preserveMergedItems)); // GetValueOrDefault for compatibility reasons because was added lately
 #pragma warning disable CS0420 // A reference to a volatile field will not be treated as volatile - no problem, deserialization is a single threaded-access
             FixedSizeStorage.TryInitialize(info.GetValueOrDefault<T[]>("items"), bitwiseAndHash, comparer, out fixedSizeStorage);
 #pragma warning restore CS0420
