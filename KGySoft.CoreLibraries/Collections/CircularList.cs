@@ -71,7 +71,7 @@ namespace KGySoft.Collections
     [DebuggerTypeProxy(typeof(CollectionDebugView<>))]
     [DebuggerDisplay("Count = {" + nameof(Count) + "}; T = {typeof(" + nameof(T) + ").Name}")]
     [Serializable]
-    public sealed class CircularList<T> : ISupportsRangeList<T>, IList
+    public class CircularList<T> : ISupportsRangeList<T>, IList
     {
         #region Nested types
 
