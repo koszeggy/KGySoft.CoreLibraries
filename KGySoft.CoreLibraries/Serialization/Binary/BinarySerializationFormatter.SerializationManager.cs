@@ -231,6 +231,77 @@ namespace KGySoft.Serialization.Binary
             }
 #endif
 
+#if NET46_OR_GREATER || NETSTANDARD2_1_OR_GREATER || NETCOREAPP
+            private static void WriteVector2(BinaryWriter bw, Vector2 value)
+            {
+                bw.Write(value.X);
+                bw.Write(value.Y);
+            }
+
+            private static void WriteVector3(BinaryWriter bw, Vector3 value)
+            {
+                bw.Write(value.X);
+                bw.Write(value.Y);
+                bw.Write(value.Z);
+            }
+
+            private static void WriteVector4(BinaryWriter bw, Vector4 value)
+            {
+                bw.Write(value.X);
+                bw.Write(value.Y);
+                bw.Write(value.Z);
+                bw.Write(value.W);
+            }
+
+            private static void WriteQuaternion(BinaryWriter bw, Quaternion value)
+            {
+                bw.Write(value.X);
+                bw.Write(value.Y);
+                bw.Write(value.Z);
+                bw.Write(value.W);
+            }
+
+            private static void WritePlane(BinaryWriter bw, Plane value)
+            {
+                bw.Write(value.Normal.X);
+                bw.Write(value.Normal.Y);
+                bw.Write(value.Normal.Z);
+                bw.Write(value.D);
+            }
+
+            [SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Matches the name of Matrix3x2")]
+            private static void WriteMatrix3x2(BinaryWriter bw, Matrix3x2 value)
+            {
+                bw.Write(value.M11);
+                bw.Write(value.M12);
+                bw.Write(value.M21);
+                bw.Write(value.M22);
+                bw.Write(value.M31);
+                bw.Write(value.M32);
+            }
+
+            [SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Matches the name of Matrix4x4")]
+            private static void WriteMatrix4x4(BinaryWriter bw, Matrix4x4 value)
+            {
+                bw.Write(value.M11);
+                bw.Write(value.M12);
+                bw.Write(value.M13);
+                bw.Write(value.M14);
+                bw.Write(value.M21);
+                bw.Write(value.M22);
+                bw.Write(value.M23);
+                bw.Write(value.M24);
+                bw.Write(value.M31);
+                bw.Write(value.M32);
+                bw.Write(value.M33);
+                bw.Write(value.M34);
+                bw.Write(value.M41);
+                bw.Write(value.M42);
+                bw.Write(value.M43);
+                bw.Write(value.M44);
+            }
+#endif
+
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
             private static void WriteIndex(BinaryWriter bw, Index index) => bw.Write(index.IsFromEnd ? ~index.Value : index.Value);
 
@@ -722,6 +793,30 @@ namespace KGySoft.Serialization.Binary
                         return;
                     case DataTypes.Complex:
                         WriteComplex(bw, (Complex)obj);
+                        return;
+#endif
+
+#if NET46_OR_GREATER || NETSTANDARD2_1_OR_GREATER || NETCOREAPP
+                    case DataTypes.Vector2:
+                        WriteVector2(bw, (Vector2)obj);
+                        return;
+                    case DataTypes.Vector3:
+                        WriteVector3(bw, (Vector3)obj);
+                        return;
+                    case DataTypes.Vector4:
+                        WriteVector4(bw, (Vector4)obj);
+                        return;
+                    case DataTypes.Quaternion:
+                        WriteQuaternion(bw, (Quaternion)obj);
+                        return;
+                    case DataTypes.Plane:
+                        WritePlane(bw, (Plane)obj);
+                        return;
+                    case DataTypes.Matrix3x2:
+                        WriteMatrix3x2(bw, (Matrix3x2)obj);
+                        return;
+                    case DataTypes.Matrix4x4:
+                        WriteMatrix4x4(bw, (Matrix4x4)obj);
                         return;
 #endif
 

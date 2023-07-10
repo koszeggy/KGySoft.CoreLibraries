@@ -430,6 +430,32 @@ namespace KGySoft.Serialization.Binary
                         return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypePlatformNotSupported(DataTypeToString(ElementDataType)));
 #endif
 
+#if NET46_OR_GREATER || NETSTANDARD2_1_OR_GREATER || NETCOREAPP
+                    case DataTypes.Vector2:
+                        return typeof(Vector2);
+                    case DataTypes.Vector3:
+                        return typeof(Vector3);
+                    case DataTypes.Vector4:
+                        return typeof(Vector4);
+                    case DataTypes.Quaternion:
+                        return typeof(Quaternion);
+                    case DataTypes.Plane:
+                        return typeof(Plane);
+                    case DataTypes.Matrix3x2:
+                        return typeof(Matrix3x2);
+                    case DataTypes.Matrix4x4:
+                        return typeof(Matrix4x4);
+#else
+                        case DataTypes.Vector2:
+                        case DataTypes.Vector3:
+                        case DataTypes.Vector4:
+                        case DataTypes.Quaternion:
+                        case DataTypes.Plane:
+                        case DataTypes.Matrix3x2:
+                        case DataTypes.Matrix4x4:
+                            return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypePlatformNotSupported(DataTypeToString(ElementDataType)));
+#endif
+
                     case DataTypes.ValueTuple0:
 #if NET47_OR_GREATER || !NETFRAMEWORK
                         return typeof(ValueTuple);

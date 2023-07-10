@@ -217,6 +217,13 @@ namespace KGySoft.Serialization.Binary
     /// <item><see cref="StringSegment"/></item>
     /// <item><see cref="BigInteger"/> (in .NET Framework 4.0 and above)</item>
     /// <item><see cref="Complex"/> (in .NET Framework 4.0 and above)</item>
+    /// <item><see cref="Vector2"/> (in .NET Framework 4.6 and above)</item>
+    /// <item><see cref="Vector3"/> (in .NET Framework 4.6 and above)</item>
+    /// <item><see cref="Vector4"/> (in .NET Framework 4.6 and above)</item>
+    /// <item><see cref="Quaternion"/> (in .NET Framework 4.6 and above)</item>
+    /// <item><see cref="Plane"/> (in .NET Framework 4.6 and above)</item>
+    /// <item><see cref="Matrix3x2"/> (in .NET Framework 4.6 and above)</item>
+    /// <item><see cref="Matrix4x4"/> (in .NET Framework 4.6 and above)</item>
     /// <item><see cref="Rune"/> (in .NET Core 3.0 and above)</item>
     /// <item><see cref="Index"/> (in .NET Standard 2.1 and above)</item>
     /// <item><see cref="Range"/> (in .NET Standard 2.1 and above)</item>
@@ -396,6 +403,7 @@ namespace KGySoft.Serialization.Binary
         /// Nested generic collections can be encoded by multiple consecutive <see cref="DataTypes"/> values.
         /// </summary>
         [Flags]
+        [SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Names match the corresponding type names (eg. DBNull, Matrix3x2)")]
         //[DebuggerDisplay("{BinarySerializationFormatter.DataTypeToString(this)}")] // If debugger cannot display it: Tools/Options/Debugging/General: Use Managed Compatibility Mode
         private enum DataTypes : uint
         {
@@ -439,7 +447,6 @@ namespace KGySoft.Serialization.Binary
             StringBuilder = 17,
             Uri = 18,
 
-            // ReSharper disable once InconsistentNaming
             DBNull = 19, // Non-serializable in .NET Core 2
             Object = 20, // Non sealed type. Can be any type as collection element.
 
@@ -589,9 +596,16 @@ namespace KGySoft.Serialization.Binary
             //PureTypesExtended = (0b01111111 << 16) | PureTypes, // bits 16-22 - up to 127 values
 
             Complex = 1 << 16, // Only in .NET Framework 4.0 and above
-            // TODO Candidates:
-            // Vector2, Vector3, Vector4, Quaternion, Plane, Matrix3x2, Matrix4x4 // .NET 4.6+
-            //Quadruple = // float128: to extended types - https://github.com/dotnet/csharplang/issues/1252
+            Vector2 = 2 << 16, // Only in .NET Framework 4.6 and above
+            Vector3 = 3 << 16, // Only in .NET Framework 4.6 and above
+            Vector4 = 4 << 16, // Only in .NET Framework 4.6 and above
+            Quaternion = 5 << 16, // Only in .NET Framework 4.6 and above
+            Plane = 6 << 16, // Only in .NET Framework 4.6 and above
+            Matrix3x2 = 7 << 16, // Only in .NET Framework 4.6 and above
+            Matrix4x4 = 8 << 16, // Only in .NET Framework 4.6 and above
+
+            // TODO candidates:
+            //Quad = // float128: to extended types - https://github.com/dotnet/csharplang/issues/1252
             //BigNumber, // https://source.dot.net/#System.Runtime.Numerics/System/Numerics/BigNumber.cs,969928e529663ace
             //BigDecimal, // https://github.com/dotnet/runtime/issues/20681
 
@@ -1205,6 +1219,15 @@ namespace KGySoft.Serialization.Binary
 #if !NET35
             { Reflector.BigIntegerType, DataTypes.BigInteger },
             { typeof(Complex), DataTypes.Complex },
+#endif
+#if NET46_OR_GREATER || NETSTANDARD2_1_OR_GREATER || NETCOREAPP
+            { typeof(Vector2), DataTypes.Vector2 },
+            { typeof(Vector3), DataTypes.Vector3 },
+            { typeof(Vector4), DataTypes.Vector4 },
+            { typeof(Quaternion), DataTypes.Quaternion },
+            { typeof(Plane), DataTypes.Plane },
+            { typeof(Matrix3x2), DataTypes.Matrix3x2 },
+            { typeof(Matrix4x4), DataTypes.Matrix4x4 },
 #endif
 #if NET47_OR_GREATER || !NETFRAMEWORK
             { typeof(ValueTuple), DataTypes.ValueTuple0 },

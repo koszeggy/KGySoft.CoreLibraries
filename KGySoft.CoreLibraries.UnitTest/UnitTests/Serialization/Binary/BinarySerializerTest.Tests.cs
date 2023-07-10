@@ -165,6 +165,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 BitVector32.CreateSection(42, BitVector32.CreateSection(13)),
                 typeof(int),
 
+#if NET46_OR_GREATER || NETCOREAPP
+                new Vector2(1, 2),
+                new Vector3(1, 2, 3),
+                new Vector4(1, 2, 3, 4),
+                new Quaternion(1, 2, 3, 4),
+                new Plane(1, 2, 3, 4),
+                new Matrix3x2(11, 12, 21, 22, 31, 32),
+                new Matrix4x4(11, 12, 13, 14, 21, 22, 23, 24, 31, 32, 33, 34, 41, 42, 43, 44),
+#endif
+
 #if NETCOREAPP3_0_OR_GREATER
 #if !NETSTANDARD_TEST
 	            new Rune('a'),  
@@ -664,6 +674,17 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new BitVector32.Section[] { BitVector32.CreateSection(13), BitVector32.CreateSection(42, BitVector32.CreateSection(13)) },
                 new Type[] { typeof(int), typeof(List<int>), null },
                 Array.CreateInstance(Reflector.RuntimeType, 3), // runtime type array, set below
+
+#if NET46_OR_GREATER || NETCOREAPP
+                new[] { new Vector2(1, 2) },
+                new[] { new Vector3(1, 2, 3) },
+                new[] { new Vector4(1, 2, 3, 4) },
+                new[] { new Quaternion(1, 2, 3, 4) },
+                new[] { new Plane(1, 2, 3, 4) },
+                new[] { new Matrix3x2(11, 12, 21, 22, 31, 32) },
+                new[] { new Matrix4x4(11, 12, 13, 14, 21, 22, 23, 24, 31, 32, 33, 34, 41, 42, 43, 44) },
+#endif
+
 #if NETCOREAPP3_0_OR_GREATER
 #if !NETSTANDARD_TEST
 	            new Rune[] { new Rune('a') },  
@@ -671,13 +692,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new Index[] { new Index(1), new Index(1, true) },
                 new Range[] { new Range(1, 2), new Range(Index.Start, Index.End) },
 #endif
+
 #if NET5_0_OR_GREATER
                 new Half[] { (Half)1, (Half)1.25 },
 #endif
+
 #if NET6_0_OR_GREATER
                 new DateOnly[] { DateOnly.FromDateTime(DateTime.Today), DateOnly.MaxValue },
                 new TimeOnly[] { TimeOnly.FromDateTime(DateTime.Now), TimeOnly.MaxValue },
 #endif
+
 #if NET7_0_OR_GREATER
                 new Int128[] { 1, 2 },
                 new UInt128[] { 1, 2 },
@@ -878,18 +902,31 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new BitVector32?[] { new BitVector32(13), null },
                 new BitVector32.Section?[] { BitVector32.CreateSection(13), null },
 
+#if NET46_OR_GREATER || NETCOREAPP
+                new Vector2?[] { new Vector2(1, 2), null, null },
+                new Vector3?[] { new Vector3(1, 2, 3), null },
+                new Vector4?[] { new Vector4(1, 2, 3, 4), null },
+                new Quaternion?[] { new Quaternion(1, 2, 3, 4), null },
+                new Plane?[] { new Plane(1, 2, 3, 4), null },
+                new Matrix3x2?[] { new Matrix3x2(11, 12, 21, 22, 31, 32), null },
+                new Matrix4x4?[] { new Matrix4x4(11, 12, 13, 14, 21, 22, 23, 24, 31, 32, 33, 34, 41, 42, 43, 44), null },
+#endif
+
 #if NETCOREAPP3_0_OR_GREATER
                 new Rune?[] { new Rune('a'), null },
                 new Index?[] { new Index(1), null },
                 new Range?[] { new Range(5, 10), null },
 #endif
+
 #if NET5_0_OR_GREATER
                 new Half?[] { (Half)1, null },
 #endif
+
 #if NET6_0_OR_GREATER
                 new DateOnly?[] { DateOnly.FromDateTime(DateTime.Today), null },
                 new TimeOnly?[] { TimeOnly.FromDateTime(DateTime.Now), null },
 #endif
+
 #if NET7_0_OR_GREATER
                 new Int128?[] { 1, null },
                 new UInt128?[] { 1, null },
@@ -1113,8 +1150,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new CustomGenericDictionary<int, string> { { 1, "alpha" }, { 2, null } },
 
                 new CustomGenericDictionary<TestEnumByte, CustomSerializedClass> { { TestEnumByte.One, new CustomSerializedClass { Name = "alpha" } } },
-
-                new StringKeyedDictionary<int> { { "alpha", 1 }, { "beta", 2 } },
             };
 
             SystemSerializeObject(referenceObjects);
@@ -1190,6 +1225,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new SortedDictionary<int, int[]> { { 1, new[] { 1, 2 } }, { 2, null } },
                 new KeyValuePair<int, int[]>(1, new[] { 1, 2 }),
                 new CircularSortedList<int, int[]> { { 1, new[] { 1, 2 } }, { 2, null } },
+                new StringKeyedDictionary<int> { { "alpha", 1 }, { "beta", 2 } },
             };
 
             SystemSerializeObject(referenceObjects);
@@ -1567,6 +1603,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 Tuple.Create(1, "2"),
                 new BigInteger(1),
                 new Complex(1.2, 3.4),
+#endif
+
+#if NET46_OR_GREATER || NETCOREAPP
+                new Vector2(1, 2),
+                new Vector3(1, 2, 3),
+                new Vector4(1, 2, 3, 4),
+                new Quaternion(1, 2, 3, 4),
+                new Plane(1, 2, 3, 4),
+                new Matrix3x2(11, 12, 21, 22, 31, 32),
+                new Matrix4x4(11, 12, 13, 14, 21, 22, 23, 24, 31, 32, 33, 34, 41, 42, 43, 44),
 #endif
 
 #if NET47_OR_GREATER || !NETFRAMEWORK

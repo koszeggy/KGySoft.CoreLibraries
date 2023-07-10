@@ -43,8 +43,15 @@
   + Supporting ArraySegment<T> struct natively
   + Supporting StrongBox<T> class natively
   + Supporting the Tuple<...> classes natively (.NET Framework 4.0 and above)
-  + Supporting the ValueTuple<...> structs natively (.NET Standard 2.0 and above)
   + Supporting the Complex struct natively (.NET Framework 4.0 and above)
+  + Supporting the Vector2 struct natively (.NET Framework 4.6 and above)
+  + Supporting the Vector3 struct natively (.NET Framework 4.6 and above)
+  + Supporting the Vector4 struct natively (.NET Framework 4.6 and above)
+  + Supporting the Quaternion struct natively (.NET Framework 4.6 and above)
+  + Supporting the Plane struct natively (.NET Framework 4.6 and above)
+  + Supporting the Matrix3x2 struct natively (.NET Framework 4.6 and above)
+  + Supporting the Matrix4x4 struct natively (.NET Framework 4.6 and above)
+  + Supporting the ValueTuple<...> structs natively (.NET Standard 2.0 and above)
 * CustomSerializerSurrogateSelector class: The class has been made obsolete
 * NameInvariantSurrogateSelector class: The class has been made obsolete
 

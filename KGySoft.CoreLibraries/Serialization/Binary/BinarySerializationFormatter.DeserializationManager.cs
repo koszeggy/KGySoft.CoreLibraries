@@ -1494,6 +1494,33 @@ namespace KGySoft.Serialization.Binary
                             return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypePlatformNotSupported(DataTypeToString(dataType)));
 #endif
 
+#if NET46_OR_GREATER || NETSTANDARD2_1_OR_GREATER || NETCOREAPP
+                        case DataTypes.Vector2:
+                            return createdResult = new Vector2(br.ReadSingle(), br.ReadSingle());
+                        case DataTypes.Vector3:
+                            return createdResult = new Vector3(br.ReadSingle(), br.ReadSingle(), br.ReadSingle());
+                        case DataTypes.Vector4:
+                            return createdResult = new Vector4(br.ReadSingle(), br.ReadSingle(), br.ReadSingle(), br.ReadSingle());
+                        case DataTypes.Quaternion:
+                            return createdResult = new Quaternion(br.ReadSingle(), br.ReadSingle(), br.ReadSingle(), br.ReadSingle());
+                        case DataTypes.Plane:
+                            return createdResult = new Plane(br.ReadSingle(), br.ReadSingle(), br.ReadSingle(), br.ReadSingle());
+                        case DataTypes.Matrix3x2:
+                            return createdResult = new Matrix3x2(br.ReadSingle(), br.ReadSingle(), br.ReadSingle(), br.ReadSingle(), br.ReadSingle(), br.ReadSingle());
+                        case DataTypes.Matrix4x4:
+                            return createdResult = new Matrix4x4(br.ReadSingle(), br.ReadSingle(), br.ReadSingle(), br.ReadSingle(), br.ReadSingle(), br.ReadSingle(), br.ReadSingle(), br.ReadSingle(),
+                                br.ReadSingle(), br.ReadSingle(), br.ReadSingle(), br.ReadSingle(), br.ReadSingle(), br.ReadSingle(), br.ReadSingle(), br.ReadSingle());
+#else
+                        case DataTypes.Vector2:
+                        case DataTypes.Vector3:
+                        case DataTypes.Vector4:
+                        case DataTypes.Quaternion:
+                        case DataTypes.Plane:
+                        case DataTypes.Matrix3x2:
+                        case DataTypes.Matrix4x4:
+                            return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypePlatformNotSupported(DataTypeToString(dataType)));
+#endif
+
                         case DataTypes.ValueTuple0:
 #if NET47_OR_GREATER || !NETFRAMEWORK
                             return createdResult = new ValueTuple();
