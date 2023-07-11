@@ -41,6 +41,9 @@
   + Supporting ThreadSafeDictionary<TKey, TValue> class natively
   + Supporting StringKeyedDictionary<TValue> class natively
   + Supporting ArraySegment<T> struct natively
+  + Supporting ArraySection<T> struct natively
+  + Supporting Array2D<T> struct natively
+  + Supporting Array3D<T> struct natively
   + Supporting StrongBox<T> class natively
   + Supporting the Tuple<...> classes natively (.NET Framework 4.0 and above)
   + Supporting the Complex struct natively (.NET Framework 4.0 and above)

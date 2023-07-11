@@ -875,6 +875,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new ArraySegment<int>?[] { new ArraySegment<int>(new[] { 1, 2, 3 }, 1, 2), new ArraySegment<int>(), null },
                 new ArraySegment<int?>?[] { new ArraySegment<int?>(new int?[] { 1, 2, 3, null }, 1, 2), new ArraySegment<int?>(), null },
 
+                new ArraySection<int>?[] { /*new ArraySection<int>(new[] { 1, 2, 3 }, 1, 2),*/ ArraySection<int>.Null, /*null*/ },
+                new ArraySection<int?>?[] { new ArraySection<int?>(new int?[] { 1, 2, 3, null }, 1, 2), ArraySection<int?>.Null, null },
+
+                new Array2D<int>?[] { /*new Array2D<int>(new[] { 1, 2, 3 }, 1, 2),*/ new Array2D<int>(), /*null*/ },
+                new Array2D<int?>?[] { new Array2D<int?>(new int?[] { 1, 2, 3, null }, 1, 2), new Array2D<int?>(), null },
+
+                new Array3D<int>?[] { new Array3D<int>(new[] { 1, 2, 3, 4, 5, 6 }, 1, 2, 3), new Array3D<int>(), null },
+                new Array3D<int?>?[] { new Array3D<int?>(new int?[] { 1, 2, 3, 4, 5, null }, 1, 2, 3), new Array3D<int?>(), null },
+
                 new BinarySerializableStruct?[] { new BinarySerializableStruct { IntProp = 1, StringProp = "alpha" }, null },
                 new SystemSerializableStruct?[] { new SystemSerializableStruct { IntProp = 1, StringProp = "alpha" }, null },
 
@@ -982,7 +991,19 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new ArraySegment<int>(),
 #if !NET35
                 new ArraySegment<Complex>(new[] { new Complex(1.2, 3.4), new Complex(5.6, 7.8), default }, 1, 2),
+#endif
 
+                new ArraySection<int>(new[] { 1, 2, 3 }, 1, 2),
+                new ArraySection<int[]>(new int[][] { new int[] { 1, 2, 3 }, new int[] { 4, 5, 6 }, null }, 1, 2),
+                new ArraySection<int>(),
+
+                new Array2D<int>(new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }.AsSection(1), 1, 2),
+                new Array2D<int>(),
+
+                new Array3D<int>(new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }.AsSection(1), 1, 2, 3),
+                new Array3D<int>(),
+
+#if !NET35
                 new SortedSet<int>(new[] { 1, 2, 3 }),
                 new SortedSet<int[]>(new int[][] { new int[] { 1, 2, 3 }, null }),
                 new SortedSet<string>(StringComparer.CurrentCulture) { "alpha", "Alpha", "ALPHA" },
@@ -1178,6 +1199,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new Dictionary<int, ThreadSafeHashSet<int>> { { 1, new ThreadSafeHashSet<int> { 1, 2 } }, { 2, null } }, // ThreadSafeHashSet
                 new Dictionary<int, ArraySegment<int>> { { 1, new ArraySegment<int>(new[] { 1, 2, 3 }, 1, 2) }, { 2, new ArraySegment<int>() } }, // ArraySegment
                 new Dictionary<int, ArraySegment<int?>?> { { 1, new ArraySegment<int?>(new int?[] { 1, 2, 3, null }, 1, 2) }, { 2, new ArraySegment<int?>() }, { 3, null } }, // ArraySegment?
+                new Dictionary<int, ArraySection<int>> { { 1, new ArraySection<int>(new[] { 1, 2, 3 }, 1, 2) }, { 2, new ArraySection<int>() } }, // ArraySection
+                new Dictionary<int, ArraySection<int?>?> { { 1, new ArraySection<int?>(new int?[] { 1, 2, 3, null }, 1, 2) }, { 2, new ArraySection<int?>() }, { 3, null } }, // ArraySection?
+                new Dictionary<int, Array2D<int>> { { 1, new Array2D<int>(new[] { 1, 2, 3 }, 1, 2) }, { 2, new Array2D<int>() } }, // Array2D
+                new Dictionary<int, Array2D<int?>?> { { 1, new Array2D<int?>(new int?[] { 1, 2, 3, null }, 1, 2) }, { 2, new Array2D<int?>() }, { 3, null } }, // Array2D?
+                new Dictionary<int, Array3D<int>> { { 1, new Array3D<int>(new[] { 1, 2, 3 }, 1, 1, 2) }, { 2, new Array3D<int>() } }, // Array3D
+                new Dictionary<int, Array3D<int?>?> { { 1, new Array3D<int?>(new int?[] { 1, 2, 3, null }, 1, 1, 2) }, { 2, new Array3D<int?>() }, { 3, null } }, // Array3D?
 #if !NET35
                 new Dictionary<int, SortedSet<int>> { { 1, new SortedSet<int> { 1, 2 } }, { 2, null } }, // SortedSet
 #endif
@@ -1234,6 +1261,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
+
             referenceObjects = new object[]
             {
                 new Dictionary<int, StrongBox<int>> { { 1, new StrongBox<int>(1) }, { 2, null } },  
@@ -1250,6 +1280,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
+
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.RecursiveSerializationAsFallback);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.RecursiveSerializationAsFallback);
         }
 
         [Test]
@@ -1263,6 +1296,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new List<Array[]> { null, new Array[] { new byte[] { 11, 12, 13 }, new short[] { 21, 22 } } }, // list of array of any arrays
                 new List<ArraySegment<int>?> { new ArraySegment<int>(new[] { 1, 2, 3 }, 1, 2), new ArraySegment<int>(), null },
                 new List<ArraySegment<int?>?> { new ArraySegment<int?>(new int?[] { 1, 2, 3, null }, 1, 2), new ArraySegment<int?>(), null },
+                new List<ArraySection<int>?> { new ArraySection<int>(new[] { 1, 2, 3 }, 1, 2), new ArraySection<int>(), null },
+                new List<ArraySection<int?>?> { new ArraySection<int?>(new int?[] { 1, 2, 3, null }, 1, 2), new ArraySection<int?>(), null },
+                new List<Array2D<int>?> { new Array2D<int>(new[] { 1, 2, 3 }, 1, 2), new Array2D<int>(), null },
+                new List<Array2D<int?>?> { new Array2D<int?>(new int?[] { 1, 2, 3, null }, 1, 2), new Array2D<int?>(), null },
 
                 // a single key-value pair with a dictionary somewhere in value
                 new KeyValuePair<int[], KeyValuePair<string, Dictionary<string, string>>>(new int[1], new KeyValuePair<string, Dictionary<string, string>>("gamma", new Dictionary<string, string> { { "alpha", "beta" } })),

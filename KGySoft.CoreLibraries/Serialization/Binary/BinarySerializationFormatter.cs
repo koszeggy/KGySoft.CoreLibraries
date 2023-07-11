@@ -86,7 +86,7 @@ using KGySoft.Serialization.Xml;
  * II. Adding a collection type
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  * When NOT to add
- * - If may contain a delegate or event subscriptions (eg. Cache<TKey, TValue>, ObservableCollection<T>)
+ * - If may contain delegate or event subscriptions (eg. Cache<TKey, TValue>, ObservableCollection<T>)
  * - If may wrap another exposed collection of any type (eg. Collection<T>, exposed by Items)
  * - If may wrap another collection that is not exposed, though the wrapped collection type may affect the behavior (locking collections, BlockingCollection<T>)
  * When to add with special care and only if really justified
@@ -262,6 +262,9 @@ namespace KGySoft.Serialization.Binary
     /// <item><see cref="Stack{T}"/></item>
     /// <item><see cref="ThreadSafeHashSet{T}"/></item>
     /// <item><see cref="ArraySegment{T}"/></item>
+    /// <item><see cref="ArraySection{T}"/></item>
+    /// <item><see cref="Array2D{T}"/></item>
+    /// <item><see cref="Array3D{T}"/></item>
     /// <item><see cref="SortedSet{T}"/> (in .NET Framework 4.0 and above)</item>
     /// <item><see cref="ConcurrentBag{T}"/> (in .NET Framework 4.0 and above)</item>
     /// <item><see cref="ConcurrentQueue{T}"/> (in .NET Framework 4.0 and above)</item>
@@ -470,18 +473,18 @@ namespace KGySoft.Serialization.Binary
 
             // . . . Non-primitive, platform-dependent pure types (32-48 - up to 16 types) . . .
 
-            BigInteger = 32, // Only in .NET Framework 4.0 and above
-            Rune = 33, // Only in .NET Core 3.0 and above
-            Index = 34, // Only in .NET Standard 2.1 and above
-            Range = 35, // Only in .NET Standard 2.1 and above
-            Half = 36, // Only in .NET 5 and above
-            DateOnly = 37, // Only in .NET 6 and above
-            TimeOnly = 38, // Only in .NET 6 and above
-            Int128 = 39, // Only in .NET 7 and above
-            UInt128 = 40, // Only in .NET 7 and above
-            ValueTuple0 = 41, // Only in .NET Standard 2.0 and above - note: generic value tuples are on byte 3. as special collections
+            BigInteger = 32, // .NET Framework 4.0 and above
+            Rune = 33, // .NET Core 3.0 and above
+            Index = 34, // .NET Standard 2.1 and above
+            Range = 35, // .NET Standard 2.1 and above
+            Half = 36, // .NET 5 and above
+            DateOnly = 37, // .NET 6 and above
+            TimeOnly = 38, // .NET 6 and above
+            Int128 = 39, // .NET 7 and above
+            UInt128 = 40, // .NET 7 and above
+            ValueTuple0 = 41, // .NET Standard 2.0 and above - note: generic value tuples are on byte 3. as special collections
 
-            // 41-47: 7 reserved values
+            // 42-47: 6 reserved values
             // TODO: Some candidates:
             //Int256 = 41, UInt256 = 42, // https://github.com/dotnet/runtime/issues/80663
             //Decimal32 = 43, Decimal64 = 44, Decimal128 = 45, // https://github.com/dotnet/runtime/issues/81376
@@ -523,10 +526,10 @@ namespace KGySoft.Serialization.Binary
             Queue = 5 << 8,
             Stack = 6 << 8,
             CircularList = 7 << 8,
-            SortedSet = 8 << 8, // Only in .NET Framework 4.0 and above
-            ConcurrentBag = 9 << 8, // Only in .NET Framework 4.0 and above
-            ConcurrentQueue = 10 << 8, // Only in .NET Framework 4.0 and above
-            ConcurrentStack = 11 << 8, // Only in .NET Framework 4.0 and above
+            SortedSet = 8 << 8, // .NET Framework 4.0 and above
+            ConcurrentBag = 9 << 8, // .NET Framework 4.0 and above
+            ConcurrentQueue = 10 << 8, // .NET Framework 4.0 and above
+            ConcurrentStack = 11 << 8, // .NET Framework 4.0 and above
             ThreadSafeHashSet = 12 << 8,
 
             // 13-15 << 8: 3 reserved generic collections
@@ -558,7 +561,7 @@ namespace KGySoft.Serialization.Binary
             SortedList = 33 << 8,
             SortedDictionary = 34 << 8,
             CircularSortedList = 35 << 8,
-            ConcurrentDictionary = 36 << 8, // Only in .NET Framework 4.0 and above
+            ConcurrentDictionary = 36 << 8, // .NET Framework 4.0 and above
             ThreadSafeDictionary = 37 << 8,
             
             // 38-45 << 8 : 8 reserved generic dictionaries
@@ -595,14 +598,14 @@ namespace KGySoft.Serialization.Binary
             // ..... pure types (they are unambiguous without a type name): .....
             //PureTypesExtended = (0b01111111 << 16) | PureTypes, // bits 16-22 - up to 127 values
 
-            Complex = 1 << 16, // Only in .NET Framework 4.0 and above
-            Vector2 = 2 << 16, // Only in .NET Framework 4.6 and above
-            Vector3 = 3 << 16, // Only in .NET Framework 4.6 and above
-            Vector4 = 4 << 16, // Only in .NET Framework 4.6 and above
-            Quaternion = 5 << 16, // Only in .NET Framework 4.6 and above
-            Plane = 6 << 16, // Only in .NET Framework 4.6 and above
-            Matrix3x2 = 7 << 16, // Only in .NET Framework 4.6 and above
-            Matrix4x4 = 8 << 16, // Only in .NET Framework 4.6 and above
+            Complex = 1 << 16, // .NET Framework 4.0 and above
+            Vector2 = 2 << 16, // .NET Framework 4.6 and above
+            Vector3 = 3 << 16, // .NET Framework 4.6 and above
+            Vector4 = 4 << 16, // .NET Framework 4.6 and above
+            Quaternion = 5 << 16, // .NET Framework 4.6 and above
+            Plane = 6 << 16, // .NET Framework 4.6 and above
+            Matrix3x2 = 7 << 16, // .NET Framework 4.6 and above
+            Matrix4x4 = 8 << 16, // .NET Framework 4.6 and above
 
             // TODO candidates:
             //Quad = // float128: to extended types - https://github.com/dotnet/csharplang/issues/1252
@@ -630,11 +633,13 @@ namespace KGySoft.Serialization.Binary
             ValueTuple7 = 7 << 24,
             ValueTuple8 = 8 << 24,
 
-            // ..... further generic collections: .....
+            // ..... array backed collections: .....
             ArraySegment = 9 << 24,
+            ArraySection = 10 << 24,
+            Array2D = 11 << 24,
+            Array3D = 12 << 24,
 
             // TODO Candidates:
-            // ArraySection, Array2D, Array3D - must be here as they are value types so can be combined with NullableExtendedCollection
             // Vector, Vector64, Vector128, Vector256 - special cases: these are not IEnumerable (similarly to KVP) but can be encoded better as collections
             // ImmutableArray, ImmutableArrayBuilder,
             // ImmutableList,
@@ -1165,6 +1170,66 @@ namespace KGySoft.Serialization.Binary
                     }
                 }
             },
+            {
+                DataTypes.ArraySection, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.BackingArrayCanBeNull,
+                    GetBackingArray = o => (Array?)Accessors.GetPropertyValue(o, nameof(ArraySection<_>.UnderlyingArray)),
+                    WriteSpecificPropertiesCallback = (bw, o) =>
+                    {
+                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(ArraySection<_>.Offset))!);
+                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(ArraySection<_>.Length))!);
+                    },
+                    CreateArrayBackedCollectionInstanceFromArray = (br, t, a) =>
+                    {
+                        ConstructorInfo ctor = t.GetConstructor(new[] { a.GetType(), Reflector.IntType, Reflector.IntType })!;
+                        return CreateInstanceAccessor.GetAccessor(ctor).CreateInstance(a, Read7BitInt(br), Read7BitInt(br));
+                    }
+                }
+            },
+            {
+                DataTypes.Array2D, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.BackingArrayCanBeNull,
+                    GetBackingArray = o => (Array?)Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(Array2D<_>.Buffer))!, nameof(ArraySection<_>.UnderlyingArray)),
+                    WriteSpecificPropertiesCallback = (bw, o) =>
+                    {
+                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(Array2D<_>.Buffer))!, nameof(ArraySection<_>.Offset))!);
+                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(Array2D<_>.Height))!);
+                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(Array2D<_>.Width))!);
+                    },
+                    CreateArrayBackedCollectionInstanceFromArray = (br, t, a) =>
+                    {
+                        Type bufferType = typeof(ArraySection<>).GetGenericType(t.GetGenericArguments()[0]);
+                        ConstructorInfo ctor = bufferType.GetConstructor(new[] { a.GetType(), Reflector.IntType })!;
+                        var buffer = CreateInstanceAccessor.GetAccessor(ctor).CreateInstance(a, Read7BitInt(br));
+                        ctor = t.GetConstructor(new[] { bufferType, Reflector.IntType, Reflector.IntType })!;
+                        return CreateInstanceAccessor.GetAccessor(ctor).CreateInstance(buffer, Read7BitInt(br), Read7BitInt(br));
+                    }
+                }
+            },
+            {
+                DataTypes.Array3D, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.BackingArrayCanBeNull,
+                    GetBackingArray = o => (Array?)Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(Array3D<_>.Buffer))!, nameof(ArraySection<_>.UnderlyingArray)),
+                    WriteSpecificPropertiesCallback = (bw, o) =>
+                    {
+                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(Array3D<_>.Buffer))!, nameof(ArraySection<_>.Offset))!);
+                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(Array3D<_>.Depth))!);
+                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(Array3D<_>.Height))!);
+                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(Array3D<_>.Width))!);
+                    },
+                    CreateArrayBackedCollectionInstanceFromArray = (br, t, a) =>
+                    {
+                        Type bufferType = typeof(ArraySection<>).GetGenericType(t.GetGenericArguments()[0]);
+                        ConstructorInfo ctor = bufferType.GetConstructor(new[] { a.GetType(), Reflector.IntType })!;
+                        var buffer = CreateInstanceAccessor.GetAccessor(ctor).CreateInstance(a, Read7BitInt(br));
+                        ctor = t.GetConstructor(new[] { bufferType, Reflector.IntType, Reflector.IntType, Reflector.IntType })!;
+                        return CreateInstanceAccessor.GetAccessor(ctor).CreateInstance(buffer, Read7BitInt(br), Read7BitInt(br), Read7BitInt(br));
+                    }
+                }
+            },
 
             #endregion
 
@@ -1292,6 +1357,9 @@ namespace KGySoft.Serialization.Binary
             { typeof(StringKeyedDictionary<>), DataTypes.StringKeyedDictionary },
 
             { typeof(ArraySegment<>), DataTypes.ArraySegment },
+            { typeof(ArraySection<>), DataTypes.ArraySection },
+            { typeof(Array2D<>), DataTypes.Array2D },
+            { typeof(Array3D<>), DataTypes.Array3D },
 
             // Tuple-like types. Added to collections for practical reasons such as handling generics or encoding type of keys values
             { Reflector.KeyValuePairType, DataTypes.KeyValuePair },
@@ -1409,7 +1477,7 @@ namespace KGySoft.Serialization.Binary
         private static DataTypes GetCollectionOrElementType(DataTypes dt) => (dt & DataTypes.CollectionTypesAll) != DataTypes.Null ? dt & DataTypes.CollectionTypesAll : dt & ~DataTypes.CollectionTypesAll;
         private static bool IsElementType(DataTypes dt) => (dt & ~DataTypes.CollectionTypesAll) != DataTypes.Null;
         private static bool IsCollectionType(DataTypes dt) => (dt & DataTypes.CollectionTypesAll) != DataTypes.Null;
-        private static bool IsNullable(DataTypes dt) => (dt & (DataTypes.Nullable | DataTypes.NullableExtendedCollection)) != DataTypes.Null || dt is DataTypes.DictionaryEntryNullable or DataTypes.KeyValuePairNullable;
+        private static bool IsNullable(DataTypes dt) => (dt & (DataTypes.Nullable | DataTypes.NullableExtendedCollection)) != DataTypes.Null || GetCollectionDataType(dt) is DataTypes.DictionaryEntryNullable or DataTypes.KeyValuePairNullable;
         private static bool IsCompressible(DataTypes dt) => (uint)((dt & DataTypes.SimpleTypesLow) - DataTypes.Int16) <= DataTypes.UIntPtr - DataTypes.Int16;
         private static bool IsCompressed(DataTypes dt) => (dt & DataTypes.Store7BitEncoded) != DataTypes.Null;
         private static bool IsEnum(DataTypes dt) => (dt & DataTypes.Enum) != DataTypes.Null;

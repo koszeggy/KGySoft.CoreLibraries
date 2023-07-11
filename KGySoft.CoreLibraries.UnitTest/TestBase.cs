@@ -15,6 +15,8 @@
 
 #region Usings
 
+using KGySoft.Collections;
+
 #region Used Namespaces
 
 using System;
@@ -126,20 +128,20 @@ namespace KGySoft.CoreLibraries
         /// Asserts whether <paramref name="check"/> and <paramref name="reference"/> are equal in depth by fields/public properties recursively.
         /// If the root objects can be simple objects use the <see cref="AssertDeepEquals"/> instead.
         /// </summary>
-        protected static void AssertMembersEqual(object reference, object check)
+        protected static void AssertMembersEqual(object reference, object check, bool forceNestedEqualityByMembers = false)
         {
             var errors = new List<string>();
-            AssertResult(CheckMembersEqual(reference, check, errors, new HashSet<object>(ReferenceEqualityComparer.Comparer)), errors);
+            AssertResult(CheckMembersEqual(reference, check, forceNestedEqualityByMembers, errors, new HashSet<object>(ReferenceEqualityComparer.Comparer)), errors);
         }
 
         /// <summary>
         /// Asserts whether <paramref name="check"/> and <paramref name="reference"/> are equal in depth by fields/public properties recursively.
         /// If the root objects can be simple objects use the <see cref="AssertDeepEquals"/> instead.
         /// </summary>
-        protected static void AssertMembersAndItemsEqual(IEnumerable reference, IEnumerable check)
+        protected static void AssertMembersAndItemsEqual(IEnumerable reference, IEnumerable check, bool forceNestedEqualityByMembers = false)
         {
             var errors = new List<string>();
-            AssertResult(CheckMembersAndItemsEqual(reference, check, errors, new HashSet<object>(ReferenceEqualityComparer.Comparer)), errors);
+            AssertResult(CheckMembersAndItemsEqual(reference, check, forceNestedEqualityByMembers, errors, new HashSet<object>(ReferenceEqualityComparer.Comparer)), errors);
         }
 
         /// <summary>
@@ -152,8 +154,8 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Gets whether <paramref name="check"/> and <paramref name="reference"/> (can also be simple objects) are equal by their public members.
         /// </summary>
-        protected static bool MembersEqual(object reference, object check)
-            => CheckMembersEqual(reference, check, null, new HashSet<object>(ReferenceEqualityComparer.Comparer));
+        protected static bool MembersEqual(object reference, object check, bool forceNestedEqualityByMembers = false)
+            => CheckMembersEqual(reference, check, forceNestedEqualityByMembers, null, new HashSet<object>(ReferenceEqualityComparer.Comparer));
 
         /// <summary>
         /// Gets whether reference and target collections are equal in depth. If <paramref name="forceEqualityByMembers"/> is <see langword="true"/>,
@@ -166,8 +168,8 @@ namespace KGySoft.CoreLibraries
         /// Gets whether <paramref name="check"/> and <paramref name="reference"/> are equal in depth by fields/public properties recursively.
         /// If the root objects can be simple objects use the <see cref="CheckDeepEquals"/> instead.
         /// </summary>
-        protected static bool MembersAndItemsEqual(IEnumerable reference, IEnumerable check)
-            => CheckMembersAndItemsEqual(reference, check, null, new HashSet<object>(ReferenceEqualityComparer.Comparer));
+        protected static bool MembersAndItemsEqual(IEnumerable reference, IEnumerable check, bool forceNestedEqualityByMembers = false)
+            => CheckMembersAndItemsEqual(reference, check, forceNestedEqualityByMembers, null, new HashSet<object>(ReferenceEqualityComparer.Comparer));
 
         protected static void Throws<T>(TestDelegate code, string expectedMessageContent = null)
             where T : Exception
@@ -324,13 +326,13 @@ namespace KGySoft.CoreLibraries
             checkedObjects.Add(reference);
             try
             {
-                if (typeRef.IsGenericTypeOf(typeof(ArraySegment<>)))
-                    // ignoring items and checking members only because of the backing array that can be larger than the segment
-                    return CheckMembersEqual(reference, check, errors, checkedObjects);
+                // ignoring items and checking members only because of the backing array that can be larger than the segment/buffer
+                if (typeRef.IsGenericTypeOf(typeof(ArraySegment<>)) || typeRef.IsGenericTypeOf(typeof(ArraySection<>)) || typeRef.IsGenericTypeOf(typeof(Array2D<>)) || typeRef.IsGenericTypeOf(typeof(Array3D<>)))
+                    return CheckMembersEqual(reference, check, forceEqualityByMembers, errors, checkedObjects);
 
                 if (!(reference is string or StringSegment) && reference is IEnumerable enumerable)
                     return forceEqualityByMembers
-                        ? CheckMembersAndItemsEqual(enumerable, (IEnumerable)check, errors, checkedObjects)
+                        ? CheckMembersAndItemsEqual(enumerable, (IEnumerable)check, true, errors, checkedObjects)
                         : CheckItemsEqual(enumerable, (IEnumerable)check, false, errors, checkedObjects);
 
                 if (reference is float floatRef && check is float floatCheck)
@@ -397,7 +399,7 @@ namespace KGySoft.CoreLibraries
                 if (forceEqualityByMembers && !typeRef.IsPrimitive && !typeof(IComparable).IsAssignableFrom(typeRef)
                     || !simpleEquals && !typeRef.GetMember(nameof(Equals), MemberTypes.Method, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly).Any(m => m is MethodInfo mi && mi.GetParameters() is ParameterInfo[] parameters && parameters.Length == 1 && parameters[0].ParameterType == typeof(object) && mi.DeclaringType != mi.GetBaseDefinition().DeclaringType))
                 {
-                    return CheckMembersEqual(reference, check, errors, checkedObjects);
+                    return CheckMembersEqual(reference, check, forceEqualityByMembers, errors, checkedObjects);
                 }
 
                 // Equals as fallback
@@ -462,7 +464,7 @@ namespace KGySoft.CoreLibraries
             return result;
         }
 
-        private static bool CheckMembersEqual(object reference, object check, List<string> errors, HashSet<object> checkedObjects)
+        private static bool CheckMembersEqual(object reference, object check, bool forceNestedEqualityByMembers, List<string> errors, HashSet<object> checkedObjects)
         {
             if (reference == null && check == null)
                 return true;
@@ -479,19 +481,19 @@ namespace KGySoft.CoreLibraries
 
             // public fields
             foreach (FieldInfo field in typeRef.GetFields(BindingFlags.Instance | BindingFlags.Public))
-                result &= CheckMemberDeepEquals($"{typeRef.GetName(TypeNameKind.ShortName)}.{field.Name}", field.Get(reference),  field.Get(check), false, errors, checkedObjects);
+                result &= CheckMemberDeepEquals($"{typeRef.GetName(TypeNameKind.ShortName)}.{field.Name}", field.Get(reference),  field.Get(check), forceNestedEqualityByMembers, errors, checkedObjects);
 
             // public properties
             foreach (PropertyInfo property in reference.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public).Where(p => p.GetIndexParameters().Length == 0))
-                result &= CheckMemberDeepEquals($"{typeRef.GetName(TypeNameKind.ShortName)}.{property.Name}", property.Get(reference), property.Get(check), false, errors, checkedObjects);
+                result &= CheckMemberDeepEquals($"{typeRef.GetName(TypeNameKind.ShortName)}.{property.Name}", property.Get(reference), property.Get(check), forceNestedEqualityByMembers, errors, checkedObjects);
 
             return result;
         }
 
-        private static bool CheckMembersAndItemsEqual(IEnumerable reference, IEnumerable check, List<string> errors, HashSet<object> checkedObjects)
+        private static bool CheckMembersAndItemsEqual(IEnumerable reference, IEnumerable check, bool forceNestedEqualityByMembers, List<string> errors, HashSet<object> checkedObjects)
         {
             // members
-            bool result = CheckMembersEqual(reference, check, errors, checkedObjects);
+            bool result = CheckMembersEqual(reference, check, forceNestedEqualityByMembers, errors, checkedObjects);
 
             // collection elements
             if (!(reference is string or StringSegment || check is string or StringSegment))

@@ -2213,7 +2213,7 @@ namespace KGySoft.Serialization.Binary
 
             private TypeAttributes EnsureAttributes(BinaryReader br, DataTypeDescriptor descriptor)
             {
-                MemberInfo type = (MemberInfo?)descriptor.StoredType ?? descriptor.Type!;
+                MemberInfo type = (MemberInfo?)descriptor.StoredType ?? descriptor.GetTypeToCreate()!;
                 if (TypeAttributesCache.TryGetValue(type, out TypeAttributes result))
                     return result;
                 result = (TypeAttributes)br.ReadByte();

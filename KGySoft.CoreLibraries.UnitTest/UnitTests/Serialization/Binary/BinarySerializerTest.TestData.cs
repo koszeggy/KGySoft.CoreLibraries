@@ -30,6 +30,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Security;
 
+using KGySoft.Collections;
 using KGySoft.Reflection;
 using KGySoft.Serialization.Binary;
 
@@ -1013,6 +1014,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             private readonly OrderedDictionary valueOrderedDictionary;
             private readonly ArraySegment<T> valueArraySegment;
             private readonly StrongBox<T> valueStrongBox;
+            private readonly ArraySection<T> valueArraySection;
 #if !NET35
             private readonly Tuple<T> tuple;
 #endif
@@ -1041,6 +1043,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 valueOrderedDictionary = new OrderedDictionary { { value, value } };
                 valueArraySegment = new ArraySegment<T>(new[] { value });
                 valueStrongBox = new StrongBox<T>(value);
+                valueArraySection = new ArraySection<T>(new[] { value });
 #if !NET35
                 tuple = new Tuple<T>(value);
 #endif
@@ -1068,6 +1071,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 && Equals(valueHashSet.First(), other.valueHashSet.First())
                 && Equals(valueOrderedDictionary[Value], other.valueOrderedDictionary[Value])
                 && Equals(valueStrongBox.Value, other.valueStrongBox.Value)
+                && Equals(valueArraySection[0], other.valueArraySection[0])
 #if !NET35
                 && Equals(tuple, other.tuple)
 #endif

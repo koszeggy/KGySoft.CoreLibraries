@@ -275,7 +275,7 @@ namespace KGySoft.Serialization.Binary
             internal Type GetTypeToCreate()
             {
                 Debug.Assert(Type != null);
-                return IsNullable(CollectionDataType) ? Nullable.GetUnderlyingType(Type!)! : Type!;
+                return IsNullable(dataType) ? Nullable.GetUnderlyingType(Type!)! : Type!;
             }
 
             internal void ApplyAttributes(TypeAttributes attr)
@@ -643,6 +643,12 @@ namespace KGySoft.Serialization.Binary
 
                     case DataTypes.ArraySegment:
                         return typeof(ArraySegment<>);
+                    case DataTypes.ArraySection:
+                        return typeof(ArraySection<>);
+                    case DataTypes.Array2D:
+                        return typeof(Array2D<>);
+                    case DataTypes.Array3D:
+                        return typeof(Array3D<>);
 
 #if NET35
                     case DataTypes.ConcurrentDictionary:

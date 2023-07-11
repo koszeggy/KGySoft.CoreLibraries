@@ -273,7 +273,7 @@ namespace KGySoft.Serialization.Binary
 
             private protected bool IsValueType(DataTypeDescriptor descriptor)
             {
-                MemberInfo type = (MemberInfo?)descriptor.StoredType ?? descriptor.Type!;
+                MemberInfo type = (MemberInfo?)descriptor.StoredType ?? descriptor.GetTypeToCreate();
                 Debug.Assert(!IsImpureTypeButEnum(GetCollectionOrElementType(descriptor.DataType)) || TypeAttributesCache.ContainsKey(type), $"Attributes of type is not cached: {descriptor}");
                 return IsImpureTypeButEnum(GetCollectionOrElementType(descriptor.DataType))
                     ? (TypeAttributesCache.GetValueOrDefault(type) & TypeAttributes.ValueType) != TypeAttributes.None
@@ -282,7 +282,7 @@ namespace KGySoft.Serialization.Binary
 
             private protected bool IsSealed(DataTypeDescriptor descriptor)
             {
-                MemberInfo type = (MemberInfo?)descriptor.StoredType ?? descriptor.Type!;
+                MemberInfo type = (MemberInfo?)descriptor.StoredType ?? descriptor.GetTypeToCreate()!;
                 Debug.Assert(!IsImpureTypeButEnum(GetCollectionOrElementType(descriptor.DataType)) || TypeAttributesCache.ContainsKey(type), $"Attributes of type is not cached: {descriptor}");
                 return IsImpureTypeButEnum(GetCollectionOrElementType(descriptor.DataType))
                     ? (TypeAttributesCache.GetValueOrDefault(type) & TypeAttributes.Sealed) != TypeAttributes.None
