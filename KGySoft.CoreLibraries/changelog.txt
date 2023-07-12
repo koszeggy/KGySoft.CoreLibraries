@@ -9,13 +9,27 @@
 ! v8.0.0:
 ~~~~~~~~~
 
-- KGySoft.CoreLibraries namespace:
+* KGySoft.CoreLibraries namespace:
 ==================================
++ ArrayExtensions class:
+  + New AsSection overload for ArraySegment<T>
+  + New AsArray2D overload for ArraySegment<T>
+  + New AsArray3D overload for ArraySegment<T>
 - ByteArrayExtensions class:
   - ToDecimalValuesString method: Fixing result for empty string input.
 
 * KGySoft.Collections namespace:
 ================================
+* ArraySection<T> struct:
+  + New constructor from ArraySegment<T>
+  + New implicit operators to convert to and from ArraySegment<T>
+  - Fixing serialization: Since v6.0.0 the underlying array is publicly exposed but it was not completely restored.
++ Array2D<T> struct:
+  + New constructor from ArraySegment<T>
+  + New implicit operator to convert to ArraySegment<T>
++ Array3D<T> struct:
+  + New constructor from ArraySegment<T>
+  + New implicit operator to convert to ArraySegment<T>
 + StringKeyedDictionary<TValue> class:
   + New public Comparer property.
 - ThreadSafeDictionary<TKey, TValue> class:
@@ -29,6 +43,8 @@
 ! ResXDataNode class:
   ! Mime types representing BinaryFormatter are no longer supported when targeting .NET 8 or later.
   ! Embedded MemoryStream in non-compatible mode is added as a byte array rather than a binary serialized stream.
+    This affects the result of the GetObject methods in ResXResourceManager, HybridResourceManager and
+    DynamimcResourceManager classes but their GetStream method still works the same way.
 
 ! KGySoft.Serialization.Binary namespace:
 =========================================

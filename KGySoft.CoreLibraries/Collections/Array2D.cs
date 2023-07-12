@@ -42,7 +42,7 @@ namespace KGySoft.Collections
 {
     /// <summary>
     /// Represents a rectangular array, whose indexer access is faster than a regular 2D array.
-    /// It supports accessing its rows or the whole content as a single dimensional <see cref="ArraySection{T}"/>.
+    /// It supports accessing its rows or the whole content as a single dimensional <see cref="ArraySection{T}"/> or <see cref="ArraySegment{T}"/>.
     /// Depending on the used platform it supports <see cref="ArrayPool{T}"/> allocation and casting to <see cref="Span{T}"/>.
     /// </summary>
     /// <typeparam name="T">The type of the elements in the collection.</typeparam>
@@ -93,8 +93,7 @@ namespace KGySoft.Collections
         private readonly int width;
         private readonly int height;
 
-        [SuppressMessage("Style", "IDE0044:Add readonly modifier", Justification = "Must not be readonly due to Dispose")]
-        private ArraySection<T> buffer;
+        private ArraySection<T> buffer; // Must not be readonly due to Dispose
 
         #endregion
 
@@ -231,13 +230,22 @@ namespace KGySoft.Collections
         /// </returns>
         public static implicit operator ArraySection<T>(Array2D<T> array) => array.buffer;
 
+        /// <summary>
+        /// Performs an implicit conversion from <see cref="Array2D{T}"/> to <see cref="ArraySegment{T}"/>.
+        /// </summary>
+        /// <param name="array">The <see cref="Array2D{T}"/> to be converted to an <see cref="ArraySegment{T}"/>.</param>
+        /// <returns>
+        /// An <see cref="ArraySegment{T}"/> instance that represents the original array.
+        /// </returns>
+        public static implicit operator ArraySegment<T>(Array2D<T> array) => array.buffer.AsArraySegment;
+
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
-        /// Performs an implicit conversion from <see cref="Array2D{T}"/> to <see cref="Span{T}"><![CDATA[Span<T>]]></see>.
+        /// Performs an implicit conversion from <see cref="Array2D{T}"/> to <see cref="Span{T}"/>.
         /// </summary>
-        /// <param name="array">The <see cref="Array2D{T}"/> to be converted to a <see cref="Span{T}"><![CDATA[Span<T>]]></see>.</param>
+        /// <param name="array">The <see cref="Array2D{T}"/> to be converted to a <see cref="Span{T}"/>.</param>
         /// <returns>
-        /// A <see cref="Span{T}"><![CDATA[Span<T>]]></see> instance that represents the specified <see cref="Array2D{T}"/>.
+        /// A <see cref="Span{T}"/> instance that represents the specified <see cref="Array2D{T}"/>.
         /// </returns>
         public static implicit operator Span<T>(Array2D<T> array) => array.AsSpan;
 #endif
@@ -460,8 +468,8 @@ namespace KGySoft.Collections
 
         #region Explicitly Implemented Interface Methods
 
-        IEnumerator<T> IEnumerable<T>.GetEnumerator() => GetEnumerator();
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        readonly IEnumerator<T> IEnumerable<T>.GetEnumerator() => GetEnumerator();
+        readonly IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
         #endregion
 

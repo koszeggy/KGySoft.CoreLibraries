@@ -21,15 +21,12 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using System.Runtime.Serialization;
-using System.Security;
 #if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
 using System.Buffers;
 #endif
 
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
-using KGySoft.Serialization.Binary;
 
 #endregion
 
@@ -49,8 +46,9 @@ namespace KGySoft.Collections
 {
     /// <summary>
     /// Represents a one dimensional array or a section of an array.
-    /// This type is very similar to <see cref="ArraySegment{T}"/>/<see cref="Memory{T}"><![CDATA[Memory<T>]]></see> types but can be used on every platform in the same way
-    /// and it is faster than <see cref="Memory{T}"><![CDATA[Memory<T>]]></see> in most cases. Depending on the used platform it supports <see cref="ArrayPool{T}"/> allocation.
+    /// This type is very similar to <see cref="ArraySegment{T}"/>/<see cref="Memory{T}"><![CDATA[Memory<T>]]></see> types but can be used on every platform in the same way,
+    /// allows span-like operations such as slicing, and it is faster than <see cref="Memory{T}"><![CDATA[Memory<T>]]></see> in most cases.
+    /// Depending on the used platform it supports <see cref="ArrayPool{T}"/> allocation.
     /// </summary>
     /// <typeparam name="T">The type of the elements in the collection.</typeparam>
     /// <remarks>
@@ -70,7 +68,7 @@ namespace KGySoft.Collections
     [Serializable]
     [DebuggerTypeProxy(typeof(ArraySection<>.ArraySectionDebugView))]
     [DebuggerDisplay("{typeof(" + nameof(T) + ")." + nameof(Type.Name) + ",nq}[{" + nameof(Length) + "}]")]
-    public struct ArraySection<T> : IList<T>, IList, IEquatable<ArraySection<T>>, ISerializable
+    public struct ArraySection<T> : IList<T>, IList, IEquatable<ArraySection<T>>
 #if !(NET35 || NET40)
         , IReadOnlyList<T>
 #endif
@@ -81,7 +79,7 @@ namespace KGySoft.Collections
         {
             #region Fields
 
-            [SuppressMessage("Style", "IDE0044:Add readonly modifier", Justification = "ArraySection is not readonly so it would generate defensive copies")]
+            [SuppressMessage("Style", "IDE0044:Add readonly modifier", Justification = "ArraySection is not readonly so it would generate defensive copies on platforms")]
             private ArraySection<T> array;
 
             #endregion
@@ -89,7 +87,7 @@ namespace KGySoft.Collections
             #region Properties
 
             [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-            public T[]? Items => array.ToArray();
+            readonly public T[]? Items => array.ToArray();
 
             #endregion
 
@@ -199,19 +197,19 @@ namespace KGySoft.Collections
 
         #region Explicitly Implemented Interface Properties
 
-        bool ICollection<T>.IsReadOnly => true;
-        int ICollection<T>.Count => length;
+        readonly bool ICollection<T>.IsReadOnly => true;
+        readonly int ICollection<T>.Count => length;
 
         // It actually should use a private field but as we never lock on this we could never cause a deadlock even if someone uses it.
-        object ICollection.SyncRoot => array?.SyncRoot ?? Throw.InvalidOperationException<object>(Res.ArraySectionNull);
-        bool ICollection.IsSynchronized => false;
+        readonly object ICollection.SyncRoot => array?.SyncRoot ?? Throw.InvalidOperationException<object>(Res.ArraySectionNull);
+        readonly bool ICollection.IsSynchronized => false;
 
-        int ICollection.Count => length;
-        bool IList.IsReadOnly => false;
-        bool IList.IsFixedSize => true;
+        readonly int ICollection.Count => length;
+        readonly bool IList.IsReadOnly => false;
+        readonly bool IList.IsFixedSize => true;
 
 #if !(NET35 || NET40)
-        int IReadOnlyCollection<T>.Count => length;
+        readonly int IReadOnlyCollection<T>.Count => length;
 #endif
 
         #endregion
@@ -252,7 +250,7 @@ namespace KGySoft.Collections
 
         object? IList.this[int index]
         {
-            get => this[index];
+            readonly get => this[index];
             set
             {
                 Throw.ThrowIfNullIsInvalid<T>(value);
@@ -284,13 +282,31 @@ namespace KGySoft.Collections
         /// </returns>
         public static implicit operator ArraySection<T>(T[]? array) => array == null ? Null : new ArraySection<T>(array);
 
+        /// <summary>
+        /// Performs an implicit conversion from <see cref="ArraySegment{T}"/> to <see cref="ArraySection{T}"/>.
+        /// </summary>
+        /// <param name="arraySegment">The <see cref="ArraySegment{T}"/> to be converted to an <see cref="ArraySection{T}"/>.</param>
+        /// <returns>
+        /// An <see cref="ArraySection{T}"/> instance that represents the original <see cref="ArraySegment{T}"/>.
+        /// </returns>
+        public static implicit operator ArraySection<T>(ArraySegment<T> arraySegment) => new ArraySection<T>(arraySegment);
+
+        /// <summary>
+        /// Performs an implicit conversion from <see cref="ArraySection{T}"/> to <see cref="ArraySegment{T}"/>.
+        /// </summary>
+        /// <param name="arraySection">The <see cref="ArraySection{T}"/> to be converted to an <see cref="ArraySegment{T}"/>.</param>
+        /// <returns>
+        /// An <see cref="ArraySegment{T}"/> instance that represents this <see cref="ArraySection{T}"/>.
+        /// </returns>
+        public static implicit operator ArraySegment<T>(ArraySection<T> arraySection) => arraySection.AsArraySegment;
+
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
-        /// Performs an implicit conversion from <see cref="ArraySection{T}"/> to <see cref="Span{T}"><![CDATA[Span<T>]]></see>.
+        /// Performs an implicit conversion from <see cref="ArraySection{T}"/> to <see cref="Span{T}"/>.
         /// </summary>
-        /// <param name="arraySection">The <see cref="ArraySection{T}"/> to be converted to a <see cref="Span{T}"><![CDATA[Span<T>]]></see>.</param>
+        /// <param name="arraySection">The <see cref="ArraySection{T}"/> to be converted to a <see cref="Span{T}"/>.</param>
         /// <returns>
-        /// A <see cref="Span{T}"><![CDATA[Span<T>]]></see> instance that represents the specified <see cref="ArraySection{T}"/>.
+        /// A <see cref="Span{T}"/> instance that represents the specified <see cref="ArraySection{T}"/>.
         /// </returns>
         public static implicit operator Span<T>(ArraySection<T> arraySection) => arraySection.AsSpan;
 #endif
@@ -314,8 +330,6 @@ namespace KGySoft.Collections
         #endregion
 
         #region Constructors
-        
-        #region Public Constructors
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ArraySection{T}" /> struct using an internally allocated buffer.
@@ -396,18 +410,23 @@ namespace KGySoft.Collections
         {
         }
 
-        #endregion
-
-        #region Private Constructors
-
-        private ArraySection(SerializationInfo info, StreamingContext context) : this()
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ArraySection{T}" /> struct from the specified <see cref="ArraySegment{T}"/>.
+        /// No heap allocation occurs when using this constructor overload.
+        /// </summary>
+        /// <param name="arraySegment">The <see cref="ArraySegment{T}"/> to initialize the new <see cref="ArraySection{T}"/> from.</param>
+        public ArraySection(ArraySegment<T> arraySegment)
         {
-            // deserialized instances never use array pool
-            array = info.GetValueOrDefault<T[]>(nameof(array));
-            length = array?.Length ?? 0;
-        }
+            if (arraySegment.Array == null)
+            {
+                this = Null;
+                return;
+            }
 
-        #endregion
+            array = arraySegment.Array;
+            offset = arraySegment.Offset;
+            length = arraySegment.Count;
+        }
 
         #endregion
 
@@ -649,19 +668,19 @@ namespace KGySoft.Collections
 
         #region Explicitly Implemented Interface Methods
 
-        void IList<T>.Insert(int index, T item) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
-        void IList<T>.RemoveAt(int index) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+        readonly void IList<T>.Insert(int index, T item) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+        readonly void IList<T>.RemoveAt(int index) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
 
-        void ICollection<T>.Add(T item) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
-        bool ICollection<T>.Remove(T item) => Throw.NotSupportedException<bool>(Res.ICollectionReadOnlyModifyNotSupported);
+        readonly void ICollection<T>.Add(T item) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+        readonly bool ICollection<T>.Remove(T item) => Throw.NotSupportedException<bool>(Res.ICollectionReadOnlyModifyNotSupported);
 
-        IEnumerator<T> IEnumerable<T>.GetEnumerator() => GetEnumerator();
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        readonly IEnumerator<T> IEnumerable<T>.GetEnumerator() => GetEnumerator();
+        readonly IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        int IList.IndexOf(object? value) => CanAccept(value) ? IndexOf((T)value!) : -1;
-        bool IList.Contains(object? value) => CanAccept(value) && Contains((T)value!);
+        readonly int IList.IndexOf(object? value) => CanAccept(value) ? IndexOf((T)value!) : -1;
+        readonly bool IList.Contains(object? value) => CanAccept(value) && Contains((T)value!);
 
-        void ICollection.CopyTo(Array targetArray, int index)
+        readonly void ICollection.CopyTo(Array targetArray, int index)
         {
             if (targetArray == null!)
                 Throw.ArgumentNullException(Argument.array);
@@ -693,17 +712,10 @@ namespace KGySoft.Collections
             Throw.ArgumentException(Argument.array, Res.ICollectionArrayTypeInvalid);
         }
 
-        int IList.Add(object? item) => Throw.NotSupportedException<int>(Res.ICollectionReadOnlyModifyNotSupported);
-        void IList.Insert(int index, object? item) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
-        void IList.Remove(object? item) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
-        void IList.RemoveAt(int index) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
-
-        [SecurityCritical]
-        void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
-        {
-            // as the underlying array and the offset is not exposed by public members serializing the represented array only
-            info.AddValue(nameof(array), length == 0 || length == array!.Length ? array : ToArray());
-        }
+        readonly int IList.Add(object? item) => Throw.NotSupportedException<int>(Res.ICollectionReadOnlyModifyNotSupported);
+        readonly void IList.Insert(int index, object? item) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+        readonly void IList.Remove(object? item) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+        readonly void IList.RemoveAt(int index) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
 
         #endregion
 
