@@ -34,9 +34,9 @@
   + New public Comparer property.
 - ThreadSafeDictionary<TKey, TValue> class:
   - Fixing non-generic IDictionary.Add implementation for null values.
-  - Serialization of the PreserveMergedKeys property
+  - The PreserveMergedKeys property was ignored on serialization.
 - ThreadSafeHashSet<T> class:
-  - Serialization of the PreserveMergedItems property
+  - The PreserveMergedItems property was ignored on serialization.
 
 ! KGySoft.Resources namespace:
 ==============================
@@ -44,7 +44,7 @@
   ! Mime types representing BinaryFormatter are no longer supported when targeting .NET 8 or later.
   ! Embedded MemoryStream in non-compatible mode is added as a byte array rather than a binary serialized stream.
     This affects the result of the GetObject methods in ResXResourceManager, HybridResourceManager and
-    DynamimcResourceManager classes but their GetStream method still works the same way.
+    DynamimcResourceManager classes but their GetStream methods still work the same way.
 
 ! KGySoft.Serialization.Binary namespace:
 =========================================
@@ -52,15 +52,15 @@
   ! CreateFormatter method: Return type has been changed to BinarySerializationFormatter from IFormatter to avoid
     SYSLIB0011 error in .NET 8 and above. It always has returned a BinarySerializationFormatter instance anyway.
 + BinarySerializationFormatter class:
-  + Supporting StringSegment struct natively
-  + Supporting ThreadSafeHashSet<T> class natively
-  + Supporting ThreadSafeDictionary<TKey, TValue> class natively
-  + Supporting StringKeyedDictionary<TValue> class natively
-  + Supporting ArraySegment<T> struct natively
-  + Supporting ArraySection<T> struct natively
-  + Supporting Array2D<T> struct natively
-  + Supporting Array3D<T> struct natively
-  + Supporting StrongBox<T> class natively
+  + Supporting the StringSegment struct natively
+  + Supporting the ThreadSafeHashSet<T> class natively
+  + Supporting the ThreadSafeDictionary<TKey, TValue> class natively
+  + Supporting the StringKeyedDictionary<TValue> class natively
+  + Supporting the ArraySegment<T> struct natively
+  + Supporting the ArraySection<T> struct natively
+  + Supporting the Array2D<T> struct natively
+  + Supporting the Array3D<T> struct natively
+  + Supporting the StrongBox<T> class natively
   + Supporting the Tuple<...> classes natively (.NET Framework 4.0 and above)
   + Supporting the Complex struct natively (.NET Framework 4.0 and above)
   + Supporting the Vector2 struct natively (.NET Framework 4.6 and above)
@@ -71,6 +71,10 @@
   + Supporting the Matrix3x2 struct natively (.NET Framework 4.6 and above)
   + Supporting the Matrix4x4 struct natively (.NET Framework 4.6 and above)
   + Supporting the ValueTuple<...> structs natively (.NET Standard 2.0 and above)
+  + Supporting the Vector64<> struct natively (.NET Core 3.0 and above)
+  + Supporting the Vector128<> struct natively (.NET Core 3.0 and above)
+  + Supporting the Vector256<> struct natively (.NET Core 3.0 and above)
+  + Supporting the Vector512<> struct natively (.NET 8.0 and above)
 * CustomSerializerSurrogateSelector class: The class has been made obsolete
 * NameInvariantSurrogateSelector class: The class has been made obsolete
 

@@ -15,6 +15,8 @@
 
 #region Usings
 
+using System.Runtime.InteropServices;
+
 using KGySoft.Collections;
 
 #region Used Namespaces
@@ -330,6 +332,18 @@ namespace KGySoft.CoreLibraries
                 if (typeRef.IsGenericTypeOf(typeof(ArraySegment<>)) || typeRef.IsGenericTypeOf(typeof(ArraySection<>)) || typeRef.IsGenericTypeOf(typeof(Array2D<>)) || typeRef.IsGenericTypeOf(typeof(Array3D<>)))
                     return CheckMembersEqual(reference, check, forceEqualityByMembers, errors, checkedObjects);
 
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+                if (typeRef.IsGenericTypeOf(typeof(Memory<>)))
+                {
+                    // Length
+                    if (!CheckMembersEqual(reference, check, forceEqualityByMembers, errors, checkedObjects))
+                        return false;
+
+                    // Items - cannot use SequenceEqual because it only accepts spans
+                    return CheckItemsEqual((IEnumerable)Reflector.InvokeMethod(reference, "ToArray"), (IEnumerable)Reflector.InvokeMethod(check, "ToArray"), forceEqualityByMembers, errors, checkedObjects);
+                }
+#endif
+
                 if (!(reference is string or StringSegment) && reference is IEnumerable enumerable)
                     return forceEqualityByMembers
                         ? CheckMembersAndItemsEqual(enumerable, (IEnumerable)check, true, errors, checkedObjects)
@@ -485,7 +499,13 @@ namespace KGySoft.CoreLibraries
 
             // public properties
             foreach (PropertyInfo property in reference.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public).Where(p => p.GetIndexParameters().Length == 0))
+            {
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+                if (property.PropertyType.IsGenericTypeOf(typeof(Span<>)))
+                    continue;
+#endif
                 result &= CheckMemberDeepEquals($"{typeRef.GetName(TypeNameKind.ShortName)}.{property.Name}", property.Get(reference), property.Get(check), forceNestedEqualityByMembers, errors, checkedObjects);
+            }
 
             return result;
         }

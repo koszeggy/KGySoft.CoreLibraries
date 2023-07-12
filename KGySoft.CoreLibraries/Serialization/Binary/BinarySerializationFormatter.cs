@@ -27,6 +27,9 @@ using System.Numerics;
 #endif
 using System.Reflection;
 using System.Runtime.CompilerServices;
+#if NETCOREAPP3_0_OR_GREATER
+using System.Runtime.Intrinsics;
+#endif
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 #if !NET35
@@ -639,8 +642,13 @@ namespace KGySoft.Serialization.Binary
             Array2D = 11 << 24,
             Array3D = 12 << 24,
 
+            // ..... SIMD vectors: .....
+            Vector64 = 13 << 24, // .NET Core 3.0 and above
+            Vector128 = 14 << 24, // .NET Core 3.0 and above
+            Vector256 = 15 << 24, // .NET Core 3.0 and above
+            Vector512 = 16 << 24, // .NET 8.0 and above
+
             // TODO Candidates:
-            // Vector, Vector64, Vector128, Vector256 - special cases: these are not IEnumerable (similarly to KVP) but can be encoded better as collections
             // ImmutableArray, ImmutableArrayBuilder,
             // ImmutableList,
             // ImmutableListBuilder,
@@ -760,6 +768,11 @@ namespace KGySoft.Serialization.Binary
             /// Indicates that the non-generic collection has string items or keys-values, or that a generic dictionary with only one generic argument has string keys.
             /// </summary>
             HasStringItemsOrKeys = 1 << 16,
+
+            /// <summary>
+            /// Indicates that the backing array is always a byte array, regardless of the actual element type.
+            /// </summary>
+            CreateResultFromByteArray = 1 << 17,
         }
 
         /// <summary>
@@ -1231,6 +1244,16 @@ namespace KGySoft.Serialization.Binary
                 }
             },
 
+#if NETCOREAPP3_0_OR_GREATER
+            { DataTypes.Vector64, CollectionSerializationInfo.FixedSizeGenericStruct },
+            { DataTypes.Vector128, CollectionSerializationInfo.FixedSizeGenericStruct },
+            { DataTypes.Vector256, CollectionSerializationInfo.FixedSizeGenericStruct },
+#endif
+
+#if NET8_0_OR_GREATER
+            { DataTypes.Vector512, CollectionSerializationInfo.FixedSizeGenericStruct },
+#endif
+
             #endregion
 
             #region Extended dictionaries (DataTypes 64..127 << 24)
@@ -1356,12 +1379,13 @@ namespace KGySoft.Serialization.Binary
             { typeof(StringDictionary), DataTypes.StringDictionary },
             { typeof(StringKeyedDictionary<>), DataTypes.StringKeyedDictionary },
 
+            // Array backed collections
             { typeof(ArraySegment<>), DataTypes.ArraySegment },
             { typeof(ArraySection<>), DataTypes.ArraySection },
             { typeof(Array2D<>), DataTypes.Array2D },
             { typeof(Array3D<>), DataTypes.Array3D },
 
-            // Tuple-like types. Added to collections for practical reasons such as handling generics or encoding type of keys values
+            // Tuple-like types. Added to collections for practical reasons such as handling generics or encoding type of items
             { Reflector.KeyValuePairType, DataTypes.KeyValuePair },
             { Reflector.DictionaryEntryType, DataTypes.DictionaryEntry },
             { typeof(StrongBox<>), DataTypes.StrongBox },
@@ -1385,6 +1409,17 @@ namespace KGySoft.Serialization.Binary
             { typeof(ValueTuple<,,,,,,>), DataTypes.ValueTuple7 },
             { typeof(ValueTuple<,,,,,,,>), DataTypes.ValueTuple8 },
 #endif
+
+            // Fixed size vectors. Added to collections for practical reasons such as handling generics.
+#if NETCOREAPP3_0_OR_GREATER
+            { typeof(Vector64<>), DataTypes.Vector64 },
+            { typeof(Vector128<>), DataTypes.Vector128 },
+            { typeof(Vector256<>), DataTypes.Vector256 },
+#endif
+#if NET8_0_OR_GREATER
+            { typeof(Vector512<>), DataTypes.Vector512 },
+#endif
+
         };
 
         #endregion

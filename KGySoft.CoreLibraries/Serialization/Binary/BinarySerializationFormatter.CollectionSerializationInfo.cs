@@ -55,6 +55,13 @@ namespace KGySoft.Serialization.Binary
 
             internal static readonly CollectionSerializationInfo Tuple = new() { Info = CollectionInfo.IsGeneric | CollectionInfo.IsTuple };
 
+            internal static readonly CollectionSerializationInfo FixedSizeGenericStruct = new()
+            {
+                Info = CollectionInfo.IsGeneric | CollectionInfo.BackingArrayHasKnownSize | CollectionInfo.CreateResultFromByteArray,
+                GetBackingArray = o => BinarySerializer.SerializeValueType((ValueType)o),
+                CreateArrayBackedCollectionInstanceFromArray = (_, t, a) => BinarySerializer.DeserializeValueType(t, (byte[])a)
+            };
+
             #endregion
 
             #region Instance Fields
@@ -129,6 +136,7 @@ namespace KGySoft.Serialization.Binary
             internal bool HasKnownSizedBackingArray => (Info & CollectionInfo.BackingArrayHasKnownSize) == CollectionInfo.BackingArrayHasKnownSize;
             internal bool IsTuple => (Info & CollectionInfo.IsTuple) == CollectionInfo.IsTuple;
             internal bool HasStringItemsOrKeys => (Info & CollectionInfo.HasStringItemsOrKeys) == CollectionInfo.HasStringItemsOrKeys;
+            internal bool CreateResultFromByteArray => (Info & CollectionInfo.CreateResultFromByteArray) == CollectionInfo.CreateResultFromByteArray;
 
             #endregion
 

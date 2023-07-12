@@ -29,12 +29,17 @@ using System.Collections.Specialized;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 #if !NET35
 using System.Numerics;
 #endif
 #if NETFRAMEWORK
 using System.Reflection;
+#endif
+using System.Runtime.CompilerServices;
+#if NETCOREAPP3_0_OR_GREATER
+using System.Runtime.Intrinsics;
+#endif
+#if NETFRAMEWORK
 using System.Runtime.Remoting.Messaging;
 #endif
 using System.Runtime.Serialization;
@@ -925,6 +930,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new Rune?[] { new Rune('a'), null },
                 new Index?[] { new Index(1), null },
                 new Range?[] { new Range(5, 10), null },
+                new Vector64<int>?[] { Vector64.Create(1, 2), null },
 #endif
 
 #if NET5_0_OR_GREATER
@@ -1079,6 +1085,19 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new ConcurrentDictionary<int, TestEnumByte>(new Dictionary<int, TestEnumByte> { { 1, TestEnumByte.One }, { 2, TestEnumByte.Two } }),
                 new ConcurrentDictionary<string, int>(new Dictionary<string, int> { { "alpha", 1 }, { "Alpha", 2 }, { "ALPHA", 3 } }, StringComparer.CurrentCulture),
                 new ConcurrentDictionary<TestEnumByte, int>(new Dictionary<TestEnumByte, int> { { TestEnumByte.One, 1 }, { TestEnumByte.Two, 2 } }, EnumComparer<TestEnumByte>.Comparer),
+#endif
+
+#if NETCOREAPP3_0_OR_GREATER
+                Vector64.Create(1, 2, 3, 4),
+                Vector64.Create(1.2f, 3.4f),
+                Vector128.Create(1, 2, 3, 4),
+                Vector128.Create(1.2d, 3.4d),
+                Vector256.Create(1, 2, 3, 4),
+                Vector256.Create(1.2d, 3.4d, 5.6d, 7.8d),
+#endif
+#if NET8_0_OR_GREATER
+                Vector512.Create(1, 2, 3, 4, 5, 6, 7, 8),
+                Vector512.Create(1d, 2d, 3d, 4d, 5d, 6d, 7d, 8d),
 #endif
             };
 
@@ -1275,6 +1294,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new Dictionary<int, ConcurrentStack<int>> { { 1, new ConcurrentStack<int>(new[] { 1, 2 }) }, { 2, null } },
 
                 new ConcurrentDictionary<int, int[]>(new Dictionary<int, int[]> { { 1, new[] { 1, 2 } }, { 2, null } }),
+#endif
+
+#if NETCOREAPP3_0_OR_GREATER
+                new Dictionary<int, Vector128<int>> { { 1, Vector128.Create(1, 2, 3, 4) } },  
 #endif
             };
 
@@ -1508,11 +1531,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes
                 | BinarySerializationOptions.RecursiveSerializationAsFallback // .NET Core 2/3: RuntimeType is not serializable
                 | BinarySerializationOptions.IgnoreISerializable, // .NET Core 2: still, it has the GetObjectData that throws a PlatformNotSupportedException
-                title, true, binder); // safeCompare: the cloned runtime types are not equal
+                title, safeCompare: true, binder: binder); // safeCompare: the cloned runtime types are not equal
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes
                 | BinarySerializationOptions.RecursiveSerializationAsFallback // .NET Core 2/3: RuntimeType is not serializable
                 | BinarySerializationOptions.IgnoreISerializable, // .NET Core 2: still, it has the GetObjectData that throws a PlatformNotSupportedException
-                title, true, binder); // safeCompare: the cloned runtime types are not equal
+                title, safeCompare: true, binder: binder); // safeCompare: the cloned runtime types are not equal
 #else
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, title, binder: binder);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, title, binder: binder);
@@ -1578,11 +1601,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes
                 | BinarySerializationOptions.RecursiveSerializationAsFallback // .NET Core 2/3: RuntimeType is not serializable
                 | BinarySerializationOptions.IgnoreISerializable, // .NET Core 2: still, it has the GetObjectData that throws a PlatformNotSupportedException
-                title, true, binder); // safeCompare: the cloned runtime types are not equal
+                title, safeCompare: true, binder: binder); // safeCompare: the cloned runtime types are not equal
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes
                 | BinarySerializationOptions.RecursiveSerializationAsFallback // .NET Core 2/3: RuntimeType is not serializable
                 | BinarySerializationOptions.IgnoreISerializable, // .NET Core 2: still, it has the GetObjectData that throws a PlatformNotSupportedException
-                title, true, binder); // safeCompare: the cloned runtime types are not equal
+                title, safeCompare: true, binder: binder); // safeCompare: the cloned runtime types are not equal
 #else
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, title, binder: binder);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, title, binder: binder);
@@ -1662,6 +1685,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #endif
                 new Index(1),
                 new Range(1, 2),
+#endif
+
+#if NETCOREAPP3_0_OR_GREATER
+                Vector64.Create(1, 2, 3, 4),
+                Vector128.Create(1, 2, 3, 4),
+                Vector256.Create(1, 2, 3, 4),
+#endif
+#if NET8_0_OR_GREATER
+                Vector512.Create(1, 2, 3, 4, 5, 6, 7, 8),
 #endif
 
 #if NET5_0_OR_GREATER

@@ -25,9 +25,12 @@ using System.Collections.Specialized;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 #if !NET35
 using System.Numerics;
+#endif
+using System.Runtime.CompilerServices;
+#if NETCOREAPP3_0_OR_GREATER
+using System.Runtime.Intrinsics;
 #endif
 using System.Text;
 
@@ -80,6 +83,7 @@ namespace KGySoft.Serialization.Binary
             internal bool HasBackingArray => CollectionSerializationInfo.GetBackingArray != null;
             internal bool HasNullableBackingArray => CollectionSerializationInfo.HasNullableBackingArray;
             internal bool IsTuple => UnderlyingCollectionDataType is >= DataTypes.Tuple1 and <= DataTypes.Tuple8 or >= DataTypes.ValueTuple1 and <= DataTypes.ValueTuple8;
+            internal bool CreateResultFromByteArray => CollectionSerializationInfo.CreateResultFromByteArray;
 
             internal int FixedItemsSize
             {
@@ -90,14 +94,21 @@ namespace KGySoft.Serialization.Binary
                         return GetNumberOfTupleElements(dt);
                     return dt switch
                     {
-                        // TODO: VectorN, etc.
+#if NETCOREAPP3_0_OR_GREATER
+                        DataTypes.Vector64 => Vector64<byte>.Count,
+                        DataTypes.Vector128 => Vector128<byte>.Count,
+                        DataTypes.Vector256 => Vector256<byte>.Count,
+#endif
+#if NET8_0_OR_GREATER
+                        DataTypes.Vector512 => Vector512<byte>.Count,
+#endif
                         _ => -1,
                     };
                 }
             }
 
             /// <summary>
-            /// Decoded type of self descriptor
+            /// Decoded type of self descriptor. Returns null until <see cref="DecodeType"/> is executed.
             /// </summary>
             internal Type? Type { get; private set; }
 
@@ -693,6 +704,27 @@ namespace KGySoft.Serialization.Binary
                     case DataTypes.ValueTuple6:
                     case DataTypes.ValueTuple7:
                     case DataTypes.ValueTuple8:
+                        return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationCollectionPlatformNotSupported(DataTypeToString(collectionDataType)));
+#endif
+
+#if NETCOREAPP3_0_OR_GREATER
+                    case DataTypes.Vector64:
+                        return typeof(Vector64<>);
+                    case DataTypes.Vector128:
+                        return typeof(Vector128<>);
+                    case DataTypes.Vector256:
+                        return typeof(Vector256<>);
+#else
+                    case DataTypes.Vector64:
+                    case DataTypes.Vector128:
+                    case DataTypes.Vector256:
+                        return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationCollectionPlatformNotSupported(DataTypeToString(collectionDataType)));
+#endif
+#if NET8_0_OR_GREATER
+                    case DataTypes.Vector512:
+                        return typeof(Vector512<>);
+#else
+                    case DataTypes.Vector512:
                         return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationCollectionPlatformNotSupported(DataTypeToString(collectionDataType)));
 #endif
 

@@ -33,6 +33,9 @@ using System.Numerics;
 #endif
 using System.Reflection;
 using System.Runtime.CompilerServices;
+#if NET7_0_OR_GREATER
+using System.Runtime.InteropServices;
+#endif
 using System.Runtime.Serialization;
 using System.Security;
 using System.Text;
@@ -456,7 +459,7 @@ namespace KGySoft.Serialization.Binary
                     }
 
                     // trying to allocate the result array at once if possible
-                    Type elementType = descriptor.GetElementDescriptor().Type!;
+                    Type elementType = descriptor.CreateResultFromByteArray ? Reflector.ByteType : descriptor.GetElementDescriptor().Type!;
 
                     int elementSize;
                     if (!safeMode || ((elementSize = elementType.SizeOf()) * (long)TotalLength) <= ArrayAllocationThreshold)
@@ -1205,7 +1208,7 @@ namespace KGySoft.Serialization.Binary
                 // special case: backing array is null so creating a default instance
                 if (descriptor.HasNullableBackingArray && !br.ReadBoolean())
                 {
-                    result = Activator.CreateInstance(type);
+                    result = Activator.CreateInstance(type)!;
                     if (addToCache)
                         AddObjectToCache(result);
                     return result;
