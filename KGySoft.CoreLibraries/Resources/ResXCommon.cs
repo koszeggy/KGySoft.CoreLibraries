@@ -126,8 +126,8 @@ namespace KGySoft.Resources
         /// <summary>
         /// Gets assembly info for the corresponding type. If the delegate is provided it is used to get this information.
         /// </summary>
-        [return:NotNullIfNotNull("type")]
-        internal static string GetAssemblyQualifiedName(Type? type, Func<Type, string?>? typeNameConverter, bool compatibleFormat)
+        [return:NotNullIfNotNull(nameof(type))]
+        internal static string? GetAssemblyQualifiedName(Type? type, Func<Type, string?>? typeNameConverter, bool compatibleFormat)
         {
             #region Local Methods
 
@@ -139,8 +139,8 @@ namespace KGySoft.Resources
 
             #endregion
 
-            if (type == null)
-                return null!;
+            if (type is null)
+                return null;
 
             string? result = null;
 

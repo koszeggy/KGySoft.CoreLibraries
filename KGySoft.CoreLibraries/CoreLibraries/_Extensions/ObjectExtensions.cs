@@ -276,7 +276,7 @@ namespace KGySoft.CoreLibraries
         [Obsolete("This DeepClone overload is obsolete. Use the DeepClone<T>(T,Func<object,object?>?) overload instead.")]
 #endif
         [SecuritySafeCritical]
-        [return:NotNullIfNotNull("obj")]public static T DeepClone<T>(this T obj, bool ignoreCustomSerialization = false)
+        [return:NotNullIfNotNull(nameof(obj))]public static T DeepClone<T>(this T obj, bool ignoreCustomSerialization = false)
         {
             ISurrogateSelector? surrogate = null;
             var formatter = new BinarySerializationFormatter(BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.IgnoreTypeForwardedFromAttribute);
@@ -318,7 +318,7 @@ namespace KGySoft.CoreLibraries
         /// <para><see cref="string"/>, <see cref="Delegate"/> and runtime <see cref="Type"/> instances are not cloned but their original reference is returned in the result.
         /// This can be overridden by handling these types in <paramref name="customClone"/>.</para>
         /// </remarks>
-        [return:NotNullIfNotNull("obj")]public static T DeepClone<T>(this T obj, Func<object, object?>? customClone)
+        [return:NotNullIfNotNull(nameof(obj))]public static T DeepClone<T>(this T obj, Func<object, object?>? customClone)
             => (T)ObjectCloner.Clone(obj, customClone)!;
 
         /// <summary>

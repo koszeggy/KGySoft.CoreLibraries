@@ -563,7 +563,7 @@ namespace KGySoft.Resources
 
         #region Static Methods
 
-        [return:NotNullIfNotNull("rs")]
+        [return:NotNullIfNotNull(nameof(rs))]
         private protected static ResourceSet? Unwrap(ResourceSet? rs)
             => rs == null ? null
                 : rs is ProxyResourceSet proxy ? proxy.WrappedResourceSet

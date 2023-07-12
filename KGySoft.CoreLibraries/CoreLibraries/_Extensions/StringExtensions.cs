@@ -62,7 +62,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="s">The string to be extracted from quotes.</param>
         /// <returns>If <paramref name="s"/> was surrounded by single or double quotes, returns a new string without the quotes; otherwise, returns <paramref name="s"/>.</returns>
-        [return:NotNullIfNotNull("s")]public static string? RemoveQuotes(this string? s)
+        [return:NotNullIfNotNull(nameof(s))]public static string? RemoveQuotes(this string? s)
             => (s?.Length ?? 0) < 2
                 ? s
                 : s!.Length > 1 && (s[0] == '"' && s[s.Length - 1] == '"' || s[0] == '\'' && s[s.Length - 1] == '\'')
@@ -276,7 +276,7 @@ namespace KGySoft.CoreLibraries
         /// </remarks>
         /// <exception cref="ArgumentNullException"><typeparamref name="T"/> is not nullable and <paramref name="s"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">Parameter <paramref name="s"/> cannot be parsed as <typeparamref name="T"/>.</exception>
-        [return:NotNullIfNotNull("s")]public static T? Parse<T>(this string? s, CultureInfo? culture = null)
+        [return:NotNullIfNotNull(nameof(s))]public static T? Parse<T>(this string? s, CultureInfo? culture = null)
         {
             if (!Parser.TryParse(s, culture, out T? value, out Exception? error))
                 Throw.ArgumentException(Argument.obj, Res.StringExtensionsCannotParseAsType(s!, typeof(T)), error);
@@ -297,7 +297,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>The parsed value. A <see langword="null"/> reference can be returned if <paramref name="s"/> is <see langword="null"/>, and <paramref name="type"/> is a reference or nullable type.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> is <see langword="null"/>, or <paramref name="type"/> is not nullable and <paramref name="s"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">Parameter <paramref name="s"/> cannot be parsed as <paramref name="type"/>.</exception>
-        [return:NotNullIfNotNull("s")]public static object? Parse(this string? s, Type type, CultureInfo? culture = null)
+        [return:NotNullIfNotNull(nameof(s))]public static object? Parse(this string? s, Type type, CultureInfo? culture = null)
         {
             if (!Parser.TryParse(s, type, culture, true, false, out object? value, out Exception? error) || !type.CanAcceptValue(value))
                 Throw.ArgumentException(Argument.obj, Res.StringExtensionsCannotParseAsType(s!, type), error);
@@ -365,7 +365,7 @@ namespace KGySoft.CoreLibraries
         public static bool TryParse(this string? s, Type type, out object? value)
             => Parser.TryParse(s, type, null, true, false, out value, out var _);
 
-        [return: NotNullIfNotNull("s")]internal static object? Parse(this string? s, Type type, bool safeMode)
+        [return: NotNullIfNotNull(nameof(s))]internal static object? Parse(this string? s, Type type, bool safeMode)
         {
             if (!Parser.TryParse(s, type, null, true, safeMode, out object? value, out Exception? error) || !type.CanAcceptValue(value))
                 Throw.ArgumentException(Argument.obj, Res.StringExtensionsCannotParseAsType(s!, type), error);

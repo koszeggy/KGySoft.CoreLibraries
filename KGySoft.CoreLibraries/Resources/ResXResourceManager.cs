@@ -771,11 +771,11 @@ namespace KGySoft.Resources
         }
 #endif
 
-        [return:NotNullIfNotNull("rs")]
+        [return:NotNullIfNotNull(nameof(rs))]
         private static ResXResourceSet? Unwrap(ResourceSet? rs)
-            => rs == null ? null
-                : rs is ResXResourceSet resx ? resx
-                : ((ProxyResourceSet)rs).ResXResourceSet;
+            => rs == null
+                ? null
+                : rs as ResXResourceSet ?? ((ProxyResourceSet)rs).ResXResourceSet;
 
         private static void ReleaseResourceSets(IDictionary resourceSets)
         {
