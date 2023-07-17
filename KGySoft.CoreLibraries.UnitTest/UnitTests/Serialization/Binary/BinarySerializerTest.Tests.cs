@@ -2094,7 +2094,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #if NETCOREAPP
             // ImmutableArray
             object[] array = new object[1];
-            object immutableArray = typeof(ImmutableArray<object>).CreateInstance(new object[] { array });
+            object immutableArray = typeof(ImmutableArray<object>).CreateInstance(array.GetType(), array);
             array[0] = immutableArray;
             referenceObjects[5] = immutableArray;
 

@@ -92,24 +92,6 @@ namespace KGySoft.Reflection
 
         #region For Public Members
 
-        #region CollectionExtensions
-
-        private static MethodInfo? addRangeExtensionMethod;
-        private static IThreadSafeCacheAccessor<Type, MethodAccessor>? methodsCollectionExtensions_AddRange;
-
-        #endregion
-
-        #region ListExtensions
-
-        private static MethodInfo? insertRangeExtensionMethod;
-        private static MethodInfo? removeRangeExtensionMethod;
-        private static MethodInfo? replaceRangeExtensionMethod;
-        private static IThreadSafeCacheAccessor<Type, MethodAccessor>? methodsListExtensions_InsertRange;
-        private static IThreadSafeCacheAccessor<Type, MethodAccessor>? methodsListExtensions_RemoveRange;
-        private static IThreadSafeCacheAccessor<Type, MethodAccessor>? methodsListExtensions_ReplaceRange;
-
-        #endregion
-
         #region ICollection<T>
 
         private static IThreadSafeCacheAccessor<Type, PropertyAccessor>? propertiesICollection_IsReadOnly;
@@ -160,7 +142,7 @@ namespace KGySoft.Reflection
         private static IThreadSafeCacheAccessor<(Type DeclaringType, string MethodName, ITuple ParameterType), MethodAccessor>? methodsByTypes;
         private static IThreadSafeCacheAccessor<(Type DeclaringType, Type T, string MethodName), MethodAccessor>? staticGenericMethodsByName;
         private static IThreadSafeCacheAccessor<(Type DeclaringType, ITuple GenericArguments, ITuple ParameterTypes, string MethodName), MethodAccessor>? staticGenericMethodsByTypes;
-        private static IThreadSafeCacheAccessor<(Type DeclaringType, Type P1, Type? P2), CreateInstanceAccessor>? constructors;
+        private static IThreadSafeCacheAccessor<(Type DeclaringType, ITuple ParameterTypes), CreateInstanceAccessor>? constructors;
         private static IThreadSafeCacheAccessor<(Type DeclaringType, Type? P1, Type? P2), ActionMethodAccessor?>? ctorMethods;
 
         #endregion
@@ -170,74 +152,6 @@ namespace KGySoft.Reflection
         #region Accessor Factories
 
         #region For Public Members
-
-        #region CollectionExtensions
-
-        private static MethodAccessor CollectionExtensions_AddRange(Type genericArgument)
-        {
-            if (methodsCollectionExtensions_AddRange == null)
-            {
-                if (addRangeExtensionMethod == null)
-                    Interlocked.CompareExchange(ref addRangeExtensionMethod, typeof(CollectionExtensions).GetMethod(nameof(CollectionExtensions.AddRange)), null);
-
-                Interlocked.CompareExchange(ref methodsCollectionExtensions_AddRange, 
-                    ThreadSafeCacheFactory.Create<Type, MethodAccessor>(t => MethodAccessor.GetAccessor(addRangeExtensionMethod!.GetGenericMethod(t)), LockFreeCacheOptions.Profile4),
-                    null);
-            }
-
-            return methodsCollectionExtensions_AddRange[genericArgument];
-        }
-
-        #endregion
-
-        #region ListExtensions
-
-        private static MethodAccessor ListExtensions_InsertRange(Type genericArgument)
-        {
-            if (methodsListExtensions_InsertRange == null)
-            {
-                if (insertRangeExtensionMethod == null)
-                    Interlocked.CompareExchange(ref insertRangeExtensionMethod, typeof(ListExtensions).GetMethod(nameof(ListExtensions.InsertRange)), null);
-
-                Interlocked.CompareExchange(ref methodsListExtensions_InsertRange,
-                    ThreadSafeCacheFactory.Create<Type, MethodAccessor>(t => MethodAccessor.GetAccessor(insertRangeExtensionMethod!.GetGenericMethod(t)), LockFreeCacheOptions.Profile4),
-                    null);
-            }
-
-            return methodsListExtensions_InsertRange[genericArgument];
-        }
-
-        private static MethodAccessor ListExtensions_RemoveRange(Type genericArgument)
-        {
-            if (methodsListExtensions_RemoveRange == null)
-            {
-                if (removeRangeExtensionMethod == null)
-                    Interlocked.CompareExchange(ref removeRangeExtensionMethod, typeof(ListExtensions).GetMethod(nameof(ListExtensions.RemoveRange)), null);
-
-                Interlocked.CompareExchange(ref methodsListExtensions_RemoveRange,
-                    ThreadSafeCacheFactory.Create<Type, MethodAccessor>(t => MethodAccessor.GetAccessor(removeRangeExtensionMethod!.GetGenericMethod(t)), LockFreeCacheOptions.Profile4),
-                    null);
-            }
-
-            return methodsListExtensions_RemoveRange[genericArgument];
-        }
-
-        private static MethodAccessor ListExtensions_ReplaceRange(Type genericArgument)
-        {
-            if (methodsListExtensions_ReplaceRange == null)
-            {
-                if (replaceRangeExtensionMethod == null)
-                    Interlocked.CompareExchange(ref replaceRangeExtensionMethod, typeof(ListExtensions).GetMethod(nameof(ListExtensions.ReplaceRange)), null);
-
-                Interlocked.CompareExchange(ref methodsListExtensions_ReplaceRange,
-                    ThreadSafeCacheFactory.Create<Type, MethodAccessor>(t => MethodAccessor.GetAccessor(replaceRangeExtensionMethod!.GetGenericMethod(t)), LockFreeCacheOptions.Profile4),
-                    null);
-            }
-
-            return methodsListExtensions_ReplaceRange[genericArgument];
-        }
-
-        #endregion
 
         #region ICollection<T>
 
@@ -582,32 +496,22 @@ namespace KGySoft.Reflection
             return staticGenericMethodsByTypes[(type, typeArguments, parameterTypes, methodName)];
         }
 
-        private static CreateInstanceAccessor GetConstructor(Type type, object?[] ctorArgs)
+        private static CreateInstanceAccessor GetConstructor(Type type, ITuple parameterTypes)
         {
-            static CreateInstanceAccessor GetCreateInstanceAccessor((Type DeclaringType, Type P1, Type? P2) key)
+            static CreateInstanceAccessor GetCreateInstanceAccessor((Type DeclaringType, ITuple ParameterTypes) key)
             {
                 // Here we accept non public constructors, too. They should be really well-known at least internal members.
                 ConstructorInfo? ci = key.DeclaringType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, 
-                    null, key.P2 == null ? new[] { key.P1 } : new[] { key.P1, key.P2 }, null);
+                    null, key.ParameterTypes.ToTypes(), null);
                 Debug.Assert(ci != null, "Constructor was not found for the specified parameter types");
                 return CreateInstanceAccessor.GetAccessor(ci!);
             }
 
-            // Not cached by constructors parameters, only by ConstructorInfo in MemberAccessor: here we allow public constructors with exact type match only because otherwise there is too much chance to go something wrong
-            if (ctorArgs.Length > 2)
-            {
-                Debug.Fail("Better to create another GetConstructor and a cache with Type[] (as ITuple in the cache) for this case");
-                Debug.Assert(ctorArgs.All(a => a != null), "If there can be null parameters use Reflector instead or obtain the constructor by types manually");
-                ConstructorInfo? ci = type.GetConstructor(BindingFlags.Public | BindingFlags.Instance, null, ctorArgs.Select(a => a!.GetType()).ToArray(), null);
-                Debug.Assert(ci != null, "Public constructor was not found for the specified parameters");
-                return CreateInstanceAccessor.GetAccessor(ci!);
-            }
-
-            Debug.Assert(!ctorArgs.IsNullOrEmpty() && ctorArgs[0] != null, "At least one parameter is expected.");
+            Debug.Assert(parameterTypes.Length > 0, "At least one parameter is expected.");
 
             if (constructors == null)
-                Interlocked.CompareExchange(ref constructors, ThreadSafeCacheFactory.Create<(Type, Type, Type?), CreateInstanceAccessor>(GetCreateInstanceAccessor, LockFreeCacheOptions.Profile128), null);
-            return constructors[(type, ctorArgs[0]!.GetType(), ctorArgs.ElementAtOrDefault(1)?.GetType())];
+                Interlocked.CompareExchange(ref constructors, ThreadSafeCacheFactory.Create<(Type, ITuple), CreateInstanceAccessor>(GetCreateInstanceAccessor, LockFreeCacheOptions.Profile128), null);
+            return constructors[(type, parameterTypes)];
         }
 
         private static ActionMethodAccessor? GetCtorMethod(Type type, object?[] ctorArgs)
@@ -636,15 +540,21 @@ namespace KGySoft.Reflection
 
         #region CollectionExtensions
 
-        internal static void AddRange(this IEnumerable target, Type genericArgument, IEnumerable collection) => CollectionExtensions_AddRange(genericArgument).Invoke(null, target, collection);
+        internal static void AddRange(this IEnumerable target, Type genericArgument, IEnumerable collection)
+            => InvokeMethod(typeof(CollectionExtensions), nameof(CollectionExtensions.AddRange), genericArgument, target, collection);
 
         #endregion
 
         #region ListExtensions
 
-        internal static void InsertRange(this IEnumerable target, Type genericArgument, int index, IEnumerable collection) => ListExtensions_InsertRange(genericArgument).Invoke(null, target, index, collection);
-        internal static void RemoveRange(this IEnumerable collection, Type genericArgument, int index, int count) => ListExtensions_RemoveRange(genericArgument).Invoke(null, collection, index, count);
-        internal static void ReplaceRange(this IEnumerable target, Type genericArgument, int index, int count, IEnumerable collection) => ListExtensions_ReplaceRange(genericArgument).Invoke(null, target, index, count, collection);
+        internal static void InsertRange(this IEnumerable target, Type genericArgument, int index, IEnumerable collection)
+            => typeof(ListExtensions).InvokeMethod(nameof(ListExtensions.InsertRange), genericArgument, target, index, collection);
+
+        internal static void RemoveRange(this IEnumerable collection, Type genericArgument, int index, int count)
+            => typeof(ListExtensions).InvokeMethod(nameof(ListExtensions.RemoveRange), genericArgument, collection, index, count);
+
+        internal static void ReplaceRange(this IEnumerable target, Type genericArgument, int index, int count, IEnumerable collection)
+            => typeof(ListExtensions).InvokeMethod(nameof(ListExtensions.ReplaceRange), genericArgument, target, index, count, collection);
 
         #endregion
 
@@ -1071,11 +981,11 @@ namespace KGySoft.Reflection
         /// For static methods by name and parameter types.
         /// </summary>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        internal static object? InvokeMethod(this Type type, string methodName, Type[] genericArguments, Type[] parameterTypes, params object?[] parameters)
+        internal static object? InvokeMethod(this Type type, string methodName, ITuple genericArguments, ITuple parameterTypes, params object?[] parameters)
         {
-            Debug.Assert(!genericArguments.IsNullOrEmpty(), "For non-generic types use the other overload of InvokeMethod");
-            Debug.Assert(!parameterTypes.IsNullOrEmpty(), "For parameterless methods use the other overload of InvokeMethod");
-            return GetStaticGenericMethodByTypes(type, genericArguments.ToTuple(), parameterTypes.ToTuple(), methodName).Invoke(null, parameters);
+            Debug.Assert(genericArguments.Length > 0, "For non-generic types use the other overload of InvokeMethod");
+            Debug.Assert(parameterTypes.Length > 0, "For parameterless methods use the other overload of InvokeMethod");
+            return GetStaticGenericMethodByTypes(type, genericArguments, parameterTypes, methodName).Invoke(null, parameters);
         }
 
         /// <summary>
@@ -1083,17 +993,39 @@ namespace KGySoft.Reflection
         /// </summary>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static object? InvokeMethod(this Type type, string methodName, Type genericArgument, Type parameterType, params object?[] parameters)
-            => InvokeMethod(type, methodName, new[] { genericArgument }, new[] { parameterType }, parameters);
+            => InvokeMethod(type, methodName, Tuple.Create(genericArgument), Tuple.Create(parameterType), parameters);
 
         /// <summary>
-        /// For constructors with exact parameter types.
+        /// For constructors by exact parameter types.
         /// </summary>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        internal static object CreateInstance(this Type type, params object?[] parameters)
+        internal static object CreateInstance(this Type type, ITuple parameterTypes, params object?[] parameters)
         {
             Debug.Assert(!parameters.IsNullOrEmpty() && parameters[0] != null, "For empty parameters use GetCreateInstanceAccessor(Type), Activator or GetDefaultConstructor instead");
-            return GetConstructor(type, parameters).CreateInstance(parameters);
+            Debug.Assert(parameterTypes.Length == parameters.Length);
+            return GetConstructor(type, parameterTypes).CreateInstance(parameters);
         }
+
+        /// <summary>
+        /// For constructors for exactly one parameter.
+        /// </summary>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        internal static object CreateInstance(this Type type, Type parameterType, object parameter)
+            => CreateInstance(type, Tuple.Create(parameterType), parameter);
+
+        /// <summary>
+        /// For constructors with exactly one non-derived parameter.
+        /// </summary>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        internal static object CreateInstance(this Type type, object parameter)
+            => CreateInstance(type, Tuple.Create(parameter.GetType()), parameter);
+
+        /// <summary>
+        /// For constructors with non-derived parameters.
+        /// </summary>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        internal static object CreateInstance(this Type type, object[] parameters)
+            => CreateInstance(type, parameters.ToTypesTuple(), parameters);
 
         /// <summary>
         /// Invokes a constructor on an already created instance.
@@ -1132,6 +1064,17 @@ namespace KGySoft.Reflection
                 0 => ZeroTuple.Instance, // ValueTuple.Create() would also do it but it involves boxing and thus always creating a new reference that we want to avoid
                 1 => Tuple.Create(array[0]),
                 _ => Tuple.Create(array[0], array[1]),
+            };
+        }
+
+        private static ITuple ToTypesTuple(this object[] array)
+        {
+            Debug.Assert(array.Length is >= 0 and <= 2);
+            return array.Length switch
+            {
+                0 => ZeroTuple.Instance, // ValueTuple.Create() would also do it but it involves boxing and thus always creating a new reference that we want to avoid
+                1 => Tuple.Create(array[0].GetType()),
+                _ => Tuple.Create(array[0].GetType(), array[1].GetType()),
             };
         }
 

@@ -1213,11 +1213,8 @@ namespace KGySoft.Serialization.Binary
                         Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(ArraySection<_>.Offset))!);
                         Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(ArraySection<_>.Length))!);
                     },
-                    CreateArrayBackedCollectionInstanceFromArray = (br, t, a) =>
-                    {
-                        ConstructorInfo ctor = t.GetConstructor(new[] { a.GetType(), Reflector.IntType, Reflector.IntType })!;
-                        return CreateInstanceAccessor.GetAccessor(ctor).CreateInstance(a, Read7BitInt(br), Read7BitInt(br));
-                    }
+                    CreateArrayBackedCollectionInstanceFromArray = (br, t, a)
+                        => t.CreateInstance(new[] { a.GetType(), Reflector.IntType, Reflector.IntType }, a, Read7BitInt(br), Read7BitInt(br)),
                 }
             },
             {
@@ -1378,7 +1375,7 @@ namespace KGySoft.Serialization.Binary
                         return (Array)typeof(Enumerable).InvokeMethod(nameof(Enumerable.ToArray), genericArg, Reflector.IEnumerableGenType.GetGenericType(genericArg), o)!;
                     },
                     CtorArguments = new[] { CollectionCtorArguments.Capacity },
-                    CreateCollectionToPopulateCallback = (t, args) => Reflector.ListGenType.GetGenericType(t.GetGenericArguments()[0]).CreateInstance(args),
+                    CreateCollectionToPopulateCallback = (t, args) => Reflector.ListGenType.GetGenericType(t.GetGenericArguments()[0]).CreateInstance(args!),
                     CreateFinalCollectionCallback = o =>
                     {
                         Type genericArg = o.GetType().GetGenericArguments()[0];
@@ -1399,7 +1396,7 @@ namespace KGySoft.Serialization.Binary
                         return (Array)typeof(Enumerable).InvokeMethod(nameof(Enumerable.ToArray), genericArg, Reflector.IEnumerableGenType.GetGenericType(genericArg), o)!;
                     },
                     CtorArguments = new[] { CollectionCtorArguments.Capacity },
-                    CreateCollectionToPopulateCallback = (t, args) => Reflector.ListGenType.GetGenericType(t.GetGenericArguments()[0]).CreateInstance(args),
+                    CreateCollectionToPopulateCallback = (t, args) => Reflector.ListGenType.GetGenericType(t.GetGenericArguments()[0]).CreateInstance(args!),
                     CreateFinalCollectionCallback = o =>
                     {
                         Accessors.InvokeMethod(o, nameof(List<_>.Reverse), Type.EmptyTypes);
