@@ -17,11 +17,20 @@
 
 using System;
 using System.Collections;
+#if !NET35
+using System.Collections.Concurrent;
+#endif
 using System.Collections.Generic;
+#if NETCOREAPP
+using System.Collections.Immutable;
+#endif
 using System.Collections.Specialized;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
+#if NETCOREAPP
+using System.Linq;
+#endif
 #if !NET35
 using System.Numerics;
 #endif
@@ -32,9 +41,6 @@ using System.Runtime.Intrinsics;
 #endif
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
-#if !NET35
-using System.Collections.Concurrent;
-#endif
 using System.Security;
 using System.Text;
 
@@ -277,6 +283,16 @@ namespace KGySoft.Serialization.Binary
     /// <item><see cref="SortedDictionary{TKey,TValue}"/></item>
     /// <item><see cref="CircularSortedList{TKey,TValue}"/></item>
     /// <item><see cref="ConcurrentDictionary{TKey,TValue}"/> (in .NET Framework 4.0 and above)</item>
+    /// <item><see cref="ImmutableArray{T}"/> (in .NET Core 2.0 and above)</item>
+    /// <item><see cref="ImmutableArray{T}.Builder"/> (in .NET Core 2.0 and above)</item>
+    /// <item><see cref="ImmutableList{T}"/> (in .NET Core 2.0 and above)</item>
+    /// <item><see cref="ImmutableList{T}.Builder"/> (in .NET Core 2.0 and above)</item>
+    /// <item><see cref="ImmutableHashSet{T}"/> (in .NET Core 2.0 and above)</item>
+    /// <item><see cref="ImmutableHashSet{T}.Builder"/> (in .NET Core 2.0 and above)</item>
+    /// <item><see cref="ImmutableSortedSet{T}"/> (in .NET Core 2.0 and above)</item>
+    /// <item><see cref="ImmutableSortedSet{T}.Builder"/> (in .NET Core 2.0 and above)</item>
+    /// <item><see cref="ImmutableQueue{T}"/> (in .NET Core 2.0 and above)</item>
+    /// <item><see cref="ImmutableStack{T}"/> (in .NET Core 2.0 and above)</item>
     /// </list>
     /// <note>
     /// <list type="bullet">
@@ -642,36 +658,40 @@ namespace KGySoft.Serialization.Binary
             Array2D = 11 << 24,
             Array3D = 12 << 24,
 
-            // ..... SIMD vectors: .....
+            // ..... generic fixed-size SIMD vectors: .....
             Vector64 = 13 << 24, // .NET Core 3.0 and above
             Vector128 = 14 << 24, // .NET Core 3.0 and above
             Vector256 = 15 << 24, // .NET Core 3.0 and above
             Vector512 = 16 << 24, // .NET 8.0 and above
 
+            // 17-20: Reserved
+
+            // ..... Immutable collections: .....
+            ImmutableArray = 21 << 24,
+            ImmutableArrayBuilder = 22 << 24,
+            ImmutableList = 23 << 24,
+            ImmutableListBuilder = 24 << 24,
+            ImmutableHashSet = 25 << 24,
+            ImmutableHashSetBuilder = 26 << 24,
+            ImmutableSortedSet = 27 << 24,
+            ImmutableSortedSetBuilder = 28 << 24,
+            ImmutableQueue = 29 << 24,
+            ImmutableStack = 30 << 24,
+
             // TODO Candidates:
-            // ImmutableArray, ImmutableArrayBuilder,
-            // ImmutableList,
-            // ImmutableListBuilder,
-            // ImmutableHashSet
-            // ImmutableHashSetBuilder,
-            // ImmutableSortedSet, ImmutableSortedSetBuilder,
-            // ImmutableQueue
-            // ImmutableQueueBuilder,
-            // ImmutableStack
-            // ImmutableStackBuilder,
             // FrozenSet* // NOTE: special case(s) because FrozenSet is abstract with no available ctor so its internal sealed derived types could be handled just like RuntimeType
 
             // ...... generic dictionaries:
             ExtendedDictionary = 0b01000000 << 24, // serves only as a flag
             // TODO Candidates:
-            // ImmutableDictionary = 37 << 8,
-            // ImmutableSortedDictionary = 38 << 8,
+            // ImmutableDictionary = 65 << 8,
+            // ImmutableSortedDictionary = 66 << 8,
             // ImmutableDictionaryBuilder,
             // ImmutableSortedDictionaryBuilder,
             // FrozenDictionary* // NOTE: special case(s) because FrozenDictionary is abstract with no available ctor so its internal sealed derived types could be handled just like RuntimeType
 
             // ----- flags: -----
-            NullableExtendedCollection = 1u << 31, // Only for extended collections. For non-extended ones (KeyValuePair, DictionaryEntry) nullable types are separate items for compatibility reasons
+            NullableExtendedCollection = 1u << 31, // Only for extended collections. For non-extended ones (KeyValuePair, DictionaryEntry) nullable types are separate items due to compatibility reasons
         }
 
         /// <summary>
@@ -902,7 +922,7 @@ namespace KGySoft.Serialization.Binary
                 DataTypes.LinkedList, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric,
-                    SpecificAddMethod = nameof(LinkedList<_>.AddLast)
+                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(LinkedList<_>.AddLast), new[] { t.GetGenericArguments()[0] })!),
                 }
             },
             {
@@ -914,7 +934,7 @@ namespace KGySoft.Serialization.Binary
 #else
                     CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer },
 #endif
-                    SpecificAddMethod = nameof(HashSet<_>.Add) // because faster than via ICollection<T>.Add
+                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(HashSet<_>.Add))!),
                 }
             },
             {
@@ -922,7 +942,7 @@ namespace KGySoft.Serialization.Binary
                 {
                     Info = CollectionInfo.IsGeneric,
                     CtorArguments = new[] { CollectionCtorArguments.Capacity },
-                    SpecificAddMethod = nameof(Queue<_>.Enqueue)
+                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(Queue<_>.Enqueue))!),
                 }
             },
             {
@@ -930,7 +950,7 @@ namespace KGySoft.Serialization.Binary
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.ReverseElements,
                     CtorArguments = new[] { CollectionCtorArguments.Capacity },
-                    SpecificAddMethod = nameof(Stack<_>.Push)
+                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(Stack<_>.Push))!),
                 }
             },
             {
@@ -945,7 +965,7 @@ namespace KGySoft.Serialization.Binary
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.HasEqualityComparer | CollectionInfo.UsesComparerHelper | CollectionInfo.HasBitwiseAndHash,
                     CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer, CollectionCtorArguments.HashingStrategy },
-                    SpecificAddMethod = nameof(ThreadSafeHashSet<_>.Add), // because faster than via ICollection<T>.Add
+                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(ThreadSafeHashSet<_>.Add))!),
                     WriteSpecificPropertiesCallback = (bw, o) =>
                     {
                         bw.Write((bool)Accessors.GetPropertyValue(o, nameof(ThreadSafeHashSet<_>.PreserveMergedItems))!);
@@ -964,28 +984,28 @@ namespace KGySoft.Serialization.Binary
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.HasComparer,
                     CtorArguments = new[] { CollectionCtorArguments.Comparer },
-                    SpecificAddMethod = nameof(SortedSet<_>.Add)
+                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(SortedSet<_>.Add))!),
                 }
             },
             {
                 DataTypes.ConcurrentBag, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric,
-                    SpecificAddMethod = nameof(ConcurrentBag<_>.Add)
+                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(ConcurrentBag<_>.Add))!),
                 }
             },
             {
                 DataTypes.ConcurrentQueue, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric,
-                    SpecificAddMethod = nameof(ConcurrentQueue<_>.Enqueue)
+                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(ConcurrentQueue<_>.Enqueue))!),
                 }
             },
             {
                 DataTypes.ConcurrentStack, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.ReverseElements,
-                    SpecificAddMethod = nameof(ConcurrentStack<_>.Push)
+                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(ConcurrentStack<_>.Push))!),
                 }
             },
 
@@ -1006,7 +1026,7 @@ namespace KGySoft.Serialization.Binary
                 {
                     Info = CollectionInfo.None,
                     CtorArguments = new[] { CollectionCtorArguments.Capacity },
-                    SpecificAddMethod = nameof(Queue.Enqueue)
+                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(Queue.Enqueue))!),
                 }
             },
             {
@@ -1014,7 +1034,7 @@ namespace KGySoft.Serialization.Binary
                 {
                     Info = CollectionInfo.ReverseElements,
                     CtorArguments = new[] { CollectionCtorArguments.Capacity },
-                    SpecificAddMethod = nameof(Stack.Push)
+                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(Stack.Push))!),
                 }
             },
             { DataTypes.StringCollection, new CollectionSerializationInfo { Info = CollectionInfo.HasStringItemsOrKeys } },
@@ -1138,7 +1158,7 @@ namespace KGySoft.Serialization.Binary
                 DataTypes.StringDictionary, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsDictionary | CollectionInfo.HasStringItemsOrKeys,
-                    SpecificAddMethod = nameof(StringDictionary.Add)
+                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(StringDictionary.Add))!),
                 }
             },
             {
@@ -1249,9 +1269,145 @@ namespace KGySoft.Serialization.Binary
             { DataTypes.Vector128, CollectionSerializationInfo.FixedSizeGenericStruct },
             { DataTypes.Vector256, CollectionSerializationInfo.FixedSizeGenericStruct },
 #endif
-
 #if NET8_0_OR_GREATER
             { DataTypes.Vector512, CollectionSerializationInfo.FixedSizeGenericStruct },
+#endif
+
+#if NETCOREAPP
+            {
+                // Trick: Normally we should use a builder for ImmutableArray but as there is an internal constructor that can wrap a pre-created array we can use the BackingArray approach.
+                //        This makes also possible to have circular references in an ImmutableArray, which is not possible by a builder that replaces the reference on every update.
+                DataTypes.ImmutableArray, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.BackingArrayCanBeNull,
+                    GetBackingArray = o => (bool)Accessors.GetPropertyValue(o, nameof(ImmutableArray<_>.IsDefault))! ? null : (Array)typeof(Enumerable).InvokeMethod(nameof(Enumerable.ToArray), o.GetType().GetGenericArguments()[0], o)!,
+                    CreateArrayBackedCollectionInstanceFromArray = (_, t, a) => t.CreateInstance(a),
+                }
+            },
+            {
+                DataTypes.ImmutableArrayBuilder, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.HasCapacity,
+                    CtorArguments = new[] { CollectionCtorArguments.Capacity },
+                    CreateCollectionToPopulateCallback = (t, args)
+                        => typeof(ImmutableArray).InvokeMethod(nameof(ImmutableArray.CreateBuilder), t.GetGenericArguments()[0], Reflector.IntType, args)!,
+                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(ImmutableArray<_>.Builder.Add))!),
+                }
+            },
+            {
+                DataTypes.ImmutableList, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric,
+                    CreateCollectionToPopulateCallback = (t, _)
+                        => typeof(ImmutableList).InvokeMethod(nameof(ImmutableList.CreateBuilder), t.GetGenericArguments()[0])!,
+                    CreateFinalCollectionCallback = o => Accessors.InvokeMethod(o, nameof(ImmutableList<_>.Builder.ToImmutable))!,
+                }
+            },
+            {
+                DataTypes.ImmutableListBuilder, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric,
+                    CreateCollectionToPopulateCallback = (t, _)
+                        => typeof(ImmutableList).InvokeMethod(nameof(ImmutableList.CreateBuilder), t.GetGenericArguments()[0])!,
+                }
+            },
+            {
+                DataTypes.ImmutableHashSet, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.HasEqualityComparer,
+                    CtorArguments = new[] { CollectionCtorArguments.Comparer },
+                    CreateCollectionToPopulateCallback = (t, args) =>
+                    {
+                        Type genericArg = t.GetGenericArguments()[0];
+                        return typeof(ImmutableHashSet).InvokeMethod(nameof(ImmutableHashSet.CreateBuilder), genericArg, typeof(IEqualityComparer<>).GetGenericType(genericArg), args)!;
+                    },
+                    CreateFinalCollectionCallback = o => Accessors.InvokeMethod(o, nameof(ImmutableHashSet<_>.Builder.ToImmutable))!,
+                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(ImmutableHashSet<_>.Builder.Add))!),
+                }
+            },
+            {
+                DataTypes.ImmutableHashSetBuilder, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.HasEqualityComparer,
+                    CtorArguments = new[] { CollectionCtorArguments.Comparer },
+                    CreateCollectionToPopulateCallback = (t, args) =>
+                    {
+                        Type genericArg = t.GetGenericArguments()[0];
+                        return typeof(ImmutableHashSet).InvokeMethod(nameof(ImmutableHashSet.CreateBuilder), genericArg, typeof(IEqualityComparer<>).GetGenericType(genericArg), args)!;
+                    },
+                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(ImmutableHashSet<_>.Builder.Add))!),
+                }
+            },
+            {
+                DataTypes.ImmutableSortedSet, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.HasComparer,
+                    CtorArguments = new[] { CollectionCtorArguments.Comparer },
+                    CreateCollectionToPopulateCallback = (t, args) =>
+                    {
+                        Type genericArg = t.GetGenericArguments()[0];
+                        return typeof(ImmutableSortedSet).InvokeMethod(nameof(ImmutableSortedSet.CreateBuilder), genericArg, typeof(IComparer<>).GetGenericType(genericArg), args)!;
+                    },
+                    CreateFinalCollectionCallback = o => Accessors.InvokeMethod(o, nameof(ImmutableSortedSet<_>.Builder.ToImmutable))!,
+                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(ImmutableSortedSet<_>.Builder.Add))!),
+                }
+            },
+            {
+                DataTypes.ImmutableSortedSetBuilder, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.HasComparer,
+                    CtorArguments = new[] { CollectionCtorArguments.Comparer },
+                    CreateCollectionToPopulateCallback = (t, args) =>
+                    {
+                        Type genericArg = t.GetGenericArguments()[0];
+                        return typeof(ImmutableSortedSet).InvokeMethod(nameof(ImmutableSortedSet.CreateBuilder), genericArg, typeof(IComparer<>).GetGenericType(genericArg), args)!;
+                    },
+                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(ImmutableSortedSet<_>.Builder.Add))!),
+                }
+            },
+            {
+                // Trick: Serializing as array (because ImmutableQueue has no Count and we want to avoid double enumeration of the queue)
+                //        but deserializing from List (because CreateArrayBackedCollectionInstanceFromArray would allow resolving circular references
+                //        to the backing array itself, which should not be allowed as ImmutableQueue does not actually wrap the array)
+                DataTypes.ImmutableQueue, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric,
+                    GetBackingArray = o =>
+                    {
+                        Type genericArg = o.GetType().GetGenericArguments()[0];
+                        return (Array)typeof(Enumerable).InvokeMethod(nameof(Enumerable.ToArray), genericArg, Reflector.IEnumerableGenType.GetGenericType(genericArg), o)!;
+                    },
+                    CtorArguments = new[] { CollectionCtorArguments.Capacity },
+                    CreateCollectionToPopulateCallback = (t, args) => Reflector.ListGenType.GetGenericType(t.GetGenericArguments()[0]).CreateInstance(args),
+                    CreateFinalCollectionCallback = o =>
+                    {
+                        Type genericArg = o.GetType().GetGenericArguments()[0];
+                        return typeof(ImmutableQueue).InvokeMethod(nameof(ImmutableQueue.CreateRange), genericArg, Reflector.IEnumerableGenType.GetGenericType(genericArg), o)!;
+                    },
+                }
+            },
+            {
+                // Trick: Serializing as array (because ImmutableStack has no Count and we want to avoid double enumeration of the stack)
+                //        but deserializing from List after reserving elements (because CreateArrayBackedCollectionInstanceFromArray would allow resolving circular references
+                //        to the backing array itself, which should not be allowed as ImmutableStack does not actually wrap the array)
+                DataTypes.ImmutableStack, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric, // | CollectionInfo.ReverseElements - would be ignored here because serialized as an array. We reverse the elements on deserialization instead.
+                    GetBackingArray = o =>
+                    {
+                        Type genericArg = o.GetType().GetGenericArguments()[0];
+                        return (Array)typeof(Enumerable).InvokeMethod(nameof(Enumerable.ToArray), genericArg, Reflector.IEnumerableGenType.GetGenericType(genericArg), o)!;
+                    },
+                    CtorArguments = new[] { CollectionCtorArguments.Capacity },
+                    CreateCollectionToPopulateCallback = (t, args) => Reflector.ListGenType.GetGenericType(t.GetGenericArguments()[0]).CreateInstance(args),
+                    CreateFinalCollectionCallback = o =>
+                    {
+                        Accessors.InvokeMethod(o, nameof(List<_>.Reverse), Type.EmptyTypes);
+                        Type genericArg = o.GetType().GetGenericArguments()[0];
+                        return typeof(ImmutableStack).InvokeMethod(nameof(ImmutableStack.CreateRange), genericArg, Reflector.IEnumerableGenType.GetGenericType(genericArg), o)!;
+                    },
+                }
+            },
 #endif
 
             #endregion
@@ -1420,6 +1576,19 @@ namespace KGySoft.Serialization.Binary
             { typeof(Vector512<>), DataTypes.Vector512 },
 #endif
 
+            // Immutable collections
+#if NETCOREAPP
+            { typeof(ImmutableArray<>), DataTypes.ImmutableArray },
+            { typeof(ImmutableArray<>.Builder), DataTypes.ImmutableArrayBuilder },
+            { typeof(ImmutableList<>), DataTypes.ImmutableList },
+            { typeof(ImmutableList<>.Builder), DataTypes.ImmutableListBuilder },
+            { typeof(ImmutableHashSet<>), DataTypes.ImmutableHashSet },
+            { typeof(ImmutableHashSet<>.Builder), DataTypes.ImmutableHashSetBuilder },
+            { typeof(ImmutableSortedSet<>), DataTypes.ImmutableSortedSet },
+            { typeof(ImmutableSortedSet<>.Builder), DataTypes.ImmutableSortedSetBuilder },
+            { typeof(ImmutableQueue<>), DataTypes.ImmutableQueue },
+            { typeof(ImmutableStack<>), DataTypes.ImmutableStack },
+#endif
         };
 
         #endregion
@@ -1512,7 +1681,6 @@ namespace KGySoft.Serialization.Binary
         private static DataTypes GetCollectionOrElementType(DataTypes dt) => (dt & DataTypes.CollectionTypesAll) != DataTypes.Null ? dt & DataTypes.CollectionTypesAll : dt & ~DataTypes.CollectionTypesAll;
         private static bool IsElementType(DataTypes dt) => (dt & ~DataTypes.CollectionTypesAll) != DataTypes.Null;
         private static bool IsCollectionType(DataTypes dt) => (dt & DataTypes.CollectionTypesAll) != DataTypes.Null;
-        private static bool IsNullable(DataTypes dt) => (dt & (DataTypes.Nullable | DataTypes.NullableExtendedCollection)) != DataTypes.Null || GetCollectionDataType(dt) is DataTypes.DictionaryEntryNullable or DataTypes.KeyValuePairNullable;
         private static bool IsCompressible(DataTypes dt) => (uint)((dt & DataTypes.SimpleTypesLow) - DataTypes.Int16) <= DataTypes.UIntPtr - DataTypes.Int16;
         private static bool IsCompressed(DataTypes dt) => (dt & DataTypes.Store7BitEncoded) != DataTypes.Null;
         private static bool IsEnum(DataTypes dt) => (dt & DataTypes.Enum) != DataTypes.Null;
@@ -1525,6 +1693,10 @@ namespace KGySoft.Serialization.Binary
         private static bool IsImpureType(DataTypes dt) => IsEnum(dt) || IsImpureTypeButEnum(dt);
         private static bool IsExtended(DataTypes dt) => (dt & DataTypes.Extended) != DataTypes.Null;
         private static bool IsTuple(DataTypes dt) => GetUnderlyingCollectionDataType(dt) is >= DataTypes.Tuple1 and <= DataTypes.Tuple8 or >= DataTypes.ValueTuple1 and <= DataTypes.ValueTuple8;
+        
+        private static bool IsNullable(DataTypes dt) => IsCollectionType(dt)
+            ? (dt & DataTypes.NullableExtendedCollection) != DataTypes.Null || GetCollectionDataType(dt) is DataTypes.DictionaryEntryNullable or DataTypes.KeyValuePairNullable
+            : (dt & DataTypes.Nullable) != DataTypes.Null;
 
         private static bool HasNonGenericItemOrKey(DataTypes dt) => GetUnderlyingCollectionDataType(dt) is DataTypes.StringKeyedDictionary
             or >= DataTypes.ArrayList and <= DataTypes.StringCollection

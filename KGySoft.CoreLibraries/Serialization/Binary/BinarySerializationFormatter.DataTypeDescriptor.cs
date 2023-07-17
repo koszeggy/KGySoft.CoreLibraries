@@ -21,6 +21,9 @@ using System.Collections;
 using System.Collections.Concurrent;
 #endif
 using System.Collections.Generic;
+#if NETCOREAPP
+using System.Collections.Immutable;
+#endif
 using System.Collections.Specialized;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
@@ -80,7 +83,7 @@ namespace KGySoft.Serialization.Binary
             internal bool IsSingleElement => CollectionSerializationInfo.IsSingleElement;
             internal bool IsStrongBox => CollectionDataType is DataTypes.StrongBox;
             internal bool IsNullable { get; private set; }
-            internal bool HasBackingArray => CollectionSerializationInfo.GetBackingArray != null;
+            internal bool HasBackingArray => CollectionSerializationInfo.CreateArrayBackedCollectionInstanceFromArray != null;
             internal bool HasNullableBackingArray => CollectionSerializationInfo.HasNullableBackingArray;
             internal bool IsTuple => UnderlyingCollectionDataType is >= DataTypes.Tuple1 and <= DataTypes.Tuple8 or >= DataTypes.ValueTuple1 and <= DataTypes.ValueTuple8;
             internal bool CreateResultFromByteArray => CollectionSerializationInfo.CreateResultFromByteArray;
@@ -725,6 +728,41 @@ namespace KGySoft.Serialization.Binary
                         return typeof(Vector512<>);
 #else
                     case DataTypes.Vector512:
+                        return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationCollectionPlatformNotSupported(DataTypeToString(collectionDataType)));
+#endif
+
+#if NETCOREAPP
+                    case DataTypes.ImmutableArray:
+                        return typeof(ImmutableArray<>);
+                    case DataTypes.ImmutableArrayBuilder:
+                        return typeof(ImmutableArray<>.Builder);
+                    case DataTypes.ImmutableList:
+                        return typeof(ImmutableList<>);
+                    case DataTypes.ImmutableListBuilder:
+                        return typeof(ImmutableList<>.Builder);
+                    case DataTypes.ImmutableHashSet:
+                        return typeof(ImmutableHashSet<>);
+                    case DataTypes.ImmutableHashSetBuilder:
+                        return typeof(ImmutableHashSet<>.Builder);
+                    case DataTypes.ImmutableSortedSet:
+                        return typeof(ImmutableSortedSet<>);
+                    case DataTypes.ImmutableSortedSetBuilder:
+                        return typeof(ImmutableSortedSet<>.Builder);
+                    case DataTypes.ImmutableQueue:
+                        return typeof(ImmutableQueue<>);
+                    case DataTypes.ImmutableStack:
+                        return typeof(ImmutableStack<>);
+#else
+                    case DataTypes.ImmutableArray:
+                    case DataTypes.ImmutableArrayBuilder:
+                    case DataTypes.ImmutableList:
+                    case DataTypes.ImmutableListBuilder:
+                    case DataTypes.ImmutableHashSet:
+                    case DataTypes.ImmutableHashSetBuilder:
+                    case DataTypes.ImmutableSortedSet:
+                    case DataTypes.ImmutableSortedSetBuilder:
+                    case DataTypes.ImmutableQueue:
+                    case DataTypes.ImmutableStack:
                         return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationCollectionPlatformNotSupported(DataTypeToString(collectionDataType)));
 #endif
 

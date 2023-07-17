@@ -1218,7 +1218,7 @@ namespace KGySoft.Serialization.Binary
 
                 // Unlike in CreateArray we always use a new object as a proxy here because the array is not the final object
                 // and if the builder returns a real array its reference could mean both the final object and its backing array.
-                // CanHaveRecursion expected to return false if the backing array is just used to create the final object but does it not contain the array (ie if can be an object[] it must be an actual backing array in the result)
+                // CanHaveRecursion is expected to return false if the backing array is just used to create the final object but does it not wrap the array (ie if can be an object[] it must be an actual backing array in the result)
                 bool trackUsages = addToCache && descriptor.CanHaveRecursion;
                 object? resultProxy = null;
                 UsageReferences? usages = null;
@@ -1249,9 +1249,8 @@ namespace KGySoft.Serialization.Binary
                 }
 
                 // creating the actual result
-                Func<BinaryReader, Type, Array, object>? callback = serializationInfo[descriptor.UnderlyingCollectionDataType].CreateArrayBackedCollectionInstanceFromArray;
-                CreateInstanceAccessor? accessor = callback == null ? CreateInstanceAccessor.GetAccessor(type.GetConstructor(new[] { backingArray.GetType() })!) : null;
-                result = callback?.Invoke(br, type, backingArray) ?? accessor!.CreateInstance(backingArray);
+                Func<BinaryReader, Type, Array, object> callback = serializationInfo[descriptor.UnderlyingCollectionDataType].CreateArrayBackedCollectionInstanceFromArray!;
+                result = callback.Invoke(br, type, backingArray);
 
                 // some post administration if the result can recursively contain itself
                 if (trackUsages)
@@ -1273,76 +1272,89 @@ namespace KGySoft.Serialization.Binary
             [SecurityCritical]
             private object CreateCollection(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor)
             {
-                if (!descriptor.IsSingleElement && !Reflector.IEnumerableType.IsAssignableFrom(descriptor.Type))
-                    Throw.SerializationException(Res.BinarySerializationIEnumerableExpected(descriptor.Type!));
+                Type type = descriptor.GetTypeToCreate();
+                if (!descriptor.IsSingleElement && !Reflector.IEnumerableType.IsAssignableFrom(type))
+                    Throw.SerializationException(Res.BinarySerializationIEnumerableExpected(type!));
 
                 DataTypes dataType = descriptor.CollectionDataType;
                 CollectionSerializationInfo serInfo = serializationInfo[dataType];
-                object result = serInfo.InitializeCollection(br, addToCache, descriptor, this, SafeMode, out int count);
+                object result = serInfo.InitializeCollection(br, addToCache, descriptor, this, SafeMode, out int count); // TODO: out int id if a proxy will be legally replaceable once
                 if (serInfo.IsSingleElement)
                 {
                     if (descriptor.IsStrongBox)
-                        SetField(descriptor.Type!.GetField(nameof(StrongBox<_>.Value)), result, ReadElement(br, descriptor.GetElementDescriptor()));
+                        SetField(descriptor.Type!.GetField(nameof(StrongBox<_>.Value))!, result, ReadElement(br, descriptor.GetElementDescriptor()));
                     else
                     {
                         object? key = ReadElement(br, descriptor.GetKeyDescriptor());
                         object? value = ReadElement(br, descriptor.GetValueDescriptor());
                         SetKeyValue(result, key, value);
                     }
+
+                    return result;
                 }
-                else if (result is IEnumerable collection)
+
+                if (result is not IEnumerable collection)
+                    return Throw.InternalError<object>($"Not an IEnumerable: {result.GetType()}");
+
+                // Unlike in CreateArrayBackedCollection we can assume that the final result never can actually contain the temp collection
+                // so we can use the builder as a proxy. This is needed only if we use a proxy builder so not the final result is created.
+                bool trackUsages = addToCache && result.GetType() != descriptor.GetTypeToCreate() && descriptor.CanHaveRecursion;
+                UsageReferences? usages = null;
+                object resultProxy = collection;
+                if (trackUsages)
+                    ObjectsBeingDeserialized.Add(resultProxy, usages = new UsageReferences());
+
+                MethodAccessor? addMethod = serInfo.GetSpecificAddMethod?.Invoke(result.GetType()); // result.GetType because of possible proxy builder
+                if (descriptor.IsDictionary)
                 {
-                    MethodAccessor? addMethod = serInfo.SpecificAddMethod == null ? null : serInfo.GetAddMethod(descriptor);
-                    if (descriptor.IsDictionary)
+                    for (int i = 0; i < count; i++)
                     {
-                        for (int i = 0; i < count; i++)
+
+                        object? key = ReadElement(br, descriptor.GetKeyDescriptor());
+                        object? value = ReadElement(br, descriptor.GetValueDescriptor());
+
+                        if (addMethod != null)
                         {
-
-                            object? key = ReadElement(br, descriptor.GetKeyDescriptor());
-                            object? value = ReadElement(br, descriptor.GetValueDescriptor());
-
-                            if (addMethod != null)
-                            {
-                                AddDictionaryElement(collection, addMethod, key, value);
-                                continue;
-                            }
+                            AddDictionaryElement(collection, addMethod, key, value);
+                            continue;
+                        }
 
 #if NET35
                             if (value != null || !descriptor.IsGenericDictionary)
 #endif
-                            {
-                                AddDictionaryElement((IDictionary)collection, key, value);
-                                continue;
-                            }
+                        {
+                            AddDictionaryElement((IDictionary)collection, key, value);
+                            continue;
+                        }
 #if NET35
                             // generic dictionary with null value: calling generic Add because non-generic one may fail in .NET Runtime 2.x
                             addMethod = serInfo.GetAddMethod(descriptor);
                             AddDictionaryElement(collection, addMethod, key, null);
                             continue;
 #endif
-                        }
                     }
-                    else
+                }
+                else
+                {
+
+                    for (int i = 0; i < count; i++)
                     {
-
-                        for (int i = 0; i < count; i++)
+                        object? element = ReadElement(br, descriptor.GetElementDescriptor());
+                        if (addMethod != null)
                         {
-                            object? element = ReadElement(br, descriptor.GetElementDescriptor());
-                            if (addMethod != null)
-                            {
-                                AddCollectionElement(collection, addMethod, element);
-                                continue;
-                            }
+                            AddCollectionElement(collection, descriptor.UnderlyingCollectionDataType, addMethod, element);
+                            continue;
+                        }
 
-                            if (collection is IList list)
-                            {
+                        if (collection is IList list)
+                        {
 #if NET35
                             if (element != null || !descriptor.IsGenericCollection)
 #endif
-                                {
-                                    AddListElement(list, element);
-                                    continue;
-                                }
+                            {
+                                AddListElement(list, element);
+                                continue;
+                            }
 
 #if NET35
                             // generic collection with null value: calling generic Add because non-generic one may fail in .NET Runtime 2.x
@@ -1350,15 +1362,28 @@ namespace KGySoft.Serialization.Binary
                             AddCollectionElement(collection, addMethod, null);
                             continue;
 #endif
-                            }
-
-                            Debug.Fail($"Define an Add method for type {descriptor.Type} for better performance");
-                            collection.TryAdd(element, false);
                         }
+
+                        Debug.Fail($"Define an Add method for type {descriptor.Type} for better performance");
+                        collection.TryAdd(element, false);
                     }
                 }
 
-                return descriptor.IsReadOnly ? descriptor.GetAsReadOnly(result) : result;
+                // NOTE: As the possible proxy builder is never part of the final result, we do not allow circular references if the result was built by a proxy
+                //       so tracking usages is just to detect this situation here. As a contrast, in CreateArrayBackedCollection we can replace the builder
+                //       to the final array because the array is wrapped by the actual result in that case.
+                result = serInfo.GetFinalCollection(result, descriptor);
+
+                // check if we have non-allowed circular reference it ourselves (only if we use a proxy for creating the result)
+                if (trackUsages)
+                {
+                    if (usages!.Count > 0)
+                        Throw.SerializationException(Res.BinarySerializationCircularBuilderReferenceCollection(type));
+
+                    ObjectsBeingDeserialized.Remove(resultProxy);
+                }
+
+                return result;
             }
 
             [SecurityCritical]
@@ -1989,7 +2014,7 @@ namespace KGySoft.Serialization.Binary
                 trackedUsages.Add(new ListUsage(list, index));
             }
 
-            private void AddCollectionElement([NoEnumeration]IEnumerable collection, MethodAccessor addMethod, object? value)
+            private void AddCollectionElement([NoEnumeration]IEnumerable collection, DataTypes collectionDataType, MethodAccessor addMethod, object? value)
             {
                 UsageReferences? trackedUsages = value == null ? null : objectsBeingDeserialized?.GetValueOrDefault(value);
                 if (trackedUsages == null)
@@ -2001,7 +2026,7 @@ namespace KGySoft.Serialization.Binary
                 Type type = collection.GetType();
 
                 // LinkedList: adding a placeholder node that can be replaced later
-                if (type.IsGenericTypeOf(typeof(LinkedList<>)))
+                if (collectionDataType == DataTypes.LinkedList)
                 {
                     object node = Reflector.CreateInstance(typeof(LinkedListNode<>), new[] { type.GetGenericArguments()[0] }, GetPlaceholderValue(value, collection));
                     Reflector.InvokeMethod(collection, nameof(LinkedList<_>.AddLast), node);
@@ -2012,7 +2037,7 @@ namespace KGySoft.Serialization.Binary
                 // Any other generic ICollection: supposing that collection is unordered
                 if (type.IsImplementationOfGenericType(Reflector.ICollectionGenType)
 #if !NET35
-                    || type.IsGenericTypeOf(typeof(ConcurrentBag<>))
+                    || collectionDataType == DataTypes.ConcurrentBag
 #endif
                 )
                 {
@@ -2020,7 +2045,7 @@ namespace KGySoft.Serialization.Binary
                     return;
                 }
 
-                // Adding if item is compatible, cannot be replaced
+                // Neither ICollection nor has specific Add method: adding if item is compatible, its reference cannot be replaced anymore
                 if (!addMethod.ParameterTypes[0].CanAcceptValue(value))
                     Throw.SerializationException(Res.BinarySerializationCircularIObjectReferenceCollection(type));
 

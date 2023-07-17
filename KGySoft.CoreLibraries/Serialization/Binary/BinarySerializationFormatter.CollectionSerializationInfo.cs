@@ -72,8 +72,6 @@ namespace KGySoft.Serialization.Binary
             /// </summary>
             private IThreadSafeCacheAccessor<Type, CreateInstanceAccessor>? ctorCache;
 
-            private IThreadSafeCacheAccessor<Type, MethodAccessor>? addMethodCache;
-
             #endregion
 
             #endregion
@@ -86,19 +84,20 @@ namespace KGySoft.Serialization.Binary
 
             /// <summary>
             /// Specifies the constructor arguments to be used. Order matters!
+            /// Can be used also to specify the arguments for <see cref="CreateCollectionToPopulateCallback"/>.
             /// </summary>
             internal CollectionCtorArguments[]? CtorArguments { private get; set; }
 
             /// <summary>
             /// Should be specified only when target collection is not <see cref="IList"/>, <see cref="IDictionary"/> or <see cref="ICollection{T}"/> implementation,
-            /// or when defining it results faster access than resolving the generic Add method for each access. Can refer to a generic method definition.
+            /// or when defining it results faster access than resolving the generic Add method for each access.
             /// </summary>
-            internal string? SpecificAddMethod { get; set; }
+            internal Func<Type, MethodAccessor>? GetSpecificAddMethod { get; set; }
 
             /// <summary>
             /// Should be specified if the collection is a value type and it has a publicly exposed backing array that can have more elements than the wrapper type (eg. ArraySegment),
             /// or, if it does not expose or wrap any array but it can be represented as a (fixed size) array (eg. Vector128).
-            /// If the array is not exposed, then it must not contain any direct circular reference to the object itself because it makes proper deserialization possible (eg. object element type must not be supported by the collection)
+            /// If the the collection does not actually wrap the array, then it must not contain any direct circular reference to the object itself because it makes proper deserialization impossible (eg. object element type must not be supported by the collection)
             /// </summary>
             internal Func<object, Array?>? GetBackingArray { get; set; }
 
@@ -117,9 +116,21 @@ namespace KGySoft.Serialization.Binary
             internal Action<BinaryReader, object>? RestoreSpecificPropertiesCallback { get; set; }
 
             /// <summary>
-            /// Should be specified for an array backed collection if specific properties were written by <see cref="WriteSpecificPropertiesCallback"/>.
+            /// Should be specified to instantiate an array backed collection. Should also read specific properties written by <see cref="WriteSpecificPropertiesCallback"/>.
             /// </summary>
             internal Func<BinaryReader, Type, Array, object>? CreateArrayBackedCollectionInstanceFromArray { get; set; }
+
+            /// <summary>
+            /// Gets a delegate that can instantiate the (possibly proxy) collection instance to populate. The parameters depend on <see cref="CtorArguments"/>.
+            /// If this is not the final instance the <see cref="CreateFinalCollectionCallback"/> should be also set.
+            /// </summary>
+            internal Func<Type, object?[], object>? CreateCollectionToPopulateCallback { get; set; }
+
+            /// <summary>
+            /// If <see cref="CreateCollectionToPopulateCallback"/> returns a proxy type, then this delegate can return the final result from the builder collection.
+            /// NOTE: Using this property may prevent deserialization of circular references.
+            /// </summary>
+            internal Func<object, object>? CreateFinalCollectionCallback { get; set; }
 
 #if !NET35
             [SuppressMessage("ReSharper", "MemberCanBePrivate.Local", Justification = "For some targets it is needed to be internal")] 
@@ -145,7 +156,7 @@ namespace KGySoft.Serialization.Binary
             private bool HasCapacity => (Info & CollectionInfo.HasCapacity) == CollectionInfo.HasCapacity;
             private bool HasEqualityComparer => (Info & CollectionInfo.HasEqualityComparer) == CollectionInfo.HasEqualityComparer;
             private bool HasStringSegmentComparer => (Info & CollectionInfo.HasStringSegmentComparer) == CollectionInfo.HasStringSegmentComparer;
-            private bool HasAnyComparer => HasEqualityComparer || HasStringSegmentComparer || (Info & (CollectionInfo.HasComparer)) == CollectionInfo.HasComparer;
+            private bool HasAnyComparer => (Info & (CollectionInfo.HasComparer | CollectionInfo.HasEqualityComparer | CollectionInfo.HasStringSegmentComparer)) != CollectionInfo.None;
             private bool HasCaseInsensitivity => (Info & CollectionInfo.HasCaseInsensitivity) == CollectionInfo.HasCaseInsensitivity;
             private bool HasReadOnly => (Info & CollectionInfo.HasReadOnly) == CollectionInfo.HasReadOnly;
             private bool UsesComparerHelper => (Info & CollectionInfo.UsesComparerHelper) == CollectionInfo.UsesComparerHelper;
@@ -192,11 +203,12 @@ namespace KGySoft.Serialization.Binary
             /// <summary>
             /// Writes specific properties of a collection that are needed for deserialization
             /// </summary>
+            /// <returns>true if the whole write is finished (eg. default instance); otherwise, false</returns>
             [SecurityCritical]
-            internal void WriteSpecificProperties(BinaryWriter bw, [NoEnumeration]IEnumerable collection, SerializationManager manager)
+            internal bool WriteSpecificProperties(BinaryWriter bw, [NoEnumeration]IEnumerable collection, SerializationManager manager)
             {
                 if (IsSingleElement)
-                    return;
+                    return false;
 
                 // 1.) Count
                 Write7BitInt(bw, collection.Count());
@@ -244,11 +256,14 @@ namespace KGySoft.Serialization.Binary
 
                 // 7.) Any custom properties
                 WriteSpecificPropertiesCallback?.Invoke(bw, collection);
+
+                return false;
             }
 
             /// <summary>
             /// Creates collection and reads all serialized specific properties that were written by <see cref="WriteSpecificProperties"/>.
             /// </summary>
+            /// <param name="count">-1 if default instance</param>
             [SecurityCritical]
             internal object InitializeCollection(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor, DeserializationManager manager, bool safeMode, out int count)
             {
@@ -327,21 +342,11 @@ namespace KGySoft.Serialization.Binary
                 return result;
             }
 
-            internal MethodAccessor GetAddMethod(DataTypeDescriptor descriptor)
+            internal object GetFinalCollection(object result, DataTypeDescriptor descriptor)
             {
-                MethodAccessor GetAddMethodAccessor(Type type)
-                {
-                    string methodName = SpecificAddMethod ?? "Add"; // if not specified called for .NET 3.5 with null dictionary/collection values.
-
-                    MethodInfo method = IsGeneric
-                        ? type.GetMethod(methodName, type.GetGenericArguments())! // Using type arguments to eliminate ambiguity (LinkedList<T>.AddLast)
-                        : type.GetMethod(methodName)!; // For non-generics arguments are not always objects (StringDictionary)
-                    return MethodAccessor.GetAccessor(method);
-                }
-
-                if (addMethodCache == null)
-                    Interlocked.CompareExchange(ref addMethodCache, ThreadSafeCacheFactory.Create<Type, MethodAccessor>(GetAddMethodAccessor, LockFreeCacheOptions.Profile128), null);
-                return addMethodCache[descriptor.Type!];
+                if (descriptor.IsReadOnly)
+                    result = descriptor.GetAsReadOnly(result);
+                return CreateFinalCollectionCallback?.Invoke(result) ?? result;
             }
 
             #endregion
@@ -379,33 +384,38 @@ namespace KGySoft.Serialization.Binary
 
             private object CreateCollection(DataTypeDescriptor descriptor, int capacity, bool isCaseInsensitive, bool isAndHash, object? comparer)
             {
-                CreateInstanceAccessor ctor = GetInitializer(descriptor);
-                if (CtorArguments == null)
-                    return ctor.CreateInstance();
+                object?[] parameters = Reflector.EmptyObjects;
 
-                object?[] parameters = new object?[CtorArguments.Length];
-                for (int i = 0; i < CtorArguments.Length; i++)
+                if (CtorArguments?.Length > 0)
                 {
-                    switch (CtorArguments[i])
+                    parameters = new object?[CtorArguments.Length];
+                    for (int i = 0; i < CtorArguments.Length; i++)
                     {
-                        case CollectionCtorArguments.Capacity:
-                            parameters[i] = capacity;
-                            break;
-                        case CollectionCtorArguments.Comparer:
-                            parameters[i] = comparer;
-                            break;
-                        case CollectionCtorArguments.CaseInsensitivity:
-                            parameters[i] = isCaseInsensitive;
-                            break;
-                        case CollectionCtorArguments.HashingStrategy:
-                            parameters[i] = isAndHash ? HashingStrategy.And : HashingStrategy.Modulo;
-                            break;
-                        default:
-                            return Throw.InternalError<object>($"Unsupported {nameof(CollectionCtorArguments)}");
+                        switch (CtorArguments[i])
+                        {
+                            case CollectionCtorArguments.Capacity:
+                                parameters[i] = capacity;
+                                break;
+                            case CollectionCtorArguments.Comparer:
+                                parameters[i] = comparer;
+                                break;
+                            case CollectionCtorArguments.CaseInsensitivity:
+                                parameters[i] = isCaseInsensitive;
+                                break;
+                            case CollectionCtorArguments.HashingStrategy:
+                                parameters[i] = isAndHash ? HashingStrategy.And : HashingStrategy.Modulo;
+                                break;
+                            default:
+                                return Throw.InternalError<object>($"Unsupported {nameof(CollectionCtorArguments)}");
+                        }
                     }
                 }
 
-                return ctor.CreateInstance(parameters);
+                if (CreateCollectionToPopulateCallback is Func<Type, object?[], object> createBuilderCallback)
+                    return createBuilderCallback.Invoke(descriptor.GetTypeToCreate(), parameters);
+
+                CreateInstanceAccessor ctor = GetInitializer(descriptor);
+                return CtorArguments == null ? ctor.CreateInstance() : ctor.CreateInstance(parameters);
             }
 
             private CreateInstanceAccessor GetInitializer(DataTypeDescriptor descriptor)

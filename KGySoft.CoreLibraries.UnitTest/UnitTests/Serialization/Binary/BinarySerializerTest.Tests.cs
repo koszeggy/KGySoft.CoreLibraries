@@ -24,6 +24,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 #endif
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Drawing;
@@ -880,10 +881,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new ArraySegment<int>?[] { new ArraySegment<int>(new[] { 1, 2, 3 }, 1, 2), new ArraySegment<int>(), null },
                 new ArraySegment<int?>?[] { new ArraySegment<int?>(new int?[] { 1, 2, 3, null }, 1, 2), new ArraySegment<int?>(), null },
 
-                new ArraySection<int>?[] { /*new ArraySection<int>(new[] { 1, 2, 3 }, 1, 2),*/ ArraySection<int>.Null, /*null*/ },
+                new ArraySection<int>?[] { new ArraySection<int>(new[] { 1, 2, 3 }, 1, 2), ArraySection<int>.Null, null },
                 new ArraySection<int?>?[] { new ArraySection<int?>(new int?[] { 1, 2, 3, null }, 1, 2), ArraySection<int?>.Null, null },
 
-                new Array2D<int>?[] { /*new Array2D<int>(new[] { 1, 2, 3 }, 1, 2),*/ new Array2D<int>(), /*null*/ },
+                new Array2D<int>?[] { new Array2D<int>(new[] { 1, 2, 3 }, 1, 2), new Array2D<int>(), null },
                 new Array2D<int?>?[] { new Array2D<int?>(new int?[] { 1, 2, 3, null }, 1, 2), new Array2D<int?>(), null },
 
                 new Array3D<int>?[] { new Array3D<int>(new[] { 1, 2, 3, 4, 5, 6 }, 1, 2, 3), new Array3D<int>(), null },
@@ -946,26 +947,28 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new Int128?[] { 1, null },
                 new UInt128?[] { 1, null },
 #endif
+#if NETCOREAPP
+                new ImmutableArray<int>?[] { ImmutableArray.Create(1, 2, 3, 4), ImmutableArray<int>.Empty, new ImmutableArray<int>(), null },
+                new ImmutableArray<int?>?[] { ImmutableArray.Create<int?>(1, 2, 3, 4, null), ImmutableArray<int?>.Empty, new ImmutableArray<int?>(), null },
+#endif
             };
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.IgnoreIBinarySerializable);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.IgnoreIBinarySerializable);
-
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.RecursiveSerializationAsFallback);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.RecursiveSerializationAsFallback);
 
 #pragma warning disable 618 // obsolete
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForcedSerializationValueTypesAsFallback);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForcedSerializationValueTypesAsFallback);
 #pragma warning restore 618
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.OmitAssemblyQualifiedNames | BinarySerializationOptions.RecursiveSerializationAsFallback);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.OmitAssemblyQualifiedNames | BinarySerializationOptions.RecursiveSerializationAsFallback);
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
         }
 
         [Test]
         public void SerializeSimpleGenericCollections()
         {
+            // serializable types
             object[] referenceObjects =
             {
                 new List<int> { 1, 2, 3 },
@@ -1066,6 +1069,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
 
+            // non-serializable types
             referenceObjects = new object[]
             {
                 new StrongBox<int>(1),
@@ -1099,6 +1103,29 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 Vector512.Create(1, 2, 3, 4, 5, 6, 7, 8),
                 Vector512.Create(1d, 2d, 3d, 4d, 5d, 6d, 7d, 8d),
 #endif
+#if NETCOREAPP
+                new ImmutableArray<int>(),
+                ImmutableArray<int>.Empty,
+                ImmutableArray.Create(1, 2, 3, 4),
+                ImmutableArray.Create(1, 2, 3, 4).ToBuilder(),
+                ImmutableList<int>.Empty,
+                ImmutableList.Create(1, 2, 3, 4),
+                ImmutableList.Create(1, 2, 3, 4).ToBuilder(),
+                ImmutableHashSet<int>.Empty,
+                ImmutableHashSet.Create(1, 2, 3, 4),
+                ImmutableHashSet.Create(EnumComparer<ConsoleColor>.Comparer, ConsoleColor.Black, ConsoleColor.Blue, ConsoleColor.Red, ConsoleColor.Green),
+                ImmutableHashSet.Create(1, 2, 3, 4).ToBuilder(),
+                ImmutableHashSet.Create(EnumComparer<ConsoleColor>.Comparer, ConsoleColor.Black, ConsoleColor.Blue, ConsoleColor.Red, ConsoleColor.Green).ToBuilder(),
+                ImmutableSortedSet<int>.Empty,
+                ImmutableSortedSet.Create(1, 2, 3, 4),
+                ImmutableSortedSet.Create(EnumComparer<ConsoleColor>.Comparer, ConsoleColor.Black, ConsoleColor.Blue, ConsoleColor.Red, ConsoleColor.Green),
+                ImmutableSortedSet.Create(1, 2, 3, 4).ToBuilder(),
+                ImmutableSortedSet.Create(EnumComparer<ConsoleColor>.Comparer, ConsoleColor.Black, ConsoleColor.Blue, ConsoleColor.Red, ConsoleColor.Green).ToBuilder(),
+                ImmutableQueue<int>.Empty,
+                ImmutableQueue.Create(1, 2, 3, 4),
+                ImmutableStack<int>.Empty,
+                ImmutableStack.Create(1, 2, 3, 4),
+#endif
             };
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
@@ -1107,6 +1134,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.RecursiveSerializationAsFallback);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.RecursiveSerializationAsFallback);
 
+            // collections with properties to restore
             referenceObjects = new object[]
             {
                 new ThreadSafeHashSet<int>(new[] { 1, 2, 3 }) { MergeInterval = TimeSpan.FromMinutes(1), PreserveMergedItems = true },
@@ -1298,6 +1326,18 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
 #if NETCOREAPP3_0_OR_GREATER
                 new Dictionary<int, Vector128<int>> { { 1, Vector128.Create(1, 2, 3, 4) } },  
+#endif
+#if NETCOREAPP
+                new Dictionary<int, ImmutableArray<int>> { { 1, new[] { 1, 2, 3, 4 }.ToImmutableArray() } },  
+                new Dictionary<int, ImmutableArray<int>.Builder> { { 1, new[] { 1, 2, 3, 4 }.ToImmutableArray().ToBuilder() } },  
+                new Dictionary<int, ImmutableList<int>> { { 1, new[] { 1, 2, 3, 4 }.ToImmutableList() } },  
+                new Dictionary<int, ImmutableList<int>.Builder> { { 1, new[] { 1, 2, 3, 4 }.ToImmutableList().ToBuilder() } },  
+                new Dictionary<int, ImmutableHashSet<int>> { { 1, new[] { 1, 2, 3, 4 }.ToImmutableHashSet() } },
+                new Dictionary<int, ImmutableHashSet<int>.Builder> { { 1, new[] { 1, 2, 3, 4 }.ToImmutableHashSet().ToBuilder() } },  
+                new Dictionary<int, ImmutableSortedSet<int>> { { 1, new[] { 1, 2, 3, 4 }.ToImmutableSortedSet() } },
+                new Dictionary<int, ImmutableSortedSet<int>.Builder> { { 1, new[] { 1, 2, 3, 4 }.ToImmutableSortedSet().ToBuilder() } },  
+                new Dictionary<int, ImmutableQueue<int>> { { 1, ImmutableQueue.Create(1, 2, 3, 4 ) } },
+                new Dictionary<int, ImmutableStack<int>> { { 1, ImmutableStack.Create(1, 2, 3, 4 ) } },
 #endif
             };
 
@@ -1950,16 +1990,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new object[] { 1, 2, 3 }, // different objects
                 new object[] { 1, 1, 1 }, // same values but different instances
                 new object[] { one, one, one }, // same value type boxed reference
-                new object[] { s1, s1 }, // same references*
+                new object[] { s1, s1 }, // same references
                 new object[] { s1, s2 }, // different references but same values
-                new string[] { s1, s1 }, // same references*
+                new string[] { s1, s1 }, // same references
                 new string[] { s1, s2 }, // different references but same values
                 new SystemSerializableClass[] { tc }, // custom class, single instance
                 new SystemSerializableClass[] { tc, tc, tc, tc }, // custom class, multiple instances*
                 new SystemSerializableStruct[] { (SystemSerializableStruct)ts }, // custom struct, single instance
-                new SystemSerializableStruct[] { (SystemSerializableStruct)ts, (SystemSerializableStruct)ts, (SystemSerializableStruct)ts, (SystemSerializableStruct)ts }, // custom struct, double instances*
-                new object[] { ts }, // custom struct, boxed single instance
-                new object[] { ts, ts, ts, ts }, // custom struct, boxed double instances*
+                new SystemSerializableStruct[] { (SystemSerializableStruct)ts, (SystemSerializableStruct)ts, (SystemSerializableStruct)ts, (SystemSerializableStruct)ts }, // custom struct, multiple unboxed instances
+                new object[] { ts }, // custom struct, single boxed instance
+                new object[] { ts, ts, ts, ts }, // custom struct, multiple boxed instances
             };
 
             SystemSerializeObject(referenceObjects);
@@ -1995,12 +2035,20 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             root.Children[0].Children[0].Children.Add(root);
             referenceObjects = new object[]
             {
-                root, // grand-grandchild is root again
-                null, // placeholder: DictionaryEntry referencing the referenceObjects and thus itself
-                null, // placeholder: KeyValuePair referencing the referenceObjects and thus itself
-                null, // placeholder: indirect tuple self-reference
-                null, // placeholder: array segment
+                null, // grand-grandchild is root again
+                null, // DictionaryEntry referencing the referenceObjects and thus itself
+                null, // KeyValuePair referencing the referenceObjects and thus itself
+                null, // indirect tuple self-reference
+                null, // array
+                null, // ImmutableArray
+                null, // ImmutableArray.Builder
+                null, // ImmutableList.Builder
+                null, // ImmutableHashSet.Builder
+                null, // ImmutableSortedSet.Builder
             };
+
+            referenceObjects[0] = root;
+
             referenceObjects[1] = new DictionaryEntry(1, referenceObjects);
             referenceObjects[2] = new KeyValuePair<int, object>(2, referenceObjects);
             referenceObjects[3] = (3, referenceObjects);
@@ -2010,15 +2058,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             segment.Array![1] = segment.Array;
             referenceObjects[4] = segmentRef;
 
-            SystemSerializeObject(referenceObjects, safeCompare: true);
-            SystemSerializeObjects(referenceObjects, safeCompare: true);
-
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.None, safeCompare: true);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, safeCompare: true);
 
             // Direct self-references
-            referenceObjects = new object[5];
-
 #if !NET35
             // tuple
             var tupleDirectReference = Tuple.Create(1, new object());
@@ -2046,14 +2087,43 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             // array
             referenceObjects[4] = (5, referenceObjects);
 
+            // Here, because the following types are not binary serializable
             SystemSerializeObject(referenceObjects, safeCompare: true);
             SystemSerializeObjects(referenceObjects, safeCompare: true);
+
+#if NETCOREAPP
+            // ImmutableArray
+            object[] array = new object[1];
+            object immutableArray = typeof(ImmutableArray<object>).CreateInstance(new object[] { array });
+            array[0] = immutableArray;
+            referenceObjects[5] = immutableArray;
+
+            // ImmutableArray.Builder
+            ImmutableArray<object>.Builder immutableArrayBuilder = ImmutableArray.CreateBuilder<object>(1);
+            immutableArrayBuilder.Add(immutableArrayBuilder);
+            referenceObjects[6] = immutableArrayBuilder;
+
+            // ImmutableList.Builder
+            ImmutableList<object>.Builder immutableListBuilder = ImmutableList.CreateBuilder<object>();
+            immutableListBuilder.Add(immutableListBuilder);
+            referenceObjects[7] = immutableListBuilder;
+
+            // ImmutableHashSet.Builder
+            ImmutableHashSet<object>.Builder immutableHashSetBuilder = ImmutableHashSet.CreateBuilder<object>();
+            immutableHashSetBuilder.Add(immutableHashSetBuilder);
+            referenceObjects[8] = immutableHashSetBuilder;
+
+            // ImmutableSortedSet.Builder
+            ImmutableSortedSet<object>.Builder immutableSortedSetBuilder = ImmutableSortedSet.CreateBuilder<object>();
+            immutableSortedSetBuilder.Add(immutableSortedSetBuilder);
+            referenceObjects[9] = immutableSortedSetBuilder;
+#endif
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None, safeCompare: true);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, safeCompare: true);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, safeCompare: true);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, safeCompare: true);
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.RecursiveSerializationAsFallback, safeCompare: true);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.RecursiveSerializationAsFallback, safeCompare: true);
 
             // Invalid self references
             referenceObjects = new object[]
@@ -2626,6 +2696,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             Throws<SerializationException>(() => DeserializeObject(manipulatedData, bsf));
         }
 
-        #endregion
+#endregion
     }
 }

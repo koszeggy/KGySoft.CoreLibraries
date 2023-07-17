@@ -49,6 +49,45 @@ namespace KGySoft.Reflection
     /// </summary>
     internal static class Accessors
     {
+        #region Nested Types
+
+        /// <summary>
+        /// A reference-type tuple with 0 elements for cached methods with 0 elements.
+        /// </summary>
+        private sealed class ZeroTuple : ITuple
+        {
+            #region Fields
+
+            internal static readonly ZeroTuple Instance = new ZeroTuple();
+
+            #endregion
+
+            #region Properties and Indexers
+
+            #region Properties
+            
+            public int Length => 0;
+
+            #endregion
+
+            #region Indexers
+            
+            public object this[int index] => throw new IndexOutOfRangeException();
+
+            #endregion
+
+            #endregion
+
+            #region Methods
+
+            public override int GetHashCode() => 0;
+            public override bool Equals(object? obj) => obj is ZeroTuple;
+
+            #endregion
+        }
+
+        #endregion
+
         #region Fields
 
         #region For Public Members
@@ -117,7 +156,11 @@ namespace KGySoft.Reflection
 
         private static IThreadSafeCacheAccessor<(Type DeclaringType, string PropertyName), PropertyAccessor?>? properties;
         private static IThreadSafeCacheAccessor<(Type DeclaringType, Type? FieldType, string? FieldNamePattern), FieldAccessor?>? fields;
-        private static IThreadSafeCacheAccessor<(Type DeclaringType, string MethodName), MethodAccessor?>? methods;
+        private static IThreadSafeCacheAccessor<(Type DeclaringType, string MethodName), MethodAccessor?>? methodsByName;
+        private static IThreadSafeCacheAccessor<(Type DeclaringType, string MethodName, ITuple ParameterType), MethodAccessor>? methodsByTypes;
+        private static IThreadSafeCacheAccessor<(Type DeclaringType, Type T, string MethodName), MethodAccessor>? staticGenericMethodsByName;
+        private static IThreadSafeCacheAccessor<(Type DeclaringType, ITuple GenericArguments, ITuple ParameterTypes, string MethodName), MethodAccessor>? staticGenericMethodsByTypes;
+        private static IThreadSafeCacheAccessor<(Type DeclaringType, Type P1, Type? P2), CreateInstanceAccessor>? constructors;
         private static IThreadSafeCacheAccessor<(Type DeclaringType, Type? P1, Type? P2), ActionMethodAccessor?>? ctorMethods;
 
         #endregion
@@ -450,18 +493,121 @@ namespace KGySoft.Reflection
             field.Set(obj, value);
         }
 
-        private static MethodAccessor? GetMethod(Type type, string methodName)
+        private static MethodAccessor? GetMethodByName(Type type, string methodName)
         {
             static MethodAccessor? GetMethodAccessor((Type DeclaringType, string MethodName) key)
             {
-                // Properties are meant to be used for visible members so always exact names are searched
-                MethodInfo? method = key.DeclaringType.GetMethod(key.MethodName, BindingFlags.Instance | BindingFlags.NonPublic);
+                MethodInfo? method = key.DeclaringType.GetMethod(key.MethodName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
                 return method == null ? null : MethodAccessor.GetAccessor(method);
             }
 
-            if (methods == null)
-                Interlocked.CompareExchange(ref methods, ThreadSafeCacheFactory.Create<(Type, string), MethodAccessor?>(GetMethodAccessor, LockFreeCacheOptions.Profile128), null);
-            return methods[(type, methodName)];
+            if (methodsByName == null)
+                Interlocked.CompareExchange(ref methodsByName, ThreadSafeCacheFactory.Create<(Type, string), MethodAccessor?>(GetMethodAccessor, LockFreeCacheOptions.Profile128), null);
+            return methodsByName[(type, methodName)];
+        }
+
+        private static MethodAccessor GetMethodByTypes(Type type, string methodName, ITuple parameterTypes)
+        {
+            static MethodAccessor GetMethodAccessor((Type DeclaringType, string MethodName, ITuple ParameterTypes) key)
+            {
+                // Unlike in GetMethodByName, here result is not nullable because we invoke public methods only
+                MethodInfo[] methods = key.DeclaringType.GetMember(key.MethodName, MemberTypes.Method, BindingFlags.Instance | BindingFlags.Public)
+                    .Cast<MethodInfo>()
+                    .Where(m => !m.IsGenericMethodDefinition && m.GetParameters().Length == key.ParameterTypes.Length)
+                    .ToArray();
+
+                foreach (MethodInfo mi in methods)
+                {
+                    if (!mi.GetParameters().Select(p => p.ParameterType).SequenceEqual(key.ParameterTypes.ToTypes()))
+                        continue;
+
+                    return MethodAccessor.GetAccessor(mi);
+                }
+
+                return Throw.InternalError<MethodAccessor>($"No matching method found: {key}");
+            }
+
+            if (methodsByTypes == null)
+                Interlocked.CompareExchange(ref methodsByTypes, ThreadSafeCacheFactory.Create<(Type, string, ITuple), MethodAccessor>(GetMethodAccessor, LockFreeCacheOptions.Profile128), null);
+            return methodsByTypes[(type, methodName, parameterTypes)];
+        }
+
+        private static MethodAccessor GetStaticGenericMethodByName(Type type, Type typeArgument, string methodName)
+        {
+            static MethodAccessor GetMethodAccessor((Type DeclaringType, Type T, string MethodName) key)
+            {
+                // Unlike in GetMethodByName, here result is not nullable because we invoke public methods only
+                MethodInfo method = key.DeclaringType.GetMethod(key.MethodName, BindingFlags.Static | BindingFlags.Public)!.GetGenericMethod(key.T);
+                return MethodAccessor.GetAccessor(method);
+            }
+
+            if (staticGenericMethodsByName == null)
+                Interlocked.CompareExchange(ref staticGenericMethodsByName, ThreadSafeCacheFactory.Create<(Type, Type, string), MethodAccessor>(GetMethodAccessor, LockFreeCacheOptions.Profile128), null);
+            return staticGenericMethodsByName[(type, typeArgument, methodName)];
+        }
+
+        private static MethodAccessor GetStaticGenericMethodByTypes(Type type, ITuple typeArguments, ITuple parameterTypes, string methodName)
+        {
+            static MethodAccessor GetMethodAccessor((Type DeclaringType, ITuple GenericArguments, ITuple ParameterTypes, string MethodName) key)
+            {
+                // Unlike in GetMethodByName, here result is not nullable because we invoke public methods only
+                MethodInfo[] methods = key.DeclaringType.GetMember(key.MethodName, MemberTypes.Method, BindingFlags.Static | BindingFlags.Public)
+                    .Cast<MethodInfo>()
+                    .Where(m => m.IsGenericMethodDefinition && m.GetGenericArguments().Length == key.GenericArguments.Length && m.GetParameters().Length == key.ParameterTypes.Length)
+                    .ToArray();
+
+                foreach (MethodInfo mi in methods)
+                {
+                    MethodInfo constructedMethod;
+                    try
+                    {
+                        constructedMethod = mi.MakeGenericMethod(key.GenericArguments.ToTypes());
+                    }
+                    catch (ArgumentException)
+                    {
+                        continue;
+                    }
+
+                    if (!constructedMethod.GetParameters().Select(p => p.ParameterType).SequenceEqual(key.ParameterTypes.ToTypes()))
+                        continue;
+
+                    return MethodAccessor.GetAccessor(constructedMethod);
+                }
+
+                return Throw.InternalError<MethodAccessor>($"No matching method found: {key}");
+            }
+
+            if (staticGenericMethodsByTypes == null)
+                Interlocked.CompareExchange(ref staticGenericMethodsByTypes, ThreadSafeCacheFactory.Create<(Type, ITuple, ITuple, string), MethodAccessor>(GetMethodAccessor, LockFreeCacheOptions.Profile128), null);
+            return staticGenericMethodsByTypes[(type, typeArguments, parameterTypes, methodName)];
+        }
+
+        private static CreateInstanceAccessor GetConstructor(Type type, object?[] ctorArgs)
+        {
+            static CreateInstanceAccessor GetCreateInstanceAccessor((Type DeclaringType, Type P1, Type? P2) key)
+            {
+                // Here we accept non public constructors, too. They should be really well-known at least internal members.
+                ConstructorInfo? ci = key.DeclaringType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, 
+                    null, key.P2 == null ? new[] { key.P1 } : new[] { key.P1, key.P2 }, null);
+                Debug.Assert(ci != null, "Constructor was not found for the specified parameter types");
+                return CreateInstanceAccessor.GetAccessor(ci!);
+            }
+
+            // Not cached by constructors parameters, only by ConstructorInfo in MemberAccessor: here we allow public constructors with exact type match only because otherwise there is too much chance to go something wrong
+            if (ctorArgs.Length > 2)
+            {
+                Debug.Fail("Better to create another GetConstructor and a cache with Type[] (as ITuple in the cache) for this case");
+                Debug.Assert(ctorArgs.All(a => a != null), "If there can be null parameters use Reflector instead or obtain the constructor by types manually");
+                ConstructorInfo? ci = type.GetConstructor(BindingFlags.Public | BindingFlags.Instance, null, ctorArgs.Select(a => a!.GetType()).ToArray(), null);
+                Debug.Assert(ci != null, "Public constructor was not found for the specified parameters");
+                return CreateInstanceAccessor.GetAccessor(ci!);
+            }
+
+            Debug.Assert(!ctorArgs.IsNullOrEmpty() && ctorArgs[0] != null, "At least one parameter is expected.");
+
+            if (constructors == null)
+                Interlocked.CompareExchange(ref constructors, ThreadSafeCacheFactory.Create<(Type, Type, Type?), CreateInstanceAccessor>(GetCreateInstanceAccessor, LockFreeCacheOptions.Profile128), null);
+            return constructors[(type, ctorArgs[0]!.GetType(), ctorArgs.ElementAtOrDefault(1)?.GetType())];
         }
 
         private static ActionMethodAccessor? GetCtorMethod(Type type, object?[] ctorArgs)
@@ -474,6 +620,7 @@ namespace KGySoft.Reflection
                 return ci == null ? null : new ActionMethodAccessor(ci);
             }
 
+            Debug.Assert(ctorArgs.Length <= 2);
             if (ctorMethods == null)
                 Interlocked.CompareExchange(ref ctorMethods, ThreadSafeCacheFactory.Create<(Type, Type?, Type?), ActionMethodAccessor?>(GetCtorMethodAccessor, LockFreeCacheOptions.Profile128), null);
             return ctorMethods[(type, ctorArgs.ElementAtOrDefault(0)?.GetType(), ctorArgs.ElementAtOrDefault(1)?.GetType())];
@@ -555,13 +702,13 @@ namespace KGySoft.Reflection
 
         #region MemoryStream
 
-        internal static byte[]? InternalGetBuffer(this MemoryStream ms) => GetMethod(typeof(MemoryStream), "InternalGetBuffer")?.InvokeInstanceFunction<MemoryStream, byte[]>(ms);
+        internal static byte[]? InternalGetBuffer(this MemoryStream ms) => GetMethodByName(typeof(MemoryStream), "InternalGetBuffer")?.InvokeInstanceFunction<MemoryStream, byte[]>(ms);
 
         #endregion
 
         #region Object
 
-        internal static object MemberwiseClone(this object obj) => GetMethod(Reflector.ObjectType, nameof(MemberwiseClone))!.InvokeInstanceFunction<object, object>(obj);
+        internal static object MemberwiseClone(this object obj) => GetMethodByName(Reflector.ObjectType, nameof(MemberwiseClone))!.InvokeInstanceFunction<object, object>(obj);
 
         #endregion
 
@@ -667,11 +814,15 @@ namespace KGySoft.Reflection
 
         internal static object? GetComparer([NoEnumeration]this IEnumerable collection)
         {
-            // 1.) By Comparer/EqualityComparer property
+            // 1.) By Comparer/EqualityComparer/KeyComparer property
             Type type = collection.GetType();
-            PropertyAccessor? property =  GetProperty(type, type == typeof(Hashtable)
-                ? "EqualityComparer" // Hashtable
-                : "Comparer"); // Dictionary<TKey, TValue>, HashSet<T>, SortedSet<T>, SortedList<TKey, TValue>, SortedDictionary<TKey, TValue>, CircularSortedList<TKey, TValue>, ThreadSafeHashSet<T>, ThreadSafeDictionary<TKey, TValue> StringKeyedDictionary<TValue>
+            PropertyAccessor? property =  GetProperty(type, type.Name switch
+            {
+                nameof(Hashtable) => "EqualityComparer",
+                "ImmutableHashSet`1" or "ImmutableSortedSet`1" => "KeyComparer",
+                _ => "Comparer" // Dictionary<TKey, TValue>, HashSet<T>, SortedSet<T>, SortedList<TKey, TValue>, SortedDictionary<TKey, TValue>, CircularSortedList<TKey, TValue>, ThreadSafeHashSet<T>, ThreadSafeDictionary<TKey, TValue>, StringKeyedDictionary<TValue>
+            }); 
+
             if (property != null)
                 return property.Get(collection);
 
@@ -793,25 +944,6 @@ namespace KGySoft.Reflection
             property.Set(instance, value);
         }
 
-        /// <summary>
-        /// Invokes a constructor on an already created instance.
-        /// </summary>
-        internal static bool TryInvokeCtor(object instance, params object?[] ctorArgs)
-        {
-            Debug.Assert(ctorArgs.Length <= 2, "Constructors with more than 2 arguments are not cached. Use MethodBase.Invoke instead.");
-            ActionMethodAccessor? accessor = GetCtorMethod(instance.GetType(), ctorArgs);
-            if (accessor == null)
-                return false;
-
-#if NETSTANDARD2_0
-            ((MethodBase)accessor.MemberInfo).Invoke(instance, ctorArgs);
-            return true;
-#else
-            accessor.Invoke(instance, ctorArgs);
-            return true;
-#endif
-        }
-
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static object? Get(this FieldInfo field, object? instance)
         {
@@ -888,8 +1020,11 @@ namespace KGySoft.Reflection
             PropertyAccessor.GetAccessor(property).Set(instance, value, indexerParams);
         }
 
+        /// <summary>
+        /// For possibly mutating value types on every platform.
+        /// </summary>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        internal static object? Invoke(this MethodInfo method, object? instance, params object?[] parameters)
+        internal static object? Invoke(MethodInfo method, object? instance, params object?[] parameters)
         {
 #if NETSTANDARD2_0
             if (!method.IsStatic && method.DeclaringType?.IsValueType == true)
@@ -897,6 +1032,86 @@ namespace KGySoft.Reflection
 #endif
 
             return MethodAccessor.GetAccessor(method).Invoke(instance, parameters);
+        }
+
+        /// <summary>
+        /// For unambiguous instance methods by name.
+        /// </summary>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        internal static object? InvokeMethod(object instance, string methodName, params object?[] parameters)
+            => GetMethodByName(instance.GetType(), methodName)!.Invoke(instance, parameters);
+
+        /// <summary>
+        /// For instance methods by name and parameter types.
+        /// </summary>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        internal static object? InvokeMethod(object instance, string methodName, Type[] parameterTypes, params object?[] parameters)
+            => GetMethodByTypes(instance.GetType(), methodName, parameterTypes.ToTuple()).Invoke(instance, parameters);
+
+        /// <summary>
+        /// For unambiguous static methods by name.
+        /// </summary>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        internal static object? InvokeMethod(this Type type, string methodName, params object?[] parameters)
+        {
+            Debug.Assert(!type.IsValueType, $"{type}.{methodName} should be invoked by the Invoke(MethodInfo,...) overload to handle value type mutations on all platforms");
+            Debug.Assert(!type.IsGenericTypeDefinition);
+
+            return GetMethodByName(type, methodName)!.Invoke(null, parameters);
+        }
+
+        /// <summary>
+        /// For unambiguous generic static methods by name.
+        /// </summary>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        internal static object? InvokeMethod(this Type type, string methodName, Type genericArgument, params object?[] parameters)
+            => GetStaticGenericMethodByName(type, genericArgument, methodName).Invoke(null, parameters);
+
+        /// <summary>
+        /// For static methods by name and parameter types.
+        /// </summary>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        internal static object? InvokeMethod(this Type type, string methodName, Type[] genericArguments, Type[] parameterTypes, params object?[] parameters)
+        {
+            Debug.Assert(!genericArguments.IsNullOrEmpty(), "For non-generic types use the other overload of InvokeMethod");
+            Debug.Assert(!parameterTypes.IsNullOrEmpty(), "For parameterless methods use the other overload of InvokeMethod");
+            return GetStaticGenericMethodByTypes(type, genericArguments.ToTuple(), parameterTypes.ToTuple(), methodName).Invoke(null, parameters);
+        }
+
+        /// <summary>
+        /// For static methods by name and parameter type.
+        /// </summary>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        internal static object? InvokeMethod(this Type type, string methodName, Type genericArgument, Type parameterType, params object?[] parameters)
+            => InvokeMethod(type, methodName, new[] { genericArgument }, new[] { parameterType }, parameters);
+
+        /// <summary>
+        /// For constructors with exact parameter types.
+        /// </summary>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        internal static object CreateInstance(this Type type, params object?[] parameters)
+        {
+            Debug.Assert(!parameters.IsNullOrEmpty() && parameters[0] != null, "For empty parameters use GetCreateInstanceAccessor(Type), Activator or GetDefaultConstructor instead");
+            return GetConstructor(type, parameters).CreateInstance(parameters);
+        }
+
+        /// <summary>
+        /// Invokes a constructor on an already created instance.
+        /// </summary>
+        internal static bool TryInvokeCtor(object instance, params object?[] ctorArgs)
+        {
+            Debug.Assert(ctorArgs.Length <= 2, "Constructors with more than 2 arguments are not cached. Use MethodBase.Invoke instead.");
+            ActionMethodAccessor? accessor = GetCtorMethod(instance.GetType(), ctorArgs);
+            if (accessor == null)
+                return false;
+
+#if NETSTANDARD2_0
+            ((MethodBase)accessor.MemberInfo).Invoke(instance, ctorArgs);
+            return true;
+#else
+            accessor.Invoke(instance, ctorArgs);
+            return true;
+#endif
         }
 
         [SecuritySafeCritical]
@@ -908,6 +1123,26 @@ namespace KGySoft.Reflection
 
         [SecuritySafeCritical]
         private static unsafe void SetPointer(FieldInfo field, object? instance, object? value) => field.SetValue(instance, Pointer.Box(((IntPtr)value!).ToPointer(), field.FieldType));
+
+        private static ITuple ToTuple(this Type[] array)
+        {
+            Debug.Assert(array.Length is >= 0 and <= 2);
+            return array.Length switch
+            {
+                0 => ZeroTuple.Instance, // ValueTuple.Create() would also do it but it involves boxing and thus always creating a new reference that we want to avoid
+                1 => Tuple.Create(array[0]),
+                _ => Tuple.Create(array[0], array[1]),
+            };
+        }
+
+        private static Type[] ToTypes(this ITuple types)
+        {
+            int len = types.Length;
+            var result = new Type[types.Length];
+            for (int i = 0; i < len; i++)
+                result[i] = (Type)types[i]!;
+            return result;
+        }
 
         #endregion
 

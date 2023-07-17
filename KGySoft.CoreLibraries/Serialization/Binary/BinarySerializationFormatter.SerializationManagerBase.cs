@@ -268,7 +268,7 @@ namespace KGySoft.Serialization.Binary
                 if (methods == null)
                     return;
                 foreach (MethodInfo method in methods)
-                    method.Invoke(obj, Context);
+                    Accessors.Invoke(method, obj, Context);
             }
 
             private protected bool IsValueType(DataTypeDescriptor descriptor)

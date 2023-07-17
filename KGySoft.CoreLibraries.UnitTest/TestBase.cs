@@ -15,6 +15,7 @@
 
 #region Usings
 
+using System.Collections.Immutable;
 using System.Runtime.InteropServices;
 
 using KGySoft.Collections;
@@ -331,6 +332,22 @@ namespace KGySoft.CoreLibraries
                 // ignoring items and checking members only because of the backing array that can be larger than the segment/buffer
                 if (typeRef.IsGenericTypeOf(typeof(ArraySegment<>)) || typeRef.IsGenericTypeOf(typeof(ArraySection<>)) || typeRef.IsGenericTypeOf(typeof(Array2D<>)) || typeRef.IsGenericTypeOf(typeof(Array3D<>)))
                     return CheckMembersEqual(reference, check, forceEqualityByMembers, errors, checkedObjects);
+
+#if NETCOREAPP2_0_OR_GREATER
+                // getting the enumerator throws an exception for default immutable arrays so performing some pre-checks before examining the items
+                if (typeRef.IsGenericTypeOf(typeof(ImmutableArray<>)))
+                {
+                    bool isDefaultRef = (bool)Accessors.GetPropertyValue(reference, nameof(ImmutableArray<_>.IsDefault))!;
+                    bool isDefaultCheck = (bool)Accessors.GetPropertyValue(check, nameof(ImmutableArray<_>.IsDefault))!;
+                    if (isDefaultRef && isDefaultCheck)
+                        return true;
+                    if (isDefaultRef || isDefaultCheck)
+                    {
+                        Fail($"{typeRef.GetName(TypeNameKind.ShortName)}.{nameof(ImmutableArray<_>.IsDefault)} {isDefaultRef} <-> {isDefaultCheck}", errors);
+                        return false;
+                    }
+                }
+#endif
 
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
                 if (typeRef.IsGenericTypeOf(typeof(Memory<>)))

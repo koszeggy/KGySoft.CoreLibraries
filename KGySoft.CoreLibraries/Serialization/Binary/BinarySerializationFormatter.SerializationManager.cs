@@ -1134,7 +1134,8 @@ namespace KGySoft.Serialization.Binary
                 IEnumerable collection = serInfo.GetCollectionToSerialize(obj);
 
                 // 2. Write specific properties
-                serInfo.WriteSpecificProperties(bw, collection, this);
+                if (serInfo.WriteSpecificProperties(bw, collection, this))
+                    return;
 
                 Type elementType, dictionaryValueType;
 

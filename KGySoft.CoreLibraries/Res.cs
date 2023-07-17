@@ -669,7 +669,11 @@ namespace KGySoft
         internal static string BinarySerializationNotAnEnum(Type type) => Get("BinarySerialization_NotAnEnumFormat", type);
 
         /// <summary>Deserialization of an IObjectReference instance has an unresolvable circular reference to itself as an element in a collection of type '{0}'. Either try to use the ForceRecursiveSerializationOfSupportedTypes option on serialization, or avoid serializing circular references in the container object.</summary>
-        internal static string BinarySerializationCircularIObjectReferenceCollection(Type type) => Get("BinarySerialization_CircularIObjectReferenceCollectionFormat", type);
+        internal static string BinarySerializationCircularIObjectReferenceCollection(Type type) => Get("BinarySerialization_CircularIObjectReferenceCollectionFormat", type.GetName(TypeNameKind.LongName));
+
+        /// <summary>Could not deserialize the collection of type '{0}' because it has a circular reference to itself as an element and the collection requires a proxy builder to populate.
+        /// Either try to use the ForceRecursiveSerializationOfSupportedTypes option on serialization, or avoid serializing circular references in the container collection.</summary>
+        internal static string BinarySerializationCircularBuilderReferenceCollection(Type type) => Get("BinarySerialization_CircularBuilderReferenceCollectionFormat", type.GetName(TypeNameKind.LongName));
 
         /// <summary>The stream contains a collection of type '{0}', which is not supported on this platform.</summary>
         internal static string BinarySerializationCollectionPlatformNotSupported(string dataType) => Get("BinarySerialization_CollectionPlatformNotSupportedFormat", dataType);

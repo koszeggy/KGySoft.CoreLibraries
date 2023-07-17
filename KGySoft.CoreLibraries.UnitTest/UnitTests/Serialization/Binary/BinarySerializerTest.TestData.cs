@@ -18,6 +18,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Diagnostics.CodeAnalysis;
@@ -1021,6 +1022,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #if NET47_OR_GREATER || !NETFRAMEWORK
             private readonly ValueTuple<T> valueTuple;
 #endif
+#if NETCOREAPP
+            private readonly ImmutableArray<T> valueImmutableArray;
+            private readonly ImmutableArray<T>.Builder valueImmutableArrayBuilder;
+            private readonly ImmutableList<T> valueImmutableList;
+            private readonly ImmutableList<T>.Builder valueImmutableListBuilder;
+#endif
 
             #endregion
 
@@ -1050,6 +1057,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #if NET47_OR_GREATER || !NETFRAMEWORK
                 valueTuple = new ValueTuple<T>(value);
 #endif
+#if NETCOREAPP
+                valueImmutableArray = ImmutableArray.Create(value);
+                valueImmutableArrayBuilder = ImmutableArray.CreateBuilder<T>();
+                valueImmutableArrayBuilder.Add(value);
+                valueImmutableList = ImmutableList.Create(value);
+                valueImmutableListBuilder = ImmutableList.CreateBuilder<T>();
+                valueImmutableListBuilder.Add(value);
+#endif
             }
 
             #endregion
@@ -1077,6 +1092,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #endif
 #if NET47_OR_GREATER || !NETFRAMEWORK
                 && Equals(valueTuple, other.valueTuple)
+#endif
+#if NETCOREAPP
+                && Equals(valueImmutableArray[0], other.valueImmutableArray[0])
+                && Equals(valueImmutableArrayBuilder[0], other.valueImmutableArrayBuilder[0])
 #endif
             ;
 
