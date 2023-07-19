@@ -239,6 +239,7 @@ namespace KGySoft.Serialization.Binary
 
                 private readonly IEnumerable target;
                 private readonly object referenceNode;
+                private readonly Type genericArg;
 
                 #endregion
 
@@ -248,6 +249,7 @@ namespace KGySoft.Serialization.Binary
                 {
                     this.target = target;
                     this.referenceNode = referenceNode;
+                    genericArg = target.GetType().GetGenericArguments()[0];
                 }
 
                 #endregion
@@ -256,8 +258,8 @@ namespace KGySoft.Serialization.Binary
 
                 internal override void SetValue(object value)
                 {
-                    Reflector.InvokeMethod(target, nameof(LinkedList<_>.AddAfter), referenceNode, value);
-                    Reflector.InvokeMethod(target, nameof(LinkedList<_>.Remove), referenceNode);
+                    Accessors.InvokeMethod(target, nameof(LinkedList<_>.AddAfter), new[] { referenceNode.GetType(), genericArg }, referenceNode, value);
+                    Accessors.InvokeMethod(target, nameof(LinkedList<_>.Remove), referenceNode);
                 }
 
                 #endregion
@@ -475,8 +477,7 @@ namespace KGySoft.Serialization.Binary
                     if (elementType.IsPrimitive)
                     {
                         // for primitive types we can use a strictly typed list
-                        ConstructorInfo ctor = Reflector.ListGenType.GetGenericType(elementType).GetConstructor(new[] { Reflector.IntType })!;
-                        builder = (IList)CreateInstanceAccessor.GetAccessor(ctor).CreateInstance(capacity);
+                        builder = (IList)Reflector.ListGenType.GetGenericType(elementType).CreateInstance(Reflector.IntType, capacity);
                         return;
                     }
 
@@ -809,7 +810,7 @@ namespace KGySoft.Serialization.Binary
                     usage.SetValue(finalObject);
             }
 
-            private static object? GetPlaceholderValue(object? value, [NoEnumeration] IEnumerable collection)
+            private static object? GetPlaceholderValue(object? value, [NoEnumeration]IEnumerable collection)
                 => value is IObjectReference ? collection.GetType().GetCollectionElementType()!.GetDefaultValue() : value;
 
             #endregion
@@ -2028,8 +2029,10 @@ namespace KGySoft.Serialization.Binary
                 // LinkedList: adding a placeholder node that can be replaced later
                 if (collectionDataType == DataTypes.LinkedList)
                 {
-                    object node = Reflector.CreateInstance(typeof(LinkedListNode<>), new[] { type.GetGenericArguments()[0] }, GetPlaceholderValue(value, collection));
-                    Reflector.InvokeMethod(collection, nameof(LinkedList<_>.AddLast), node);
+                    Type genericArg = type.GetGenericArguments()[0];
+                    Type nodeType = typeof(LinkedListNode<>).GetGenericType(genericArg);
+                    object node = nodeType.CreateInstance(genericArg, GetPlaceholderValue(value, collection));
+                    Accessors.InvokeMethod(collection, nameof(LinkedList<_>.AddLast), new[] { nodeType }, node);
                     trackedUsages.Add(new LinkedListUsage(collection, node));
                     return;
                 }

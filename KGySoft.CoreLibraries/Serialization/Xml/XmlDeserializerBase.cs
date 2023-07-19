@@ -84,8 +84,7 @@ namespace KGySoft.Serialization.Xml
                         if (ElementType.IsValueType)
                         {
                             // for value types we use a strictly typed list for less boxing (though the elements will be added boxed)
-                            ConstructorInfo ctor = Reflector.ListGenType.GetGenericType(ElementType).GetConstructor(new[] { Reflector.IntType })!;
-                            builder = (IList)CreateInstanceAccessor.GetAccessor(ctor).CreateInstance(capacity);
+                            builder = (IList)Reflector.ListGenType.GetGenericType(ElementType).CreateInstance(Reflector.IntType, capacity);
                         }
                         else
                         {

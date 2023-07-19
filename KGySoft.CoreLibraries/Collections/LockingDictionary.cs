@@ -58,7 +58,7 @@ namespace KGySoft.Collections
     /// <para>For the situations above a lock can be requested also explicitly by the <see cref="LockingCollection{T}.Lock">Lock</see> method, which can be released by the <see cref="LockingCollection{T}.Unlock">Unlock</see> method.
     /// To release an explicitly requested lock the <see cref="LockingCollection{T}.Unlock">Unlock</see> method must be called the same times as the <see cref="LockingCollection{T}.Lock">Lock</see> method. The fixed version of the example above:
     /// <code lang="C#"><![CDATA[
-    /// var asThreadSafe = new LockingDictionary<MyClass>(myDictionary);
+    /// var asThreadSafe = new LockingDictionary<MyKey, MyValue>(myDictionary);
     ///
     /// // This works well because the lock is not released between the two calls:
     /// asThreadSafe.Lock();

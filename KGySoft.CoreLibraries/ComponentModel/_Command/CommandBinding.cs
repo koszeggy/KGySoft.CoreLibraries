@@ -263,7 +263,7 @@ namespace KGySoft.ComponentModel
                 return this;
 
             // creating generic info by reflection because the signature must match and EventArgs can vary
-            var info = (SubscriptionInfo)Reflector.CreateInstance(typeof(SubscriptionInfo<>).GetGenericType(invokerParameters[1].ParameterType));
+            var info = (SubscriptionInfo)Activator.CreateInstance(typeof(SubscriptionInfo<>).GetGenericType(invokerParameters[1].ParameterType))!;
             info.Source = source;
             info.EventName = eventName;
             info.Binding = this;

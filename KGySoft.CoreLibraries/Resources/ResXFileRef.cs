@@ -147,10 +147,8 @@ namespace KGySoft.Resources
                     if (parts.Length > 2)
                         textFileEncoding = Encoding.GetEncoding(parts[2]);
 
-                    using (StreamReader sr = new StreamReader(fileName, textFileEncoding))
-                    {
-                        return sr.ReadToEnd();
-                    }
+                    using StreamReader sr = new StreamReader(fileName, textFileEncoding);
+                    return sr.ReadToEnd();
                 }
 
                 // binary: unless a byte array or memory stream is requested, creating the result from stream
@@ -167,7 +165,7 @@ namespace KGySoft.Resources
                 var memStream = new MemoryStream(buffer);
                 return toCreate == typeof(MemoryStream)
                     ? memStream
-                    : Reflector.CreateInstance(toCreate!, ReflectionWays.Auto, memStream);
+                    : toCreate!.CreateInstance(typeof(MemoryStream), memStream);
             }
 
             #endregion

@@ -1048,7 +1048,12 @@ namespace KGySoft.Reflection
             }
 
             void DumpRootName(StringBuilder sb, TypeNameKind kind)
-                => sb.Append(kind == TypeNameKind.ShortName ? rootName!.Split('.', '+').LastOrDefault() ?? String.Empty : rootName);
+            {
+                if (kind == TypeNameKind.ShortName)
+                    sb.Append(rootName!.AsSegment().Split('.', '+').LastOrDefault().AsSpan);
+                else
+                    sb.Append(rootName);
+            }
 
             void DumpGenericArguments(StringBuilder sb, TypeNameKind kind)
             {
@@ -1072,7 +1077,6 @@ namespace KGySoft.Reflection
                 }
 
                 sb.Append(']');
-
             }
 
             void DumpModifiers(StringBuilder sb)

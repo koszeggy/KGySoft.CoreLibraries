@@ -1231,10 +1231,8 @@ namespace KGySoft.Serialization.Binary
                     CreateArrayBackedCollectionInstanceFromArray = (br, t, a) =>
                     {
                         Type bufferType = typeof(ArraySection<>).GetGenericType(t.GetGenericArguments()[0]);
-                        ConstructorInfo ctor = bufferType.GetConstructor(new[] { a.GetType(), Reflector.IntType })!;
-                        var buffer = CreateInstanceAccessor.GetAccessor(ctor).CreateInstance(a, Read7BitInt(br));
-                        ctor = t.GetConstructor(new[] { bufferType, Reflector.IntType, Reflector.IntType })!;
-                        return CreateInstanceAccessor.GetAccessor(ctor).CreateInstance(buffer, Read7BitInt(br), Read7BitInt(br));
+                        var buffer = bufferType.CreateInstance(a, Read7BitInt(br));
+                        return t.CreateInstance(new[] { bufferType, Reflector.IntType, Reflector.IntType }, buffer, Read7BitInt(br), Read7BitInt(br));
                     }
                 }
             },
@@ -1253,10 +1251,8 @@ namespace KGySoft.Serialization.Binary
                     CreateArrayBackedCollectionInstanceFromArray = (br, t, a) =>
                     {
                         Type bufferType = typeof(ArraySection<>).GetGenericType(t.GetGenericArguments()[0]);
-                        ConstructorInfo ctor = bufferType.GetConstructor(new[] { a.GetType(), Reflector.IntType })!;
-                        var buffer = CreateInstanceAccessor.GetAccessor(ctor).CreateInstance(a, Read7BitInt(br));
-                        ctor = t.GetConstructor(new[] { bufferType, Reflector.IntType, Reflector.IntType, Reflector.IntType })!;
-                        return CreateInstanceAccessor.GetAccessor(ctor).CreateInstance(buffer, Read7BitInt(br), Read7BitInt(br), Read7BitInt(br));
+                        var buffer = bufferType.CreateInstance(a, Read7BitInt(br));
+                        return t.CreateInstance(new[] { bufferType, Reflector.IntType, Reflector.IntType, Reflector.IntType }, buffer, Read7BitInt(br), Read7BitInt(br), Read7BitInt(br));
                     }
                 }
             },

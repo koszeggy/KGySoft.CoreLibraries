@@ -269,7 +269,7 @@ namespace KGySoft.ComponentModel
         private static IComparer<(int, object?)> CreateComparer(bool ascending, Type valueType)
         {
             if (valueType.GetInterfaces().Any(i => i.IsGenericTypeOf(typeof(IComparable<>)) && i.GetGenericArguments()[0] == valueType))
-                return (IComparer<(int, object?)>)Reflector.CreateInstance(typeof(ItemGenericComparer<>).GetGenericType(valueType), ascending);
+                return (IComparer<(int, object?)>)typeof(ItemGenericComparer<>).GetGenericType(valueType).CreateInstance(Reflector.BoolType, ascending);
             return new ItemComparer(ascending);
         }
 
