@@ -293,6 +293,10 @@ namespace KGySoft.Serialization.Binary
     /// <item><see cref="ImmutableSortedSet{T}.Builder"/> (in .NET Core 2.0 and above)</item>
     /// <item><see cref="ImmutableQueue{T}"/> (in .NET Core 2.0 and above)</item>
     /// <item><see cref="ImmutableStack{T}"/> (in .NET Core 2.0 and above)</item>
+    /// <item><see cref="ImmutableDictionary{TKey,TValue}"/> (in .NET Core 2.0 and above)</item>
+    /// <item><see cref="ImmutableDictionary{TKey,TValue}.Builder"/> (in .NET Core 2.0 and above)</item>
+    /// <item><see cref="ImmutableSortedDictionary{TKey,TValue}"/> (in .NET Core 2.0 and above)</item>
+    /// <item><see cref="ImmutableSortedDictionary{TKey,TValue}.Builder"/> (in .NET Core 2.0 and above)</item>
     /// </list>
     /// <note>
     /// <list type="bullet">
@@ -683,11 +687,12 @@ namespace KGySoft.Serialization.Binary
 
             // ...... generic dictionaries:
             ExtendedDictionary = 0b01000000 << 24, // serves only as a flag
+            ImmutableDictionary = 65 << 24,
+            ImmutableDictionaryBuilder = 66 << 24,
+            ImmutableSortedDictionary = 67 << 24,
+            ImmutableSortedDictionaryBuilder = 68 << 24,
+
             // TODO Candidates:
-            // ImmutableDictionary = 65 << 8,
-            // ImmutableSortedDictionary = 66 << 8,
-            // ImmutableDictionaryBuilder,
-            // ImmutableSortedDictionaryBuilder,
             // FrozenDictionary* // NOTE: special case(s) because FrozenDictionary is abstract with no available ctor so its internal sealed derived types could be handled just like RuntimeType
 
             // ----- flags: -----
@@ -793,10 +798,15 @@ namespace KGySoft.Serialization.Binary
             /// Indicates that the backing array is always a byte array, regardless of the actual element type.
             /// </summary>
             CreateResultFromByteArray = 1 << 17,
+
+            /// <summary>
+            /// Indicates that the dictionary has an additional EqualityComparer for TValue that can be passed to a constructor or factory method
+            /// </summary>
+            HasValueComparer = 1 << 18,
         }
 
         /// <summary>
-        /// Possible arguments of a collection constructor
+        /// Possible arguments of a collection constructor or factory method
         /// </summary>
         private enum CollectionCtorArguments
         {
@@ -804,6 +814,7 @@ namespace KGySoft.Serialization.Binary
             Comparer,
             CaseInsensitivity,
             HashingStrategy,
+            ValueComparer,
         }
 
         /// <summary>
@@ -1407,7 +1418,60 @@ namespace KGySoft.Serialization.Binary
 
             #region Extended dictionaries (DataTypes 64..127 << 24)
 
-            // TODO
+            {
+                DataTypes.ImmutableDictionary, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer | CollectionInfo.HasValueComparer,
+                    CtorArguments = new[] { CollectionCtorArguments.Comparer, CollectionCtorArguments.ValueComparer },
+                    CreateCollectionToPopulateCallback = (t, args) =>
+                    {
+                        Type[] genericArgs = t.GetGenericArguments();
+                        return typeof(ImmutableDictionary).InvokeMethod(nameof(ImmutableDictionary.CreateBuilder), genericArgs,
+                            new[] { typeof(IEqualityComparer<>).GetGenericType(genericArgs[0]), typeof(IEqualityComparer<>).GetGenericType(genericArgs[1]) }, args)!;
+                    },
+                    CreateFinalCollectionCallback = o => Accessors.InvokeMethod(o, nameof(ImmutableDictionary<_,_>.Builder.ToImmutable))!,
+                }
+            },
+            {
+                DataTypes.ImmutableDictionaryBuilder, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer | CollectionInfo.HasValueComparer,
+                    CtorArguments = new[] { CollectionCtorArguments.Comparer, CollectionCtorArguments.ValueComparer },
+                    CreateCollectionToPopulateCallback = (t, args) =>
+                    {
+                        Type[] genericArgs = t.GetGenericArguments();
+                        return typeof(ImmutableDictionary).InvokeMethod(nameof(ImmutableDictionary.CreateBuilder), genericArgs,
+                            new[] { typeof(IEqualityComparer<>).GetGenericType(genericArgs[0]), typeof(IEqualityComparer<>).GetGenericType(genericArgs[1]) }, args)!;
+                    },
+                }
+            },
+            {
+                DataTypes.ImmutableSortedDictionary, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasComparer | CollectionInfo.HasValueComparer,
+                    CtorArguments = new[] { CollectionCtorArguments.Comparer, CollectionCtorArguments.ValueComparer },
+                    CreateCollectionToPopulateCallback = (t, args) =>
+                    {
+                        Type[] genericArgs = t.GetGenericArguments();
+                        return typeof(ImmutableSortedDictionary).InvokeMethod(nameof(ImmutableSortedDictionary.CreateBuilder), genericArgs,
+                            new[] { typeof(IComparer<>).GetGenericType(genericArgs[0]), typeof(IEqualityComparer<>).GetGenericType(genericArgs[1]) }, args)!;
+                    },
+                    CreateFinalCollectionCallback = o => Accessors.InvokeMethod(o, nameof(ImmutableSortedDictionary<_,_>.Builder.ToImmutable))!,
+                }
+            },
+            {
+                DataTypes.ImmutableSortedDictionaryBuilder, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasComparer | CollectionInfo.HasValueComparer,
+                    CtorArguments = new[] { CollectionCtorArguments.Comparer, CollectionCtorArguments.ValueComparer },
+                    CreateCollectionToPopulateCallback = (t, args) =>
+                    {
+                        Type[] genericArgs = t.GetGenericArguments();
+                        return typeof(ImmutableSortedDictionary).InvokeMethod(nameof(ImmutableSortedDictionary.CreateBuilder), genericArgs,
+                            new[] { typeof(IComparer<>).GetGenericType(genericArgs[0]), typeof(IEqualityComparer<>).GetGenericType(genericArgs[1]) }, args)!;
+                    },
+                }
+            },
 
             #endregion
         };
@@ -1581,6 +1645,10 @@ namespace KGySoft.Serialization.Binary
             { typeof(ImmutableSortedSet<>.Builder), DataTypes.ImmutableSortedSetBuilder },
             { typeof(ImmutableQueue<>), DataTypes.ImmutableQueue },
             { typeof(ImmutableStack<>), DataTypes.ImmutableStack },
+            { typeof(ImmutableDictionary<,>), DataTypes.ImmutableDictionary },
+            { typeof(ImmutableDictionary<,>.Builder), DataTypes.ImmutableDictionaryBuilder },
+            { typeof(ImmutableSortedDictionary<,>), DataTypes.ImmutableSortedDictionary },
+            { typeof(ImmutableSortedDictionary<,>.Builder), DataTypes.ImmutableSortedDictionaryBuilder },
 #endif
         };
 

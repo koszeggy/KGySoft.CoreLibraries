@@ -1096,6 +1096,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #if NETCOREAPP
                 && Equals(valueImmutableArray[0], other.valueImmutableArray[0])
                 && Equals(valueImmutableArrayBuilder[0], other.valueImmutableArrayBuilder[0])
+                && Equals(valueImmutableList[0], other.valueImmutableList[0])
+                && Equals(valueImmutableListBuilder[0], other.valueImmutableListBuilder[0])
 #endif
             ;
 

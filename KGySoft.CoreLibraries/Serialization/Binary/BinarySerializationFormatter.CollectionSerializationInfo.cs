@@ -157,6 +157,7 @@ namespace KGySoft.Serialization.Binary
             private bool HasEqualityComparer => (Info & CollectionInfo.HasEqualityComparer) == CollectionInfo.HasEqualityComparer;
             private bool HasStringSegmentComparer => (Info & CollectionInfo.HasStringSegmentComparer) == CollectionInfo.HasStringSegmentComparer;
             private bool HasAnyComparer => (Info & (CollectionInfo.HasComparer | CollectionInfo.HasEqualityComparer | CollectionInfo.HasStringSegmentComparer)) != CollectionInfo.None;
+            private bool HasValueComparer => (Info & CollectionInfo.HasValueComparer) != CollectionInfo.None;
             private bool HasCaseInsensitivity => (Info & CollectionInfo.HasCaseInsensitivity) == CollectionInfo.HasCaseInsensitivity;
             private bool HasReadOnly => (Info & CollectionInfo.HasReadOnly) == CollectionInfo.HasReadOnly;
             private bool UsesComparerHelper => (Info & CollectionInfo.UsesComparerHelper) == CollectionInfo.UsesComparerHelper;
@@ -252,6 +253,15 @@ namespace KGySoft.Serialization.Binary
                     bw.Write(isDefaultComparer);
                     if (!isDefaultComparer)
                         manager.WriteNonRoot(bw, comparer!);
+
+                    if (HasValueComparer)
+                    {
+                        comparer = Accessors.GetPropertyValue(collection, "ValueComparer");
+                        isDefaultComparer = comparer == null || IsDefaultValueComparer(collection, comparer);
+                        bw.Write(isDefaultComparer);
+                        if (!isDefaultComparer)
+                            manager.WriteNonRoot(bw, comparer!);
+                    }
                 }
 
                 // 7.) Any custom properties
@@ -263,7 +273,6 @@ namespace KGySoft.Serialization.Binary
             /// <summary>
             /// Creates collection and reads all serialized specific properties that were written by <see cref="WriteSpecificProperties"/>.
             /// </summary>
-            /// <param name="count">-1 if default instance</param>
             [SecurityCritical]
             internal object InitializeCollection(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor, DeserializationManager manager, bool safeMode, out int count)
             {
@@ -330,9 +339,14 @@ namespace KGySoft.Serialization.Binary
                         ? IsNonNullDefaultComparer ? GetDefaultComparer(descriptor.Type!) : null
                         : manager.ReadWithType(br)
                     : null;
+                object? valueComparer = HasValueComparer
+                    ? br.ReadBoolean() // is default?
+                        ? null
+                        : manager.ReadWithType(br)
+                    : null;
 
                 // creating the result instance
-                result = CreateCollection(descriptor, capacity, caseInsensitive, isAndHash, comparer);
+                result = CreateCollection(descriptor, capacity, caseInsensitive, isAndHash, comparer, valueComparer);
                 if (id != 0)
                     manager.ReplaceObjectInCache(id, result);
 
@@ -365,6 +379,12 @@ namespace KGySoft.Serialization.Binary
                 return false;
             }
 
+            private bool IsDefaultValueComparer([NoEnumeration]IEnumerable collection, object? comparer)
+            {
+                object? defaultComparer = GetDefaultValueComparer(collection.GetType());
+                return Equals(defaultComparer, comparer);
+            }
+
             private object? GetDefaultComparer(Type type)
             {
                 if (!IsGeneric)
@@ -382,7 +402,15 @@ namespace KGySoft.Serialization.Binary
                     : typeof(Comparer<>).GetPropertyValue(elementType, nameof(Comparer<_>.Default));
             }
 
-            private object CreateCollection(DataTypeDescriptor descriptor, int capacity, bool isCaseInsensitive, bool isAndHash, object? comparer)
+            private object? GetDefaultValueComparer(Type type)
+            {
+                Debug.Assert(IsGeneric && IsDictionary && !UsesComparerHelper && !HasStringSegmentComparer);
+
+                Type valueType = type.GetGenericArguments()[1];
+                return typeof(EqualityComparer<>).GetPropertyValue(valueType, nameof(EqualityComparer<_>.Default));
+            }
+
+            private object CreateCollection(DataTypeDescriptor descriptor, int capacity, bool isCaseInsensitive, bool isAndHash, object? comparer, object? valueComparer)
             {
                 object?[] parameters = Reflector.EmptyObjects;
 
@@ -405,17 +433,20 @@ namespace KGySoft.Serialization.Binary
                             case CollectionCtorArguments.HashingStrategy:
                                 parameters[i] = isAndHash ? HashingStrategy.And : HashingStrategy.Modulo;
                                 break;
+                            case CollectionCtorArguments.ValueComparer:
+                                parameters[i] = valueComparer;
+                                break;
                             default:
                                 return Throw.InternalError<object>($"Unsupported {nameof(CollectionCtorArguments)}");
                         }
                     }
                 }
 
-                if (CreateCollectionToPopulateCallback is Func<Type, object?[], object> createBuilderCallback)
-                    return createBuilderCallback.Invoke(descriptor.GetTypeToCreate(), parameters);
+                if (CreateCollectionToPopulateCallback is Func<Type, object?[], object> createCollectionToPopulateCallback)
+                    return createCollectionToPopulateCallback.Invoke(descriptor.GetTypeToCreate(), parameters);
 
                 CreateInstanceAccessor ctor = GetInitializer(descriptor);
-                return CtorArguments == null ? ctor.CreateInstance() : ctor.CreateInstance(parameters);
+                return ctor.CreateInstance(parameters);
             }
 
             private CreateInstanceAccessor GetInitializer(DataTypeDescriptor descriptor)

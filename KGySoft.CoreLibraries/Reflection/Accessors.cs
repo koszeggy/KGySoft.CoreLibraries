@@ -749,7 +749,7 @@ namespace KGySoft.Reflection
             PropertyAccessor? property =  GetProperty(type, type.Name switch
             {
                 nameof(Hashtable) => "EqualityComparer",
-                "ImmutableHashSet`1" or "ImmutableSortedSet`1" => "KeyComparer",
+                "ImmutableHashSet`1" or "ImmutableSortedSet`1" or "ImmutableDictionary`2" or "ImmutableSortedDictionary`2" or "Builder" => "KeyComparer",
                 _ => "Comparer" // Dictionary<TKey, TValue>, HashSet<T>, SortedSet<T>, SortedList<TKey, TValue>, SortedDictionary<TKey, TValue>, CircularSortedList<TKey, TValue>, ThreadSafeHashSet<T>, ThreadSafeDictionary<TKey, TValue>, StringKeyedDictionary<TValue>
             }); 
 
@@ -757,7 +757,7 @@ namespace KGySoft.Reflection
                 return property.Get(collection);
 
             // 2.) By *comparer* field
-            return GetField(type, null, "comparer")?.Get(collection); // SortedList, ListDictionary, OrderedDictionary, ConcurrentDictionary
+            return GetField(type, null, "comparer")?.Get(collection); // SortedList, ListDictionary, OrderedDictionary, ConcurrentDictionary (< .NET 6)
         }
 
         #endregion

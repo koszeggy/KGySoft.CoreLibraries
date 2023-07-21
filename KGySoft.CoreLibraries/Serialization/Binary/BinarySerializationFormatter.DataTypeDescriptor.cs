@@ -752,6 +752,14 @@ namespace KGySoft.Serialization.Binary
                         return typeof(ImmutableQueue<>);
                     case DataTypes.ImmutableStack:
                         return typeof(ImmutableStack<>);
+                    case DataTypes.ImmutableDictionary:
+                        return typeof(ImmutableDictionary<,>);
+                    case DataTypes.ImmutableDictionaryBuilder:
+                        return typeof(ImmutableDictionary<,>.Builder);
+                    case DataTypes.ImmutableSortedDictionary:
+                        return typeof(ImmutableSortedDictionary<,>);
+                    case DataTypes.ImmutableSortedDictionaryBuilder:
+                        return typeof(ImmutableSortedDictionary<,>.Builder);
 #else
                     case DataTypes.ImmutableArray:
                     case DataTypes.ImmutableArrayBuilder:
@@ -763,6 +771,10 @@ namespace KGySoft.Serialization.Binary
                     case DataTypes.ImmutableSortedSetBuilder:
                     case DataTypes.ImmutableQueue:
                     case DataTypes.ImmutableStack:
+                    case DataTypes.ImmutableDictionary:
+                    case DataTypes.ImmutableDictionaryBuilder:
+                    case DataTypes.ImmutableSortedDictionary:
+                    case DataTypes.ImmutableSortedDictionaryBuilder:
                         return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationCollectionPlatformNotSupported(DataTypeToString(collectionDataType)));
 #endif
 

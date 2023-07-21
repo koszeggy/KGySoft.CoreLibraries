@@ -1125,6 +1125,26 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 ImmutableQueue.Create(1, 2, 3, 4),
                 ImmutableStack<int>.Empty,
                 ImmutableStack.Create(1, 2, 3, 4),
+                ImmutableDictionary<int, string>.Empty,
+                new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } }.ToImmutableDictionary(),
+                new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } }.ToImmutableDictionary((IEqualityComparer<int>)null, StringComparer.OrdinalIgnoreCase),
+                new Dictionary<ConsoleColor, string> { { ConsoleColor.Red, "R" }, { ConsoleColor.Green, "G" }, { ConsoleColor.Blue, "B" } }.ToImmutableDictionary(EnumComparer<ConsoleColor>.Comparer),
+                new Dictionary<ConsoleColor, string> { { ConsoleColor.Red, "R" }, { ConsoleColor.Green, "G" }, { ConsoleColor.Blue, "B" } }.ToImmutableDictionary(EnumComparer<ConsoleColor>.Comparer, StringComparer.OrdinalIgnoreCase),
+                ImmutableDictionary.CreateBuilder<int, string>(),
+                new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } }.ToImmutableDictionary().ToBuilder(),
+                new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } }.ToImmutableDictionary((IEqualityComparer<int>)null, StringComparer.OrdinalIgnoreCase).ToBuilder(),
+                new Dictionary<ConsoleColor, string> { { ConsoleColor.Red, "R" }, { ConsoleColor.Green, "G" }, { ConsoleColor.Blue, "B" } }.ToImmutableDictionary(EnumComparer<ConsoleColor>.Comparer).ToBuilder(),
+                new Dictionary<ConsoleColor, string> { { ConsoleColor.Red, "R" }, { ConsoleColor.Green, "G" }, { ConsoleColor.Blue, "B" } }.ToImmutableDictionary(EnumComparer<ConsoleColor>.Comparer, StringComparer.OrdinalIgnoreCase).ToBuilder(),
+                ImmutableSortedDictionary<int, string>.Empty,
+                new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } }.ToImmutableSortedDictionary(),
+                new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } }.ToImmutableSortedDictionary(null, StringComparer.OrdinalIgnoreCase),
+                new Dictionary<ConsoleColor, string> { { ConsoleColor.Red, "R" }, { ConsoleColor.Green, "G" }, { ConsoleColor.Blue, "B" } }.ToImmutableSortedDictionary(EnumComparer<ConsoleColor>.Comparer),
+                new Dictionary<ConsoleColor, string> { { ConsoleColor.Red, "R" }, { ConsoleColor.Green, "G" }, { ConsoleColor.Blue, "B" } }.ToImmutableSortedDictionary(EnumComparer<ConsoleColor>.Comparer, StringComparer.OrdinalIgnoreCase),
+                ImmutableSortedDictionary.CreateBuilder<int, string>(),
+                new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } }.ToImmutableSortedDictionary().ToBuilder(),
+                new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } }.ToImmutableSortedDictionary(null, StringComparer.OrdinalIgnoreCase).ToBuilder(),
+                new Dictionary<ConsoleColor, string> { { ConsoleColor.Red, "R" }, { ConsoleColor.Green, "G" }, { ConsoleColor.Blue, "B" } }.ToImmutableSortedDictionary(EnumComparer<ConsoleColor>.Comparer).ToBuilder(),
+                new Dictionary<ConsoleColor, string> { { ConsoleColor.Red, "R" }, { ConsoleColor.Green, "G" }, { ConsoleColor.Blue, "B" } }.ToImmutableSortedDictionary(EnumComparer<ConsoleColor>.Comparer, StringComparer.OrdinalIgnoreCase).ToBuilder(),
 #endif
             };
 
@@ -1233,6 +1253,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         [Test]
         public void SerializeSupportedDictionaries()
         {
+            // serializable types
             object[] referenceObjects =
             {
                 // generic collection value
@@ -1311,33 +1332,43 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
 
+            // non-serializable types
             referenceObjects = new object[]
             {
-                new Dictionary<int, StrongBox<int>> { { 1, new StrongBox<int>(1) }, { 2, null } },  
+                new Dictionary<int, StrongBox<int>> { { 1, new StrongBox<int>(1) }, { 2, null } },
 #if !NET35
 #if !NET7_0 // BUG, only in .NET 7: https://github.com/dotnet/runtime/issues/67491
-                new Dictionary<int, ConcurrentBag<int>> { { 1, new ConcurrentBag<int> { 1, 2 } }, { 2, null } },  
+                new Dictionary<int, ConcurrentBag<int>> { { 1, new ConcurrentBag<int> { 1, 2 } }, { 2, null } },
 #endif
                 new Dictionary<int, ConcurrentQueue<int>> { { 1, new ConcurrentQueue<int>(new[] { 1, 2 }) }, { 2, null } },
                 new Dictionary<int, ConcurrentStack<int>> { { 1, new ConcurrentStack<int>(new[] { 1, 2 }) }, { 2, null } },
-
-                new ConcurrentDictionary<int, int[]>(new Dictionary<int, int[]> { { 1, new[] { 1, 2 } }, { 2, null } }),
 #endif
 
 #if NETCOREAPP3_0_OR_GREATER
-                new Dictionary<int, Vector128<int>> { { 1, Vector128.Create(1, 2, 3, 4) } },  
+                new Dictionary<int, Vector128<int>> { { 1, Vector128.Create(1, 2, 3, 4) } },
 #endif
 #if NETCOREAPP
-                new Dictionary<int, ImmutableArray<int>> { { 1, new[] { 1, 2, 3, 4 }.ToImmutableArray() } },  
-                new Dictionary<int, ImmutableArray<int>.Builder> { { 1, new[] { 1, 2, 3, 4 }.ToImmutableArray().ToBuilder() } },  
-                new Dictionary<int, ImmutableList<int>> { { 1, new[] { 1, 2, 3, 4 }.ToImmutableList() } },  
-                new Dictionary<int, ImmutableList<int>.Builder> { { 1, new[] { 1, 2, 3, 4 }.ToImmutableList().ToBuilder() } },  
+                new Dictionary<int, ImmutableArray<int>> { { 1, new[] { 1, 2, 3, 4 }.ToImmutableArray() } },
+                new Dictionary<int, ImmutableArray<int>.Builder> { { 1, new[] { 1, 2, 3, 4 }.ToImmutableArray().ToBuilder() } },
+                new Dictionary<int, ImmutableList<int>> { { 1, new[] { 1, 2, 3, 4 }.ToImmutableList() } },
+                new Dictionary<int, ImmutableList<int>.Builder> { { 1, new[] { 1, 2, 3, 4 }.ToImmutableList().ToBuilder() } },
                 new Dictionary<int, ImmutableHashSet<int>> { { 1, new[] { 1, 2, 3, 4 }.ToImmutableHashSet() } },
-                new Dictionary<int, ImmutableHashSet<int>.Builder> { { 1, new[] { 1, 2, 3, 4 }.ToImmutableHashSet().ToBuilder() } },  
+                new Dictionary<int, ImmutableHashSet<int>.Builder> { { 1, new[] { 1, 2, 3, 4 }.ToImmutableHashSet().ToBuilder() } },
                 new Dictionary<int, ImmutableSortedSet<int>> { { 1, new[] { 1, 2, 3, 4 }.ToImmutableSortedSet() } },
-                new Dictionary<int, ImmutableSortedSet<int>.Builder> { { 1, new[] { 1, 2, 3, 4 }.ToImmutableSortedSet().ToBuilder() } },  
-                new Dictionary<int, ImmutableQueue<int>> { { 1, ImmutableQueue.Create(1, 2, 3, 4 ) } },
-                new Dictionary<int, ImmutableStack<int>> { { 1, ImmutableStack.Create(1, 2, 3, 4 ) } },
+                new Dictionary<int, ImmutableSortedSet<int>.Builder> { { 1, new[] { 1, 2, 3, 4 }.ToImmutableSortedSet().ToBuilder() } },
+                new Dictionary<int, ImmutableQueue<int>> { { 1, ImmutableQueue.Create(1, 2, 3, 4) } },
+                new Dictionary<int, ImmutableStack<int>> { { 1, ImmutableStack.Create(1, 2, 3, 4) } },
+                new Dictionary<int, ImmutableDictionary<int, int>> { { 1, new Dictionary<int, int> { { 1, 2 } }.ToImmutableDictionary() }, { 2, null } }, // ImmutableDictionary 
+                new Dictionary<int, ImmutableSortedDictionary<int, int>> { { 1, new Dictionary<int, int> { { 1, 2 } }.ToImmutableSortedDictionary() }, { 2, null } }, // ImmutableSortedDictionary 
+#endif
+
+                // other generic dictionary types as outer objects
+#if !NET35
+                new ConcurrentDictionary<int, int[]>(new Dictionary<int, int[]> { { 1, new[] { 1, 2 } }, { 2, null } }),
+#endif
+#if NETCOREAPP
+                new Dictionary<int, int[]> { { 1, new[] { 1, 2 } }, { 2, null } }.ToImmutableDictionary(), // ImmutableDictionary
+                new Dictionary<int, int[]> { { 1, new[] { 1, 2 } }, { 2, null } }.ToImmutableSortedDictionary(), // ImmutableSortedDictionary
 #endif
             };
 
@@ -1803,6 +1834,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
                 // Pointer fields
                 // new UnsafeStruct(), - TestSurrogateSelector calls Reflector.SetField now
+
+                new[] { 1, 2, 3 }.ToImmutableList(),
             };
 
             // default
@@ -2031,8 +2064,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
             // Constructed indirect self references
-            var root = new CircularReferenceClass { Name = "root" }.AddChild("child").AddChild("grandchild").Parent.Parent;
-            root.Children[0].Children[0].Children.Add(root);
             referenceObjects = new object[]
             {
                 null, // grand-grandchild is root again
@@ -2045,8 +2076,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 null, // ImmutableList.Builder
                 null, // ImmutableHashSet.Builder
                 null, // ImmutableSortedSet.Builder
+                null, // ImmutableDictionary.Builder/Key
+                null, // ImmutableDictionary.Builder/Value
+                null, // ImmutableDictionary.Builder/Key+Value
             };
 
+            var root = new CircularReferenceClass { Name = "root" }.AddChild("child").AddChild("grandchild").Parent.Parent;
+            root.Children[0].Children[0].Children.Add(root);
             referenceObjects[0] = root;
 
             referenceObjects[1] = new DictionaryEntry(1, referenceObjects);
@@ -2117,6 +2153,19 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             ImmutableSortedSet<object>.Builder immutableSortedSetBuilder = ImmutableSortedSet.CreateBuilder<object>();
             immutableSortedSetBuilder.Add(immutableSortedSetBuilder);
             referenceObjects[9] = immutableSortedSetBuilder;
+
+            // ImmutableDictionary.Builder
+            ImmutableDictionary<object, object>.Builder immutableDictionaryBuilder = ImmutableDictionary.CreateBuilder<object, object>();
+            immutableDictionaryBuilder.Add(immutableDictionaryBuilder, null); // key
+            referenceObjects[10] = immutableDictionaryBuilder;
+
+            immutableDictionaryBuilder = ImmutableDictionary.CreateBuilder<object, object>();
+            immutableDictionaryBuilder.Add(new object(), immutableDictionaryBuilder); // value
+            referenceObjects[11] = immutableDictionaryBuilder;
+
+            immutableDictionaryBuilder = ImmutableDictionary.CreateBuilder<object, object>();
+            immutableDictionaryBuilder.Add(immutableDictionaryBuilder, immutableDictionaryBuilder); // key+value
+            referenceObjects[12] = immutableDictionaryBuilder;
 #endif
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None, safeCompare: true);

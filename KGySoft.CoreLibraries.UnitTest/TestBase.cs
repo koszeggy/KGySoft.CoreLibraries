@@ -456,7 +456,11 @@ namespace KGySoft.CoreLibraries
                 referenceObjects = referenceObjects.Cast<object>().OrderBy(i => i).ToList();
                 targetObjects = targetObjects.Cast<object>().OrderBy(i => i).ToList();
             }
-            else if (type.IsGenericTypeOf(typeof(ConcurrentDictionary<,>)))
+            else if (type.IsGenericTypeOf(typeof(ConcurrentDictionary<,>))
+#if NETCOREAPP
+                || type.IsGenericTypeOf(typeof(ImmutableDictionary<,>.Builder))
+#endif
+                     )
             {
                 referenceObjects = referenceObjects.Convert<List<KeyValuePair<object, object>>>().OrderBy(i => i.Key.ToString()).ToList();
                 targetObjects = targetObjects.Convert<List<KeyValuePair<object, object>>>().OrderBy(i => i.Key.ToString()).ToList();
