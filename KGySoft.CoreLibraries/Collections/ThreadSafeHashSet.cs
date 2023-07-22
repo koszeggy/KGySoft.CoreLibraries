@@ -222,15 +222,18 @@ namespace KGySoft.Collections
         private volatile bool isMerging;
         private long mergeInterval = TimeHelper.GetInterval(100);
         private long nextMerge;
+
         /// <summary>
         /// Items here are accessed without locking.
         /// Once a new item is added, it is never removed anymore even when they are deleted
         /// </summary>
         private volatile FixedSizeStorage fixedSizeStorage;
+        
         /// <summary>
         /// A temporary storage for new values. It is regularly merged with fixedSizeStorage into a new fixed size instance.
         /// </summary>
         private volatile TempStorage? expandableStorage;
+        
         private SerializationInfo? deserializationInfo;
 
         #endregion
