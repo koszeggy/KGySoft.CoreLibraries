@@ -198,15 +198,12 @@ namespace KGySoft.Collections
 
                 lock (syncRoot)
                 {
-                    TempStorage? lockingValues = expandableStorage;
-
                     // lost race
-                    if (lockingValues == null)
+                    if (expandableStorage == null)
                         return fixedSizeStorage.Count;
 
-                    int result = fixedSizeStorage.Count + lockingValues.Count;
                     MergeIfExpired();
-                    return result;
+                    return (expandableStorage?.Count ?? 0) + fixedSizeStorage.Count;
                 }
             }
         }

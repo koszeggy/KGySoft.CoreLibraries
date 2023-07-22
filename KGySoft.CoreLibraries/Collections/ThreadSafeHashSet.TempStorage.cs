@@ -46,12 +46,14 @@ namespace KGySoft.Collections
                 #region Fields
 
                 internal uint Hash;
+
                 /// <summary>
                 /// Zero-based index of a chained item in the current bucket or -1 if last.
                 /// Deleted items use negative indices below -1. Last deleted item has index -2.
                 /// </summary>
                 internal int Next;
-                [AllowNull] internal T Value;
+
+                [AllowNull]internal T Value;
 
                 #endregion
             }

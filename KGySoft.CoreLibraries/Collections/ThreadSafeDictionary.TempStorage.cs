@@ -735,7 +735,7 @@ namespace KGySoft.Collections
 
             internal InternalEnumerator GetInternalEnumerator() => new InternalEnumerator(this);
 
-#endregion
+            #endregion
 
             #region Private Methods
 
@@ -846,7 +846,7 @@ namespace KGySoft.Collections
 
             #endregion
 
-#endregion
+            #endregion
         }
     }
 }
