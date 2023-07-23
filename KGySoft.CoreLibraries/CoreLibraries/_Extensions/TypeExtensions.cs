@@ -302,7 +302,7 @@ namespace KGySoft.CoreLibraries
                 return false;
             }
 
-            for (Type? t = type; t != null; t = t.BaseType)
+            for (Type? t = type; t is not null; t = t.BaseType)
             {
                 if (t.Name == rootName && t.IsGenericTypeOf(genericTypeDefinition))
                 {
@@ -755,6 +755,29 @@ namespace KGySoft.CoreLibraries
                 default:
                     return genMethodDef.MakeGenericMethod(args);
             }
+        }
+
+        /// <summary>
+        /// Similar to the public <see cref="IsImplementationOfGenericType(Type,Type,out Type)"/> but:
+        /// - Only subclass check
+        /// - type can be constructed generic or generic type definition
+        /// - The returned genericType can be either constructed (if type was constructed) or genericTypeDefinition
+        /// </summary>
+        internal static bool IsSubclassOfGeneric(this Type type, Type genericTypeDefinition, [MaybeNullWhen(false)]out Type genericType)
+        {
+            Debug.Assert(genericTypeDefinition.IsGenericTypeDefinition);
+            string rootName = genericTypeDefinition.Name;
+            for (Type? t = type.BaseType; t is not null; t = t.BaseType)
+            {
+                if (t.Name == rootName && t.IsGenericType && t.GetGenericTypeDefinition() == genericTypeDefinition)
+                {
+                    genericType = t;
+                    return true;
+                }
+            }
+
+            genericType = null;
+            return false;
         }
 
         internal static bool IsZeroBasedArray(this Type type)

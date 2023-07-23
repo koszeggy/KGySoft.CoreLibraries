@@ -1274,12 +1274,16 @@ namespace KGySoft.Serialization.Binary
             private object CreateCollection(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor)
             {
                 Type type = descriptor.GetTypeToCreate();
-                if (!descriptor.IsSingleElement && !Reflector.IEnumerableType.IsAssignableFrom(type))
+                if (!(descriptor.IsSingleElement || descriptor.IsComparer) && !Reflector.IEnumerableType.IsAssignableFrom(type))
                     Throw.SerializationException(Res.BinarySerializationIEnumerableExpected(type!));
 
                 DataTypes dataType = descriptor.CollectionDataType;
                 CollectionSerializationInfo serInfo = serializationInfo[dataType];
                 object result = serInfo.InitializeCollection(br, addToCache, descriptor, this, SafeMode, out int count); // TODO: out int id if a proxy will be legally replaceable once
+
+                if (serInfo.IsComparer)
+                    return result;
+
                 if (serInfo.IsSingleElement)
                 {
                     if (descriptor.IsStrongBox)

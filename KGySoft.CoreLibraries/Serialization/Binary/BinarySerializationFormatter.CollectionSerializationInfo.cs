@@ -84,7 +84,7 @@ namespace KGySoft.Serialization.Binary
 
             /// <summary>
             /// Specifies the constructor arguments to be used. Order matters!
-            /// Can be used also to specify the arguments for <see cref="CreateCollectionToPopulateCallback"/>.
+            /// Can be used also to specify the arguments for <see cref="CreateInstanceCallback"/>.
             /// </summary>
             internal CollectionCtorArguments[]? CtorArguments { private get; set; }
 
@@ -124,13 +124,19 @@ namespace KGySoft.Serialization.Binary
             /// Gets a delegate that can instantiate the (possibly proxy) collection instance to populate. The parameters depend on <see cref="CtorArguments"/>.
             /// If this is not the final instance the <see cref="CreateFinalCollectionCallback"/> should be also set.
             /// </summary>
-            internal Func<Type, object?[], object>? CreateCollectionToPopulateCallback { get; set; }
+            internal Func<Type, object?[], object>? CreateInstanceCallback { get; set; }
 
             /// <summary>
-            /// If <see cref="CreateCollectionToPopulateCallback"/> returns a proxy type, then this delegate can return the final result from the builder collection.
+            /// If <see cref="CreateInstanceCallback"/> returns a proxy type, then this delegate can return the final result from the builder collection.
             /// NOTE: Using this property may prevent deserialization of circular references.
             /// </summary>
             internal Func<object, object>? CreateFinalCollectionCallback { get; set; }
+
+            /// <summary>
+            /// Can be set if the type is represented by an abstract public generic type that can have supported non-generic derived types.
+            /// Currently used for comparers.
+            /// </summary>
+            internal Func<Type, Type> GetReferenceGenericTypeCallback { get; set; }
 
 #if !NET35
             [SuppressMessage("ReSharper", "MemberCanBePrivate.Local", Justification = "For some targets it is needed to be internal")] 
@@ -148,6 +154,7 @@ namespace KGySoft.Serialization.Binary
             internal bool IsTuple => (Info & CollectionInfo.IsTuple) == CollectionInfo.IsTuple;
             internal bool HasStringItemsOrKeys => (Info & CollectionInfo.HasStringItemsOrKeys) == CollectionInfo.HasStringItemsOrKeys;
             internal bool CreateResultFromByteArray => (Info & CollectionInfo.CreateResultFromByteArray) == CollectionInfo.CreateResultFromByteArray;
+            internal bool IsComparer => (Info & CollectionInfo.IsComparer) == CollectionInfo.IsComparer;
 
             #endregion
 
@@ -277,6 +284,17 @@ namespace KGySoft.Serialization.Binary
             internal object InitializeCollection(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor, DeserializationManager manager, bool safeMode, out int count)
             {
                 object result;
+
+                if (IsComparer)
+                {
+                    Debug.Assert(CreateInstanceCallback != null, $"{nameof(CreateInstanceCallback)} must be specified for comparers");
+                    result = CreateInstanceCallback!.Invoke(descriptor.GetTypeToCreate(), Reflector.EmptyObjects);
+                    if (addToCache)
+                        manager.AddObjectToCache(result);
+
+                    count = 0;
+                    return result;
+                }
 
                 // StrongBox, KeyValuePair, DictionaryEntry
                 if (IsSingleElement)
@@ -442,7 +460,7 @@ namespace KGySoft.Serialization.Binary
                     }
                 }
 
-                if (CreateCollectionToPopulateCallback is Func<Type, object?[], object> createCollectionToPopulateCallback)
+                if (CreateInstanceCallback is Func<Type, object?[], object> createCollectionToPopulateCallback)
                     return createCollectionToPopulateCallback.Invoke(descriptor.GetTypeToCreate(), parameters);
 
                 CreateInstanceAccessor ctor = GetInitializer(descriptor);

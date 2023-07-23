@@ -866,6 +866,14 @@ namespace KGySoft.Reflection
             return property.Get(instance);
         }
 
+        internal static object? GetPropertyValue(this Type type, string propertyName)
+        {
+            PropertyAccessor? property = GetProperty(type, propertyName);
+            if (property == null)
+                Throw.InvalidOperationException(Res.ReflectionInstancePropertyDoesNotExist(propertyName, type));
+            return property.Get(null);
+        }
+
         internal static void SetPropertyValue(object instance, string propertyName, object? value)
         {
             PropertyAccessor? property = GetProperty(instance.GetType(), propertyName);

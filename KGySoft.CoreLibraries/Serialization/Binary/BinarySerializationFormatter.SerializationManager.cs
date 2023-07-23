@@ -533,11 +533,33 @@ namespace KGySoft.Serialization.Binary
                     }
 
                     // supported collection (including some some special types such as KeyValuePair or tuples)
-                    Type collType = t.IsGenericType ? t.GetGenericTypeDefinition()
+                    Type checkedType = t.IsGenericType ? t.GetGenericTypeDefinition()
                         : t.IsGenericParameter && t.DeclaringMethod == null ? t.DeclaringType!
                         : t;
 
-                    return supportedCollections.TryGetValue(collType, out result);
+                    if (supportedCollections.TryGetValue(checkedType, out result))
+                        return true;
+
+                    // special cases for known abstract types (generic comparers with internal implementations)
+                    if (t.IsSubclassOfGeneric(typeof(EqualityComparer<>), out Type? comparerType) && t == comparerType.GetPropertyValue(nameof(EqualityComparer<_>.Default))!.GetType())
+                    {
+                        result = DataTypes.DefaultEqualityComparer;
+                        return true;
+                    }
+
+                    if (t.IsSubclassOfGeneric(typeof(Comparer<>), out comparerType) && t == comparerType.GetPropertyValue(nameof(Comparer<_>.Default))!.GetType())
+                    {
+                        result = DataTypes.DefaultComparer;
+                        return true;
+                    }
+
+                    if (t.IsSubclassOfGeneric(typeof(EnumComparer<>), out comparerType) && t == comparerType.GetPropertyValue(nameof(EnumComparer<_>.Comparer))!.GetType())
+                    {
+                        result = DataTypes.EnumComparer;
+                        return true;
+                    }
+
+                    return false;
                 }
 
                 DataTypes GetImpureDataType(Type t)
@@ -1021,11 +1043,20 @@ namespace KGySoft.Serialization.Binary
                 if (IsElementType(dataType))
                     return new CircularList<DataTypes> { dataType };
 
+                CollectionSerializationInfo serInfo = serializationInfo[GetUnderlyingCollectionDataType(dataType)];
+                
+                // actual type is non-generic but the dataType is generic (eg. recognized derived type of a known abstract type)
+                if (serInfo.IsGeneric)
+                {
+                    Debug.Assert(serInfo is { IsComparer: true, GetReferenceGenericTypeCallback: not null }); // currently these types are comparers only, eg. ByteEqualityComparer : EqualityComparer<byte>
+                    return EncodeGenericCollection(serInfo.GetReferenceGenericTypeCallback!.Invoke(type), dataType);
+                }
+
                 // non-generic collection
                 Debug.Assert(IsCollectionType(dataType) && !type.IsGenericType, $"Unexpected non-element type: {dataType}");
 
                 // note: not encoding key/value separately even for dictionaries because they are the same
-                return new() { dataType | (serializationInfo[GetUnderlyingCollectionDataType(dataType)].HasStringItemsOrKeys ? DataTypes.String : DataTypes.Object) };
+                return new() { dataType | (serInfo.HasStringItemsOrKeys ? DataTypes.String : DataTypes.Object) };
             }
 
             [SecurityCritical]
@@ -1105,6 +1136,9 @@ namespace KGySoft.Serialization.Binary
                 }
 
                 CollectionSerializationInfo serInfo = serializationInfo[collectionDataType];
+                if (serInfo.IsComparer)
+                    return;
+
                 Type type = obj.GetType();
 
                 // II. Tuple

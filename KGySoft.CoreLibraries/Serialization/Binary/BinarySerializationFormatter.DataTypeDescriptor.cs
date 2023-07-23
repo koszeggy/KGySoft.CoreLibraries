@@ -81,6 +81,7 @@ namespace KGySoft.Serialization.Binary
 #endif
             internal bool IsReadOnly { get; set; }
             internal bool IsSingleElement => CollectionSerializationInfo.IsSingleElement;
+            internal bool IsComparer => CollectionSerializationInfo.IsComparer;
             internal bool IsStrongBox => CollectionDataType is DataTypes.StrongBox;
             internal bool IsNullable { get; private set; }
             internal bool HasBackingArray => CollectionSerializationInfo.CreateArrayBackedCollectionInstanceFromArray != null;
@@ -574,6 +575,12 @@ namespace KGySoft.Serialization.Binary
                         return typeof(CircularList<>);
                     case DataTypes.ThreadSafeHashSet:
                         return typeof(ThreadSafeHashSet<>);
+                    case DataTypes.DefaultEqualityComparer:
+                        return typeof(EqualityComparer<>);
+                    case DataTypes.DefaultComparer:
+                        return typeof(Comparer<>);
+                    case DataTypes.EnumComparer:
+                        return typeof(EnumComparer<>);
 #if !NET35
                     case DataTypes.SortedSet:
                         return typeof(SortedSet<>);

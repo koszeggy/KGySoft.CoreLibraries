@@ -555,7 +555,10 @@ namespace KGySoft.Serialization.Binary
             ConcurrentStack = 11 << 8, // .NET Framework 4.0 and above
             ThreadSafeHashSet = 12 << 8,
 
-            // 13-15 << 8: 3 reserved generic collections
+            // ...... generic comparers (element type is encoded similarly to collections): ......
+            DefaultEqualityComparer = 13 << 8,
+            DefaultComparer = 14 << 8,
+            EnumComparer = 15 << 8,
 
             // ...... non-generic or special collections: ......
             ArrayList = 16 << 8,
@@ -580,7 +583,7 @@ namespace KGySoft.Serialization.Binary
             ExtendedCollectionType = 31 << 8, // Indicates that byte 3. is also included
 
             // ...... generic dictionaries:
-            Dictionary = 32 << 8, // Represents both the generic Dictionary type and a flag (1 << 13) for all dictionaries
+            Dictionary = 32 << 8, // Represents both the generic Dictionary type and a flag (1 << 13) for generic dictionaries
             SortedList = 33 << 8,
             SortedDictionary = 34 << 8,
             CircularSortedList = 35 << 8,
@@ -803,6 +806,11 @@ namespace KGySoft.Serialization.Binary
             /// Indicates that the dictionary has an additional EqualityComparer for TValue that can be passed to a constructor or factory method
             /// </summary>
             HasValueComparer = 1 << 18,
+
+            /// <summary>
+            /// Indicates that thr generic type is a known comparer rather than an actual collection, thus it has no actual elements, it's just it can be encoded like a collection.
+            /// </summary>
+            IsComparer = 1 << 19,
         }
 
         /// <summary>
@@ -1019,8 +1027,30 @@ namespace KGySoft.Serialization.Binary
                     GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(ConcurrentStack<_>.Push))!),
                 }
             },
-
 #endif
+            {
+                DataTypes.DefaultEqualityComparer, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.IsComparer,
+                    GetReferenceGenericTypeCallback = t => t.IsSubclassOfGeneric(typeof(EqualityComparer<>), out Type? result) ? result : t,
+                    CreateInstanceCallback = (t, _) => t.GetPropertyValue(nameof(EqualityComparer<_>.Default))!
+                }
+            },
+            {
+                DataTypes.DefaultComparer, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.IsComparer,
+                    CreateInstanceCallback = (t, _) => t.GetPropertyValue(nameof(Comparer<_>.Default))!
+                }
+            },
+            {
+                DataTypes.EnumComparer, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.IsComparer,
+                    CreateInstanceCallback = (t, _) => t.GetPropertyValue(nameof(EnumComparer<_>.Comparer))!
+                }
+            },
+
             #endregion
 
             #region Non-generic or special collections (DataTypes 16..31 << 8)
@@ -1293,7 +1323,7 @@ namespace KGySoft.Serialization.Binary
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.HasCapacity,
                     CtorArguments = new[] { CollectionCtorArguments.Capacity },
-                    CreateCollectionToPopulateCallback = (t, args)
+                    CreateInstanceCallback = (t, args)
                         => typeof(ImmutableArray).InvokeMethod(nameof(ImmutableArray.CreateBuilder), t.GetGenericArguments()[0], Reflector.IntType, args)!,
                     GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(ImmutableArray<_>.Builder.Add))!),
                 }
@@ -1302,7 +1332,7 @@ namespace KGySoft.Serialization.Binary
                 DataTypes.ImmutableList, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric,
-                    CreateCollectionToPopulateCallback = (t, _)
+                    CreateInstanceCallback = (t, _)
                         => typeof(ImmutableList).InvokeMethod(nameof(ImmutableList.CreateBuilder), t.GetGenericArguments()[0])!,
                     CreateFinalCollectionCallback = o => Accessors.InvokeMethod(o, nameof(ImmutableList<_>.Builder.ToImmutable))!,
                 }
@@ -1311,7 +1341,7 @@ namespace KGySoft.Serialization.Binary
                 DataTypes.ImmutableListBuilder, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric,
-                    CreateCollectionToPopulateCallback = (t, _)
+                    CreateInstanceCallback = (t, _)
                         => typeof(ImmutableList).InvokeMethod(nameof(ImmutableList.CreateBuilder), t.GetGenericArguments()[0])!,
                 }
             },
@@ -1320,7 +1350,7 @@ namespace KGySoft.Serialization.Binary
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.HasEqualityComparer,
                     CtorArguments = new[] { CollectionCtorArguments.Comparer },
-                    CreateCollectionToPopulateCallback = (t, args) =>
+                    CreateInstanceCallback = (t, args) =>
                     {
                         Type genericArg = t.GetGenericArguments()[0];
                         return typeof(ImmutableHashSet).InvokeMethod(nameof(ImmutableHashSet.CreateBuilder), genericArg, typeof(IEqualityComparer<>).GetGenericType(genericArg), args)!;
@@ -1334,7 +1364,7 @@ namespace KGySoft.Serialization.Binary
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.HasEqualityComparer,
                     CtorArguments = new[] { CollectionCtorArguments.Comparer },
-                    CreateCollectionToPopulateCallback = (t, args) =>
+                    CreateInstanceCallback = (t, args) =>
                     {
                         Type genericArg = t.GetGenericArguments()[0];
                         return typeof(ImmutableHashSet).InvokeMethod(nameof(ImmutableHashSet.CreateBuilder), genericArg, typeof(IEqualityComparer<>).GetGenericType(genericArg), args)!;
@@ -1347,7 +1377,7 @@ namespace KGySoft.Serialization.Binary
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.HasComparer,
                     CtorArguments = new[] { CollectionCtorArguments.Comparer },
-                    CreateCollectionToPopulateCallback = (t, args) =>
+                    CreateInstanceCallback = (t, args) =>
                     {
                         Type genericArg = t.GetGenericArguments()[0];
                         return typeof(ImmutableSortedSet).InvokeMethod(nameof(ImmutableSortedSet.CreateBuilder), genericArg, typeof(IComparer<>).GetGenericType(genericArg), args)!;
@@ -1361,7 +1391,7 @@ namespace KGySoft.Serialization.Binary
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.HasComparer,
                     CtorArguments = new[] { CollectionCtorArguments.Comparer },
-                    CreateCollectionToPopulateCallback = (t, args) =>
+                    CreateInstanceCallback = (t, args) =>
                     {
                         Type genericArg = t.GetGenericArguments()[0];
                         return typeof(ImmutableSortedSet).InvokeMethod(nameof(ImmutableSortedSet.CreateBuilder), genericArg, typeof(IComparer<>).GetGenericType(genericArg), args)!;
@@ -1382,7 +1412,7 @@ namespace KGySoft.Serialization.Binary
                         return (Array)typeof(Enumerable).InvokeMethod(nameof(Enumerable.ToArray), genericArg, Reflector.IEnumerableGenType.GetGenericType(genericArg), o)!;
                     },
                     CtorArguments = new[] { CollectionCtorArguments.Capacity },
-                    CreateCollectionToPopulateCallback = (t, args) => Reflector.ListGenType.GetGenericType(t.GetGenericArguments()[0]).CreateInstance(args!),
+                    CreateInstanceCallback = (t, args) => Reflector.ListGenType.GetGenericType(t.GetGenericArguments()[0]).CreateInstance(args!),
                     CreateFinalCollectionCallback = o =>
                     {
                         Type genericArg = o.GetType().GetGenericArguments()[0];
@@ -1403,7 +1433,7 @@ namespace KGySoft.Serialization.Binary
                         return (Array)typeof(Enumerable).InvokeMethod(nameof(Enumerable.ToArray), genericArg, Reflector.IEnumerableGenType.GetGenericType(genericArg), o)!;
                     },
                     CtorArguments = new[] { CollectionCtorArguments.Capacity },
-                    CreateCollectionToPopulateCallback = (t, args) => Reflector.ListGenType.GetGenericType(t.GetGenericArguments()[0]).CreateInstance(args!),
+                    CreateInstanceCallback = (t, args) => Reflector.ListGenType.GetGenericType(t.GetGenericArguments()[0]).CreateInstance(args!),
                     CreateFinalCollectionCallback = o =>
                     {
                         Accessors.InvokeMethod(o, nameof(List<_>.Reverse), Type.EmptyTypes);
@@ -1423,7 +1453,7 @@ namespace KGySoft.Serialization.Binary
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer | CollectionInfo.HasValueComparer,
                     CtorArguments = new[] { CollectionCtorArguments.Comparer, CollectionCtorArguments.ValueComparer },
-                    CreateCollectionToPopulateCallback = (t, args) =>
+                    CreateInstanceCallback = (t, args) =>
                     {
                         Type[] genericArgs = t.GetGenericArguments();
                         return typeof(ImmutableDictionary).InvokeMethod(nameof(ImmutableDictionary.CreateBuilder), genericArgs,
@@ -1437,7 +1467,7 @@ namespace KGySoft.Serialization.Binary
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer | CollectionInfo.HasValueComparer,
                     CtorArguments = new[] { CollectionCtorArguments.Comparer, CollectionCtorArguments.ValueComparer },
-                    CreateCollectionToPopulateCallback = (t, args) =>
+                    CreateInstanceCallback = (t, args) =>
                     {
                         Type[] genericArgs = t.GetGenericArguments();
                         return typeof(ImmutableDictionary).InvokeMethod(nameof(ImmutableDictionary.CreateBuilder), genericArgs,
@@ -1450,7 +1480,7 @@ namespace KGySoft.Serialization.Binary
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasComparer | CollectionInfo.HasValueComparer,
                     CtorArguments = new[] { CollectionCtorArguments.Comparer, CollectionCtorArguments.ValueComparer },
-                    CreateCollectionToPopulateCallback = (t, args) =>
+                    CreateInstanceCallback = (t, args) =>
                     {
                         Type[] genericArgs = t.GetGenericArguments();
                         return typeof(ImmutableSortedDictionary).InvokeMethod(nameof(ImmutableSortedDictionary.CreateBuilder), genericArgs,
@@ -1464,7 +1494,7 @@ namespace KGySoft.Serialization.Binary
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasComparer | CollectionInfo.HasValueComparer,
                     CtorArguments = new[] { CollectionCtorArguments.Comparer, CollectionCtorArguments.ValueComparer },
-                    CreateCollectionToPopulateCallback = (t, args) =>
+                    CreateInstanceCallback = (t, args) =>
                     {
                         Type[] genericArgs = t.GetGenericArguments();
                         return typeof(ImmutableSortedDictionary).InvokeMethod(nameof(ImmutableSortedDictionary.CreateBuilder), genericArgs,

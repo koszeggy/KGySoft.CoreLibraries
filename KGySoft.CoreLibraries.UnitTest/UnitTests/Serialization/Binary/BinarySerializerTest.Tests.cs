@@ -1054,6 +1054,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new StringKeyedDictionary<int> { { "1", 1 }, { "2", 2 } },
                 new StringKeyedDictionary<int>(ignoreCase: true) { { "1", 1 }, { "2", 2 } },
                 new StringKeyedDictionary<TestEnumByte>(StringSegmentComparer.OrdinalRandomized) { { "1", TestEnumByte.One }, { "2", TestEnumByte.Two } },
+
+                  EqualityComparer<int>.Default,
+                  EqualityComparer<byte>.Default,
+                  EqualityComparer<string>.Default,
+                  EqualityComparer<object>.Default,
+                  Comparer<int>.Default,
+                  Comparer<byte>.Default,
+                  Comparer<string>.Default,
+                  Comparer<object>.Default,
+                  EnumComparer<ConsoleColor>.Comparer,
             };
 
             SystemSerializeObject(referenceObjects);
