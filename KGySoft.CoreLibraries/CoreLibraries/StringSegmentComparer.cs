@@ -50,6 +50,12 @@ namespace KGySoft.CoreLibraries
         [Serializable]
         private class StringSegmentOrdinalComparer : StringSegmentComparer
         {
+            #region Fields
+
+            internal static readonly StringSegmentOrdinalComparer Instance = new StringSegmentOrdinalComparer();
+
+            #endregion
+
             #region Methods
 
             #region Public Methods
@@ -87,6 +93,13 @@ namespace KGySoft.CoreLibraries
 #endif
             #endregion
 
+            #region Object
+
+            public override bool Equals(object? obj) => obj?.GetType() == typeof(StringSegmentOrdinalComparer);
+            public override int GetHashCode() => typeof(StringSegmentOrdinalComparer).GetHashCode();
+
+            #endregion
+
             #endregion
 
             #region Internal Methods
@@ -107,6 +120,12 @@ namespace KGySoft.CoreLibraries
         [Serializable]
         private class StringSegmentOrdinalIgnoreCaseComparer : StringSegmentComparer
         {
+            #region Fields
+
+            internal static readonly StringSegmentOrdinalIgnoreCaseComparer Instance = new StringSegmentOrdinalIgnoreCaseComparer();
+
+            #endregion
+
             #region Methods
 
             #region Public Methods
@@ -144,6 +163,13 @@ namespace KGySoft.CoreLibraries
 #endif
             #endregion
 
+            #region Object
+
+            public override bool Equals(object? obj) => obj?.GetType() == typeof(StringSegmentOrdinalIgnoreCaseComparer);
+            public override int GetHashCode() => typeof(StringSegmentOrdinalIgnoreCaseComparer).GetHashCode();
+
+            #endregion
+
             #endregion
 
             #region Internal Methods
@@ -166,6 +192,15 @@ namespace KGySoft.CoreLibraries
         {
             #region Fields
 
+            #region Static Fields
+
+            internal static readonly StringSegmentCultureAwareComparer Invariant = new StringSegmentCultureAwareComparer(CultureInfo.InvariantCulture, false);
+            internal static readonly StringSegmentCultureAwareComparer InvariantIgnoreCase = new StringSegmentCultureAwareComparer(CultureInfo.InvariantCulture, true);
+
+            #endregion
+
+            #region Instance Fields
+
             private readonly CompareInfo compareInfo;
             private readonly CompareOptions options;
 #if NET35 || NET40 || NET45
@@ -174,6 +209,8 @@ namespace KGySoft.CoreLibraries
 #if NETSTANDARD2_1 || NETCOREAPP2_1 || NETCOREAPP3_0
             private readonly StringComparison? knownComparison;
 #endif
+
+            #endregion
 
             #endregion
 
@@ -283,6 +320,16 @@ namespace KGySoft.CoreLibraries
 #endif
             #endregion
 
+            #region Object
+
+            public override bool Equals(object? obj) => obj is StringSegmentCultureAwareComparer other
+                && options == other.options
+                && compareInfo.Equals(other.compareInfo);
+
+            public override int GetHashCode() => compareInfo.GetHashCode() ^ (int)(options & CompareOptions.IgnoreCase);
+
+            #endregion
+
             #endregion
 
             #region Internal Methods
@@ -305,11 +352,21 @@ namespace KGySoft.CoreLibraries
         {
             #region Fields
 
+            #region Fields
+
+            internal static new readonly StringSegmentOrdinalRandomizedComparer Instance = new StringSegmentOrdinalRandomizedComparer();
+
+            #endregion
+
+            #region Instance Fields
+
 #if !NETCOREAPP3_0_OR_GREATER
             private readonly int seed;
             private readonly int factor1;
             private readonly int factor2;
 #endif
+
+            #endregion
 
             #endregion
 
@@ -353,17 +410,6 @@ namespace KGySoft.CoreLibraries
 #endif
             }
 
-            #endregion
-
-            #region Internal Methods
-
-            internal override int GetHashCode(StringSegmentInternal obj) =>
-#if NETCOREAPP3_0_OR_GREATER
-                String.GetHashCode(obj.String.AsSpan(obj.Offset, obj.Length));
-#else
-                GetHashCode(obj.String, obj.Offset, obj.Length);
-#endif
-
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             public override int GetHashCode(ReadOnlySpan<char> s)
             {
@@ -377,6 +423,20 @@ namespace KGySoft.CoreLibraries
                 return result;
 #endif
             }
+#endif
+
+            public override bool Equals(object? obj) => obj is StringSegmentOrdinalRandomizedComparer;
+            public override int GetHashCode() => typeof(StringSegmentOrdinalRandomizedComparer).GetHashCode();
+
+            #endregion
+
+            #region Internal Methods
+
+            internal override int GetHashCode(StringSegmentInternal obj) =>
+#if NETCOREAPP3_0_OR_GREATER
+                String.GetHashCode(obj.String.AsSpan(obj.Offset, obj.Length));
+#else
+                GetHashCode(obj.String, obj.Offset, obj.Length);
 #endif
 
             #endregion
@@ -408,11 +468,21 @@ namespace KGySoft.CoreLibraries
         {
             #region Fields
 
+            #region Static Fields
+
+            internal static new readonly StringSegmentOrdinalIgnoreCaseRandomizedComparer Instance = new StringSegmentOrdinalIgnoreCaseRandomizedComparer();
+
+            #endregion
+
+            #region Instance Fields
+
 #if !NETCOREAPP3_0_OR_GREATER
             private readonly int seed;
             private readonly int factor1;
             private readonly int factor2;
 #endif
+
+            #endregion
 
             #endregion
 
@@ -456,17 +526,6 @@ namespace KGySoft.CoreLibraries
 #endif
             }
 
-            #endregion
-
-            #region Internal Methods
-
-            internal override int GetHashCode(StringSegmentInternal obj) =>
-#if NETCOREAPP3_0_OR_GREATER
-                String.GetHashCode(obj.String.AsSpan(obj.Offset, obj.Length), StringComparison.OrdinalIgnoreCase);
-#else
-                GetHashCode(obj.String, obj.Offset, obj.Length);
-#endif
-
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             public override int GetHashCode(ReadOnlySpan<char> s)
             {
@@ -480,6 +539,20 @@ namespace KGySoft.CoreLibraries
                 return result;
 #endif
             }
+#endif
+
+            public override bool Equals(object? obj) => obj is StringSegmentOrdinalIgnoreCaseRandomizedComparer;
+            public override int GetHashCode() => typeof(StringSegmentOrdinalIgnoreCaseRandomizedComparer).GetHashCode();
+
+            #endregion
+
+            #region Internal Methods
+
+            internal override int GetHashCode(StringSegmentInternal obj) =>
+#if NETCOREAPP3_0_OR_GREATER
+                String.GetHashCode(obj.String.AsSpan(obj.Offset, obj.Length), StringComparison.OrdinalIgnoreCase);
+#else
+                GetHashCode(obj.String, obj.Offset, obj.Length);
 #endif
 
             #endregion
@@ -504,6 +577,94 @@ namespace KGySoft.CoreLibraries
 
         #endregion
 
+        #region StringSegmentOrdinalNonRandomizedComparer
+
+        [Serializable]
+        private sealed class StringSegmentOrdinalNonRandomizedComparer : StringSegmentOrdinalComparer
+        {
+            #region Fields
+
+            internal static new readonly StringSegmentOrdinalNonRandomizedComparer Instance = new StringSegmentOrdinalNonRandomizedComparer();
+
+            #endregion
+
+            #region Methods
+
+            #region Public Methods
+
+            public override int GetHashCode(string obj)
+            {
+                if (obj == null!)
+                    Throw.ArgumentNullException(Argument.obj);
+                return GetHashCodeOrdinalNonRandomized(obj);
+            }
+
+            public override int GetHashCode(StringSegment obj) => obj.IsNull ? 0 : GetHashCodeOrdinalNonRandomized(obj.UnderlyingString!, obj.Offset, obj.Length);
+
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            public override int GetHashCode(ReadOnlySpan<char> obj) => GetHashCodeOrdinalNonRandomized(obj);
+#endif
+
+            public override bool Equals(object? obj) => obj is StringSegmentOrdinalNonRandomizedComparer;
+            public override int GetHashCode() => typeof(StringSegmentOrdinalNonRandomizedComparer).GetHashCode();
+
+            #endregion
+
+            #region Internal Methods
+
+            internal override int GetHashCode(StringSegmentInternal obj) => GetHashCodeOrdinalNonRandomized(obj.String, obj.Offset, obj.Length);
+
+            #endregion
+
+            #endregion
+        }
+
+        #endregion
+
+        #region StringSegmentOrdinalIgnoreCaseNonRandomizedComparer
+
+        [Serializable]
+        private sealed class StringSegmentOrdinalIgnoreCaseNonRandomizedComparer : StringSegmentOrdinalComparer
+        {
+            #region Fields
+
+            internal static new readonly StringSegmentOrdinalIgnoreCaseNonRandomizedComparer Instance = new StringSegmentOrdinalIgnoreCaseNonRandomizedComparer();
+
+            #endregion
+
+            #region Methods
+
+            #region Public Methods
+
+            public override int GetHashCode(string obj)
+            {
+                if (obj == null!)
+                    Throw.ArgumentNullException(Argument.obj);
+                return GetHashCodeOrdinalIgnoreCaseNonRandomized(obj);
+            }
+
+            public override int GetHashCode(StringSegment obj) => obj.IsNull ? 0 : GetHashCodeOrdinalIgnoreCaseNonRandomized(obj.UnderlyingString!, obj.Offset, obj.Length);
+
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            public override int GetHashCode(ReadOnlySpan<char> obj) => GetHashCodeOrdinalIgnoreCaseNonRandomized(obj);
+#endif
+
+            public override bool Equals(object? obj) => obj is StringSegmentOrdinalIgnoreCaseNonRandomizedComparer;
+            public override int GetHashCode() => typeof(StringSegmentOrdinalIgnoreCaseNonRandomizedComparer).GetHashCode();
+
+            #endregion
+
+            #region Internal Methods
+
+            internal override int GetHashCode(StringSegmentInternal obj) => GetHashCodeOrdinalIgnoreCaseNonRandomized(obj.String, obj.Offset, obj.Length);
+
+            #endregion
+
+            #endregion
+        }
+
+        #endregion
+
         #endregion
 
         #region Constants
@@ -511,17 +672,6 @@ namespace KGySoft.CoreLibraries
 #if NETCOREAPP3_0_OR_GREATER
         private const int lengthThreshold = 32;
 #endif
-        #endregion
-
-        #region Fields
-
-        private static StringSegmentComparer? ordinalComparer;
-        private static StringSegmentComparer? ordinalIgnoreCaseComparer;
-        private static StringSegmentComparer? invariantComparer;
-        private static StringSegmentComparer? invariantIgnoreCaseComparer;
-        private static StringSegmentComparer? ordinalRandomizedComparer;
-        private static StringSegmentComparer? ordinalIgnoreCaseRandomizedComparer;
-
         #endregion
 
         #region Properties
@@ -533,9 +683,10 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <remarks>
         /// <note>The comparer returned by this property does not generate randomized hash codes for strings no longer than 32 characters (and for longer strings it is platform-dependent).
-        /// Use the <see cref="OrdinalRandomized"/> property to get a comparer with randomized hash for any lengths on all platforms.</note>
+        /// Use the <see cref="OrdinalRandomized"/> property to get a comparer with randomized hash for any lengths on all platforms,
+        /// or the <see cref="OrdinalNonRandomized"/> property to never use randomized hash codes.</note>
         /// </remarks>
-        public static StringSegmentComparer Ordinal => ordinalComparer ??= new StringSegmentOrdinalComparer();
+        public static StringSegmentComparer Ordinal => StringSegmentOrdinalComparer.Instance;
 
         /// <summary>
         /// Gets a <see cref="StringSegmentComparer"/> object that performs a case-insensitive ordinal string comparison.
@@ -544,23 +695,24 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <remarks>
         /// <note>The comparer returned by this property does not generate randomized hash codes for strings no longer than 32 characters (and for longer strings it is platform-dependent).
-        /// Use the <see cref="OrdinalIgnoreCaseRandomized"/> property to get a comparer with randomized hash for any lengths on all platforms.</note>
+        /// Use the <see cref="OrdinalIgnoreCaseRandomized"/> property to get a comparer with randomized hash for any lengths on all platforms,
+        /// or the <see cref="OrdinalIgnoreCaseNonRandomized"/> property to never use randomized hash codes.</note>
         /// </remarks>
-        public static StringSegmentComparer OrdinalIgnoreCase => ordinalIgnoreCaseComparer ??= new StringSegmentOrdinalIgnoreCaseComparer();
+        public static StringSegmentComparer OrdinalIgnoreCase => StringSegmentOrdinalIgnoreCaseComparer.Instance;
 
         /// <summary>
         /// Gets a <see cref="StringSegmentComparer"/> object that performs a case-sensitive string comparison using the word comparison rules of the invariant culture.
         /// <br/>Depending on the targeted platform, the <see cref="GetHashCode(StringSegment)"/> method might allocate a new string.
         /// In .NET Core 3.0 and above none of the members of the returned <see cref="StringSegmentComparer"/> will allocate new strings.
         /// </summary>
-        public static StringSegmentComparer InvariantCulture => invariantComparer ??= new StringSegmentCultureAwareComparer(CultureInfo.InvariantCulture, false);
+        public static StringSegmentComparer InvariantCulture => StringSegmentCultureAwareComparer.Invariant;
 
         /// <summary>
         /// Gets a <see cref="StringSegmentComparer"/> object that performs a case-insensitive string comparison using the word comparison rules of the invariant culture.
         /// <br/>Depending on the targeted platform, the <see cref="GetHashCode(StringSegment)"/> method might allocate a new string.
         /// In .NET Core 3.0 and above none of the members of the returned <see cref="StringSegmentComparer"/> will allocate new strings.
         /// </summary>
-        public static StringSegmentComparer InvariantCultureIgnoreCase => invariantIgnoreCaseComparer ??= new StringSegmentCultureAwareComparer(CultureInfo.InvariantCulture, true);
+        public static StringSegmentComparer InvariantCultureIgnoreCase => StringSegmentCultureAwareComparer.InvariantIgnoreCase;
 
         /// <summary>
         /// Gets a <see cref="StringSegmentComparer"/> object that performs a case-sensitive string comparison using the word comparison rules of the current culture.
@@ -580,13 +732,33 @@ namespace KGySoft.CoreLibraries
         /// Gets a <see cref="StringSegmentComparer"/> object that performs a case-sensitive ordinal string comparison. The returned comparer is functionally equivalent
         /// with <see cref="Ordinal"/> but it ensures that the hash code of a specific string is stable only within the same process and <see cref="AppDomain"/>.
         /// </summary>
-        public static StringSegmentComparer OrdinalRandomized => ordinalRandomizedComparer ??= new StringSegmentOrdinalRandomizedComparer();
+        public static StringSegmentComparer OrdinalRandomized => StringSegmentOrdinalRandomizedComparer.Instance;
 
         /// <summary>
         /// Gets a <see cref="StringSegmentComparer"/> object that performs a case-insensitive ordinal string comparison. The returned comparer is functionally equivalent
         /// with <see cref="OrdinalIgnoreCase"/> but it ensures that the hash code of a specific string is stable only within the same process and <see cref="AppDomain"/>.
         /// </summary>
-        public static StringSegmentComparer OrdinalIgnoreCaseRandomized => ordinalIgnoreCaseRandomizedComparer ??= new StringSegmentOrdinalIgnoreCaseRandomizedComparer();
+        public static StringSegmentComparer OrdinalIgnoreCaseRandomized => StringSegmentOrdinalIgnoreCaseRandomizedComparer.Instance;
+
+        /// <summary>
+        /// Gets a <see cref="StringSegmentComparer"/> object that performs a case-sensitive ordinal string comparison. The returned comparer is functionally equivalent
+        /// with <see cref="Ordinal"/> but it ensures that the hash code of a specific string is always the same, regardless of the targeted platform or the length of the string.
+        /// </summary>
+        /// <remarks>
+        /// <note type="security">Never use this comparer for a collection that can be populated by a publicly available service because it can be a target
+        /// of hash collision attacks, which may radically degrade the performance.</note>
+        /// </remarks>
+        public static StringSegmentComparer OrdinalNonRandomized => StringSegmentOrdinalNonRandomizedComparer.Instance;
+
+        /// <summary>
+        /// Gets a <see cref="StringSegmentComparer"/> object that performs a case-insensitive ordinal string comparison. The returned comparer is functionally equivalent
+        /// with <see cref="OrdinalIgnoreCase"/> but it ensures that the hash code of a specific string is stable only within the same process and <see cref="AppDomain"/>.
+        /// </summary>
+        /// <remarks>
+        /// <note type="security">Never use this comparer for a collection that can be populated by a publicly available service because it can be a target
+        /// of hash collision attacks, which may radically degrade the performance.</note>
+        /// </remarks>
+        public static StringSegmentComparer OrdinalIgnoreCaseNonRandomized => StringSegmentOrdinalIgnoreCaseNonRandomizedComparer.Instance;
 
         #endregion
 
@@ -657,13 +829,7 @@ namespace KGySoft.CoreLibraries
             if (s.Length > lengthThreshold)
                 return s.GetHashCode();
 #endif
-            var result = 13;
-
-            // ReSharper disable once ForCanBeConvertedToForeach - performance
-            for (int i = 0; i < s.Length; i++)
-                result = result * 397 + s[i];
-
-            return result;
+            return GetHashCodeOrdinalNonRandomized(s);
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -673,11 +839,7 @@ namespace KGySoft.CoreLibraries
             if (length > lengthThreshold)
                 return String.GetHashCode(s.AsSpan(offset, length));
 #endif
-            var result = 13;
-            for (int i = 0; i < length; i++)
-                result = result * 397 + s[i + offset];
-
-            return result;
+            return GetHashCodeOrdinalNonRandomized(s, offset, length);
         }
 
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
@@ -688,13 +850,7 @@ namespace KGySoft.CoreLibraries
             if (s.Length > lengthThreshold)
                 return String.GetHashCode(s); 
 #endif
-            var result = 13;
-
-            // ReSharper disable once ForCanBeConvertedToForeach - performance
-            for (int i = 0; i < s.Length; i++)
-                result = result * 397 + s[i];
-
-            return result;
+            return GetHashCodeOrdinalNonRandomized(s);
         }
 #endif
 
@@ -706,13 +862,7 @@ namespace KGySoft.CoreLibraries
                 return s.GetHashCode(StringComparison.OrdinalIgnoreCase);
 #endif
 
-            var result = 13;
-
-            // ReSharper disable once ForCanBeConvertedToForeach - performance
-            for (int i = 0; i < s.Length; i++)
-                result = result * 397 + Char.ToUpperInvariant(s[i]);
-
-            return result;
+            return GetHashCodeOrdinalIgnoreCaseNonRandomized(s);
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -722,11 +872,7 @@ namespace KGySoft.CoreLibraries
             if (length > lengthThreshold)
                 return String.GetHashCode(s.AsSpan(offset, length), StringComparison.OrdinalIgnoreCase);
 #endif
-            var result = 13;
-            for (int i = 0; i < length; i++)
-                result = result * 397 + Char.ToUpperInvariant(s[i + offset]);
-
-            return result;
+            return GetHashCodeOrdinalIgnoreCaseNonRandomized(s, offset, length);
         }
 
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
@@ -737,6 +883,74 @@ namespace KGySoft.CoreLibraries
             if (s.Length > lengthThreshold)
                 return String.GetHashCode(s, StringComparison.OrdinalIgnoreCase);
 #endif
+            return GetHashCodeOrdinalIgnoreCaseNonRandomized(s);
+        }
+#endif
+
+        #endregion
+
+        #region Private Methods
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        private static int GetHashCodeOrdinalNonRandomized(string s)
+        {
+            var result = 13;
+
+            // ReSharper disable once ForCanBeConvertedToForeach - performance
+            for (int i = 0; i < s.Length; i++)
+                result = result * 397 + s[i];
+
+            return result;
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        private static int GetHashCodeOrdinalIgnoreCaseNonRandomized(string s)
+        {
+            var result = 13;
+
+            // ReSharper disable once ForCanBeConvertedToForeach - performance
+            for (int i = 0; i < s.Length; i++)
+                result = result * 397 + Char.ToUpperInvariant(s[i]);
+
+            return result;
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        private static int GetHashCodeOrdinalNonRandomized(string s, int offset, int length)
+        {
+            var result = 13;
+            for (int i = 0; i < length; i++)
+                result = result * 397 + s[i + offset];
+
+            return result;
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        private static int GetHashCodeOrdinalIgnoreCaseNonRandomized(string s, int offset, int length)
+        {
+            var result = 13;
+            for (int i = 0; i < length; i++)
+                result = result * 397 + Char.ToUpperInvariant(s[i + offset]);
+
+            return result;
+        }
+
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        private static int GetHashCodeOrdinalNonRandomized(ReadOnlySpan<char> s)
+        {
+            var result = 13;
+
+            // ReSharper disable once ForCanBeConvertedToForeach - performance
+            for (int i = 0; i < s.Length; i++)
+                result = result * 397 + s[i];
+
+            return result;
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        private static int GetHashCodeOrdinalIgnoreCaseNonRandomized(ReadOnlySpan<char> s)
+        {
             var result = 13;
 
             // ReSharper disable once ForCanBeConvertedToForeach - performance

@@ -92,6 +92,12 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             Assert.AreEqual(StringComparer.Ordinal.Equals(a, b), StringSegmentComparer.Ordinal.Equals(a, b));
             Assert.AreEqual(StringComparer.Ordinal.Equals(a, b), StringSegmentComparer.Ordinal.Equals((object)a, b));
             Assert.AreEqual(StringComparer.Ordinal.Equals(a, b), StringSegmentComparer.Ordinal.Equals((object)a, (StringSegment)b));
+            Assert.AreEqual(StringComparer.Ordinal.Equals(a, b), StringSegmentComparer.OrdinalRandomized.Equals(a, b));
+            Assert.AreEqual(StringComparer.Ordinal.Equals(a, b), StringSegmentComparer.OrdinalRandomized.Equals((object)a, b));
+            Assert.AreEqual(StringComparer.Ordinal.Equals(a, b), StringSegmentComparer.OrdinalRandomized.Equals((object)a, (StringSegment)b));
+            Assert.AreEqual(StringComparer.Ordinal.Equals(a, b), StringSegmentComparer.OrdinalNonRandomized.Equals(a, b));
+            Assert.AreEqual(StringComparer.Ordinal.Equals(a, b), StringSegmentComparer.OrdinalNonRandomized.Equals((object)a, b));
+            Assert.AreEqual(StringComparer.Ordinal.Equals(a, b), StringSegmentComparer.OrdinalNonRandomized.Equals((object)a, (StringSegment)b));
             Assert.AreEqual(Math.Sign(StringComparer.Ordinal.Compare(a, b)), Math.Sign(StringSegmentComparer.Ordinal.Compare(a, b)));
             Assert.AreEqual(Math.Sign(StringComparer.Ordinal.Compare(a, b)), Math.Sign(StringSegmentComparer.Ordinal.Compare((object)a, b)));
             Assert.AreEqual(Math.Sign(StringComparer.Ordinal.Compare(a, b)), Math.Sign(StringSegmentComparer.Ordinal.Compare((object)a, (StringSegment)b)));
@@ -102,7 +108,6 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             Assert.AreEqual(StringComparer.CurrentCultureIgnoreCase.Equals(a, b), StringSegmentComparer.CurrentCultureIgnoreCase.Equals(a, b));
             Assert.AreEqual(Math.Sign(StringComparer.CurrentCultureIgnoreCase.Compare(a, b)), Math.Sign(StringSegmentComparer.CurrentCultureIgnoreCase.Compare(a, b)));
         }
-
 
         [TestCase(-1, null, "")]
         [TestCase(0, "", "")]

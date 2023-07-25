@@ -15,6 +15,9 @@
   + New AsSection overload for ArraySegment<T>
   + New AsArray2D overload for ArraySegment<T>
   + New AsArray3D overload for ArraySegment<T>
++ StringSegmentComparer class:
+  + New OrdinalNonRandomized property
+  + New OrdinalIgnoreCaseNonRandomized property
 - ByteArrayExtensions class:
   - ToDecimalValuesString method: Fixing result for empty string input.
 
