@@ -18,6 +18,7 @@
 + StringSegmentComparer class:
   + New OrdinalNonRandomized property
   + New OrdinalIgnoreCaseNonRandomized property
+  + New Create overload with CompareOptions parameter (.NET Framework 4.6 and above)
 - ByteArrayExtensions class:
   - ToDecimalValuesString method: Fixing result for empty string input.
 

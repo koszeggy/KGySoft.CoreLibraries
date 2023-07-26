@@ -20,6 +20,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Runtime.CompilerServices;
+#if NET35 || NET40 || NET45 || NETSTANDARD2_1 || NETCOREAPP2_1 || NETCOREAPP3_0
+using System.Runtime.Serialization;
+#endif
 
 #if !NETCOREAPP3_0_OR_GREATER
 using KGySoft.Collections;
@@ -27,12 +30,16 @@ using KGySoft.Collections;
 
 #endregion
 
-namespace KGySoft.CoreLibraries
-{
+#region Suppressions
+
 #if NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0
 #pragma warning disable CS1574, CS1580 // the documentation contains types that are not available in every target
 #endif
 
+#endregion
+
+namespace KGySoft.CoreLibraries
+{
     /// <summary>
     /// Represents a string comparison operation that uses specific case and culture-based or ordinal comparison rules
     /// allowing comparing strings by <see cref="string">string</see>, <see cref="StringSegment"/> and <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> instances.
@@ -204,10 +211,10 @@ namespace KGySoft.CoreLibraries
             private readonly CompareInfo compareInfo;
             private readonly CompareOptions options;
 #if NET35 || NET40 || NET45
-            private readonly StringComparer stringComparer;
+            [NonSerialized]private StringComparer stringComparer = null!;
 #endif
 #if NETSTANDARD2_1 || NETCOREAPP2_1 || NETCOREAPP3_0
-            private readonly StringComparison? knownComparison;
+            [NonSerialized]private StringComparison? knownComparison;
 #endif
 
             #endregion
@@ -216,24 +223,34 @@ namespace KGySoft.CoreLibraries
 
             #region Constructors
 
+#if NET35 || NET40 || NET45
             internal StringSegmentCultureAwareComparer(CultureInfo culture, bool ignoreCase)
             {
                 if (culture == null!)
                     Throw.ArgumentNullException(Argument.culture);
                 compareInfo = culture.CompareInfo;
                 options = ignoreCase ? CompareOptions.IgnoreCase : CompareOptions.None;
-#if NET35 || NET40 || NET45
-                stringComparer = StringComparer.Create(culture, ignoreCase);
-#endif
+                InitComparer(culture, ignoreCase);
+            }
+#else
+            internal StringSegmentCultureAwareComparer(CultureInfo culture, bool ignoreCase)
+                : this(culture, ignoreCase ? CompareOptions.IgnoreCase : CompareOptions.None)
+            {
+            }
+
+            internal StringSegmentCultureAwareComparer(CultureInfo culture, CompareOptions options)
+            {
+                if (culture == null!)
+                    Throw.ArgumentNullException(Argument.culture);
+                if (!options.AllFlagsDefined())
+                    Throw.FlagsEnumArgumentOutOfRange(Argument.options, options);
+                compareInfo = culture.CompareInfo;
+                this.options = options;
 #if NETSTANDARD2_1 || NETCOREAPP2_1 || NETCOREAPP3_0
-                // span comparison is not supported with a custom culture even in .NET Core 3 so using StringComparison when possible
-                knownComparison = culture.Equals(CultureInfo.InvariantCulture)
-                    ? ignoreCase ? StringComparison.InvariantCultureIgnoreCase : StringComparison.InvariantCulture
-                    : culture.Equals(CultureInfo.CurrentCulture)
-                        ? ignoreCase ? StringComparison.CurrentCultureIgnoreCase : StringComparison.CurrentCulture
-                        : default(StringComparison?);
+                InitComparison(culture, ignoreCase);
 #endif
             }
+#endif
 
             #endregion
 
@@ -337,6 +354,34 @@ namespace KGySoft.CoreLibraries
             internal override bool Equals(StringSegment x, string? y) => StringSegment.Compare(x, y, compareInfo, options) == 0;
             internal override int GetHashCode(StringSegmentInternal obj) => Throw.InternalError<int>("Not expected to be called");
             internal override bool Equals(StringSegmentInternal x, string y) => Throw.InternalError<bool>("Not expected to be called");
+
+            #endregion
+
+            #region Private Methods
+
+#if NET35 || NET40 || NET45
+            private void InitComparer(CultureInfo culture, bool ignoreCase) => stringComparer = StringComparer.Create(culture, ignoreCase);
+
+            [OnDeserialized]
+            private void OnDeserialized(StreamingContext ctx)
+                => InitComparer(CultureInfo.GetCultureInfo(compareInfo.Name), options == CompareOptions.IgnoreCase);
+#endif
+
+#if NETSTANDARD2_1 || NETCOREAPP2_1 || NETCOREAPP3_0
+            private void InitComparison(CultureInfo culture, bool ignoreCase)
+            {
+                // span comparison is not supported with a custom culture even in .NET Core 3 so using StringComparison when possible
+                knownComparison = culture.Equals(CultureInfo.InvariantCulture)
+                    ? ignoreCase ? StringComparison.InvariantCultureIgnoreCase : StringComparison.InvariantCulture
+                    : culture.Equals(CultureInfo.CurrentCulture)
+                        ? ignoreCase ? StringComparison.CurrentCultureIgnoreCase : StringComparison.CurrentCulture
+                        : default(StringComparison?);
+            }
+
+            [OnDeserialized]
+            private void OnDeserialized(StreamingContext ctx)
+                => InitComparison(CultureInfo.GetCultureInfo(compareInfo.Name), options == CompareOptions.IgnoreCase);
+#endif
 
             #endregion
 
@@ -813,10 +858,33 @@ namespace KGySoft.CoreLibraries
         /// <para>If <paramref name="culture"/> is any <see cref="CultureInfo"/> other than the <see cref="CultureInfo.InvariantCulture"/> and <see cref="CultureInfo.CurrentCulture"/>,
         /// then depending on the targeted platform, the <see cref="GetHashCode(StringSegment)"/>, <see cref="GetHashCode(ReadOnlySpan{char})"/>, <see cref="Equals(ReadOnlySpan{char}, ReadOnlySpan{char})"/>
         /// and <see cref="Compare(ReadOnlySpan{char}, ReadOnlySpan{char})"/> methods might allocate a new string. In .NET Core 3.0 and above
-        /// none of the members with <see cref="StringSegment"/> parameters will allocate new strings. And methods with <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> parameters
+        /// none of the members with <see cref="StringSegment"/> parameters will allocate new strings. And methods with <see cref="ReadOnlySpan{T}"/> parameters
         /// (<see cref="Equals(ReadOnlySpan{char}, ReadOnlySpan{char})"/> and <see cref="Compare(ReadOnlySpan{char}, ReadOnlySpan{char})"/>) can avoid allocating strings when targeting .NET 5.0 or higher.</para>
         /// </remarks>
         public static StringSegmentComparer Create(CultureInfo culture, bool ignoreCase) => new StringSegmentCultureAwareComparer(culture, ignoreCase);
+
+#if !(NET35 || NET40 || NET45) // because GetHashCode cannot respect CompareOptions on these platforms
+        /// <summary>
+        /// Creates a <see cref="StringSegmentComparer"/> object that compares strings according to the rules of a specified <paramref name="culture"/>.
+        /// <br/>Please note that the returned <see cref="StringSegmentComparer"/> may allocate new strings in some cases when targeting older frameworks.
+        /// See the <strong>Remarks</strong> section for details.
+        /// </summary>
+        /// <param name="culture">A culture whose linguistic rules are used to perform a comparison.</param>
+        /// <param name="options">Specifies the options for the comparisons.</param>
+        /// <returns>A new <see cref="StringSegmentComparer"/> object that performs string comparisons according to the comparison rules used by
+        /// the <paramref name="culture"/> parameter and the case rule specified by the <paramref name="ignoreCase"/> parameter.</returns>
+        /// <remarks>
+        /// <para>If <paramref name="culture"/> is either the <see cref="CultureInfo.InvariantCulture"/> or the <see cref="CultureInfo.CurrentCulture"/>,
+        /// then depending on the targeted platform, the <see cref="GetHashCode(StringSegment)"/> and <see cref="GetHashCode(ReadOnlySpan{char})"/> methods might allocate a new string.
+        /// In .NET Core 3.0 and above none of the members of the returned <see cref="StringSegmentComparer"/> will allocate new strings.</para>
+        /// <para>If <paramref name="culture"/> is any <see cref="CultureInfo"/> other than the <see cref="CultureInfo.InvariantCulture"/> and <see cref="CultureInfo.CurrentCulture"/>,
+        /// then depending on the targeted platform, the <see cref="GetHashCode(StringSegment)"/>, <see cref="GetHashCode(ReadOnlySpan{char})"/>, <see cref="Equals(ReadOnlySpan{char}, ReadOnlySpan{char})"/>
+        /// and <see cref="Compare(ReadOnlySpan{char}, ReadOnlySpan{char})"/> methods might allocate a new string. In .NET Core 3.0 and above
+        /// none of the members with <see cref="StringSegment"/> parameters will allocate new strings. And methods with <see cref="ReadOnlySpan{T}"/> parameters
+        /// (<see cref="Equals(ReadOnlySpan{char}, ReadOnlySpan{char})"/> and <see cref="Compare(ReadOnlySpan{char}, ReadOnlySpan{char})"/>) can avoid allocating strings when targeting .NET 5.0 or higher.</para>
+        /// </remarks>
+        public static StringSegmentComparer Create(CultureInfo culture, CompareOptions options) => new StringSegmentCultureAwareComparer(culture, options);
+#endif
 
         #endregion
 
