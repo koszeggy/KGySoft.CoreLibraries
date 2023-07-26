@@ -56,6 +56,9 @@
     SYSLIB0011 error in .NET 8 and above. It always has returned a BinarySerializationFormatter instance anyway.
 + BinarySerializationFormatter class:
   + Supporting the StringSegment struct natively
+  + Supporting the CompareInfo class natively
+  + Supporting the CultureInfo class natively
+  + Supporting the StringSegment struct natively
   + Supporting the ThreadSafeHashSet<T> class natively
   + Supporting the ThreadSafeDictionary<TKey, TValue> class natively
   + Supporting the StringKeyedDictionary<TValue> class natively

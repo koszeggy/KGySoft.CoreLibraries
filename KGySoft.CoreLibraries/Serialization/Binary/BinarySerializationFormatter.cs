@@ -224,6 +224,14 @@ namespace KGySoft.Serialization.Binary
     /// <item><see cref="Uri"/></item>
     /// <item><see cref="StringBuilder"/></item>
     /// <item><see cref="StringSegment"/></item>
+    /// <item><see cref="CultureInfo"/></item>
+    /// <item><see cref="CompareInfo"/></item>
+    /// <item><see cref="Enum"/> types</item>
+    /// <item><see cref="Type"/> instances if they are runtime types.</item>
+    /// <item><see cref="Nullable{T}"/> types if type parameter is any of the supported types.</item>
+    /// <item><see cref="KeyValuePair{TKey,TValue}"/> if <see cref="KeyValuePair{TKey,TValue}.Key"/> and <see cref="KeyValuePair{TKey,TValue}.Value"/> are any of the supported types.</item>
+    /// <item><see cref="DictionaryEntry"/> if <see cref="DictionaryEntry.Key"/> and <see cref="DictionaryEntry.Value"/> are any of the supported types.</item>
+    /// <item><see cref="StrongBox{T}"/> if <see cref="StrongBox{T}.Value"/> is any of the supported types.</item>
     /// <item><see cref="BigInteger"/> (in .NET Framework 4.0 and above)</item>
     /// <item><see cref="Complex"/> (in .NET Framework 4.0 and above)</item>
     /// <item><see cref="Vector2"/> (in .NET Framework 4.6 and above)</item>
@@ -241,15 +249,9 @@ namespace KGySoft.Serialization.Binary
     /// <item><see cref="TimeOnly"/> (in .NET 6.0 and above)</item>
     /// <item><see cref="Int128"/> (in .NET 7.0 and above)</item>
     /// <item><see cref="UInt128"/> (in .NET 7.0 and above)</item>
-    /// <item><see cref="Enum"/> types</item>
-    /// <item><see cref="Type"/> instances if they are runtime types.</item>
-    /// <item><see cref="Nullable{T}"/> types if type parameter is any of the supported types.</item>
-    /// <item>Any object that implements the <see cref="IBinarySerializable"/> interface.</item>
-    /// <item><see cref="KeyValuePair{TKey,TValue}"/> if <see cref="KeyValuePair{TKey,TValue}.Key"/> and <see cref="KeyValuePair{TKey,TValue}.Value"/> are any of the supported types.</item>
-    /// <item><see cref="DictionaryEntry"/> if <see cref="DictionaryEntry.Key"/> and <see cref="DictionaryEntry.Value"/> are any of the supported types.</item>
-    /// <item><see cref="StrongBox{T}"/> if <see cref="StrongBox{T}.Value"/> is any of the supported types.</item>
     /// <item><see cref="Tuple"/> types if generic arguments are any of the supported types (in .NET Framework 4.0 and above)</item>
     /// <item><see cref="ValueTuple"/> types if generic arguments are any of the supported types (in .NET Standard 2.0 and above)</item>
+    /// <item>Any object that implements the <see cref="IBinarySerializable"/> interface.</item>
     /// </list>
     /// <note>
     /// <list type="bullet">
@@ -632,6 +634,32 @@ namespace KGySoft.Serialization.Binary
             Plane = 6 << 16, // .NET Framework 4.6 and above
             Matrix3x2 = 7 << 16, // .NET Framework 4.6 and above
             Matrix4x4 = 8 << 16, // .NET Framework 4.6 and above
+
+            CompareInfo = 9 << 16,
+            CultureInfo = 10 << 16,
+
+            // TODO
+            ComparerDefaultInvariant = 11 << 16,
+            CaseInsensitiveComparerDefaultInvariant = 12 << 16,
+            
+            StringComparerOrdinal = 13 << 16,
+            StringComparerOrdinalIgnoreCase = 14 << 16,
+            StringComparerInvariant = 15 << 16,
+            StringComparerInvariantIgnoreCase = 16 << 16,
+            // TODO: Candidates
+            //StringComparerOrdinalNonRandomized = 17 << 16, // https://github.com/dotnet/runtime/issues/77679
+            //StringComparerOrdinalIgnoreCaseNonRandomized = 18 << 16, // https://github.com/dotnet/runtime/issues/77679
+
+            StringSegmentComparerOrdinal = 19 << 16,
+            StringSegmentComparerOrdinalIgnoreCase = 20 << 16,
+            StringSegmentComparerInvariant = 21 << 16,
+            StringSegmentComparerInvariantIgnoreCase = 22 << 16,
+            StringSegmentComparerOrdinalNonRandomized = 23 << 16,
+            StringSegmentComparerOrdinalIgnoreCaseNonRandomized = 24 << 16,
+            StringSegmentComparerOrdinalRandomized = 25 << 16,
+            StringSegmentComparerOrdinalIgnoreCaseRandomized = 26 << 16,
+            StringSegmentComparerCultureAware = 27 << 16,
+
 
             // TODO candidates:
             //Quad = // float128: to extended types - https://github.com/dotnet/csharplang/issues/1252
@@ -1547,6 +1575,8 @@ namespace KGySoft.Serialization.Binary
             { typeof(BitVector32), DataTypes.BitVector32 },
             { typeof(BitVector32.Section), DataTypes.BitVector32Section },
             { typeof(StringSegment), DataTypes.StringSegment },
+            { typeof(CompareInfo), DataTypes.CompareInfo },
+            { typeof(CultureInfo), DataTypes.CultureInfo },
 #if !NET35
             { Reflector.BigIntegerType, DataTypes.BigInteger },
             { typeof(Complex), DataTypes.Complex },

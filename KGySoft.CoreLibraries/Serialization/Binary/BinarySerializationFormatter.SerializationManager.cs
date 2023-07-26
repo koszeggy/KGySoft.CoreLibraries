@@ -216,6 +216,22 @@ namespace KGySoft.Serialization.Binary
                 Write7BitInt(bw, stringSegment.Length);
             }
 
+            private static void WriteCompareInfo(BinaryWriter bw, CompareInfo compareInfo)
+            {
+                string name = compareInfo.Name;
+                bw.Write(name);
+                if (name.Length == 0)
+                    bw.Write(ReferenceEquals(compareInfo, CultureInfo.InvariantCulture.CompareInfo));
+            }
+
+            private static void WriteCultureInfo(BinaryWriter bw, CultureInfo cultureInfo)
+            {
+                string name = cultureInfo.ToString(); // Name would not be correct for all cases, eg. de-DE_phoneb
+                bw.Write(name);
+                if (name.Length == 0)
+                    bw.Write(ReferenceEquals(cultureInfo, CultureInfo.InvariantCulture));
+            }
+
 #if !NET35
             private static void WriteBigInteger(BinaryWriter bw, BigInteger value)
             {
@@ -798,6 +814,12 @@ namespace KGySoft.Serialization.Binary
                         return;
                     case DataTypes.StringSegment:
                         WriteStringSegment(bw, (StringSegment)obj);
+                        return;
+                    case DataTypes.CompareInfo:
+                        WriteCompareInfo(bw, (CompareInfo)obj);
+                        return;
+                    case DataTypes.CultureInfo:
+                        WriteCultureInfo(bw, (CultureInfo)obj);
                         return;
 
                     // these types have no effective data

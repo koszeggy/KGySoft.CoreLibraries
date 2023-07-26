@@ -28,6 +28,7 @@ using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Drawing;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 #if !NET35
@@ -143,6 +144,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new StringBuilder("alpha"),
                 StringSegment.Null,
                 "123456".AsSegment(1, 2),
+                CultureInfo.InvariantCulture.CompareInfo,
+                CompareInfo.GetCompareInfo("en-US"),
 #if !NET35
                 new BigInteger(1),
                 new Complex(1.2, 2.3),
@@ -170,6 +173,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 BitVector32.CreateSection(13),
                 BitVector32.CreateSection(42, BitVector32.CreateSection(13)),
                 typeof(int),
+                CultureInfo.InvariantCulture,
+                CultureInfo.CurrentCulture,
+                CultureInfo.GetCultureInfo(0x10407), // Name: de-DE, CompareInfo.Name: de-DE_phoneb
 
 #if NET46_OR_GREATER || NETCOREAPP
                 new Vector2(1, 2),
@@ -207,9 +213,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
-#if !NETCOREAPP2_0 // .NET Core 2.0 throws NotSupportedException for DBNull and RuntimeType.GetObjectData. In .NET Core 3 they work but Equals fails for cloned RuntimeType, hence safeCompare
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, safeCompare: true);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, safeCompare: true);
+#if NETFRAMEWORK
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
+#else
+            // IgnoreISerializable: .NET Core 2.0 throws NotSupportedException for DBNull and RuntimeType.GetObjectData.
+            // In .NET Core 3 they work but Equals fails for cloned RuntimeType, hence safeCompare
+            // IgnoreSerializationMethods: TextInfo in CultureInfo is no longer [NonSerialized] and it has a IDeserializationCallback that throws PlatformNotSupportedException
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.IgnoreISerializable | BinarySerializationOptions.IgnoreSerializationMethods, safeCompare: true);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.IgnoreISerializable | BinarySerializationOptions.IgnoreSerializationMethods, safeCompare: true);
 #endif
         }
 

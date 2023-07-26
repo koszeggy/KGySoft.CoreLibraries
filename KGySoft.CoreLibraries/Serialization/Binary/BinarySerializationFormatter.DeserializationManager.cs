@@ -756,6 +756,22 @@ namespace KGySoft.Serialization.Binary
                 return result;
             }
 
+            private static CompareInfo ReadCompareInfo(BinaryReader br)
+            {
+                string name = br.ReadString();
+                if (name.Length == 0 && br.ReadBoolean())
+                    return CultureInfo.InvariantCulture.CompareInfo;
+                return CompareInfo.GetCompareInfo(name);
+            }
+
+            private static CultureInfo ReadCultureInfo(BinaryReader br)
+            {
+                string name = br.ReadString();
+                if (name.Length == 0 && br.ReadBoolean())
+                    return CultureInfo.InvariantCulture;
+                return CultureInfo.GetCultureInfo(name);
+            }
+
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
             private static Index ReadIndex(BinaryReader br)
             {
@@ -1515,6 +1531,10 @@ namespace KGySoft.Serialization.Binary
                             return TryGetFromCache(out cachedResult) ? cachedResult : createdResult = ReadStringBuilder(br);
                         case DataTypes.RuntimeType:
                             return TryGetFromCache(out cachedResult) ? cachedResult : createdResult = ReadType(br, true).Type;
+                        case DataTypes.CompareInfo:
+                            return TryGetFromCache(out cachedResult) ? cachedResult : createdResult = ReadCompareInfo(br);
+                        case DataTypes.CultureInfo:
+                            return TryGetFromCache(out cachedResult) ? cachedResult : createdResult = ReadCultureInfo(br);
 
 #if !NET35
                         case DataTypes.BigInteger:

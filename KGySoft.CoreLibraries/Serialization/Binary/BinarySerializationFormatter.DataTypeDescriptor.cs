@@ -26,6 +26,7 @@ using System.Collections.Immutable;
 #endif
 using System.Collections.Specialized;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 #if !NET35
@@ -433,6 +434,10 @@ namespace KGySoft.Serialization.Binary
                         return Reflector.VoidType;
                     case DataTypes.RuntimeType:
                         return Reflector.RuntimeType;
+                    case DataTypes.CompareInfo:
+                        return typeof(CompareInfo);
+                    case DataTypes.CultureInfo:
+                        return typeof(CultureInfo);
 
 #if !NET35
                     case DataTypes.BigInteger:
