@@ -616,7 +616,7 @@ namespace KGySoft.Reflection
         internal static string? GetSource(this Exception exception) => GetFieldValueOrDefault<Exception, string?>(exception, null, "_source");
         internal static void SetSource(this Exception exception, string? value) => GetField(typeof(Exception), null, "_source")?.SetInstanceValue(exception, value);
         internal static void SetRemoteStackTraceString(this Exception exception, string value) => GetField(typeof(Exception), null, "_remoteStackTraceString")?.SetInstanceValue(exception, value);
-        internal static void InternalPreserveStackTrace(this Exception exception) => GetMethod(typeof(Exception), nameof(InternalPreserveStackTrace))?.InvokeInstanceAction(exception);
+        internal static void InternalPreserveStackTrace(this Exception exception) => GetMethodByName(typeof(Exception), nameof(InternalPreserveStackTrace))?.InvokeInstanceAction(exception);
 #endif
 
         #endregion
@@ -762,9 +762,34 @@ namespace KGySoft.Reflection
 
         #endregion
 
-        #region Comparer
+        #region Comparer/CaseInsensitiveComparer/StringComparer
 
         internal static CompareInfo? CompareInfo(this Comparer comparer) => GetFieldValueOrDefault<Comparer, CompareInfo?>(comparer);
+        internal static CompareInfo? CompareInfo(this CaseInsensitiveComparer comparer) => GetFieldValueOrDefault<CaseInsensitiveComparer, CompareInfo?>(comparer);
+
+#if !NET6_0_OR_GREATER
+        internal static CompareInfo? CompareInfo(this StringComparer comparer)
+        {
+            Debug.Assert(comparer.GetType() == StringComparer.CurrentCulture.GetType(), "Not a culture aware string comparer.");
+            return GetFieldValueOrDefault<StringComparer, CompareInfo?>(comparer);
+        }
+
+        internal static CompareOptions CompareOptions(this StringComparer comparer)
+        {
+            Type type = comparer.GetType();
+            Debug.Assert(type == StringComparer.CurrentCulture.GetType(), "Not a culture aware string comparer.");
+
+            FieldAccessor? field = GetField(type, typeof(CompareOptions), null);
+            if (field != null)
+                return field.GetInstanceValue<StringComparer, CompareOptions>(comparer);
+
+            field = GetField(type, typeof(bool), "ignoreCase");
+            if (field != null)
+                return field.GetInstanceValue<StringComparer, bool>(comparer) ? System.Globalization.CompareOptions.IgnoreCase : default;
+
+            return default;
+        }
+#endif
 
         #endregion
 
@@ -1084,7 +1109,7 @@ namespace KGySoft.Reflection
         private static unsafe object GetPointer(FieldInfo field, object? instance) => new IntPtr(Pointer.Unbox((Pointer)field.GetValue(instance)!));
 
 #if NETFRAMEWORK && !NET35
-        private static object? GetPointerPartiallyTrusted(FieldInfo field, object? instance) => GetMethod(typeof(Pointer), "GetPointerValue")?.InvokeInstanceFunction<Pointer, object>((Pointer)field.GetValue(instance));
+        private static object? GetPointerPartiallyTrusted(FieldInfo field, object? instance) => GetMethodByName(typeof(Pointer), "GetPointerValue")?.InvokeInstanceFunction<Pointer, object>((Pointer)field.GetValue(instance));
 #endif
 
         [SecuritySafeCritical]

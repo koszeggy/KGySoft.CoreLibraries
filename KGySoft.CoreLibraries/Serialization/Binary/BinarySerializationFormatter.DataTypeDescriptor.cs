@@ -438,6 +438,14 @@ namespace KGySoft.Serialization.Binary
                         return typeof(CompareInfo);
                     case DataTypes.CultureInfo:
                         return typeof(CultureInfo);
+                    case DataTypes.Comparer:
+                        return typeof(Comparer);
+                    case DataTypes.CaseInsensitiveComparer:
+                        return typeof(CaseInsensitiveComparer);
+                    case DataTypes.StringComparer:
+                        return typeof(StringComparer);
+                    case DataTypes.StringSegmentComparer:
+                        return typeof(StringSegmentComparer);
 
 #if !NET35
                     case DataTypes.BigInteger:

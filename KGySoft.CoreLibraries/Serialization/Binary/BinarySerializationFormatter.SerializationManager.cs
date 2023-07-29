@@ -15,6 +15,8 @@
 
 #region Usings
 
+using CompareInfo = System.Globalization.CompareInfo;
+
 #region Used Namespaces
 
 using System;
@@ -174,12 +176,6 @@ namespace KGySoft.Serialization.Binary
                 bw.Write(version.Revision);
             }
 
-            private static void WriteUri(BinaryWriter bw, Uri uri)
-            {
-                bw.Write(uri.IsAbsoluteUri);
-                bw.Write(uri.GetComponents(UriComponents.SerializationInfoString, UriFormat.UriEscaped));
-            }
-
             private static void WriteBitArray(BinaryWriter bw, BitArray bitArray)
             {
                 int length = bitArray.Length;
@@ -192,44 +188,10 @@ namespace KGySoft.Serialization.Binary
                 }
             }
 
-            private static void WriteStringBuilder(BinaryWriter bw, StringBuilder sb)
-            {
-                Write7BitInt(bw, sb.Capacity);
-                Write7BitInt(bw, sb.MaxCapacity);
-                bw.Write(sb.ToString());
-            }
-
             private static void WriteSection(BinaryWriter bw, BitVector32.Section section)
             {
                 bw.Write(section.Mask);
                 bw.Write(section.Offset);
-            }
-
-            private static void WriteStringSegment(BinaryWriter bw, StringSegment stringSegment)
-            {
-                bw.Write(!stringSegment.IsNull);
-                if (stringSegment.IsNull)
-                    return;
-
-                bw.Write(stringSegment.UnderlyingString!);
-                Write7BitInt(bw, stringSegment.Offset);
-                Write7BitInt(bw, stringSegment.Length);
-            }
-
-            private static void WriteCompareInfo(BinaryWriter bw, CompareInfo compareInfo)
-            {
-                string name = compareInfo.Name;
-                bw.Write(name);
-                if (name.Length == 0)
-                    bw.Write(ReferenceEquals(compareInfo, CultureInfo.InvariantCulture.CompareInfo));
-            }
-
-            private static void WriteCultureInfo(BinaryWriter bw, CultureInfo cultureInfo)
-            {
-                string name = cultureInfo.ToString(); // Name would not be correct for all cases, eg. de-DE_phoneb
-                bw.Write(name);
-                if (name.Length == 0)
-                    bw.Write(ReferenceEquals(cultureInfo, CultureInfo.InvariantCulture));
             }
 
 #if !NET35
@@ -391,8 +353,7 @@ namespace KGySoft.Serialization.Binary
                     return;
                 }
 
-                Type type = obj.GetType();
-                DataTypes dataType = GetDataType(type);
+                DataTypes dataType = GetDataType(obj.GetType());
 
                 // b.) Pure simple types and enums
                 if (IsPureSimpleType(dataType) || IsEnum(dataType))
@@ -432,8 +393,8 @@ namespace KGySoft.Serialization.Binary
                         return;
                 }
 
-                Type type = obj!.GetType();
-                DataTypes dataType = GetDataType(type);
+                Debug.Assert(obj != null);
+                DataTypes dataType = GetDataType(obj.GetType());
 
                 // Pure simple types and enums
                 if (IsPureSimpleType(dataType) || IsEnum(dataType))
@@ -553,29 +514,7 @@ namespace KGySoft.Serialization.Binary
                         : t.IsGenericParameter && t.DeclaringMethod == null ? t.DeclaringType!
                         : t;
 
-                    if (supportedCollections.TryGetValue(checkedType, out result))
-                        return true;
-
-                    // special cases for known abstract types (generic comparers with internal implementations)
-                    if (t.IsSubclassOfGeneric(typeof(EqualityComparer<>), out Type? comparerType) && t == comparerType.GetPropertyValue(nameof(EqualityComparer<_>.Default))!.GetType())
-                    {
-                        result = DataTypes.DefaultEqualityComparer;
-                        return true;
-                    }
-
-                    if (t.IsSubclassOfGeneric(typeof(Comparer<>), out comparerType) && t == comparerType.GetPropertyValue(nameof(Comparer<_>.Default))!.GetType())
-                    {
-                        result = DataTypes.DefaultComparer;
-                        return true;
-                    }
-
-                    if (t.IsSubclassOfGeneric(typeof(EnumComparer<>), out comparerType) && t == comparerType.GetPropertyValue(nameof(EnumComparer<_>.Comparer))!.GetType())
-                    {
-                        result = DataTypes.EnumComparer;
-                        return true;
-                    }
-
-                    return false;
+                    return supportedCollections.TryGetValue(checkedType, out result);
                 }
 
                 DataTypes GetImpureDataType(Type t)
@@ -605,8 +544,13 @@ namespace KGySoft.Serialization.Binary
                 // a.) Well-known types or forced recursion
                 if (TryGetKnownDataType(type, out DataTypes dataType))
                     return dataType;
-
-                // b.) Non-pure types
+                
+                // b.) Abstract types with specially supported derived types
+                dataType = SpecialSupportCache[type];
+                if (dataType != DataTypes.Null)
+                    return dataType;
+                
+                // c.) Non-pure types
                 return GetImpureDataType(type);
             }
 
@@ -633,7 +577,7 @@ namespace KGySoft.Serialization.Binary
                         MarkAttributes(bw, type, DataTypes.Enum);
                 }
 
-                WritePureObject(bw, obj, GetUnderlyingSimpleType(dataType));
+                WritePureObject(bw, obj, GetUnderlyingSimpleType(dataType), isRoot);
             }
 
             [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity",
@@ -726,7 +670,7 @@ namespace KGySoft.Serialization.Binary
 
             [SecurityCritical]
             [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Very simple method with many cases.")]
-            private void WritePureObject(BinaryWriter bw, object obj, DataTypes dataType)
+            private void WritePureObject(BinaryWriter bw, object obj, DataTypes dataType, bool isRoot)
             {
                 switch (dataType)
                 {
@@ -776,10 +720,10 @@ namespace KGySoft.Serialization.Binary
                         bw.Write((string)obj);
                         return;
                     case DataTypes.StringBuilder:
-                        WriteStringBuilder(bw, (StringBuilder)obj);
+                        WriteStringBuilder(bw, (StringBuilder)obj, isRoot);
                         return;
                     case DataTypes.Uri:
-                        WriteUri(bw, (Uri)obj);
+                        WriteUri(bw, (Uri)obj, isRoot);
                         return;
                     case DataTypes.Decimal:
                         bw.Write((decimal)obj);
@@ -813,13 +757,25 @@ namespace KGySoft.Serialization.Binary
                         WriteType(bw, (Type)obj, true);
                         return;
                     case DataTypes.StringSegment:
-                        WriteStringSegment(bw, (StringSegment)obj);
+                        WriteStringSegment(bw, (StringSegment)obj, isRoot);
                         return;
                     case DataTypes.CompareInfo:
-                        WriteCompareInfo(bw, (CompareInfo)obj);
+                        WriteCompareInfo(bw, (CompareInfo)obj, isRoot);
                         return;
                     case DataTypes.CultureInfo:
-                        WriteCultureInfo(bw, (CultureInfo)obj);
+                        WriteCultureInfo(bw, (CultureInfo)obj, isRoot);
+                        return;
+                    case DataTypes.Comparer:
+                        WriteComparer(bw, (Comparer)obj, isRoot);
+                        return;
+                    case DataTypes.CaseInsensitiveComparer:
+                        WriteCaseInsensitiveComparer(bw, (CaseInsensitiveComparer)obj, isRoot);
+                        return;
+                    case DataTypes.StringComparer:
+                        WriteStringComparer(bw, (StringComparer)obj, isRoot);
+                        return;
+                    case DataTypes.StringSegmentComparer:
+                        WriteStringSegmentComparer(bw, (StringSegmentComparer)obj, isRoot);
                         return;
 
                     // these types have no effective data
@@ -907,6 +863,187 @@ namespace KGySoft.Serialization.Binary
                         Throw.InternalError($"Unexpected pure type: {dataType}");
                         return;
                 }
+            }
+
+            private void WriteStringValue(BinaryWriter bw, string value, bool isRoot)
+            {
+                if (!isRoot)
+                {
+                    if (WriteId(bw, value))
+                        return;
+                }
+
+                bw.Write(value);
+            }
+
+            private void WriteUri(BinaryWriter bw, Uri uri, bool isRoot)
+            {
+                bw.Write(uri.IsAbsoluteUri);
+                WriteStringValue(bw, uri.GetComponents(UriComponents.SerializationInfoString, UriFormat.UriEscaped), isRoot);
+            }
+
+            private void WriteStringBuilder(BinaryWriter bw, StringBuilder sb, bool isRoot)
+            {
+                Write7BitInt(bw, sb.Capacity);
+                Write7BitInt(bw, sb.MaxCapacity);
+                WriteStringValue(bw, sb.ToString(), isRoot);
+            }
+
+            private void WriteStringSegment(BinaryWriter bw, StringSegment stringSegment, bool isRoot)
+            {
+                bw.Write(!stringSegment.IsNull);
+                if (stringSegment.IsNull)
+                    return;
+
+                WriteStringValue(bw, stringSegment.UnderlyingString!, isRoot);
+                Write7BitInt(bw, stringSegment.Offset);
+                Write7BitInt(bw, stringSegment.Length);
+            }
+
+            private void WriteCompareInfo(BinaryWriter bw, CompareInfo compareInfo, bool isRoot)
+            {
+                string name = compareInfo.Name;
+                WriteStringValue(bw, name, isRoot);
+                if (name.Length == 0)
+                    bw.Write(ReferenceEquals(compareInfo, CultureInfo.InvariantCulture.CompareInfo));
+            }
+
+            private void WriteCultureInfo(BinaryWriter bw, CultureInfo cultureInfo, bool isRoot)
+            {
+                string name = cultureInfo.ToString(); // Name would not be correct for all cases, eg. de-DE_phoneb
+                WriteStringValue(bw, name, isRoot);
+                if (name.Length == 0)
+                    bw.Write(ReferenceEquals(cultureInfo, CultureInfo.InvariantCulture));
+            }
+
+            private void WriteComparer(BinaryWriter bw, Comparer comparer, bool isRoot)
+            {
+                if (ReferenceEquals(comparer, Comparer.DefaultInvariant))
+                {
+                    bw.Write((byte)ComparerType.Invariant);
+                    return;
+                }
+
+                CompareInfo? compareInfo = comparer.CompareInfo();
+                if (compareInfo == null)
+                {
+                    // Only as a fallback if the internal CompareInfo cannot be retrieved on the current platform
+                    bw.Write((byte)ComparerType.Default);
+                    return;
+                }
+
+                bw.Write((byte)ComparerType.CultureSpecific);
+                WriteStringValue(bw, compareInfo.Name, isRoot);
+            }
+
+            private void WriteCaseInsensitiveComparer(BinaryWriter bw, CaseInsensitiveComparer comparer, bool isRoot)
+            {
+                if (ReferenceEquals(comparer, CaseInsensitiveComparer.DefaultInvariant))
+                {
+                    bw.Write((byte)ComparerType.Invariant);
+                    return;
+                }
+
+                CompareInfo? compareInfo = comparer.CompareInfo();
+                if (compareInfo == null)
+                {
+                    // Only as a fallback if the internal CompareInfo cannot be retrieved on the current platform
+                    bw.Write((byte)ComparerType.Default);
+                    return;
+                }
+
+                bw.Write((byte)ComparerType.CultureSpecific);
+                WriteStringValue(bw, compareInfo.Name, isRoot);
+            }
+
+            private void WriteStringComparer(BinaryWriter bw, StringComparer comparer, bool isRoot)
+            {
+                switch (comparer)
+                {
+                    case StringComparer when ReferenceEquals(comparer, StringComparer.Ordinal):
+                        bw.Write((byte)ComparerType.Ordinal);
+                        return;
+                    case StringComparer when ReferenceEquals(comparer, StringComparer.OrdinalIgnoreCase):
+                        bw.Write((byte)ComparerType.OrdinalIgnoreCase);
+                        return;
+                    case StringComparer when ReferenceEquals(comparer, StringComparer.InvariantCulture):
+                        bw.Write((byte)ComparerType.Invariant);
+                        return;
+                    case StringComparer when ReferenceEquals(comparer, StringComparer.InvariantCultureIgnoreCase):
+                        bw.Write((byte)ComparerType.InvariantIgnoreCase);
+                        return;
+#if NET9_0_OR_GREATER // TODO - https://github.com/dotnet/runtime/issues/77679
+#error check if already available
+                    case StringComparer when ReferenceEquals(comparer, StringComparer.OrdinalNonRandomized):
+                        bw.Write((byte)ComparerType.OrdinalNonRandomized);
+                        return;
+                    case StringComparer when ReferenceEquals(comparer, StringComparer.OrdinalIgnoreCaseNonRandomized):
+                        bw.Write((byte)ComparerType.OrdinalIgnoreCaseNonRandomized);
+                        return;
+#endif
+                }
+
+#if NET6_0_OR_GREATER
+                if (StringComparer.IsWellKnownCultureAwareComparer(comparer, out CompareInfo? compareInfo, out CompareOptions compareOptions))
+                {
+                    bw.Write((byte)ComparerType.CultureSpecific);
+                    WriteStringValue(bw, compareInfo.Name, isRoot);
+                    Write7BitInt(bw, (int)compareOptions);
+                    return;
+                }
+
+                Debug.Fail($"Unexpected StringComparer: {comparer.GetType().FullName}. {nameof(GetDataType)} should hadn't returned {DataTypes.StringComparer}.");
+                bw.Write((byte)ComparerType.Default);
+#else
+                CompareInfo? compareInfo = comparer.CompareInfo();
+                CompareOptions compareOptions = comparer.CompareOptions();
+                if (compareInfo != null)
+                {
+                    bw.Write((byte)ComparerType.CultureSpecific);
+                    WriteStringValue(bw, compareInfo.Name, isRoot);
+                    Write7BitInt(bw, (int)compareOptions);
+                    return;
+                }
+
+                // Only as a fallback if the internal CompareInfo cannot be retrieved on the current platform
+                bw.Write((byte)ComparerType.Default);
+#endif
+            }
+
+            private void WriteStringSegmentComparer(BinaryWriter bw, StringSegmentComparer comparer, bool isRoot)
+            {
+                switch (comparer)
+                {
+                    case StringSegmentComparer when ReferenceEquals(comparer, StringSegmentComparer.Ordinal):
+                        bw.Write((byte)ComparerType.Ordinal);
+                        return;
+                    case StringSegmentComparer when ReferenceEquals(comparer, StringSegmentComparer.OrdinalIgnoreCase):
+                        bw.Write((byte)ComparerType.OrdinalIgnoreCase);
+                        return;
+                    case StringSegmentComparer when ReferenceEquals(comparer, StringSegmentComparer.InvariantCulture):
+                        bw.Write((byte)ComparerType.Invariant);
+                        return;
+                    case StringSegmentComparer when ReferenceEquals(comparer, StringSegmentComparer.InvariantCultureIgnoreCase):
+                        bw.Write((byte)ComparerType.InvariantIgnoreCase);
+                        return;
+                    case StringSegmentComparer when ReferenceEquals(comparer, StringSegmentComparer.OrdinalRandomized):
+                        bw.Write((byte)ComparerType.OrdinalRandomized);
+                        return;
+                    case StringSegmentComparer when ReferenceEquals(comparer, StringSegmentComparer.OrdinalIgnoreCaseRandomized):
+                        bw.Write((byte)ComparerType.OrdinalIgnoreCaseRandomized);
+                        return;
+                    case StringSegmentComparer when ReferenceEquals(comparer, StringSegmentComparer.OrdinalNonRandomized):
+                        bw.Write((byte)ComparerType.OrdinalNonRandomized);
+                        return;
+                    case StringSegmentComparer when ReferenceEquals(comparer, StringSegmentComparer.OrdinalIgnoreCaseNonRandomized):
+                        bw.Write((byte)ComparerType.OrdinalIgnoreCaseNonRandomized);
+                        return;
+                }
+
+                CompareInfo compareInfo = comparer.CompareInfo ?? Throw.InternalError<CompareInfo>($"Unexpected StringSegmentComparer: {comparer.GetType().FullName}");
+                bw.Write((byte)ComparerType.CultureSpecific);
+                WriteStringValue(bw, compareInfo.Name, isRoot);
+                Write7BitInt(bw, (int)comparer.CompareOptions);
             }
 
             [SecurityCritical]
@@ -1070,6 +1207,7 @@ namespace KGySoft.Serialization.Binary
                 // actual type is non-generic but the dataType is generic (eg. recognized derived type of a known abstract type)
                 if (serInfo.IsGeneric)
                 {
+                    // TODO: get first generic base instead of GetReferenceGenericTypeCallback
                     Debug.Assert(serInfo is { IsComparer: true, GetReferenceGenericTypeCallback: not null }); // currently these types are comparers only, eg. ByteEqualityComparer : EqualityComparer<byte>
                     return EncodeGenericCollection(serInfo.GetReferenceGenericTypeCallback!.Invoke(type), dataType);
                 }
@@ -1436,7 +1574,7 @@ namespace KGySoft.Serialization.Binary
                     Debug.Assert(element != null, "When element is null, WriteId should return true");
                 }
 
-                WritePureObject(bw, element!, elementDataType);
+                WritePureObject(bw, element!, elementDataType, false);
             }
 
             [SecurityCritical]

@@ -137,7 +137,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new DateTimeOffset(DateTime.Now),
                 new DateTimeOffset(DateTime.UtcNow),
                 new DateTimeOffset(DateTime.Now.Ticks, new TimeSpan(1, 1, 0)),
-                new Uri(@"x:\teszt"), // 19
+                new Uri(@"x:\teszt"),
                 new DictionaryEntry(1, "alpha"),
                 new KeyValuePair<int, string>(1, "alpha"),
                 new BitArray(new[] { true, false, true }),
@@ -145,7 +145,22 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 StringSegment.Null,
                 "123456".AsSegment(1, 2),
                 CultureInfo.InvariantCulture.CompareInfo,
-                CompareInfo.GetCompareInfo("en-US"),
+                CompareInfo.GetCompareInfo("en"),
+                Comparer.DefaultInvariant,
+                Comparer.Default,
+                new Comparer(CultureInfo.GetCultureInfo("en")),
+                StringComparer.InvariantCulture,
+                StringComparer.InvariantCultureIgnoreCase,
+                StringComparer.Create(CultureInfo.GetCultureInfo("en"), true),
+                StringSegmentComparer.Ordinal,
+                StringSegmentComparer.OrdinalIgnoreCase,
+                StringSegmentComparer.InvariantCulture,
+                StringSegmentComparer.InvariantCultureIgnoreCase,
+                StringSegmentComparer.OrdinalNonRandomized,
+                StringSegmentComparer.OrdinalIgnoreCaseNonRandomized,
+                StringSegmentComparer.OrdinalRandomized,
+                StringSegmentComparer.OrdinalIgnoreCaseRandomized,
+                StringSegmentComparer.Create(CultureInfo.GetCultureInfo("en"), true),
 #if !NET35
                 new BigInteger(1),
                 new Complex(1.2, 2.3),
@@ -176,6 +191,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 CultureInfo.InvariantCulture,
                 CultureInfo.CurrentCulture,
                 CultureInfo.GetCultureInfo(0x10407), // Name: de-DE, CompareInfo.Name: de-DE_phoneb
+                StringComparer.Ordinal,
+                StringComparer.OrdinalIgnoreCase,
+                CaseInsensitiveComparer.DefaultInvariant,
+                CaseInsensitiveComparer.Default,
+                new CaseInsensitiveComparer(CultureInfo.GetCultureInfo("en")),
 
 #if NET46_OR_GREATER || NETCOREAPP
                 new Vector2(1, 2),
@@ -217,8 +237,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
 #else
-            // IgnoreISerializable: .NET Core 2.0 throws NotSupportedException for DBNull and RuntimeType.GetObjectData.
-            // In .NET Core 3 they work but Equals fails for cloned RuntimeType, hence safeCompare
+            // IgnoreISerializable:
+            // - .NET Core 2.0 throws NotSupportedException for DBNull and RuntimeType.GetObjectData.
+            // - StringComparer.Ordinal and StringComparer.OrdinalIgnoreCase changes its type during serialization in .NET Core to be compatible with .NET Framework
+            // safeCompare: In .NET Core 3 they work but Equals fails for cloned RuntimeType
             // IgnoreSerializationMethods: TextInfo in CultureInfo is no longer [NonSerialized] and it has a IDeserializationCallback that throws PlatformNotSupportedException
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.IgnoreISerializable | BinarySerializationOptions.IgnoreSerializationMethods, safeCompare: true);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.IgnoreISerializable | BinarySerializationOptions.IgnoreSerializationMethods, safeCompare: true);
@@ -667,6 +689,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new BitArray[] { new BitArray(new[] { true, false, true }), null },
                 new StringBuilder[] { new StringBuilder("alpha"), null },
                 new StringSegment[] { new StringSegment("alpha", 1, 2), null },
+                new Comparer[] { Comparer.DefaultInvariant, Comparer.Default, null },
+                new StringComparer[] { StringComparer.InvariantCulture, StringComparer.CurrentCulture, new CustomStringComparer(), null },
 #if !NET35
                 new BigInteger[] { 1, 2 },
                 new Complex[] { new Complex(1.2, 3.4), new Complex(5.6, 7.8) },
@@ -2767,6 +2791,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             Throws<SerializationException>(() => DeserializeObject(manipulatedData, bsf));
         }
 
-#endregion
+        #endregion
     }
 }

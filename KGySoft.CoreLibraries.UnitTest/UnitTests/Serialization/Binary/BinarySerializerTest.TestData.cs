@@ -1754,6 +1754,24 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
         #endregion
 
+        #region CustomStringComparer class
+
+        [Serializable]
+        private sealed class CustomStringComparer : StringComparer
+        {
+            #region Methods
+            
+            public override int Compare(string x, string y) => String.Compare(x, y, StringComparison.Ordinal);
+            public override bool Equals(string x, string y) => x == y;
+            public override int GetHashCode(string obj) => obj.GetHashCode();
+            public override bool Equals(object obj) => obj is CustomStringComparer;
+            public override int GetHashCode() => typeof(CustomStringComparer).GetHashCode();
+
+            #endregion
+        }
+
+        #endregion
+
         #endregion
 
         #region Nested structs

@@ -1050,7 +1050,13 @@ namespace KGySoft.Reflection
             void DumpRootName(StringBuilder sb, TypeNameKind kind)
             {
                 if (kind == TypeNameKind.ShortName)
-                    sb.Append(rootName!.AsSegment().Split('.', '+').LastOrDefault().AsSpan);
+                    sb.Append(rootName!.AsSegment().Split('.', '+').LastOrDefault()
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+                            .AsSpan
+#else
+                            .ToString()
+#endif
+                    );
                 else
                     sb.Append(rootName);
             }

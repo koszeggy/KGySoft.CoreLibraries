@@ -70,6 +70,13 @@
   + Supporting the Array2D<T> struct natively
   + Supporting the Array3D<T> struct natively
   + Supporting the StrongBox<T> class natively
+  + Supporting the Comparer class natively
+  + Supporting the CaseInsensitiveComparer class natively
+  + Supporting the known StringComparer implementations natively
+  + Supporting the StringSegmentComparer implementations natively
+  + Supporting the default EqualityComparer<T> implementations natively
+  + Supporting the default Comparer<T> implementations natively
+  + Supporting the default EnumComparer<T> implementations natively
   + Supporting the Tuple<...> classes natively (.NET Framework 4.0 and above)
   + Supporting the Complex struct natively (.NET Framework 4.0 and above)
   + Supporting the Vector2 struct natively (.NET Framework 4.6 and above)

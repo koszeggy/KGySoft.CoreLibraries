@@ -76,13 +76,18 @@ using KGySoft.Serialization.Xml;
  * - If may contain a pointer or may require unmanaged preallocated memory
  * When to add with special care and only if really justified
  * - If type is abstract, non-sealed or internal (eg. object, RuntimeType)
+ * - If type has known values but the type in general cannot be supported (eg. comparer singleton instances vs. general instances)
  * - If type is impure (ambiguous without extra info) or may contain elements that make safe deserialization impossible
  * 1. Add type to DataTypes bits 0..5 (adjust free places in comments) or to bits 16..23 (Extended)
- * 2. If type is pure (unambiguous by DataType) add it to supportedNonPrimitiveElementTypes.
+ * 2. If type is pure (unambiguous by DataTypes) add it to supportedNonPrimitiveElementTypes.
+ *    If the added data type is abstract and there is a special logic to determine if the type is supported, add the logic to DetermineSpecialSupport.
  *    Otherwise, handle it in SerializationManager.GetDataType/GetImpureDataType
  * 3. If type is pure handle it type in SerializationManager.WritePureObject. If serialization is more than one line create a static WriteXXX.
  *    Otherwise, handle it in SerializationManager.WriteImpureObject. Create a WriteXXX that can be called separately from writing type.
- * 4. Handle type in DeserializationManager.ReadObject: for reference types call TryGetFromCache. Always set createdResult.
+ * 4. Handle type in DeserializationManager.ReadObject:
+ *    - For reference types call TryGetFromCache (or TryGetFromCacheOrAddPlaceholder if ReadXXX also accesses the cache).
+ *    - Always set createdResult if addToCache is not handled in ReadXXX (eg. impure types handle it by themselves).
+ *    - If type is value type and it can read nested cached objects the caching condition is different (see StringSegment)
  * 5. Add type to DataTypeDescriptor.GetElementType.
  *    If type is non-pure and WriteXXX starts with WriteType, then you can put it into the group with ReadType.
  * 6. Add type to unit test:
@@ -110,7 +115,8 @@ using KGySoft.Serialization.Xml;
  *    - 64..127 << 24: Extended dictionaries. If value type, must be here to use NullableExtendedCollection.
  * 2. Update serializationInfo initializer - mind the groups of 1.
  *    - If new CollectionInfo flag has to be defined, a property in CollectionSerializationInfo might be also needed
- * 3. Add type to supportedCollections
+ * 3. If type is not abstract add it to supportedCollections
+ *    If the added data type is abstract and there is a special logic to determine if the type is supported, add the logic to DetermineSpecialSupport.
  * 4. Add type to DataTypeDescriptor.GetCollectionType - mind groups
  *    - If collection has a known fixed size and is deserialized by a backing array then DataTypeDescriptor.FixedItemsSize might be needed to adjusted, too.
  * 5. If needed, update CollectionSerializationInfo.WriteSpecificProperties and InitializeCollection (e.g. new flag in 2.)
@@ -226,12 +232,19 @@ namespace KGySoft.Serialization.Binary
     /// <item><see cref="StringSegment"/></item>
     /// <item><see cref="CultureInfo"/></item>
     /// <item><see cref="CompareInfo"/></item>
+    /// <item><see cref="Comparer"/></item>
+    /// <item><see cref="CaseInsensitiveComparer"/></item>
     /// <item><see cref="Enum"/> types</item>
     /// <item><see cref="Type"/> instances if they are runtime types.</item>
+    /// <item>Known <see cref="StringComparer"/> implementations.</item>
+    /// <item><see cref="StringSegmentComparer"/> implementations.</item>
     /// <item><see cref="Nullable{T}"/> types if type parameter is any of the supported types.</item>
     /// <item><see cref="KeyValuePair{TKey,TValue}"/> if <see cref="KeyValuePair{TKey,TValue}.Key"/> and <see cref="KeyValuePair{TKey,TValue}.Value"/> are any of the supported types.</item>
     /// <item><see cref="DictionaryEntry"/> if <see cref="DictionaryEntry.Key"/> and <see cref="DictionaryEntry.Value"/> are any of the supported types.</item>
     /// <item><see cref="StrongBox{T}"/> if <see cref="StrongBox{T}.Value"/> is any of the supported types.</item>
+    /// <item>Default <see cref="EqualityComparer{T}"/> implementations.</item>
+    /// <item>Default <see cref="Comparer{T}"/> implementations.</item>
+    /// <item>Default <see cref="EnumComparer{T}"/> implementations.</item>
     /// <item><see cref="BigInteger"/> (in .NET Framework 4.0 and above)</item>
     /// <item><see cref="Complex"/> (in .NET Framework 4.0 and above)</item>
     /// <item><see cref="Vector2"/> (in .NET Framework 4.6 and above)</item>
@@ -638,28 +651,10 @@ namespace KGySoft.Serialization.Binary
             CompareInfo = 9 << 16,
             CultureInfo = 10 << 16,
 
-            // TODO
-            ComparerDefaultInvariant = 11 << 16,
-            CaseInsensitiveComparerDefaultInvariant = 12 << 16,
-            
-            StringComparerOrdinal = 13 << 16,
-            StringComparerOrdinalIgnoreCase = 14 << 16,
-            StringComparerInvariant = 15 << 16,
-            StringComparerInvariantIgnoreCase = 16 << 16,
-            // TODO: Candidates
-            //StringComparerOrdinalNonRandomized = 17 << 16, // https://github.com/dotnet/runtime/issues/77679
-            //StringComparerOrdinalIgnoreCaseNonRandomized = 18 << 16, // https://github.com/dotnet/runtime/issues/77679
-
-            StringSegmentComparerOrdinal = 19 << 16,
-            StringSegmentComparerOrdinalIgnoreCase = 20 << 16,
-            StringSegmentComparerInvariant = 21 << 16,
-            StringSegmentComparerInvariantIgnoreCase = 22 << 16,
-            StringSegmentComparerOrdinalNonRandomized = 23 << 16,
-            StringSegmentComparerOrdinalIgnoreCaseNonRandomized = 24 << 16,
-            StringSegmentComparerOrdinalRandomized = 25 << 16,
-            StringSegmentComparerOrdinalIgnoreCaseRandomized = 26 << 16,
-            StringSegmentComparerCultureAware = 27 << 16,
-
+            Comparer = 11 << 16,
+            CaseInsensitiveComparer = 12 << 16,
+            StringComparer = 13 << 16,
+            StringSegmentComparer = 14 << 16,
 
             // TODO candidates:
             //Quad = // float128: to extended types - https://github.com/dotnet/csharplang/issues/1252
@@ -870,6 +865,24 @@ namespace KGySoft.Serialization.Binary
             CustomSerialized = 1 << 4,
             BinarySerializable = 1 << 5,
             RawStruct = 1 << 6,
+        }
+
+        /// <summary>
+        /// Gets the possibly known singleton identity of a comparer.
+        /// Used for non-generic comparers whose instances can be either singletons or regular instances to be serialized.
+        /// </summary>
+        private enum ComparerType
+        {
+            Default, // Used only as a fallback if internal implementation is not recognizable because normally default comparer is serialized as a culture-aware one
+            CultureSpecific, // Not a known singleton but the comparer type is supported and the instance should be serialized by its compare info and possible other data
+            Invariant, // Comparer.DefaultInvariant, CaseInsensitiveComparer.DefaultInvariant, StringComparer.InvariantCulture, StringSegmentComparer.InvariantCulture
+            Ordinal, // StringComparer, StringSegmentComparer
+            OrdinalIgnoreCase, // StringComparer, StringSegmentComparer
+            InvariantIgnoreCase, // StringComparer, StringSegmentComparer
+            OrdinalRandomized, // StringSegmentComparer
+            OrdinalIgnoreCaseRandomized, // StringSegmentComparer
+            OrdinalNonRandomized, // StringSegmentComparer, TODO StringComparer - https://github.com/dotnet/runtime/issues/77679
+            OrdinalIgnoreCaseNonRandomized, // StringSegmentComparer, TODO StringComparer - https://github.com/dotnet/runtime/issues/77679
         }
 
         #endregion
@@ -1476,6 +1489,7 @@ namespace KGySoft.Serialization.Binary
 
             #region Extended dictionaries (DataTypes 64..127 << 24)
 
+#if NETCOREAPP
             {
                 DataTypes.ImmutableDictionary, new CollectionSerializationInfo
                 {
@@ -1530,6 +1544,7 @@ namespace KGySoft.Serialization.Binary
                     },
                 }
             },
+#endif
 
             #endregion
         };
@@ -1537,8 +1552,10 @@ namespace KGySoft.Serialization.Binary
         private static readonly IThreadSafeCacheAccessor<Type, Dictionary<Type, IEnumerable<MethodInfo>?>> methodsByAttributeCache
             = ThreadSafeCacheFactory.Create<Type, Dictionary<Type, IEnumerable<MethodInfo>?>>(_ => new Dictionary<Type, IEnumerable<MethodInfo>?>(4), LockFreeCacheOptions.Profile256);
 
-        // including string and void
-        private static readonly Dictionary<Type, DataTypes> primitiveTypes = new Dictionary<Type, DataTypes>
+        /// <summary>
+        /// Types that cannot be serialized recursively even by a surrogate, including string and void
+        /// </summary>
+        private static readonly Dictionary<Type, DataTypes> primitiveTypes = new()
         {
             { Reflector.BoolType, DataTypes.Bool },
             { Reflector.ByteType, DataTypes.UInt8 },
@@ -1558,7 +1575,10 @@ namespace KGySoft.Serialization.Binary
             { Reflector.VoidType, DataTypes.Void },
         };
 
-        private static readonly Dictionary<Type, DataTypes> supportedNonPrimitiveElementTypes = new Dictionary<Type, DataTypes>
+        /// <summary>
+        /// Natively supported non-primitive simple types.
+        /// </summary>
+        private static readonly Dictionary<Type, DataTypes> supportedNonPrimitiveElementTypes = new()
         {
             { Reflector.DecimalType, DataTypes.Decimal },
             { Reflector.DateTimeType, DataTypes.DateTime },
@@ -1577,6 +1597,8 @@ namespace KGySoft.Serialization.Binary
             { typeof(StringSegment), DataTypes.StringSegment },
             { typeof(CompareInfo), DataTypes.CompareInfo },
             { typeof(CultureInfo), DataTypes.CultureInfo },
+            { typeof(Comparer), DataTypes.Comparer },
+            { typeof(CaseInsensitiveComparer), DataTypes.CaseInsensitiveComparer },
 #if !NET35
             { Reflector.BigIntegerType, DataTypes.BigInteger },
             { typeof(Complex), DataTypes.Complex },
@@ -1613,7 +1635,10 @@ namespace KGySoft.Serialization.Binary
 #endif
         };
 
-        private static readonly Dictionary<Type, DataTypes> supportedCollections = new Dictionary<Type, DataTypes>
+        /// <summary>
+        /// Supported collection types, including some types that are not collections but their elements can be encoded similar to collections.
+        /// </summary>
+        private static readonly Dictionary<Type, DataTypes> supportedCollections = new()
         {
             // Array is not here because that is an abstract type. Arrays are handled separately.
             { Reflector.ListGenType, DataTypes.List },

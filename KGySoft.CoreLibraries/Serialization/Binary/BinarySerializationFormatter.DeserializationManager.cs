@@ -709,12 +709,6 @@ namespace KGySoft.Serialization.Binary
                     : new Version(major, minor, build, revision);
             }
 
-            private static Uri ReadUri(BinaryReader br)
-            {
-                bool isAbsolute = br.ReadBoolean();
-                return new Uri(br.ReadString(), isAbsolute ? UriKind.Absolute : UriKind.Relative);
-            }
-
             private static BitArray ReadBitArray(BinaryReader br)
             {
                 int length = Read7BitInt(br);
@@ -739,37 +733,6 @@ namespace KGySoft.Serialization.Binary
                 while (shift.Offset < offset - 1)
                     shift = BitVector32.CreateSection(1, shift);
                 return BitVector32.CreateSection(mask, shift);
-            }
-
-            private static StringSegment ReadStringSegment(BinaryReader br) => !br.ReadBoolean()
-                ? StringSegment.Null
-                : new StringSegment(br.ReadString(), Read7BitInt(br), Read7BitInt(br));
-
-            private static StringBuilder ReadStringBuilder(BinaryReader br)
-            {
-                int capacity = Read7BitInt(br);
-                int maxCapacity = Read7BitInt(br);
-                if (maxCapacity == Int32.MaxValue)
-                    return new StringBuilder(br.ReadString(), capacity);
-                var result = new StringBuilder(capacity, maxCapacity);
-                result.Append(br.ReadString());
-                return result;
-            }
-
-            private static CompareInfo ReadCompareInfo(BinaryReader br)
-            {
-                string name = br.ReadString();
-                if (name.Length == 0 && br.ReadBoolean())
-                    return CultureInfo.InvariantCulture.CompareInfo;
-                return CompareInfo.GetCompareInfo(name);
-            }
-
-            private static CultureInfo ReadCultureInfo(BinaryReader br)
-            {
-                string name = br.ReadString();
-                if (name.Length == 0 && br.ReadBoolean())
-                    return CultureInfo.InvariantCulture;
-                return CultureInfo.GetCultureInfo(name);
             }
 
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
@@ -1341,23 +1304,24 @@ namespace KGySoft.Serialization.Binary
                         }
 
 #if NET35
-                            if (value != null || !descriptor.IsGenericDictionary)
+                        if (value != null || !descriptor.IsGenericDictionary)
 #endif
                         {
                             AddDictionaryElement((IDictionary)collection, key, value);
                             continue;
                         }
 #if NET35
-                            // generic dictionary with null value: calling generic Add because non-generic one may fail in .NET Runtime 2.x
-                            addMethod = serInfo.GetAddMethod(descriptor);
-                            AddDictionaryElement(collection, addMethod, key, null);
-                            continue;
+                        // generic dictionary with null value: calling generic Add because non-generic one may fail in .NET Runtime 2.x
+                        addMethod = MethodAccessor.GetAccessor(Reflector.IDictionaryGenType
+                            .GetGenericType(descriptor.GetKeyDescriptor().GetTypeToCreate(), descriptor.GetValueDescriptor().GetTypeToCreate())
+                            .GetMethod(nameof(IDictionary<_,_>.Add))!);
+                        AddDictionaryElement(collection, addMethod, key, null);
+                        continue;
 #endif
                     }
                 }
                 else
                 {
-
                     for (int i = 0; i < count; i++)
                     {
                         object? element = ReadElement(br, descriptor.GetElementDescriptor());
@@ -1379,8 +1343,8 @@ namespace KGySoft.Serialization.Binary
 
 #if NET35
                             // generic collection with null value: calling generic Add because non-generic one may fail in .NET Runtime 2.x
-                            addMethod = serInfo.GetAddMethod(descriptor);
-                            AddCollectionElement(collection, addMethod, null);
+                            addMethod = MethodAccessor.GetAccessor(Reflector.ICollectionGenType.GetGenericType(descriptor.GetElementDescriptor().GetTypeToCreate()).GetMethod(nameof(ICollection<_>.Add))!);
+                            AddCollectionElement(collection, descriptor.UnderlyingCollectionDataType, addMethod, null);
                             continue;
 #endif
                         }
@@ -1424,24 +1388,51 @@ namespace KGySoft.Serialization.Binary
             /// Reads a non-collection object from the stream.
             /// </summary>
             /// <param name="br">The reader</param>
-            /// <param name="addToCache">When <see langword="true"/>, the result must be added to the ID cache. Otherwise, only reference types in a collection might be added to cache.</param>
+            /// <param name="addToCache">When <see langword="true"/>, the result must be added to the ID cache. Otherwise, only reference types in a collection might be added to cache.
+            /// False: Root level objects except recursive object graphs; Value type fields or collection elements
+            /// On non-root level this parameter is <see langword="true"/> for every reference type (including boxed value types); <see langword="false"/> only for non-root value element types.
+            /// Can be null for collection element types in which case will be evaluated lazily: will be false for value element types.</param>
             /// <param name="dataTypeDescriptor">The descriptor of the data type to be deserialized.</param>
             /// <returns>The deserialized object.</returns>
             [SecurityCritical]
             [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Long but very straightforward switch")]
             private object? ReadObject(BinaryReader br, bool? addToCache, DataTypeDescriptor dataTypeDescriptor)
             {
+                int id = 0;
+
+                #region Local Methods
+
+                // Call it for pure reference type objects if ReadXXX does not use the objects cache
                 bool TryGetFromCache(out object? cachedValue)
                 {
+                    Debug.Assert(addToCache.HasValue, "addToCache must be assigned before calling TryGetFromCache");
+                    Debug.Assert(addToCache == true || dataTypeDescriptor.ParentDescriptor == null, "Not expected to be called for value element types");
                     if (dataTypeDescriptor.ParentDescriptor == null)
                     {
                         cachedValue = null;
                         return false;
                     }
 
-                    Debug.Assert(addToCache == true, "Reference element types of collections should be cached");
                     return TryGetCachedObject(br, out cachedValue);
                 }
+
+                // Call it for pure reference type objects if ReadXXX uses the objects cache
+                bool TryGetFromCacheOrAddPlaceholder(out object? cachedValue)
+                {
+                    bool result = TryGetFromCache(out cachedValue);
+                    if (!result)
+                        AddPlaceholder();
+                    return result;
+                }
+
+                // Call it for value type objects if ReadXXX uses the objects cache
+                void AddPlaceholder()
+                {
+                    if (addToCache == true)
+                        AddObjectToCache(default, out id);
+                }
+
+                #endregion
 
                 DataTypes dataType = dataTypeDescriptor.ElementDataType;
                 bool is7BitEncoded = IsCompressed(dataType);
@@ -1508,7 +1499,7 @@ namespace KGySoft.Serialization.Binary
                         case DataTypes.UIntPtr:
                             return createdResult = new UIntPtr(is7BitEncoded ? (ulong)Read7BitLong(br) : br.ReadUInt64());
                         case DataTypes.Object:
-                            // object - returning object instance on root level, otherwise, doing recursion because can mean any type as an element type
+                            // object - returning object instance on (sub)root level, otherwise, doing recursion because can mean any type as an element type
                             if (dataTypeDescriptor.ParentDescriptor == null)
                                 return createdResult = new object();
                             // result is not set here - when caching is needed, will be done in the recursion
@@ -1518,23 +1509,32 @@ namespace KGySoft.Serialization.Binary
                         case DataTypes.Guid:
                             return createdResult = new Guid(br.ReadBytes(16));
                         case DataTypes.Uri:
-                            return TryGetFromCache(out cachedResult) ? cachedResult : createdResult = ReadUri(br);
+                            return TryGetFromCacheOrAddPlaceholder(out cachedResult) ? cachedResult : createdResult = ReadUri(br, addToCache.Value);
                         case DataTypes.BitArray:
                             return TryGetFromCache(out cachedResult) ? cachedResult : createdResult = ReadBitArray(br);
                         case DataTypes.BitVector32:
                             return createdResult = new BitVector32(br.ReadInt32());
                         case DataTypes.BitVector32Section:
                             return createdResult = ReadSection(br);
-                        case DataTypes.StringSegment:
-                            return createdResult = ReadStringSegment(br);
+                        case DataTypes.StringSegment: // inner string is cached even if the result isn't but it's a collection element (ie. whenever it's not root)
+                            AddPlaceholder();
+                            return createdResult = ReadStringSegment(br, addToCache.Value || dataTypeDescriptor.ParentDescriptor != null);
                         case DataTypes.StringBuilder:
-                            return TryGetFromCache(out cachedResult) ? cachedResult : createdResult = ReadStringBuilder(br);
+                            return TryGetFromCacheOrAddPlaceholder(out cachedResult) ? cachedResult : createdResult = ReadStringBuilder(br, addToCache.Value);
                         case DataTypes.RuntimeType:
                             return TryGetFromCache(out cachedResult) ? cachedResult : createdResult = ReadType(br, true).Type;
                         case DataTypes.CompareInfo:
-                            return TryGetFromCache(out cachedResult) ? cachedResult : createdResult = ReadCompareInfo(br);
+                            return TryGetFromCacheOrAddPlaceholder(out cachedResult) ? cachedResult : createdResult = ReadCompareInfo(br, addToCache.Value);
                         case DataTypes.CultureInfo:
-                            return TryGetFromCache(out cachedResult) ? cachedResult : createdResult = ReadCultureInfo(br);
+                            return TryGetFromCacheOrAddPlaceholder(out cachedResult) ? cachedResult : createdResult = ReadCultureInfo(br, addToCache.Value);
+                        case DataTypes.Comparer:
+                            return TryGetFromCacheOrAddPlaceholder(out cachedResult) ? cachedResult : createdResult = ReadComparer(br, addToCache.Value);
+                        case DataTypes.CaseInsensitiveComparer:
+                            return TryGetFromCacheOrAddPlaceholder(out cachedResult) ? cachedResult : createdResult = ReadCaseInsensitiveComparer(br, addToCache.Value);
+                        case DataTypes.StringComparer:
+                            return TryGetFromCacheOrAddPlaceholder(out cachedResult) ? cachedResult : createdResult = ReadStringComparer(br, addToCache.Value);
+                        case DataTypes.StringSegmentComparer:
+                            return TryGetFromCacheOrAddPlaceholder(out cachedResult) ? cachedResult : createdResult = ReadStringSegmentComparer(br, addToCache.Value);
 
 #if !NET35
                         case DataTypes.BigInteger:
@@ -1643,10 +1643,124 @@ namespace KGySoft.Serialization.Binary
                 }
                 finally
                 {
-                    if (addToCache.Value && createdResult != null)
-                        AddObjectToCache(createdResult);
+                    if (addToCache == true && createdResult != null)
+                    {
+                        if (id == 0)
+                            AddObjectToCache(createdResult);
+                        else
+                            ReplaceObjectInCache(id, createdResult);
+                    }
                 }
             }
+
+            private string ReadStringValue(BinaryReader br, bool addToCache)
+            {
+                if (addToCache && TryGetCachedObject(br, out object? cachedResult))
+                {
+                    if (cachedResult is not string)
+                        Throw.SerializationException(Res.BinarySerializationInvalidStreamData);
+                    return (string)cachedResult;
+                }
+
+                string result = br.ReadString();
+                if (addToCache)
+                    AddObjectToCache(result);
+                return result;
+            }
+
+            private Uri ReadUri(BinaryReader br, bool addToCache)
+            {
+                bool isAbsolute = br.ReadBoolean();
+                return new Uri(ReadStringValue(br, addToCache), isAbsolute ? UriKind.Absolute : UriKind.Relative);
+            }
+
+            private StringBuilder ReadStringBuilder(BinaryReader br, bool addToCache)
+            {
+                int capacity = Read7BitInt(br);
+                int maxCapacity = Read7BitInt(br);
+                if (maxCapacity == Int32.MaxValue)
+                    return new StringBuilder(ReadStringValue(br, addToCache), capacity);
+                var result = new StringBuilder(capacity, maxCapacity);
+                result.Append(ReadStringValue(br, addToCache));
+                return result;
+            }
+
+            private StringSegment ReadStringSegment(BinaryReader br, bool addToCache) => !br.ReadBoolean()
+                ? StringSegment.Null
+                : new StringSegment(ReadStringValue(br, addToCache), Read7BitInt(br), Read7BitInt(br));
+
+            private CompareInfo ReadCompareInfo(BinaryReader br, bool addToCache)
+            {
+                string name = ReadStringValue(br, addToCache);
+                if (name.Length == 0 && br.ReadBoolean())
+                    return CultureInfo.InvariantCulture.CompareInfo;
+                return CompareInfo.GetCompareInfo(name);
+            }
+
+            private CultureInfo ReadCultureInfo(BinaryReader br, bool addToCache)
+            {
+                string name = ReadStringValue(br, addToCache);
+                if (name.Length == 0 && br.ReadBoolean())
+                    return CultureInfo.InvariantCulture;
+                return CultureInfo.GetCultureInfo(name);
+            }
+
+            private Comparer ReadComparer(BinaryReader br, bool addToCache) => (ComparerType)br.ReadByte() switch
+            {
+                ComparerType.Invariant => Comparer.DefaultInvariant,
+                ComparerType.CultureSpecific => new Comparer(CultureInfo.GetCultureInfo(ReadStringValue(br, addToCache))),
+                ComparerType.Default => Comparer.Default, // only as a fallback if Comparer implementation was unrecognized during serialization
+                _ => Throw.SerializationException<Comparer>(Res.BinarySerializationInvalidStreamData)
+            };
+
+            private CaseInsensitiveComparer ReadCaseInsensitiveComparer(BinaryReader br, bool addToCache) => (ComparerType)br.ReadByte() switch
+            {
+                ComparerType.Invariant => CaseInsensitiveComparer.DefaultInvariant,
+                ComparerType.CultureSpecific => new CaseInsensitiveComparer(CultureInfo.GetCultureInfo(ReadStringValue(br, addToCache))),
+                ComparerType.Default => CaseInsensitiveComparer.Default, // only as a fallback if CaseInsensitiveComparer implementation was unrecognized during serialization
+                _ => Throw.SerializationException<CaseInsensitiveComparer>(Res.BinarySerializationInvalidStreamData)
+            };
+
+            private StringComparer ReadStringComparer(BinaryReader br, bool addToCache) => (ComparerType)br.ReadByte() switch
+            {
+                ComparerType.Ordinal => StringComparer.Ordinal,
+                ComparerType.OrdinalIgnoreCase => StringComparer.OrdinalIgnoreCase,
+                ComparerType.Invariant => StringComparer.InvariantCulture,
+                ComparerType.InvariantIgnoreCase => StringComparer.InvariantCultureIgnoreCase,
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+                ComparerType.CultureSpecific => StringComparer.Create(CultureInfo.GetCultureInfo(ReadStringValue(br, addToCache)), (CompareOptions)Read7BitInt(br)),
+#else
+                ComparerType.CultureSpecific => StringComparer.Create(CultureInfo.GetCultureInfo(ReadStringValue(br, addToCache)), (CompareOptions)Read7BitInt(br) == CompareOptions.IgnoreCase),
+#endif
+#if NET9_0_OR_GREATER
+#error check if already available - https://github.com/dotnet/runtime/issues/77679
+                ComparerType.OrdinalNonRandomized => StringComparer.OrdinalNonRandomized,
+                ComparerType.OrdinalIgnoreCaseNonRandomized => StringComparer.OrdinalIgnoreCaseNonRandomized,
+#else
+                ComparerType.OrdinalNonRandomized => Throw.PlatformNotSupportedException<StringComparer>(Res.BinarySerializationTypePlatformNotSupported($"{nameof(StringComparer)}.{nameof(ComparerType.OrdinalNonRandomized)}")),
+                ComparerType.OrdinalIgnoreCaseNonRandomized => Throw.PlatformNotSupportedException<StringComparer>(Res.BinarySerializationTypePlatformNotSupported($"{nameof(StringComparer)}.{nameof(ComparerType.OrdinalIgnoreCaseNonRandomized)}")),
+#endif
+                ComparerType.Default => StringComparer.InvariantCulture, // only as a fallback if culture aware StringComparer implementation was unrecognized during serialization
+                _ => Throw.SerializationException<StringComparer>(Res.BinarySerializationInvalidStreamData)
+            };
+
+            private StringSegmentComparer ReadStringSegmentComparer(BinaryReader br, bool addToCache) => (ComparerType)br.ReadByte() switch
+            {
+                ComparerType.Ordinal => StringSegmentComparer.Ordinal,
+                ComparerType.OrdinalIgnoreCase => StringSegmentComparer.OrdinalIgnoreCase,
+                ComparerType.Invariant => StringSegmentComparer.InvariantCulture,
+                ComparerType.InvariantIgnoreCase => StringSegmentComparer.InvariantCultureIgnoreCase,
+#if NET35 || NET40 || NET45
+                ComparerType.CultureSpecific => StringSegmentComparer.Create(CultureInfo.GetCultureInfo(ReadStringValue(br, addToCache)), (CompareOptions)Read7BitInt(br) == CompareOptions.IgnoreCase),
+#else
+                ComparerType.CultureSpecific => StringSegmentComparer.Create(CultureInfo.GetCultureInfo(ReadStringValue(br, addToCache)), (CompareOptions)Read7BitInt(br)),
+#endif
+                ComparerType.OrdinalRandomized => StringSegmentComparer.OrdinalRandomized,
+                ComparerType.OrdinalIgnoreCaseRandomized => StringSegmentComparer.OrdinalIgnoreCaseRandomized,
+                ComparerType.OrdinalNonRandomized => StringSegmentComparer.OrdinalNonRandomized,
+                ComparerType.OrdinalIgnoreCaseNonRandomized => StringSegmentComparer.OrdinalIgnoreCaseNonRandomized,
+                _ => Throw.SerializationException<StringSegmentComparer>(Res.BinarySerializationInvalidStreamData)
+            };
 
             [SecurityCritical]
             private object ReadBinarySerializable(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor)

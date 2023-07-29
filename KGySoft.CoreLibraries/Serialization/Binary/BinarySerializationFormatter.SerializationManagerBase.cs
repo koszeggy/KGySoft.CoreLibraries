@@ -21,9 +21,8 @@ using System.Reflection;
 using System.Runtime.Serialization;
 using System.Security;
 
-#if NETFRAMEWORK || NETSTANDARD2_0
+using KGySoft.Collections;
 using KGySoft.CoreLibraries; 
-#endif
 using KGySoft.Reflection;
 
 #endregion
@@ -107,6 +106,14 @@ namespace KGySoft.Serialization.Binary
                 compressibleType,
                 genericMethodDefinitionPlaceholderType
             };
+
+            /// <summary>
+            /// A cache for types that have special support on the current platform and it has some cost to determine this.
+            /// The result is <see cref="DataTypes.Null"/> if the type is ignored or the special support is disabled for it
+            /// so it must be determined by the regular ways if it can be serialized.
+            /// </summary>
+            private protected static readonly IThreadSafeCacheAccessor<Type, DataTypes> SpecialSupportCache
+                = ThreadSafeCacheFactory.Create<Type, DataTypes>(DetermineSpecialSupport, LockFreeCacheOptions.Profile256);
 
             #endregion
 
@@ -210,6 +217,44 @@ namespace KGySoft.Serialization.Binary
                     cacheItem[attribute] = result;
                     return result;
                 }
+            }
+
+            private static DataTypes DetermineSpecialSupport(Type type)
+            {
+                // StringComparer
+                if (type.IsSubclassOf(typeof(StringComparer)))
+                {
+                    // Well-known string comparers. Some of the items may have the same type on some platforms.
+                    // CurrentCulture is not a supported singleton, it's queried for CultureAware solutions. Possible unrecognized inner structure in handled in WriteStringComparer
+                    // TODO: add non-randomized - https://github.com/dotnet/runtime/issues/77679
+                    return type.In(StringComparer.Ordinal.GetType, StringComparer.OrdinalIgnoreCase.GetType, StringComparer.InvariantCulture.GetType, StringComparer.InvariantCultureIgnoreCase.GetType, StringComparer.CurrentCulture.GetType)
+                        ? DataTypes.StringComparer
+                        : DataTypes.Null;
+                }
+
+                // StringSegmentComparer - no need to check anything else because it cannot be derived in a 3rd party assembly due to the abstract private protected members
+                if (type.IsSubclassOf(typeof(StringSegmentComparer)))
+                    return DataTypes.StringSegmentComparer;
+
+                // EqualityComparer<T>.Default
+                if (type.IsSubclassOfGeneric(typeof(EqualityComparer<>), out Type? comparerType))
+                    return type == comparerType.GetPropertyValue(nameof(EqualityComparer<_>.Default))!.GetType()
+                        ? DataTypes.DefaultEqualityComparer
+                        : DataTypes.Null;
+
+                // Comparer<T>.Default
+                if (type.IsSubclassOfGeneric(typeof(Comparer<>), out comparerType))
+                    return type == comparerType.GetPropertyValue(nameof(Comparer<_>.Default))!.GetType()
+                        ? DataTypes.DefaultComparer
+                        : DataTypes.Null;
+
+                // EnumComparer<T>.Comparer
+                if (type.IsSubclassOfGeneric(typeof(EnumComparer<>), out comparerType))
+                    return type == comparerType.GetPropertyValue(nameof(EnumComparer<_>.Comparer))!.GetType()
+                        ? DataTypes.EnumComparer
+                        : DataTypes.Null;
+
+                return DataTypes.Null;
             }
 
             #endregion

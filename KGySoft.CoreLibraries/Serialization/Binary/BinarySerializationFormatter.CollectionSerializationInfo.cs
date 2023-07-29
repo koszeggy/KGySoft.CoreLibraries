@@ -136,7 +136,7 @@ namespace KGySoft.Serialization.Binary
             /// Can be set if the type is represented by an abstract public generic type that can have supported non-generic derived types.
             /// Currently used for comparers.
             /// </summary>
-            internal Func<Type, Type> GetReferenceGenericTypeCallback { get; set; }
+            internal Func<Type, Type>? GetReferenceGenericTypeCallback { get; set; }
 
 #if !NET35
             [SuppressMessage("ReSharper", "MemberCanBePrivate.Local", Justification = "For some targets it is needed to be internal")] 
