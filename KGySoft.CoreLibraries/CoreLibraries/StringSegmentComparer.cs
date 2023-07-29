@@ -63,6 +63,12 @@ namespace KGySoft.CoreLibraries
 
             #endregion
 
+            #region Properties
+
+            public override CompareOptions CompareOptions => CompareOptions.Ordinal;
+
+            #endregion
+
             #region Methods
 
             #region Public Methods
@@ -130,6 +136,12 @@ namespace KGySoft.CoreLibraries
             #region Fields
 
             internal static readonly StringSegmentOrdinalIgnoreCaseComparer Instance = new StringSegmentOrdinalIgnoreCaseComparer();
+
+            #endregion
+
+            #region Properties
+
+            public override CompareOptions CompareOptions => CompareOptions.OrdinalIgnoreCase;
 
             #endregion
 
@@ -218,6 +230,13 @@ namespace KGySoft.CoreLibraries
 #endif
 
             #endregion
+
+            #endregion
+
+            #region Properties
+
+            public override CompareInfo CompareInfo => compareInfo;
+            public override CompareOptions CompareOptions => options;
 
             #endregion
 
@@ -721,6 +740,8 @@ namespace KGySoft.CoreLibraries
 
         #region Properties
 
+        #region Static Properties
+        
         /// <summary>
         /// Gets a <see cref="StringSegmentComparer"/> object that performs a case-sensitive ordinal string comparison.
         /// <br/>The methods of the returned <see cref="StringSegmentComparer"/> instance can be called with <see cref="string">string</see>, <see cref="StringSegment"/>
@@ -804,6 +825,23 @@ namespace KGySoft.CoreLibraries
         /// of hash collision attacks, which may radically degrade the performance.</note>
         /// </remarks>
         public static StringSegmentComparer OrdinalIgnoreCaseNonRandomized => StringSegmentOrdinalIgnoreCaseNonRandomizedComparer.Instance;
+
+        #endregion
+
+        #region Instance Properties
+
+        /// <summary>
+        /// Gets a <see cref="System.Globalization.CompareInfo"/> that is associated with this <see cref="StringSegmentComparer"/>
+        /// or <see langword="null"/> if this <see cref="StringSegmentComparer"/> is not a culture-aware one.
+        /// </summary>
+        public virtual CompareInfo? CompareInfo => null;
+
+        /// <summary>
+        /// Gets the <see cref="System.Globalization.CompareOptions"/> that is associated with this <see cref="StringSegmentComparer"/>.
+        /// </summary>
+        public abstract CompareOptions CompareOptions { get; }
+
+        #endregion
 
         #endregion
 
