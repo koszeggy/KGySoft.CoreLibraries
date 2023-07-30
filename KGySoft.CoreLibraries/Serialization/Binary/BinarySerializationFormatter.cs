@@ -1073,7 +1073,6 @@ namespace KGySoft.Serialization.Binary
                 DataTypes.DefaultEqualityComparer, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsComparer,
-                    GetReferenceGenericTypeCallback = t => t.IsSubclassOfGeneric(typeof(EqualityComparer<>), out Type? result) ? result : t,
                     CreateInstanceCallback = (t, _) => t.GetPropertyValue(nameof(EqualityComparer<_>.Default))!
                 }
             },

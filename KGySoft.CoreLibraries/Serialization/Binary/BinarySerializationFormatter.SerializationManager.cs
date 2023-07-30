@@ -1204,12 +1204,14 @@ namespace KGySoft.Serialization.Binary
 
                 CollectionSerializationInfo serInfo = serializationInfo[GetUnderlyingCollectionDataType(dataType)];
                 
-                // actual type is non-generic but the dataType is generic (eg. recognized derived type of a known abstract type)
+                // actual type is non-generic but the dataType is generic (eg. recognized derived type of a known abstract generic type)
                 if (serInfo.IsGeneric)
                 {
-                    // TODO: get first generic base instead of GetReferenceGenericTypeCallback
-                    Debug.Assert(serInfo is { IsComparer: true, GetReferenceGenericTypeCallback: not null }); // currently these types are comparers only, eg. ByteEqualityComparer : EqualityComparer<byte>
-                    return EncodeGenericCollection(serInfo.GetReferenceGenericTypeCallback!.Invoke(type), dataType);
+                    Debug.Assert(serInfo is { IsComparer: true }); // currently these types are comparers only, eg. ByteEqualityComparer : EqualityComparer<byte>
+                    do
+                        type = type.BaseType!;
+                    while (!type.IsGenericType);
+                    return EncodeGenericCollection(type, dataType);
                 }
 
                 // non-generic collection
