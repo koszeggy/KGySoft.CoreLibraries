@@ -771,7 +771,7 @@ namespace KGySoft.Reflection
         internal static CompareInfo? CompareInfo(this StringComparer comparer)
         {
             Debug.Assert(comparer.GetType() == StringComparer.CurrentCulture.GetType(), "Not a culture aware string comparer.");
-            return GetFieldValueOrDefault<StringComparer, CompareInfo?>(comparer);
+            return GetFieldValueOrDefault<CompareInfo>(comparer);
         }
 
         internal static CompareOptions CompareOptions(this StringComparer comparer)
@@ -781,11 +781,11 @@ namespace KGySoft.Reflection
 
             FieldAccessor? field = GetField(type, typeof(CompareOptions), null);
             if (field != null)
-                return field.GetInstanceValue<StringComparer, CompareOptions>(comparer);
+                return (CompareOptions)field.Get(comparer)!;
 
             field = GetField(type, typeof(bool), "ignoreCase");
             if (field != null)
-                return field.GetInstanceValue<StringComparer, bool>(comparer) ? System.Globalization.CompareOptions.IgnoreCase : default;
+                return (bool)field.Get(comparer)! ? System.Globalization.CompareOptions.IgnoreCase : default;
 
             return default;
         }

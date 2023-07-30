@@ -24,7 +24,9 @@ using System.Collections;
 using System.Collections.Concurrent;
 #endif
 using System.Collections.Generic;
+#if NETCOREAPP
 using System.Collections.Immutable;
+#endif
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Drawing;
@@ -1881,7 +1883,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 // Pointer fields
                 // new UnsafeStruct(), - TestSurrogateSelector calls Reflector.SetField now
 
-                new[] { 1, 2, 3 }.ToImmutableList(),
+#if NETCOREAPP
+		        new[] { 1, 2, 3 }.ToImmutableList(),
+#endif
             };
 
             // default

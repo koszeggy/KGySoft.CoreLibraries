@@ -15,11 +15,6 @@
 
 #region Usings
 
-using System.Collections.Immutable;
-using System.Runtime.InteropServices;
-
-using KGySoft.Collections;
-
 #region Used Namespaces
 
 using System;
@@ -28,6 +23,9 @@ using System.Collections;
 using System.Collections.Concurrent;
 #endif
 using System.Collections.Generic;
+#if NETCOREAPP
+using System.Collections.Immutable;
+#endif
 using System.Collections.Specialized;
 #if NETFRAMEWORK
 using System.ComponentModel.Design; 
@@ -47,9 +45,10 @@ using System.Security.Policy;
 #endif
 using System.Text;
 #if NETFRAMEWORK
-using System.Windows.Forms; 
+using System.Windows.Forms;
 #endif
 
+using KGySoft.Collections;
 using KGySoft.Drawing;
 using KGySoft.Reflection;
 using KGySoft.Resources;

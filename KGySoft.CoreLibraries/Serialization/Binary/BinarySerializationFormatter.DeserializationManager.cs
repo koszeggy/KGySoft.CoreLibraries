@@ -1313,7 +1313,7 @@ namespace KGySoft.Serialization.Binary
 #if NET35
                         // generic dictionary with null value: calling generic Add because non-generic one may fail in .NET Runtime 2.x
                         addMethod = MethodAccessor.GetAccessor(Reflector.IDictionaryGenType
-                            .GetGenericType(descriptor.GetKeyDescriptor().GetTypeToCreate(), descriptor.GetValueDescriptor().GetTypeToCreate())
+                            .GetGenericType(descriptor.GetKeyDescriptor().Type!, descriptor.GetValueDescriptor().Type!)
                             .GetMethod(nameof(IDictionary<_,_>.Add))!);
                         AddDictionaryElement(collection, addMethod, key, null);
                         continue;
@@ -1343,7 +1343,7 @@ namespace KGySoft.Serialization.Binary
 
 #if NET35
                             // generic collection with null value: calling generic Add because non-generic one may fail in .NET Runtime 2.x
-                            addMethod = MethodAccessor.GetAccessor(Reflector.ICollectionGenType.GetGenericType(descriptor.GetElementDescriptor().GetTypeToCreate()).GetMethod(nameof(ICollection<_>.Add))!);
+                            addMethod = MethodAccessor.GetAccessor(Reflector.ICollectionGenType.GetGenericType(descriptor.GetElementDescriptor().Type!).GetMethod(nameof(ICollection<_>.Add))!);
                             AddCollectionElement(collection, descriptor.UnderlyingCollectionDataType, addMethod, null);
                             continue;
 #endif
