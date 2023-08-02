@@ -590,8 +590,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             public override int Read(Span<byte> buffer)
             {
-                throw new NotImplementedException("Span<byte>");
-                return base.Read(buffer);
+                var result = base.Read(buffer);
+                Advance(result);
+                if (log)
+                    Console.WriteLine($"{result} bytes: {buffer.ToArray().Take(result).ToArray().ToDecimalValuesString()} ({buffer.ToArray().Take(result).ToArray().ToHexValuesString(",")}) - {GetStack()}");
+                return result;
             }
 
             public override int Read(Span<char> buffer)

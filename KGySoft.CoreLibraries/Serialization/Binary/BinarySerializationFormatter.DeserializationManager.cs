@@ -474,14 +474,14 @@ namespace KGySoft.Serialization.Binary
 
                     // otherwise, allocating just a List with limited initial capacity
                     int capacity = Math.Min(TotalLength, ArrayAllocationThreshold / elementSize);
-                    if (elementType.IsPrimitive)
+                    if (elementType.IsPrimitive || elementType.IsValueType && !typeof(IObjectReference).IsAssignableFrom(elementType))
                     {
-                        // for primitive types we can use a strictly typed list
+                        // for primitive types and non-IObjectReference value type we use a strictly typed list
                         builder = (IList)Reflector.ListGenType.GetGenericType(elementType).CreateInstance(Reflector.IntType, capacity);
                         return;
                     }
 
-                    // for all other types using an object list because the elements can be replaced by a surrogate selector or possible IObjectReference proxy
+                    // for reference types or IObjectReference implementations just using an object list
                     builder = new List<object>(capacity);
                 }
 
@@ -495,9 +495,24 @@ namespace KGySoft.Serialization.Binary
                 {
                     if (Array == null || !descriptor.GetElementDescriptor().Type!.IsPrimitive)
                         return false;
-                    int length = Buffer.ByteLength(Array);
-                    Buffer.BlockCopy(reader.ReadBytes(length), 0, Array, 0, length);
+                    int byteLength = Buffer.ByteLength(Array);
+#if NET6_0_OR_GREATER
+                    // reinterpreting the primitive array as Span<byte>
+                    if (reader.Read(MemoryMarshal.CreateSpan(ref MemoryMarshal.GetArrayDataReference(Array), byteLength)) < byteLength)
+                        Throw.SerializationException(Res.BinarySerializationDataLengthTooSmall);
                     return true;
+#else
+                    // preventing an allocation and copying if the result is a byte array anyway
+                    if (Array is byte[] byteArray) // or sbyte[] but in this case it's ok to handle that, too
+                    {
+                        if (reader.Read(byteArray, 0, byteLength) < byteLength)
+                            Throw.SerializationException(Res.BinarySerializationDataLengthTooSmall);
+                        return true;
+                    }
+
+                    Buffer.BlockCopy(reader.ReadBytes(byteLength), 0, Array, 0, byteLength);
+                    return true;
+#endif
                 }
 
                 internal Array ToArray()

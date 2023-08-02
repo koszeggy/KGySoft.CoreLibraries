@@ -20,7 +20,7 @@ using CompareInfo = System.Globalization.CompareInfo;
 #region Used Namespaces
 
 using System;
-#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
+#if (NETCOREAPP && !NET6_0_OR_GREATER) || NETSTANDARD2_1_OR_GREATER
 using System.Buffers;
 #endif
 using System.Collections;
@@ -1423,7 +1423,7 @@ namespace KGySoft.Serialization.Binary
                     int byteLength = Buffer.ByteLength(array);
 
 #if NET6_0_OR_GREATER
-                    // reinterpreting the primitive array as byte[]
+                    // reinterpreting the primitive array as Span<byte>
                     bw.Write(MemoryMarshal.CreateReadOnlySpan(ref MemoryMarshal.GetArrayDataReference(array), byteLength));
                     return;
 #else
@@ -2153,7 +2153,9 @@ namespace KGySoft.Serialization.Binary
             {
                 static bool IsComparedByValue(Type t) =>
                     t.IsPrimitive || t == Reflector.StringType || t.BaseType == Reflector.EnumType // always instance so can be used than the slower IsEnum
-                    || t.IsValueType && (supportedNonPrimitiveElementTypes.ContainsKey(t) /*TODO: || t.GenericDef genDef is not KVP && supportedCollections.ContainsKey(genDef)) - NOTE: KVP/Tuple is not allowed because T can have special Equals that can consider different instances equal but other known value type collections are safe to compare by value*/);
+                    // NOTE: Comparing value types as values might cause issues when boxing mutable types such as VectorN. But we are ok with it because when boxed
+                    //       these cannot be mutated without reflection. Not including collections because most of them would be problematic (ValueTuple: custom equality for an item, KVP: slow compare, Array2D: Dispose, etc.)
+                    || t.IsValueType && supportedNonPrimitiveElementTypes.ContainsKey(t);
 
                 // null is always known.
                 if (data == null)
