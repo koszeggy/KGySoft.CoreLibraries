@@ -300,7 +300,7 @@ namespace KGySoft.CoreLibraries
                 if (surrogate is RemotingSurrogateSelector)
                     formatter.SurrogateSelector = null;
 #endif
-                return (T)formatter.DeserializeFromStream(stream)!;
+                return formatter.DeserializeFromStream<T>(stream)!;
             }
         }
 

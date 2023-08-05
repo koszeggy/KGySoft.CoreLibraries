@@ -60,6 +60,7 @@ namespace KGySoft
         elementType,
         eventArgs,
         eventName,
+        expectedCustomTypes,
         expression,
         factory,
         field,

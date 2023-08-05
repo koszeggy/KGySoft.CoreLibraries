@@ -605,6 +605,9 @@ namespace KGySoft.Serialization.Binary
 
             #region Fields
 
+            private readonly Type rootType;
+            private readonly HashSet<Type>? expectedCustomTypes;
+
             private List<string>? cachedNames;
             private List<(Assembly, string?)>? cachedAssemblies;
             private List<DataTypeDescriptor>? cachedTypes;
@@ -637,7 +640,8 @@ namespace KGySoft.Serialization.Binary
 
             #region Constructors
 
-            internal DeserializationManager(StreamingContext context, BinarySerializationOptions options, SerializationBinder? binder, ISurrogateSelector? surrogateSelector)
+            internal DeserializationManager(StreamingContext context, BinarySerializationOptions options, SerializationBinder? binder, ISurrogateSelector? surrogateSelector,
+                IEnumerable<Type>? expectedCustomTypes, Type rootType)
                 : base(context,
                     // Considering only deserialization flags. Other info must be read from the stream.
                     options & (BinarySerializationOptions.IgnoreSerializationMethods 
@@ -647,6 +651,31 @@ namespace KGySoft.Serialization.Binary
                         | BinarySerializationOptions.SafeMode),
                     binder, surrogateSelector)
             {
+                this.rootType = rootType;
+                if (!SafeMode)
+                    return;
+
+                if (surrogateSelector != null)
+                    Throw.SerializationException(Res.BinarySerializationSurrogateNotAllowedInSafeMode);
+                if (binder is not (null or ForwardedTypesSerializationBinder { SafeMode: true }))
+                    Throw.SerializationException(Res.BinarySerializationBinderNotAllowedInSafeMode);
+                if (binder != null)
+                    return;
+
+                // Safe mode without a safe binder: adding allowed types
+                int capacity = (expectedCustomTypes?.TryGetCount(out int count) == true ? count : 0) + 1;
+                var expectedTypes = new HashSet<Type>(capacity) { rootType };
+                if (expectedCustomTypes != null)
+                {
+                    foreach (Type type in expectedCustomTypes)
+                    {
+                        if (type == null!)
+                            Throw.ArgumentException(Argument.expectedCustomTypes, Res.ArgumentContainsNull);
+                        expectedTypes.Add(type);
+                    }
+                }
+
+                this.expectedCustomTypes = expectedTypes;
             }
 
             #endregion

@@ -180,6 +180,12 @@ namespace KGySoft
         /// <summary>Data length is too small.</summary>
         internal static string BinarySerializationDataLengthTooSmall => Get("BinarySerialization_DataLengthTooSmall");
 
+        /// <summary>In safe mode no serialization surrogate is allowed to be used.</summary>
+        internal static string BinarySerializationSurrogateNotAllowedInSafeMode => Get("BinarySerialization_SurrogateNotAllowedInSafeMode");
+
+        /// <summary>The specified serialization binder cannot be used in safe mode. Only ForwardedTypesSerializationBinder is allowed if its SafeMode property is set to true.</summary>
+        internal static string BinarySerializationBinderNotAllowedInSafeMode => Get("BinarySerialization_BinderNotAllowedInSafeMode");
+
         #endregion
 
         #region ByteArrayExtensions

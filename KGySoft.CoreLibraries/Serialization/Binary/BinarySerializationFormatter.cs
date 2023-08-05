@@ -2065,12 +2065,10 @@ namespace KGySoft.Serialization.Binary
         public byte[] Serialize(object? data)
         {
             MemoryStream result;
-            using (BinaryWriter bw = new BinaryWriter(result = new MemoryStream()))
-            {
-                var manager = new SerializationManager(Context, Options, Binder, SurrogateSelector);
-                manager.WriteRoot(bw, data);
-                return result.ToArray();
-            }
+            using BinaryWriter bw = new BinaryWriter(result = new MemoryStream());
+            var manager = new SerializationManager(Context, Options, Binder, SurrogateSelector);
+            manager.WriteRoot(bw, data);
+            return result.ToArray();
         }
 
         /// <summary>
@@ -2082,10 +2080,34 @@ namespace KGySoft.Serialization.Binary
         /// <returns>The deserialized data.</returns>
         /// <overloads>In the two-parameter overload the start offset of the data to deserialize can be specified.</overloads>
         public object? Deserialize(byte[] rawData, int offset = 0)
+            => Deserialize<object?>(rawData, offset, (IEnumerable<Type>?)null);
+
+        public object? Deserialize(byte[] rawData, int offset, params Type[]? expectedCustomTypes)
+            => Deserialize<object?>(rawData, offset, (IEnumerable<Type>?)expectedCustomTypes);
+
+        public object? Deserialize(byte[] rawData, params Type[]? expectedCustomTypes)
+            => Deserialize<object?>(rawData, 0, (IEnumerable<Type>?)expectedCustomTypes);
+
+        public T Deserialize<T>(byte[] rawData, int offset, params Type[]? expectedCustomTypes)
+            => Deserialize<T>(rawData, offset, (IEnumerable<Type>?)expectedCustomTypes);
+
+        public T Deserialize<T>(byte[] rawData, params Type[]? expectedCustomTypes)
+            => Deserialize<T>(rawData, 0, (IEnumerable<Type>?)expectedCustomTypes);
+
+        public object? Deserialize(byte[] rawData, int offset, IEnumerable<Type>? expectedCustomTypes)
+            => Deserialize<object?>(rawData, offset, expectedCustomTypes);
+
+        public object? Deserialize(byte[] rawData, IEnumerable<Type>? expectedCustomTypes)
+            => Deserialize<object?>(rawData, 0, expectedCustomTypes);
+
+        public T Deserialize<T>(byte[] rawData, int offset, IEnumerable<Type>? expectedCustomTypes)
         {
-            using (BinaryReader br = new BinaryReader(offset == 0 ? new MemoryStream(rawData) : new MemoryStream(rawData, offset, rawData.Length - offset)))
-                return DeserializeByReader(br);
+            using var br = new BinaryReader(offset == 0 ? new MemoryStream(rawData) : new MemoryStream(rawData, offset, rawData.Length - offset));
+            return DeserializeByReader<T>(br, expectedCustomTypes);
         }
+
+        public T Deserialize<T>(byte[] rawData, IEnumerable<Type>? expectedCustomTypes)
+            => Deserialize<T>(rawData, 0, expectedCustomTypes);
 
         /// <summary>
         /// Serializes the given <paramref name="data"/> into a <paramref name="stream"/>.
@@ -2100,7 +2122,20 @@ namespace KGySoft.Serialization.Binary
         /// </summary>
         /// <param name="stream">The stream, from which the data is read. The stream must support reading and will remain open after deserialization.</param>
         /// <returns>The deserialized data.</returns>
-        public object? DeserializeFromStream(Stream stream) => DeserializeByReader(new BinaryReader(stream));
+        public object? DeserializeFromStream(Stream stream)
+            => DeserializeByReader<object?>(new BinaryReader(stream), (IEnumerable<Type>?)null);
+
+        public object? DeserializeFromStream(Stream stream, params Type[]? expectedCustomTypes)
+            => DeserializeByReader<object?>(new BinaryReader(stream), (IEnumerable<Type>?)expectedCustomTypes);
+
+        public T DeserializeFromStream<T>(Stream stream, params Type[]? expectedCustomTypes)
+            => DeserializeByReader<T>(new BinaryReader(stream), (IEnumerable<Type>?)expectedCustomTypes);
+
+        public object? DeserializeFromStream(Stream stream, IEnumerable<Type>? expectedCustomTypes)
+            => DeserializeByReader<object?>(new BinaryReader(stream), expectedCustomTypes);
+
+        public T DeserializeFromStream<T>(Stream stream, IEnumerable<Type>? expectedCustomTypes)
+            => DeserializeByReader<T>(new BinaryReader(stream), expectedCustomTypes);
 
         /// <summary>
         /// Serializes the given <paramref name="data"/> by using the provided <paramref name="writer"/>.
@@ -2129,13 +2164,25 @@ namespace KGySoft.Serialization.Binary
         /// </remarks>
         /// <param name="reader">The reader that will be used to deserialize data. The reader will remain opened after deserialization.</param>
         /// <returns>The deserialized data.</returns>
-        [SecuritySafeCritical]
         public object? DeserializeByReader(BinaryReader reader)
+            => DeserializeByReader<object?>(reader, (IEnumerable<Type>?)null);
+
+        public object? DeserializeByReader(BinaryReader reader, params Type[]? expectedCustomTypes)
+            => DeserializeByReader<object?>(reader, (IEnumerable<Type>?)expectedCustomTypes);
+
+        public T DeserializeByReader<T>(BinaryReader reader, params Type[]? expectedCustomTypes)
+            => DeserializeByReader<T>(reader, (IEnumerable<Type>?)expectedCustomTypes);
+
+        public object? DeserializeByReader(BinaryReader reader, IEnumerable<Type>? expectedCustomTypes)
+            => DeserializeByReader<object?>(reader, expectedCustomTypes);
+
+        [SecuritySafeCritical]
+        public T DeserializeByReader<T>(BinaryReader reader, IEnumerable<Type>? expectedCustomTypes)
         {
             if (reader == null!)
                 Throw.ArgumentNullException(Argument.reader);
-            var manager = new DeserializationManager(Context, Options, Binder, SurrogateSelector);
-            return manager.Deserialize(reader);
+            var manager = new DeserializationManager(Context, Options, Binder, SurrogateSelector, expectedCustomTypes, typeof(T));
+            return (T)manager.Deserialize(reader)!;
         }
 
         #endregion

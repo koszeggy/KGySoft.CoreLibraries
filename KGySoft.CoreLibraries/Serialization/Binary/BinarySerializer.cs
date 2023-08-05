@@ -16,6 +16,7 @@
 #region Usings
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Runtime.CompilerServices;
@@ -57,7 +58,8 @@ namespace KGySoft.Serialization.Binary
         /// <param name="options">Options of the serialization. This parameter is optional.
         /// <br/>Default value: <see cref="BinarySerializationOptions.CompactSerializationOfStructures"/>.</param>
         /// <returns>Serialized raw data of the object</returns>
-        public static byte[] Serialize(object? data, BinarySerializationOptions options = DefaultSerializationOptions) => new BinarySerializationFormatter(options).Serialize(data);
+        public static byte[] Serialize(object? data, BinarySerializationOptions options = DefaultSerializationOptions)
+            => new BinarySerializationFormatter(options).Serialize(data);
 
         /// <summary>
         /// Deserializes the specified part of a byte array into an object.
@@ -68,7 +70,32 @@ namespace KGySoft.Serialization.Binary
         /// <param name="options">Options of the deserialization. This parameter is optional.
         /// <br/>Default value: <see cref="BinarySerializationOptions.SafeMode"/>.</param>
         /// <returns>The deserialized object.</returns>
-        public static object? Deserialize(byte[] rawData, int offset = 0, BinarySerializationOptions options = DefaultDeserializationOptions) => new BinarySerializationFormatter(options).Deserialize(rawData, offset);
+        public static object? Deserialize(byte[] rawData, int offset = 0, BinarySerializationOptions options = DefaultDeserializationOptions)
+            => new BinarySerializationFormatter(options).Deserialize(rawData, offset);
+
+        public static object? Deserialize(byte[] rawData, int offset, BinarySerializationOptions options, params Type[]? expectedCustomTypes)
+            => new BinarySerializationFormatter(options).Deserialize(rawData, offset, expectedCustomTypes);
+
+        public static object? Deserialize(byte[] rawData, int offset, params Type[]? expectedCustomTypes)
+            => new BinarySerializationFormatter(DefaultDeserializationOptions).Deserialize(rawData, offset, expectedCustomTypes);
+
+        public static T Deserialize<T>(byte[] rawData, int offset, BinarySerializationOptions options, params Type[]? expectedCustomTypes)
+            => new BinarySerializationFormatter(options).Deserialize<T>(rawData, offset, expectedCustomTypes);
+
+        public static T Deserialize<T>(byte[] rawData, int offset = 0, params Type[]? expectedCustomTypes)
+            => new BinarySerializationFormatter(DefaultDeserializationOptions).Deserialize<T>(rawData, offset, expectedCustomTypes);
+
+        public static object? Deserialize(byte[] rawData, int offset, BinarySerializationOptions options, IEnumerable<Type>? expectedCustomTypes)
+            => new BinarySerializationFormatter(options).Deserialize(rawData, offset, expectedCustomTypes);
+
+        public static object? Deserialize(byte[] rawData, int offset, IEnumerable<Type>? expectedCustomTypes)
+            => new BinarySerializationFormatter(DefaultDeserializationOptions).Deserialize(rawData, offset, expectedCustomTypes);
+
+        public static T Deserialize<T>(byte[] rawData, int offset, BinarySerializationOptions options, IEnumerable<Type>? expectedCustomTypes)
+            => new BinarySerializationFormatter(options).Deserialize<T>(rawData, offset, expectedCustomTypes);
+
+        public static T Deserialize<T>(byte[] rawData, int offset, IEnumerable<Type>? expectedCustomTypes)
+            => new BinarySerializationFormatter(DefaultDeserializationOptions).Deserialize<T>(rawData, offset, expectedCustomTypes);
 
         /// <summary>
         /// Serializes the given <paramref name="data"/> into a <paramref name="stream"/>.
@@ -77,7 +104,8 @@ namespace KGySoft.Serialization.Binary
         /// <param name="data">The data that will be written into the stream.</param>
         /// <param name="options">Options of the serialization. This parameter is optional.
         /// <br/>Default value: <see cref="BinarySerializationOptions.CompactSerializationOfStructures"/>.</param>
-        public static void SerializeToStream(Stream stream, object? data, BinarySerializationOptions options = DefaultSerializationOptions) => new BinarySerializationFormatter(options).SerializeToStream(stream, data);
+        public static void SerializeToStream(Stream stream, object? data, BinarySerializationOptions options = DefaultSerializationOptions)
+            => new BinarySerializationFormatter(options).SerializeToStream(stream, data);
 
         /// <summary>
         /// Deserializes data beginning at current position of given <paramref name="stream"/>.
@@ -86,7 +114,32 @@ namespace KGySoft.Serialization.Binary
         /// <param name="options">Options of the deserialization. This parameter is optional.
         /// <br/>Default value: <see cref="BinarySerializationOptions.SafeMode"/>.</param>
         /// <returns>The deserialized data.</returns>
-        public static object? DeserializeFromStream(Stream stream, BinarySerializationOptions options = DefaultDeserializationOptions) => new BinarySerializationFormatter(options).DeserializeFromStream(stream);
+        public static object? DeserializeFromStream(Stream stream, BinarySerializationOptions options = DefaultDeserializationOptions)
+            => new BinarySerializationFormatter(options).DeserializeFromStream(stream);
+
+        public static object? DeserializeFromStream(Stream stream, BinarySerializationOptions options, params Type[]? expectedCustomTypes)
+            => new BinarySerializationFormatter(options).DeserializeFromStream(stream, expectedCustomTypes);
+
+        public static object? DeserializeFromStream(Stream stream, params Type[]? expectedCustomTypes)
+            => new BinarySerializationFormatter(DefaultDeserializationOptions).DeserializeFromStream(stream, expectedCustomTypes);
+
+        public static T DeserializeFromStream<T>(Stream stream, BinarySerializationOptions options, params Type[]? expectedCustomTypes)
+            => new BinarySerializationFormatter(options).DeserializeFromStream<T>(stream, expectedCustomTypes);
+
+        public static T DeserializeFromStream<T>(Stream stream, params Type[]? expectedCustomTypes)
+            => new BinarySerializationFormatter(DefaultDeserializationOptions).DeserializeFromStream<T>(stream, expectedCustomTypes);
+
+        public static object? DeserializeFromStream(Stream stream, BinarySerializationOptions options, IEnumerable<Type>? expectedCustomTypes)
+            => new BinarySerializationFormatter(options).DeserializeFromStream(stream, expectedCustomTypes);
+
+        public static object? DeserializeFromStream(Stream stream, IEnumerable<Type>? expectedCustomTypes)
+            => new BinarySerializationFormatter(DefaultDeserializationOptions).DeserializeFromStream(stream, expectedCustomTypes);
+
+        public static T DeserializeFromStream<T>(Stream stream, BinarySerializationOptions options, IEnumerable<Type>? expectedCustomTypes)
+            => new BinarySerializationFormatter(options).DeserializeFromStream<T>(stream, expectedCustomTypes);
+
+        public static T DeserializeFromStream<T>(Stream stream, IEnumerable<Type>? expectedCustomTypes)
+            => new BinarySerializationFormatter(DefaultDeserializationOptions).DeserializeFromStream<T>(stream, expectedCustomTypes);
 
         /// <summary>
         /// Serializes the given <paramref name="data"/> by using the provided <paramref name="writer"/>.
@@ -99,7 +152,8 @@ namespace KGySoft.Serialization.Binary
         /// <param name="data">The data that will be written by the writer.</param>
         /// <param name="options">Options of the serialization. This parameter is optional.
         /// <br/>Default value: <see cref="BinarySerializationOptions.CompactSerializationOfStructures"/>.</param>
-        public static void SerializeByWriter(BinaryWriter writer, object? data, BinarySerializationOptions options = DefaultSerializationOptions) => new BinarySerializationFormatter(options).SerializeByWriter(writer, data);
+        public static void SerializeByWriter(BinaryWriter writer, object? data, BinarySerializationOptions options = DefaultSerializationOptions)
+            => new BinarySerializationFormatter(options).SerializeByWriter(writer, data);
 
         /// <summary>
         /// Deserializes data beginning at current position of given <paramref name="reader"/>.
@@ -112,7 +166,32 @@ namespace KGySoft.Serialization.Binary
         /// <paramref name="reader"/> must use UTF-8 encoding to get correct result. If data was serialized by the <see cref="SerializeByWriter">SerializeByWriter</see> method, then you must use the same encoding as there.</note>
         /// </remarks>
         /// <returns>The deserialized data.</returns>
-        public static object? DeserializeByReader(BinaryReader reader, BinarySerializationOptions options = DefaultDeserializationOptions) => new BinarySerializationFormatter(options).DeserializeByReader(reader);
+        public static object? DeserializeByReader(BinaryReader reader, BinarySerializationOptions options = DefaultDeserializationOptions)
+            => new BinarySerializationFormatter(options).DeserializeByReader(reader);
+
+        public static object? DeserializeByReader(BinaryReader reader, BinarySerializationOptions options, params Type[]? expectedCustomTypes)
+            => new BinarySerializationFormatter(options).DeserializeByReader(reader, expectedCustomTypes);
+
+        public static object? DeserializeByReader(BinaryReader reader, params Type[]? expectedCustomTypes)
+            => new BinarySerializationFormatter(DefaultDeserializationOptions).DeserializeByReader(reader, expectedCustomTypes);
+
+        public static T DeserializeByReader<T>(BinaryReader reader, BinarySerializationOptions options, params Type[]? expectedCustomTypes)
+            => new BinarySerializationFormatter(options).DeserializeByReader<T>(reader, expectedCustomTypes);
+
+        public static T DeserializeByReader<T>(BinaryReader reader, params Type[]? expectedCustomTypes)
+            => new BinarySerializationFormatter(DefaultDeserializationOptions).DeserializeByReader<T>(reader, expectedCustomTypes);
+
+        public static object? DeserializeByReader(BinaryReader reader, BinarySerializationOptions options, IEnumerable<Type>? expectedCustomTypes)
+            => new BinarySerializationFormatter(options).DeserializeByReader(reader, expectedCustomTypes);
+
+        public static object? DeserializeByReader(BinaryReader reader, IEnumerable<Type>? expectedCustomTypes)
+            => new BinarySerializationFormatter(DefaultDeserializationOptions).DeserializeByReader(reader, expectedCustomTypes);
+
+        public static T DeserializeByReader<T>(BinaryReader reader, BinarySerializationOptions options, IEnumerable<Type>? expectedCustomTypes)
+            => new BinarySerializationFormatter(options).DeserializeByReader<T>(reader, expectedCustomTypes);
+
+        public static T DeserializeByReader<T>(BinaryReader reader, IEnumerable<Type>? expectedCustomTypes)
+            => new BinarySerializationFormatter(DefaultDeserializationOptions).DeserializeByReader<T>(reader, expectedCustomTypes);
 
         /// <summary>
         /// Serializes a <see cref="ValueType"/> into a byte array. If the type of the specified instance contains any references,

@@ -2616,10 +2616,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             // using a proxy type and a binder to serialize a type information that is not already loaded (content is not relevant)
             Type proxyType = typeof(SystemSerializableClass);
-            object[] referenceObjects =
-            {
-                Reflector.CreateInstance(proxyType)
-            };
 
             // only serialization way is set
             var binder = new CustomSerializationBinder()
@@ -2628,7 +2624,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 TypeNameResolver = t => t == proxyType ? typeName : null
             };
 
-            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, binder: binder), "Cannot resolve assembly in safe mode");
+            var formatter = new BinarySerializationFormatter(BinarySerializationOptions.SafeMode) { Binder = binder };
+            var data = SerializeObject(Reflector.CreateInstance(proxyType), formatter);
+            formatter.Binder = null;
+            Throws<SerializationException>(() => DeserializeObject(data, formatter), "Cannot resolve assembly in safe mode");
         }
 
 #if NETFRAMEWORK // starting with .NET Core it is not part of the core framework anymore

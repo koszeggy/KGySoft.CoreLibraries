@@ -696,6 +696,12 @@ Either try to use the ForceRecursiveSerializationOfSupportedTypes option on seri
   <data name="BinarySerialization_DataLengthTooSmall" xml:space="preserve">
     <value>Data length is too small.</value>
   </data>
+  <data name="BinarySerialization_SurrogateNotAllowedInSafeMode" xml:space="preserve">
+    <value>In safe mode no serialization surrogate is allowed to be used.</value>
+  </data>
+  <data name="BinarySerialization_BinderNotAllowedInSafeMode" xml:space="preserve">
+    <value>The specified serialization binder cannot be used in safe mode. Only ForwardedTypesSerializationBinder is allowed if its SafeMode property is set to true.</value>
+  </data>
   <data name="BinarySerialization_DeserializeUnexpectedId" xml:space="preserve">
     <value>Unexpected id on deserialization. Serialization stream corrupted?</value>
   </data>
