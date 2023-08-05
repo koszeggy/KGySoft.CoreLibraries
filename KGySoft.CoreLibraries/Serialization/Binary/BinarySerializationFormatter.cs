@@ -1805,9 +1805,9 @@ namespace KGySoft.Serialization.Binary
         /// <summary>
         /// Creates a new instance of <see cref="BinarySerializationFormatter"/> class.
         /// </summary>
-        /// <param name="options">Options used for serialization. This parameter is optional.
-        /// <br/>Default value: <see cref="BinarySerializationOptions.RecursiveSerializationAsFallback"/>, <see cref="BinarySerializationOptions.CompactSerializationOfStructures"/>.</param>
-        public BinarySerializationFormatter(BinarySerializationOptions options = BinarySerializer.DefaultOptions)
+        /// <param name="options">Options used for serialization or deserialization. This parameter is optional.
+        /// <br/>Default value: <see cref="BinarySerializationOptions.SafeMode"/>, <see cref="BinarySerializationOptions.CompactSerializationOfStructures"/>.</param>
+        public BinarySerializationFormatter(BinarySerializationOptions options = BinarySerializer.DefaultSerializationOptions | BinarySerializer.DefaultDeserializationOptions)
         {
             Context = new StreamingContext(StreamingContextStates.All);
             Options = options;

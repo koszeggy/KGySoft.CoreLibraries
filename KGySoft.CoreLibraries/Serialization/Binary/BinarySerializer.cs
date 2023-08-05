@@ -41,7 +41,8 @@ namespace KGySoft.Serialization.Binary
     {
         #region Constants
 
-        internal const BinarySerializationOptions DefaultOptions = BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures;
+        internal const BinarySerializationOptions DefaultSerializationOptions = BinarySerializationOptions.CompactSerializationOfStructures;
+        internal const BinarySerializationOptions DefaultDeserializationOptions = BinarySerializationOptions.SafeMode;
 
         #endregion
 
@@ -54,9 +55,9 @@ namespace KGySoft.Serialization.Binary
         /// </summary>
         /// <param name="data">The object to serialize</param>
         /// <param name="options">Options of the serialization. This parameter is optional.
-        /// <br/>Default value: <see cref="BinarySerializationOptions.RecursiveSerializationAsFallback"/>, <see cref="BinarySerializationOptions.CompactSerializationOfStructures"/>.</param>
+        /// <br/>Default value: <see cref="BinarySerializationOptions.CompactSerializationOfStructures"/>.</param>
         /// <returns>Serialized raw data of the object</returns>
-        public static byte[] Serialize(object? data, BinarySerializationOptions options = DefaultOptions) => new BinarySerializationFormatter(options).Serialize(data);
+        public static byte[] Serialize(object? data, BinarySerializationOptions options = DefaultSerializationOptions) => new BinarySerializationFormatter(options).Serialize(data);
 
         /// <summary>
         /// Deserializes the specified part of a byte array into an object.
@@ -65,9 +66,9 @@ namespace KGySoft.Serialization.Binary
         /// <param name="offset">Points to the starting position of the object data in <paramref name="rawData"/>. This parameter is optional.
         /// <br/>Default value: <c>0</c>.</param>
         /// <param name="options">Options of the deserialization. This parameter is optional.
-        /// <br/>Default value: <see cref="BinarySerializationOptions.None"/>.</param>
+        /// <br/>Default value: <see cref="BinarySerializationOptions.SafeMode"/>.</param>
         /// <returns>The deserialized object.</returns>
-        public static object? Deserialize(byte[] rawData, int offset = 0, BinarySerializationOptions options = BinarySerializationOptions.None) => new BinarySerializationFormatter(options).Deserialize(rawData, offset);
+        public static object? Deserialize(byte[] rawData, int offset = 0, BinarySerializationOptions options = DefaultDeserializationOptions) => new BinarySerializationFormatter(options).Deserialize(rawData, offset);
 
         /// <summary>
         /// Serializes the given <paramref name="data"/> into a <paramref name="stream"/>.
@@ -75,17 +76,17 @@ namespace KGySoft.Serialization.Binary
         /// <param name="stream">The stream, into which the data is written. The stream must support writing and will remain open after serialization.</param>
         /// <param name="data">The data that will be written into the stream.</param>
         /// <param name="options">Options of the serialization. This parameter is optional.
-        /// <br/>Default value: <see cref="BinarySerializationOptions.RecursiveSerializationAsFallback"/>, <see cref="BinarySerializationOptions.CompactSerializationOfStructures"/>.</param>
-        public static void SerializeToStream(Stream stream, object? data, BinarySerializationOptions options = DefaultOptions) => new BinarySerializationFormatter(options).SerializeToStream(stream, data);
+        /// <br/>Default value: <see cref="BinarySerializationOptions.CompactSerializationOfStructures"/>.</param>
+        public static void SerializeToStream(Stream stream, object? data, BinarySerializationOptions options = DefaultSerializationOptions) => new BinarySerializationFormatter(options).SerializeToStream(stream, data);
 
         /// <summary>
         /// Deserializes data beginning at current position of given <paramref name="stream"/>.
         /// </summary>
         /// <param name="stream">The stream, from which the data is read. The stream must support reading and will remain open after deserialization.</param>
         /// <param name="options">Options of the deserialization. This parameter is optional.
-        /// <br/>Default value: <see cref="BinarySerializationOptions.None"/>.</param>
+        /// <br/>Default value: <see cref="BinarySerializationOptions.SafeMode"/>.</param>
         /// <returns>The deserialized data.</returns>
-        public static object? DeserializeFromStream(Stream stream, BinarySerializationOptions options = BinarySerializationOptions.None) => new BinarySerializationFormatter(options).DeserializeFromStream(stream);
+        public static object? DeserializeFromStream(Stream stream, BinarySerializationOptions options = DefaultDeserializationOptions) => new BinarySerializationFormatter(options).DeserializeFromStream(stream);
 
         /// <summary>
         /// Serializes the given <paramref name="data"/> by using the provided <paramref name="writer"/>.
@@ -97,21 +98,21 @@ namespace KGySoft.Serialization.Binary
         /// <param name="writer">The writer that will used to serialize data. The writer will remain opened after serialization.</param>
         /// <param name="data">The data that will be written by the writer.</param>
         /// <param name="options">Options of the serialization. This parameter is optional.
-        /// <br/>Default value: <see cref="BinarySerializationOptions.RecursiveSerializationAsFallback"/>, <see cref="BinarySerializationOptions.CompactSerializationOfStructures"/>.</param>
-        public static void SerializeByWriter(BinaryWriter writer, object? data, BinarySerializationOptions options = DefaultOptions) => new BinarySerializationFormatter(options).SerializeByWriter(writer, data);
+        /// <br/>Default value: <see cref="BinarySerializationOptions.CompactSerializationOfStructures"/>.</param>
+        public static void SerializeByWriter(BinaryWriter writer, object? data, BinarySerializationOptions options = DefaultSerializationOptions) => new BinarySerializationFormatter(options).SerializeByWriter(writer, data);
 
         /// <summary>
         /// Deserializes data beginning at current position of given <paramref name="reader"/>.
         /// </summary>
         /// <param name="reader">The reader that will be used to deserialize data. The reader will remain opened after deserialization.</param>
         /// <param name="options">Options of the deserialization. This parameter is optional.
-        /// <br/>Default value: <see cref="BinarySerializationOptions.None"/>.</param>
+        /// <br/>Default value: <see cref="BinarySerializationOptions.SafeMode"/>.</param>
         /// <remarks>
         /// <note>If data was serialized by <see cref="Serialize">Serialize</see> or <see cref="SerializeToStream">SerializeToStream</see> methods, then
         /// <paramref name="reader"/> must use UTF-8 encoding to get correct result. If data was serialized by the <see cref="SerializeByWriter">SerializeByWriter</see> method, then you must use the same encoding as there.</note>
         /// </remarks>
         /// <returns>The deserialized data.</returns>
-        public static object? DeserializeByReader(BinaryReader reader, BinarySerializationOptions options = BinarySerializationOptions.None) => new BinarySerializationFormatter(options).DeserializeByReader(reader);
+        public static object? DeserializeByReader(BinaryReader reader, BinarySerializationOptions options = DefaultDeserializationOptions) => new BinarySerializationFormatter(options).DeserializeByReader(reader);
 
         /// <summary>
         /// Serializes a <see cref="ValueType"/> into a byte array. If the type of the specified instance contains any references,
@@ -471,8 +472,8 @@ namespace KGySoft.Serialization.Binary
         /// </summary>
         /// <returns>A <see cref="BinarySerializationFormatter"/> instance that can be used for serialization and deserialization with given <paramref name="options"/>.</returns>
         /// <param name="options">Options for the created formatter. This parameter is optional.
-        /// <br/>Default value: <see cref="BinarySerializationOptions.RecursiveSerializationAsFallback"/>, <see cref="BinarySerializationOptions.CompactSerializationOfStructures"/>.</param>
-        public static BinarySerializationFormatter CreateFormatter(BinarySerializationOptions options = DefaultOptions) => new BinarySerializationFormatter(options);
+        /// <br/>Default value: <see cref="BinarySerializationOptions.CompactSerializationOfStructures"/>.</param>
+        public static BinarySerializationFormatter CreateFormatter(BinarySerializationOptions options = DefaultSerializationOptions) => new BinarySerializationFormatter(options);
 
         #endregion
 

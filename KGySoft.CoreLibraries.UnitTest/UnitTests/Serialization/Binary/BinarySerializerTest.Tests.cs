@@ -2718,7 +2718,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         public void SafeModeArrayOutOfMemoryAttackTest()
         {
             byte[] array = { 1, 2, 3, 4, 5, 6, 7 };
-            var bsf = new BinarySerializationFormatter();
+            var bsf = new BinarySerializationFormatter(BinarySerializationOptions.None);
             var serData = new List<byte>(SerializeObject(array, bsf));
 
             // 7 bit encoded length is at offset 3. Inserting 4 FF values will be decoded as MaxInt
@@ -2742,7 +2742,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         public void SafeModeListCapacityOutOfMemoryAttackTest()
         {
             var list = new List<byte> { 1, 2, 3 };
-            var bsf = new BinarySerializationFormatter();
+            var bsf = new BinarySerializationFormatter(BinarySerializationOptions.None);
             var serData = new List<byte>(SerializeObject(list, bsf));
 
             // 7 bit encoded capacity is at offset 3. 07 + 4xFF will be decoded as MaxInt
@@ -2770,7 +2770,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         public void SafeModeDictionaryCapacityOutOfMemoryAttackTest()
         {
             var list = new Dictionary<byte, bool> { { 0, false }, { 1, true } };
-            var bsf = new BinarySerializationFormatter();
+            var bsf = new BinarySerializationFormatter(BinarySerializationOptions.None);
             var serData = new List<byte>(SerializeObject(list, bsf));
 
             // 7 bit encoded count is at offset 3. 07 + 4xFF will be decoded as MaxInt

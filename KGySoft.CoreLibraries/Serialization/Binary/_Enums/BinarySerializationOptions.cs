@@ -74,7 +74,7 @@ namespace KGySoft.Serialization.Binary
         /// <note type="caution">Though this flag makes possible to serialize non-serializable types, deserializing such stream will not work
         /// when the <see cref="SafeMode"/> flag is enabled (unless an applicable <see cref="BinarySerializationFormatter.SurrogateSelector"/> is used).</note>
         /// </para>
-        /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Enabled</strong></para>
+        /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
         /// </summary>
         RecursiveSerializationAsFallback = 1 << 2,
 
@@ -179,7 +179,7 @@ namespace KGySoft.Serialization.Binary
         /// <note type="security">Please note that even enabling this flag may not prevent every possible attacks, especially when targeting the .NET Framework.
         /// <br/>See the security notes at the <strong>Remarks</strong> section of the <see cref="BinarySerializationFormatter"/> class for more details.</note>
         /// <para>This flag is considered on deserialization.</para>
-        /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
+        /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Enabled</strong></para>
         /// </summary>
         SafeMode = 1 << 12,
     }
