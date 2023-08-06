@@ -667,12 +667,19 @@ You may try to preload the assembly before deserialization or to disable SafeMod
   <data name="BinarySerialization_CannotResolveTypeFormat" xml:space="preserve">
     <value>Could not resolve type name "{0}".</value>
   </data>
+  <data name="BinarySerialization_CannotResolveExpectedTypeSafeFormat" xml:space="preserve">
+    <value>Unexpected type name "{0}". In safe mode you should specify the expected types in the expectedCustomTypes parameter of the deserialization methods.</value>
+  </data>
   <data name="BinarySerialization_CannotResolveTypeInAssemblyFormat" xml:space="preserve">
     <value>Could not resolve type "{0}" in assembly "{1}".</value>
   </data>
   <data name="BinarySerialization_CannotResolveTypeInAssemblySafeFormat" xml:space="preserve">
     <value>Could not resolve type "{0}" in assembly "{1}".
 You may try to preload the assembly before deserialization or disable SafeMode if the serialization stream is from a trusted source.</value>
+  </data>
+  <data name="BinarySerialization_CannotResolveExpectedTypeInAssemblySafeFormat" xml:space="preserve">
+    <value>Unexpected type "{0}" in assembly "{1}". In safe mode you should specify the expected types in the expectedCustomTypes parameter of the deserialization methods.
+If assembly identity has changed since the serialization you can use the ForwardedTypesSerializationBinder if you set its SafeMode to true.</value>
   </data>
   <data name="BinarySerialization_CircularIObjectReference" xml:space="preserve">
     <value>Deserialization of an IObjectReference instance has an unresolvable circular reference to itself.</value>
@@ -692,6 +699,12 @@ Either try to use the ForceRecursiveSerializationOfSupportedTypes option on seri
   </data>
   <data name="BinarySerialization_ValueTypeContainsReferenceSafeFormat" xml:space="preserve">
     <value>Value type '{0}' cannot be deserialized from raw data in safe mode because it contains references. If the serialization stream is from a trusted source you may try to disable safe mode to attempt the deserialization with marshaling.</value>
+  </data>
+  <data name="BinarySerialization_NonNullResultExpectedFormat" xml:space="preserve">
+    <value>The deserialized value was null, which cannot be cast to {0}.</value>
+  </data>
+  <data name="BinarySerialization_UnexpectedResultFormat" xml:space="preserve">
+    <value>The type of the result is expected to be {0} but it was {1}.</value>
   </data>
   <data name="BinarySerialization_DataLengthTooSmall" xml:space="preserve">
     <value>Data length is too small.</value>
@@ -724,7 +737,10 @@ Either try to use the ForceRecursiveSerializationOfSupportedTypes option on seri
     <value>The current domain has insufficient permissions to create an empty instance of type "{0}" without a default constructor.</value>
   </data>
   <data name="BinarySerialization_CannotCreateObjectSafeFormat" xml:space="preserve">
-    <value>In safe mode it is not supported to deserialize type "{0}". Maybe because it is not marked by the SerializableAttribute.</value>
+    <value>In safe mode it is not supported to deserialize type "{0}".</value>
+  </data>
+  <data name="BinarySerialization_CannotCreateSerializableObjectSafe" xml:space="preserve">
+    <value>In safe mode it is not supported to deserialize type "{0}". If it's because it is not marked by the SerializableAttribute you can try to enable the AllowNonSerializableExpectedCustomTypes option.</value>
   </data>
   <data name="BinarySerialization_NotBinarySerializableFormat" xml:space="preserve">
     <value>Type '{0}' was serialized as an IBinarySerializable instance though it is not IBinarySerializable now.</value>

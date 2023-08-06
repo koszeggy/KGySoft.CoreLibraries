@@ -18,9 +18,9 @@
 using System;
 #if NETFRAMEWORK
 using System.CodeDom.Compiler;
+#endif
 #if !NET35
 using System.Collections;
-#endif
 #endif
 using System.Globalization;
 using System.Linq;
@@ -51,18 +51,16 @@ namespace KGySoft.Serialization
                 .Where(f => !f.IsNotSerialized)
                 .OrderBy(f => f.MetadataToken).ToArray(), LockFreeCacheOptions.Profile1K);
 
-#if NETFRAMEWORK
-
         private static readonly Type[] unsafeTypes =
         {
+#if NETFRAMEWORK
             typeof(TempFileCollection),
+#endif
 #if !NET35
             StructuralComparisons.StructuralComparer.GetType(),
             StructuralComparisons.StructuralEqualityComparer.GetType(),
 #endif
         };
-
-#endif
 
         #endregion
 
@@ -135,6 +133,8 @@ namespace KGySoft.Serialization
             return type.IsSerializable || type.CanBeParsedNatively();
 #endif
         }
+
+        internal static bool IsUnsafeType(Type type) => type.In(unsafeTypes);
 
         #endregion
     }

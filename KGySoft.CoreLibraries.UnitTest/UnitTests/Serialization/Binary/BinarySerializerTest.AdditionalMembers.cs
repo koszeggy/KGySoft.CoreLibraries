@@ -679,7 +679,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             }
         }
 
-        private static object DeserializeObject(byte[] rawData, IFormatter formatter)
+        private static object DeserializeObject(byte[] rawData, IFormatter formatter, IEnumerable<Type> expectedTypes = null)
         {
             using (MemoryStream ms = new MemoryStream(rawData))
             {
@@ -687,13 +687,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 BinarySerializationFormatter bsf = formatter as BinarySerializationFormatter;
                 if (dumpDetails && bsf != null)
                     br = new TestReader(ms, dumpDetails);
-                object result = br != null ? bsf.DeserializeByReader(br) : formatter.Deserialize(ms);
+                object result = br != null ? bsf.DeserializeByReader(br, expectedTypes)
+                    : expectedTypes != null && bsf != null ? bsf.DeserializeFromStream(ms, expectedTypes)
+                    : formatter.Deserialize(ms);
                 Assert.AreEqual(ms.Length, ms.Position, "Stream was not read until the end");
                 return result;
             }
         }
 
-        private static object[] DeserializeObjects(byte[] rawData, IFormatter formatter)
+        private static object[] DeserializeObjects(byte[] rawData, IFormatter formatter, IEnumerable<Type> expectedTypes = null)
         {
             using (MemoryStream ms = new MemoryStream(rawData))
             {
@@ -706,7 +708,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                     br = new TestReader(ms, dumpDetails);
 
                 for (int i = 0; i < length; i++)
-                    result[i] = br != null ? bsf.DeserializeByReader(br) : formatter.Deserialize(ms);
+                    result[i] = br != null ? bsf.DeserializeByReader(br, expectedTypes)
+                        : expectedTypes != null && bsf != null ? bsf.DeserializeFromStream(ms, expectedTypes)
+                        : formatter.Deserialize(ms);
                 Assert.AreEqual(ms.Length, ms.Position, "Stream was not read until the end");
                 return result;
             }
@@ -771,7 +775,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         }
 
         private  static void KGySerializeObject(object obj, BinarySerializationOptions options, string title = null, bool safeCompare = false, bool forceEqualityByMembers = false,
-            SerializationBinder binder = null, ISurrogateSelector surrogateSelector = null)
+            SerializationBinder binder = null, ISurrogateSelector surrogateSelector = null, IEnumerable<Type> expectedTypes = null)
         {
             if (title == null)
                 title = obj.GetType().ToString();
@@ -781,7 +785,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             {
                 byte[] serData = SerializeObject(obj, bsf);
                 Console.WriteLine();
-                object deserializedObject = DeserializeObject(serData, bsf);
+                if (expectedTypes == null && (options & (BinarySerializationOptions.SafeMode | BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes)) == (BinarySerializationOptions.SafeMode | BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes))
+                    expectedTypes = GetExpectedTypes(obj);
+                object deserializedObject = DeserializeObject(serData, bsf, expectedTypes);
                 Console.WriteLine();
                 if (safeCompare)
                     AssertDeepEquals(serData, SerializeObject(deserializedObject, bsf));
@@ -796,7 +802,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         }
 
         private static void KGySerializeObjects(IList<object> referenceObjects, BinarySerializationOptions options, string title = null, bool safeCompare = false, bool forceEqualityByMembers = false,
-            SerializationBinder binder = null, ISurrogateSelector surrogateSelector = null)
+            SerializationBinder binder = null, ISurrogateSelector surrogateSelector = null, IEnumerable<Type> expectedTypes = null)
         {
             if (title == null)
                 title = $"Items Count: {referenceObjects.Count}";
@@ -806,7 +812,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             {
                 byte[] serData = SerializeObjects(referenceObjects, bsf);
                 Console.WriteLine();
-                object[] deserializedObjects = DeserializeObjects(serData, bsf);
+                if (expectedTypes == null && (options & (BinarySerializationOptions.SafeMode | BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes)) == (BinarySerializationOptions.SafeMode | BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes))
+                    expectedTypes = GetExpectedTypes(referenceObjects);
+                object[] deserializedObjects = DeserializeObjects(serData, bsf, expectedTypes);
                 Console.WriteLine();
                 if (safeCompare)
                     AssertItemsEqual(serData, SerializeObjects(deserializedObjects, bsf));
@@ -818,6 +826,17 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 Console.WriteLine($"KGySoft serialization failed: {e}");
                 throw;
             }
+        }
+
+        private static IEnumerable<Type> GetExpectedTypes(object o)
+        {
+            if (o == null)
+                return null;
+
+            var result = new List<Type> { o.GetType() };
+            if (o is IList<object> list)
+                result.AddRange(list.Where(i => i != null).Select(i => i.GetType()));
+            return result;
         }
 
         #endregion

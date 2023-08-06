@@ -198,6 +198,8 @@ namespace KGySoft.Reflection
 #endif
         }
 
+        internal static (string? ForwardedAssemblyName, bool IsCoreIdentity) GetForwardedAssemblyName(Type type) => ForwardedNamesCache[type];
+
         #endregion
 
         #region Private Methods
@@ -329,7 +331,7 @@ namespace KGySoft.Reflection
             if (Attribute.GetCustomAttribute(type, typeof(TypeForwardedFromAttribute), false) is TypeForwardedFromAttribute attr)
                 return (attr.AssemblyFullName, IsCoreLibAssemblyName(attr.AssemblyFullName));
 
-            return default;
+            return (null, IsCoreLibAssemblyName(type.Assembly.FullName));
         }
 #endif
 

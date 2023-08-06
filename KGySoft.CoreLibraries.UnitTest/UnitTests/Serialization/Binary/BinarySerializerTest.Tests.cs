@@ -178,8 +178,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode);
+
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
+
+            var expectedTypes = GetExpectedTypes(referenceObjects).Concat(new[] { typeof(CompareOptions) }).ToArray();
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.SafeMode, expectedTypes: expectedTypes);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.SafeMode, expectedTypes: expectedTypes);
 
             // further natively supported types, which are not serializable in every framework
             referenceObjects = new object[]
@@ -234,6 +241,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
+
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode);
+
+            // NOTE: SafeMode with ForceRecursiveSerializationOfSupportedTypes cannot be used (eg. due to the internal CultureData type)
 
 #if NETFRAMEWORK
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
@@ -310,8 +322,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.None); // 217
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.None); // 174
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode);
         }
 
         [Test]
@@ -369,8 +381,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode);
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.OmitAssemblyQualifiedNames);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.OmitAssemblyQualifiedNames);
@@ -418,8 +430,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode);
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
@@ -438,7 +450,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             };
 
             SystemSerializeObjects(referenceObjects, safeCompare: true);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, safeCompare: true);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, safeCompare: true);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, safeCompare: true);
 #endif
         }
@@ -573,6 +585,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode);
+
 #if NETFRAMEWORK
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
@@ -609,6 +624,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
+
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode);
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.IgnoreIBinarySerializable);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.IgnoreIBinarySerializable);
@@ -655,6 +673,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
+
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode);
         }
 
         [Test]
@@ -708,6 +729,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode);
+
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
 
@@ -758,6 +782,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode);
+
 #if !NETCOREAPP2_0 // .NET Core 2.0 throws NotSupportedException for DBNull and RuntimeType.GetObjectData. In .NET Core 3 they work but Equals fails for cloned RuntimeType, hence safeCompare
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, safeCompare: true);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, safeCompare: true);
@@ -787,6 +814,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
+
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode);
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.OmitAssemblyQualifiedNames);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.OmitAssemblyQualifiedNames);
@@ -820,7 +850,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 Array.CreateInstance(typeof(string), new int[] {3}, new int[]{-1}) // array with -1..1 index interval
             };
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.None); // 17 -> 20
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode);
+
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
         }
 
@@ -844,6 +877,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
+
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode);
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
@@ -871,6 +907,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new Array[] { null, new[] { 1, 2 }, new[] { "alpha", "beta" } },
                 new Enum[] { null, TestEnumByte.One, TestEnumInt.Min }
             };
+
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode);
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback);
@@ -943,6 +982,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
 
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode);
+
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
@@ -990,6 +1032,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new ImmutableArray<int?>?[] { ImmutableArray.Create<int?>(1, 2, 3, 4, null), ImmutableArray<int?>.Empty, new ImmutableArray<int?>(), null },
 #endif
             };
+
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode);
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.IgnoreIBinarySerializable);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.IgnoreIBinarySerializable);
@@ -1107,6 +1152,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
 
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode);
+
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
@@ -1196,6 +1244,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #endif
             };
 
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode);
+
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
@@ -1211,6 +1262,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             SystemSerializeObject(referenceObjects, forceEqualityByMembers: true);
             SystemSerializeObjects(referenceObjects, forceEqualityByMembers: true);
+
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, forceEqualityByMembers: true);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, forceEqualityByMembers: true);
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None, forceEqualityByMembers: true);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, forceEqualityByMembers: true);
@@ -1255,6 +1309,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
 
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode);
+
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
@@ -1290,6 +1347,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
+
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode);
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
@@ -1374,6 +1434,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
 
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode);
+
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
@@ -1419,6 +1482,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new Dictionary<int, int[]> { { 1, new[] { 1, 2 } }, { 2, null } }.ToImmutableSortedDictionary(), // ImmutableSortedDictionary
 #endif
             };
+
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode);
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
@@ -1499,6 +1565,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             SystemSerializeObject(referenceObjects);
             //SystemSerializeObjects(referenceObjects); // System deserialization fails at List<IBinarySerializable>: IBinarySerializable/IList is not marked as serializable.
 
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode);
+
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
@@ -1521,6 +1590,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
+
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode);
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
@@ -1545,6 +1617,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
+
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode);
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
@@ -1632,6 +1707,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             SystemSerializeObjects(referenceObjects);
 #endif
 
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode);
+
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
@@ -1712,6 +1790,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             SystemSerializeObject(referenceObjects, title, binder: binder); // ignores OmitAssemblyNameOnSerialize in .NET 3.5 but works
             SystemSerializeObjects(referenceObjects, title, binder: binder); // ignores OmitAssemblyNameOnSerialize in .NET 3.5 but works
 #endif
+
+            Throws<SerializationException>(() => KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode));
+            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode));
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None, title, binder: binder);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, title, binder: binder);
@@ -1890,17 +1971,20 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             // default
             SystemSerializeObjects(referenceObjects); // system serialization fails: IBinarySerializable, Rune, etc. is not serializable
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
             ISurrogateSelector selector = new TestSurrogateSelector();
             string title = nameof(TestSurrogateSelector);
             SystemSerializeObjects(referenceObjects, title, surrogateSelector: selector); // system deserialization fails: Invalid BinaryFormatter stream.
+            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, title, surrogateSelector: selector));
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, title, surrogateSelector: selector);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.TryUseSurrogateSelectorForAnyType, title, surrogateSelector: selector);
 
             selector = new TestCloningSurrogateSelector();
             title = nameof(TestCloningSurrogateSelector);
             SystemSerializeObjects(referenceObjects, title, surrogateSelector: selector);
+            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, title, surrogateSelector: selector));
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, title, surrogateSelector: selector);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.TryUseSurrogateSelectorForAnyType, title, surrogateSelector: selector);
         }
@@ -2000,6 +2084,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             ISurrogateSelector selector = new NameInvariantSurrogateSelector();
             string title = nameof(NameInvariantSurrogateSelector);
             //SystemSerializeObjects(referenceObjects, title, surrogateSelector: selector); // System.MemberAccessException: Cannot create an abstract class.
+            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, title, surrogateSelector: selector));
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, title, surrogateSelector: selector);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.TryUseSurrogateSelectorForAnyType, title, surrogateSelector: selector);
         }
@@ -2038,6 +2123,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             SystemSerializeObjects(referenceObjects, title, surrogateSelector: selector);
 
+            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, title, surrogateSelector: selector));
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, title, surrogateSelector: selector);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.TryUseSurrogateSelectorForAnyType, title, surrogateSelector: selector);
 
@@ -2088,6 +2174,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
 
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode);
+
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
         }
@@ -2109,6 +2198,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             //SystemSerializeObject(referenceObjects); // Field in TypedReferences cannot be static or init only (SelfReferencerDirect/Indirect), StrongBox is not serializable
             //SystemSerializeObjects(referenceObjects);
+
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode);
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
@@ -2217,6 +2309,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             immutableDictionaryBuilder.Add(immutableDictionaryBuilder, immutableDictionaryBuilder); // key+value
             referenceObjects[12] = immutableDictionaryBuilder;
 #endif
+
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, safeCompare: true);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, safeCompare: true);
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None, safeCompare: true);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, safeCompare: true);
@@ -2350,6 +2445,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             SystemSerializeObject(referenceObjects, safeCompare: true);
             SystemSerializeObjects(referenceObjects, safeCompare: true);
+
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode);
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
@@ -2515,7 +2613,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 }
             };
 
-            SystemSerializeObject(obj, binder: binder); // 
+            SystemSerializeObject(obj, binder: binder);
             KGySerializeObject(obj, BinarySerializationOptions.None, binder: binder);
         }
 
@@ -2534,6 +2632,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
+
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode);
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
@@ -2582,6 +2683,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             };
 
             SystemSerializeObjects(referenceObjects);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.SafeMode);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.IgnoreTypeForwardedFromAttribute);
         }
@@ -2595,7 +2697,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             };
 
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback);
+            throw null; // TODO: add as expected
             Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.SafeMode));
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.SafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes);
         }
 
         [Test]
@@ -2627,6 +2731,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             var formatter = new BinarySerializationFormatter(BinarySerializationOptions.SafeMode) { Binder = binder };
             var data = SerializeObject(Reflector.CreateInstance(proxyType), formatter);
             formatter.Binder = null;
+            throw null; // TODO: add as expected
             Throws<SerializationException>(() => DeserializeObject(data, formatter), "Cannot resolve assembly in safe mode");
         }
 
@@ -2645,6 +2750,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
             // But throws an exception in SafeMode
+            throw null; // TODO: add as expected
             Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode));
         }
 #endif
@@ -2682,6 +2788,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             // SystemSerializeObjects(referenceObjects); // on .NET Framework this lasts forever
 
             // In SafeMode this cannot be deserialized even in .NET Framework
+            throw null; // TODO: add as expected
             Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.SafeMode));
 
             // But actually it can be deserialized without any problem if ignoring the ISerializable implementation of the Hashtable

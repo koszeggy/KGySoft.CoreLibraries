@@ -19,9 +19,6 @@
 
 using System;
 using System.Collections;
-#if !NET35
-using System.Collections.Concurrent;
-#endif
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics.CodeAnalysis;
@@ -50,6 +47,7 @@ using KGySoft.Reflection;
 #region Used Aliases
 
 using ReferenceEqualityComparer = KGySoft.CoreLibraries.ReferenceEqualityComparer;
+using System.Xml.Linq;
 
 #endregion
 
@@ -605,11 +603,11 @@ namespace KGySoft.Serialization.Binary
 
             #region Fields
 
-            private readonly Type rootType;
-            private readonly HashSet<Type>? expectedCustomTypes;
+            private readonly Type? rootType;
+            private readonly Dictionary<(string?, string), Type>? expectedTypes;
 
             private List<string>? cachedNames;
-            private List<(Assembly, string?)>? cachedAssemblies;
+            private List<(Assembly?, string?)>? cachedAssemblies;
             private List<DataTypeDescriptor>? cachedTypes;
             private StringKeyedDictionary<Assembly>? assemblyByNameCache;
             private Dictionary<int, object?>? idCache;
@@ -622,8 +620,8 @@ namespace KGySoft.Serialization.Binary
 
             private Dictionary<int, object?> IdCache => idCache ??= new Dictionary<int, object?> { { 0, null } };
 
-            private List<(Assembly Assembly, string? StoredName)> CachedAssemblies
-                => cachedAssemblies ??= new List<(Assembly, string?)>(KnownAssemblies.Select(a => (a, (string?)null)));
+            private List<(Assembly? Assembly, string? StoredName)> CachedAssemblies
+                => cachedAssemblies ??= new List<(Assembly?, string?)>(KnownAssemblies.Select(a => ((Assembly?)a, a == AssemblyResolver.CoreLibrariesAssembly ? null : a.FullName)));
 
             private List<DataTypeDescriptor> CachedTypes
                 => cachedTypes ??= new List<DataTypeDescriptor>(KnownTypes.Select(t => new DataTypeDescriptor(t)));
@@ -648,13 +646,15 @@ namespace KGySoft.Serialization.Binary
                         | BinarySerializationOptions.IgnoreObjectChanges 
                         | BinarySerializationOptions.IgnoreISerializable 
                         | BinarySerializationOptions.IgnoreIObjectReference
-                        | BinarySerializationOptions.SafeMode),
+                        | BinarySerializationOptions.SafeMode
+                        | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes),
                     binder, surrogateSelector)
             {
-                this.rootType = rootType;
+                this.rootType = rootType == Reflector.ObjectType ? null : rootType;
                 if (!SafeMode)
                     return;
 
+                // Further checks in safe mode
                 if (surrogateSelector != null)
                     Throw.SerializationException(Res.BinarySerializationSurrogateNotAllowedInSafeMode);
                 if (binder is not (null or ForwardedTypesSerializationBinder { SafeMode: true }))
@@ -662,20 +662,38 @@ namespace KGySoft.Serialization.Binary
                 if (binder != null)
                     return;
 
-                // Safe mode without a safe binder: adding allowed types
-                int capacity = (expectedCustomTypes?.TryGetCount(out int count) == true ? count : 0) + 1;
-                var expectedTypes = new HashSet<Type>(capacity) { rootType };
-                if (expectedCustomTypes != null)
-                {
-                    foreach (Type type in expectedCustomTypes)
-                    {
-                        if (type == null!)
-                            Throw.ArgumentException(Argument.expectedCustomTypes, Res.ArgumentContainsNull);
-                        expectedTypes.Add(type);
-                    }
-                }
+                expectedTypes = new Dictionary<(string?, string), Type>();
 
-                this.expectedCustomTypes = expectedTypes;
+                // Safe mode without a safe binder: adding allowed types
+                var types = new Queue<Type>(new[] { rootType }.Concat(expectedCustomTypes ?? Reflector.EmptyArray<Type>()));
+                while (types.TryDequeue(out Type? type))
+                {
+                    if (type == null!)
+                        Throw.ArgumentException(Argument.expectedCustomTypes, Res.ArgumentContainsNull);
+
+                    if (type.IsConstructedGenericType())
+                    {
+                        foreach (Type arg in type.GetGenericArguments())
+                            types.Enqueue(arg);
+                        type = type.GetGenericTypeDefinition();
+                    }
+
+                    Assembly asm = type.Assembly;
+                    string? asmName = asm.FullName;
+                    string typeName = type.FullName!;
+
+                    // actual identity
+                    expectedTypes[(asmName, typeName)] = type;
+
+                    // forwarded identity
+                    (string? ForwardedAssemblyName, bool IsCoreIdentity) identity = AssemblyResolver.GetForwardedAssemblyName(type);
+                    if (identity.ForwardedAssemblyName != null)
+                        expectedTypes[(identity.ForwardedAssemblyName, typeName)] = type;
+
+                    // core assembly: adding also without assembly name
+                    if (identity.IsCoreIdentity)
+                        expectedTypes[(null, typeName)] = type;
+                }
             }
 
             #endregion
@@ -850,6 +868,19 @@ namespace KGySoft.Serialization.Binary
                 try
                 {
                     object? result = ReadRoot(br);
+
+                    // checking the result
+                    if (rootType is not null)
+                    {
+                        if (result is null)
+                        {
+                            if (rootType.IsValueType && !rootType.IsNullable())
+                                Throw.SerializationException(Res.BinarySerializationNonNullResultExpected(rootType));
+                        }
+                        else if (!rootType.IsInstanceOfType(result))
+                            Throw.SerializationException(Res.BinarySerializationUnexpectedResult(rootType, result.GetType()));
+                    }
+
                     DeserializationCallback();
                     return result;
                 }
@@ -964,7 +995,7 @@ namespace KGySoft.Serialization.Binary
                     return result;
                 }
 
-                (Assembly Assembly, string? StoredName) assembly = default;
+                (Assembly? Assembly, string? StoredName) assembly = default;
 
                 // type with known or omitted assembly: only type name is stored as string
                 if (index != OmitAssemblyIndex)
@@ -974,22 +1005,7 @@ namespace KGySoft.Serialization.Binary
                 }
 
                 string typeName = br.ReadString();
-                type = ReadBoundType(assembly.StoredName, typeName);
-                if (type == null)
-                {
-                    type = assembly.StoredName == null
-                        ? Reflector.ResolveType(typeName, ResolveTypeOptions.None)
-                        : Reflector.ResolveType(assembly.Assembly!, typeName, ResolveTypeOptions.None);
-                }
-
-                if (type == null)
-                {
-                    string message = assembly.StoredName == null
-                        ? Res.BinarySerializationCannotResolveType(typeName)
-                        : Res.BinarySerializationCannotResolveTypeInAssembly(typeName, assembly.StoredName);
-                    Throw.SerializationException(message);
-                }
-
+                type = ResolveType(assembly, typeName);
                 result = new DataTypeDescriptor(type, new TypeByString(assembly.StoredName, typeName));
                 CachedTypes.Add(result);
                 if (type.IsGenericTypeDefinition)
@@ -1127,13 +1143,6 @@ namespace KGySoft.Serialization.Binary
 
                 // 3/d.) other collection or key-value
                 return CreateCollection(br, addToCache, descriptor);
-            }
-
-            private Type? ReadBoundType(string? assemblyName, string typeName)
-            {
-                if (Binder is ISerializationBinder binder)
-                    return binder.BindToType(assemblyName ?? String.Empty, typeName);
-                return Binder?.BindToType(assemblyName ?? String.Empty, typeName);
             }
 
             private DataTypeDescriptor HandleGenericMethodParameter(BinaryReader br)
@@ -2122,8 +2131,17 @@ namespace KGySoft.Serialization.Binary
             [SecurityCritical]
             private object CreateEmptyObject(bool useSurrogate, Type type)
             {
-                if (!useSurrogate && SafeMode && !SerializationHelper.IsSafeType(type))
-                    Throw.SerializationException(Res.BinarySerializationCannotCreateObjectSafe(type));
+                if (!useSurrogate && SafeMode)
+                {
+                    if (AllowNonSerializableExpectedCustomTypes)
+                    {
+                        if (SerializationHelper.IsUnsafeType(type))
+                            Throw.SerializationException(Res.BinarySerializationCannotCreateObjectSafe(type));
+                    }
+                    else if (!SerializationHelper.IsSafeType(type))
+                        Throw.SerializationException(Res.BinarySerializationCannotCreateSerializableObjectSafe(type));
+                }
+
                 if (!Reflector.TryCreateEmptyObject(type, false, true, out object? obj))
                     Throw.SerializationException(Res.BinarySerializationCannotCreateUninitializedObject(type));
                 return obj;
@@ -2357,17 +2375,23 @@ namespace KGySoft.Serialization.Binary
 
             private DataTypeDescriptor ReadNewTypeWithAssembly(string assemblyName, string typeName)
             {
+                // 1.) Binder
                 Type? type = ReadBoundType(assemblyName, typeName);
-                if (type != null)
-                    CachedAssemblies.Add((type.Assembly, assemblyName));
+                
+                // 2.) Expected type
+                if (type is null)
+                    expectedTypes?.TryGetValue((assemblyName, typeName), out type);
+
+                if (type is not null)
+                    CachedAssemblies.Add((null, assemblyName));
+                else if (SafeMode)
+                    Throw.SerializationException(Res.BinarySerializationCannotResolveExpectedTypeInAssemblySafe(typeName, assemblyName));
                 else
                 {
-                    // Assembly resolve depends on SafeMode
-                    Assembly assembly = GetAssembly(assemblyName);
-
-                    // ResolveType should not resolve any further assemblies (generic type parameters are loaded separately)
-                    type = Reflector.ResolveType(assembly, typeName, ResolveTypeOptions.None);
-                    if (type == null)
+                    // 3.) Actual resolve
+                    Assembly assembly = ResolveAssembly(assemblyName);
+                    type = TypeResolver.ResolveType(assembly, typeName, ResolveTypeOptions.None);
+                    if (type is null)
                         Throw.SerializationException(Res.BinarySerializationCannotResolveTypeInAssembly(typeName, assemblyName));
                     CachedAssemblies.Add((assembly, assemblyName));
                 }
@@ -2377,44 +2401,90 @@ namespace KGySoft.Serialization.Binary
                 return result;
             }
 
-            /// <summary>
-            /// Resolves an assembly by string
-            /// </summary>
-            private Assembly GetAssembly(string name)
+            private Type? ReadBoundType(string? assemblyName, string typeName)
             {
-                if (assemblyByNameCache != null && assemblyByNameCache.TryGetValue(name, out Assembly? result))
+                if (Binder is ISerializationBinder binder)
+                    return binder.BindToType(assemblyName ?? String.Empty, typeName);
+                return Binder?.BindToType(assemblyName ?? String.Empty, typeName);
+            }
+
+            private Assembly ResolveAssembly(string name)
+            {
+                Debug.Assert(!SafeMode);
+                if (assemblyByNameCache?.TryGetValue(name, out Assembly? result) == true)
                     return result;
 
                 // 1.) Iterating through loaded assemblies
                 result = Reflector.GetLoadedAssemblies().FirstOrDefault(asm => asm.FullName == name);
 
                 // 2.) Trying to load assembly. Not using AssemblyResolver because Assembly.Load allows version mismatch for some System assemblies.
-                if (result == null)
+                try
                 {
-                    if (SafeMode)
-                        Throw.SerializationException(Res.BinarySerializationCannotResolveAssemblySafe(name));
-
+                    result = Assembly.Load(new AssemblyName(name));
+                }
+                catch (Exception e) when (!e.IsCritical())
+                {
                     try
                     {
-                        result = Assembly.Load(new AssemblyName(name));
+                        result = Assembly.Load(name);
                     }
-                    catch (Exception e) when (!e.IsCritical())
+                    catch (Exception ex) when (!ex.IsCritical())
                     {
-                        try
-                        {
-                            result = Assembly.Load(name);
-                        }
-                        catch (Exception ex) when (!ex.IsCritical())
-                        {
-                            Throw.SerializationException(Res.ReflectionCannotLoadAssembly(name), ex);
-                        }
+                        Throw.SerializationException(Res.ReflectionCannotLoadAssembly(name), ex);
                     }
                 }
 
-                if (result == null)
-                    Throw.SerializationException(Res.ReflectionCannotLoadAssembly(name));
                 assemblyByNameCache ??= new StringKeyedDictionary<Assembly>(1);
                 assemblyByNameCache.Add(name, result);
+                return result;
+            }
+
+            private Type ResolveType((Assembly? Assembly, string? StoredName) assembly, string typeName)
+            {
+                // 1.) Binder
+                Type? result = ReadBoundType(assembly.StoredName, typeName);
+                if (result is not null)
+                    return result;
+
+                // 2.) Expected types cache
+                if (expectedTypes?.TryGetValue((assembly.StoredName, typeName), out result) == true)
+                    return result;
+
+                if (SafeMode)
+                {
+                    string message = assembly.StoredName == null
+                        ? Res.BinarySerializationCannotResolveExpectedTypeSafe(typeName)
+                        : Res.BinarySerializationCannotResolveExpectedTypeInAssemblySafe(typeName, assembly.StoredName);
+                    Throw.SerializationException(message);
+                }
+
+                // 3.) Actual resolve. ResolveType should not resolve any further assemblies (generic type parameters are loaded separately)
+                if (assembly.Assembly is not null)
+                {
+                    // 3/a.) From assembly
+                    result = Reflector.ResolveType(assembly.Assembly, typeName, ResolveTypeOptions.None);
+#if !NETFRAMEWORK
+                    // Possible former core library type: trying also without a name
+                    if (result is null && assembly.StoredName == null)
+                        result = Reflector.ResolveType(typeName, ResolveTypeOptions.None);
+#endif
+                }
+                else
+                {
+                    // 3/a.) From assembly name or just by name
+                    result = assembly.StoredName != null
+                        ? Reflector.ResolveType(ResolveAssembly(assembly.StoredName), typeName, ResolveTypeOptions.None)
+                        : Reflector.ResolveType(typeName, ResolveTypeOptions.None);
+                }
+
+                if (result is null)
+                {
+                    string message = assembly.StoredName == null
+                        ? Res.BinarySerializationCannotResolveType(typeName)
+                        : Res.BinarySerializationCannotResolveTypeInAssembly(typeName, assembly.StoredName);
+                    Throw.SerializationException(message);
+                }
+
                 return result;
             }
 

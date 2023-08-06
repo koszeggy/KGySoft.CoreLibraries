@@ -637,8 +637,15 @@ namespace KGySoft
         /// You may try to preload the assembly before deserialization or to disable SafeMode if the serialization stream is from a trusted source.</summary>
         internal static string BinarySerializationCannotResolveAssemblySafe(string name) => Get("BinarySerialization_CannotResolveAssemblySafeFormat", name);
 
+        ///// <summary>Unexpected assembly: "{0}". In safe mode you should specify the expected types in the expectedCustomTypes parameter of the deserialization methods.
+        ///// If assembly identity has changed since the serialization you can use the ForwardedTypesSerializationBinder if you set its SafeMode to true.</summary>
+        //internal static string BinarySerializationCannotResolveExpectedAssemblySafe(string name) => Get("BinarySerialization_CannotResolveExpectedAssemblySafeFormat", name);
+
         /// <summary>Could not resolve type name "{0}".</summary>
         internal static string BinarySerializationCannotResolveType(string dataType) => Get("BinarySerialization_CannotResolveTypeFormat", dataType);
+
+        /// <summary>Unexpected type name "{0}". In safe mode you should specify the expected types in the expectedCustomTypes parameter of the deserialization methods.</summary>
+        internal static string BinarySerializationCannotResolveExpectedTypeSafe(string dataType) => Get("BinarySerialization_CannotResolveExpectedTypeSafeFormat", dataType);
 
         /// <summary>Could not resolve type "{0}" in assembly "{1}".</summary>
         internal static string BinarySerializationCannotResolveTypeInAssembly(string typeName, string asmName) => Get("BinarySerialization_CannotResolveTypeInAssemblyFormat", typeName, asmName);
@@ -646,6 +653,10 @@ namespace KGySoft
         /// <summary>Could not resolve type "{0}" in assembly "{1}".
         /// You may try to preload the assembly before deserialization or disable SafeMode if the serialization stream is from a trusted source.</summary>
         internal static string BinarySerializationCannotResolveTypeInAssemblySafe(string typeName, string asmName) => Get("BinarySerialization_CannotResolveTypeInAssemblySafeFormat", typeName, asmName);
+
+        /// <summary>Unexpected type "{0}" in assembly "{1}". In safe mode you should specify the expected types in the expectedCustomTypes parameter of the deserialization methods.
+        /// If assembly identity has changed since the serialization you can use the ForwardedTypesSerializationBinder if you set its SafeMode to true.</summary>
+        internal static string BinarySerializationCannotResolveExpectedTypeInAssemblySafe(string typeName, string asmName) => Get("BinarySerialization_CannotResolveExpectedTypeInAssemblySafeFormat", typeName, asmName);
 
         /// <summary>Unexpected element in serialization info: {0}. Maybe the instance was not serialized by NameInvariantSurrogateSelector.</summary>
         internal static string BinarySerializationUnexpectedSerializationInfoElement(string elementName) => Get("BinarySerialization_UnexpectedSerializationInfoElementFormat", elementName);
@@ -662,8 +673,11 @@ namespace KGySoft
         /// <summary>The current domain has insufficient permissions to create an empty instance of type "{0}" without a default constructor.</summary>
         internal static string BinarySerializationCannotCreateUninitializedObject(Type type) => Get("BinarySerialization_CannotCreateUninitializedObjectFormat", type);
 
-        /// <summary>In safe mode it is not supported to deserialize type "{0}". Maybe because it is not marked by the SerializableAttribute.</summary>
+        /// <summary>In safe mode it is not supported to deserialize type "{0}".</summary>
         internal static string BinarySerializationCannotCreateObjectSafe(Type type) => Get("BinarySerialization_CannotCreateObjectSafeFormat", type);
+
+        /// <summary>In safe mode it is not supported to deserialize type "{0}". If it's because it is not marked by the SerializableAttribute you can try to enable the AllowNonSerializableExpectedCustomTypes option.</summary>
+        internal static string BinarySerializationCannotCreateSerializableObjectSafe(Type type) => Get("BinarySerialization_CannotCreateSerializableObjectSafe", type);
 
         /// <summary>Type '{0}' was serialized as an IBinarySerializable instance though it is not IBinarySerializable now.</summary>
         internal static string BinarySerializationNotBinarySerializable(Type type) => Get("BinarySerialization_NotBinarySerializableFormat", type);
@@ -689,6 +703,12 @@ namespace KGySoft
 
         /// <summary>Value type '{0}' cannot be deserialized from raw data in safe mode because it contains references. If the serialization stream is from a trusted source you may try to disable safe mode to attempt the deserialization with marshaling.</summary>
         internal static string BinarySerializationValueTypeContainsReferenceSafe(Type type) => Get("BinarySerialization_ValueTypeContainsReferenceSafeFormat", type.GetName(TypeNameKind.LongName));
+
+        /// <summary>The deserialized value was null, which cannot be cast to {0}.</summary>
+        internal static string BinarySerializationNonNullResultExpected(Type type) => Get("BinarySerialization_NonNullResultExpectedFormat", type.GetName(TypeNameKind.LongName));
+
+        /// <summary>The type of the result is expected to be {0} but it was {1}.</summary>
+        internal static string BinarySerializationUnexpectedResult(Type expectedType, Type actualType) => Get("BinarySerialization_UnexpectedResultFormat", expectedType.GetName(TypeNameKind.LongName), actualType.GetName(TypeNameKind.LongName));
 
         #endregion
 
