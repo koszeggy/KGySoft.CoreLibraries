@@ -1636,7 +1636,7 @@ namespace KGySoft.Collections
 
             info.AddValue(nameof(initialLockingCapacity), initialLockingCapacity);
             info.AddValue(nameof(bitwiseAndHash), bitwiseAndHash);
-            info.AddValue(nameof(comparer), ComparerHelper<TKey>.IsDefaultComparer(comparer) ? null : comparer);
+            info.AddValue(nameof(comparer), ComparerHelper<TKey>.IsDefaultComparer(comparer) ? null : comparer, typeof(IEqualityComparer<TKey>));
             info.AddValue(nameof(mergeInterval), mergeInterval);
             info.AddValue(nameof(preserveMergedKeys), preserveMergedKeys);
             info.AddValue("items", ToArray());

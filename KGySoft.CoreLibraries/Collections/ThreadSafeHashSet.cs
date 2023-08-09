@@ -1018,7 +1018,7 @@ namespace KGySoft.Collections
 
             info.AddValue(nameof(initialLockingCapacity), initialLockingCapacity);
             info.AddValue(nameof(bitwiseAndHash), bitwiseAndHash);
-            info.AddValue(nameof(comparer), ComparerHelper<T>.IsDefaultComparer(comparer) ? null : comparer);
+            info.AddValue(nameof(comparer), ComparerHelper<T>.IsDefaultComparer(comparer) ? null : comparer, typeof(IEqualityComparer<T>));
             info.AddValue(nameof(mergeInterval), mergeInterval);
             info.AddValue(nameof(preserveMergedItems), preserveMergedItems);
             info.AddValue("items", ToArray());

@@ -162,7 +162,7 @@ namespace KGySoft.ComponentModel
 
             this.command = command;
             this.disposeCommand = disposeCommand;
-            state = initialState is CommandState s ? s : new CommandState(initialState);
+            state = initialState as CommandState ?? new CommandState(initialState);
             state.PropertyChanged += State_PropertyChanged;
         }
 

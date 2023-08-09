@@ -719,11 +719,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         private static void SystemSerializeObject(object obj, string title = null, bool safeCompare = false, bool forceEqualityByMembers = false,
             SerializationBinder binder = null, ISurrogateSelector surrogateSelector = null)
         {
+            if (title == null)
+                title = obj.GetType().ToString();
+            Console.WriteLine($"------------------System BinaryFormatter ({title})--------------------");
+
+#if NET9_0_OR_GREATER
+            Console.WriteLine("System serialization failed: BinaryFormatter is no longer available in .NET 9.0 or later");
+#else
             using (new TestExecutionContext.IsolatedContext())
             {
-                if (title == null)
-                    title = obj.GetType().ToString();
-                Console.WriteLine($"------------------System BinaryFormatter ({title})--------------------");
                 BinaryFormatter bf = new BinaryFormatter { Binder = binder, SurrogateSelector = surrogateSelector };
                 try
                 {
@@ -742,7 +746,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 {
                     Console.WriteLine($"System serialization failed: {e}");
                 }
-            }
+            } 
+#endif
         }
 
         private static void SystemSerializeObjects(IList<object> referenceObjects, string title = null, bool safeCompare = false, bool forceEqualityByMembers = false,
@@ -751,6 +756,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             if (title == null)
                 title = $"Items Count: {referenceObjects.Count}";
             Console.WriteLine($"------------------System BinaryFormatter ({title})--------------------");
+
+#if NET9_0_OR_GREATER
+            Console.WriteLine("System serialization failed: BinaryFormatter is no longer available in .NET 9.0 or later");
+#else
             using (new TestExecutionContext.IsolatedContext())
             {
                 BinaryFormatter bf = new BinaryFormatter { Binder = binder, SurrogateSelector = surrogateSelector };
@@ -771,7 +780,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 {
                     Console.WriteLine($"System serialization failed: {e}");
                 }
-            }
+            } 
+#endif
         }
 
         private  static void KGySerializeObject(object obj, BinarySerializationOptions options, string title = null, bool safeCompare = false, bool forceEqualityByMembers = false,
@@ -783,10 +793,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             BinarySerializationFormatter bsf = new BinarySerializationFormatter(options) { Binder = binder, SurrogateSelector = surrogateSelector };
             try
             {
-                byte[] serData = SerializeObject(obj, bsf);
-                Console.WriteLine();
                 if (expectedTypes == null && (options & (BinarySerializationOptions.SafeMode | BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes)) == (BinarySerializationOptions.SafeMode | BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes))
                     expectedTypes = GetExpectedTypes(obj);
+                if (expectedTypes != null)
+                    Console.WriteLine($"Expected types: {expectedTypes.Select(t => t.GetName(TypeNameKind.ShortName)).Join(',')}{Environment.NewLine}");
+                byte[] serData = SerializeObject(obj, bsf);
+                Console.WriteLine();
                 object deserializedObject = DeserializeObject(serData, bsf, expectedTypes);
                 Console.WriteLine();
                 if (safeCompare)
@@ -810,10 +822,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             BinarySerializationFormatter bsf = new BinarySerializationFormatter(options) { Binder = binder, SurrogateSelector = surrogateSelector };
             try
             {
-                byte[] serData = SerializeObjects(referenceObjects, bsf);
-                Console.WriteLine();
                 if (expectedTypes == null && (options & (BinarySerializationOptions.SafeMode | BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes)) == (BinarySerializationOptions.SafeMode | BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes))
                     expectedTypes = GetExpectedTypes(referenceObjects);
+                if (expectedTypes != null)
+                    Console.WriteLine($"Expected types: {expectedTypes.Select(t => t.GetName(TypeNameKind.ShortName)).Join(',')}{Environment.NewLine}");
+                byte[] serData = SerializeObjects(referenceObjects, bsf);
+                Console.WriteLine();
                 object[] deserializedObjects = DeserializeObjects(serData, bsf, expectedTypes);
                 Console.WriteLine();
                 if (safeCompare)

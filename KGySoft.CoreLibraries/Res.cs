@@ -637,15 +637,14 @@ namespace KGySoft
         /// You may try to preload the assembly before deserialization or to disable SafeMode if the serialization stream is from a trusted source.</summary>
         internal static string BinarySerializationCannotResolveAssemblySafe(string name) => Get("BinarySerialization_CannotResolveAssemblySafeFormat", name);
 
-        ///// <summary>Unexpected assembly: "{0}". In safe mode you should specify the expected types in the expectedCustomTypes parameter of the deserialization methods.
-        ///// If assembly identity has changed since the serialization you can use the ForwardedTypesSerializationBinder if you set its SafeMode to true.</summary>
-        //internal static string BinarySerializationCannotResolveExpectedAssemblySafe(string name) => Get("BinarySerialization_CannotResolveExpectedAssemblySafeFormat", name);
-
         /// <summary>Could not resolve type name "{0}".</summary>
         internal static string BinarySerializationCannotResolveType(string dataType) => Get("BinarySerialization_CannotResolveTypeFormat", dataType);
 
         /// <summary>Unexpected type name "{0}". In safe mode you should specify the expected types in the expectedCustomTypes parameter of the deserialization methods.</summary>
         internal static string BinarySerializationCannotResolveExpectedTypeSafe(string dataType) => Get("BinarySerialization_CannotResolveExpectedTypeSafeFormat", dataType);
+
+        /// <summary>Expected type name "{0}" must be unique in SafeMode if the serialization stream has omitted assembly names.</summary>
+        internal static string BinarySerializationExpectedTypeOmittedAssemblyNameSafe(string dataType) => Get("BinarySerialization_ExpectedTypeOmittedAssemblyNameSafeFormat", dataType);
 
         /// <summary>Could not resolve type "{0}" in assembly "{1}".</summary>
         internal static string BinarySerializationCannotResolveTypeInAssembly(string typeName, string asmName) => Get("BinarySerialization_CannotResolveTypeInAssemblyFormat", typeName, asmName);
@@ -655,7 +654,7 @@ namespace KGySoft
         internal static string BinarySerializationCannotResolveTypeInAssemblySafe(string typeName, string asmName) => Get("BinarySerialization_CannotResolveTypeInAssemblySafeFormat", typeName, asmName);
 
         /// <summary>Unexpected type "{0}" in assembly "{1}". In safe mode you should specify the expected types in the expectedCustomTypes parameter of the deserialization methods.
-        /// If assembly identity has changed since the serialization you can use the ForwardedTypesSerializationBinder if you set its SafeMode to true.</summary>
+        /// If assembly has a partial name or its identity has changed since the serialization you can use the ForwardedTypesSerializationBinder if you set its SafeMode to true.</summary>
         internal static string BinarySerializationCannotResolveExpectedTypeInAssemblySafe(string typeName, string asmName) => Get("BinarySerialization_CannotResolveExpectedTypeInAssemblySafeFormat", typeName, asmName);
 
         /// <summary>Unexpected element in serialization info: {0}. Maybe the instance was not serialized by NameInvariantSurrogateSelector.</summary>

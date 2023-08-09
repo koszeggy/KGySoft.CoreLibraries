@@ -2175,7 +2175,7 @@ namespace KGySoft.Collections
 
             info.AddValue(nameof(capacity), capacity);
             info.AddValue(nameof(ensureCapacity), ensureCapacity);
-            info.AddValue(nameof(comparer), ComparerHelper<TKey>.IsDefaultComparer(comparer) ? null : comparer);
+            info.AddValue(nameof(comparer), ComparerHelper<TKey>.IsDefaultComparer(comparer) ? null : comparer, typeof(IEqualityComparer<TKey>));
             info.AddValue(nameof(itemLoader), itemLoader.Equals(nullLoader) ? null : itemLoader);
             info.AddValue(nameof(behavior), (byte)behavior);
             info.AddValue(nameof(disposeDroppedValues), disposeDroppedValues);

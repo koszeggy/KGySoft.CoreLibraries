@@ -58,7 +58,7 @@ namespace KGySoft.CoreLibraries
         #region SizeOfHelper struct
 
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
-        private struct SizeOfHelper<T> where T : struct
+        private struct SizeOfHelper<T> // where T : struct // ISSUE: this prevents nullable structs
         {
             #region Fields
 

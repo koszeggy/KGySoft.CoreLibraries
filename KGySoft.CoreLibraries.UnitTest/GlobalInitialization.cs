@@ -54,6 +54,12 @@ namespace KGySoft.CoreLibraries
             typeof(Bitmap).RegisterTypeConverter<BitmapConverter>();
             typeof(Icon).RegisterTypeConverter<IconConverter>();
 #endif
+#if NET8_0
+            // Only for .NET 8: enabling BinaryFormatter, which is used for the tests only (comparing functionality, payload sizes, performance, etc.)
+            // It is safe as serialization and deserialization is performed within the same process so no potentially dangerous external payload is processed.
+            // In .NET 9 it will be removed completely.
+            AppContext.SetSwitch("System.Runtime.Serialization.EnableUnsafeBinaryFormatterSerialization", true);
+#endif
         }
 
         #endregion

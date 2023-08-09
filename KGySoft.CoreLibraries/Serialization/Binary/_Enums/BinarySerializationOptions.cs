@@ -97,9 +97,10 @@ namespace KGySoft.Serialization.Binary
         /// <para>If enabled, type references will be stored without assembly identification. This can make possible
         /// to restore a type even if the version of the assembly has been modified since last serialization while makes serialized data more compact;
         /// however, it cannot be guaranteed that the correct type will be even found on deserialization.
-        /// <note type="caution">If there are types with the same name in the same namespace in different assemblies, then by using this flag, these types cannot be distincted.</note>
+        /// <note type="caution">If there are types with the same name in the same namespace in different assemblies, then by using this flag, these types cannot be distinguished.
+        /// In <see cref="SafeMode"/> the deserialization may fail if the specified expected types are not unique only by the full type name.</note>
         /// <note>If you want to deserialize a type that was stored with strong assembly reference (without this flag) from a different version of an assembly,
-        /// then use <see cref="WeakAssemblySerializationBinder"/> instead.</note></para>
+        /// then use <see cref="WeakAssemblySerializationBinder"/> instead (cannot be used in <see cref="SafeMode"/>).</note></para>
         /// <para>This flag is considered on serialization.</para>
         /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
         /// </summary>
@@ -182,5 +183,13 @@ namespace KGySoft.Serialization.Binary
         /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Enabled</strong></para>
         /// </summary>
         SafeMode = 1 << 12,
+
+        /// <summary>
+        /// <para>Indicates that recursively serialized types that are indicated as expected types at the deserialization methods should be able to be
+        /// deserialized in <see cref="SafeMode"/> even if they are not marked by the <see cref="SerializableAttribute"/>.</para>
+        /// <para>This flag is considered on deserialization.</para>
+        /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
+        /// </summary>
+        AllowNonSerializableExpectedCustomTypes = 1 << 13,
     }
 }

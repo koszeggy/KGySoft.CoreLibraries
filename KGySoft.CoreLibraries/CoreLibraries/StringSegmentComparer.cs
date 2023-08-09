@@ -266,7 +266,8 @@ namespace KGySoft.CoreLibraries
                 compareInfo = culture.CompareInfo;
                 this.options = options;
 #if NETSTANDARD2_1 || NETCOREAPP2_1 || NETCOREAPP3_0
-                InitComparison(culture, ignoreCase);
+                if (options is CompareOptions.None or CompareOptions.IgnoreCase)
+                    InitComparison(culture, options == CompareOptions.IgnoreCase);
 #endif
             }
 #endif

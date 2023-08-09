@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Threading;
 
+using KGySoft.Collections;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 
@@ -482,7 +483,7 @@ namespace KGySoft.ComponentModel
             if (propertyNames.Length == 0)
                 Throw.ArgumentException(Argument.propertyNames, Res.ArgumentEmpty);
 
-            return propertyChangedCommand.CreateBinding(new Dictionary<string, object?> { { stateHandler, handler }, { statePropertyNames, propertyNames } })
+            return propertyChangedCommand.CreateBinding(new StringKeyedDictionary<object?>(2) { { stateHandler, handler }, { statePropertyNames, propertyNames } })
                 .AddSource(source, nameof(source.PropertyChanged));
         }
 

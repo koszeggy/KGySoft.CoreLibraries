@@ -386,7 +386,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 #if NET5_0_OR_GREATER
                 (Half)1,
 #endif
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
                 DateOnly.FromDateTime(DateTime.Today),
                 TimeOnly.FromDateTime(DateTime.Now),
 #endif

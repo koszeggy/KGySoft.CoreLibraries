@@ -1191,7 +1191,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             #region SelfReferencerIndirectDefaultDeserializer class
 
             [Serializable]
-            private class SelfReferencerIndirectDefaultDeserializer : IObjectReference
+            internal class SelfReferencerIndirectDefaultDeserializer : IObjectReference
             {
                 #region Fields
 
@@ -1226,7 +1226,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             #region SelfReferencerIndirectCustomDeserializer class
 
             [Serializable]
-            private class SelfReferencerIndirectCustomDeserializer : ISerializable, IObjectReference
+            internal class SelfReferencerIndirectCustomDeserializer : ISerializable, IObjectReference
             {
                 #region Fields
 
@@ -1730,7 +1730,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             {
                 1 => Singleton1.Instance,
                 2 => Singleton2.Instance,
-                _ => (object)Singleton3.Instance
+                _ => Singleton3.Instance
             };
 
             [SecurityCritical]

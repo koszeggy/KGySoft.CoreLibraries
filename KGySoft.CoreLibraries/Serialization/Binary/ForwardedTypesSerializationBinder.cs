@@ -168,8 +168,6 @@ namespace KGySoft.Serialization.Binary
 
         #region Methods
 
-        #region Public Methods
-
         /// <summary>
         /// Adds the <paramref name="type"/> to this binder. If no <paramref name="assemblyIdentities"/> are defined, then any
         /// <see cref="Type"/> with the same full name will be resolved to <paramref name="type"/>; otherwise, only the ones,
@@ -238,10 +236,13 @@ namespace KGySoft.Serialization.Binary
                 Throw.ArgumentNullException(Argument.types);
             if (types.Length == 0)
                 Throw.ArgumentException(Argument.types, Res.CollectionEmpty);
-            if (types.Contains(null!))
-                Throw.ArgumentException(Argument.types, Res.ArgumentContainsNull);
+
             foreach (Type type in types)
+            {
+                if (type == null!)
+                    Throw.ArgumentException(Argument.types, Res.ArgumentContainsNull);
                 AddType(type);
+            }
         }
 
         /// <summary>
@@ -314,14 +315,14 @@ namespace KGySoft.Serialization.Binary
         /// <param name="assemblyName">Specifies the <see cref="Assembly"/> name of the serialized object.</param>
         /// <param name="typeName">Specifies the <see cref="Type"/> name of the serialized object.</param>
         /// <exception cref="SerializationException">The type cannot be resolved or the assembly cannot be loaded.</exception>
-        public override Type? BindToType(string assemblyName, string typeName)
+        public override Type BindToType(string assemblyName, string typeName)
         {
             #region Local Methods
 
             Type? ResolveType(AssemblyName? asmName, string typName)
             {
                 // there is no rule for such type name
-                if (!mapping.TryGetValue(typName, out var byTypeMap))
+                if (!mapping.TryGetValue(typName, out Dictionary<Type, HashSet<string>>? byTypeMap))
                     return null;
 
                 foreach (KeyValuePair<Type, HashSet<string>> map in byTypeMap)
@@ -337,29 +338,22 @@ namespace KGySoft.Serialization.Binary
             #endregion
 
             string fullName = String.IsNullOrEmpty(assemblyName) ? typeName : typeName + "," + assemblyName;
-            var options = ResolveTypeOptions.AllowPartialAssemblyMatch;
-            if (!SafeMode)
-                options |= ResolveTypeOptions.TryToLoadAssemblies;
             Type? result = Reflector.ResolveType(fullName, ResolveType);
+            if (result is null && !SafeMode)
+                result = Reflector.ResolveType(fullName, ResolveTypeOptions.AllowPartialAssemblyMatch | ResolveTypeOptions.TryToLoadAssemblies);
 
-            if (result == null)
-            {
-                string message = String.IsNullOrEmpty(assemblyName)
-                    ? Res.BinarySerializationCannotResolveType(typeName)
-                    : SafeMode
-                        ? Res.BinarySerializationCannotResolveTypeInAssemblySafe(typeName, assemblyName)
-                        : Res.BinarySerializationCannotResolveTypeInAssembly(typeName, assemblyName);
-                Throw.SerializationException(message);
-            }
+            if (result is not null)
+                return result;
+
+            string message = String.IsNullOrEmpty(assemblyName)
+                ? Res.BinarySerializationCannotResolveType(typeName)
+                : SafeMode
+                    ? Res.BinarySerializationCannotResolveTypeInAssemblySafe(typeName, assemblyName) // TODO: change message, preload does not help
+                    : Res.BinarySerializationCannotResolveTypeInAssembly(typeName, assemblyName);
+            Throw.SerializationException(message);
 
             return result;
         }
-
-        #endregion
-
-        #region Private Methods
-
-        #endregion
 
         #endregion
     }

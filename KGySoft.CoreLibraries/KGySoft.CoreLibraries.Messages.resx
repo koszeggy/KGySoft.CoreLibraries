@@ -670,6 +670,9 @@ You may try to preload the assembly before deserialization or to disable SafeMod
   <data name="BinarySerialization_CannotResolveExpectedTypeSafeFormat" xml:space="preserve">
     <value>Unexpected type name "{0}". In safe mode you should specify the expected types in the expectedCustomTypes parameter of the deserialization methods.</value>
   </data>
+    <data name="BinarySerialization_ExpectedTypeOmittedAssemblyNameSafeFormat" xml:space="preserve">
+    <value>Expected type name "{0}" must be unique in SafeMode if the serialization stream has omitted assembly names.</value>
+  </data>
   <data name="BinarySerialization_CannotResolveTypeInAssemblyFormat" xml:space="preserve">
     <value>Could not resolve type "{0}" in assembly "{1}".</value>
   </data>
@@ -679,7 +682,7 @@ You may try to preload the assembly before deserialization or disable SafeMode i
   </data>
   <data name="BinarySerialization_CannotResolveExpectedTypeInAssemblySafeFormat" xml:space="preserve">
     <value>Unexpected type "{0}" in assembly "{1}". In safe mode you should specify the expected types in the expectedCustomTypes parameter of the deserialization methods.
-If assembly identity has changed since the serialization you can use the ForwardedTypesSerializationBinder if you set its SafeMode to true.</value>
+If assembly has a partial name or its identity has changed since the serialization you can use the ForwardedTypesSerializationBinder if you set its SafeMode to true.</value>
   </data>
   <data name="BinarySerialization_CircularIObjectReference" xml:space="preserve">
     <value>Deserialization of an IObjectReference instance has an unresolvable circular reference to itself.</value>

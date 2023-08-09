@@ -2088,6 +2088,8 @@ namespace KGySoft.CoreLibraries
             return initializerArray;
         }
 
+        internal static IEnumerable<T> Append<T>(this IEnumerable<T> source, T item) => source.Concat(new[] { item });
+
         #endregion
 
         #region Private Methods

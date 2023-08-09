@@ -165,7 +165,7 @@ namespace KGySoft.Reflection
                     3 => typeof(Func<,,,>),
                     4 => typeof(Func<,,,,>),
                     _ => Throw.InternalError<Type>("Unexpected number of parameters")
-                }).GetGenericType(ParameterTypes.Concat(new[] { method.ReturnType }).ToArray());
+                }).GetGenericType(ParameterTypes.Append(method.ReturnType).ToArray());
 
                 lambda = Expression.Lambda(delegateType, methodCall, parameters);
                 return lambda.Compile();
@@ -213,7 +213,7 @@ namespace KGySoft.Reflection
 
                 il.Emit(method.IsVirtual ? OpCodes.Callvirt : OpCodes.Call, method); // calling the method
                 il.Emit(OpCodes.Ret); // returning method's return value
-                return dm.CreateDelegate(delegateType.GetGenericType(new[] { declaringType }.Concat(ParameterTypes).Concat(new[] { method.ReturnType }).ToArray()));
+                return dm.CreateDelegate(delegateType.GetGenericType(new[] { declaringType }.Concat(ParameterTypes).Append(method.ReturnType).ToArray()));
 #else
                 parameters[0] = Expression.Parameter(declaringType.MakeByRefType(), "instance");
 #endif
@@ -227,7 +227,7 @@ namespace KGySoft.Reflection
 #else
             methodCall = Expression.Call(parameters[0], method, parameters.Skip(1)); 
 #endif
-            delegateType = delegateType.GetGenericType(new[] { declaringType }.Concat(ParameterTypes).Concat(new[] { method.ReturnType }).ToArray());
+            delegateType = delegateType.GetGenericType(new[] { declaringType }.Concat(ParameterTypes).Append(method.ReturnType).ToArray());
             lambda = Expression.Lambda(delegateType, methodCall, parameters);
             return lambda.Compile();
         }

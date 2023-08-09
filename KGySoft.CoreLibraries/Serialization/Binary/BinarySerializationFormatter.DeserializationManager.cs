@@ -604,7 +604,7 @@ namespace KGySoft.Serialization.Binary
             #region Fields
 
             private readonly Type? rootType;
-            private readonly Dictionary<(string?, string), Type>? expectedTypes;
+            private readonly Dictionary<(string? AssemblyName, string TypeName), Type>? expectedTypes;
 
             private List<string>? cachedNames;
             private List<(Assembly?, string?)>? cachedAssemblies;
@@ -666,10 +666,20 @@ namespace KGySoft.Serialization.Binary
 
                 // Safe mode without a safe binder: adding allowed types
                 var types = new Queue<Type>(new[] { rootType }.Concat(expectedCustomTypes ?? Reflector.EmptyArray<Type>()));
+#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
                 while (types.TryDequeue(out Type? type))
+#else
+                while (types.Count > 0)
+#endif
                 {
+#if !(NETCOREAPP || NETSTANDARD2_1_OR_GREATER)
+                    var type = types.Dequeue(); 
+#endif
                     if (type == null!)
                         Throw.ArgumentException(Argument.expectedCustomTypes, Res.ArgumentContainsNull);
+
+                    while (type!.HasElementType)
+                        type = type.GetElementType();
 
                     if (type.IsConstructedGenericType())
                     {
@@ -690,8 +700,8 @@ namespace KGySoft.Serialization.Binary
                     if (identity.ForwardedAssemblyName != null)
                         expectedTypes[(identity.ForwardedAssemblyName, typeName)] = type;
 
-                    // core assembly: adding also without assembly name
-                    if (identity.IsCoreIdentity)
+                    // core assembly (either by forwarded or current identity): adding also without assembly name
+                    if (identity.IsCoreIdentity || asm == KnownAssemblies[0])
                         expectedTypes[(null, typeName)] = type;
                 }
             }
@@ -2416,6 +2426,8 @@ namespace KGySoft.Serialization.Binary
 
                 // 1.) Iterating through loaded assemblies
                 result = Reflector.GetLoadedAssemblies().FirstOrDefault(asm => asm.FullName == name);
+                if (result is not null)
+                    return result;
 
                 // 2.) Trying to load assembly. Not using AssemblyResolver because Assembly.Load allows version mismatch for some System assemblies.
                 try
@@ -2447,8 +2459,32 @@ namespace KGySoft.Serialization.Binary
                     return result;
 
                 // 2.) Expected types cache
-                if (expectedTypes?.TryGetValue((assembly.StoredName, typeName), out result) == true)
-                    return result;
+                if (expectedTypes != null)
+                {
+                    // Assembly names are omitted: in SafeMode we accept unique names only
+                    if (SafeMode && assembly.Assembly is null && assembly.StoredName is null)
+                    {
+                        // This affects performance a LOT but omitting assembly names is not recommended in safe mode anyway so not using a cache
+                        // for the lookup itself (and the result is mapped to a new type index so will be cached anyway).
+
+                        // NOTE: The following line would be somewhat faster but it does not work if the same type is added with multiple assembly identities
+                        //if (expectedTypes.Where(t => t.Key.TypeName == typeName).Take(2).Select(t => t.Value).SingleOrDefault() is Type type)
+                        //    return type;
+                        Type[] types = expectedTypes.Where(t => t.Key.TypeName == typeName).Select(t => t.Value).Distinct().Take(2).ToArray();
+                        if (types.Length == 1)
+                            return types[0];
+
+                        string message = types.Length == 0
+                            ? Res.BinarySerializationCannotResolveExpectedTypeSafe(typeName)
+                            : Res.BinarySerializationExpectedTypeOmittedAssemblyNameSafe(typeName);
+                        Throw.SerializationException(message);
+                    }
+
+                    // NOTE: It's important that we don't check this first if assembly names are omitted because in safe mode it would be possible to
+                    //       mistakenly map a custom type to core type of the same full name otherwise.
+                    if (expectedTypes.TryGetValue((assembly.StoredName, typeName), out result))
+                        return result;
+                }
 
                 if (SafeMode)
                 {

@@ -102,7 +102,7 @@ namespace KGySoft.Serialization.Binary
         [SecurityCritical]
         public ISerializationSurrogate? GetSurrogate(Type type, StreamingContext context, out ISurrogateSelector selector)
         {
-            if (type == null)
+            if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
 
             selector = this;

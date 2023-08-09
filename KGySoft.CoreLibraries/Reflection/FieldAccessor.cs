@@ -593,7 +593,7 @@ namespace KGySoft.Reflection
 #else
             // Expressions would not work for read-only fields so using always dynamic methods
             Type[] parameterTypes = (Field.IsStatic ? Type.EmptyTypes : new[] { declaringType.IsValueType ? declaringType.MakeByRefType() : declaringType })
-                .Concat(new[] { Field.FieldType })
+                .Append(Field.FieldType)
                 .ToArray();
 
             var dm = new DynamicMethod(setterPrefix + Field.Name, Reflector.VoidType, parameterTypes, declaringType, true);
