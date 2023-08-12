@@ -2416,7 +2416,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         [Test]
         public void MemberOfTest()
         {
-            MemberInfo methodIntParse = Reflector.MemberOf(() => int.Parse(null, null)); // MethodInfo: Int32.Parse(string, IFormatProvider)
+            MemberInfo methodIntParse = Reflector.MemberOf(() => int.Parse(default(string), default(IFormatProvider))); // MethodInfo: Int32.Parse(string, IFormatProvider)
             Assert.AreEqual(typeof(int).GetMethod(nameof(Int32.Parse), new[] { typeof(string), typeof(IFormatProvider) }), methodIntParse);
 
             MemberInfo ctorList = Reflector.MemberOf(() => new List<int>()); // ConstructorInfo: List<int>().ctor()

@@ -2088,7 +2088,13 @@ namespace KGySoft.CoreLibraries
             return initializerArray;
         }
 
-        internal static IEnumerable<T> Append<T>(this IEnumerable<T> source, T item) => source.Concat(new[] { item });
+#if NETFRAMEWORK && !NET472_OR_GREATER
+        internal static IEnumerable<T> Append<T>(this IEnumerable<T> source, T item)
+#else
+        // just to prevent MissingMethodException if the assembly for an older target is forcibly used for newer targets
+        internal static IEnumerable<T> Append<T>(IEnumerable<T> source, T item)
+#endif
+            => source.Concat(new[] { item });
 
         #endregion
 

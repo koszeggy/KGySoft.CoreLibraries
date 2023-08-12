@@ -440,10 +440,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         [TestCaseSource(nameof(testCases))]
         public void BaselineTestWithoutUsingSurrogate(object obj)
         {
-#if !NET8_0_OR_GREATER
+#if !NET9_0_OR_GREATER
             DoTest(new BinaryFormatter(), null, obj, false, false, false);
 #endif
-            DoTest(new BinarySerializationFormatter(), null, obj, true, false, false);
+            DoTest(new BinarySerializationFormatter(BinarySerializationOptions.None), null, obj, true, false, false);
             DoTest(new BinarySerializationFormatter(BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes), null, obj, true, false, false);
         }
 
@@ -452,10 +452,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         {
             ISurrogateSelector surrogate = new CustomSerializerSurrogateSelector();
 
-#if !NET8_0_OR_GREATER
+#if !NET9_0_OR_GREATER
             DoTest(new BinaryFormatter(), surrogate, obj, false, true, true);
 #endif
-            DoTest(new BinarySerializationFormatter(), surrogate, obj, true, true, true);
+            DoTest(new BinarySerializationFormatter(BinarySerializationOptions.None), surrogate, obj, true, true, true);
             DoTest(new BinarySerializationFormatter(BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes), surrogate, obj, true, true, true);
         }
 
@@ -465,10 +465,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         {
             ISurrogateSelector surrogate = new CustomSerializerSurrogateSelector();
 
-#if !NET8_0_OR_GREATER
+#if !NET9_0_OR_GREATER
             DoTest(new BinaryFormatter(), surrogate, obj, false, false, true);
 #endif
-            DoTest(new BinarySerializationFormatter(), surrogate, obj, true, false, true);
+            DoTest(new BinarySerializationFormatter(BinarySerializationOptions.None), surrogate, obj, true, false, true);
             DoTest(new BinarySerializationFormatter(BinarySerializationOptions.TryUseSurrogateSelectorForAnyType), surrogate, obj, true, false, true);
         }
 
@@ -477,10 +477,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         {
             ISurrogateSelector surrogate = new CustomSerializerSurrogateSelector();
 
-#if !NET8_0_OR_GREATER
+#if !NET9_0_OR_GREATER
             DoTest(new BinaryFormatter(), surrogate, obj, false, true, false);
 #endif
-            DoTest(new BinarySerializationFormatter(), surrogate, obj, true, true, false);
+            DoTest(new BinarySerializationFormatter(BinarySerializationOptions.None), surrogate, obj, true, true, false);
             DoTest(new BinarySerializationFormatter(BinarySerializationOptions.TryUseSurrogateSelectorForAnyType), surrogate, obj, true, false, true);
         }
 
@@ -489,19 +489,19 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         {
             object obj = new ConflictNameChild(1, 2, 3, "Public Base", "Protected Base", "Private Base");
             ISurrogateSelector surrogate = new CustomSerializerSurrogateSelector();
-#if !NET8_0_OR_GREATER
+#if !NET9_0_OR_GREATER
             var bf = new BinaryFormatter();
 #endif
-            var bsf = new BinarySerializationFormatter();
+            var bsf = new BinarySerializationFormatter(BinarySerializationOptions.None);
 
             // not using surrogate: tests if the formatter can handle the situation internally
-#if !NET8_0_OR_GREATER
+#if !NET9_0_OR_GREATER
             DoTest(bf, null, obj, false, false, false);
 #endif
             DoTest(bsf, null, obj, true, false, false);
 
             // using surrogate for both ways
-#if !NET8_0_OR_GREATER
+#if !NET9_0_OR_GREATER
             DoTest(bf, surrogate, obj, false, true, true);
 #endif
             DoTest(bsf, surrogate, obj, true, true, true);
@@ -538,7 +538,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         {
             var obj = new Exception("message");
             var surrogate = new CustomSerializerSurrogateSelector();
-            var formatter = new BinarySerializationFormatter { SurrogateSelector = surrogate };
+            var formatter = new BinarySerializationFormatter(BinarySerializationOptions.None) { SurrogateSelector = surrogate };
 
             DoTest(formatter, surrogate, obj, true, true, true);
             surrogate.IgnoreISerializable = true;
@@ -613,7 +613,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             #endregion
 
             var objOld = new ChangedClassOld { m_IntField = 42, m_StringField = "alpha" };
-            var formatter = new BinarySerializationFormatter();
+            var formatter = new BinarySerializationFormatter(BinarySerializationOptions.None);
             var rawDataOld = formatter.Serialize(objOld);
 
             using var surrogate = new CustomSerializerSurrogateSelector();
@@ -632,31 +632,41 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         [Test]
         public void SafeModeTest()
         {
-#if !NET8_0_OR_GREATER
+#if !NET9_0_OR_GREATER
             var bf = new BinaryFormatter();
 #endif
-            var bsf = new BinarySerializationFormatter();
+            var bsf = new BinarySerializationFormatter(BinarySerializationOptions.None);
             using var surrogate = new CustomSerializerSurrogateSelector();
             var obj = new NonSerializableClass { IntProp = 42 };
 
             // in non-safe mode everything works
-#if !NET8_0_OR_GREATER
+#if !NET9_0_OR_GREATER
             DoTest(bf, surrogate, obj, true, true, true);
 #endif
             DoTest(bsf, surrogate, obj, true, true, true);
 
             surrogate.SafeMode = true; // so the surrogate denies support
-            bsf.Options |= BinarySerializationOptions.SafeMode; // so even the formatter denies support
 
-            // in safe mode SerializationException should be thrown
-#if !NET8_0_OR_GREATER
-            Throws<SerializationException>(() => DoTest(bf, surrogate, obj, true, true, true));
+            // in safe mode the surrogate denies serialization so it is passed back to the formatter
+#if !NET9_0_OR_GREATER
+            // BinaryFormatter: denies serialization as it is not serializable
+            Throws<SerializationException>(() => DoTest(bf, surrogate, obj, true, true, true), "is not marked as serializable");
 #endif
-            Throws<SerializationException>(() => DoTest(bsf, surrogate, obj, true, true, true));
+            // BinarySerializationFormatter: serialization is not supported with the provided options
+            Throws<NotSupportedException>(() => DoTest(bsf, surrogate, obj, true, true, true), $"is not supported with following serialization options: None.{Environment.NewLine}You can try to enable the RecursiveSerializationAsFallback flag, though the serialized data will possibly not be able to be deserialized using the SafeMode flag.");
+
+            // Enabling RecursiveSerializationAsFallback: the serialization works indeed, so the SafeMode setting on the surrogate selector didn't matter
+            bsf.Options |= BinarySerializationOptions.RecursiveSerializationAsFallback;
+            DoTest(bsf, surrogate, obj, true, true, true);
+
+            // Enabling SafeMode on the formatter itself: not allowing any surrogate even if they would happily do the serialization
+            bsf.Options |= BinarySerializationOptions.SafeMode;
+            surrogate.SafeMode = false; // so the surrogate would support it again
+            Throws<SerializationException>(() => DoTest(bsf, surrogate, obj, true, true, true), "In safe mode no serialization surrogate is allowed to be used.");
         }
 
-#endregion
+        #endregion
 
-#endregion
+        #endregion
     }
 }

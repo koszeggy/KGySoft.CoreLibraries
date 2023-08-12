@@ -668,7 +668,8 @@ You may try to preload the assembly before deserialization or to disable SafeMod
     <value>Could not resolve type name "{0}".</value>
   </data>
   <data name="BinarySerialization_CannotResolveExpectedTypeSafeFormat" xml:space="preserve">
-    <value>Unexpected type name "{0}". In safe mode you should specify the expected types in the expectedCustomTypes parameter of the deserialization methods.</value>
+    <value>Unexpected type name "{0}".
+In safe mode you should specify the expected types in the expectedCustomTypes parameter of the deserialization methods.</value>
   </data>
     <data name="BinarySerialization_ExpectedTypeOmittedAssemblyNameSafeFormat" xml:space="preserve">
     <value>Expected type name "{0}" must be unique in SafeMode if the serialization stream has omitted assembly names.</value>
@@ -681,7 +682,8 @@ You may try to preload the assembly before deserialization or to disable SafeMod
 You may try to preload the assembly before deserialization or disable SafeMode if the serialization stream is from a trusted source.</value>
   </data>
   <data name="BinarySerialization_CannotResolveExpectedTypeInAssemblySafeFormat" xml:space="preserve">
-    <value>Unexpected type "{0}" in assembly "{1}". In safe mode you should specify the expected types in the expectedCustomTypes parameter of the deserialization methods.
+    <value>Unexpected type "{0}" in assembly "{1}".
+In safe mode you should specify the expected types in the expectedCustomTypes parameter of the deserialization methods.
 If assembly has a partial name or its identity has changed since the serialization you can use the ForwardedTypesSerializationBinder if you set its SafeMode to true.</value>
   </data>
   <data name="BinarySerialization_CircularIObjectReference" xml:space="preserve">
