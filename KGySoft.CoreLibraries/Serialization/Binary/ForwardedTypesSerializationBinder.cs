@@ -137,6 +137,7 @@ namespace KGySoft.Serialization.Binary
 
         /// <summary>
         /// Gets or sets whether a legacy assembly identity is tried to be written on serializing.
+        /// <br/>Default value: <see langword="false"/>.
         /// </summary>
         /// <remarks>
         /// <note>In Framework .NET 3.5 <see cref="BinaryFormatter"/> and most <see cref="IFormatter"/> implementations ignore the
@@ -346,13 +347,11 @@ namespace KGySoft.Serialization.Binary
                 return result;
 
             string message = String.IsNullOrEmpty(assemblyName)
-                ? Res.BinarySerializationCannotResolveType(typeName)
+                ? Res.BinarySerializationCannotResolveType(typeName) // TODO: special message for safe mode: specify expected type
                 : SafeMode
                     ? Res.BinarySerializationCannotResolveTypeInAssemblySafe(typeName, assemblyName) // TODO: change message, preload does not help
                     : Res.BinarySerializationCannotResolveTypeInAssembly(typeName, assemblyName);
-            Throw.SerializationException(message);
-
-            return result;
+            return Throw.SerializationException<Type>(message);
         }
 
         #endregion

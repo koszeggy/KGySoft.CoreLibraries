@@ -21,6 +21,7 @@ using System.ComponentModel.Design.Serialization;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Serialization;
 using System.Security;
 
 using KGySoft.CoreLibraries;
@@ -34,6 +35,12 @@ namespace KGySoft.ComponentModel
     /// <summary>
     /// Provides a type converter to convert any <see cref="object"/> to and from base64 encoded <see cref="string"/> or <see cref="Array">byte array</see> representations.
     /// </summary>
+    /// <remarks>
+    /// <note>This converter uses the <see cref="BinarySerializationFormatter"/> class in safe mode internally. The <see cref="ConvertFrom"/> method may
+    /// throw a <see cref="SerializationException"/> if the serialization stream contains any type name to resolve so this converter can be used only
+    /// for natively supported types.
+    /// <br/>See the <strong>Remarks</strong> section of the <see cref="BinarySerializationFormatter"/> class for the natively supported types.</note>
+    /// </remarks>
     /// <seealso cref="TypeConverter" />
     public class BinaryTypeConverter : TypeConverter
     {
