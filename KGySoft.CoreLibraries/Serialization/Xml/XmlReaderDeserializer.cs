@@ -379,7 +379,7 @@ namespace KGySoft.Serialization.Xml
                         Throw.ArgumentException(Res.XmlSerializationCrcError);
                 }
 
-                ctx.Result = BinarySerializer.Deserialize(data);
+                ctx.Result = BinarySerializer.Deserialize(data, 0, SafeMode ? BinarySerializationOptions.SafeMode : BinarySerializationOptions.None);
                 ReadToNodeType(ctx.Reader, XmlNodeType.EndElement);
             }
 

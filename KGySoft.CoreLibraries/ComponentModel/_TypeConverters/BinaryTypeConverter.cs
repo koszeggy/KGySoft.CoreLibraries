@@ -19,6 +19,7 @@ using System;
 using System.ComponentModel;
 using System.ComponentModel.Design.Serialization;
 using System.Globalization;
+using System.Linq;
 using System.Reflection;
 using System.Security;
 
@@ -53,7 +54,12 @@ namespace KGySoft.ComponentModel
 
         #region Properties
 
-        private static MethodInfo DeserializeMethod => deserializeMethod ??= typeof(BinarySerializer).GetMethod(nameof(BinarySerializer.Deserialize))!;
+        private static MethodInfo DeserializeMethod => deserializeMethod ??= typeof(BinarySerializer)
+            .GetMember(nameof(BinarySerializer.Deserialize), MemberTypes.Method, BindingFlags.Public | BindingFlags.Static)
+            .Cast<MethodInfo>()
+            .First(mi => !mi.IsGenericMethodDefinition && mi.GetParameters()
+                .Select(p => p.ParameterType)
+                .SequenceEqual(new[] { Reflector.ByteArrayType, Reflector.IntType, typeof(BinarySerializationOptions), typeof(Type[]) }))!;
 
         #endregion
 
@@ -93,10 +99,10 @@ namespace KGySoft.ComponentModel
         {
             if (!destinationType.In(supportedTypes))
                 return base.ConvertTo(context, culture, value, destinationType);
-            byte[] result = BinarySerializer.Serialize(value);
+            byte[] result = BinarySerializer.Serialize(value, BinarySerializationOptions.RecursiveSerializationAsFallback);
             return destinationType == Reflector.ByteArrayType ? result
                 : destinationType == Reflector.StringType ? Convert.ToBase64String(result)
-                : new InstanceDescriptor(DeserializeMethod, new object[] { result, 0, BinarySerializationOptions.SafeMode });
+                : new InstanceDescriptor(DeserializeMethod, new object[] { result, 0, BinarySerializationOptions.SafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes, new[] { destinationType } });
         }
 
         /// <summary>
@@ -115,7 +121,9 @@ namespace KGySoft.ComponentModel
             else if (value?.GetType() == Reflector.ByteArrayType) // cast is dangerous: works also from sbyte[] so type check must be performed
                 bytes = (byte[])value;
 
-            return bytes != null ? BinarySerializer.Deserialize(bytes, 0, BinarySerializationOptions.SafeMode) : base.ConvertFrom(context!, culture!, value!);
+            return bytes != null
+                ? BinarySerializer.Deserialize(bytes, 0, BinarySerializationOptions.SafeMode)
+                : base.ConvertFrom(context!, culture!, value!);
         }
 
         #endregion

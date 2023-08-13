@@ -19,7 +19,6 @@ using System;
 using System.Collections;
 using System.ComponentModel;
 using System.ComponentModel.Design;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
@@ -313,7 +312,6 @@ namespace KGySoft.Resources
             #region Fields
 
             private readonly ITypeResolutionService? typeResolver; // deserialization
-            private readonly bool safeMode; // deserialization
 
             private readonly Func<Type, string?>? typeNameConverter; // serialization
             private readonly bool compatibleFormat; // serialization
@@ -325,11 +323,7 @@ namespace KGySoft.Resources
             /// <summary>
             /// This is the constructor for deserialization
             /// </summary>
-            internal ResXSerializationBinder(ITypeResolutionService typeResolver, bool safeMode)
-            {
-                this.typeResolver = typeResolver;
-                this.safeMode = safeMode;
-            }
+            internal ResXSerializationBinder(ITypeResolutionService typeResolver) => this.typeResolver = typeResolver;
 
             /// <summary>
             /// This is the constructor for serialization
@@ -394,21 +388,7 @@ namespace KGySoft.Resources
                 if (strippedName != aqnOrFullName)
                     result = typeResolver.GetType(strippedName);
 
-                // If it is still null, then the binder couldn't handle it. If safe mode is disabled, then letting the formatter take over.
-                if (result != null || !safeMode)
-                    return result;
-
-                // In safe mode we try to resolve the type without loading any assembly.
-                // We do not allow returning a null result because if this binder is used by a BinaryFormatter it may try to load a potentially dangerous assembly.
-                result = TypeResolver.ResolveType(aqnOrFullName, null, ResolveTypeOptions.AllowPartialAssemblyMatch);
-                if (result == null)
-                {
-                    string message = String.IsNullOrEmpty(assemblyName)
-                        ? Res.BinarySerializationCannotResolveType(typeName)
-                        : Res.BinarySerializationCannotResolveTypeInAssemblySafe(typeName, assemblyName);
-                    Throw.SerializationException(message);
-                }
-
+                // If it is still null, then the binder couldn't handle it. Letting the formatter take over (which is NOT in safe mode if this binder was used).
                 return result;
             }
 
@@ -858,10 +838,17 @@ namespace KGySoft.Resources
 
             Type? result = null;
             if (typeResolver != null)
+            {
+                // TODO: do not allow typeResolver in safeMode
+                //if (safeMode)
+                //    Throw.ArgumentException(Res.ResourcesTypeResolutionServiceNotAllowedInSafeMode);
                 result = typeResolver.GetType(assemblyQualifiedName, false);
+            }
 
             if (result == null)
             {
+                // TODO: in safeMode check if type is expected. Either explicitly or is a known primitive/parseable/expected type
+                //if (safeMode && !CheckAllowTypeSafe(assemblyQualifiedName), expectedTypes)
                 var options = ResolveTypeOptions.AllowPartialAssemblyMatch;
                 if (!safeMode)
                     options |= ResolveTypeOptions.TryToLoadAssemblies;
@@ -1321,7 +1308,7 @@ namespace KGySoft.Resources
             }
 
             // 8.) to byte[] by KGySoft BinarySerializationFormatter
-            var serializer = new BinarySerializationFormatter();
+            var serializer = new BinarySerializationFormatter(BinarySerializationOptions.RecursiveSerializationAsFallback);
             if (typeNameConverter != null)
                 serializer.Binder = new ResXSerializationBinder(typeNameConverter, false);
 
@@ -1561,15 +1548,15 @@ namespace KGySoft.Resources
                 var serializer = new BinarySerializationFormatter(safeMode ? BinarySerializationOptions.SafeMode : BinarySerializationOptions.None)
                 {
                     Binder = typeResolver != null
-                        ? new ResXSerializationBinder(typeResolver, safeMode)
-                        : new WeakAssemblySerializationBinder { SafeMode = safeMode }
+                        ? new ResXSerializationBinder(typeResolver)
+                        : new ForwardedTypesSerializationBinder { SafeMode = safeMode }
                 };
 
                 object? result = null;
                 if (serializedData.Length > 0)
                 {
                     result = serializer.Deserialize(serializedData);
-                    if (result != ResXNullRef.Value && IsNullRef(result!.GetType().AssemblyQualifiedName))
+                    if (IsNullRef(result!.GetType().AssemblyQualifiedName))
                         result = ResXNullRef.Value;
                 }
 
