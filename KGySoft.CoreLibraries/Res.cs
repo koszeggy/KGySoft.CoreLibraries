@@ -424,6 +424,9 @@ namespace KGySoft
         /// <summary>Setting this property is invalid when UseLanguageSettings is true.</summary>
         internal static string ResourcesInvalidDrmPropertyChange => Get("Resources_InvalidDrmPropertyChange");
 
+        /// <summary>In safe mode it is not supported to resolve types by a type resolution service.</summary>
+        internal static string ResourcesTypeResolverInSafeModeNotSupported => Get("Resources_TypeResolverInSafeModeNotSupported");
+
         #endregion
 
         #region Serialization (any ways)
@@ -1010,8 +1013,11 @@ namespace KGySoft
         /// <summary>Unsupported mime type "{0}" at line {1}, position {2}.</summary>
         internal static string ResourcesMimeTypeNotSupported(string mimeType, int line, int pos) => Get("Resources_MimeTypeNotSupportedFormat", mimeType, line, pos);
 
-        /// <summary>When targeting .NET 8 or later, resources serialized by BinaryFormatter (mime type "{0}") is no longer supported. Line {1}, position {2}.</summary>
+        /// <summary>When targeting .NET 8 or later, resources serialized by BinaryFormatter (mime type "{0}") are no longer supported. Line {1}, position {2}.</summary>
         internal static string ResourcesBinaryFormatterNotSupported(string mimeType, int line, int pos) => Get("Resources_BinaryFormatterNotSupportedFormat", mimeType, line, pos);
+
+        /// <summary>In safe mode it is not allowed to deserialize resource "{0}" because it was serialized by BinaryFormatter. Line {1}, position {2}.</summary>
+        internal static string ResourcesBinaryFormatterSafeModeNotSupported(string name, int line, int pos) => Get("Resources_BinaryFormatterSafeModeNotSupportedFormat", name, line, pos);
 
         /// <summary>Unsupported ResX reader "{0}" at line {1}, position {2}.</summary>
         internal static string ResourcesResXReaderNotSupported(string reader, int line, int pos) => Get("Resources_ResXReaderNotSupportedFormat", reader, line, pos);
@@ -1056,6 +1062,9 @@ namespace KGySoft
 
         /// <summary>Saving a resource of type "{0}" is not supported in compatible format because BinaryFormatter is not supported in .NET 8 and above. Either apply the TypeConverterAttribute for type "{0}" that can convert to and from byte array or string, or disable compatible format.</summary>
         internal static string ResourcesCompatibleFormatNotSupported(Type type) => Get("Resources_CompatibleFormatNotSupportedFormat", type);
+
+        /// <summary>In safe mode it is not supported to deserialize file references. Resource name: {0}.</summary>
+        internal static string ResourcesFileRefFileNotSupportedSafeMode(string name) => Get("Resources_FileRefFileNotSupportedSafeModeFormat", name);
 
         #endregion
 

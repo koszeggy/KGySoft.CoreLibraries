@@ -965,8 +965,40 @@ namespace KGySoft.Resources
         /// <para>If the resource is not a file reference, <see cref="GetValueSafe">GetValueSafe</see> tries to deserialize the value from the raw .resx string content.
         /// The deserialization will fail if the assembly of the type to create type is not already loaded.</para>
         /// </remarks>
-        public object? GetValueSafe(ITypeResolutionService? typeResolver = null, string? basePath = null, bool cleanupRawData = false)
-            => DoGetValue(typeResolver, basePath, cleanupRawData, true);
+        [Obsolete("In safe mode neither typeResolver nor file references are allowed")]
+        public object? GetValueSafe(ITypeResolutionService? typeResolver, string? basePath = null, bool cleanupRawData = false)
+        {
+            if (typeResolver != null)
+                Throw.NotSupportedException(Res.ResourcesTypeResolverInSafeModeNotSupported);
+            return DoGetValue(null, basePath, cleanupRawData, true);
+        }
+
+        /// <summary>
+        /// Retrieves the object that is stored by this node, not allowing loading assemblies during the possible deserialization.
+        /// </summary>
+        /// <returns>The object that corresponds to the stored value.</returns>
+        /// <param name="typeResolver">A custom type resolution service to use for resolving type names. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <param name="basePath">Defines a base path for file reference values. Used when <see cref="FileRef"/> is not <see langword="null"/>.
+        /// If this parameter is <see langword="null"/>, tries to use the original base path, if any. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <param name="cleanupRawData"><see langword="true"/> to free the underlying XML data once the value is deserialized; otherwise, <see langword="false"/>. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
+        /// <exception cref="TypeLoadException">The corresponding type or its container assembly could not be loaded.</exception>
+        /// <exception cref="SerializationException">An error occurred during the binary deserialization of the resource.</exception>
+        /// <exception cref="FileNotFoundException">The resource is a file reference and the referenced file cannot be found.</exception>
+        /// <exception cref="NotSupportedException">Unsupported MIME type or an appropriate type converter is not available.</exception>
+        /// <remarks>
+        /// <note type="security">When using this method it is guaranteed that no new assembly is loaded during the deserialization, unless it is resolved by the specified <paramref name="typeResolver"/>.
+        /// To allow loading assemblies use the <see cref="GetValue">GetValue</see> method instead.</note>
+        /// <para>If the stored value currently exists in memory, it is returned directly.</para>
+        /// <para>If the resource is a file reference, <see cref="GetValueSafe">GetValueSafe</see> tries to open the file and deserialize its content.
+        /// The deserialization will fail if the assembly of the type to create is not loaded yet.</para>
+        /// <para>If the resource is not a file reference, <see cref="GetValueSafe">GetValueSafe</see> tries to deserialize the value from the raw .resx string content.
+        /// The deserialization will fail if the assembly of the type to create type is not already loaded.</para>
+        /// </remarks>
+        public object? GetValueSafe(bool cleanupRawData = false)
+            => DoGetValue(null, null, cleanupRawData, true);
 
         /// <summary>
         /// Returns a string that represents the current object.
@@ -1342,6 +1374,9 @@ namespace KGySoft.Resources
                 result = cachedValue;
             else if (fileRef != null)
             {
+                if (safeMode)
+                    Throw.NotSupportedException(Res.ResourcesFileRefFileNotSupportedSafeMode(Name));
+
                 // fileRef.TypeName is always an AQN, so there is no need to play with the alias name.
                 Type? objectType = ResolveType(fileRef.TypeName, typeResolver, safeMode);
                 if (objectType != null)
@@ -1473,6 +1508,8 @@ namespace KGySoft.Resources
 #if NET8_0_OR_GREATER
                 Throw.NotSupportedException(Res.ResourcesBinaryFormatterNotSupported(mimeType, dataNodeInfo.Line, dataNodeInfo.Column));
 #else
+                if (safeMode)
+                    Throw.NotSupportedException(Res.ResourcesBinaryFormatterSafeModeNotSupported(dataNodeInfo.Name, dataNodeInfo.Line, dataNodeInfo.Column));
                 byte[] serializedData = FromBase64WrappedString(text);
                 using var surrogate = new CustomSerializerSurrogateSelector { IgnoreNonExistingFields = true, SafeMode = safeMode };
 #if !NETFRAMEWORK
@@ -1485,7 +1522,7 @@ namespace KGySoft.Resources
                 {
                     SurrogateSelector = surrogate,
                     Binder = typeResolver != null
-                        ? new ResXSerializationBinder(typeResolver, safeMode)
+                        ? new ResXSerializationBinder(typeResolver)
                         : new WeakAssemblySerializationBinder { SafeMode = safeMode }
                 };
 
@@ -1544,6 +1581,7 @@ namespace KGySoft.Resources
             // 3.) BinarySerializationFormatter
             if (mimeType == ResXCommon.KGySoftSerializedObjectMimeType)
             {
+                Debug.Assert(typeResolver == null || !safeMode, "No typeResolver is expected in safe mode");
                 byte[] serializedData = FromBase64WrappedString(text);
                 var serializer = new BinarySerializationFormatter(safeMode ? BinarySerializationOptions.SafeMode : BinarySerializationOptions.None)
                 {

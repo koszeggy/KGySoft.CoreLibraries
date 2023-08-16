@@ -932,7 +932,16 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
     <value>Unsupported mime type "{0}" at line {1}, position {2}.</value>
   </data>
   <data name="Resources_BinaryFormatterNotSupportedFormat" xml:space="preserve">
-    <value>When targeting .NET 8 or later, resources serialized by BinaryFormatter (mime type "{0}") is no longer supported. Line {1}, position {2}.</value>
+    <value>When targeting .NET 8 or later, resources serialized by BinaryFormatter (mime type "{0}") are no longer supported. Line {1}, position {2}.</value>
+  </data>
+  <data name="Resources_BinaryFormatterSafeModeNotSupportedFormat" xml:space="preserve">
+    <value>In safe mode it is not allowed to deserialize resource "{0}" because it was serialized by BinaryFormatter. Line {1}, position {2}.</value>
+  </data>
+  <data name="Resources_FileRefFileNotSupportedSafeModeFormat" xml:space="preserve">
+    <value>In safe mode it is not supported to deserialize file references. Resource name: {0}.</value>
+  </data>
+  <data name="Resources_TypeResolverInSafeModeNotSupported" xml:space="preserve">
+    <value>In safe mode it is not supported to resolve types by a type resolution service.</value>
   </data>
   <data name="Resources_ResXReaderNotSupportedFormat" xml:space="preserve">
     <value>Unsupported ResX reader "{0}" at line {1}, position {2}.</value>
