@@ -44,10 +44,23 @@
 - ThreadSafeHashSet<T> class:
   - The PreserveMergedItems property was ignored on serialization.
 
+! KGySoft.ComponentModel namespace:
+===================================
+! BinaryTypeConverter class: It does not support any custom type anymore, only the ones that are natively supported
+  by the BinarySerializationFormatter class in safe mode, without storing any type names to resolve.
+
 ! KGySoft.Resources namespace:
 ==============================
 ! ResXDataNode class:
-  ! Mime types representing BinaryFormatter are no longer supported when targeting .NET 8 or later.
+  ! GetValue method: Mime types representing BinaryFormatter are no longer supported when targeting .NET 8 or later.
+  ! GetValueSafe(ITypeResolutionService, string, bool): This method is now obsolete and throws an exception if the
+    typeResolver parameter is not null because custom type resolving is not enabled in safe mode.
+  + New GetValueSafe(bool) overload. Without any specified parameter this overload is called after a rebuild.
+  ! GetValueSafe methods:
+    ! Resources serialized by the safe BinarySerializationFormatter (non-compatible mode) can only be deserialized
+      if the serialization stream does not contain any type name to resolve.
+    ! File references are not allowed in safe mode. Not even strings or byte array because a file replacement may
+      cause an OutOfMemoryException.
   ! Embedded MemoryStream in non-compatible mode is added as a byte array rather than a binary serialized stream.
     This affects the result of the GetObject methods in ResXResourceManager, HybridResourceManager and
     DynamimcResourceManager classes but their GetStream methods still work the same way.
@@ -60,6 +73,15 @@
   ! Deserialize* methods: BinarySerializationOptions.SafeMode flag is now enabled by default
 ! BinarySerializationFormatter class:
   ! Constructor: BinarySerializationOptions.SafeMode flag is now enabled in options parameter by default
+  ! If SafeMode is enabled, non-natively supported types cannot be automatically deserialized anymore (not even
+    serializable types). Every type that is stored in the serialization stream by name must be passed to the
+    expectedCustomTypes parameter of the new Deserialize* methods, including enum or managed value type names.
+  ! If SafeMode is enabled, no surrogate selectors can be used, not even the ones that have a SafeMode property
+    in this library.
+  ! If SafeMode is enabled, only ForwardedTypesSerializationBinder can be used for deserialization if its SafeMode
+    is set to true. The reason for not allowing any 3rd party binders (not even the other binders in this library)
+    is that a custom serialization logic could weaken the SafeMode rules of BinarySerializationFormatter.
+  + New Deserialize, DeserializeFromStream, DeserializeByReader overloads with expectedCustomTypes parameters.
   + Supporting the StringSegment struct natively
   + Supporting the CompareInfo class natively
   + Supporting the CultureInfo class natively
@@ -109,6 +131,12 @@
   + Supporting the Vector512<T> struct natively (.NET 8.0 and above)
 * CustomSerializerSurrogateSelector class: The class has been made obsolete
 * NameInvariantSurrogateSelector class: The class has been made obsolete
+
+! KGySoft.Serialization.Xml namespace:
+======================================
+! XmlSerializer class:
+  ! DeserializeSafe and DeserializeContentSafe methods: These methods cannot deserialize binary serialized contents
+    anymore if they contain any explicitly stored types to be resolved.
 
 
 ~~~~~~~~~
