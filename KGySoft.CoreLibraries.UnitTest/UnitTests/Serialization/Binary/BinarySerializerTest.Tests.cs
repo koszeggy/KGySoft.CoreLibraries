@@ -1537,9 +1537,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             {
                 new Dictionary<int, StrongBox<int>> { { 1, new StrongBox<int>(1) }, { 2, null } },
 #if !NET35
-#if !NET7_0 // BUG, only in .NET 7: https://github.com/dotnet/runtime/issues/67491
                 new Dictionary<int, ConcurrentBag<int>> { { 1, new ConcurrentBag<int> { 1, 2 } }, { 2, null } },
-#endif
                 new Dictionary<int, ConcurrentQueue<int>> { { 1, new ConcurrentQueue<int>(new[] { 1, 2 }) }, { 2, null } },
                 new Dictionary<int, ConcurrentStack<int>> { { 1, new ConcurrentStack<int>(new[] { 1, 2 }) }, { 2, null } },
 #endif
@@ -1578,8 +1576,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode);
 
+#if !NET7_0_OR_GREATER // forced recursive serialization is dangerous for ConcurrentBag in .NET 7 and above: https://github.com/dotnet/runtime/issues/67491
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.RecursiveSerializationAsFallback);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.RecursiveSerializationAsFallback);
+#endif
         }
 
         [Test]
