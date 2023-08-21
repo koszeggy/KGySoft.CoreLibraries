@@ -950,17 +950,17 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
     <value>Unsupported ResX writer "{0}" at line {1}, position {2}.</value>
   </data>
   <data name="Resources_TypeLoadExceptionAtFormat" xml:space="preserve">
-    <value>Type "{0}" in the data at line {1}, position {2} cannot be resolved.</value>
+    <value>Could not resolve type "{0}" in the data at line {1}, position {2}.</value>
   </data>
   <data name="Resources_TypeLoadExceptionSafeAtFormat" xml:space="preserve">
-    <value>Type "{0}" in the data at line {1}, position {2} cannot be resolved.
+    <value>Could not resolve type "{0}" in the data at line {1}, position {2}.
 You may try to preload its assembly before deserialization or use the unsafe GetValue if the resource is from a trusted source.</value>
   </data>
   <data name="Resources_TypeLoadExceptionFormat" xml:space="preserve">
-    <value>Type "{0}" cannot be resolved.</value>
+    <value>Could not resolve type "{0}".</value>
   </data>
   <data name="Resources_TypeLoadExceptionSafeFormat" xml:space="preserve">
-    <value>Type "{0}" cannot be resolved using safe mode.
+    <value>Could not resolve type in safe mode: "{0}".
 You may try to preload its assembly before deserialization or use the unsafe GetValue if the resource is from a trusted source.</value>
   </data>
   <data name="General_ArgumentEmpty" xml:space="preserve">

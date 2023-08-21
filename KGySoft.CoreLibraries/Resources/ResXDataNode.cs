@@ -839,9 +839,7 @@ namespace KGySoft.Resources
             Type? result = null;
             if (typeResolver != null)
             {
-                // TODO: do not allow typeResolver in safeMode
-                //if (safeMode)
-                //    Throw.ArgumentException(Res.ResourcesTypeResolutionServiceNotAllowedInSafeMode);
+                Debug.Assert(!safeMode, "In safe mode typeResolver is expected to be null.");
                 result = typeResolver.GetType(assemblyQualifiedName, false);
             }
 
@@ -933,7 +931,8 @@ namespace KGySoft.Resources
         /// <exception cref="NotSupportedException">Unsupported MIME type or an appropriate type converter is not available.</exception>
         /// <remarks>
         /// <note type="security">When using this method make sure that the .resx data to be deserialized is from a trusted source.
-        /// This method might load assemblies during type resolve. To disallow loading assemblies use the <see cref="GetValueSafe">GetValueSafe</see> method instead.</note>
+        /// This method might load assemblies during type resolve and allows resolving file references.
+        /// To disallow loading assemblies or resolving file references use the <see cref="GetValueSafe(bool)">GetValueSafe</see> method instead.</note>
         /// <para>If the stored value currently exists in memory, it is returned directly.</para>
         /// <para>If the resource is a file reference, <see cref="GetValue">GetValue</see> tries to open the file and deserialize its content.</para>
         /// <para>If the resource is not a file reference, <see cref="GetValue">GetValue</see> tries to deserialize the value from the raw .resx string content.</para>
@@ -943,59 +942,50 @@ namespace KGySoft.Resources
 
         /// <summary>
         /// Retrieves the object that is stored by this node, not allowing loading assemblies during the possible deserialization.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="GetValueSafe(bool)"/> overload for details.
         /// </summary>
         /// <returns>The object that corresponds to the stored value.</returns>
-        /// <param name="typeResolver">A custom type resolution service to use for resolving type names. This parameter is optional.
-        /// <br/>Default value: <see langword="null"/>.</param>
-        /// <param name="basePath">Defines a base path for file reference values. Used when <see cref="FileRef"/> is not <see langword="null"/>.
-        /// If this parameter is <see langword="null"/>, tries to use the original base path, if any. This parameter is optional.
+        /// <param name="typeResolver">Starting with version 8.0.0 this parameter must be <see langword="null"/>.</param>
+        /// <param name="basePath">Starting with version 8.0.0 this parameter is ignored because file references are not supported in safe mode. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <param name="cleanupRawData"><see langword="true"/> to free the underlying XML data once the value is deserialized; otherwise, <see langword="false"/>. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <exception cref="TypeLoadException">The corresponding type or its container assembly could not be loaded.</exception>
         /// <exception cref="SerializationException">An error occurred during the binary deserialization of the resource.</exception>
         /// <exception cref="FileNotFoundException">The resource is a file reference and the referenced file cannot be found.</exception>
-        /// <exception cref="NotSupportedException">Unsupported MIME type or an appropriate type converter is not available.</exception>
-        /// <remarks>
-        /// <note type="security">When using this method it is guaranteed that no new assembly is loaded during the deserialization, unless it is resolved by the specified <paramref name="typeResolver"/>.
-        /// To allow loading assemblies use the <see cref="GetValue">GetValue</see> method instead.</note>
-        /// <para>If the stored value currently exists in memory, it is returned directly.</para>
-        /// <para>If the resource is a file reference, <see cref="GetValueSafe">GetValueSafe</see> tries to open the file and deserialize its content.
-        /// The deserialization will fail if the assembly of the type to create is not loaded yet.</para>
-        /// <para>If the resource is not a file reference, <see cref="GetValueSafe">GetValueSafe</see> tries to deserialize the value from the raw .resx string content.
-        /// The deserialization will fail if the assembly of the type to create type is not already loaded.</para>
-        /// </remarks>
+        /// <exception cref="NotSupportedException">Unsupported MIME type or an appropriate type converter is not available.
+        /// <br/>-or-<br/>
+        /// <paramref name="typeResolver"/> is not <see langword="null"/>.
+        /// <br/>-or-<br/>
+        /// <see cref="FileRef"/> is not <see langword="null"/>.
+        /// </exception>
         [Obsolete("In safe mode neither typeResolver nor file references are allowed")]
         public object? GetValueSafe(ITypeResolutionService? typeResolver, string? basePath = null, bool cleanupRawData = false)
         {
             if (typeResolver != null)
                 Throw.NotSupportedException(Res.ResourcesTypeResolverInSafeModeNotSupported);
-            return DoGetValue(null, basePath, cleanupRawData, true);
+            return DoGetValue(null, null, cleanupRawData, true);
         }
 
         /// <summary>
         /// Retrieves the object that is stored by this node, not allowing loading assemblies during the possible deserialization.
         /// </summary>
         /// <returns>The object that corresponds to the stored value.</returns>
-        /// <param name="typeResolver">A custom type resolution service to use for resolving type names. This parameter is optional.
-        /// <br/>Default value: <see langword="null"/>.</param>
-        /// <param name="basePath">Defines a base path for file reference values. Used when <see cref="FileRef"/> is not <see langword="null"/>.
-        /// If this parameter is <see langword="null"/>, tries to use the original base path, if any. This parameter is optional.
-        /// <br/>Default value: <see langword="null"/>.</param>
         /// <param name="cleanupRawData"><see langword="true"/> to free the underlying XML data once the value is deserialized; otherwise, <see langword="false"/>. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <exception cref="TypeLoadException">The corresponding type or its container assembly could not be loaded.</exception>
         /// <exception cref="SerializationException">An error occurred during the binary deserialization of the resource.</exception>
         /// <exception cref="FileNotFoundException">The resource is a file reference and the referenced file cannot be found.</exception>
-        /// <exception cref="NotSupportedException">Unsupported MIME type or an appropriate type converter is not available.</exception>
+        /// <exception cref="NotSupportedException">Unsupported MIME type or an appropriate type converter is not available.
+        /// <br/>-or-<br/>
+        /// The value has not been deserialized yet and <see cref="FileRef"/> is not <see langword="null"/>.
+        /// </exception>
         /// <remarks>
-        /// <note type="security">When using this method it is guaranteed that no new assembly is loaded during the deserialization, unless it is resolved by the specified <paramref name="typeResolver"/>.
-        /// To allow loading assemblies use the <see cref="GetValue">GetValue</see> method instead.</note>
+        /// <note type="security">When using this method it is guaranteed that no new assembly is loaded during the deserialization.
+        /// To allow loading assemblies or to use a custom <see cref="ITypeResolutionService"/> use the <see cref="GetValue">GetValue</see> method instead.</note>
         /// <para>If the stored value currently exists in memory, it is returned directly.</para>
-        /// <para>If the resource is a file reference, <see cref="GetValueSafe">GetValueSafe</see> tries to open the file and deserialize its content.
-        /// The deserialization will fail if the assembly of the type to create is not loaded yet.</para>
-        /// <para>If the resource is not a file reference, <see cref="GetValueSafe">GetValueSafe</see> tries to deserialize the value from the raw .resx string content.
-        /// The deserialization will fail if the assembly of the type to create type is not already loaded.</para>
+        /// <para>If the resource is a file reference and is has not been deserialized yet, then this method throws a <see cref="NotSupportedException"/>.
+        /// You can only use the <see cref="GetValue">GetValue</see> method to deserialize a file reference.</para>
         /// </remarks>
         public object? GetValueSafe(bool cleanupRawData = false)
             => DoGetValue(null, null, cleanupRawData, true);

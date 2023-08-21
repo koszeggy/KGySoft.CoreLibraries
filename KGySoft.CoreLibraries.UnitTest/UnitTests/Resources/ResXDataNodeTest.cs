@@ -123,61 +123,63 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.IsNull(node.ValueData);
         }
 
-        [TestCase(false)]
-        [TestCase(true)]
-        public void SafeModeWithTypeConverterTest(bool customResolver)
+        [Test]
+        [Obsolete]
+        public void SafeModeWithTypeConverterTest()
         {
-            var nodeInfo = new DataNodeInfo()
+            var nodeInfo = new DataNodeInfo
             {
                 Name = "dangerous",
                 TypeName = "MyNamespace.DangerousType, DangerousAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null",
             };
 
             var nodeRaw = new ResXDataNode(nodeInfo, null);
-            var resolver = customResolver ? new TestTypeResolver() : null;
+            Throws<NotSupportedException>(() => nodeRaw.GetValueSafe(new TestTypeResolver()));
+        }
 
-            Throws<TypeLoadException>(() => nodeRaw.GetValueSafe(resolver));
+        [Test]
+        public void SafeModeWithFileRefTest()
+        {
+            var fileRef = new ResXFileRef("fileName", "MyNamespace.DangerousType, DangerousAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null", null);
+            var nodeRaw = new ResXDataNode("dangerous", fileRef);
+            Throws<NotSupportedException>(() => nodeRaw.GetValueSafe(), Res.ResourcesFileRefFileNotSupportedSafeMode(nodeRaw.Name));
+        }
+
+        [Test]
+        public void SafeModeWithFileRefTestWithResolver()
+        {
+            var fileRef = new ResXFileRef("fileName", "MyNamespace.DangerousType, DangerousAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null", null);
+            var nodeRaw = new ResXDataNode("dangerous", fileRef);
+
+            Throws<NotSupportedException>(() => nodeRaw.GetValueSafe(new TestTypeResolver()), Res.ResourcesTypeResolverInSafeModeNotSupported);
         }
 
         [TestCase(false)]
         [TestCase(true)]
-        public void SafeModeWithFileRefTest(bool customResolver)
-        {
-            var fileRef = new ResXFileRef("fileName", "MyNamespace.DangerousType, DangerousAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null", null);
-            var nodeRaw = new ResXDataNode("dangerous", fileRef);
-            var resolver = customResolver ? new TestTypeResolver() : null;
-
-            Throws<TypeLoadException>(() => nodeRaw.GetValueSafe(resolver));
-        }
-
-
-        [TestCase(false, false)]
-        [TestCase(false, true)]
-        [TestCase(true, false)]
-        [TestCase(true, true)]
-        public void SafeModeWithFormatterTest(bool compatibleFormat, bool customResolver)
+        public void SafeModeWithCompatibleFormatterTest(bool customResolver)
         {
 #if NET35
-            if (compatibleFormat)
-                Assert.Inconclusive("In .NET 3.5 cannot create the hacked payload in compatible format because SerializationBinder.BindToName method is not supported");
+            Assert.Inconclusive("In .NET 3.5 cannot create the hacked payload in compatible format because SerializationBinder.BindToName method is not supported");
 #elif NET8_0_OR_GREATER
-            if (compatibleFormat)
-                Assert.Inconclusive("Cannot test compatible format in .NET 8.0 and above because BinaryFormatter is no longer supported");
+            Assert.Inconclusive("Cannot test compatible format in .NET 8.0 and above because BinaryFormatter is no longer supported");
 #endif
             const string asmName = "DangerousAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null";
             const string typeName = "MyNamespace.DangerousType";
             var proxyType = typeof(object);
             var proxyInstance = Reflector.CreateInstance(proxyType);
             var nodeWithObject = new ResXDataNode("dangerous", proxyInstance);
-            var info = nodeWithObject.GetDataNodeInfo(null, compatibleFormat);
+            var info = nodeWithObject.GetDataNodeInfo(null, true);
 
             // hacking the content as if it was from another assembly
-            IFormatter formatter = compatibleFormat ? new BinaryFormatter() : new BinarySerializationFormatter(BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
-            formatter.Binder = new CustomSerializationBinder
+            var formatter = new BinaryFormatter
             {
-                AssemblyNameResolver = t => t == proxyType ? asmName : null,
-                TypeNameResolver = t => t == proxyType ? typeName : null,
+                Binder = new CustomSerializationBinder
+                {
+                    AssemblyNameResolver = t => t == proxyType ? asmName : null,
+                    TypeNameResolver = t => t == proxyType ? typeName : null,
+                }
             };
+
             using var stream = new MemoryStream();
             formatter.Serialize(stream, proxyInstance);
             info.ValueData = Convert.ToBase64String(stream.ToArray());
@@ -185,8 +187,40 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             var resolver = customResolver ? new TestTypeResolver() : null;
             var nodeRaw = new ResXDataNode(info, null);
 
-            Throws<SerializationException>(() => nodeRaw.GetValue(resolver));
-            Throws<SerializationException>(() => nodeRaw.GetValueSafe(resolver));
+            Throws<SerializationException>(() => nodeRaw.GetValue(resolver), asmName);
+            Throws<NotSupportedException>(() => nodeRaw.GetValueSafe(), Res.ResourcesBinaryFormatterSafeModeNotSupported(nodeRaw.Name, 0, 0));
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void SafeModeWithIncompatibleFormatterTest(bool customResolver)
+        {
+            const string asmName = "DangerousAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null";
+            const string typeName = "MyNamespace.DangerousType";
+            var proxyType = typeof(object);
+            var proxyInstance = Reflector.CreateInstance(proxyType);
+            var nodeWithObject = new ResXDataNode("dangerous", proxyInstance);
+            var info = nodeWithObject.GetDataNodeInfo(null, false);
+
+            // hacking the content as if it was from another assembly
+            var formatter = new BinarySerializationFormatter(BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes)
+            {
+                Binder = new CustomSerializationBinder
+                {
+                    AssemblyNameResolver = t => t == proxyType ? asmName : null,
+                    TypeNameResolver = t => t == proxyType ? typeName : null,
+                }
+            };
+
+            using var stream = new MemoryStream();
+            formatter.SerializeToStream(stream, proxyInstance);
+            info.ValueData = Convert.ToBase64String(stream.ToArray());
+
+            var resolver = customResolver ? new TestTypeResolver() : null;
+            var nodeRaw = new ResXDataNode(info, null);
+
+            Throws<SerializationException>(() => nodeRaw.GetValue(resolver), asmName);
+            Throws<SerializationException>(() => nodeRaw.GetValueSafe(), "You may try to preload the assembly before deserialization or disable SafeMode if the serialization stream is from a trusted source.");
         }
 
         #endregion

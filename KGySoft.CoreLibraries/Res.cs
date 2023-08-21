@@ -1025,17 +1025,17 @@ namespace KGySoft
         /// <summary>Unsupported ResX writer "{0}" at line {1}, position {2}.</summary>
         internal static string ResourcesResXWriterNotSupported(string writer, int line, int pos) => Get("Resources_ResXWriterNotSupportedFormat", writer, line, pos);
 
-        /// <summary>Type "{0}" in the data at line {1}, position {2} cannot be resolved.</summary>
+        /// <summary>Could not resolve type "{0}" in the data at line {1}, position {2}.</summary>
         internal static string ResourcesTypeLoadExceptionAt(string typeName, int line, int pos) => Get("Resources_TypeLoadExceptionAtFormat", typeName, line, pos);
 
-        /// <summary>Type "{0}" in the data at line {1}, position {2} cannot be resolved.
+        /// <summary>Could not resolve type "{0}" in the data at line {1}, position {2}.
         /// You may try to preload its assembly before deserialization or use the unsafe GetValue if the resource is from a trusted source.</summary>
         internal static string ResourcesTypeLoadExceptionSafeAt(string typeName, int line, int pos) => Get("Resources_TypeLoadExceptionSafeAtFormat", typeName, line, pos);
 
-        /// <summary>Type "{0}" cannot be resolved.</summary>
+        /// <summary>Could not resolve type "{0}".</summary>
         internal static string ResourcesTypeLoadException(string typeName) => Get("Resources_TypeLoadExceptionFormat", typeName);
 
-        /// <summary>Type "{0}" cannot be resolved using safe mode.
+        /// <summary>Could not resolve type in safe mode: "{0}".
         /// You may try to preload its assembly before deserialization or use the unsafe GetValue if the resource is from a trusted source.</summary>
         internal static string ResourcesTypeLoadExceptionSafe(string typeName) => Get("Resources_TypeLoadExceptionSafeFormat", typeName);
 

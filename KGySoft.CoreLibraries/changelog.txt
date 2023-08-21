@@ -54,8 +54,10 @@
 ! ResXDataNode class:
   ! GetValue method: Mime types representing BinaryFormatter are no longer supported when targeting .NET 8 or later.
   ! GetValueSafe(ITypeResolutionService, string, bool): This method is now obsolete and throws an exception if the
-    typeResolver parameter is not null because custom type resolving is not enabled in safe mode.
-  + New GetValueSafe(bool) overload. Without any specified parameter this overload is called after a rebuild.
+    typeResolver parameter is not null because custom type resolving is not enabled in safe mode. The first
+    parameter is not optional anymore so if no parameters are specified the new overload is used automatically.
+  + New GetValueSafe(bool) overload. If the obsoleted overload was called without specifying the optional parameters
+    this new overload is going to be called after a rebuild.
   ! GetValueSafe methods:
     ! Resources serialized by the safe BinarySerializationFormatter (non-compatible mode) can only be deserialized
       if the serialization stream does not contain any type name to resolve.
