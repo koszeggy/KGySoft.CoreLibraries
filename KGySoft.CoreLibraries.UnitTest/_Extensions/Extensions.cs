@@ -18,6 +18,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using System.Reflection;
 using System.Text;
 
 #endregion
@@ -85,6 +88,20 @@ namespace KGySoft.CoreLibraries
             for (int i = 0; i < s.Length; i++)
                 chars[i] = s[i] < 32 && !s[i].In(whitespaceControls) ? '□' : s[i];
             return new String(chars);
+        }
+
+        internal static string Dump(this object o)
+        {
+            if (o == null)
+                return "<null>";
+
+            if (o is IConvertible convertible)
+                return convertible.ToString(CultureInfo.InvariantCulture);
+
+            if (o is IEnumerable enumerable)
+                return $"[{enumerable.Cast<object>().Select(Dump).Join(", ")}]";
+
+            return $"{{{o.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance).Select(p => $"{p.Name} = {Dump(p.GetValue(o))}").Join(", ")}}}";
         }
 
         #endregion

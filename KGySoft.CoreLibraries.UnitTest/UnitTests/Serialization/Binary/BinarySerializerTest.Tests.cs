@@ -3025,6 +3025,29 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             Throws<SerializationException>(() => DeserializeObject(manipulatedData, bsf), "Invalid stream data.");
         }
 
+#if NETCOREAPP3_0_OR_GREATER
+        [TestCase<int>]
+        [TestCase<Point>]
+        [TestCase<ConsoleColor>]
+        [TestCase<Dictionary<string, ConsoleColor>>]
+        [TestCase<SystemSerializableClass>]
+#else
+        [TestCaseGeneric(TypeArguments = new[] { typeof(int) })]
+        [TestCaseGeneric(TypeArguments = new[] { typeof(Point) })]
+        [TestCaseGeneric(TypeArguments = new[] { typeof(ConsoleColor) })]
+        [TestCaseGeneric(TypeArguments = new[] { typeof(Dictionary<string, ConsoleColor>) })]
+        [TestCaseGeneric(TypeArguments = new[] { typeof(SystemSerializableClass) })]
+#endif
+        public void SafeModeGenericTest<T>()
+        {
+            T instance = ThreadSafeRandom.Instance.NextObject<T>();
+            Console.WriteLine($"{typeof(T).GetName(TypeNameKind.ShortName)}: {instance.Dump()}");
+
+            byte[] raw = BinarySerializer.Serialize(instance);
+            T clone = BinarySerializer.Deserialize<T>(raw);
+            AssertDeepEquals(instance, clone);
+        }
+
         #endregion
     }
 }

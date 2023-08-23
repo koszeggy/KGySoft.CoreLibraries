@@ -691,6 +691,8 @@ namespace KGySoft.Serialization.Binary
                     Assembly asm = type.Assembly;
                     string? asmName = asm.FullName;
                     string typeName = type.FullName!;
+                    if (typeName == null!)
+                        Throw.ArgumentException(Argument.expectedCustomTypes, Res.ArgumentInvalid);
 
                     // actual identity
                     expectedTypes[(asmName, typeName)] = type;
