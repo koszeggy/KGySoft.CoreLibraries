@@ -375,7 +375,7 @@ Even if used in a secure environment or on a cryptographically secured channel, 
 
 Binary serialization functions are available via the static [`BinarySerializer`](https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Serialization_Binary_BinarySerializer.htm) class and by the [`BinarySerializationFormatter`][bsf] type.
 
-> 💡 _Tip:_ Try also [online](https://dotnetfiddle.net/T7BUyB).
+> 💡 _Tip:_ Try also [online](https://dotnetfiddle.net/nQfFrQ).
 
 ```cs
 // Simple way: by the static BinarySerializer class

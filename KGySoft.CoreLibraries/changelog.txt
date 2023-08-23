@@ -77,7 +77,7 @@
   ! Constructor: BinarySerializationOptions.SafeMode flag is now enabled in options parameter by default
   ! If SafeMode is enabled, non-natively supported types cannot be automatically deserialized anymore (not even
     serializable types). Every type that is stored in the serialization stream by name must be passed to the
-    expectedCustomTypes parameter of the new Deserialize* methods, including enum or managed value type names.
+    expectedCustomTypes parameter of the new Deserialize* methods, including enum or unmanaged value type names.
   ! If SafeMode is enabled, no surrogate selectors can be used, not even the ones that have a SafeMode property
     in this library.
   ! If SafeMode is enabled, only ForwardedTypesSerializationBinder can be used for deserialization if its SafeMode
@@ -87,7 +87,6 @@
   + Supporting the StringSegment struct natively
   + Supporting the CompareInfo class natively
   + Supporting the CultureInfo class natively
-  + Supporting the StringSegment struct natively
   + Supporting the ThreadSafeHashSet<T> class natively
   + Supporting the ThreadSafeDictionary<TKey, TValue> class natively
   + Supporting the StringKeyedDictionary<TValue> class natively

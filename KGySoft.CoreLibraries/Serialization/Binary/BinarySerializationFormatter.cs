@@ -361,7 +361,7 @@ namespace KGySoft.Serialization.Binary
     /// </para>
     /// </remarks>
     /// <example>
-    /// <note type="tip">Try also <a href="https://dotnetfiddle.net/T7BUyB" target="_blank">online</a>.</note>
+    /// <note type="tip">Try also <a href="https://dotnetfiddle.net/nQfFrQ" target="_blank">online</a>.</note>
     /// The following example demonstrates the length difference produced by the <see cref="BinarySerializationFormatter"/> and <see cref="BinaryFormatter"/> classes. Feel free to change the generated type.
     /// <code lang="C#"><![CDATA[
     /// using System;
