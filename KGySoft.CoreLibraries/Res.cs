@@ -708,12 +708,6 @@ namespace KGySoft
         /// <summary>Value type '{0}' cannot be deserialized from raw data in safe mode because it contains references. If the serialization stream is from a trusted source you may try to disable safe mode to attempt the deserialization with marshaling.</summary>
         internal static string BinarySerializationValueTypeContainsReferenceSafe(Type type) => Get("BinarySerialization_ValueTypeContainsReferenceSafeFormat", type.GetName(TypeNameKind.LongName));
 
-        /// <summary>The deserialized value was null, which cannot be cast to {0}.</summary>
-        internal static string BinarySerializationNonNullResultExpected(Type type) => Get("BinarySerialization_NonNullResultExpectedFormat", type.GetName(TypeNameKind.LongName));
-
-        /// <summary>The type of the result is expected to be {0} but it was {1}.</summary>
-        internal static string BinarySerializationUnexpectedResult(Type expectedType, Type actualType) => Get("BinarySerialization_UnexpectedResultFormat", expectedType.GetName(TypeNameKind.LongName), actualType.GetName(TypeNameKind.LongName));
-
         #endregion
 
         #region Cache<TKey, TValue>
@@ -1029,14 +1023,14 @@ namespace KGySoft
         internal static string ResourcesTypeLoadExceptionAt(string typeName, int line, int pos) => Get("Resources_TypeLoadExceptionAtFormat", typeName, line, pos);
 
         /// <summary>Could not resolve type "{0}" in the data at line {1}, position {2}.
-        /// You may try to preload its assembly before deserialization or use the unsafe GetValue if the resource is from a trusted source.</summary>
+        /// You may try to specify the expected type or use the unsafe GetValue if the resource is from a trusted source.</summary>
         internal static string ResourcesTypeLoadExceptionSafeAt(string typeName, int line, int pos) => Get("Resources_TypeLoadExceptionSafeAtFormat", typeName, line, pos);
 
         /// <summary>Could not resolve type "{0}".</summary>
         internal static string ResourcesTypeLoadException(string typeName) => Get("Resources_TypeLoadExceptionFormat", typeName);
 
         /// <summary>Could not resolve type in safe mode: "{0}".
-        /// You may try to preload its assembly before deserialization or use the unsafe GetValue if the resource is from a trusted source.</summary>
+        /// You may try to specify the expected type or use the unsafe GetValue if the resource is from a trusted source.</summary>
         internal static string ResourcesTypeLoadExceptionSafe(string typeName) => Get("Resources_TypeLoadExceptionSafeFormat", typeName);
 
         /// <summary>Type of resource "{0}" is not string but "{1}" - enable SafeMode or use GetObject instead.</summary>
@@ -1075,6 +1069,18 @@ namespace KGySoft
 
         /// <summary>Array of pointer type '{0}' is not supported.</summary>
         internal static string SerializationPointerArrayTypeNotSupported(Type type) => Get("Serialization_PointerArrayTypeNotSupportedFormat", type.GetName(TypeNameKind.LongName));
+
+        /// <summary>The deserialized value was null, which cannot be cast to {0}.</summary>
+        internal static string SerializationNonNullResultExpected(Type type) => Get("Serialization_NonNullResultExpectedFormat", type.GetName(TypeNameKind.LongName));
+
+        /// <summary>The type of the result is expected to be {0} but it was {1}.</summary>
+        internal static string SerializationUnexpectedResult(Type expectedType, Type actualType) => Get("Serialization_UnexpectedResultFormat", expectedType.GetName(TypeNameKind.LongName), actualType.GetName(TypeNameKind.LongName));
+
+        /// <summary>The type of the result is expected to be {0} but it was {1}.</summary>
+        internal static string SerializationUnexpectedResult(Type expectedType, string actualTypeName) => Get("Serialization_UnexpectedResultFormat", expectedType.GetName(TypeNameKind.LongName), actualTypeName);
+
+        /// <summary>Unexpected type name in safe mode: {0}.</summary>
+        internal static string SerializationUnexpectedTypeSafe(string typeName) => Get("Serialization_UnexpectedTypeSafeFormat", typeName);
 
         #endregion
 

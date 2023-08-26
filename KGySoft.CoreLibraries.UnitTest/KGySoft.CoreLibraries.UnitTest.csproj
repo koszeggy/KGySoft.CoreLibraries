@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <!--<TargetFrameworks>net35;net40;net45;net47;net472;netcoreapp2.0;netcoreapp2.1;netcoreapp3.0;net5.0;net6.0;net7.0</TargetFrameworks>-->
-    <TargetFrameworks>net47</TargetFrameworks>
+    <!--<TargetFrameworks>net35;net40;net45;net46;net47;net472;netcoreapp2.0;netcoreapp2.1;netcoreapp3.0;net5.0;net6.0;net7.0;net8.0</TargetFrameworks>-->
+    <TargetFrameworks>net7.0</TargetFrameworks>
 
     <!--For UnitTesting the .NET Standard versions-->
     <!--<TargetFrameworks>netcoreapp2.0;netcoreapp3.0</TargetFrameworks>
@@ -47,7 +47,7 @@
   </ItemGroup>
 
   <!-- .NET Framework only references -->
-  <ItemGroup Condition="'$(TargetFramework)'=='net35' OR '$(TargetFramework)'=='net40' OR '$(TargetFramework)'=='net45' OR '$(TargetFramework)'=='net47' OR '$(TargetFramework)'=='net472'">
+  <ItemGroup Condition="'$(TargetFramework)'=='net35' OR '$(TargetFramework)'=='net40' OR '$(TargetFramework)'=='net45' OR '$(TargetFramework)'=='net46'  OR '$(TargetFramework)'=='net47' OR '$(TargetFramework)'=='net472'">
     <Reference Include="sysglobl" />
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>

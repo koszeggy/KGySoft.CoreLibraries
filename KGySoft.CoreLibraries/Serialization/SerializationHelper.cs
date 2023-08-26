@@ -16,6 +16,7 @@
 #region Usings
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 #if NETFRAMEWORK
 using System.CodeDom.Compiler;
 #endif
@@ -29,6 +30,8 @@ using System.Reflection;
 using KGySoft.Collections;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
+
+using TypeExtensions = KGySoft.CoreLibraries.TypeExtensions;
 
 #endregion
 
@@ -61,6 +64,36 @@ namespace KGySoft.Serialization
             StructuralComparisons.StructuralEqualityComparer.GetType(),
 #endif
         };
+
+        private static StringKeyedDictionary<Type>? nativelySupportedSimpleTypes;
+
+        #endregion
+
+        #region Properties
+
+        private static StringKeyedDictionary<Type> NativelySupportedSimpleTypes
+        {
+            get
+            {
+                if (nativelySupportedSimpleTypes == null)
+                {
+                    var result = new StringKeyedDictionary<Type>();
+                    foreach (Type type in TypeExtensions.GetNativelyParsedTypes())
+                    {
+                        result[type.AssemblyQualifiedName!] = type;
+                        var legacyName = AssemblyResolver.GetForwardedAssemblyName(type);
+                        if (legacyName.ForwardedAssemblyName != null)
+                            result[$"{type.FullName}, {legacyName.ForwardedAssemblyName}"] = type;
+                        if (legacyName.IsCoreIdentity || AssemblyResolver.IsCoreLibAssemblyName(type.Assembly.FullName))
+                            result[type.FullName!] = type;
+                    }
+
+                    nativelySupportedSimpleTypes = result;
+                }
+
+                return nativelySupportedSimpleTypes;
+            }
+        }
 
         #endregion
 
@@ -135,6 +168,9 @@ namespace KGySoft.Serialization
         }
 
         internal static bool IsUnsafeType(Type type) => type.In(unsafeTypes);
+
+        internal static bool TryGetNativelySupportedSimpleType(string typeName, [NotNullWhen(true)]out Type? result)
+            => NativelySupportedSimpleTypes.TryGetValue(typeName, out result);
 
         #endregion
     }

@@ -472,6 +472,15 @@ Hit rate: {8:P2}</value>
   <data name="Serialization_PointerArrayTypeNotSupportedFormat" xml:space="preserve">
     <value>Array of pointer type '{0}' is not supported.</value>
   </data>
+  <data name="Serialization_NonNullResultExpectedFormat" xml:space="preserve">
+    <value>The deserialized value was null, which cannot be cast to {0}.</value>
+  </data>
+  <data name="Serialization_UnexpectedResultFormat" xml:space="preserve">
+    <value>The type of the result is expected to be {0} but it was {1}.</value>
+  </data>
+  <data name="Serialization_UnexpectedTypeSafeFormat" xml:space="preserve">
+    <value>Unexpected type name in safe mode: {0}.</value>
+  </data>
   <data name="StreamExtensions_StreamCannotRead" xml:space="preserve">
     <value>Source stream cannot be read.</value>
   </data>
@@ -704,12 +713,6 @@ Either try to use the ForceRecursiveSerializationOfSupportedTypes option on seri
   </data>
   <data name="BinarySerialization_ValueTypeContainsReferenceSafeFormat" xml:space="preserve">
     <value>Value type '{0}' cannot be deserialized from raw data in safe mode because it contains references. If the serialization stream is from a trusted source you may try to disable safe mode to attempt the deserialization with marshaling.</value>
-  </data>
-  <data name="BinarySerialization_NonNullResultExpectedFormat" xml:space="preserve">
-    <value>The deserialized value was null, which cannot be cast to {0}.</value>
-  </data>
-  <data name="BinarySerialization_UnexpectedResultFormat" xml:space="preserve">
-    <value>The type of the result is expected to be {0} but it was {1}.</value>
   </data>
   <data name="BinarySerialization_DataLengthTooSmall" xml:space="preserve">
     <value>Data length is too small.</value>
@@ -954,14 +957,14 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
   </data>
   <data name="Resources_TypeLoadExceptionSafeAtFormat" xml:space="preserve">
     <value>Could not resolve type "{0}" in the data at line {1}, position {2}.
-You may try to preload its assembly before deserialization or use the unsafe GetValue if the resource is from a trusted source.</value>
+You may try to specify the expected type or use the unsafe GetValue if the resource is from a trusted source.</value>
   </data>
   <data name="Resources_TypeLoadExceptionFormat" xml:space="preserve">
     <value>Could not resolve type "{0}".</value>
   </data>
   <data name="Resources_TypeLoadExceptionSafeFormat" xml:space="preserve">
     <value>Could not resolve type in safe mode: "{0}".
-You may try to preload its assembly before deserialization or use the unsafe GetValue if the resource is from a trusted source.</value>
+You may try to specify the expected type or use the unsafe GetValue if the resource is from a trusted source.</value>
   </data>
   <data name="General_ArgumentEmpty" xml:space="preserve">
     <value>Value cannot be empty.</value>

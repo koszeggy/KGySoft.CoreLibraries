@@ -346,11 +346,9 @@ namespace KGySoft.Serialization.Binary
             if (result is not null)
                 return result;
 
-            string message = String.IsNullOrEmpty(assemblyName)
-                ? Res.BinarySerializationCannotResolveType(typeName) // TODO: special message for safe mode: specify expected type
-                : SafeMode
-                    ? Res.BinarySerializationCannotResolveTypeInAssemblySafe(typeName, assemblyName) // TODO: change message, preload does not help
-                    : Res.BinarySerializationCannotResolveTypeInAssembly(typeName, assemblyName);
+            string message = SafeMode
+                ? Res.SerializationUnexpectedTypeSafe(fullName)
+                : Res.BinarySerializationCannotResolveType(fullName);
             return Throw.SerializationException<Type>(message);
         }
 

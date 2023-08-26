@@ -887,10 +887,10 @@ namespace KGySoft.Serialization.Binary
                         if (result is null)
                         {
                             if (rootType.IsValueType && !rootType.IsNullable())
-                                Throw.SerializationException(Res.BinarySerializationNonNullResultExpected(rootType));
+                                Throw.SerializationException(Res.SerializationNonNullResultExpected(rootType));
                         }
                         else if (!rootType.IsInstanceOfType(result))
-                            Throw.SerializationException(Res.BinarySerializationUnexpectedResult(rootType, result.GetType()));
+                            Throw.SerializationException(Res.SerializationUnexpectedResult(rootType, result.GetType()));
                     }
 
                     DeserializationCallback();
