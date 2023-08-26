@@ -827,36 +827,44 @@ namespace KGySoft.Resources
             return Convert.FromBase64String(sb.ToString());
         }
 
-        private static Type? ResolveType(string assemblyQualifiedName, ITypeResolutionService? typeResolver, bool safeMode)
+        private static Type? ResolveType(string assemblyQualifiedName, ITypeResolutionService? typeResolver, bool safeMode, Type? expectedType)
         {
             // Mapping WinForms refs to KGySoft ones.
-            if (IsFileRef(assemblyQualifiedName))
+            if (IsFileRef(assemblyQualifiedName) && (expectedType is null || expectedType == typeof(ResXFileRef)))
                 return typeof(ResXFileRef);
 
-            if (IsNullRef(assemblyQualifiedName))
+            if (IsNullRef(assemblyQualifiedName) && (expectedType is null || !expectedType.IsValueType || expectedType.IsNullable()))
                 return typeof(ResXNullRef);
 
             Type? result = null;
             if (typeResolver != null)
             {
-                Debug.Assert(!safeMode, "In safe mode typeResolver is expected to be null.");
+                // We have a type resolver: only in unsafe mode so we ignore expectedType from here, which can be specified in safe mode only.
+                Debug.Assert(!safeMode && expectedType == null, "Type resolver is not expected to be used with expectedType or in safe mode.");
                 result = typeResolver.GetType(assemblyQualifiedName, false);
             }
 
             if (result == null)
             {
-                // TODO: in safeMode check if type is expected. Either explicitly or is a known primitive/parseable/expected type
-                //if (safeMode && !CheckAllowTypeSafe(assemblyQualifiedName), expectedTypes)
-                var options = ResolveTypeOptions.AllowPartialAssemblyMatch;
-                if (!safeMode)
-                    options |= ResolveTypeOptions.TryToLoadAssemblies;
-                result = TypeResolver.ResolveType(assemblyQualifiedName, null, options);
+                if (expectedType is not null)
+                {
+                    if (expectedType.AssemblyQualifiedName == assemblyQualifiedName || expectedType.Assembly == AssemblyResolver.CoreLibrariesAssembly && expectedType.FullName == assemblyQualifiedName)
+                        result = expectedType;
+                    else // throwing from here because if returning null, a TypeLoadException will be thrown instead
+                        Throw.ArgumentException(Argument.expectedType, Res.SerializationUnexpectedResult(expectedType, assemblyQualifiedName));
+                }
+                else
+                {
+                    // expected type is not specified: in safeMode accepting it only for natively supported types
+                    if (!SerializationHelper.TryGetNativelySupportedSimpleType(assemblyQualifiedName, out result) && !safeMode)
+                        result = TypeResolver.ResolveType(assemblyQualifiedName, null, ResolveTypeOptions.AllowPartialAssemblyMatch | ResolveTypeOptions.TryToLoadAssemblies);
+                }
             }
 
-            if (result == null)
+            if (result is null)
                 return null;
 
-            // Mapping WinForms refs to KGySoft ones (can happen in case of non-usual aliases)
+            // Mapping WinForms refs to KGySoft ones (can happen in case of non-usual aliases or when expected type is actually the WinForms type)
             if (IsFileRef(result.AssemblyQualifiedName))
                 return typeof(ResXFileRef);
 
@@ -989,6 +997,23 @@ namespace KGySoft.Resources
         /// </remarks>
         public object? GetValueSafe(bool cleanupRawData = false)
             => DoGetValue(null, null, cleanupRawData, true);
+
+        public object? GetValueSafe(Type? expectedType, bool cleanupRawData = false)
+            => DoGetValue(null, null, cleanupRawData, true, expectedType);
+
+        public T? GetValueSafe<T>(bool cleanupRawData = false)
+        {
+            var result = DoGetValue(null, null, cleanupRawData, true, typeof(T));
+            if (result is null)
+            {
+                if (typeof(T).IsValueType && !typeof(T).IsNullable())
+                    Throw.SerializationException(Res.SerializationNonNullResultExpected(typeof(T)));
+            }
+            else if (result is not T)
+                Throw.SerializationException(Res.SerializationUnexpectedResult(typeof(T), result.GetType()));
+
+            return (T?)result;
+        }
 
         /// <summary>
         /// Returns a string that represents the current object.
@@ -1141,7 +1166,7 @@ namespace KGySoft.Resources
             else
             {
                 // Cached value can be null here when we are switching to compatible format and there was no deserialization yet.
-                cachedValue ??= NodeInfoToObject(nodeInfo, null, safeMode);
+                cachedValue ??= NodeInfoToObject(nodeInfo, null, safeMode, null);
                 InitNodeInfo(typeNameConverter, compatibleFormat.GetValueOrDefault());
             }
 
@@ -1357,7 +1382,7 @@ namespace KGySoft.Resources
             nodeInfo.CompatibleFormat = !type.In(nonCompatibleModeNativeTypes);
         }
 
-        private object? DoGetValue(ITypeResolutionService? typeResolver, string? basePath, bool cleanupRawData, bool safeMode)
+        private object? DoGetValue(ITypeResolutionService? typeResolver, string? basePath, bool cleanupRawData, bool safeMode, Type? expectedType = null)
         {
             object? result;
             if (cachedValue != null)
@@ -1368,7 +1393,7 @@ namespace KGySoft.Resources
                     Throw.NotSupportedException(Res.ResourcesFileRefFileNotSupportedSafeMode(Name));
 
                 // fileRef.TypeName is always an AQN, so there is no need to play with the alias name.
-                Type? objectType = ResolveType(fileRef.TypeName, typeResolver, safeMode);
+                Type? objectType = ResolveType(fileRef.TypeName, typeResolver, safeMode, expectedType);
                 if (objectType != null)
                     cachedValue = result = fileRef.GetValue(objectType, basePath ?? fileRefBasePath);
                 else
@@ -1387,7 +1412,7 @@ namespace KGySoft.Resources
             {
                 // it's embedded, we deserialize it
                 Debug.Assert(nodeInfo != null);
-                cachedValue = result = NodeInfoToObject(nodeInfo!, typeResolver, safeMode);
+                cachedValue = result = NodeInfoToObject(nodeInfo!, typeResolver, safeMode, expectedType);
             }
 
             if (cleanupRawData && nodeInfo != null)
@@ -1413,7 +1438,7 @@ namespace KGySoft.Resources
             return type.CanBeParsedNatively() && (!compatibleFormat || !type.In(nonCompatibleModeNativeTypes));
         }
 
-        private object? NodeInfoToObject(DataNodeInfo dataNodeInfo, ITypeResolutionService? typeResolver, bool safeMode)
+        private object? NodeInfoToObject(DataNodeInfo dataNodeInfo, ITypeResolutionService? typeResolver, bool safeMode, Type? expectedType)
         {
             // Handling that <value> can be missing in .resx.
             // If TypeName is not null, then a TypeConverter may handle null
@@ -1423,7 +1448,7 @@ namespace KGySoft.Resources
 
             // from MIME type
             if (!String.IsNullOrEmpty(dataNodeInfo.MimeType))
-                return NodeInfoToObjectByMime(dataNodeInfo, typeResolver, safeMode);
+                return NodeInfoToObjectByMime(dataNodeInfo, typeResolver, safeMode, expectedType);
 
             string typeName = AssemblyQualifiedName!;
             Debug.Assert(typeName != null!, "If there is no MIME type, typeName is expected to be string");
@@ -1432,7 +1457,7 @@ namespace KGySoft.Resources
             if (typeName == null)
                 return valueData ?? String.Empty;
 
-            Type? type = ResolveType(typeName, typeResolver, safeMode);
+            Type? type = ResolveType(typeName, typeResolver, safeMode, expectedType);
             if (type == null)
             {
                 string newMessage = safeMode
@@ -1487,7 +1512,7 @@ namespace KGySoft.Resources
             }
         }
 
-        private object? NodeInfoToObjectByMime(DataNodeInfo dataNodeInfo, ITypeResolutionService? typeResolver, bool safeMode)
+        private object? NodeInfoToObjectByMime(DataNodeInfo dataNodeInfo, ITypeResolutionService? typeResolver, bool safeMode, Type? expectedType)
         {
             string mimeType = dataNodeInfo.MimeType!;
             string text = dataNodeInfo.ValueData ?? String.Empty;
@@ -1536,7 +1561,7 @@ namespace KGySoft.Resources
                 if (String.IsNullOrEmpty(typeName))
                     throw ResXCommon.CreateXmlException(Res.ResourcesMissingAttribute(ResXCommon.TypeStr, dataNodeInfo.Line, dataNodeInfo.Column), dataNodeInfo.Line, dataNodeInfo.Column);
 
-                Type? type = ResolveType(typeName!, typeResolver, safeMode);
+                Type? type = ResolveType(typeName!, typeResolver, safeMode, expectedType);
                 if (type == null)
                 {
                     string newMessage = safeMode

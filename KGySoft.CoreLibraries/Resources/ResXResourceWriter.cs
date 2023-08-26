@@ -807,6 +807,9 @@ namespace KGySoft.Resources
         /// Adds a metadata node specified in a <see cref="ResXDataNode"/> object to the list of resources to write.
         /// </summary>
         /// <param name="node">A <see cref="ResXDataNode"/> object that contains a metadata name/value pair.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="node"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException"><see cref="SafeMode"/> and <see cref="CompatibleFormat"/> are both <see langword="true"/> and <paramref name="node"/> contains
+        /// a non-deserialized node in non-compatible format with a non-natively supported type name. Deserialize the node manually and use the <see cref="AddMetadata(string, object?)"/> overload instead.</exception>
         public void AddMetadata(ResXDataNode node)
         {
             if (node == null!)
@@ -849,6 +852,9 @@ namespace KGySoft.Resources
         /// Adds a named resource specified in a <see cref="ResXDataNode"/> object to the list of resources to write.
         /// </summary>
         /// <param name="node">A <see cref="ResXDataNode"/> object that contains a resource name/value pair.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="node"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException"><see cref="SafeMode"/> and <see cref="CompatibleFormat"/> are both <see langword="true"/> and <paramref name="node"/> contains
+        /// a non-deserialized node in non-compatible format with a non-natively supported type name. Deserialize the node manually and use the <see cref="AddResource(string, object?)"/> overload instead.</exception>
         public void AddResource(ResXDataNode node)
         {
             if (node == null!)

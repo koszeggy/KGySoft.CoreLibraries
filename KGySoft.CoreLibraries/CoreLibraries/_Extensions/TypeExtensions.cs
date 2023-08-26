@@ -883,6 +883,8 @@ namespace KGySoft.CoreLibraries
             return isDefaultGetHashCodeCache[type];
         }
 
+        internal static IEnumerable<Type> GetNativelyParsedTypes() => nativelyParsedTypes;
+
         #endregion
 
         #region Private Methods
