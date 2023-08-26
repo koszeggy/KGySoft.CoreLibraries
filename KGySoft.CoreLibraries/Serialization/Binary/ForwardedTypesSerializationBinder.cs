@@ -338,7 +338,7 @@ namespace KGySoft.Serialization.Binary
 
             #endregion
 
-            string fullName = String.IsNullOrEmpty(assemblyName) ? typeName : typeName + "," + assemblyName;
+            string fullName = String.IsNullOrEmpty(assemblyName) ? typeName : typeName + ", " + assemblyName;
             Type? result = Reflector.ResolveType(fullName, ResolveType);
             if (result is null && !SafeMode)
                 result = Reflector.ResolveType(fullName, ResolveTypeOptions.AllowPartialAssemblyMatch | ResolveTypeOptions.TryToLoadAssemblies);

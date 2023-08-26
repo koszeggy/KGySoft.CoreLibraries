@@ -178,7 +178,7 @@ namespace KGySoft.CoreLibraries
         {
             var e = Assert.Throws<T>(code);
             Assert.IsInstanceOf(typeof(T), e);
-            Assert.IsTrue(expectedMessageContent == null || e.Message.Contains(expectedMessageContent), $"Expected message: {expectedMessageContent}{Environment.NewLine}Actual message:{e.Message}");
+            Assert.IsTrue(expectedMessageContent == null || e.Message.Contains(expectedMessageContent), $"Expected message: {expectedMessageContent}{Environment.NewLine}Actual message: {e.Message}");
             Console.WriteLine($"Expected exception {typeof(T)} has been thrown: {e.Message}");
         }
 

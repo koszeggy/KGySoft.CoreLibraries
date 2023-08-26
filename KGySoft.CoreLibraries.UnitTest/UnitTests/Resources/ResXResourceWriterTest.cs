@@ -280,7 +280,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         }
 #endif
 
-        private static void KGySerializeObjects(object[] referenceObjects, bool compatibilityMode, bool checkCompatibleEquality = true, Func<Type, string> typeNameConverter = null, ITypeResolutionService typeResolver = null, bool safeMode = true)
+        // ReSharper disable once UnusedParameter.Local - used with .NET Framework only
+        private static void KGySerializeObjects(object[] referenceObjects, bool compatibilityMode, bool checkCompatibleEquality = true,
+            Func<Type, string> typeNameConverter = null, ITypeResolutionService typeResolver = null, bool safeMode = true)
         {
             Console.WriteLine($"------------------KGySoft ResXResourceWriter (Items Count: {referenceObjects.Length}; Compatibility mode: {compatibilityMode})--------------------");
             StringBuilder sb = new StringBuilder();
@@ -298,9 +300,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             using (ResXResourceReader reader = ResXResourceReader.FromFileContents(sb.ToString(), typeResolver))
             {
                 reader.SafeMode = safeMode;
+                int i = 0;
                 foreach (DictionaryEntry item in reader)
                 {
-                    deserializedObjects.Add(safeMode ? ((ResXDataNode)item.Value)!.GetValueSafe() : item.Value);
+                    deserializedObjects.Add(safeMode ? ((ResXDataNode)item.Value)!.GetValueSafe(referenceObjects[i++]?.GetType()) : item.Value);
                 }
             }
 
@@ -618,7 +621,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             };
 
 #if !NET8_0_OR_GREATER
-            KGySerializeObjects(referenceObjects, true);
+            KGySerializeObjects(referenceObjects, true, safeMode: false);
 #endif
             KGySerializeObjects(referenceObjects, false);
         }
@@ -661,6 +664,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             typeof(Encoding).RegisterTypeConverter<EncodingConverter>();
 #if !(NETCOREAPP2_0 || NETCOREAPP2_1)
             typeof(Image).RegisterTypeConverter<AdvancedImageConverter>();
+            typeof(Icon).RegisterTypeConverter<AdvancedImageConverter>();
 #endif
 #if NETCOREAPP
             Assembly.Load("System.Drawing"); // preloading assembly for safe mode
@@ -744,7 +748,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             KGySerializeObjects(referenceObjects, false, false);
 #else
 #if !NET8_0_OR_GREATER
-            KGySerializeObjects(referenceObjects, true);
+            KGySerializeObjects(referenceObjects, true, safeMode: false); // apart from simple byte[] BinaryFormatter is used, which is not supported in safe mode
 #endif
             KGySerializeObjects(referenceObjects, false);
 #endif
@@ -767,7 +771,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             SystemSerializeObjects(referenceObjects);
 #endif
 #if !NET8_0_OR_GREATER
-            KGySerializeObjects(referenceObjects, true);
+            KGySerializeObjects(referenceObjects, true, safeMode: false);
 #endif
             KGySerializeObjects(referenceObjects, false);
 
@@ -842,7 +846,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Reflector.ResolveAssembly("System.Core");
 #endif
 #if !NET8_0_OR_GREATER
-            KGySerializeObjects(referenceObjects, true, false); // system reader fails on full non-mscorlib type parsing 
+            KGySerializeObjects(referenceObjects, true, false, safeMode: false); // system reader fails on full non-mscorlib type parsing 
 #endif
             KGySerializeObjects(referenceObjects, false);
         }

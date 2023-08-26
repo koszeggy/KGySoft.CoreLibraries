@@ -131,6 +131,8 @@ namespace KGySoft.CoreLibraries
         private static IThreadSafeCacheAccessor<Type, ConstructorInfo?>? defaultCtorCache;
         private static IThreadSafeCacheAccessor<Type, bool>? isDefaultGetHashCodeCache;
 
+        private static IThreadSafeCacheAccessor<(Type, string), bool>? matchesNameCache;
+
         #endregion
 
         #region Properties
@@ -884,6 +886,102 @@ namespace KGySoft.CoreLibraries
         }
 
         internal static IEnumerable<Type> GetNativelyParsedTypes() => nativelyParsedTypes;
+
+        /// <summary>
+        /// Gets whether name matches the type. Partial assembly match is not allowed because for now this is used in safeMode only.
+        /// Otherwise, AssemblyResolver.IdentityMatches could be used as a fallback.
+        /// Checks AssemblyQualifiedName, pure FullName for core types and considers possible forwarded identity.
+        /// </summary>
+        internal static bool MatchesName(this Type type, string name)
+        {
+            #region Local Methods
+
+            static bool IsNameMatch((Type, string) key)
+            {
+                (Type type, string name) = key;
+                string? aqn = type.AssemblyQualifiedName;
+
+                // trivial match
+                if (aqn == name)
+                    return true;
+
+                // the type contains open generic parameters
+                if (aqn == null)
+                    return false;
+
+                // using TypeResolver just to parse the type name for possible generic types but we do the actual resolve by ourselves
+                var expectedTypes = new HashSet<Type>();
+                AddExpectedTypes(type, expectedTypes);
+                return TypeResolver.ResolveType(name, DoResolveType, ResolveTypeOptions.None) == type;
+
+                #region LocalMethods
+
+                static void AddExpectedTypes(Type type, ICollection<Type> expectedTypes)
+                {
+                    while (type.HasElementType)
+                        type = type.GetElementType()!;
+
+                    if (!type.IsConstructedGenericType)
+                    {
+                        expectedTypes.Add(type);
+                        return;
+                    }
+
+                    expectedTypes.Add(type.GetGenericTypeDefinition());
+                    foreach (Type genericArgument in type.GetGenericArguments())
+                        AddExpectedTypes(genericArgument, expectedTypes);
+                }
+
+                // Never returning null to prevent the fallback to take over.
+                // Thrown exceptions are suppressed by TypeResolver because no ThrowError flag is used
+                Type DoResolveType(AssemblyName? asmName, string typeName)
+                {
+                    // throwing an exception for unexpected types
+                    Type expectedType = expectedTypes.First(t => t.FullName == typeName);
+
+                    string actualFullName = expectedType.FullName!;
+                    Debug.Assert(actualFullName != null!, "Possible open generic types should be filtered out by the caller");
+
+                    string? actualAsmName = expectedType.Assembly.FullName;
+                    if (actualAsmName == null)
+                        throw new InvalidOperationException();
+
+                    // Only full name is specified: accepting only for core libraries
+                    if (asmName == null)
+                    {
+                        if (AssemblyResolver.IsCoreLibAssemblyName(actualAsmName) || AssemblyResolver.GetForwardedAssemblyName(expectedType).IsCoreIdentity)
+                            return expectedType;
+                        throw new InvalidOperationException();
+                    }
+
+                    if (AssemblyResolver.IdentityMatches(new AssemblyName(actualAsmName), asmName, true))
+                        return expectedType;
+
+                    var forwardedName = AssemblyResolver.GetForwardedAssemblyName(expectedType);
+                    if (forwardedName.ForwardedAssemblyName == null
+                        ? forwardedName.IsCoreIdentity && AssemblyResolver.IsCoreLibAssemblyName(asmName.FullName)
+                        : AssemblyResolver.IdentityMatches(new AssemblyName(forwardedName.ForwardedAssemblyName), asmName, true))
+                    {
+                        return expectedType;
+                    }
+
+                    throw new InvalidOperationException();
+                }
+
+                #endregion
+            }
+
+            #endregion
+
+            if (matchesNameCache == null)
+            {
+                Interlocked.CompareExchange(ref matchesNameCache,
+                    ThreadSafeCacheFactory.Create<(Type, string), bool>(IsNameMatch, LockFreeCacheOptions.Profile128),
+                    null);
+            }
+
+            return matchesNameCache[(type, name)];
+        }
 
         #endregion
 

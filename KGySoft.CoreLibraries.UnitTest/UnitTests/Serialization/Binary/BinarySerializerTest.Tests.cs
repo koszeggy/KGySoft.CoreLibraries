@@ -615,8 +615,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: referenceObjects.Concat(new[] { typeof(OpenGenericDictionary<>), typeof(DictionaryExtensions) }));
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: referenceObjects.Concat(new[] { typeof(OpenGenericDictionary<>), typeof(DictionaryExtensions) }));
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: referenceObjects.Where(t => t.FullName != null).Concat(new[] { typeof(OpenGenericDictionary<>), typeof(DictionaryExtensions) }));
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: referenceObjects.Where(t => t.FullName != null).Concat(new[] { typeof(OpenGenericDictionary<>), typeof(DictionaryExtensions) }));
 
 #if NETFRAMEWORK
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);

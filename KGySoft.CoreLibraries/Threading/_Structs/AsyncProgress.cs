@@ -86,9 +86,9 @@ namespace KGySoft.Threading
         public AsyncProgress(T operationType, int maximumValue, int currentValue)
         {
             if (maximumValue < 0)
-                throw new ArgumentOutOfRangeException(nameof(maximumValue), Res.ArgumentMustBeGreaterThanOrEqualTo(0));
+                Throw.ArgumentOutOfRangeException(nameof(maximumValue), Res.ArgumentMustBeGreaterThanOrEqualTo(0));
             if ((uint)currentValue > (uint)maximumValue)
-                throw new ArgumentOutOfRangeException(nameof(currentValue), Res.ArgumentMustBeBetween(0, maximumValue));
+                Throw.ArgumentOutOfRangeException(nameof(currentValue), Res.ArgumentMustBeBetween(0, maximumValue));
 
             OperationType = operationType;
             MaximumValue = maximumValue;

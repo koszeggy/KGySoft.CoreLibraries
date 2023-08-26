@@ -848,7 +848,7 @@ namespace KGySoft.Resources
             {
                 if (expectedType is not null)
                 {
-                    if (expectedType.AssemblyQualifiedName == assemblyQualifiedName || expectedType.Assembly == AssemblyResolver.CoreLibrariesAssembly && expectedType.FullName == assemblyQualifiedName)
+                    if (expectedType.MatchesName(assemblyQualifiedName))
                         result = expectedType;
                     else // throwing from here because if returning null, a TypeLoadException will be thrown instead
                         Throw.ArgumentException(Argument.expectedType, Res.SerializationUnexpectedResult(expectedType, assemblyQualifiedName));
@@ -1561,7 +1561,7 @@ namespace KGySoft.Resources
                 if (String.IsNullOrEmpty(typeName))
                     throw ResXCommon.CreateXmlException(Res.ResourcesMissingAttribute(ResXCommon.TypeStr, dataNodeInfo.Line, dataNodeInfo.Column), dataNodeInfo.Line, dataNodeInfo.Column);
 
-                Type? type = ResolveType(typeName!, typeResolver, safeMode, expectedType);
+                Type? type = ResolveType(typeName, typeResolver, safeMode, expectedType);
                 if (type == null)
                 {
                     string newMessage = safeMode

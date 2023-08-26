@@ -220,7 +220,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             var nodeRaw = new ResXDataNode(info, null);
 
             Throws<SerializationException>(() => nodeRaw.GetValue(resolver), asmName);
-            Throws<SerializationException>(() => nodeRaw.GetValueSafe(), "You may try to preload the assembly before deserialization or disable SafeMode if the serialization stream is from a trusted source.");
+            Throws<SerializationException>(() => nodeRaw.GetValueSafe(), "Unexpected type name in safe mode: MyNamespace.DangerousType, DangerousAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null.");
         }
 
         #endregion

@@ -1022,7 +1022,7 @@ namespace KGySoft
         /// <summary>Could not resolve type "{0}" in the data at line {1}, position {2}.</summary>
         internal static string ResourcesTypeLoadExceptionAt(string typeName, int line, int pos) => Get("Resources_TypeLoadExceptionAtFormat", typeName, line, pos);
 
-        /// <summary>Could not resolve type "{0}" in the data at line {1}, position {2}.
+        /// <summary>Could not resolve type in safe mode "{0}" in the data at line {1}, position {2}.
         /// You may try to specify the expected type or use the unsafe GetValue if the resource is from a trusted source.</summary>
         internal static string ResourcesTypeLoadExceptionSafeAt(string typeName, int line, int pos) => Get("Resources_TypeLoadExceptionSafeAtFormat", typeName, line, pos);
 
@@ -1077,7 +1077,7 @@ namespace KGySoft
         internal static string SerializationUnexpectedResult(Type expectedType, Type actualType) => Get("Serialization_UnexpectedResultFormat", expectedType.GetName(TypeNameKind.LongName), actualType.GetName(TypeNameKind.LongName));
 
         /// <summary>The type of the result is expected to be {0} but it was {1}.</summary>
-        internal static string SerializationUnexpectedResult(Type expectedType, string actualTypeName) => Get("Serialization_UnexpectedResultFormat", expectedType.GetName(TypeNameKind.LongName), actualTypeName);
+        internal static string SerializationUnexpectedResult(Type expectedType, string actualTypeName) => Get("Serialization_UnexpectedResultFormat", expectedType.GetName(TypeNameKind.ForcedAssemblyQualifiedName), actualTypeName);
 
         /// <summary>Unexpected type name in safe mode: {0}.</summary>
         internal static string SerializationUnexpectedTypeSafe(string typeName) => Get("Serialization_UnexpectedTypeSafeFormat", typeName);
