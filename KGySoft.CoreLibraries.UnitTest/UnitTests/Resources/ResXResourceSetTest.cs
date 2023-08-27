@@ -349,7 +349,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             rsCheck = new ResXResourceSet(new StringReader(sb.ToString()));
 
             rsCheck.SafeMode = true;
-            Throws<SerializationException>(() => ((ResXDataNode)rsCheck.GetObject("x"))!.GetValueSafe());
+            Throws<SerializationException>(() => ((ResXDataNode)rsCheck.GetObject("x"))!.GetValueSafe(), "In safe mode it is not allowed to deserialize resource \"x\" because it was serialized by BinaryFormatter.");
 
             rsCheck.SafeMode = false;
             Assert.AreEqual(rs.GetObject("x"), rsCheck.GetObject("x"));
@@ -361,7 +361,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             rsCheck = new ResXResourceSet(new StringReader(sb.ToString()));
 
             rsCheck.SafeMode = true;
-            Throws<SerializationException>(() => ((ResXDataNode)rsCheck.GetObject("x"))!.GetValueSafe());
+            Throws<SerializationException>(() => ((ResXDataNode)rsCheck.GetObject("x"))!.GetValueSafe(), "In safe mode it is not supported to deserialize type \"KGySoft.CoreLibraries.UnitTests.Resources.ResXResourceSetTest+NonSerializableClass\".");
 
             rsCheck.SafeMode = false;
             Assert.AreEqual(rs.GetObject("x"), rsCheck.GetObject("x"));

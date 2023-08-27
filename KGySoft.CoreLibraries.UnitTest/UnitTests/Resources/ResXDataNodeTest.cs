@@ -188,7 +188,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             var nodeRaw = new ResXDataNode(info, null);
 
             Throws<SerializationException>(() => nodeRaw.GetValue(resolver), asmName);
-            Throws<NotSupportedException>(() => nodeRaw.GetValueSafe(), Res.ResourcesBinaryFormatterSafeModeNotSupported(nodeRaw.Name, 0, 0));
+            Throws<SerializationException>(() => nodeRaw.GetValueSafe(), Res.ResourcesBinaryFormatterSafeModeNotSupported(nodeRaw.Name, 0, 0));
         }
 
         [TestCase(false)]

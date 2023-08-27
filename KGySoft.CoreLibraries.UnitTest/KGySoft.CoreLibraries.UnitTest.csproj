@@ -38,7 +38,7 @@
 
   <!-- Common NuGet references -->
   <ItemGroup>
-    <PackageReference Include="KGySoft.Drawing" Version="6.3.2" />
+    <PackageReference Include="KGySoft.Drawing" Version="7.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.9.4" />
     <PackageReference Include="NUnit" Version="3.13.1" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.17.0">

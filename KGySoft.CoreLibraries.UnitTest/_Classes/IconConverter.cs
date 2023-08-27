@@ -1,4 +1,4 @@
-﻿#if NETCOREAPP
+﻿#if NETCOREAPP2_0 || NETCOREAPP2_1
 #region Copyright
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -35,7 +35,15 @@ namespace KGySoft.CoreLibraries
     {
         #region Methods
 
+        public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType) => destinationType == Reflector.ByteArrayType;
         public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType == Reflector.ByteArrayType || base.CanConvertFrom(context, sourceType);
+
+        public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
+        {
+            using MemoryStream ms = new MemoryStream();
+            ((Icon)value).Save(ms);
+            return ms.ToArray();
+        }
 
         public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
         {

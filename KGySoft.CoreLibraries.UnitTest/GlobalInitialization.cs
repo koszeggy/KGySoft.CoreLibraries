@@ -51,6 +51,8 @@ namespace KGySoft.CoreLibraries
 
 #if !NETFRAMEWORK
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+#endif
+#if NETCOREAPP && !NETCOREAPP3_0_OR_GREATER
             typeof(Bitmap).RegisterTypeConverter<BitmapConverter>();
             typeof(Icon).RegisterTypeConverter<IconConverter>();
 #endif

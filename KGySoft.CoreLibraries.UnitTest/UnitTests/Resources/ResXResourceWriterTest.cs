@@ -406,7 +406,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Reflector.ResolveAssembly("System.Numerics, Version=4.0.0.0, PublicKeyToken=b77a5c561934e089");
 #endif
 #if !NET8_0_OR_GREATER
-            KGySerializeObjects(referenceObjects, true);
+            KGySerializeObjects(referenceObjects, true, safeMode: false);
 #endif
             KGySerializeObjects(referenceObjects, false);
         }
@@ -433,7 +433,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 BinarySerializationOptions.ForcedSerializationValueTypesAsFallback, // KGySoft.CoreLibraries enum, obsolete element
 #pragma warning restore 618
                 (BinarySerializationOptions)(-1), // KGySoft.Libraries enum, non-existing value
-
             };
 
 #if NETFRAMEWORK
@@ -664,7 +663,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             typeof(Encoding).RegisterTypeConverter<EncodingConverter>();
 #if !(NETCOREAPP2_0 || NETCOREAPP2_1)
             typeof(Image).RegisterTypeConverter<AdvancedImageConverter>();
-            typeof(Icon).RegisterTypeConverter<AdvancedImageConverter>();
 #endif
 #if NETCOREAPP
             Assembly.Load("System.Drawing"); // preloading assembly for safe mode
@@ -694,7 +692,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 #endif
 
 #if !(NETCOREAPP2_0 || NETCOREAPP2_1)
-                Icons.Information, // multi-resolution icon (built-in saves one page only)
+                Icons.Information, // multi-resolution icon
                 Icons.Information.ToMultiResBitmap(), // multi-resolution bitmap-icon (built-in saves one page only)  
 #if WINDOWS
                 CreateTestTiff(), // multipage TIFF (built-in saves first page only)
@@ -860,9 +858,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             };
 
 #if !NET8_0_OR_GREATER
-            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, true));
+            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, true), "In safe mode it is not allowed to deserialize resource \"0_NonSerializableClass\" because it was serialized by BinaryFormatter.");
 #endif
-            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, false));
+            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, false), Res.BinarySerializationCannotCreateSerializableObjectSafe(typeof(NonSerializableClass)));
 
 #if !NET8_0_OR_GREATER
             KGySerializeObjects(referenceObjects, true, safeMode: false);
@@ -893,9 +891,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             SystemSerializeObjects(referenceObjects);
 #endif
 #if !NET8_0_OR_GREATER
-            KGySerializeObjects(referenceObjects, true);
+            KGySerializeObjects(referenceObjects, true, safeMode: false);
 #endif
-            KGySerializeObjects(referenceObjects, false);
+            KGySerializeObjects(referenceObjects, false, safeMode: false);
 
             referenceObjects = new object[]
             {
@@ -907,8 +905,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 #endif
             };
 
-            KGySerializeObjects(referenceObjects, true);
-            KGySerializeObjects(referenceObjects, false);
+            KGySerializeObjects(referenceObjects, true, safeMode: false);
+            KGySerializeObjects(referenceObjects, false, safeMode: false);
+
+            Throws<NotSupportedException>(() => KGySerializeObjects(referenceObjects, false), "In safe mode it is not supported to deserialize file references. Resource name: 0_ResXFileRef.");
         }
 
         [Test]
@@ -925,7 +925,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             SystemSerializeObjects(referenceObjects);
 #endif
 #if !NET8_0_OR_GREATER
-            KGySerializeObjects(referenceObjects, true);
+            KGySerializeObjects(referenceObjects, true, safeMode: false);
 #endif
             KGySerializeObjects(referenceObjects, false);
         }
@@ -959,7 +959,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             SystemSerializeObjects(referenceObjects);
 #endif
 #if !NET8_0_OR_GREATER
-            KGySerializeObjects(referenceObjects, true, true, typeNameConverter, typeResolver);
+            KGySerializeObjects(referenceObjects, true, true, typeNameConverter, typeResolver, false);
 #endif
             KGySerializeObjects(referenceObjects, false, true, typeNameConverter, typeResolver);
         }

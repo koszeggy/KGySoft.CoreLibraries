@@ -1524,7 +1524,7 @@ namespace KGySoft.Resources
                 Throw.NotSupportedException(Res.ResourcesBinaryFormatterNotSupported(mimeType, dataNodeInfo.Line, dataNodeInfo.Column));
 #else
                 if (safeMode)
-                    Throw.NotSupportedException(Res.ResourcesBinaryFormatterSafeModeNotSupported(dataNodeInfo.Name, dataNodeInfo.Line, dataNodeInfo.Column));
+                    Throw.SerializationException(Res.ResourcesBinaryFormatterSafeModeNotSupported(dataNodeInfo.Name, dataNodeInfo.Line, dataNodeInfo.Column));
                 byte[] serializedData = FromBase64WrappedString(text);
                 using var surrogate = new CustomSerializerSurrogateSelector { IgnoreNonExistingFields = true, SafeMode = safeMode };
 #if !NETFRAMEWORK
