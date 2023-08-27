@@ -1668,28 +1668,26 @@ namespace KGySoft.Serialization.Binary
                 Type? typeToWrite = type;
                 string explicitAsmName = si.AssemblyName;
                 string? explicitTypeName = si.FullTypeName;
-#if NET35
-                if (explicitAsmName != type.Assembly.FullName || explicitTypeName != type.FullName)
-                {
-                    // First of all we try to obtain the type if exists
-                    typeToWrite = !String.IsNullOrEmpty(explicitAsmName) && !String.IsNullOrEmpty(explicitTypeName)
-                        ? Reflector.ResolveType(explicitTypeName + ", " + explicitAsmName, ResolveTypeOptions.None)
-                        : null;
-                }
-#else
+
+#if !NET35
+                // Cleaner case: si.SetType was called
                 if (si.ObjectType != type)
                     typeToWrite = si.ObjectType.FullName != null ? si.ObjectType : null;
                 else if (si.IsAssemblyNameSetExplicit || si.IsFullTypeNameSetExplicit)
+#else
+                if (explicitAsmName != type.Assembly.FullName || explicitTypeName != type.FullName)
+#endif
                 {
+                    // Less clean case: identity was changed by string (or .NET 3.5: we cannot tell if si.SetType was called).
+                    // We need to avoid using the same identity by string and type. We try to identify the type first.
                     typeToWrite = !String.IsNullOrEmpty(explicitAsmName) && !String.IsNullOrEmpty(explicitTypeName)
-                        ? Reflector.ResolveType(explicitTypeName + ", " + explicitAsmName, ResolveTypeOptions.None)
+                        ? Reflector.ResolveType(explicitTypeName + ", " + explicitAsmName, ResolveTypeOptions.None) // not allowing partial match or loading assemblies
                         : null;
 
-                    // if the string name could be resolved but it has different name, then going on with string name
-                    if (typeToWrite != null && (typeToWrite.Assembly.FullName != si.AssemblyName || typeToWrite.FullName != si.FullTypeName))
+                    // If the string name could be resolved but it has a different name, then we can go on with string name because there will be no conflict
+                    if (typeToWrite != null && (typeToWrite.Assembly.FullName != explicitAsmName || typeToWrite.FullName != explicitTypeName))
                         typeToWrite = null;
                 }
-#endif
 
                 bool forcedType = knownElementType == null || !knownElementType.IsSealed;
                 MemberInfo typeToCache = forcedType

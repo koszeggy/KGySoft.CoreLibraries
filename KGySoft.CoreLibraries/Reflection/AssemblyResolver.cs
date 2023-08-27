@@ -198,7 +198,12 @@ namespace KGySoft.Reflection
 #endif
         }
 
-        internal static (string? ForwardedAssemblyName, bool IsCoreIdentity) GetForwardedAssemblyName(Type type) => ForwardedNamesCache[type];
+        internal static (string? ForwardedAssemblyName, bool IsCoreIdentity) GetForwardedAssemblyName(Type type) =>
+#if NET35
+            default;
+#else
+            ForwardedNamesCache[type];
+#endif
 
         #endregion
 

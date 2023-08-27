@@ -101,7 +101,7 @@ namespace KGySoft.CoreLibraries
             if (o is IEnumerable enumerable)
                 return $"[{enumerable.Cast<object>().Select(Dump).Join(", ")}]";
 
-            return $"{{{o.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance).Select(p => $"{p.Name} = {Dump(p.GetValue(o))}").Join(", ")}}}";
+            return $"{{{o.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance).Select(p => $"{p.Name} = {Dump(p.GetValue(o, null))}").Join(", ")}}}";
         }
 
         #endregion

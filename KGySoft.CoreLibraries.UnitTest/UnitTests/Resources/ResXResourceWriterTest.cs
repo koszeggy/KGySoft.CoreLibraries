@@ -649,7 +649,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
 #if NETFRAMEWORK
             SystemSerializeObjects(referenceObjects);
-            KGySerializeObjects(referenceObjects, true);
+            KGySerializeObjects(referenceObjects, true, safeMode: false);
 #endif
             KGySerializeObjects(referenceObjects, false);
         }

@@ -169,7 +169,7 @@ namespace KGySoft.Serialization
 
         internal static bool IsUnsafeType(Type type) => type.In(unsafeTypes);
 
-        internal static bool TryGetNativelySupportedSimpleType(string typeName, [NotNullWhen(true)]out Type? result)
+        internal static bool TryGetNativelySupportedSimpleType(string typeName, [MaybeNullWhen(false)]out Type result)
             => NativelySupportedSimpleTypes.TryGetValue(typeName, out result);
 
         #endregion

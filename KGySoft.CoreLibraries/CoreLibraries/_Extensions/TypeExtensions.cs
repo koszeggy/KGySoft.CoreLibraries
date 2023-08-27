@@ -921,7 +921,7 @@ namespace KGySoft.CoreLibraries
                     while (type.HasElementType)
                         type = type.GetElementType()!;
 
-                    if (!type.IsConstructedGenericType)
+                    if (!type.IsConstructedGenericType())
                     {
                         expectedTypes.Add(type);
                         return;

@@ -19,6 +19,9 @@ using System;
 using System.Collections;
 using System.ComponentModel;
 using System.ComponentModel.Design;
+#if NETFRAMEWORK
+using System.Diagnostics.CodeAnalysis;
+#endif
 using System.Globalization;
 using System.IO;
 using System.Reflection;
@@ -30,9 +33,7 @@ using System.Xml;
 
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
-#if !NETFRAMEWORK && !NET8_0_OR_GREATER
 using KGySoft.Serialization;
-#endif
 using KGySoft.Serialization.Binary;
 
 #endregion

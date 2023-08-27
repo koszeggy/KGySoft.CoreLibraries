@@ -2499,13 +2499,12 @@ namespace KGySoft.Serialization.Binary
                 // 3.) Actual resolve. ResolveType should not resolve any further assemblies (generic type parameters are loaded separately)
                 if (assembly.Assembly is not null)
                 {
-                    // 3/a.) From assembly
-                    result = Reflector.ResolveType(assembly.Assembly, typeName, ResolveTypeOptions.None);
-#if !NETFRAMEWORK
-                    // Possible former core library type: trying also without a name
-                    if (result is null && assembly.StoredName == null)
+                    // 3/a.) From core libraries: trying without a name first
+                    if (assembly.StoredName == null)
                         result = Reflector.ResolveType(typeName, ResolveTypeOptions.None);
-#endif
+
+                    // 3/b.) From assembly
+                    result ??= Reflector.ResolveType(assembly.Assembly, typeName, ResolveTypeOptions.None);
                 }
                 else
                 {
