@@ -60,7 +60,7 @@ namespace KGySoft.Serialization.Xml
 
         #region Constructors
 
-        internal XmlReaderDeserializer(bool safeMode) : base(safeMode)
+        internal XmlReaderDeserializer(bool safeMode, IEnumerable<Type>? expectedCustomTypes = null, Type? rootType = null) : base(safeMode)
         {
         }
 

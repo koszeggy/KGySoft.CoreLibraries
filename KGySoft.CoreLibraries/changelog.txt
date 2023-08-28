@@ -139,8 +139,10 @@
 ! KGySoft.Serialization.Xml namespace:
 ======================================
 ! XmlSerializer class:
-  ! DeserializeSafe and DeserializeContentSafe methods: These methods cannot deserialize binary serialized contents
-    anymore if they contain any explicitly stored types to be resolved.
+  ! DeserializeSafe and DeserializeContentSafe methods: These methods cannot deserialize any custom types anymore
+    without declaring the expected types in the new overloads. Natively supported simple types are recognized
+    even if they are not specified as expected types.
+  + New DeserializeSafe and DeserializeContentSafe overloads with expectedCustomTypes parameters.
 
 
 ~~~~~~~~~

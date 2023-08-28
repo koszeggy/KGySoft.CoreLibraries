@@ -396,6 +396,18 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="InvalidOperationException"><paramref name="content"/> cannot be deserialized in safe mode.</exception>
         public static object? DeserializeSafe(XElement content) => new XElementDeserializer(true).Deserialize(content);
+    
+        public static object? DeserializeSafe(XElement content, params Type[]? expectedCustomTypes)
+            => new XElementDeserializer(true, expectedCustomTypes).Deserialize(content);
+
+        public static T DeserializeSafe<T>(XElement content, params Type[]? expectedCustomTypes)
+            => (T)new XElementDeserializer(true, expectedCustomTypes, typeof(T)).Deserialize(content)!;
+
+        public static object? DeserializeSafe(XElement content, IEnumerable<Type>? expectedCustomTypes)
+            => new XElementDeserializer(true, expectedCustomTypes).Deserialize(content);
+
+        public static T DeserializeSafe<T>(XElement content, IEnumerable<Type>? expectedCustomTypes)
+            => (T)new XElementDeserializer(true, expectedCustomTypes, typeof(T)).Deserialize(content)!;
 
         /// <summary>
         /// Deserializes an object using the provided <see cref="XmlReader"/> in <paramref name="reader"/> parameter.
@@ -432,6 +444,18 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="XmlException">An error occurred while parsing the XML.</exception>
         /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
         public static object? DeserializeSafe(XmlReader reader) => new XmlReaderDeserializer(true).Deserialize(reader);
+    
+        public static object? DeserializeSafe(XmlReader reader, params Type[]? expectedCustomTypes)
+            => new XmlReaderDeserializer(true, expectedCustomTypes).Deserialize(reader);
+
+        public static T DeserializeSafe<T>(XmlReader reader, params Type[]? expectedCustomTypes)
+            => (T)new XmlReaderDeserializer(true, expectedCustomTypes, typeof(T)).Deserialize(reader)!;
+    
+        public static object? DeserializeSafe(XmlReader reader, IEnumerable<Type>? expectedCustomTypes)
+            => new XmlReaderDeserializer(true, expectedCustomTypes).Deserialize(reader);
+
+        public static T DeserializeSafe<T>(XmlReader reader, IEnumerable<Type>? expectedCustomTypes)
+            => (T)new XmlReaderDeserializer(true, expectedCustomTypes, typeof(T)).Deserialize(reader)!;
 
         /// <summary>
         /// Deserializes an object using the provided <see cref="TextReader"/> in <paramref name="reader"/> parameter.
@@ -548,6 +572,18 @@ namespace KGySoft.Serialization.Xml
         [SuppressMessage("Security", "CA3075:InsecureDTDProcessing", Justification = "False alarm for .NET 3.5, though the resolver is null also for that target.")]
 #endif
         public static object? DeserializeSafe(string fileName)
+            => DeserializeSafe<object?>(fileName, (IEnumerable<Type>?)null);
+
+        public static object? DeserializeSafe(string fileName, params Type[]? expectedCustomTypes)
+            => DeserializeSafe<object?>(fileName, (IEnumerable<Type>?)expectedCustomTypes);
+
+        public static T DeserializeSafe<T>(string fileName, params Type[]? expectedCustomTypes)
+            => DeserializeSafe<T>(fileName, (IEnumerable<Type>?)expectedCustomTypes);
+
+        public static object? DeserializeSafe(string fileName, IEnumerable<Type>? expectedCustomTypes)
+            => DeserializeSafe<object?>(fileName, expectedCustomTypes);
+
+        public static T DeserializeSafe<T>(string fileName, IEnumerable<Type>? expectedCustomTypes)
         {
             if (fileName == null!)
                 Throw.ArgumentNullException(Argument.fileName);
@@ -563,7 +599,7 @@ namespace KGySoft.Serialization.Xml
 #endif
             })
             {
-                return DeserializeSafe(xmlReader);
+                return DeserializeSafe<T>(xmlReader, expectedCustomTypes);
             }
         }
 
@@ -619,6 +655,18 @@ namespace KGySoft.Serialization.Xml
         [SuppressMessage("Security", "CA3075:InsecureDTDProcessing", Justification = "False alarm for .NET 3.5, though the resolver is null also for that target.")]
 #endif
         public static object? DeserializeSafe(Stream stream)
+            => DeserializeSafe<object?>(stream, (IEnumerable<Type>?)null);
+
+        public static object? DeserializeSafe(Stream stream, params Type[]? expectedCustomTypes)
+            => DeserializeSafe<object?>(stream, (IEnumerable<Type>?)expectedCustomTypes);
+
+        public static T DeserializeSafe<T>(Stream stream, params Type[]? expectedCustomTypes)
+            => DeserializeSafe<T>(stream, (IEnumerable<Type>?)expectedCustomTypes);
+
+        public static object? DeserializeSafe(Stream stream, IEnumerable<Type>? expectedCustomTypes)
+            => DeserializeSafe<object?>(stream, expectedCustomTypes);
+
+        public static T DeserializeSafe<T>(Stream stream, IEnumerable<Type>? expectedCustomTypes)
         {
             if (stream == null!)
                 Throw.ArgumentNullException(Argument.stream);
@@ -633,7 +681,7 @@ namespace KGySoft.Serialization.Xml
 #endif
             };
 
-            return DeserializeSafe(xmlReader);
+            return DeserializeSafe<T>(xmlReader, expectedCustomTypes);
         }
 
         /// <summary>
@@ -664,6 +712,12 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="InvalidOperationException"><paramref name="content"/> cannot be deserialized in safe mode.</exception>
         public static void DeserializeContentSafe(XElement content, object obj) => new XElementDeserializer(true).DeserializeContent(content, obj);
 
+        public static void DeserializeContentSafe(XElement content, object obj, params Type[]? expectedCustomTypes)
+            => new XElementDeserializer(true, expectedCustomTypes).DeserializeContent(content, obj);
+
+        public static void DeserializeContentSafe(XElement content, object obj, IEnumerable<Type>? expectedCustomTypes)
+            => new XElementDeserializer(true, expectedCustomTypes).DeserializeContent(content, obj);
+
         /// <summary>
         /// Restores inner state of an already created object passed in <paramref name="obj"/> parameter based on a saved XML.
         /// Works for the results of the <see cref="SerializeContent(XmlWriter,object,XmlSerializationOptions)"/> method and other <c>SerializeContent</c> overloads.
@@ -691,6 +745,12 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
         public static void DeserializeContentSafe(XmlReader reader, object obj) => new XmlReaderDeserializer(true).DeserializeContent(reader, obj);
+
+        public static void DeserializeContentSafe(XmlReader reader, object obj, params Type[]? expectedCustomTypes)
+            => new XmlReaderDeserializer(true, expectedCustomTypes).DeserializeContent(reader, obj);
+
+        public static void DeserializeContentSafe(XmlReader reader, object obj, IEnumerable<Type>? expectedCustomTypes)
+            => new XmlReaderDeserializer(true, expectedCustomTypes).DeserializeContent(reader, obj);
 
         #endregion
     }
