@@ -223,6 +223,17 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Throws<SerializationException>(() => nodeRaw.GetValueSafe(), "Unexpected type name in safe mode: MyNamespace.DangerousType, DangerousAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null.");
         }
 
+        [Test]
+        public void TypeResolveTest()
+        {
+            // TODO:
+            // - System.Int32 with some specified other expected type
+            // - Expected: typedef List<>, item is int, is int auto accepted?
+            // - int without specifying expected
+            // - enum without specifying expected
+            throw new NotImplementedException();
+        }
+
         #endregion
     }
 }

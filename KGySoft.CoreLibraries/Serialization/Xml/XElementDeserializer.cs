@@ -62,7 +62,7 @@ namespace KGySoft.Serialization.Xml
         #region Constructors
 
         internal XElementDeserializer(bool safeMode, IEnumerable<Type>? expectedCustomTypes = null, Type? rootType = null)
-            : base(safeMode)
+            : base(safeMode, expectedCustomTypes, rootType)
         {
         }
 

@@ -213,36 +213,75 @@ namespace KGySoft.Serialization.Xml
 
         #region Fields
 
+        #region Static Fields
+        
         private static readonly StringKeyedDictionary<HashSet<Type>> unsafeMembers = new StringKeyedDictionary<HashSet<Type>>(2)
         {
             ["Capacity"] = new HashSet<Type> { Reflector.ListGenType, typeof(CircularList<>), typeof(ArrayList), typeof(SortedList), typeof(SortedList<,>), typeof(CircularSortedList<,>) },
-            [nameof(Cache<_,_>.EnsureCapacity)] = new HashSet<Type> { typeof(Cache<,>) }
+            [nameof(Cache<_, _>.EnsureCapacity)] = new HashSet<Type> { typeof(Cache<,>) }
         };
+
+        #endregion
+
+        #region Instance Fields
+
+        private readonly Type? rootType;
+        private readonly Dictionary<string, Type>? expectedTypes;
+
+        private Dictionary<string, Type>? resolvedTypes;
+
+        #endregion
 
         #endregion
 
         #region Properties
 
-        #region Private Protected Properties
-
         private protected bool SafeMode { get; }
-
-        #endregion
-
-        #region Private Properties
-
-        private ResolveTypeOptions ResolveTypeOptions => ResolveTypeOptions.AllowPartialAssemblyMatch
-            | (SafeMode ? ResolveTypeOptions.None : ResolveTypeOptions.TryToLoadAssemblies);
-
-        #endregion
 
         #endregion
 
         #region Constructors
 
-        private protected XmlDeserializerBase(bool safeMode)
+        private protected XmlDeserializerBase(bool safeMode, IEnumerable<Type>? expectedCustomTypes, Type? rootType)
         {
+            this.rootType = rootType == Reflector.ObjectType ? null : rootType;
             SafeMode = safeMode;
+            if (!safeMode)
+                return;
+
+            expectedTypes = new Dictionary<string, Type>();
+
+            // Safe mode without a safe binder: adding allowed types
+            var types = new Queue<Type>(new[] { rootType }.Concat(expectedCustomTypes ?? Reflector.EmptyArray<Type>()));
+#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
+            while (types.TryDequeue(out Type? type))
+#else
+            while (types.Count > 0)
+#endif
+            {
+#if !(NETCOREAPP || NETSTANDARD2_1_OR_GREATER)
+                    var type = types.Dequeue(); 
+#endif
+                if (type == null!)
+                    Throw.ArgumentException(Argument.expectedCustomTypes, Res.ArgumentContainsNull);
+
+                while (type!.HasElementType)
+                    type = type.GetElementType();
+
+                if (type.IsConstructedGenericType())
+                {
+                    foreach (Type arg in type.GetGenericArguments())
+                        types.Enqueue(arg);
+                    type = type.GetGenericTypeDefinition();
+                }
+
+                // Unlike in binary serialization, using only full name for expected types
+                string typeName = type.FullName!;
+                if (typeName == null!)
+                    Throw.ArgumentException(Argument.expectedCustomTypes, Res.ArgumentInvalid);
+
+                expectedTypes[typeName] = type;
+            }
         }
 
         #endregion
@@ -250,7 +289,7 @@ namespace KGySoft.Serialization.Xml
         #region Methods
 
         #region Static Methods
-        
+
         #region Private Protected Methods
 
         private protected static object CreateCollectionByInitializerCollection(ConstructorInfo collectionCtor, IEnumerable initializerCollection, Dictionary<MemberInfo, object?> members)
@@ -542,9 +581,40 @@ namespace KGySoft.Serialization.Xml
         #region Instance Methods
 
         private protected Type ResolveType(string typeName)
-            => Reflector.ResolveType(typeName, ResolveTypeOptions) ?? (SafeMode
-                ? Throw.InvalidOperationException<Type>(Res.XmlSerializationCannotResolveTypeSafe(typeName))
-                : Throw.ReflectionException<Type>(Res.XmlSerializationCannotResolveType(typeName)));
+        {
+            #region Local Methods
+
+            Type? DoResolveType(AssemblyName? arg1, string arg2)
+            {
+                // TODO:
+                // 1. Expected
+                // 2. Known
+                // 3. SafeMode -> ReflectionException; otherwise, null so auto resolve will take over
+                throw new NotImplementedException();
+
+                // original safe mode error: Throw.InvalidOperationException<Type>(Res.XmlSerializationCannotResolveTypeSafe(typeName)
+                // reconsider both the exception type and its message
+            }
+
+            #endregion
+
+            resolvedTypes ??= new Dictionary<string, Type>();
+
+            // Already cached
+            if (resolvedTypes.TryGetValue(typeName, out Type? result))
+                return result;
+
+            // Expected types or fallback in non-safe mode. In SafeMode flags are irrelevant because DoResolveType throws an exception on failure
+            // We could use ThrowError in safe mode but this way we can customize the message of the ReflectionException
+            result = TypeResolver.ResolveType(typeName, DoResolveType, SafeMode ? ResolveTypeOptions.None : ResolveTypeOptions.AllowPartialAssemblyMatch | ResolveTypeOptions.TryToLoadAssemblies);
+
+            Debug.Assert(result != null || !SafeMode, "In safe mode null result is not expected because DoResolveType should throw an exception");
+            if (result == null)
+                Throw.ReflectionException<Type>(Res.XmlSerializationCannotResolveType(typeName));
+
+            resolvedTypes[typeName] = result;
+            return result;
+        }
 
         private protected void ResolveMember(Type type, string memberOrItemName, string? strDeclaringType, string? strItemType, out PropertyInfo? property, out FieldInfo? field, out Type? itemType)
         {
@@ -578,10 +648,11 @@ namespace KGySoft.Serialization.Xml
         {
             TypeConverter? converter = null;
 
-            // Explicitly defined type converter if can convert from string
+            // Explicitly defined type converter if can convert from string.
+            // Using the same resolve logic for the converter than for the usual ones in the input stream.
             Attribute[] attrs = Attribute.GetCustomAttributes(member, typeof(TypeConverterAttribute), true);
             if (attrs.Length > 0 && attrs[0] is TypeConverterAttribute convAttr
-                && Reflector.ResolveType(convAttr.ConverterTypeName, ResolveTypeOptions) is Type convType)
+                && ResolveType(convAttr.ConverterTypeName) is Type convType)
             {
                 ConstructorInfo? ctor = convType.GetConstructor(new Type[] { Reflector.Type });
                 object[] ctorParams = { memberType };
