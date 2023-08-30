@@ -688,6 +688,10 @@ namespace KGySoft.Serialization.Binary
                         type = type.GetGenericTypeDefinition();
                     }
 
+                    // skipping primitive types that are never resolved by name
+                    if (primitiveTypes.ContainsKey(type))
+                        continue;
+
                     Assembly asm = type.Assembly;
                     string? asmName = asm.FullName;
                     string typeName = type.FullName!;
@@ -703,7 +707,7 @@ namespace KGySoft.Serialization.Binary
                         expectedTypes[(identity.ForwardedAssemblyName, typeName)] = type;
 
                     // core assembly (either by forwarded or current identity): adding also without assembly name
-                    if (identity.IsCoreIdentity || asm == KnownAssemblies[0])
+                    if (identity.IsCoreIdentity || asm == AssemblyResolver.CoreLibrariesAssembly)
                         expectedTypes[(null, typeName)] = type;
                 }
             }

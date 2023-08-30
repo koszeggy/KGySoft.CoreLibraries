@@ -580,42 +580,8 @@ namespace KGySoft.Serialization.Xml
 
         #region Instance Methods
 
-        private protected Type ResolveType(string typeName)
-        {
-            #region Local Methods
-
-            Type? DoResolveType(AssemblyName? arg1, string arg2)
-            {
-                // TODO:
-                // 1. Expected
-                // 2. Known
-                // 3. SafeMode -> ReflectionException; otherwise, null so auto resolve will take over
-                throw new NotImplementedException();
-
-                // original safe mode error: Throw.InvalidOperationException<Type>(Res.XmlSerializationCannotResolveTypeSafe(typeName)
-                // reconsider both the exception type and its message
-            }
-
-            #endregion
-
-            resolvedTypes ??= new Dictionary<string, Type>();
-
-            // Already cached
-            if (resolvedTypes.TryGetValue(typeName, out Type? result))
-                return result;
-
-            // Expected types or fallback in non-safe mode. In SafeMode flags are irrelevant because DoResolveType throws an exception on failure
-            // We could use ThrowError in safe mode but this way we can customize the message of the ReflectionException
-            result = TypeResolver.ResolveType(typeName, DoResolveType, SafeMode ? ResolveTypeOptions.None : ResolveTypeOptions.AllowPartialAssemblyMatch | ResolveTypeOptions.TryToLoadAssemblies);
-
-            Debug.Assert(result != null || !SafeMode, "In safe mode null result is not expected because DoResolveType should throw an exception");
-            if (result == null)
-                Throw.ReflectionException<Type>(Res.XmlSerializationCannotResolveType(typeName));
-
-            resolvedTypes[typeName] = result;
-            return result;
-        }
-
+        #region Private Protected Methods
+        
         private protected void ResolveMember(Type type, string memberOrItemName, string? strDeclaringType, string? strItemType, out PropertyInfo? property, out FieldInfo? field, out Type? itemType)
         {
             property = null;
@@ -688,6 +654,62 @@ namespace KGySoft.Serialization.Xml
                 declaringType = declaringType.GetGenericTypeDefinition();
             return types.Contains(declaringType);
         }
+
+        private protected Type ResolveType(string typeName)
+        {
+            resolvedTypes ??= new Dictionary<string, Type>();
+
+            // Already cached
+            if (resolvedTypes.TryGetValue(typeName, out Type? result))
+                return result;
+
+            // Expected types or fallback in non-safe mode. In SafeMode flags are irrelevant because DoResolveType throws an exception on failure
+            // We could use ThrowError in safe mode but this way we can customize the message of the ReflectionException
+            result = TypeResolver.ResolveType(typeName, DoResolveType, SafeMode ? ResolveTypeOptions.None : ResolveTypeOptions.AllowPartialAssemblyMatch | ResolveTypeOptions.TryToLoadAssemblies);
+
+            Debug.Assert(result != null || !SafeMode, "In safe mode null result is not expected because DoResolveType should throw an exception");
+            if (result == null)
+                Throw.ReflectionException<Type>(Res.XmlSerializationCannotResolveType(typeName));
+
+            resolvedTypes[typeName] = result;
+            return result;
+        }
+
+        #endregion
+
+        #region Private Methods
+
+        private Type? DoResolveType(AssemblyName? asmName, string typeName)
+        {
+            if (expectedTypes?.TryGetValue(typeName, out Type? result) == true || SerializationHelper.TryGetNativelySupportedSimpleType(typeName, out result))
+            {
+                if (asmName == null)
+                    return result;
+
+#if NETFRAMEWORK
+                // GetName requires FileIOPermission under .NET Framework
+                AssemblyName actualAsmName = new AssemblyName(result.Assembly.FullName!);
+#else
+                AssemblyName actualAsmName = result.Assembly.GetName();
+#endif
+                if (AssemblyResolver.IdentityMatches(actualAsmName, asmName, !SafeMode))
+                    return result;
+
+                var legacyName = AssemblyResolver.GetForwardedAssemblyName(result);
+                if (legacyName.IsCoreIdentity && AssemblyResolver.IsCoreLibAssemblyName(asmName.Name)
+                    || legacyName.ForwardedAssemblyName != null && AssemblyResolver.IdentityMatches(actualAsmName, new AssemblyName(legacyName.ForwardedAssemblyName), true))
+                {
+                    return result;
+                }
+            }
+
+            if (!SafeMode)
+                return null;
+
+            return Throw.InvalidOperationException<Type>(Res.XmlSerializationCannotResolveTypeSafe(typeName));
+        }
+
+        #endregion
 
         #endregion
 

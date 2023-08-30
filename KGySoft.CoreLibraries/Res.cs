@@ -1112,7 +1112,7 @@ namespace KGySoft
         internal static string XmlSerializationCannotResolveType(string typeName) => Get("XmlSerialization_CannotResolveTypeFormat", typeName);
 
         /// <summary>Could not resolve type in safe mode: "{0}".
-        /// In safe mode you have to preload the assembly of the type before deserialization, even if the type name is fully qualified.</summary>
+        /// In safe mode you must specify every non-natively supported expected type that are resolved by name.</summary>
         internal static string XmlSerializationCannotResolveTypeSafe(string typeName) => Get("XmlSerialization_CannotResolveTypeSafeFormat", typeName);
 
         /// <summary>Deserializing type "{0}" is not supported.</summary>
