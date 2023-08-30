@@ -128,7 +128,20 @@ namespace KGySoft.Serialization.Xml
                 objType = ResolveType(attrType.Value);
 
             if (TryDeserializeObject(objType, content, null, out var result))
+            {
+                if (RootType is null)
+                    return result;
+
+                if (result is null)
+                {
+                    if (RootType.IsValueType && !RootType.IsNullable())
+                        Throw.SerializationException(Res.SerializationNonNullResultExpected(RootType));
+                }
+                else if (!RootType.IsInstanceOfType(result))
+                    Throw.SerializationException(Res.SerializationUnexpectedResult(RootType, result.GetType()));
+
                 return result;
+            }
 
             if (attrType == null)
                 Throw.ArgumentException(Argument.content, Res.XmlSerializationRootTypeMissing);

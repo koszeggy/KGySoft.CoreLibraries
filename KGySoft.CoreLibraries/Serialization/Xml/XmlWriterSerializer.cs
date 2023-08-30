@@ -92,9 +92,9 @@ namespace KGySoft.Serialization.Xml
 
         #region Instance Methods
 
-        #region Public Methods
+        #region Internal Methods
 
-        public void Serialize(XmlWriter writer, object? obj)
+        internal void Serialize(XmlWriter writer, object? obj)
         {
             if (writer == null!)
                 Throw.ArgumentNullException(Argument.writer);
@@ -112,21 +112,7 @@ namespace KGySoft.Serialization.Xml
             writer.Flush();
         }
 
-        /// <summary>
-        /// Saves public properties or collection elements of an object given in <paramref name="obj"/> parameter
-        /// by an already opened <see cref="XmlWriter"/> object given in <paramref name="writer"/> parameter.
-        /// </summary>
-        /// <param name="obj">The object, which inner content should be serialized. Parameter value must not be <see langword="null"/>.</param>
-        /// <param name="writer">A preconfigured <see cref="XmlWriter"/> object that will be used for serialization. The writer must be in proper state to serialize <paramref name="obj"/> properly
-        /// and will not be closed after serialization.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="obj"/> and <paramref name="writer"/> must not be <see langword="null"/>.</exception>
-        /// <exception cref="NotSupportedException">Serialization is not supported with provided <see cref="XmlSerializerBase.Options"/></exception>
-        /// <exception cref="ReflectionException">The object hierarchy to serialize contains circular reference.</exception>
-        /// <remarks>
-        /// If the provided object in <paramref name="obj"/> parameter is a collection, then elements will be serialized, too.
-        /// If you want to serialize a primitive type, then use the <see cref="Serialize"/> method.
-        /// </remarks>
-        public void SerializeContent(XmlWriter writer, object obj)
+        internal void SerializeContent(XmlWriter writer, object obj)
         {
             if (obj == null!)
                 Throw.ArgumentNullException(Argument.obj);

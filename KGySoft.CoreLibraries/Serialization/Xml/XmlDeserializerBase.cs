@@ -225,7 +225,6 @@ namespace KGySoft.Serialization.Xml
 
         #region Instance Fields
 
-        private readonly Type? rootType;
         private readonly Dictionary<string, Type>? expectedTypes;
 
         private Dictionary<string, Type>? resolvedTypes;
@@ -237,6 +236,7 @@ namespace KGySoft.Serialization.Xml
         #region Properties
 
         private protected bool SafeMode { get; }
+        private protected Type? RootType { get; }
 
         #endregion
 
@@ -244,7 +244,7 @@ namespace KGySoft.Serialization.Xml
 
         private protected XmlDeserializerBase(bool safeMode, IEnumerable<Type>? expectedCustomTypes, Type? rootType)
         {
-            this.rootType = rootType == Reflector.ObjectType ? null : rootType;
+            RootType = rootType == Reflector.ObjectType ? null : rootType;
             SafeMode = safeMode;
             if (!safeMode)
                 return;

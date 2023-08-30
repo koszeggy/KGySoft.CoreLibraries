@@ -107,18 +107,9 @@ namespace KGySoft.Serialization.Xml
 
         #region Instance Methods
 
-        #region Public Methods
+        #region Insternal Methods
 
-        /// <summary>
-        /// Serializes the object passed in <paramref name="obj"/> parameter into a new <see cref="XElement"/> object.
-        /// </summary>
-        /// <param name="obj">The object to serialize.</param>
-        /// <returns>An <see cref="XElement"/> instance that contains the serialized object.
-        /// Result can be deserialized by <see cref="XElementDeserializer.Deserialize(XElement)"/> method.</returns>
-        /// <exception cref="NotSupportedException">Root object is a read-only collection.</exception>
-        /// <exception cref="ReflectionException">The object hierarchy to serialize contains circular reference.<br/>-or-<br/>
-        /// Serialization is not supported with provided options.</exception>
-        public XElement Serialize(object? obj)
+        internal XElement Serialize(object? obj)
         {
             XElement result = new XElement(XmlSerializer.ElementObject!);
             if (obj == null)
@@ -128,20 +119,7 @@ namespace KGySoft.Serialization.Xml
             return result;
         }
 
-        /// <summary>
-        /// Saves public properties or collection elements of an object given in <paramref name="obj"/> parameter
-        /// into an already existing <see cref="XElement"/> object given in <paramref name="parent"/> parameter.
-        /// </summary>
-        /// <param name="obj">The object, which inner content should be serialized. Parameter value must not be <see langword="null"/>.</param>
-        /// <param name="parent">The parent under that the object will be saved. Its content can be deserialized by <see cref="XElementDeserializer.DeserializeContent(XElement,object)"/> method.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="obj"/> and <paramref name="parent"/> must not be <see langword="null"/>.</exception>
-        /// <exception cref="NotSupportedException">Serialization is not supported with provided <see cref="XmlSerializerBase.Options"/></exception>
-        /// <exception cref="ReflectionException">The object hierarchy to serialize contains circular reference.</exception>
-        /// <remarks>
-        /// If the provided object in <paramref name="obj"/> parameter is a collection, then elements will be serialized, too.
-        /// If you want to serialize a primitive type, then use the <see cref="Serialize"/> method.
-        /// </remarks>
-        public void SerializeContent(XElement parent, object obj)
+        internal void SerializeContent(XElement parent, object obj)
         {
             if (obj == null!)
                 Throw.ArgumentNullException(Argument.obj);
