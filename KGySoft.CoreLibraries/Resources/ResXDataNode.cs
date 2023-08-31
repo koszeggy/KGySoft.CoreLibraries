@@ -856,8 +856,8 @@ namespace KGySoft.Resources
                 }
                 else
                 {
-                    // expected type is not specified: in safeMode accepting it only for natively supported types
-                    if (!SerializationHelper.TryGetNativelySupportedSimpleType(assemblyQualifiedName, out result) && !safeMode)
+                    // expected type is not specified: in safeMode accepting it only for known simple types
+                    if (!SerializationHelper.TryGetKnownSimpleType(assemblyQualifiedName, out result) && !safeMode)
                         result = TypeResolver.ResolveType(assemblyQualifiedName, null, ResolveTypeOptions.AllowPartialAssemblyMatch | ResolveTypeOptions.TryToLoadAssemblies);
                 }
             }

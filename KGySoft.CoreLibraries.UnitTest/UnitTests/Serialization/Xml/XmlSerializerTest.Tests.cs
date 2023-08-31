@@ -55,7 +55,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         #region Methods
 
         [Test]
-        public void SerializeNativelySupportedTypes()
+        public void SerializeSimpleTypes()
         {
             object[] referenceObjects =
             {
@@ -88,10 +88,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             // These types cannot be serialized with system serializer
             referenceObjects = new object[]
             {
-                DBNull.Value,
                 new IntPtr(1),
                 new UIntPtr(1),
-                1.GetType(),
                 new DateTimeOffset(DateTime.Now),
                 new DateTimeOffset(DateTime.UtcNow),
                 new DateTimeOffset(DateTime.Now.Ticks, new TimeSpan(1, 1, 0)),
@@ -420,8 +418,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             };
 
             // even escape can be omitted if deserialization is by XmlTextReader, which does not normalize newlines
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.EscapeNewlineCharacters);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.EscapeNewlineCharacters);
+            var expectedTypes = new[] { typeof(BinarySerializableClass), typeof(ExplicitTypeConverterHolder), typeof(Point), typeof(ExplicitTypeConverterHolder.MultilineTypeConverter) };
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.EscapeNewlineCharacters, expectedTypes: expectedTypes);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.EscapeNewlineCharacters, expectedTypes: expectedTypes);
         }
 
         [Test]
@@ -501,18 +500,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         {
             object[] referenceObjects =
             {
-                new EmptyType(),
-#if !NET35
-                new StrongBox<int?>(5),
-                new StrongBox<int?>(), 
-#endif
                 new BinarySerializableClass { IntProp = 1, StringProp = "alpha", ObjectProp = " . " },
                 new BinarySerializableStruct { IntProp = 2, StringProp = "beta" },
                 new SystemSerializableClass { IntProp = 3, StringProp = "gamma" },
-                new NonSerializableStruct { IntProp = 1, Point = new(10, 20) },
             };
 
-            // SystemSerializeObject(referenceObjects); - InvalidOperationException: The type _LibrariesTest.Libraries.Serialization.XmlSerializerTest+EmptyType was not expected.
+            //SystemSerializeObject(referenceObjects); // InvalidOperationException: The type _LibrariesTest.Libraries.Serialization.XmlSerializerTest+BinarySerializableClass was not expected.
             SystemSerializeObjects(referenceObjects);
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // BinarySerializableStruct, NonSerializableStruct
@@ -529,6 +522,34 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback | XmlSerializationOptions.OmitCrcAttribute); // everything
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback | XmlSerializationOptions.OmitCrcAttribute); // every element
+
+            referenceObjects = new object[]
+            {
+                new EmptyType(),
+#if !NET35
+                new StrongBox<int?>(5),
+                new StrongBox<int?>(), 
+#endif
+                new NonSerializableStruct { IntProp = 1, Point = new(10, 20) },
+            };
+
+            //SystemSerializeObject(referenceObjects); // InvalidOperationException: The type _LibrariesTest.Libraries.Serialization.XmlSerializerTest+EmptyType was not expected.
+            SystemSerializeObjects(referenceObjects);
+
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // BinarySerializableStruct, NonSerializableStruct
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // BinarySerializableStruct, NonSerializableStruct
+
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); //  NonSerializableStruct
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // NonSerializableStruct
+
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures | XmlSerializationOptions.OmitCrcAttribute); // BinarySerializableStruct, NonSerializableStruct
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures | XmlSerializationOptions.OmitCrcAttribute); // BinarySerializableStruct, NonSerializableStruct
+
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, safeMode: false); // everything
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, safeMode: false); // every element
+
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback | XmlSerializationOptions.OmitCrcAttribute, safeMode: false); // everything
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback | XmlSerializationOptions.OmitCrcAttribute, safeMode: false); // every element
         }
 
         [Test]
@@ -873,18 +894,19 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 new IConvertible[][] { null, new IConvertible[] { null, 1 }, },
             };
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // BinarySerializableStruct, NonSerializableStruct, SystemSerializableStruct
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // BinarySerializableStruct, NonSerializableStruct, SystemSerializableStruct
+            var expectedTypes = GetExpectedTypes(referenceObjects).Concat(new[] { typeof(BinarySerializableSealedClass), typeof(BinarySerializableStruct), typeof(SystemSerializableClass), typeof(SystemSerializableSealedClass), typeof(SystemSerializableStruct) }).ToList();
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback, expectedTypes: expectedTypes); // BinarySerializableStruct, NonSerializableStruct, SystemSerializableStruct
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback, expectedTypes: expectedTypes); // BinarySerializableStruct, NonSerializableStruct, SystemSerializableStruct
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // SystemSerializableStruct
-                | XmlSerializationOptions.CompactSerializationOfStructures); // BinarySerializableStruct, NonSerializableStruct
+                | XmlSerializationOptions.CompactSerializationOfStructures, expectedTypes: expectedTypes); // BinarySerializableStruct, NonSerializableStruct
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // SystemSerializableStruct
-                | XmlSerializationOptions.CompactSerializationOfStructures); // BinarySerializableStruct, NonSerializableStruct
+                | XmlSerializationOptions.CompactSerializationOfStructures, expectedTypes: expectedTypes); // BinarySerializableStruct, NonSerializableStruct
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // everything
-                | XmlSerializationOptions.CompactSerializationOfStructures); // nothing
+                | XmlSerializationOptions.CompactSerializationOfStructures, expectedTypes: expectedTypes); // nothing
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // as content, non-structs; otherwise everything
-                | XmlSerializationOptions.CompactSerializationOfStructures); // as content, structs; otherwise, nothing
+                | XmlSerializationOptions.CompactSerializationOfStructures, expectedTypes: expectedTypes); // as content, structs; otherwise, nothing
         }
 
         /// <summary>
@@ -993,9 +1015,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 #if NETCOREAPP3_0
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, true); // randomContent: ConcurrentStack
 #else
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, safeMode: false);
 #endif
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, false);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, false, false);
 #endif // !NET35
         }
 
@@ -1040,8 +1062,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 
             Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback),
                 "Serialization of collection \"KGySoft.CoreLibraries.UnitTests.Serialization.Xml.XmlSerializerTest+ReadOnlyCollectionWithoutInitCtorAndReadOnlyProperties\" is not supported with following options: \"RecursiveSerializationAsFallback\", because it does not implement IList, IDictionary or ICollection<T> interfaces and has no initializer constructor that can accept an array or list.");
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, false);
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, safeMode: false);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, false, false);
         }
 
         [Test]
@@ -1079,8 +1101,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 new BinaryMembers("One", "Two") { BinProp = DateTime.Now }
             };
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.ForcedSerializationOfReadOnlyMembersAndCollections); // Queue as readonly property
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.ForcedSerializationOfReadOnlyMembersAndCollections); // Queue as readonly property
+            var expectedTypes = new[] { typeof(BinaryMembers), typeof(BinaryTypeConverter) };
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.ForcedSerializationOfReadOnlyMembersAndCollections, expectedTypes: expectedTypes); // Queue as readonly property
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.ForcedSerializationOfReadOnlyMembersAndCollections, expectedTypes: expectedTypes); // Queue as readonly property
         }
 
         [Test]
@@ -1180,7 +1203,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 // dictionary with dictionary key and value
                 new Dictionary<Dictionary<int[], string>, Dictionary<int, string>> { { new Dictionary<int[], string> { { new int[] { 1 }, "key.value1" } }, new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } } }, { new Dictionary<int[], string> { { new int[] { 2 }, "key.value2" } }, new Dictionary<int, string> { { 1, "apple" }, { 2, "frog" }, { 3, "cat" } } } },
 
-                // object list vith various elements
+                // object list with various elements
                 new List<object> { 1, "alpha", new Version(13, 0), new object[] { 3, "gamma", null }, new object(), null },
 
                 // dictionary with object key and value
@@ -1197,11 +1220,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             //SystemSerializeObject(referenceObjects); - InvalidOperationException: You must implement a default accessor on System.Collections.ICollection because it inherits from ICollection.
             //SystemSerializeObjects(referenceObjects); - NullReferenceException
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // All but list and arrays
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // All but list and arrays
+            var expectedTypes = GetExpectedTypes(referenceObjects).Concat(new[] { typeof(Version), typeof(TestEnum), typeof(BinarySerializableSealedClass) }).ToList();
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback, expectedTypes: expectedTypes); // All but list and arrays
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback, expectedTypes: expectedTypes); // All but list and arrays
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); // everything
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); // as content, nested collections and non-simple types; otherwise every element
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, expectedTypes: expectedTypes); // everything
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, expectedTypes: expectedTypes); // as content, nested collections and non-simple types; otherwise every element
         }
 
         /// <summary>
@@ -1237,18 +1261,19 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             //SystemSerializeObject(referenceObjects); // InvalidOperationException: You must implement a default accessor on System.Collections.Generic.LinkedList`1[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]] because it inherits from ICollection.
             //SystemSerializeObjects(referenceObjects); // InvalidOperationException: You must implement a default accessor on System.Collections.Generic.LinkedList`1[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]] because it inherits from ICollection.
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback);
+            var expectedTypes = new[] { typeof(FullExtraComponent), typeof(Point), typeof(FullExtraComponent.TestInner), typeof(FullExtraComponent.InnerStructure) };
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback, expectedTypes: expectedTypes);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback, expectedTypes: expectedTypes);
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // every non-trusted type
                 | XmlSerializationOptions.AutoGenerateDefaultValuesAsFallback // properties without DefaultAttribute
-                | XmlSerializationOptions.CompactSerializationOfPrimitiveArrays); // IntArray
+                | XmlSerializationOptions.CompactSerializationOfPrimitiveArrays, expectedTypes: expectedTypes); // IntArray
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // every non-trusted type
                 | XmlSerializationOptions.AutoGenerateDefaultValuesAsFallback // properties without DefaultAttribute
-                | XmlSerializationOptions.CompactSerializationOfPrimitiveArrays); // IntArray
+                | XmlSerializationOptions.CompactSerializationOfPrimitiveArrays, expectedTypes: expectedTypes); // IntArray
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, safeMode: false);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, safeMode: false);
         }
 
         [Test]
@@ -1332,17 +1357,20 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             XElement xml = XmlSerializer.Serialize(obj, XmlSerializationOptions.BinarySerializationAsFallback);
             Console.WriteLine(xml);
 
-            // in safe mode, binary content throws an exception
+            // in safe mode, expected types must be specified
             // 1.) by XElement
-            Throws<InvalidOperationException>(() => XmlSerializer.DeserializeSafe(xml), "It is not allowed to deserialize a BinarySerializationFormatter content in safe mode.");
+            Throws<SerializationException>(() => XmlSerializer.DeserializeSafe(xml), "In safe mode you should specify the expected types in the expectedCustomTypes parameter of the deserialization methods.");
 
             // 2.) by reader
             using (var reader = XmlReader.Create(new StringReader(xml.ToString()), new XmlReaderSettings { CloseInput = true }))
-                Throws<InvalidOperationException>(() => XmlSerializer.DeserializeSafe(reader), "It is not allowed to deserialize a BinarySerializationFormatter content in safe mode.");
+                Throws<SerializationException>(() => XmlSerializer.DeserializeSafe(reader), "In safe mode you should specify the expected types in the expectedCustomTypes parameter of the deserialization methods.");
 
-            // but it works in non-safe mode
-            var deserialized = XmlSerializer.Deserialize(xml);
+            // but it works if the expected type (or root type if no other is needed) is specified
+            object deserialized = XmlSerializer.DeserializeSafe<CustomGenericCollection<int>>(xml);
+            AssertDeepEquals(obj, deserialized);
 
+            // it works also in non-safe mode
+            deserialized = XmlSerializer.Deserialize(xml);
             AssertDeepEquals(obj, deserialized);
         }
 
@@ -1406,14 +1434,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 
             // 1.) by XElement
             Throws<OutOfMemoryException>(() => XmlSerializer.Deserialize(xml));
-            var list = (List<int>)XmlSerializer.DeserializeSafe(xml);
+            var list = XmlSerializer.DeserializeSafe<List<int>>(xml);
             AssertItemsEqual(obj, list);
 
             // 2.) by reader
             using (var reader = XmlReader.Create(new StringReader(xml.ToString()), new XmlReaderSettings { CloseInput = true }))
                 Throws<OutOfMemoryException>(() => XmlSerializer.Deserialize(reader));
             using (var reader = XmlReader.Create(new StringReader(xml.ToString()), new XmlReaderSettings { CloseInput = true }))
-                list = (List<int>)XmlSerializer.DeserializeSafe(reader);
+                list = XmlSerializer.DeserializeSafe<List<int>>(reader);
             AssertItemsEqual(obj, list);
         }
 

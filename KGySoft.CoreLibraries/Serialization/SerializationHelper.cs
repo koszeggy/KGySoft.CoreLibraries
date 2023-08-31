@@ -65,33 +65,35 @@ namespace KGySoft.Serialization
 #endif
         };
 
-        private static StringKeyedDictionary<Type>? nativelySupportedSimpleTypes;
+        private static StringKeyedDictionary<Type>? knownSimpleTypes;
 
         #endregion
 
         #region Properties
 
-        private static StringKeyedDictionary<Type> NativelySupportedSimpleTypes
+        private static StringKeyedDictionary<Type> KnownSimpleTypes
         {
             get
             {
-                if (nativelySupportedSimpleTypes == null)
+                if (knownSimpleTypes == null)
                 {
                     var result = new StringKeyedDictionary<Type>();
-                    foreach (Type type in TypeExtensions.GetNativelyParsedTypes())
+                    foreach (Type type in TypeExtensions.GetNativelyParsedTypes().Concat(new[] { Reflector.ObjectType, Reflector.NullableType }))
                     {
                         result[type.AssemblyQualifiedName!] = type;
                         var legacyName = AssemblyResolver.GetForwardedAssemblyName(type);
                         if (legacyName.ForwardedAssemblyName != null)
                             result[$"{type.FullName}, {legacyName.ForwardedAssemblyName}"] = type;
-                        if (legacyName.IsCoreIdentity || AssemblyResolver.IsCoreLibAssemblyName(type.Assembly.FullName))
-                            result[type.FullName!] = type;
+
+                        // These types are allowed to be recognized also just by full name, regardless their assembly
+                        //if (legacyName.IsCoreIdentity || AssemblyResolver.IsCoreLibAssemblyName(type.Assembly.FullName))
+                        result[type.FullName!] = type;
                     }
 
-                    nativelySupportedSimpleTypes = result;
+                    knownSimpleTypes = result;
                 }
 
-                return nativelySupportedSimpleTypes;
+                return knownSimpleTypes;
             }
         }
 
@@ -169,8 +171,8 @@ namespace KGySoft.Serialization
 
         internal static bool IsUnsafeType(Type type) => type.In(unsafeTypes);
 
-        internal static bool TryGetNativelySupportedSimpleType(string typeName, [MaybeNullWhen(false)]out Type result)
-            => NativelySupportedSimpleTypes.TryGetValue(typeName, out result);
+        internal static bool TryGetKnownSimpleType(string typeName, [MaybeNullWhen(false)]out Type result)
+            => KnownSimpleTypes.TryGetValue(typeName, out result);
 
         #endregion
     }

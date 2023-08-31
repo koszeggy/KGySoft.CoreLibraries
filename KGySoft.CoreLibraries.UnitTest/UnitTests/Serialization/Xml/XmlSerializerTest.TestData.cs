@@ -64,11 +64,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 
         #region EmptyType class
 
-        public class EmptyType
+        public sealed class EmptyType
         {
             #region Methods
 
-            public override bool Equals(object obj) => true;
+            public override bool Equals(object obj) => obj is EmptyType;
 
             public override int GetHashCode() => 0;
 
@@ -698,7 +698,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 
             #region MultilineTypeConverter class
 
-            private class MultilineTypeConverter : TypeConverter
+            internal class MultilineTypeConverter : TypeConverter
             {
                 #region Methods
 
@@ -711,7 +711,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
                 {
                     var parts = ((string)value).Split(new[] { Environment.NewLine }, StringSplitOptions.None);
-                    Type type = Reflector.ResolveType(parts[0]);
+                    Type type = Reflector.ResolveType(parts[0], ResolveTypeOptions.None);
                     return parts[1].Parse(type, culture);
                 }
 

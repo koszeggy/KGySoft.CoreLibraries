@@ -800,7 +800,7 @@ Either try to use the ForceRecursiveSerializationOfSupportedTypes option on seri
   </data>
   <data name="XmlSerialization_CannotResolveTypeSafeFormat" xml:space="preserve">
     <value>Could not resolve type in safe mode: "{0}".
-In safe mode you have to preload the assembly of the type before deserialization, even if the type name is fully qualified.</value>
+In safe mode you must specify every non-natively supported type that are expected to be present in the XML stream.</value>
   </data>
   <data name="XmlSerialization_SerializingTypeNotSupportedFormat" xml:space="preserve">
     <value>Serializing type "{0}" is not supported with following options: {1}. You may either use fallback options or provide a type converter for the type.</value>
@@ -900,9 +900,6 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
   </data>
   <data name="XmlSerialization_UnexpectedEnd" xml:space="preserve">
     <value>Unexpected end of XML content.</value>
-  </data>
-  <data name="XmlSerialization_BinarySerializerSafe" xml:space="preserve">
-    <value>It is not allowed to deserialize a BinarySerializationFormatter content in safe mode.</value>
   </data>
   <data name="Profiler_Uncategorized" xml:space="preserve">
     <value>&lt;Uncategorized&gt;</value>

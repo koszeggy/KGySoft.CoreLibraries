@@ -381,8 +381,6 @@ namespace KGySoft.Serialization.Xml
             {
                 if (ctx.Reader.IsEmptyElement)
                     return;
-                if (SafeMode)
-                    Throw.InvalidOperationException(Res.XmlSerializationBinarySerializerSafe);
 
                 string? attrCrc = ctx.Reader[XmlSerializer.AttributeCrc];
                 ReadToNodeType(ctx.Reader, XmlNodeType.Text);
@@ -393,7 +391,7 @@ namespace KGySoft.Serialization.Xml
                         Throw.ArgumentException(Res.XmlSerializationCrcError);
                 }
 
-                ctx.Result = BinarySerializer.Deserialize(data, 0, SafeMode ? BinarySerializationOptions.SafeMode : BinarySerializationOptions.None);
+                ctx.Result = BinarySerializer.Deserialize(data, 0, SafeMode ? BinarySerializationOptions.SafeMode : BinarySerializationOptions.None, ExpectedTypes);
                 ReadToNodeType(ctx.Reader, XmlNodeType.EndElement);
             }
 

@@ -310,8 +310,6 @@ namespace KGySoft.Serialization.Xml
             {
                 if (ctx.Element.IsEmpty)
                     return;
-                if (SafeMode)
-                    Throw.InvalidOperationException(Res.XmlSerializationBinarySerializerSafe);
 
                 byte[] data = Convert.FromBase64String(ctx.Element.Value);
                 XAttribute? attrCrc = ctx.Element.Attribute(XmlSerializer.AttributeCrc!);
@@ -321,7 +319,7 @@ namespace KGySoft.Serialization.Xml
                         Throw.ArgumentException(Res.XmlSerializationCrcError);
                 }
 
-                ctx.Result = BinarySerializer.Deserialize(data, 0, SafeMode ? BinarySerializationOptions.SafeMode : BinarySerializationOptions.None);
+                ctx.Result = BinarySerializer.Deserialize(data, 0, SafeMode ? BinarySerializationOptions.SafeMode : BinarySerializationOptions.None, ExpectedTypes);
             }
 
             bool TryDeserializeComplexObject(ref TryDeserializeObjectContext ctx)

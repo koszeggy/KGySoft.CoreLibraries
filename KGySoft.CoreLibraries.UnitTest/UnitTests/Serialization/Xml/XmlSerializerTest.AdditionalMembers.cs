@@ -20,6 +20,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Xml;
 using System.Xml.Linq;
@@ -47,7 +48,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
     {
         #region Methods
 
-        private void SystemSerializeObject(object obj)
+        private static void SystemSerializeObject(object obj)
         {
             using (new TestExecutionContext.IsolatedContext())
             {
@@ -71,7 +72,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             }
         }
 
-        private void SystemSerializeObjects(object[] referenceObjects)
+        private static void SystemSerializeObjects(object[] referenceObjects)
         {
             using (new TestExecutionContext.IsolatedContext())
             {
@@ -107,9 +108,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             }
         }
 
-        private void KGySerializeObject(object obj, XmlSerializationOptions options, bool randomContent = false)
+        private static void KGySerializeObject(object obj, XmlSerializationOptions options, bool randomContent = false, bool safeMode = true, IList<Type> expectedTypes = null)
         {
             Type type = obj.GetType();
+            if (expectedTypes == null && safeMode)
+                expectedTypes = GetExpectedTypes(obj);
             Console.WriteLine($"------------------KGySoft XmlSerializer ({type} - options: {options.ToString<XmlSerializationOptions>()})--------------------");
             try
             {
@@ -117,7 +120,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 //Console.WriteLine(".....As object.....");
                 XElement xElement = KGyXmlSerializer.Serialize(obj, options);
                 Console.WriteLine(xElement);
-                object deserializedObject = KGyXmlSerializer.Deserialize(xElement);
+                object deserializedObject = safeMode ? KGyXmlSerializer.DeserializeSafe(xElement, expectedTypes) : KGyXmlSerializer.Deserialize(xElement);
                 AssertDeepEquals(obj, deserializedObject);
 
                 // XmlReader/Writer - as object
@@ -130,7 +133,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 // deserialize by reader - if file already contains unescaped newlines: // new XmlTextReader(new StringReader(sb.ToString()));
                 using (var reader = XmlReader.Create(new StringReader(sb.ToString()), new XmlReaderSettings { CloseInput = true }))
                 {
-                    deserializedObject = KGyXmlSerializer.Deserialize(reader);
+                    deserializedObject = safeMode ? KGyXmlSerializer.DeserializeSafe(reader, expectedTypes) : KGyXmlSerializer.Deserialize(reader);
                 }
 
                 AssertDeepEquals(obj, deserializedObject);
@@ -144,7 +147,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 KGyXmlSerializer.SerializeContent(xElementComp, obj, options);
                 //Console.WriteLine(xElementComp);
                 deserializedObject = type.IsArray ? Array.CreateInstance(type.GetElementType(), ((Array)obj).Length) : Reflector.CreateInstance(type);
-                KGyXmlSerializer.DeserializeContent(xElementComp, deserializedObject);
+                if (safeMode)
+                    KGyXmlSerializer.DeserializeContentSafe(xElementComp, deserializedObject, expectedTypes);
+                else
+                    KGyXmlSerializer.DeserializeContent(xElementComp, deserializedObject);
                 AssertDeepEquals(obj, deserializedObject);
 
                 // XmlReader/Writer - as component
@@ -162,7 +168,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 {
                     deserializedObject = type.IsArray ? Array.CreateInstance(type.GetElementType(), ((Array)obj).Length) : Reflector.CreateInstance(type);
                     reader.Read(); // to node "test"
-                    KGyXmlSerializer.DeserializeContent(reader, deserializedObject);
+                    if (safeMode)
+                        KGyXmlSerializer.DeserializeContentSafe(reader, deserializedObject, expectedTypes);
+                    else
+                        KGyXmlSerializer.DeserializeContent(reader, deserializedObject);
                     reader.ReadEndElement();
                 }
 
@@ -176,9 +185,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             }
         }
 
-        private void KGySerializeObjects(object[] referenceObjects, XmlSerializationOptions options, bool alsoAsContent = true)
+        private static void KGySerializeObjects(object[] referenceObjects, XmlSerializationOptions options, bool alsoAsContent = true, bool safeMode = true, IList<Type> expectedTypes = null)
         {
             Console.WriteLine($"------------------KGySoft XmlSerializer (Items Count: {referenceObjects.Length}; options: {options.ToString<XmlSerializationOptions>()})--------------------");
+            if (expectedTypes == null && safeMode)
+                expectedTypes = GetExpectedTypes(referenceObjects);
             try
             {
                 XElement xElement = new XElement("test");
@@ -220,10 +231,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                         {
                             var itemType = item.GetType();
                             deserXElement = itemType.IsArray ? item.MemberwiseClone() : Reflector.CreateInstance(itemType);
-                            KGyXmlSerializer.DeserializeContent(xItem, deserXElement);
+                            if (safeMode)
+                                KGyXmlSerializer.DeserializeContentSafe(xItem, deserXElement, expectedTypes);
+                            else
+                                KGyXmlSerializer.DeserializeContent(xItem, deserXElement);
                             deserReader = itemType.IsArray ? item.MemberwiseClone() : Reflector.CreateInstance(itemType);
                             itemReader.Read(); // to node "itemContent"
-                            KGyXmlSerializer.DeserializeContent(itemReader, deserReader);
+                            if (safeMode)
+                                KGyXmlSerializer.DeserializeContentSafe(itemReader, deserReader, expectedTypes);
+                            else
+                                KGyXmlSerializer.DeserializeContent(itemReader, deserReader);
                             itemReader.ReadEndElement();
                         }
 
@@ -246,8 +263,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                         reader.Read(); // test
                         foreach (XElement element in xElement.Elements())
                         {
-                            object deserXElement = KGyXmlSerializer.Deserialize(element);
-                            object deserReader = KGyXmlSerializer.Deserialize(reader);
+                            object deserXElement = safeMode ?  KGyXmlSerializer.DeserializeSafe(element, expectedTypes) : KGyXmlSerializer.Deserialize(element);
+                            object deserReader = safeMode ? KGyXmlSerializer.DeserializeSafe(reader, expectedTypes) : KGyXmlSerializer.Deserialize(reader);
                             AssertDeepEquals(deserXElement, deserReader);
 
                             deserializedObjects.Add(deserXElement);
@@ -269,6 +286,17 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 Console.WriteLine($"KGySoft serialization failed: {e}");
                 throw;
             }
+        }
+
+        private static IList<Type> GetExpectedTypes(object o)
+        {
+            if (o == null)
+                return null;
+
+            var result = new List<Type> { o.GetType() };
+            if (o is IList<object> list)
+                result.AddRange(list.Where(i => i != null).Select(i => i.GetType()));
+            return result;
         }
 
         #endregion

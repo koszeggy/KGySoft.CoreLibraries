@@ -225,9 +225,9 @@ namespace KGySoft.Serialization.Xml
 
         #region Instance Fields
 
-        private readonly Dictionary<string, Type>? expectedTypes;
+        private readonly StringKeyedDictionary<Type>? expectedTypes;
 
-        private Dictionary<string, Type>? resolvedTypes;
+        private StringKeyedDictionary<Type>? resolvedTypes;
 
         #endregion
 
@@ -237,6 +237,7 @@ namespace KGySoft.Serialization.Xml
 
         private protected bool SafeMode { get; }
         private protected Type? RootType { get; }
+        private protected IEnumerable<Type>? ExpectedTypes => expectedTypes?.Values;
 
         #endregion
 
@@ -249,10 +250,13 @@ namespace KGySoft.Serialization.Xml
             if (!safeMode)
                 return;
 
-            expectedTypes = new Dictionary<string, Type>();
+            expectedTypes = new StringKeyedDictionary<Type>();
 
             // Safe mode without a safe binder: adding allowed types
-            var types = new Queue<Type>(new[] { rootType }.Concat(expectedCustomTypes ?? Reflector.EmptyArray<Type>()));
+            var types = new Queue<Type>(expectedCustomTypes ?? Reflector.EmptyArray<Type>());
+            if (rootType is not null)
+                types.Enqueue(rootType);
+
 #if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
             while (types.TryDequeue(out Type? type))
 #else
@@ -657,7 +661,7 @@ namespace KGySoft.Serialization.Xml
 
         private protected Type ResolveType(string typeName)
         {
-            resolvedTypes ??= new Dictionary<string, Type>();
+            resolvedTypes ??= new StringKeyedDictionary<Type>();
 
             // Already cached
             if (resolvedTypes.TryGetValue(typeName, out Type? result))
@@ -667,9 +671,13 @@ namespace KGySoft.Serialization.Xml
             // We could use ThrowError in safe mode but this way we can customize the message of the ReflectionException
             result = TypeResolver.ResolveType(typeName, DoResolveType, SafeMode ? ResolveTypeOptions.None : ResolveTypeOptions.AllowPartialAssemblyMatch | ResolveTypeOptions.TryToLoadAssemblies);
 
-            Debug.Assert(result != null || !SafeMode, "In safe mode null result is not expected because DoResolveType should throw an exception");
-            if (result == null)
-                Throw.ReflectionException<Type>(Res.XmlSerializationCannotResolveType(typeName));
+            if (result is null)
+            {
+                if (SafeMode)
+                    Throw.InvalidOperationException<Type>(Res.XmlSerializationCannotResolveTypeSafe(typeName));
+                else
+                    Throw.ReflectionException<Type>(Res.XmlSerializationCannotResolveType(typeName));
+            }
 
             resolvedTypes[typeName] = result;
             return result;
@@ -679,9 +687,11 @@ namespace KGySoft.Serialization.Xml
 
         #region Private Methods
 
+        // Not returning null in SafeMode to prevent the fallback to take over.
+        // Thrown exceptions (except ReflectionException) are suppressed by TypeResolver because no ThrowError flag is used
         private Type? DoResolveType(AssemblyName? asmName, string typeName)
         {
-            if (expectedTypes?.TryGetValue(typeName, out Type? result) == true || SerializationHelper.TryGetNativelySupportedSimpleType(typeName, out result))
+            if (expectedTypes?.TryGetValue(typeName, out Type? result) == true || SerializationHelper.TryGetKnownSimpleType(typeName, out result))
             {
                 if (asmName == null)
                     return result;
@@ -697,7 +707,7 @@ namespace KGySoft.Serialization.Xml
 
                 var legacyName = AssemblyResolver.GetForwardedAssemblyName(result);
                 if (legacyName.IsCoreIdentity && AssemblyResolver.IsCoreLibAssemblyName(asmName.Name)
-                    || legacyName.ForwardedAssemblyName != null && AssemblyResolver.IdentityMatches(actualAsmName, new AssemblyName(legacyName.ForwardedAssemblyName), true))
+                    || legacyName.ForwardedAssemblyName != null && AssemblyResolver.IdentityMatches(new AssemblyName(legacyName.ForwardedAssemblyName), asmName, true))
                 {
                     return result;
                 }
@@ -706,7 +716,7 @@ namespace KGySoft.Serialization.Xml
             if (!SafeMode)
                 return null;
 
-            return Throw.InvalidOperationException<Type>(Res.XmlSerializationCannotResolveTypeSafe(typeName));
+            throw new InvalidOperationException();
         }
 
         #endregion

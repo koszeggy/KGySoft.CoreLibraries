@@ -492,9 +492,6 @@ namespace KGySoft
         /// <summary>Unexpected end of XML content.</summary>
         internal static string XmlSerializationUnexpectedEnd => Get("XmlSerialization_UnexpectedEnd");
 
-        /// <summary>It is not allowed to deserialize a BinarySerializationFormatter content in safe mode.</summary>
-        internal static string XmlSerializationBinarySerializerSafe => Get("XmlSerialization_BinarySerializerSafe");
-
         #endregion
 
         #endregion
@@ -1112,7 +1109,7 @@ namespace KGySoft
         internal static string XmlSerializationCannotResolveType(string typeName) => Get("XmlSerialization_CannotResolveTypeFormat", typeName);
 
         /// <summary>Could not resolve type in safe mode: "{0}".
-        /// In safe mode you must specify every non-natively supported expected type that are resolved by name.</summary>
+        /// In safe mode you must specify every non-natively supported type that are expected to be present in the XML stream.</summary>
         internal static string XmlSerializationCannotResolveTypeSafe(string typeName) => Get("XmlSerialization_CannotResolveTypeSafeFormat", typeName);
 
         /// <summary>Deserializing type "{0}" is not supported.</summary>

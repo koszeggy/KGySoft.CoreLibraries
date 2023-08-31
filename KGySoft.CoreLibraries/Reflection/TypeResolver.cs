@@ -1282,7 +1282,7 @@ namespace KGySoft.Reflection
             else if (assemblyName == null)
             {
                 // We are not throwing an exception from here because on failure we try all assemblies
-                result = typeResolver?.Invoke(null, rootName!) ?? AssemblyResolver.MscorlibAssembly.GetType(rootName!, false, ignoreCase);
+                result = AssemblyResolver.MscorlibAssembly.GetType(rootName!, false, ignoreCase);
                 if (result != null)
                     return result;
             }
