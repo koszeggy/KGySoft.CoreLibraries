@@ -78,17 +78,10 @@ namespace KGySoft.Serialization
                 if (knownSimpleTypes == null)
                 {
                     var result = new StringKeyedDictionary<Type>();
-                    foreach (Type type in TypeExtensions.GetNativelyParsedTypes().Concat(new[] { Reflector.ObjectType, Reflector.NullableType }))
-                    {
-                        result[type.AssemblyQualifiedName!] = type;
-                        var legacyName = AssemblyResolver.GetForwardedAssemblyName(type);
-                        if (legacyName.ForwardedAssemblyName != null)
-                            result[$"{type.FullName}, {legacyName.ForwardedAssemblyName}"] = type;
 
-                        // These types are allowed to be recognized also just by full name, regardless their assembly
-                        //if (legacyName.IsCoreIdentity || AssemblyResolver.IsCoreLibAssemblyName(type.Assembly.FullName))
+                    // populating with full names only because assembly name is checked by the caller
+                    foreach (Type type in TypeExtensions.GetNativelyParsedTypes().Concat(new[] { Reflector.ObjectType, Reflector.NullableType }))
                         result[type.FullName!] = type;
-                    }
 
                     knownSimpleTypes = result;
                 }
@@ -172,7 +165,10 @@ namespace KGySoft.Serialization
         internal static bool IsUnsafeType(Type type) => type.In(unsafeTypes);
 
         internal static bool TryGetKnownSimpleType(string typeName, [MaybeNullWhen(false)]out Type result)
-            => KnownSimpleTypes.TryGetValue(typeName, out result);
+        {
+            Debug.Assert(!typeName.Contains(']') || typeName.IndexOf(',', typeName.LastIndexOf(']')) < 0, "Non-assembly qualified name expected");
+            return KnownSimpleTypes.TryGetValue(typeName, out result);
+        }
 
         #endregion
     }

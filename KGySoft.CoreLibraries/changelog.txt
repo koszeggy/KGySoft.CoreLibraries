@@ -9,8 +9,12 @@
 ! v8.0.0:
 ~~~~~~~~~
 
-* KGySoft.CoreLibraries namespace:
+! KGySoft.CoreLibraries namespace:
 ==================================
+! StringExtensions and SpanExtensions classes:
+  ! Parse methods: When parsing a Type it is no longer allowed to load assemblies during the operation
+    if the value to parse contains assembly qualified names of unloaded assemblies. You still can use the
+    Reflector.ResolveType method with the appropriate options to allow loading assemblies.
 + ArrayExtensions class:
   + New AsSection overload for ArraySegment<T>
   + New AsArray2D overload for ArraySegment<T>
@@ -146,6 +150,8 @@
     without declaring the expected types in the new overloads. Natively supported simple types are recognized
     even if they are not specified as expected types.
   + New DeserializeSafe and DeserializeContentSafe overloads with expectedCustomTypes parameters.
+  + Deserializing binary serialized content was disabled in safe mode. Now it's enabled but types resolved by names
+    must be declared in the expectedCustomTypes parameter of the new Deserialize[Content]Safe overloads.
 
 
 ~~~~~~~~~

@@ -14,10 +14,6 @@ namespace System.Diagnostics.CodeAnalysis
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Parameter | AttributeTargets.Property | AttributeTargets.ReturnValue, Inherited = false)]
     internal sealed class NotNullAttribute : Attribute { }
 
-    /// <summary>Specifies that an output may be null even if the corresponding type disallows it.</summary>
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Parameter | AttributeTargets.Property | AttributeTargets.ReturnValue, Inherited = false)]
-    internal sealed class MaybeNullAttribute : Attribute { }
-
     /// <summary>Specifies that when a method returns <see cref="ReturnValue"/>, the parameter may be null even if the corresponding type disallows it.</summary>
     [AttributeUsage(AttributeTargets.Parameter, Inherited = false)]
     internal sealed class MaybeNullWhenAttribute : Attribute

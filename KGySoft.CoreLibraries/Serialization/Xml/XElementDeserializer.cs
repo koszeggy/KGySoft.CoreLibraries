@@ -381,20 +381,27 @@ namespace KGySoft.Serialization.Xml
                 return true;
             }
 
-            if (type != null && type.IsNullable())
+            if (type is not null && type.IsNullable())
                 type = Nullable.GetUnderlyingType(type);
 
             // a.) If type can be natively parsed, parsing from string
-            if (type != null && type.CanBeParsedNatively())
+            if (type is not null && type.CanBeParsedNatively())
             {
                 string? value = ReadStringValue(element);
-                result = value.Parse(type, SafeMode);
+                if (type != Reflector.RuntimeType)
+                {
+                    result = value.Parse(type);
+                    return true;
+                }
+
+                // Here parsing runtime type. Parse would handle also runtime type but we need to consider expected types.
+                result = value == null ? null : ResolveType(value);
                 return true;
             }
 
             // b.) Deserialize IXmlSerializable
             string? format = element.Attribute(XmlSerializer.AttributeFormat!)?.Value;
-            if (type != null && format == XmlSerializer.AttributeValueCustom)
+            if (type is not null && format == XmlSerializer.AttributeValueCustom)
             {
                 object instance = existingInstance ?? (type.CanBeCreatedWithoutParameters()
                     ? CreateInstanceAccessor.GetAccessor(type).CreateInstance()
@@ -412,7 +419,7 @@ namespace KGySoft.Serialization.Xml
             }
 
             // c.) Using type converter of the type if applicable
-            if (type != null)
+            if (type is not null)
             {
                 TypeConverter converter = TypeDescriptor.GetConverter(type);
                 if (converter.CanConvertFrom(Reflector.StringType))

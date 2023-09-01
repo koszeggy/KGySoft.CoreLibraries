@@ -668,8 +668,10 @@ namespace KGySoft.Serialization.Xml
                 return result;
 
             // Expected types or fallback in non-safe mode. In SafeMode flags are irrelevant because DoResolveType throws an exception on failure
-            // We could use ThrowError in safe mode but this way we can customize the message of the ReflectionException
-            result = TypeResolver.ResolveType(typeName, DoResolveType, SafeMode ? ResolveTypeOptions.None : ResolveTypeOptions.AllowPartialAssemblyMatch | ResolveTypeOptions.TryToLoadAssemblies);
+            // We could use ThrowError in safe mode but this way we can customize the message of the ReflectionException.
+            // If there are no expected types in unsafe mode we don't specify the resolver to use the more permanent cache.
+            result = TypeResolver.ResolveType(typeName, SafeMode || expectedTypes != null ? DoResolveType : null,
+                SafeMode ? ResolveTypeOptions.None : ResolveTypeOptions.AllowPartialAssemblyMatch | ResolveTypeOptions.TryToLoadAssemblies);
 
             if (result is null)
             {
@@ -687,8 +689,10 @@ namespace KGySoft.Serialization.Xml
 
         #region Private Methods
 
-        // Not returning null in SafeMode to prevent the fallback to take over.
-        // Thrown exceptions (except ReflectionException) are suppressed by TypeResolver because no ThrowError flag is used
+        /// <summary>
+        /// Not returning null in SafeMode to prevent the fallback to take over.
+        /// Thrown exceptions (except ReflectionException) are suppressed by TypeResolver because no ThrowError flag is used
+        /// </summary>
         private Type? DoResolveType(AssemblyName? asmName, string typeName)
         {
             if (expectedTypes?.TryGetValue(typeName, out Type? result) == true || SerializationHelper.TryGetKnownSimpleType(typeName, out result))
@@ -713,9 +717,11 @@ namespace KGySoft.Serialization.Xml
                 }
             }
 
+            // Letting TypeResolver do the resolve according to the options
             if (!SafeMode)
                 return null;
 
+            // Will be suppressed by TypeResolver but the caller will throw a customized exception for null
             throw new InvalidOperationException();
         }
 

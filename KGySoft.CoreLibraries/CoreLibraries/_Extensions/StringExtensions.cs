@@ -134,7 +134,7 @@ namespace KGySoft.CoreLibraries
             if (String.IsNullOrEmpty(separator))
                 return ParseHexBytes(s);
 
-            List<StringSegmentInternal> values = new StringSegmentInternal(s).Split(separator!);
+            List<StringSegmentInternal> values = new StringSegmentInternal(s).Split(separator);
             int len = values.Count;
             byte[] result = new byte[len];
             for (int i = 0; i < len; i++)
@@ -299,7 +299,7 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentException">Parameter <paramref name="s"/> cannot be parsed as <paramref name="type"/>.</exception>
         [return:NotNullIfNotNull(nameof(s))]public static object? Parse(this string? s, Type type, CultureInfo? culture = null)
         {
-            if (!Parser.TryParse(s, type, culture, true, false, out object? value, out Exception? error) || !type.CanAcceptValue(value))
+            if (!Parser.TryParse(s, type, culture, true, out object? value, out Exception? error) || !type.CanAcceptValue(value))
                 Throw.ArgumentException(Argument.obj, Res.StringExtensionsCannotParseAsType(s!, type), error);
             return value;
         }
@@ -348,7 +348,7 @@ namespace KGySoft.CoreLibraries
         /// <returns><see langword="true"/>, if <paramref name="s"/> could be parsed as <paramref name="type"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> is null, or <paramref name="type"/> is not nullable and <paramref name="s"/> is <see langword="null"/>.</exception>
         public static bool TryParse(this string? s, Type type, CultureInfo? culture, out object? value)
-            => Parser.TryParse(s, type, culture, true, false, out value, out var _);
+            => Parser.TryParse(s, type, culture, true,  out value, out var _);
 
         /// <summary>
         /// Tries to parse an object of type <paramref name="type"/> from a <see cref="string">string</see> value. Firstly, it tries to parse the type natively.
@@ -363,14 +363,7 @@ namespace KGySoft.CoreLibraries
         /// <returns><see langword="true"/>, if <paramref name="s"/> could be parsed as <paramref name="type"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> is null, or <paramref name="type"/> is not nullable and <paramref name="s"/> is <see langword="null"/>.</exception>
         public static bool TryParse(this string? s, Type type, out object? value)
-            => Parser.TryParse(s, type, null, true, false, out value, out var _);
-
-        [return: NotNullIfNotNull(nameof(s))]internal static object? Parse(this string? s, Type type, bool safeMode)
-        {
-            if (!Parser.TryParse(s, type, null, true, safeMode, out object? value, out Exception? error) || !type.CanAcceptValue(value))
-                Throw.ArgumentException(Argument.obj, Res.StringExtensionsCannotParseAsType(s!, type), error);
-            return value;
-        }
+            => Parser.TryParse(s, type, null, true,  out value, out var _);
 
         #endregion
 

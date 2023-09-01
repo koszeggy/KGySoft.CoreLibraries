@@ -629,22 +629,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         [Test]
         public void SerializeTypes()
         {
+            // these should work also in safe mode
             Type[] referenceObjects =
             {
-                typeof(int), // mscorlib
+                typeof(string), // mscorlib
                 typeof(int).MakeByRefType(), // mscorlib
-                typeof(int).MakePointerType(), // mscorlib
-                typeof(List<int>), // mscorlib
-                typeof(List<ICache>), // mixed
-                typeof(ICache), // custom
-                typeof(CircularList<int>), // mixed
-                typeof(CircularList<ICache>), // custom
-                typeof(List<>), // mscorlib, generic template
-                typeof(int[]), // 1D zero based array
-                typeof(int[,]), // multi-dim array
-                typeof(int[][,]), // mixed jagged array
-                Array.CreateInstance(typeof(int), new[] { 3 }, new[] { -1 }).GetType(), // nonzero based 1D array
-                typeof(List<>).GetGenericArguments()[0] // generic type parameter
+                typeof(byte).MakePointerType(), // mscorlib
+                typeof(char[]), // 1D zero based array
+                typeof(float[,]), // multi-dim array
+                typeof(bool[][,]), // mixed jagged array
+                Array.CreateInstance(typeof(object), new[] { 3 }, new[] { -1 }).GetType(), // nonzero based 1D array
             };
 
 #if NETFRAMEWORK
@@ -652,6 +646,22 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             KGySerializeObjects(referenceObjects, true, safeMode: false);
 #endif
             KGySerializeObjects(referenceObjects, false);
+
+            referenceObjects = new[]
+            {
+                typeof(List<int>), // mscorlib
+                typeof(List<ICache>), // mixed
+                typeof(ICache), // custom
+                typeof(CircularList<int>), // mixed
+                typeof(CircularList<ICache>), // custom
+                typeof(List<>), // mscorlib, generic template
+            };
+
+#if NETFRAMEWORK
+            SystemSerializeObjects(referenceObjects);
+            KGySerializeObjects(referenceObjects, true, safeMode: false);
+#endif
+            KGySerializeObjects(referenceObjects, false, safeMode: false);
         }
 
         [Test]

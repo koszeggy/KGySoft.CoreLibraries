@@ -367,12 +367,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 typeof(DictionaryExtensions).GetMethods().Where(mi => mi.Name == nameof(DictionaryExtensions.GetValueOrDefault)).ElementAt(2).GetGenericArguments()[0] // TKey of a GetValueOrDefault overload, ambiguous generic method definition argument
             };
 
-            // recursion for the array
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, false);
+            var expectedTypes = referenceObjects.Cast<Type>().Where(t => t.FullName != null).Concat(new[] { typeof(OpenGenericDictionary<>), typeof(DictionaryExtensions) }).ToList();
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None, expectedTypes: expectedTypes);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, false, expectedTypes: expectedTypes);
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.FullyQualifiedNames);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.FullyQualifiedNames, false);
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.FullyQualifiedNames, expectedTypes: expectedTypes);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.FullyQualifiedNames, false, expectedTypes: expectedTypes);
         }
 
         [Test]

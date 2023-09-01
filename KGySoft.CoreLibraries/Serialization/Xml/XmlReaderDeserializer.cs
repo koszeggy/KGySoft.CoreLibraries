@@ -458,10 +458,17 @@ namespace KGySoft.Serialization.Xml
                 type = Nullable.GetUnderlyingType(type);
 
             // a.) If type can be natively parsed, parsing from string
-            if (type != null && type.CanBeParsedNatively())
+            if (type is not null && type.CanBeParsedNatively())
             {
                 string? value = ReadStringValue(reader);
-                result = value.Parse(type, SafeMode);
+                if (type != Reflector.RuntimeType)
+                {
+                    result = value.Parse(type);
+                    return true;
+                }
+
+                // Here parsing runtime type. Parse would handle also runtime type but we need to consider expected types.
+                result = value == null ? null : ResolveType(value);
                 return true;
             }
 

@@ -830,6 +830,40 @@ namespace KGySoft.Resources
 
         private static Type? ResolveType(string assemblyQualifiedName, ITypeResolutionService? typeResolver, bool safeMode, Type? expectedType)
         {
+            #region Local Methods
+
+            // Only in safeMode, when there is no expected type.
+            // Used from TypeResolver rather than calling ResolveKnownType directly so modifiers (eg. array) are handled automatically.
+            static Type ResolveKnownType(AssemblyName? asmName, string typeName)
+            {
+                if (SerializationHelper.TryGetKnownSimpleType(typeName, out Type? result))
+                {
+                    if (asmName == null)
+                        return result;
+
+#if NETFRAMEWORK
+                    // GetName requires FileIOPermission under .NET Framework
+                    AssemblyName actualAsmName = new AssemblyName(result.Assembly.FullName!);
+#else
+                    AssemblyName actualAsmName = result.Assembly.GetName();
+#endif
+                    if (AssemblyResolver.IdentityMatches(actualAsmName, asmName, false))
+                        return result;
+
+                    var legacyName = AssemblyResolver.GetForwardedAssemblyName(result);
+                    if (legacyName.IsCoreIdentity && AssemblyResolver.IsCoreLibAssemblyName(asmName.Name)
+                        || legacyName.ForwardedAssemblyName != null && AssemblyResolver.IdentityMatches(new AssemblyName(legacyName.ForwardedAssemblyName), asmName, true))
+                    {
+                        return result;
+                    }
+                }
+
+                // Will be suppressed by TypeResolver but the caller will throw a customized exception for null
+                throw new InvalidOperationException();
+            }
+
+            #endregion
+
             // Mapping WinForms refs to KGySoft ones.
             if (IsFileRef(assemblyQualifiedName) && (expectedType is null || expectedType == typeof(ResXFileRef)))
                 return typeof(ResXFileRef);
@@ -845,7 +879,7 @@ namespace KGySoft.Resources
                 result = typeResolver.GetType(assemblyQualifiedName, false);
             }
 
-            if (result == null)
+            if (result is null)
             {
                 if (expectedType is not null)
                 {
@@ -854,12 +888,11 @@ namespace KGySoft.Resources
                     else // throwing from here because if returning null, a TypeLoadException will be thrown instead
                         Throw.ArgumentException(Argument.expectedType, Res.SerializationUnexpectedResult(expectedType, assemblyQualifiedName));
                 }
+                else if (safeMode)
+                    // immediate return because file ref/null ref is never accepted there
+                    return TypeResolver.ResolveType(assemblyQualifiedName, ResolveKnownType, ResolveTypeOptions.None);
                 else
-                {
-                    // expected type is not specified: in safeMode accepting it only for known simple types
-                    if (!SerializationHelper.TryGetKnownSimpleType(assemblyQualifiedName, out result) && !safeMode)
-                        result = TypeResolver.ResolveType(assemblyQualifiedName, null, ResolveTypeOptions.AllowPartialAssemblyMatch | ResolveTypeOptions.TryToLoadAssemblies);
-                }
+                    result = TypeResolver.ResolveType(assemblyQualifiedName, null, ResolveTypeOptions.AllowPartialAssemblyMatch | ResolveTypeOptions.TryToLoadAssemblies);
             }
 
             if (result is null)
@@ -1470,7 +1503,19 @@ namespace KGySoft.Resources
 
             // 1.) Native type - type converter is slower and will not convert negative zeros, for example.
             if (type.CanBeParsedNatively())
-                return valueData.Parse(type, safeMode) ?? ResXNullRef.Value;
+            {
+                if (type != Reflector.RuntimeType)
+                    return valueData.Parse(type) ?? ResXNullRef.Value;
+
+                // Here parsing runtime type. Parse would handle also runtime type but we need a different behavior.
+                // Passing null as expectedType so in safe mode only known types are accepted, whereas in unsafe mode even assembly loading is allowed
+                object? result = valueData == null ? ResXNullRef.Value : ResolveType(valueData, typeResolver, safeMode, null);
+
+                // Note that we throw ArgumentException just like Parse instead of TypeLoadException like for the resource type itself
+                return result ?? Throw.ArgumentException<object>(safeMode
+                    ? Res.ResourcesTypeLoadExceptionSafeAt(valueData!, dataNodeInfo.Line, dataNodeInfo.Column)
+                    : Res.ResourcesTypeLoadExceptionAt(valueData!, dataNodeInfo.Line, dataNodeInfo.Column));
+            }
 
             // 2.) null
             if (type == typeof(ResXNullRef))

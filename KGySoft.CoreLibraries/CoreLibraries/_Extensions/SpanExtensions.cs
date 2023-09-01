@@ -399,7 +399,7 @@ namespace KGySoft.CoreLibraries
         /// If a type converter can convert from <see cref="string">string</see>, then it can be used, though in that case a string allocation will occur.</para>
         /// </remarks>
         /// <exception cref="ArgumentException">Parameter <paramref name="s"/> cannot be parsed as <typeparamref name="T"/>.</exception>
-        [return:MaybeNull]public static T Parse<T>(this ReadOnlySpan<char> s, CultureInfo? culture = null)
+        public static T? Parse<T>(this ReadOnlySpan<char> s, CultureInfo? culture = null)
         {
             if (!Parser.TryParse(s, culture, out T? value, out Exception? error))
                 Throw.ArgumentException(Argument.obj, Res.SpanExtensionsCannotParseAsType(s.ToString(), typeof(T)), error);
@@ -422,7 +422,7 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentException">Parameter <paramref name="s"/> cannot be parsed as <paramref name="type"/>.</exception>
         public static object? Parse(this ReadOnlySpan<char> s, Type type, CultureInfo? culture = null)
         {
-            if (!Parser.TryParse(s, type, culture, true, false, out object? value, out Exception? error) || !type.CanAcceptValue(value))
+            if (!Parser.TryParse(s, type, culture, true, out object? value, out Exception? error) || !type.CanAcceptValue(value))
                 Throw.ArgumentException(Argument.obj, Res.SpanExtensionsCannotParseAsType(s.ToString(), type), error);
             return value;
         }
@@ -439,7 +439,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="value">When this method returns with <see langword="true"/> result, then this parameter contains the result of the parsing.
         /// It will be <see langword="null"/> if <paramref name="s"/> represents <see langword="null"/> and <typeparamref name="T"/> is a reference or nullable type.</param>
         /// <returns><see langword="true"/>, if <paramref name="s"/> could be parsed as <typeparamref name="T"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
-        public static bool TryParse<T>(this ReadOnlySpan<char> s, CultureInfo? culture, [MaybeNull]out T value)
+        public static bool TryParse<T>(this ReadOnlySpan<char> s, CultureInfo? culture, out T value)
             => Parser.TryParse(s, culture, out value, out var _);
 
         /// <summary>
@@ -453,7 +453,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="value">When this method returns with <see langword="true"/> result, then this parameter contains the result of the parsing.
         /// It will be <see langword="null"/> if <paramref name="s"/> represents <see langword="null"/> and <typeparamref name="T"/> is a reference or nullable type.</param>
         /// <returns><see langword="true"/>, if <paramref name="s"/> could be parsed as <typeparamref name="T"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
-        public static bool TryParse<T>(this ReadOnlySpan<char> s, [MaybeNull]out T value) => TryParse(s, null, out value);
+        public static bool TryParse<T>(this ReadOnlySpan<char> s, out T? value) => TryParse(s, null, out value);
 
         /// <summary>
         /// Tries to parse an object of type <paramref name="type"/> from a <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> value.
@@ -469,7 +469,7 @@ namespace KGySoft.CoreLibraries
         /// <returns><see langword="true"/>, if <paramref name="s"/> could be parsed as <paramref name="type"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> is <see langword="null"/>.</exception>
         public static bool TryParse(this ReadOnlySpan<char> s, Type type, CultureInfo culture, out object? value)
-            => Parser.TryParse(s, type, culture, true, false, out value, out var _);
+            => Parser.TryParse(s, type, culture, true, out value, out var _);
 
         /// <summary>
         /// Tries to parse an object of type <paramref name="type"/> from a <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> value.
@@ -484,7 +484,7 @@ namespace KGySoft.CoreLibraries
         /// <returns><see langword="true"/>, if <paramref name="s"/> could be parsed as <paramref name="type"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> is <see langword="null"/>.</exception>
         public static bool TryParse(this ReadOnlySpan<char> s, Type type, out object? value)
-            => Parser.TryParse(s, type, null, true, false, out value, out var _);
+            => Parser.TryParse(s, type, null, true, out value, out var _);
 
         #endregion
 

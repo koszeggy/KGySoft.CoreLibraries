@@ -108,7 +108,7 @@ namespace KGySoft.CoreLibraries
 
             #region Internal Methods
 
-            internal static bool TryParse(ReadOnlySpan<char> s, Type type, CultureInfo? culture, bool tryKnownTypes, bool safeMode, out object? value, out Exception? error)
+            internal static bool TryParse(ReadOnlySpan<char> s, Type type, CultureInfo? culture, bool tryKnownTypes, out object? value, out Exception? error)
             {
                 if (type == null!)
                     Throw.ArgumentNullException(Argument.type);
@@ -150,10 +150,7 @@ namespace KGySoft.CoreLibraries
 #endif
                     ))
                     {
-                        var options = ResolveTypeOptions.AllowPartialAssemblyMatch;
-                        if (!safeMode)
-                            options |= ResolveTypeOptions.TryToLoadAssemblies;
-                        value = Reflector.ResolveType(s.ToString(), options);
+                        value = Reflector.ResolveType(s.ToString(), ResolveTypeOptions.AllowPartialAssemblyMatch);
                         return value != null;
                     }
 
@@ -193,7 +190,7 @@ namespace KGySoft.CoreLibraries
                 }
             }
 
-            internal static bool TryParse<T>(ReadOnlySpan<char> s, CultureInfo? culture, [MaybeNull]out T value, out Exception? error)
+            internal static bool TryParse<T>(ReadOnlySpan<char> s, CultureInfo? culture, out T? value, out Exception? error)
             {
                 error = null;
                 culture ??= CultureInfo.InvariantCulture;
@@ -204,7 +201,7 @@ namespace KGySoft.CoreLibraries
                     return true;
 
                 // The slow path: for value types boxing will occur
-                if (!TryParse(s, type, culture, false, false, out object? result, out error) || !type.CanAcceptValue(result))
+                if (!TryParse(s, type, culture, false, out object? result, out error) || !type.CanAcceptValue(result))
                 {
                     value = default;
                     return false;
