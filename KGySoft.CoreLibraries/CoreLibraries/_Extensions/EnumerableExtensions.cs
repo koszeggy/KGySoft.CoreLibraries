@@ -1357,15 +1357,14 @@ namespace KGySoft.CoreLibraries
             if (source is string str)
                 return str.Length == 0;
 
-            var disposableEnumerator = source as IDisposable;
+            IEnumerator enumerator = source.GetEnumerator();
             try
             {
-                IEnumerator enumerator = source.GetEnumerator();
                 return !enumerator.MoveNext();
             }
             finally
             {
-                disposableEnumerator?.Dispose();
+                (enumerator as IDisposable)?.Dispose();
             }
         }
 

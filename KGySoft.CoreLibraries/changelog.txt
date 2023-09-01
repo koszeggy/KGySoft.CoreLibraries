@@ -23,6 +23,9 @@
   + New Create overload with CompareOptions parameter (.NET Framework 4.6 and above)
 - ByteArrayExtensions class:
   - ToDecimalValuesString method: Fixing result for empty string input.
+- EnumerableExtensions:
+  - IsNullOrEmpty (non-generic): the fallback implementation attempted to dispose the possibly disposable enumerable
+    instance instead of the enumerator.
 
 * KGySoft.Collections namespace:
 ================================
