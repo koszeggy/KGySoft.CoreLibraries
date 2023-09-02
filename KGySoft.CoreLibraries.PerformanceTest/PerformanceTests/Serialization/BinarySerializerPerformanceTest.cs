@@ -103,7 +103,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Serialization
             }
 
             var bf = new BinaryFormatter();
-            var bsf = new BinarySerializationFormatter();
+            var bsf = new BinarySerializationFormatter(BinarySerializationOptions.None);
 
             new PerformanceTest<object> { TestName = $"Binary Serialization/Deserialization Speed Test - {testObj.GetType()}", Iterations = 10000 }
                 .AddCase(() => Deserialize(bf, Serialize(bf, testObj)), "BinaryFormatter")

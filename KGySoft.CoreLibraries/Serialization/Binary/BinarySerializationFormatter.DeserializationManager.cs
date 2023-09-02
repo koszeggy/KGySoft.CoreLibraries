@@ -651,16 +651,17 @@ namespace KGySoft.Serialization.Binary
                     binder, surrogateSelector)
             {
                 this.rootType = rootType == Reflector.ObjectType ? null : rootType;
-                if (!SafeMode)
-                    return;
 
-                // Further checks in safe mode
-                if (surrogateSelector != null)
-                    Throw.SerializationException(Res.BinarySerializationSurrogateNotAllowedInSafeMode);
-                if (binder is not (null or ForwardedTypesSerializationBinder { SafeMode: true }))
-                    Throw.SerializationException(Res.BinarySerializationBinderNotAllowedInSafeMode);
-                if (binder != null)
-                    return;
+                if (SafeMode)
+                {
+                    // Further checks in safe mode
+                    if (surrogateSelector != null)
+                        Throw.SerializationException(Res.BinarySerializationSurrogateNotAllowedInSafeMode);
+                    if (binder is not (null or ForwardedTypesSerializationBinder { SafeMode: true }))
+                        Throw.SerializationException(Res.BinarySerializationBinderNotAllowedInSafeMode);
+                    if (binder != null)
+                        return;
+                }
 
                 expectedTypes = new Dictionary<(string?, string), Type>();
 
@@ -2473,7 +2474,7 @@ namespace KGySoft.Serialization.Binary
                         // This affects performance a LOT but omitting assembly names is not recommended in safe mode anyway so not using a cache
                         // for the lookup itself (and the result is mapped to a new type index so will be cached anyway).
 
-                        // NOTE: The following line would be somewhat faster but it does not work if the same type is added with multiple assembly identities
+                        // NOTE: The following line would be somewhat faster but it does not work if the same type name is added with multiple assembly identities
                         //if (expectedTypes.Where(t => t.Key.TypeName == typeName).Take(2).Select(t => t.Value).SingleOrDefault() is Type type)
                         //    return type;
                         Type[] types = expectedTypes.Where(t => t.Key.TypeName == typeName).Select(t => t.Value).Distinct().Take(2).ToArray();
@@ -2503,7 +2504,7 @@ namespace KGySoft.Serialization.Binary
                 // 3.) Actual resolve. ResolveType should not resolve any further assemblies (generic type parameters are loaded separately)
                 if (assembly.Assembly is not null)
                 {
-                    // 3/a.) From core libraries: trying without a name first
+                    // 3/a.) From core libraries: trying without an assembly first
                     if (assembly.StoredName == null)
                         result = Reflector.ResolveType(typeName, ResolveTypeOptions.None);
 
