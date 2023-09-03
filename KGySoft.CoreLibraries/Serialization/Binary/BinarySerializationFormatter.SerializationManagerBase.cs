@@ -130,7 +130,7 @@ namespace KGySoft.Serialization.Binary
             #region Private Fields
 
             private readonly ISurrogateSelector? surrogateSelector;
-            private readonly Dictionary<Type, KeyValuePair<ISerializationSurrogate?, ISurrogateSelector?>>? surrogates;
+            private readonly Dictionary<Type, (ISerializationSurrogate? Surrogate, ISurrogateSelector? Selector)>? surrogates;
             private Dictionary<MemberInfo, TypeAttributes>? typeAttributes;
 
             #endregion
@@ -171,7 +171,7 @@ namespace KGySoft.Serialization.Binary
                 Binder = binder;
                 this.surrogateSelector = surrogateSelector;
                 if (surrogateSelector != null)
-                    surrogates = new Dictionary<Type, KeyValuePair<ISerializationSurrogate?, ISurrogateSelector?>>();
+                    surrogates = new Dictionary<Type, (ISerializationSurrogate?, ISurrogateSelector?)>();
             }
 
             #endregion
@@ -290,18 +290,18 @@ namespace KGySoft.Serialization.Binary
                 if (surrogateSelector == null)
                     return false;
 
-                if (surrogates!.TryGetValue(type, out KeyValuePair<ISerializationSurrogate?, ISurrogateSelector?> result))
+                if (surrogates!.TryGetValue(type, out var result))
                 {
-                    if (result.Key == null)
+                    if (result.Surrogate == null)
                         return false;
 
-                    surrogate = result.Key;
-                    selector = result.Value;
+                    surrogate = result.Surrogate;
+                    selector = result.Selector;
                     return true;
                 }
 
                 DoGetSurrogate(type, out surrogate, out selector);
-                surrogates[type] = new KeyValuePair<ISerializationSurrogate?, ISurrogateSelector?>(surrogate, selector);
+                surrogates[type] = (surrogate, selector);
                 return surrogate != null;
             }
 
