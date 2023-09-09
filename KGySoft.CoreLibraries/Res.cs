@@ -564,7 +564,7 @@ namespace KGySoft
         internal static string FlagsEnumOutOfRange<TEnum>(TEnum value = default) where TEnum : struct, Enum => Get("General_FlagsEnumOutOfRangeFormat", value.GetType().Name);
 
         /// <summary>Specified argument is expected to be an instance of type {0}.</summary>
-        internal static string NotAnInstanceOfType(Type type) => Get("General_NotAnInstanceOfTypeFormat", type);
+        internal static string NotAnInstanceOfType(Type type) => Get("General_NotAnInstanceOfTypeFormat", type.GetName(TypeNameKind.LongName));
 
         /// <summary>Value "{0}" contains illegal path characters.</summary>
         internal static string ValueContainsIllegalPathCharacters(string path) => Get("General_ValueContainsIllegalPathCharactersFormat", path);
@@ -573,10 +573,10 @@ namespace KGySoft
         internal static string InvalidAsyncResult(string beginMethodName) => Get("General_InvalidAsyncResultFormat", beginMethodName);
 
         /// <summary>The value "{0}" is not of type "{1}" and cannot be used in this generic collection.</summary>
-        internal static string ICollectionNonGenericValueTypeInvalid(object? value, Type type) => Get("ICollection_NonGenericValueTypeInvalidFormat", value, type);
+        internal static string ICollectionNonGenericValueTypeInvalid(object? value, Type type) => Get("ICollection_NonGenericValueTypeInvalidFormat", value, type.GetName(TypeNameKind.LongName));
 
         /// <summary>The key "{0}" is not of type "{1}" and cannot be used in this generic collection.</summary>
-        internal static string IDictionaryNonGenericKeyTypeInvalid(object key, Type type) => Get("IDictionary_NonGenericKeyTypeInvalidFormat", key, type);
+        internal static string IDictionaryNonGenericKeyTypeInvalid(object key, Type type) => Get("IDictionary_NonGenericKeyTypeInvalidFormat", key, type.GetName(TypeNameKind.LongName));
 
         #endregion
 
@@ -592,10 +592,10 @@ namespace KGySoft
 
         /// <summary>Serialization of type {0} is not supported with following serialization options: {1}.
         /// You can try to enable the RecursiveSerializationAsFallback flag, though the serialized data will possibly not be able to be deserialized using the SafeMode flag.</summary>
-        internal static string BinarySerializationNotSupported(Type type, BinarySerializationOptions options) => Get("BinarySerialization_NotSupportedFormat", type, options.ToString<BinarySerializationOptions>());
+        internal static string BinarySerializationNotSupported(Type type, BinarySerializationOptions options) => Get("BinarySerialization_NotSupportedFormat", type.GetName(TypeNameKind.LongName), options.ToString<BinarySerializationOptions>());
 
         /// <summary>An IEnumerable type expected but {0} found during deserialization.</summary>
-        internal static string BinarySerializationIEnumerableExpected(Type type) => Get("BinarySerialization_IEnumerableExpectedFormat", type);
+        internal static string BinarySerializationIEnumerableExpected(Type type) => Get("BinarySerialization_IEnumerableExpectedFormat", type.GetName(TypeNameKind.LongName));
 
         /// <summary>Invalid enum base type: {0}. Serialization stream corrupted?</summary>
         internal static string BinarySerializationInvalidEnumBase(string dataType) => Get("BinarySerialization_InvalidEnumBaseFormat", dataType);
@@ -607,22 +607,22 @@ namespace KGySoft
         internal static string BinarySerializationTypePlatformNotSupported(string dataType) => Get("BinarySerialization_TypePlatformNotSupportedFormat", dataType);
 
         /// <summary>Type "{0}" cannot be deserialized because its type hierarchy has been changed since serialization. Use IgnoreObjectChanges option to suppress this exception.</summary>
-        internal static string BinarySerializationObjectHierarchyChanged(Type type) => Get("BinarySerialization_ObjectHierarchyChangedFormat", type);
+        internal static string BinarySerializationObjectHierarchyChanged(Type type) => Get("BinarySerialization_ObjectHierarchyChangedFormat", type.GetName(TypeNameKind.LongName));
 
         /// <summary>Generic method with signature "{0}" was not found in type "{1}".</summary>
-        internal static string BinarySerializationGenericMethodNotFound(string signature, Type type) => Get("BinarySerialization_GenericMethodNotFoundFormat", signature, type);
+        internal static string BinarySerializationGenericMethodNotFound(string signature, Type type) => Get("BinarySerialization_GenericMethodNotFoundFormat", signature, type.GetName(TypeNameKind.LongName));
 
         /// <summary>Type "{0}" cannot be deserialized because it has no field "{1}". To call the deserialization constructor implement the ISerializable interface. Use IgnoreObjectChanges option to suppress this exception.</summary>
-        internal static string BinarySerializationMissingField(Type type, string field) => Get("BinarySerialization_MissingFieldFormat", type, field);
+        internal static string BinarySerializationMissingField(Type type, string field) => Get("BinarySerialization_MissingFieldFormat", type.GetName(TypeNameKind.LongName), field);
 
         /// <summary>Type "{0}" cannot be deserialized because field "{1}" not found in type "{2}". Use IgnoreObjectChanges option to suppress this exception.</summary>
-        internal static string BinarySerializationMissingFieldBase(Type type, string field, Type baseType) => Get("BinarySerialization_MissingFieldBaseFormat", type, field, baseType);
+        internal static string BinarySerializationMissingFieldBase(Type type, string field, Type baseType) => Get("BinarySerialization_MissingFieldBaseFormat", type.GetName(TypeNameKind.LongName), field, baseType);
 
         /// <summary>Type "{0}" does not have a special constructor to deserialize it as ISerializable</summary>
-        internal static string BinarySerializationMissingISerializableCtor(Type type) => Get("BinarySerialization_MissingISerializableCtorFormat", type);
+        internal static string BinarySerializationMissingISerializableCtor(Type type) => Get("BinarySerialization_MissingISerializableCtorFormat", type.GetName(TypeNameKind.LongName));
 
         /// <summary>The serialization surrogate has changed the reference of the result object, which prevented resolving circular references to itself. Object type: {0}</summary>
-        internal static string BinarySerializationSurrogateChangedObject(Type type) => Get("BinarySerialization_SurrogateChangedObjectFormat", type);
+        internal static string BinarySerializationSurrogateChangedObject(Type type) => Get("BinarySerialization_SurrogateChangedObjectFormat", type.GetName(TypeNameKind.LongName));
 
         /// <summary>Could not decode data type: {0}. Serialization stream corrupted?</summary>
         internal static string BinarySerializationCannotDecodeDataType(string dataType) => Get("BinarySerialization_CannotDecodeDataTypeFormat", dataType);
@@ -663,31 +663,31 @@ namespace KGySoft
         internal static string BinarySerializationUnexpectedSerializationInfoElement(string elementName) => Get("BinarySerialization_UnexpectedSerializationInfoElementFormat", elementName);
 
         /// <summary>Object hierarchy has been changed since serialization of type "{0}".</summary>
-        internal static string BinarySerializationObjectHierarchyChangedSurrogate(Type type) => Get("BinarySerialization_ObjectHierarchyChangedSurrogateFormat", type);
+        internal static string BinarySerializationObjectHierarchyChangedSurrogate(Type type) => Get("BinarySerialization_ObjectHierarchyChangedSurrogateFormat", type.GetName(TypeNameKind.LongName));
 
         /// <summary>Number of serializable fields in type "{0}" has been decreased since serialization so cannot deserialize type "{1}".</summary>
-        internal static string BinarySerializationMissingFieldSurrogate(Type baseType, Type type) => Get("BinarySerialization_MissingFieldSurrogateFormat", baseType, type);
+        internal static string BinarySerializationMissingFieldSurrogate(Type baseType, Type type) => Get("BinarySerialization_MissingFieldSurrogateFormat", baseType, type.GetName(TypeNameKind.LongName));
 
         /// <summary>Fields might have been reordered since serialization. Cannot deserialize type "{0}" because cannot assign value "{1}" to field "{2}.{3}".</summary>
-        internal static string BinarySerializationUnexpectedFieldType(Type type, object? value, Type declaringType, string fieldName) => Get("BinarySerialization_UnexpectedFieldTypeFormat", type, value, declaringType, fieldName);
+        internal static string BinarySerializationUnexpectedFieldType(Type type, object? value, Type declaringType, string fieldName) => Get("BinarySerialization_UnexpectedFieldTypeFormat", type.GetName(TypeNameKind.LongName), value, declaringType, fieldName);
 
         /// <summary>The current domain has insufficient permissions to create an empty instance of type "{0}" without a default constructor.</summary>
-        internal static string BinarySerializationCannotCreateUninitializedObject(Type type) => Get("BinarySerialization_CannotCreateUninitializedObjectFormat", type);
+        internal static string BinarySerializationCannotCreateUninitializedObject(Type type) => Get("BinarySerialization_CannotCreateUninitializedObjectFormat", type.GetName(TypeNameKind.LongName));
 
         /// <summary>In safe mode it is not supported to deserialize type "{0}".</summary>
-        internal static string BinarySerializationCannotCreateObjectSafe(Type type) => Get("BinarySerialization_CannotCreateObjectSafeFormat", type);
+        internal static string BinarySerializationCannotCreateObjectSafe(Type type) => Get("BinarySerialization_CannotCreateObjectSafeFormat", type.GetName(TypeNameKind.LongName));
 
         /// <summary>In safe mode it is not supported to deserialize type "{0}". If it's because it is not marked by the SerializableAttribute you can try to enable the AllowNonSerializableExpectedCustomTypes option.</summary>
-        internal static string BinarySerializationCannotCreateSerializableObjectSafe(Type type) => Get("BinarySerialization_CannotCreateSerializableObjectSafe", type);
+        internal static string BinarySerializationCannotCreateSerializableObjectSafe(Type type) => Get("BinarySerialization_CannotCreateSerializableObjectSafe", type.GetName(TypeNameKind.LongName));
 
         /// <summary>Type '{0}' was serialized as an IBinarySerializable instance though it is not IBinarySerializable now.</summary>
-        internal static string BinarySerializationNotBinarySerializable(Type type) => Get("BinarySerialization_NotBinarySerializableFormat", type);
+        internal static string BinarySerializationNotBinarySerializable(Type type) => Get("BinarySerialization_NotBinarySerializableFormat", type.GetName(TypeNameKind.LongName));
 
         /// <summary>Type '{0}' was serialized as a raw value type, though it is not a value type now.</summary>
-        internal static string BinarySerializationNotAValueType(Type type) => Get("BinarySerialization_NotAValueTypeFormat", type);
+        internal static string BinarySerializationNotAValueType(Type type) => Get("BinarySerialization_NotAValueTypeFormat", type.GetName(TypeNameKind.LongName));
 
         /// <summary>Type '{0}' was serialized as an enum type though it is not an enum now.</summary>
-        internal static string BinarySerializationNotAnEnum(Type type) => Get("BinarySerialization_NotAnEnumFormat", type);
+        internal static string BinarySerializationNotAnEnum(Type type) => Get("BinarySerialization_NotAnEnumFormat", type.GetName(TypeNameKind.LongName));
 
         /// <summary>Deserialization of an IObjectReference instance has an unresolvable circular reference to itself as an element in a collection of type '{0}'. Either try to use the ForceRecursiveSerializationOfSupportedTypes option on serialization, or avoid serializing circular references in the container object.</summary>
         internal static string BinarySerializationCircularIObjectReferenceCollection(Type type) => Get("BinarySerialization_CircularIObjectReferenceCollectionFormat", type.GetName(TypeNameKind.LongName));
@@ -724,7 +724,7 @@ namespace KGySoft
         #region CircularSortedList<T>
 
         /// <summary>Type of value should be either {0} or DictionaryEntry.</summary>
-        internal static string CircularSortedListInvalidKeyValueType(Type type) => Get("CircularSortedList_InvalidKeyValueTypeFormat", type);
+        internal static string CircularSortedListInvalidKeyValueType(Type type) => Get("CircularSortedList_InvalidKeyValueTypeFormat", type.GetName(TypeNameKind.LongName));
 
         #endregion
 
@@ -737,7 +737,7 @@ namespace KGySoft
         internal static string ComponentModelCannotAddNewFastBindingList(Type t) => Get("ComponentModel_CannotAddNewFastBindingListFormat", t);
 
         /// <summary>No property descriptor found for property name '{0}' in type '{1}'.</summary>
-        internal static string ComponentModelPropertyNotExists(string propertyName, Type type) => Get("ComponentModel_PropertyNotExistsFormat", propertyName, type);
+        internal static string ComponentModelPropertyNotExists(string propertyName, Type type) => Get("ComponentModel_PropertyNotExistsFormat", propertyName, type.GetName(TypeNameKind.LongName));
 
         /// <summary>Cannot add new item to the binding list because type '{0}' cannot be constructed without parameters.</summary>
         internal static string ComponentModelCannotAddNewObservableBindingList(Type t) => Get("ComponentModel_CannotAddNewObservableBindingListFormat", t);
@@ -746,7 +746,7 @@ namespace KGySoft
         internal static string ComponentModelMissingState(string stateName) => Get("ComponentModel_MissingStateFormat", stateName);
 
         /// <summary>There is no event '{0}' in type '{1}'.</summary>
-        internal static string ComponentModelMissingEvent(string eventName, Type type) => Get("ComponentModel_MissingEventFormat", eventName, type);
+        internal static string ComponentModelMissingEvent(string eventName, Type type) => Get("ComponentModel_MissingEventFormat", eventName, type.GetName(TypeNameKind.LongName));
 
         /// <summary>Event '{0}' does not have regular event handler delegate type or accessors.</summary>
         internal static string ComponentModelInvalidEvent(string eventName) => Get("ComponentModel_InvalidEventFormat", eventName);
@@ -758,19 +758,19 @@ namespace KGySoft
         internal static string ComponentModelCannotSetProperty(string propertyName) => Get("ComponentModel_CannotSetPropertyFormat", propertyName);
 
         /// <summary>The returned value is not compatible with type {0}</summary>
-        internal static string ComponentModelReturnedTypeInvalid(Type type) => Get("ComponentModel_ReturnedTypeInvalidFormat", type);
+        internal static string ComponentModelReturnedTypeInvalid(Type type) => Get("ComponentModel_ReturnedTypeInvalidFormat", type.GetName(TypeNameKind.LongName));
 
         /// <summary>No value exists for property '{0}'.</summary>
         internal static string ComponentModelPropertyValueNotExist(string propertyName) => Get("ComponentModel_PropertyValueNotExistFormat", propertyName);
 
         /// <summary>The type has no parameterless constructor and thus cannot be cloned: {0}</summary>
-        internal static string ComponentModelObservableObjectHasNoDefaultCtor(Type type) => Get("ComponentModel_ObservableObjectHasNoDefaultCtorFormat", type);
+        internal static string ComponentModelObservableObjectHasNoDefaultCtor(Type type) => Get("ComponentModel_ObservableObjectHasNoDefaultCtorFormat", type.GetName(TypeNameKind.LongName));
 
         /// <summary>Failed to cast the command target '{0}' to type {1}.</summary>
-        internal static string ComponentModelCannotCastCommandTarget(object? value, Type type) => Get("ComponentModel_CannotCastCommandTargetFormat", value ?? Null, type);
+        internal static string ComponentModelCannotCastCommandTarget(object? value, Type type) => Get("ComponentModel_CannotCastCommandTargetFormat", value ?? Null, type.GetName(TypeNameKind.LongName));
 
         /// <summary>Failed to cast the command parameter '{0}' to type {1}.</summary>
-        internal static string ComponentModelCannotCastCommandParam(object? value, Type type) => Get("ComponentModel_CannotCastCommandParamFormat", value ?? Null, type);
+        internal static string ComponentModelCannotCastCommandParam(object? value, Type type) => Get("ComponentModel_CannotCastCommandParamFormat", value ?? Null, type.GetName(TypeNameKind.LongName));
 
         #endregion
 
@@ -784,7 +784,7 @@ namespace KGySoft
         #region ObjectExtensions
 
         /// <summary>The specified argument cannot be converted to type {0}.</summary>
-        internal static string ObjectExtensionsCannotConvertToType(Type type) => Get("ObjectExtensions_CannotConvertToTypeFormat", type);
+        internal static string ObjectExtensionsCannotConvertToType(Type type) => Get("ObjectExtensions_CannotConvertToTypeFormat", type.GetName(TypeNameKind.LongName));
 
         #endregion
 
@@ -845,7 +845,7 @@ namespace KGySoft
         internal static string PerformanceTestCaseRepetitionIterations(int iterations, double totalMilliseconds, double averageIterationsPerTestTime) => Get("PerformanceTest_CaseRepetitionIterationsFormat", iterations, totalMilliseconds, averageIterationsPerTestTime);
 
         /// <summary>{0}: {1}</summary>
-        internal static string PerformanceTestCaseError(Type type, string message) => Get("PerformanceTest_CaseErrorFormat", type, message);
+        internal static string PerformanceTestCaseError(Type type, string message) => Get("PerformanceTest_CaseErrorFormat", type.GetName(TypeNameKind.LongName), message);
 
         /// <summary>{0:N2} ms ({1:P2})</summary>
         internal static string PerformanceTestWorstBestDiffTime(double totalMilliseconds, double percent) => Get("PerformanceTest_WorstBestDiffTimeFormat", totalMilliseconds, percent);
@@ -871,58 +871,58 @@ namespace KGySoft
         #region Reflection
 
         /// <summary>The constant field cannot be set: {0}.{1}</summary>
-        internal static string ReflectionCannotSetConstantField(Type? type, string memberName) => Get("Reflection_CannotSetConstantFieldFormat", type, memberName);
+        internal static string ReflectionCannotSetConstantField(Type? type, string memberName) => Get("Reflection_CannotSetConstantFieldFormat", type?.GetName(TypeNameKind.LongName), memberName);
 
         /// <summary>Member type {0} is not supported.</summary>
         internal static string ReflectionNotSupportedMemberType(MemberTypes memberType) => Get("Reflection_NotSupportedMemberTypeFormat", memberType);
 
         /// <summary>Property has no getter accessor: {0}.{1}</summary>
-        internal static string ReflectionPropertyHasNoGetter(Type? type, string memberName) => Get("Reflection_PropertyHasNoGetterFormat", type, memberName);
+        internal static string ReflectionPropertyHasNoGetter(Type? type, string memberName) => Get("Reflection_PropertyHasNoGetterFormat", type?.GetName(TypeNameKind.LongName), memberName);
 
         /// <summary>Property has no setter accessor: {0}.{1}</summary>
-        internal static string ReflectionPropertyHasNoSetter(Type? type, string memberName) => Get("Reflection_PropertyHasNoSetterFormat", type, memberName);
+        internal static string ReflectionPropertyHasNoSetter(Type? type, string memberName) => Get("Reflection_PropertyHasNoSetterFormat", type?.GetName(TypeNameKind.LongName), memberName);
 
         /// <summary>Value "{0}" cannot be resolved as a System.Type.</summary>
         internal static string ReflectionNotAType(string value) => Get("Reflection_NotATypeFormat", value);
 
         /// <summary>Property "{0}" not found and cannot be set via TypeDescriptor on type "{1}".</summary>
-        internal static string ReflectionPropertyNotFoundTypeDescriptor(string propertyName, Type type) => Get("Reflection_PropertyNotFoundTypeDescriptorFormat", propertyName, type);
+        internal static string ReflectionPropertyNotFoundTypeDescriptor(string propertyName, Type type) => Get("Reflection_PropertyNotFoundTypeDescriptorFormat", propertyName, type.GetName(TypeNameKind.LongName));
 
         /// <summary>No suitable instance property "{0}" found on type "{1}".</summary>
-        internal static string ReflectionInstancePropertyDoesNotExist(string propertyName, Type type) => Get("Reflection_InstancePropertyDoesNotExistFormat", propertyName, type);
+        internal static string ReflectionInstancePropertyDoesNotExist(string propertyName, Type type) => Get("Reflection_InstancePropertyDoesNotExistFormat", propertyName, type.GetName(TypeNameKind.LongName));
 
         /// <summary>No suitable static property "{0}" found on type "{1}".</summary>
-        internal static string ReflectionStaticPropertyDoesNotExist(string propertyName, Type type) => Get("Reflection_StaticPropertyDoesNotExistFormat", propertyName, type);
+        internal static string ReflectionStaticPropertyDoesNotExist(string propertyName, Type type) => Get("Reflection_StaticPropertyDoesNotExistFormat", propertyName, type.GetName(TypeNameKind.LongName));
 
         /// <summary>Expected number of array index arguments: {0}.</summary>
         internal static string ReflectionIndexParamsLengthMismatch(int length) => Get("Reflection_IndexParamsLengthMismatchFormat", length);
 
         /// <summary>No suitable indexer found on type "{0}" for the passed parameters.</summary>
-        internal static string ReflectionIndexerNotFound(Type type) => Get("Reflection_IndexerNotFoundFormat", type);
+        internal static string ReflectionIndexerNotFound(Type type) => Get("Reflection_IndexerNotFoundFormat", type.GetName(TypeNameKind.LongName));
 
         /// <summary>Property "{0}" not found and cannot be retrieved via TypeDescriptor on type "{1}".</summary>
-        internal static string ReflectionCannotGetPropertyTypeDescriptor(string propertyName, Type type) => Get("Reflection_CannotGetPropertyTypeDescriptorFormat", propertyName, type);
+        internal static string ReflectionCannotGetPropertyTypeDescriptor(string propertyName, Type type) => Get("Reflection_CannotGetPropertyTypeDescriptorFormat", propertyName, type.GetName(TypeNameKind.LongName));
 
         /// <summary>Expected number of generic parameters: {0}.</summary>
         internal static string ReflectionTypeArgsLengthMismatch(int length) => Get("Reflection_TypeArgsLengthMismatchFormat", length);
 
         /// <summary>No suitable instance method "{0}" found on type "{1}" for the given parameters.</summary>
-        internal static string ReflectionInstanceMethodNotFound(string methodName, Type type) => Get("Reflection_InstanceMethodNotFoundFormat", methodName, type);
+        internal static string ReflectionInstanceMethodNotFound(string methodName, Type type) => Get("Reflection_InstanceMethodNotFoundFormat", methodName, type.GetName(TypeNameKind.LongName));
 
         /// <summary>No suitable static method "{0}" found on type "{1}" for the given parameters.</summary>
-        internal static string ReflectionStaticMethodNotFound(string methodName, Type type) => Get("Reflection_StaticMethodNotFoundFormat", methodName, type);
+        internal static string ReflectionStaticMethodNotFound(string methodName, Type type) => Get("Reflection_StaticMethodNotFoundFormat", methodName, type.GetName(TypeNameKind.LongName));
 
         /// <summary>No suitable constructor found on type "{0}" for the given parameters.</summary>
-        internal static string ReflectionCtorNotFound(Type type) => Get("Reflection_CtorNotFoundFormat", type);
+        internal static string ReflectionCtorNotFound(Type type) => Get("Reflection_CtorNotFoundFormat", type.GetName(TypeNameKind.LongName));
 
         /// <summary>Instance field "{0}" not found on type "{1}".</summary>
-        internal static string ReflectionInstanceFieldDoesNotExist(string fieldName, Type type) => Get("Reflection_InstanceFieldDoesNotExistFormat", fieldName, type);
+        internal static string ReflectionInstanceFieldDoesNotExist(string fieldName, Type type) => Get("Reflection_InstanceFieldDoesNotExistFormat", fieldName, type.GetName(TypeNameKind.LongName));
 
         /// <summary>Static field "{0}" not found on type "{1}".</summary>
-        internal static string ReflectionStaticFieldDoesNotExist(string fieldName, Type type) => Get("Reflection_StaticFieldDoesNotExistFormat", fieldName, type);
+        internal static string ReflectionStaticFieldDoesNotExist(string fieldName, Type type) => Get("Reflection_StaticFieldDoesNotExistFormat", fieldName, type.GetName(TypeNameKind.LongName));
 
         /// <summary>No MemberInfo can be returned from expression type "{0}".</summary>
-        internal static string ReflectionNotAMember(Type type) => Get("Reflection_NotAMemberFormat", type);
+        internal static string ReflectionNotAMember(Type type) => Get("Reflection_NotAMemberFormat", type.GetName(TypeNameKind.LongName));
 
         /// <summary>Failed to load assembly by name: "{0}".</summary>
         internal static string ReflectionCannotLoadAssembly(string name) => Get("Reflection_CannotLoadAssemblyFormat", name);
@@ -947,34 +947,34 @@ namespace KGySoft
         internal static string ReflectionSetStructPropertyNetStandard20(string propertyName, Type type) => Get("Reflection_SetStructPropertyNetStandard20Format", propertyName, type.GetName(TypeNameKind.LongName));
 
         /// <summary>This method can be used to access static properties but {0}.{1} is an instance property.</summary>
-        internal static string ReflectionStaticPropertyExpectedGeneric(string propertyName, Type type) => Get("Reflection_StaticPropertyExpectedGenericFormat", type, propertyName);
+        internal static string ReflectionStaticPropertyExpectedGeneric(string propertyName, Type type) => Get("Reflection_StaticPropertyExpectedGenericFormat", type.GetName(TypeNameKind.LongName), propertyName);
 
         /// <summary>This method can be used to access instance properties but {0}.{1} is a static property.</summary>
-        internal static string ReflectionInstancePropertyExpectedGeneric(string propertyName, Type? type) => Get("Reflection_InstancePropertyExpectedGenericFormat", type, propertyName);
+        internal static string ReflectionInstancePropertyExpectedGeneric(string propertyName, Type? type) => Get("Reflection_InstancePropertyExpectedGenericFormat", type.GetName(TypeNameKind.LongName), propertyName);
 
         /// <summary>Cannot access {0}.{1} property with the provided type arguments and/or parameters.</summary>
-        internal static string ReflectionCannotInvokePropertyGeneric(string propertyName, Type? type) => Get("Reflection_CannotInvokePropertyGenericFormat", type, propertyName);
+        internal static string ReflectionCannotInvokePropertyGeneric(string propertyName, Type? type) => Get("Reflection_CannotInvokePropertyGenericFormat", type.GetName(TypeNameKind.LongName), propertyName);
 
         /// <summary>This method can be used to access static fields but {0}.{1} is an instance field.</summary>
-        internal static string ReflectionStaticFieldExpectedGeneric(string fieldName, Type type) => Get("Reflection_StaticFieldExpectedGenericFormat", type, fieldName);
+        internal static string ReflectionStaticFieldExpectedGeneric(string fieldName, Type type) => Get("Reflection_StaticFieldExpectedGenericFormat", type.GetName(TypeNameKind.LongName), fieldName);
 
         /// <summary>This method can be used to access instance fields but {0}.{1} is a static field.</summary>
-        internal static string ReflectionInstanceFieldExpectedGeneric(string fieldName, Type? type) => Get("Reflection_InstanceFieldExpectedGenericFormat", type, fieldName);
+        internal static string ReflectionInstanceFieldExpectedGeneric(string fieldName, Type? type) => Get("Reflection_InstanceFieldExpectedGenericFormat", type?.GetName(TypeNameKind.LongName), fieldName);
 
         /// <summary>Cannot access {0}.{1} field with the provided type arguments and/or parameters.</summary>
-        internal static string ReflectionCannotInvokeFieldGeneric(string propertyName, Type? type) => Get("Reflection_CannotInvokeFieldGenericFormat", type, propertyName);
+        internal static string ReflectionCannotInvokeFieldGeneric(string propertyName, Type? type) => Get("Reflection_CannotInvokeFieldGenericFormat", type?.GetName(TypeNameKind.LongName), propertyName);
 
         /// <summary>This method can be used to access static methods but {0}.{1} is an instance method.</summary>
-        internal static string ReflectionStaticMethodExpectedGeneric(string methodName, Type type) => Get("Reflection_StaticMethodExpectedGenericFormat", type, methodName);
+        internal static string ReflectionStaticMethodExpectedGeneric(string methodName, Type type) => Get("Reflection_StaticMethodExpectedGenericFormat", type.GetName(TypeNameKind.LongName), methodName);
 
         /// <summary>This method can be used to access instance methods but {0}.{1} is a static method.</summary>
-        internal static string ReflectionInstanceMethodExpectedGeneric(string methodName, Type? type) => Get("Reflection_InstanceMethodExpectedGenericFormat", type, methodName);
+        internal static string ReflectionInstanceMethodExpectedGeneric(string methodName, Type? type) => Get("Reflection_InstanceMethodExpectedGenericFormat", type?.GetName(TypeNameKind.LongName), methodName);
 
         /// <summary>Cannot access {0}.{1} method with the provided type arguments and/or parameters.</summary>
-        internal static string ReflectionCannotInvokeMethodGeneric(string methodName, Type? type) => Get("Reflection_CannotInvokeMethodGenericFormat", type, methodName);
+        internal static string ReflectionCannotInvokeMethodGeneric(string methodName, Type? type) => Get("Reflection_CannotInvokeMethodGenericFormat", type?.GetName(TypeNameKind.LongName), methodName);
 
         /// <summary>Cannot create an instance of type {0} with the provided type arguments and/or parameters.</summary>
-        internal static string ReflectionCannotCreateInstanceGeneric(Type type) => Get("Reflection_CannotCreateInstanceGenericFormat", type);
+        internal static string ReflectionCannotCreateInstanceGeneric(Type type) => Get("Reflection_CannotCreateInstanceGenericFormat", type.GetName(TypeNameKind.LongName));
 
         #endregion
 
@@ -1052,7 +1052,7 @@ namespace KGySoft
         internal static string ResourcesFileRefFileNotFound(string path) => Get("Resources_FileRefFileNotFoundFormat", path);
 
         /// <summary>Saving a resource of type "{0}" is not supported in compatible format because BinaryFormatter is not supported in .NET 8 and above. Either apply the TypeConverterAttribute for type "{0}" that can convert to and from byte array or string, or disable compatible format.</summary>
-        internal static string ResourcesCompatibleFormatNotSupported(Type type) => Get("Resources_CompatibleFormatNotSupportedFormat", type);
+        internal static string ResourcesCompatibleFormatNotSupported(Type type) => Get("Resources_CompatibleFormatNotSupportedFormat", type.GetName(TypeNameKind.LongName));
 
         /// <summary>In safe mode it is not supported to deserialize file references. Resource name: {0}.</summary>
         internal static string ResourcesFileRefFileNotSupportedSafeMode(string name) => Get("Resources_FileRefFileNotSupportedSafeModeFormat", name);
@@ -1062,7 +1062,7 @@ namespace KGySoft
         #region Serialization (any ways)
 
         /// <summary>Type "{0}" cannot be deserialized because it has no field "{1}". Set IgnoreNonExistingFields to true to suppress this exception.</summary>
-        internal static string SerializationMissingField(Type type, string field) => Get("Serialization_MissingFieldFormat", type, field);
+        internal static string SerializationMissingField(Type type, string field) => Get("Serialization_MissingFieldFormat", type.GetName(TypeNameKind.LongName), field);
 
         /// <summary>Array of pointer type '{0}' is not supported.</summary>
         internal static string SerializationPointerArrayTypeNotSupported(Type type) => Get("Serialization_PointerArrayTypeNotSupportedFormat", type.GetName(TypeNameKind.LongName));
@@ -1085,7 +1085,7 @@ namespace KGySoft
 #if !(NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0)
 
         /// <summary>The specified span '{0}' cannot be parsed as type {1}.</summary>
-        internal static string SpanExtensionsCannotParseAsType(string s, Type type) => Get("SpanExtensions_CannotParseAsTypeFormat", s, type);
+        internal static string SpanExtensionsCannotParseAsType(string s, Type type) => Get("SpanExtensions_CannotParseAsTypeFormat", s, type.GetName(TypeNameKind.LongName));
 
 #endif
         #endregion
@@ -1093,14 +1093,14 @@ namespace KGySoft
         #region StringExtensions
 
         /// <summary>The specified string '{0}' cannot be parsed as type {1}.</summary>
-        internal static string StringExtensionsCannotParseAsType(string s, Type type) => Get("StringExtensions_CannotParseAsTypeFormat", s, type);
+        internal static string StringExtensionsCannotParseAsType(string s, Type type) => Get("StringExtensions_CannotParseAsTypeFormat", s, type.GetName(TypeNameKind.LongName));
 
         #endregion
 
         #region XmlSerialization
 
         /// <summary>Serializing type "{0}" is not supported with following options: {1}. You may either use fallback options or provide a type converter for the type.</summary>
-        internal static string XmlSerializationSerializingTypeNotSupported(Type type, XmlSerializationOptions options) => Get("XmlSerialization_SerializingTypeNotSupportedFormat", type, options.ToString<XmlSerializationOptions>());
+        internal static string XmlSerializationSerializingTypeNotSupported(Type type, XmlSerializationOptions options) => Get("XmlSerialization_SerializingTypeNotSupportedFormat", type.GetName(TypeNameKind.LongName), options.ToString<XmlSerializationOptions>());
 
         /// <summary>Root named "object" expected but "{0}" found.</summary>
         internal static string XmlSerializationRootObjectExpected(string name) => Get("XmlSerialization_RootObjectExpectedFormat", name);
@@ -1113,61 +1113,66 @@ namespace KGySoft
         internal static string XmlSerializationCannotResolveTypeSafe(string typeName) => Get("XmlSerialization_CannotResolveTypeSafeFormat", typeName);
 
         /// <summary>Deserializing type "{0}" is not supported.</summary>
-        internal static string XmlSerializationDeserializingTypeNotSupported(Type type) => Get("XmlSerialization_DeserializingTypeNotSupportedFormat", type);
+        internal static string XmlSerializationDeserializingTypeNotSupported(Type type) => Get("XmlSerialization_DeserializingTypeNotSupportedFormat", type.GetName(TypeNameKind.LongName));
 
         /// <summary>Content serialization of read-only collection type "{0}" is not supported because populating will not work at deserialization.
         /// If the collection has an initializer constructor, then using XmlSerializer.Serialize method overloads instead of SerializeContent can work.</summary>
-        internal static string XmlSerializationSerializingReadOnlyCollectionNotSupported(Type type) => Get("XmlSerialization_SerializingReadOnlyCollectionNotSupportedFormat", type);
+        internal static string XmlSerializationSerializingReadOnlyCollectionNotSupported(Type type) => Get("XmlSerialization_SerializingReadOnlyCollectionNotSupportedFormat", type.GetName(TypeNameKind.LongName));
 
         /// <summary>Binary serialization of type "{0}" failed with options "{1}": {2}</summary>
-        internal static string XmlSerializationBinarySerializationFailed(Type type, XmlSerializationOptions options, string errorMessage) => Get("XmlSerialization_BinarySerializationFailedFormat", type, options.ToString<XmlSerializationOptions>(), errorMessage);
+        internal static string XmlSerializationBinarySerializationFailed(Type type, XmlSerializationOptions options, string errorMessage) => Get("XmlSerialization_BinarySerializationFailedFormat", type.GetName(TypeNameKind.LongName), options.ToString<XmlSerializationOptions>(), errorMessage);
 
-        /// <summary>Cannot serialize collection "{0}" with following options: "{1}". You may either use fallback options or provide a type converter or apply DesignerSerializationVisibilityAttribute with value Content on the container collection property.</summary>
-        internal static string XmlSerializationCannotSerializeCollection(Type type, XmlSerializationOptions options) => Get("XmlSerialization_CannotSerializeCollectionFormat", type, options.ToString<XmlSerializationOptions>());
+        /// <summary>Cannot serialize collection "{0}" with following options: "{1}". You may either use fallback options (eg. RecursiveSerializationAsFallback), provide a type converter or apply DesignerSerializationVisibilityAttribute with value Content on the container collection property or field.</summary>
+        internal static string XmlSerializationCannotSerializeCollection(Type type, XmlSerializationOptions options) => Get("XmlSerialization_CannotSerializeCollectionFormat", type.GetName(TypeNameKind.LongName), options.ToString<XmlSerializationOptions>());
+
+        /// <summary>Cannot serialize known collection "{0}" with following options: "{1}" because it has an unrecognized comparer.
+        /// You can force serialization by the RecursiveSerializationAsFallback option but then the comparer will be ignored and deserialization will use a default comparer.
+        /// You can also use the BinarySerializationAsFallback option, which serializes also the comparer but the deserialization might not work in safe mode.</summary>
+        internal static string XmlSerializationCannotSerializeUnsupportedComparer(Type type, XmlSerializationOptions options) => Get("XmlSerialization_CannotSerializeUnsupportedComparerFormat", type.GetName(TypeNameKind.LongName), options.ToString<XmlSerializationOptions>());
 
         /// <summary>Serialization of collection "{0}" is not supported with following options: "{1}", because it does not implement IList, IDictionary or ICollection&lt;T&gt; interfaces and has no initializer constructor that can accept an array or list.
         /// To force the recursive serialization of the collection enable both RecursiveSerializationAsFallback and ForcedSerializationOfReadOnlyMembersAndCollections options; however, deserialization will likely fail in this case. Using BinarySerializationAsFallback option may also work.</summary>
-        internal static string XmlSerializationCannotSerializeUnsupportedCollection(Type type, XmlSerializationOptions options) => Get("XmlSerialization_CannotSerializeUnsupportedCollectionFormat", type, options.ToString<XmlSerializationOptions>());
+        internal static string XmlSerializationCannotSerializeUnsupportedCollection(Type type, XmlSerializationOptions options) => Get("XmlSerialization_CannotSerializeUnsupportedCollectionFormat", type.GetName(TypeNameKind.LongName), options.ToString<XmlSerializationOptions>());
 
         /// <summary>Type "{0}" does not implement IXmlSerializable.</summary>
-        internal static string XmlSerializationNotAnIXmlSerializable(Type type) => Get("XmlSerialization_NotAnIXmlSerializableFormat", type);
+        internal static string XmlSerializationNotAnIXmlSerializable(Type type) => Get("XmlSerialization_NotAnIXmlSerializableFormat", type.GetName(TypeNameKind.LongName));
 
         /// <summary>Type "{0}" does not have a parameterless constructor so it can be (de-)serialized either as a root element by SerializeContent and DeserializeContent or as a public property/field value in a parent object if the member value is not null after creating the parent object.</summary>
-        internal static string XmlSerializationNoDefaultCtor(Type type) => Get("XmlSerialization_NoDefaultCtorFormat", type);
+        internal static string XmlSerializationNoDefaultCtor(Type type) => Get("XmlSerialization_NoDefaultCtorFormat", type.GetName(TypeNameKind.LongName));
 
         /// <summary>Property value of "{0}.{1}" is expected to be a type of "{2}" but was "{3}".</summary>
         internal static string XmlSerializationPropertyTypeMismatch(Type declaringType, string propertyName, Type expectedType, Type actualType) => Get("XmlSerialization_PropertyTypeMismatchFormat", declaringType, propertyName, expectedType, actualType);
 
         /// <summary>Collection "{0}" is read-only so its content cannot be restored.</summary>
-        internal static string XmlSerializationCannotDeserializeReadOnlyCollection(Type type) => Get("XmlSerialization_CannotDeserializeReadOnlyCollectionFormat", type);
+        internal static string XmlSerializationCannotDeserializeReadOnlyCollection(Type type) => Get("XmlSerialization_CannotDeserializeReadOnlyCollectionFormat", type.GetName(TypeNameKind.LongName));
 
         /// <summary>Content serialization of collection type "{0}" is not supported because it cannot be populated by standard interfaces.
         /// If the collection has an initializer constructor, then using XmlSerializer.Serialize method overloads instead of SerializeContent can work.</summary>
-        internal static string XmlSerializationSerializingNonPopulatableCollectionNotSupported(Type type) => Get("XmlSerialization_SerializingNonPopulatableCollectionNotSupportedFormat", type);
+        internal static string XmlSerializationSerializingNonPopulatableCollectionNotSupported(Type type) => Get("XmlSerialization_SerializingNonPopulatableCollectionNotSupportedFormat", type.GetName(TypeNameKind.LongName));
 
         /// <summary>Cannot restore property "{0}" in type "{1}" because it has no setter.</summary>
-        internal static string XmlSerializationPropertyHasNoSetter(string propertyName, Type type) => Get("XmlSerialization_PropertyHasNoSetterFormat", propertyName, type);
+        internal static string XmlSerializationPropertyHasNoSetter(string propertyName, Type type) => Get("XmlSerialization_PropertyHasNoSetterFormat", propertyName, type.GetName(TypeNameKind.LongName));
 
         /// <summary>Cannot set null to non-null property "{0}" in type "{1}" because it has no setter.</summary>
-        internal static string XmlSerializationPropertyHasNoSetterCantSetNull(string propertyName, Type type) => Get("XmlSerialization_PropertyHasNoSetterCantSetNullFormat", propertyName, type);
+        internal static string XmlSerializationPropertyHasNoSetterCantSetNull(string propertyName, Type type) => Get("XmlSerialization_PropertyHasNoSetterCantSetNullFormat", propertyName, type.GetName(TypeNameKind.LongName));
 
         /// <summary>Cannot restore property "{0}" in type "{1}" because it has no setter and it returned null.</summary>
-        internal static string XmlSerializationPropertyHasNoSetterGetsNull(string propertyName, Type type) => Get("XmlSerialization_PropertyHasNoSetterGetsNullFormat", propertyName, type);
+        internal static string XmlSerializationPropertyHasNoSetterGetsNull(string propertyName, Type type) => Get("XmlSerialization_PropertyHasNoSetterGetsNullFormat", propertyName, type.GetName(TypeNameKind.LongName));
 
         /// <summary>Collection item expected but "{0}" found.</summary>
         internal static string XmlSerializationItemExpected(string name) => Get("XmlSerialization_ItemExpectedFormat", name);
 
         /// <summary>Could not determine type of element in collection "{0}".</summary>
-        internal static string XmlSerializationCannotDetermineElementType(Type type) => Get("XmlSerialization_CannotDetermineElementTypeFormat", type);
+        internal static string XmlSerializationCannotDetermineElementType(Type type) => Get("XmlSerialization_CannotDetermineElementTypeFormat", type.GetName(TypeNameKind.LongName));
 
         /// <summary>Type "{0}" is not a regular collection so items cannot be added to it.</summary>
-        internal static string XmlSerializationNotACollection(Type type) => Get("XmlSerialization_NotACollectionFormat", type);
+        internal static string XmlSerializationNotACollection(Type type) => Get("XmlSerialization_NotACollectionFormat", type.GetName(TypeNameKind.LongName));
 
         /// <summary>Type "{0}" has no public property or field "{1}".</summary>
-        internal static string XmlSerializationHasNoMember(Type type, string name) => Get("XmlSerialization_HasNoMemberFormat", type, name);
+        internal static string XmlSerializationHasNoMember(Type type, string name) => Get("XmlSerialization_HasNoMemberFormat", type.GetName(TypeNameKind.LongName), name);
 
         /// <summary>Serialized content of type "{0}" not found.</summary>
-        internal static string XmlSerializationNoContent(Type type) => Get("XmlSerialization_NoContentFormat", type);
+        internal static string XmlSerializationNoContent(Type type) => Get("XmlSerialization_NoContentFormat", type.GetName(TypeNameKind.LongName));
 
         /// <summary>Invalid array length: {0}</summary>
         internal static string XmlSerializationInvalidArrayLength(string value) => Get("XmlSerialization_InvalidArrayLengthFormat", value);
@@ -1176,16 +1181,16 @@ namespace KGySoft
         internal static string XmlSerializationInvalidArrayBounds(string value) => Get("XmlSerialization_InvalidArrayBoundsFormat", value);
 
         /// <summary>Cannot restore array "{0}" because size does not match. Expected length: "{1}".</summary>
-        internal static string XmlSerializationArraySizeMismatch(Type type, int length) => Get("XmlSerialization_ArraySizeMismatchFormat", type, length);
+        internal static string XmlSerializationArraySizeMismatch(Type type, int length) => Get("XmlSerialization_ArraySizeMismatchFormat", type.GetName(TypeNameKind.LongName), length);
 
         /// <summary>Cannot restore array "{0}" because rank does not match. Expected rank: "{1}".</summary>
-        internal static string XmlSerializationArrayRankMismatch(Type type, int rank) => Get("XmlSerialization_ArrayRankMismatchFormat", type, rank);
+        internal static string XmlSerializationArrayRankMismatch(Type type, int rank) => Get("XmlSerialization_ArrayRankMismatchFormat", type.GetName(TypeNameKind.LongName), rank);
 
         /// <summary>Cannot restore array "{0}" because length of the {1}. dimension does not match.</summary>
-        internal static string XmlSerializationArrayDimensionSizeMismatch(Type type, int length) => Get("XmlSerialization_ArrayDimensionSizeMismatchFormat", type, length);
+        internal static string XmlSerializationArrayDimensionSizeMismatch(Type type, int length) => Get("XmlSerialization_ArrayDimensionSizeMismatchFormat", type.GetName(TypeNameKind.LongName), length);
 
         /// <summary>Cannot restore array "{0}" because lower bound of the {1}. dimension does not match.</summary>
-        internal static string XmlSerializationArrayLowerBoundMismatch(Type type, int dimension) => Get("XmlSerialization_ArrayLowerBoundMismatchFormat", type, dimension);
+        internal static string XmlSerializationArrayLowerBoundMismatch(Type type, int dimension) => Get("XmlSerialization_ArrayLowerBoundMismatchFormat", type.GetName(TypeNameKind.LongName), dimension);
 
         /// <summary>Array items length mismatch. Expected items: {0}, found items: {1}.</summary>
         internal static string XmlSerializationInconsistentArrayLength(int expected, int actual) => Get("XmlSerialization_InconsistentArrayLengthFormat", expected, actual);

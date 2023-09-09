@@ -25,6 +25,7 @@ using System.Reflection;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Xml;
+using System.Xml.Linq;
 using System.Xml.Serialization;
 
 using KGySoft.CoreLibraries;
@@ -138,7 +139,7 @@ namespace KGySoft.Serialization.Xml
                     if (!objType.IsReadWriteCollection(obj))
                         Throw.NotSupportedException(Res.XmlSerializationSerializingReadOnlyCollectionNotSupported(objType));
 
-                    SerializeCollection(enumerable, objType.GetCollectionElementType()!, false, writer, DesignerSerializationVisibility.Visible);
+                    SerializeCollection(enumerable, objType.GetCollectionElementType()!, false, writer, DesignerSerializationVisibility.Visible, ComparerType.None);
                     return;
                 }
 
@@ -158,7 +159,7 @@ namespace KGySoft.Serialization.Xml
         /// <summary>
         /// Serializing a collection by XmlWriter
         /// </summary>
-        private void SerializeCollection(IEnumerable? collection, Type elementType, bool typeNeeded, XmlWriter writer, DesignerSerializationVisibility visibility)
+        private void SerializeCollection(IEnumerable? collection, Type elementType, bool typeNeeded, XmlWriter writer, DesignerSerializationVisibility visibility, ComparerType comparer)
         {
             if (collection == null)
                 return;
@@ -230,6 +231,9 @@ namespace KGySoft.Serialization.Xml
             // non-array collection
             if (typeNeeded)
                 writer.WriteAttributeString(XmlSerializer.AttributeType, GetTypeString(collection.GetType()));
+
+            if (comparer > ComparerType.Default)
+                writer.WriteAttributeString(XmlSerializer.AttributeComparer, Enum<ComparerType>.ToString(comparer));
 
             // serializing main properties first
             SerializeMembers(collection, writer, visibility);
@@ -311,13 +315,14 @@ namespace KGySoft.Serialization.Xml
                     Type? elementType = null;
 
                     // if can be trusted in all circumstances
-                    if (IsTrustedCollection(ctx.Type)
+                    ComparerType? comparer = ComparerType.None;
+                    if (IsTrustedCollection(ctx.Type) || ((comparer = GetComparer(enumerable)) ?? ComparerType.Unknown) != ComparerType.Unknown
                         // or recursive is requested
                         || ((ctx.Visibility == DesignerSerializationVisibility.Content || RecursiveSerializationAsFallback)
                             // and is a supported collection or serialization is forced
                             && (ForceReadonlyMembersAndCollections || ctx.Type.IsSupportedCollectionForReflection(out var _, out var _, out elementType, out var _))))
                     {
-                        SerializeCollection(enumerable, elementType ?? ctx.Type.GetCollectionElementType()!, ctx.TypeNeeded, ctx.Writer, ctx.Visibility);
+                        SerializeCollection(enumerable, elementType ?? ctx.Type.GetCollectionElementType()!, ctx.TypeNeeded, ctx.Writer, ctx.Visibility, comparer.GetValueOrDefault());
                         return true;
                     }
 

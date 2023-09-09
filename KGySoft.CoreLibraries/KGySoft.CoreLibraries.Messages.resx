@@ -806,7 +806,12 @@ In safe mode you must specify every non-natively supported type that are expecte
     <value>Serializing type "{0}" is not supported with following options: {1}. You may either use fallback options or provide a type converter for the type.</value>
   </data>
   <data name="XmlSerialization_CannotSerializeCollectionFormat" xml:space="preserve">
-    <value>Cannot serialize collection "{0}" with following options: "{1}". You may either use fallback options or provide a type converter or apply DesignerSerializationVisibilityAttribute with value Content on the container collection property.</value>
+    <value>Cannot serialize collection "{0}" with following options: "{1}". You may either use fallback options (eg. RecursiveSerializationAsFallback), provide a type converter or apply DesignerSerializationVisibilityAttribute with value Content on the container collection property or field.</value>
+  </data>
+  <data name="XmlSerialization_CannotSerializeUnsupportedComparerFormat" xml:space="preserve">
+    <value>Cannot serialize known collection "{0}" with following options: "{1}" because it has an unrecognized comparer.
+You can force serialization by the RecursiveSerializationAsFallback option but then the comparer will be ignored and deserialization will use a default comparer.
+You can also use the BinarySerializationAsFallback option, which serializes also the comparer but the deserialization might not work in safe mode.</value>
   </data>
   <data name="XmlSerialization_CannotSerializeUnsupportedCollectionFormat" xml:space="preserve">
     <value>Serialization of collection "{0}" is not supported with following options: "{1}", because it does not implement IList, IDictionary or ICollection&lt;T&gt; interfaces and has no initializer constructor that can accept an array or list.

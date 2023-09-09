@@ -191,6 +191,7 @@ namespace KGySoft.Serialization.Xml
         internal const string AttributeValueCustom = "custom";
         internal const string AttributeValueStructBinary = "structBinary";
         internal const string AttributeValueBinary = "binary";
+        internal const string AttributeComparer = "comparer";
         internal const string ElementObject = "object";
         internal const string ElementItem = "item";
         internal const string MethodShouldSerialize = "ShouldSerialize";

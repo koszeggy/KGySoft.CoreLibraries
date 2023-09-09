@@ -15,6 +15,10 @@
 
 #region Usings
 
+using System.Collections.Specialized;
+
+using KGySoft.Annotations;
+
 #region Used Namespaces
 
 using System;
@@ -87,6 +91,12 @@ namespace KGySoft.Serialization.Xml
             }
 
             #endregion
+
+            #region Methods
+
+            public override string ToString() => MemberInfo.Name;
+
+            #endregion
         }
 
         #endregion
@@ -107,6 +117,7 @@ namespace KGySoft.Serialization.Xml
             typeof(Stack),
             Reflector.BitArrayType,
             Reflector.StringCollectionType,
+            typeof(StringDictionary),
 
             typeof(CircularList<>),
 
@@ -115,6 +126,27 @@ namespace KGySoft.Serialization.Xml
             typeof(ConcurrentQueue<>),
             typeof(ConcurrentStack<>),
 #endif
+        };
+
+        private static readonly Dictionary<Type, ComparerType> knownCollectionsWithComparer = new()
+        {
+            { typeof(HashSet<>), ComparerType.Default },
+            { typeof(SortedSet<>), ComparerType.Default },
+            { typeof(ThreadSafeHashSet<>), ComparerType.Default },
+            { Reflector.DictionaryGenType, ComparerType.Default },
+            { typeof(SortedList<,>), ComparerType.Default },
+            { typeof(SortedDictionary<,>), ComparerType.Default },
+            { typeof(CircularSortedList<,>), ComparerType.Default },
+            { typeof(ThreadSafeDictionary<,>), ComparerType.Default },
+            { typeof(StringKeyedDictionary<>), ComparerType.StringSegmentOrdinal },
+#if !NET35
+            { typeof(ConcurrentDictionary<,>), ComparerType.Default },
+#endif
+            { typeof(Hashtable), ComparerType.None },
+            { typeof(SortedList), ComparerType.Default },
+            { typeof(ListDictionary), ComparerType.None },
+            { typeof(HybridDictionary), ComparerType.None }, // ISSUE: case sensitivity
+            { typeof(OrderedDictionary), ComparerType.None }, // ISSUE: read-only
         };
 
         private static readonly Type[] escapedNativelySupportedTypes = 
@@ -182,6 +214,18 @@ namespace KGySoft.Serialization.Xml
 
         private protected static bool IsTrustedCollection(Type type)
             => type.IsArray || trustedCollections.Contains(type.IsGenericType ? type.GetGenericTypeDefinition() : type);
+
+        private protected static ComparerType? GetComparer([NoEnumeration]IEnumerable collection)
+        {
+            Type type = collection.GetType();
+            bool isGeneric = type.IsGenericType;
+            if (!knownCollectionsWithComparer.TryGetValue(isGeneric ? type.GetGenericTypeDefinition() : type, out ComparerType defaultComparer))
+                return null;
+
+            object? comparer = collection.GetComparer();
+            ComparerType comparerType = ToComparerType(comparer, isGeneric ? type.GetGenericArguments()[0] : null);
+            return comparerType == defaultComparer ? ComparerType.None : comparerType;
+        }
 
         #endregion
 
@@ -257,6 +301,46 @@ namespace KGySoft.Serialization.Xml
 
             return true;
         }
+
+        private static ComparerType ToComparerType(object? comparer, Type? collectionGenericArgument) => comparer switch
+        {
+            null => ComparerType.None,
+
+            StringComparer stringComparer => Equals(StringComparer.Ordinal, stringComparer) ? ComparerType.Ordinal
+                : Equals(StringComparer.OrdinalIgnoreCase, stringComparer) ? ComparerType.OrdinalIgnoreCase
+                : Equals(StringComparer.InvariantCulture, stringComparer) ? ComparerType.Invariant
+                : Equals(StringComparer.InvariantCultureIgnoreCase, stringComparer) ? ComparerType.InvariantIgnoreCase
+#if NET9_0_OR_GREATER // TODO - https://github.com/dotnet/runtime/issues/77679
+#error check if already available
+                : Equals(StringComparer.OrdinalNonRandomized, stringComparer) ? ComparerType.OrdinalNonRandomized
+                : Equals(StringComparer.OrdinalIgnoreCaseNonRandomized, stringComparer) ? ComparerType.OrdinalIgnoreCaseNonRandomized
+#endif
+                : ComparerType.Unknown,
+
+            StringSegmentComparer stringSegmentComparer => Equals(StringSegmentComparer.Ordinal, stringSegmentComparer) ? ComparerType.StringSegmentOrdinal
+                : Equals(StringSegmentComparer.OrdinalIgnoreCase, stringSegmentComparer) ? ComparerType.StringSegmentOrdinalIgnoreCase
+                : Equals(StringSegmentComparer.InvariantCulture, stringSegmentComparer) ? ComparerType.StringSegmentInvariant
+                : Equals(StringSegmentComparer.InvariantCultureIgnoreCase, stringSegmentComparer) ? ComparerType.StringSegmentInvariantIgnoreCase
+                : Equals(StringSegmentComparer.OrdinalRandomized, stringSegmentComparer) ? ComparerType.StringSegmentOrdinalRandomized
+                : Equals(StringSegmentComparer.OrdinalIgnoreCaseRandomized, stringSegmentComparer) ? ComparerType.StringSegmentOrdinalIgnoreCaseRandomized
+                : Equals(StringSegmentComparer.OrdinalNonRandomized, stringSegmentComparer) ? ComparerType.StringSegmentOrdinalNonRandomized
+                : Equals(StringSegmentComparer.OrdinalIgnoreCaseNonRandomized, stringSegmentComparer) ? ComparerType.StringSegmentOrdinalIgnoreCaseNonRandomized
+                : ComparerType.Unknown,
+
+            Comparer nonGenericComparer => Equals(nonGenericComparer, Comparer.DefaultInvariant) ? ComparerType.DefaultInvariant
+                : Equals(nonGenericComparer, Comparer.Default) ? ComparerType.Default
+                : ComparerType.Unknown,
+
+            CaseInsensitiveComparer caseInsensitiveComparer => Equals(caseInsensitiveComparer, CaseInsensitiveComparer.DefaultInvariant) ? ComparerType.CaseInsensitiveInvariant
+                : Equals(caseInsensitiveComparer, CaseInsensitiveComparer.Default) ? ComparerType.CaseInsensitive
+                : ComparerType.Unknown,
+
+            _ => collectionGenericArgument is null ? ComparerType.Unknown
+                : Equals(comparer, typeof(EqualityComparer<>).GetPropertyValue(collectionGenericArgument, nameof(EqualityComparer<_>.Default)))
+                || Equals(comparer, typeof(Comparer<>).GetPropertyValue(collectionGenericArgument, nameof(Comparer<_>.Default))) ? ComparerType.Default
+                : Equals(comparer, typeof(EnumComparer<>).GetPropertyValue(collectionGenericArgument, nameof(EnumComparer<_>.Comparer))) ? ComparerType.EnumComparer
+                : ComparerType.Unknown
+        };
 
         #endregion
 
@@ -346,7 +430,7 @@ namespace KGySoft.Serialization.Xml
                     return true;
             }
 
-            // Skip 3.) DefaultValue equals to property value
+            // Skip 3.) DefaultValue equals to member value
             bool hasDefaultValue = false;
             object? defaultValue = null;
             if ((Options & XmlSerializationOptions.IgnoreDefaultValueAttribute) == XmlSerializationOptions.None)
@@ -369,7 +453,11 @@ namespace KGySoft.Serialization.Xml
             value = property != null
                 ? property.Get(obj)
                 : field!.Get(obj);
-            return hasDefaultValue && Equals(value, defaultValue);
+            if (hasDefaultValue && Equals(value, defaultValue))
+                return true;
+
+            // Skip 4.) The member returns the same reference as the object itself (eg. a self cast to an interface)
+            return ReferenceEquals(value, obj);
         }
 
         /// <summary>

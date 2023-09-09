@@ -108,7 +108,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             }
         }
 
-        private static void KGySerializeObject(object obj, XmlSerializationOptions options, bool randomContent = false, bool safeMode = true, IList<Type> expectedTypes = null)
+        private static void KGySerializeObject(object obj, XmlSerializationOptions options, bool hasRandomContent = false, bool safeMode = true, IList<Type> expectedTypes = null)
         {
             Type type = obj.GetType();
             if (expectedTypes == null && safeMode)
@@ -137,7 +137,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 }
 
                 AssertDeepEquals(obj, deserializedObject);
-                if (!randomContent)
+                if (!hasRandomContent)
                     Assert.AreEqual(xElement.ToString(), sb.ToString(), "XElement and XmlWriter Serialize are not compatible");
 
                 // XElement - as component

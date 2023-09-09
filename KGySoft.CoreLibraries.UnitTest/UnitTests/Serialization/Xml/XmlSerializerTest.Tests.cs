@@ -913,37 +913,39 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         /// Simple generic collections
         /// </summary>
         [Test]
-        public void SerializeSimpleGenericCollections()
+        public void SerializeTrustedGenericCollections()
         {
-            IEnumerable[] referenceObjects =
+            // natively supported collections, also by system serializer
+            object[] referenceObjects =
             {
+                // unconditionally trusted
                 new List<int> { 1, 2, 3 },
                 new List<int?> { 1, 2, null },
                 new List<int[]> { new int[] { 1, 2, 3 }, null },
 
-                new Collection<int> { 1, 2, 3 },
-                new Collection<int[]> { new int[] { 1, 2, 3 }, null },
+                new CircularList<int> { 1, 2, 3 },
 
-                new HashSet<int> { 1, 2, 3 },
-                new HashSet<int[]> { new int[] { 1, 2, 3 }, null },
+                // trusted with a known comparer
+                new HashSet<string> { "alpha", "beta", "gamma" },
             };
 
-            //SystemSerializeObject(referenceObjects); - NotSupportedException: Cannot serialize interface System.Collections.IEnumerable.
+            // SystemSerializeObject(referenceObjects); // InvalidOperationException: The type may not be used in this context.
             SystemSerializeObjects(referenceObjects);
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // Collection, HashSet
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // Collection, HashSet
-
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfPrimitiveArrays // nested int[]
-                | XmlSerializationOptions.RecursiveSerializationAsFallback); // Collection, HashSet
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfPrimitiveArrays // nested int[]
-                | XmlSerializationOptions.RecursiveSerializationAsFallback); // Collection, HashSet
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
 
             // these collections are not supported by system serializer
-            referenceObjects = new IEnumerable[]
+            referenceObjects = new object[]
             {
+                // unconditionally trusted
                 new LinkedList<int>(new[] { 1, 2, 3 }),
                 new LinkedList<int[]>(new int[][] { new int[] { 1, 2, 3 }, null }),
+
+                // trusted with a known comparer
+                new SortedSet<int> { 1, 2, 3 },
+
+                new ThreadSafeHashSet<int> { 1, 2, 3 },
 
                 new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } },
                 new Dictionary<int[], string[]> { { new int[] { 1 }, new string[] { "alpha" } }, { new int[] { 2 }, null } },
@@ -955,19 +957,23 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 new SortedDictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } },
                 new SortedDictionary<int, string[]> { { 1, new string[] { "alpha" } }, { 2, null } },
 
+                new CircularSortedList<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } },
+                new CircularSortedList<int, string[]> { { 1, new string[] { "alpha" } }, { 2, null } },
+
+                new ThreadSafeDictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } },
+
+                new StringKeyedDictionary<int> { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } },
+
 #if !NET35
                 new ConcurrentDictionary<int, string>(new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } }),
 #endif
-
-
-                new Cache<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } },
             };
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // everything but LinkedList
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // everything but LinkedList  
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
 
-            // these can be deserialized by initializer constructor only because they implement neither ICollection<T> nor IList or if they do, they are read-only
-            referenceObjects = new IEnumerable[]
+            // these cannot be serialized as content because they can be deserialized by initializer constructor only as they implement neither ICollection<T> nor IList
+            referenceObjects = new object[]
             {
                 // non-populatable
                 new Queue<int>(new[] { 1, 2, 3 }),
@@ -976,12 +982,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 new Queue<int>[][] { new Queue<int>[] { new Queue<int>(new int[] { 1, 2, 3 }) } },
 #if !NET35
                 new ConcurrentQueue<int>(new[] { 1, 2, 3 }),
-#if !NET7_0 // BUG, only in .NET 7: https://github.com/dotnet/runtime/issues/67491
                 new ConcurrentBag<int> { 1, 2, 3 },  
-#endif
-#if !NET40
-                new ArraySegment<int>(new[] { 1, 2, 3 }),
-#endif
 #endif
 
                 // non-populatable, reverse
@@ -990,35 +991,38 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 #if !NET35
                 new ConcurrentStack<int>(new[] { 1, 2, 3 }),
 #endif
-
-                // read-only
-                new ReadOnlyCollection<int>(new[] { 1, 2, 3 }),
-
-#if !(NET35 || NET40)
-                new ReadOnlyDictionary<int, string>(new Dictionary<int, string> { { 1, "One" }, { 2, "Two" } }),
-#endif
             };
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // ArraySegment, ReadOnlyCollection, ReadOnlyDictionary
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback, false); // ArraySegment, ReadOnlyCollection, ReadOnlyDictionary  
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, false);
+        }
 
-#if !NET35
-            // these collections are not supported recursively at all
+        /// <summary>
+        /// Simple generic collections
+        /// </summary>
+        [Test]
+        public void SerializeGenericCollectionsWithComparer()
+        {
+            IEnumerable[] referenceObjects =
+            {
+                new HashSet<int> { 1, 2, 3 },
+            };
+
+            SystemSerializeObject(referenceObjects);
+            SystemSerializeObjects(referenceObjects);
+
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
+            throw new NotImplementedException();
+            return;
+
+            // these can be deserialized by initializer constructor only because they implement neither ICollection<T> nor IList or if they do, they are read-only
             referenceObjects = new IEnumerable[]
             {
-#if !NET40
-                new ArraySegment<int>(new[] { 1, 2, 3 }, 1, 1), // initializer collection has 3 elements, while the segment has only 1
-#endif
-                new BlockingCollection<int> { 1, 2, 3 }, // no initializer constructor of array or list
             };
 
-#if NETCOREAPP3_0
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, true); // randomContent: ConcurrentStack
-#else
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, safeMode: false);
-#endif
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, false, false);
-#endif // !NET35
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback, false);
         }
 
         [Test]
@@ -1129,7 +1133,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         /// Simple non-generic collections
         /// </summary>
         [Test]
-        public void SerializeSimpleNonGenericCollections()
+        public void SerializeTrustedNonGenericCollections()
         {
             IEnumerable[] referenceObjects =
             {
@@ -1153,8 +1157,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 new OrderedDictionary { { "alpha", 1 }, { "Alpha", 2 }, { "ALPHA", 3 } },
             };
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // all
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // all  
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None); // all
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None); // all  
 
             // these collections cannot be populated but they have supported initializer constructor
             referenceObjects = new IEnumerable[]
@@ -1221,8 +1225,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             //SystemSerializeObjects(referenceObjects); - NullReferenceException
 
             var expectedTypes = GetExpectedTypes(referenceObjects).Concat(new[] { typeof(Version), typeof(TestEnum), typeof(BinarySerializableSealedClass) }).ToList();
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback, expectedTypes: expectedTypes); // All but list and arrays
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback, expectedTypes: expectedTypes); // All but list and arrays
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None, expectedTypes: expectedTypes);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, expectedTypes: expectedTypes);
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, expectedTypes: expectedTypes); // everything
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, expectedTypes: expectedTypes); // as content, nested collections and non-simple types; otherwise every element
@@ -1234,12 +1238,22 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         [Test]
         public void SerializeCustomCollections()
         {
-            ICollection[] referenceObjects =
+            object[] referenceObjects =
             {
+                new Collection<int> { 1, 2, 3 },
+                new Collection<int[]> { new int[] { 1, 2, 3 }, null },
+                new Cache<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } },
                 new CustomGenericCollection<KeyValuePair<int, object>> { new KeyValuePair<int, object>(1, "alpha"), new KeyValuePair<int, object>(2, DateTime.Now), new KeyValuePair<int, object>(3, new object()), new KeyValuePair<int, object>(4, new object[] { 1, "alpha", DateTime.Now, null }), new KeyValuePair<int, object>(5, null) },
                 new CustomNonGenericCollection { new KeyValuePair<int, object>(1, "alpha"), new KeyValuePair<int, object>(2, DateTime.Now), new KeyValuePair<int, object>(3, new object()), new KeyValuePair<int, object>(4, new object[] { 1, "alpha", DateTime.Now, null }), new KeyValuePair<int, object>(5, null) },
                 new CustomGenericDictionary<string, Dictionary<int, string>> { { "hu", new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } } }, { "en", new Dictionary<int, string> { { 1, "apple" }, { 2, "frog" }, { 3, "cat" } } } },
                 new CustomNonGenericDictionary { { "hu", new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } } }, { "en", new Dictionary<int, string> { { 1, "apple" }, { 2, "frog" }, { 3, "cat" } } } },
+
+                // read-only
+                new ReadOnlyCollection<int>(new[] { 1, 2, 3 }),
+
+#if !(NET35 || NET40)
+                new ReadOnlyDictionary<int, string>(new Dictionary<int, string> { { 1, "One" }, { 2, "Two" } }),
+#endif
             };
 
             // SystemSerializeObject(referenceObjects); // InvalidOperationException: You must implement a default accessor on System.Collections.ICollection because it inherits from ICollection.
@@ -1247,6 +1261,20 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // all
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // all
+
+#if !NET35
+            // these collections are not supported recursively at all
+            referenceObjects = new IEnumerable[]
+            {
+#if !NET40
+                new ArraySegment<int>(new[] { 1, 2, 3 }, 1, 1), // initializer collection has 3 elements, while the segment has only 1
+#endif
+                new BlockingCollection<int> { 1, 2, 3 }, // no initializer constructor of array or list
+            };
+
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, safeMode: false);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, false, false);
+#endif // !NET35
         }
 
         [Test]
