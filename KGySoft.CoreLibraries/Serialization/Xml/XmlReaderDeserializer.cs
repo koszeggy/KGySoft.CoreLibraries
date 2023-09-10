@@ -259,7 +259,7 @@ namespace KGySoft.Serialization.Xml
                         MemberInfo? member = (MemberInfo?)property ?? field;
 
                         // 1.) real member
-                        if (member != null)
+                        if (member is not null)
                         {
                             if (SkipMember(member))
                             {
@@ -267,9 +267,18 @@ namespace KGySoft.Serialization.Xml
                                 continue;
                             }
 
-                            object? existingValue = members != null ? null
-                                : property is not null ? !property.CanWrite || itemType?.CanBeCreatedWithoutParameters() != true ? property.Get(obj) : null
-                                : field!.Get(obj);
+                            object? existingValue = null;
+                            if (members == null)
+                            {
+                                if (property is not null)
+                                {
+                                    if (!property.CanWrite || itemType?.CanBeCreatedWithoutParameters() != true)
+                                        existingValue = property.Get(obj);
+                                }
+                                else if (itemType?.CanBeCreatedWithoutParameters() != true)
+                                    existingValue = field!.Get(obj);
+                            }
+
                             if (!TryDeserializeByConverter(member, itemType!, () => ReadStringValue(reader), out object? result)
                                 && !TryDeserializeObject(itemType, reader, existingValue, out result))
                             {

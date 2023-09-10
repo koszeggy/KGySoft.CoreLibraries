@@ -1099,7 +1099,7 @@ namespace KGySoft
 
         #region XmlSerialization
 
-        /// <summary>Serializing type "{0}" is not supported with following options: {1}. You may either use fallback options or provide a type converter for the type.</summary>
+        /// <summary>Serializing type "{0}" is not supported with following options: {1}. You may either use fallback options (eg. RecursiveSerializationAsFallback) or provide a type converter for the type.</summary>
         internal static string XmlSerializationSerializingTypeNotSupported(Type type, XmlSerializationOptions options) => Get("XmlSerialization_SerializingTypeNotSupportedFormat", type.GetName(TypeNameKind.LongName), options.ToString<XmlSerializationOptions>());
 
         /// <summary>Root named "object" expected but "{0}" found.</summary>

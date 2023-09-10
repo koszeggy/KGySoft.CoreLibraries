@@ -214,6 +214,9 @@ namespace KGySoft.Serialization.Xml
         private protected static bool IsTrustedCollection(Type type)
             => type.IsArray || trustedCollections.Contains(type.IsGenericType ? type.GetGenericTypeDefinition() : type);
 
+        private protected static bool IsKnownCollection(Type type)
+            => knownCollectionsWithComparer.ContainsKey(type.IsGenericType ? type.GetGenericTypeDefinition() : type);
+
         private protected static ComparerType? GetComparer([NoEnumeration]IEnumerable collection)
         {
             Type type = collection.GetType();
@@ -241,35 +244,37 @@ namespace KGySoft.Serialization.Xml
             // properties:
             && type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).All(p =>
                 // have public getter
-                    (p.GetGetMethod() != null
-                        // of a non-delegate type
-                        && !p.PropertyType.IsDelegate()
-                        // and must have public setter, unless if type is IXmlSerializable or a trusted collection
-                        && (p.GetSetMethod() != null || typeof(IXmlSerializable).IsAssignableFrom(p.PropertyType) || IsTrustedCollection(p.PropertyType)))
-                    // or, if it is an explicit interface implementation, we just ignore it
-                    || Reflector.IsExplicitInterfaceImplementation(p))
+                (p.GetGetMethod() != null
+                    // of a non-delegate type
+                    && !p.PropertyType.IsDelegate()
+                    // and must have public setter, unless its type is IXmlSerializable or a trusted collection
+                    && (p.GetSetMethod() != null
+                        || typeof(IXmlSerializable).IsAssignableFrom(p.PropertyType)
+                        || IsTrustedCollection(p.PropertyType) || IsKnownCollection(p.PropertyType)))
+                // or, if it is an explicit interface implementation, we just ignore it
+                || Reflector.IsExplicitInterfaceImplementation(p))
             // fields:
             && type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).All(f =>
                 // must be public
-                    (f.IsPublic
-                        // of a non delegate type
-                        && !f.FieldType.IsDelegate()
-                        // and must be non read-only unless is type is a trusted collection
-                        && (!f.IsInitOnly || IsTrustedCollection(f.FieldType)))
-                    // or, if it is a compiler-generated field, we just ignore it
-                    || Attribute.GetCustomAttribute(f, typeof(CompilerGeneratedAttribute), false) != null)
+                (f.IsPublic
+                    // of a non delegate type
+                    && !f.FieldType.IsDelegate()
+                    // and must be non read-only unless its type is a trusted collection
+                    && (!f.IsInitOnly || IsTrustedCollection(f.FieldType) || IsKnownCollection(f.FieldType)))
+                // or, if it is a compiler-generated field, we just ignore it
+                || Attribute.GetCustomAttribute(f, typeof(CompilerGeneratedAttribute), false) != null)
             // and the type has no instance events
             && type.GetEvents(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).Length == 0;
 
         private static bool IsWhiteSpace(char c, bool ignoreNewline)
         {
-            if (c == ' ' || c == '\t')
+            if (c is ' ' or '\t')
                 return true;
 
             if (ignoreNewline)
                 return false;
 
-            return c == '\r' || c == '\n';
+            return c is '\r' or '\n';
 
             // U+0009 = <control> HORIZONTAL TAB
             // U+000a = <control> LINE FEED

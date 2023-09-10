@@ -146,27 +146,29 @@
 ! KGySoft.Serialization.Xml namespace:
 ======================================
 ! XmlSerializer class:
-  ! DeserializeSafe and DeserializeContentSafe methods: These methods cannot deserialize any custom types anymore
-    without declaring the expected types in the new overloads. Natively supported simple types are recognized
-    even if they are not specified as expected types.
-  + Serialize* methods: Supporting more collections without fallback options if they use a supported comparer:
-    + HashSet<T>
-    + SortedSet<T>
-    + ThreadSafeHashSet<T>
+  ! DeserializeSafe and DeserializeContentSafe methods:
+    ! These methods cannot deserialize any custom types anymore without declaring the expected types in the new
+      overloads. Natively supported simple types are recognized even if they are not specified as expected types.
+    ! 
+  + Serialize* methods: Supporting more collections without fallback options (if they use a supported comparer):
     + Dictionary<TKey, TValue>
     + SortedList<TKey, TValue>
     + SortedDictionary<TKey, TValue>
     + ThreadSafeDictionary<TKey, TValue>
     + StringKeyedDictionary<TKey, TValue>
     + ConcurrentDictionary<TKey, TValue> (.NET Framework 4.0 and above)
+    + HashSet<T>
+    + SortedSet<T>
+    + ThreadSafeHashSet<T>
     + Hashtable
     + SortedList
     + ListDictionary
     + HybridDictionary
     + OrderedDictionary
+  + SerializeContent methods: 
   + New DeserializeSafe and DeserializeContentSafe overloads with expectedCustomTypes parameters.
-  + Deserializing binary serialized content was disabled in safe mode. Now it's enabled but types resolved by name
-    must be declared in the expectedCustomTypes parameter of the new Deserialize[Content]Safe overloads.
+  + Deserialize* methods: binary serialized content was disabled in safe mode. Now it's enabled but types resolved
+    by name must be declared in the expectedCustomTypes parameter of the new Deserialize[Content]Safe overloads.
 
 
 ~~~~~~~~~

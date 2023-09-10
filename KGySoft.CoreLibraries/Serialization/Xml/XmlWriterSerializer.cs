@@ -26,7 +26,6 @@ using System.Reflection;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Xml;
-using System.Xml.Linq;
 using System.Xml.Serialization;
 
 using KGySoft.CoreLibraries;
@@ -48,8 +47,9 @@ namespace KGySoft.Serialization.Xml
 
             internal object Object;
             internal Type Type;
-            internal bool TypeNeeded;
             internal XmlWriter Writer;
+            internal bool TypeNeeded;
+            internal bool IsReadOnlyProperty;
             internal DesignerSerializationVisibility Visibility;
 
             #endregion
@@ -262,7 +262,7 @@ namespace KGySoft.Serialization.Xml
         /// obj.GetType and type can be different (properties)
         /// </summary>
         [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "False alarm, the new analyzer includes the complexity of local methods.")]
-        private void SerializeObject(object? obj, bool typeNeeded, XmlWriter writer, DesignerSerializationVisibility visibility)
+        private void SerializeObject(object? obj, bool typeNeeded, XmlWriter writer, DesignerSerializationVisibility visibility, bool isReadOnlyProperty = false)
         {
             #region Local Methods to reduce complexity
 
@@ -317,11 +317,15 @@ namespace KGySoft.Serialization.Xml
                 if (ctx.Object is IEnumerable enumerable)
                 {
                     Type? elementType = null;
+                    ComparerType? comparer = ComparerType.None;
 
                     // if can be trusted in all circumstances
-                    ComparerType? comparer = ComparerType.None;
-                    if (IsTrustedCollection(ctx.Type) || ((comparer = GetComparer(enumerable)) ?? ComparerType.Unknown) != ComparerType.Unknown
-                        // or recursive is requested
+                    if (IsTrustedCollection(ctx.Type)
+                        // or deserialization can only use the pre-created known collection (so the comparer can be ignored)
+                        || ctx.IsReadOnlyProperty && IsKnownCollection(ctx.Type)
+                        // or the known collection uses a supported comparer
+                        || (!ctx.IsReadOnlyProperty && ((comparer = GetComparer(enumerable)) ?? ComparerType.Unknown) != ComparerType.Unknown)
+                        // or recursive serialization is requested
                         || ((ctx.Visibility == DesignerSerializationVisibility.Content || RecursiveSerializationAsFallback)
                             // and is a supported collection or serialization is forced
                             && (ForceReadonlyMembersAndCollections || ctx.Type.IsSupportedCollectionForReflection(out var _, out var _, out elementType, out var _))))
@@ -387,7 +391,15 @@ namespace KGySoft.Serialization.Xml
                 return;
             }
 
-            var context = new SerializeObjectContext { Object = obj, Type = type, TypeNeeded = typeNeeded, Writer = writer, Visibility = visibility };
+            var context = new SerializeObjectContext
+            {
+                Object = obj,
+                Type = type,
+                TypeNeeded = typeNeeded,
+                Writer = writer,
+                Visibility = visibility,
+                IsReadOnlyProperty = isReadOnlyProperty
+            };
 
             // d.) Key/Value
             if (TrySerializeKeyValue(ref context))
@@ -489,7 +501,7 @@ namespace KGySoft.Serialization.Xml
                     writer.WriteEndElement();
                 else
                 {
-                    SerializeObject(value, memberType != actualType, writer, visibility);
+                    SerializeObject(value, memberType != actualType, writer, visibility, property?.CanWrite == false);
                     writer.WriteFullEndElement();
                 }
             }
