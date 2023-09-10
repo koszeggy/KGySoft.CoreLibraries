@@ -663,10 +663,15 @@ namespace KGySoft.Serialization.Binary
                         return;
                 }
 
+                if (this.rootType is null && expectedCustomTypes is null or ICollection<Type> { Count: 0 })
+                    return;
+
                 expectedTypes = new Dictionary<(string?, string), Type>();
 
-                // Safe mode without a safe binder: adding allowed types
-                var types = new Queue<Type>(new[] { rootType }.Concat(expectedCustomTypes ?? Reflector.EmptyArray<Type>()));
+                // Adding allowed types resolved by name. Including also possible object root in case supported types were forced to be saved recursively.
+                var types = new Queue<Type>(expectedCustomTypes ?? Reflector.EmptyArray<Type>());
+                types.Enqueue(rootType);
+
 #if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
                 while (types.TryDequeue(out Type? type))
 #else

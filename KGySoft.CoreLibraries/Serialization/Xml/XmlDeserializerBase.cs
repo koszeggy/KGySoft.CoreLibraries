@@ -273,15 +273,16 @@ namespace KGySoft.Serialization.Xml
         {
             RootType = rootType == Reflector.ObjectType ? null : rootType;
             SafeMode = safeMode;
-            if (!safeMode)
+
+            if (RootType is null && expectedCustomTypes is null or ICollection<Type> { Count: 0 })
                 return;
 
             expectedTypes = new StringKeyedDictionary<Type>();
 
-            // Safe mode without a safe binder: adding allowed types
+            // Adding allowed types. Skipping possible object root type because object is parsed anyway.
             var types = new Queue<Type>(expectedCustomTypes ?? Reflector.EmptyArray<Type>());
-            if (rootType is not null)
-                types.Enqueue(rootType);
+            if (RootType is not null)
+                types.Enqueue(RootType);
 
 #if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
             while (types.TryDequeue(out Type? type))
