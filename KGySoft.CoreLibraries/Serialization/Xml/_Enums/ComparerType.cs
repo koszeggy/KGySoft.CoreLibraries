@@ -18,7 +18,7 @@ namespace KGySoft.Serialization.Xml
     internal enum ComparerType
     {
         /// <summary>
-        /// Represents an unknown or unexpected comparer for a specific collection
+        /// Represents an unknown or unexpected comparer for a known collection
         /// </summary>
         Unknown = -1,
 
@@ -32,19 +32,21 @@ namespace KGySoft.Serialization.Xml
         /// - Generic collection with IEqualityComparer`1: EqualityComparer`1.Default
         /// - Generic collection with IComparer`1: Comparer`1.Default
         /// - Non-generic collection with IComparer: Comparer.Default (with current culture)
-        /// - Non-generic collection with IEqualityComparer: null (but this should return <see cref="None"/>)
         /// </summary>
         Default,
 
         DefaultInvariant, // Comparer.DefaultInvariant
-        CaseInsensitive, // CaseInsensitiveComparer.Default
+        CaseInsensitive, // CaseInsensitiveComparer.Default or HybridDictionary case insensitivity
         CaseInsensitiveInvariant, // CaseInsensitiveComparer.DefaultInvariant
         Ordinal, // StringComparer.Ordinal
         OrdinalIgnoreCase, // StringComparer.OrdinalIgnoreCase
         Invariant, // StringComparer.InvariantCulture
         InvariantIgnoreCase, // StringComparer.InvariantCultureIgnoreCase
+#if NET9_0_OR_GREATER // TODO - https://github.com/dotnet/runtime/issues/77679
+#error check if already available
         OrdinalNonRandomized, // StringComparer.OrdinalNonRandomized
-        OrdinalIgnoreCaseNonRandomized, // StringComparer.OrdinalIgnoreCaseNonRandomized
+        OrdinalIgnoreCaseNonRandomized, // StringComparer.OrdinalIgnoreCaseNonRandomized  
+#endif
         StringSegmentOrdinal, // StringSegmentOrdinal.Ordinal
         StringSegmentOrdinalIgnoreCase, // StringSegmentOrdinal.OrdinalIgnoreCase
         StringSegmentInvariant, // StringSegmentOrdinal.InvariantCulture

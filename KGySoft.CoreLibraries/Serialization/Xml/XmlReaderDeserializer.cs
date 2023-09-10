@@ -25,6 +25,7 @@ using System.Reflection;
 using System.Security;
 using System.Text;
 using System.Xml;
+using System.Xml.Linq;
 using System.Xml.Serialization;
 
 using KGySoft.CoreLibraries;
@@ -52,6 +53,7 @@ namespace KGySoft.Serialization.Xml
             internal XmlReader Reader;
             internal object? ExistingInstance;
             internal object? Result;
+            internal bool ReadOnly;
 
             #endregion
         }
@@ -424,11 +426,18 @@ namespace KGySoft.Serialization.Xml
                     return true;
                 }
 
-                ctx.Result = ctx.ExistingInstance ?? (ctx.Type.CanBeCreatedWithoutParameters()
-                    ? CreateInstanceAccessor.GetAccessor(ctx.Type).CreateInstance()
-                    : Throw.ReflectionException<object>(Res.XmlSerializationNoDefaultCtor(ctx.Type)));
+                ctx.Result = ctx.ExistingInstance;
 
-                // 4.) New collection by collectionCtor again (there IS defaultCtor but the new instance is read-only so falling back to collectionCtor)
+                // 4.) New collection by default ctor or comparer ctor
+                if (ctx.Result == null)
+                {
+                    string? attrComparer = ctx.Reader[XmlSerializer.AttributeComparer];
+                    ctx.Result = attrComparer != null ? CreateKnownCollectionWithComparer(ctx.Type, attrComparer)
+                        : ctx.Type.CanBeCreatedWithoutParameters() ? CreateInstanceAccessor.GetAccessor(ctx.Type).CreateInstance()
+                        : Throw.ReflectionException<object>(Res.XmlSerializationNoDefaultCtor(ctx.Type));
+                }
+
+                // 5.) New collection by collectionCtor again (there IS defaultCtor but the new instance is read-only so falling back to collectionCtor)
                 if (isCollection && !ctx.Type.IsReadWriteCollection(ctx.Result))
                 {
                     if (collectionCtor != null)
@@ -440,8 +449,9 @@ namespace KGySoft.Serialization.Xml
                     Throw.SerializationException(Res.XmlSerializationCannotDeserializeReadOnlyCollection(ctx.Type));
                 }
 
-                // 5.) Newly created collection or any other object (both existing and new)
+                // 6.) Newly created collection or any other object (both existing and new)
                 DeserializeContent(ctx.Reader, ctx.Result!);
+                HandleReadOnly(ref ctx.Result, ctx.ReadOnly);
                 return true;
             }
 
@@ -529,6 +539,9 @@ namespace KGySoft.Serialization.Xml
             }
 
             // g.) recursive deserialization (including collections)
+            if (reader[XmlSerializer.AttributeReadOnly]?.Equals(Boolean.TrueString, StringComparison.OrdinalIgnoreCase) == true)
+                context.ReadOnly = true;
+
             if (TryDeserializeComplexObject(ref context))
             {
                 result = context.Result;

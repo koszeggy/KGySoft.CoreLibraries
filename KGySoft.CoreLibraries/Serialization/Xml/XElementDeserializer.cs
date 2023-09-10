@@ -18,6 +18,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
@@ -53,6 +54,7 @@ namespace KGySoft.Serialization.Xml
             internal XElement Element;
             internal object? ExistingInstance;
             internal object? Result;
+            internal bool ReadOnly;
 
             #endregion
         }
@@ -96,7 +98,7 @@ namespace KGySoft.Serialization.Xml
             if (element.IsEmpty)
                 return null;
 
-            XAttribute? attrEscaped = element.Attribute(XmlSerializer.AttributeEscaped!);
+            XAttribute? attrEscaped = element.Attribute(XmlSerializer.AttributeEscaped);
             return attrEscaped == null || attrEscaped.Value != XmlSerializer.AttributeValueTrue
                 ? element.Value
                 : Unescape(element.Value);
@@ -122,7 +124,7 @@ namespace KGySoft.Serialization.Xml
             if (content.IsEmpty)
                 return null;
 
-            XAttribute? attrType = content.Attribute(XmlSerializer.AttributeType!);
+            XAttribute? attrType = content.Attribute(XmlSerializer.AttributeType);
             Type? objType = null;
             if (attrType != null)
                 objType = ResolveType(attrType.Value);
@@ -160,7 +162,7 @@ namespace KGySoft.Serialization.Xml
             Type objType = obj.GetType();
 
             // deserialize IXmlSerializable content
-            XAttribute? attrFormat = parent.Attribute(XmlSerializer.AttributeFormat!);
+            XAttribute? attrFormat = parent.Attribute(XmlSerializer.AttributeFormat);
             if (attrFormat != null && attrFormat.Value == XmlSerializer.AttributeValueCustom)
             {
                 if (obj is not IXmlSerializable xmlSerializable)
@@ -222,7 +224,7 @@ namespace KGySoft.Serialization.Xml
             foreach (XElement memberOrItem in parent.Elements())
             {
                 string name = memberOrItem.Name.LocalName;
-                ResolveMember(objRealType, name, memberOrItem.Attribute(XmlSerializer.AttributeDeclaringType!)?.Value, memberOrItem.Attribute(XmlSerializer.AttributeType!)?.Value,
+                ResolveMember(objRealType, name, memberOrItem.Attribute(XmlSerializer.AttributeDeclaringType)?.Value, memberOrItem.Attribute(XmlSerializer.AttributeType)?.Value,
                     out PropertyInfo? property, out FieldInfo? field, out Type? itemType);
                 MemberInfo? member = (MemberInfo?)property ?? field;
 
@@ -281,7 +283,7 @@ namespace KGySoft.Serialization.Xml
                 if (ctx.Type?.IsGenericTypeOf(Reflector.KeyValuePairType) == true)
                 {
                     // key
-                    XElement? xItem = ctx.Element.Element(nameof(KeyValuePair<_, _>.Key)!);
+                    XElement? xItem = ctx.Element.Element(nameof(KeyValuePair<_,_>.Key));
                     if (xItem == null)
                         Throw.ArgumentException(Res.XmlSerializationKeyValueMissingKey);
                     XAttribute? xType = xItem.Attribute(XmlSerializer.AttributeType!);
@@ -290,10 +292,10 @@ namespace KGySoft.Serialization.Xml
                         Throw.NotSupportedException(Res.XmlSerializationDeserializingTypeNotSupported(keyType));
 
                     // value
-                    xItem = ctx.Element.Element(nameof(KeyValuePair<_, _>.Value)!);
+                    xItem = ctx.Element.Element(nameof(KeyValuePair<_,_>.Value));
                     if (xItem == null)
                         Throw.ArgumentException(Res.XmlSerializationKeyValueMissingValue);
-                    xType = xItem.Attribute(XmlSerializer.AttributeType!);
+                    xType = xItem.Attribute(XmlSerializer.AttributeType);
                     Type valueType = xType != null ? ResolveType(xType.Value) : ctx.Type.GetGenericArguments()[1];
                     if (!TryDeserializeObject(valueType, xItem, null, out object? value))
                         Throw.NotSupportedException(Res.XmlSerializationDeserializingTypeNotSupported(valueType));
@@ -312,7 +314,7 @@ namespace KGySoft.Serialization.Xml
                     return;
 
                 byte[] data = Convert.FromBase64String(ctx.Element.Value);
-                XAttribute? attrCrc = ctx.Element.Attribute(XmlSerializer.AttributeCrc!);
+                XAttribute? attrCrc = ctx.Element.Attribute(XmlSerializer.AttributeCrc);
                 if (attrCrc != null)
                 {
                     if (Crc32.CalculateHash(data).ToString("X8", CultureInfo.InvariantCulture) != attrCrc.Value)
@@ -351,11 +353,18 @@ namespace KGySoft.Serialization.Xml
                     return true;
                 }
 
-                ctx.Result = ctx.ExistingInstance ?? (ctx.Type.CanBeCreatedWithoutParameters()
-                    ? CreateInstanceAccessor.GetAccessor(ctx.Type).CreateInstance()
-                    : Throw.ReflectionException<object>(Res.XmlSerializationNoDefaultCtor(ctx.Type)));
+                ctx.Result = ctx.ExistingInstance;
 
-                // 4.) New collection by collectionCtor again (there IS defaultCtor but the new instance is read-only so falling back to collectionCtor)
+                // 4.) New collection by default ctor or comparer ctor
+                if (ctx.Result == null)
+                {
+                    XAttribute? attrComparer = ctx.Element.Attribute(XmlSerializer.AttributeComparer);
+                    ctx.Result = attrComparer != null ? CreateKnownCollectionWithComparer(ctx.Type, attrComparer.Value)
+                        : ctx.Type.CanBeCreatedWithoutParameters() ? CreateInstanceAccessor.GetAccessor(ctx.Type).CreateInstance()
+                        : Throw.ReflectionException<object>(Res.XmlSerializationNoDefaultCtor(ctx.Type));
+                }
+
+                // 5.) New collection by collectionCtor again (there IS defaultCtor but the new instance is read-only so falling back to collectionCtor)
                 if (isCollection && !ctx.Type.IsReadWriteCollection(ctx.Result))
                 {
                     if (collectionCtor != null)
@@ -367,8 +376,9 @@ namespace KGySoft.Serialization.Xml
                     Throw.SerializationException(Res.XmlSerializationCannotDeserializeReadOnlyCollection(ctx.Type));
                 }
 
-                // 5.) Newly created collection or any other object (both existing and new)
+                // 6.) Newly created collection or any other object (both existing and new)
                 DeserializeContent(ctx.Element, ctx.Result!);
+                HandleReadOnly(ref ctx.Result, ctx.ReadOnly);
                 return true;
             }
 
@@ -400,7 +410,7 @@ namespace KGySoft.Serialization.Xml
             }
 
             // b.) Deserialize IXmlSerializable
-            string? format = element.Attribute(XmlSerializer.AttributeFormat!)?.Value;
+            string? format = element.Attribute(XmlSerializer.AttributeFormat)?.Value;
             if (type is not null && format == XmlSerializer.AttributeValueCustom)
             {
                 object instance = existingInstance ?? (type.CanBeCreatedWithoutParameters()
@@ -456,6 +466,9 @@ namespace KGySoft.Serialization.Xml
             }
 
             // g.) recursive deserialization (including collections)
+            if (element.Attribute(XmlSerializer.AttributeReadOnly)?.Value.Equals(Boolean.TrueString, StringComparison.OrdinalIgnoreCase) == true)
+                context.ReadOnly = true;
+
             if (TryDeserializeComplexObject(ref context))
             {
                 result = context.Result;
@@ -471,8 +484,8 @@ namespace KGySoft.Serialization.Xml
         /// </summary>
         private Array DeserializeArray(Array? array, Type? elementType, XElement element, bool canRecreateArray)
         {
-            string? attrLength = element.Attribute(XmlSerializer.AttributeLength!)?.Value;
-            string? attrDim = element.Attribute(XmlSerializer.AttributeDim!)?.Value;
+            string? attrLength = element.Attribute(XmlSerializer.AttributeLength)?.Value;
+            string? attrDim = element.Attribute(XmlSerializer.AttributeDim)?.Value;
             var builder = new ArrayBuilder(array, elementType, attrLength, attrDim, canRecreateArray, SafeMode);
 
             // has no elements: primitive array (can be restored by BlockCopy)
@@ -480,7 +493,7 @@ namespace KGySoft.Serialization.Xml
             {
                 string value = element.Value;
                 byte[] data = Convert.FromBase64String(value);
-                XAttribute? attrCrc = element.Attribute(XmlSerializer.AttributeCrc!);
+                XAttribute? attrCrc = element.Attribute(XmlSerializer.AttributeCrc);
                 string? crc = attrCrc?.Value;
 
                 if (crc != null)
@@ -497,7 +510,7 @@ namespace KGySoft.Serialization.Xml
             foreach (XElement item in element.Elements(XmlSerializer.ElementItem))
             {
                 Type? itemType = null;
-                XAttribute? attrType = item.Attribute(XmlSerializer.AttributeType!);
+                XAttribute? attrType = item.Attribute(XmlSerializer.AttributeType);
                 if (attrType != null)
                     itemType = ResolveType(attrType.Value);
                 if (itemType == null)
@@ -521,7 +534,7 @@ namespace KGySoft.Serialization.Xml
             if (SafeMode && ctx.Type!.IsManaged())
                 Throw.ArgumentException(Res.XmlSerializationValueTypeContainsReferenceSafe(ctx.Type!));
             byte[] data = Convert.FromBase64String(ctx.Element.Value);
-            XAttribute? attrCrc = ctx.Element.Attribute(XmlSerializer.AttributeCrc!);
+            XAttribute? attrCrc = ctx.Element.Attribute(XmlSerializer.AttributeCrc);
             if (attrCrc != null)
             {
                 if (Crc32.CalculateHash(data).ToString("X8", CultureInfo.InvariantCulture) != attrCrc.Value)

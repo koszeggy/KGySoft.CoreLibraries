@@ -17,7 +17,9 @@
 
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
@@ -215,10 +217,34 @@ namespace KGySoft.Serialization.Xml
 
         #region Static Fields
         
-        private static readonly StringKeyedDictionary<HashSet<Type>> unsafeMembers = new StringKeyedDictionary<HashSet<Type>>(2)
+        private static readonly StringKeyedDictionary<ICollection<Type>> unsafeMembers = new StringKeyedDictionary<ICollection<Type>>(2)
         {
             ["Capacity"] = new HashSet<Type> { Reflector.ListGenType, typeof(CircularList<>), typeof(ArrayList), typeof(SortedList), typeof(SortedList<,>), typeof(CircularSortedList<,>) },
-            [nameof(Cache<_, _>.EnsureCapacity)] = new HashSet<Type> { typeof(Cache<,>) }
+            [nameof(Cache<_,_>.EnsureCapacity)] = new[] { typeof(Cache<,>) },
+            [nameof(BitArray.Length)] = new[] { typeof(BitArray) },
+        };
+
+        private static readonly Dictionary<Type, Func<Type, ComparerType, object>> knownCollectionWithComparerFactory = new()
+        {
+            { Reflector.DictionaryGenType, CreateCollectionWithGenericEqualityComparer },
+            { typeof(HashSet<>), CreateCollectionWithGenericEqualityComparer },
+            { typeof(SortedSet<>), CreateCollectionWithGenericComparer },
+            { typeof(ThreadSafeHashSet<>), CreateCollectionWithGenericEqualityComparerAndHashingStrategy },
+            { typeof(SortedList<,>), CreateCollectionWithGenericComparer },
+            { typeof(SortedDictionary<,>), CreateCollectionWithGenericComparer },
+            { typeof(CircularSortedList<,>), CreateCollectionWithGenericComparer },
+            { typeof(ThreadSafeDictionary<,>), CreateCollectionWithGenericEqualityComparerAndHashingStrategy },
+            { typeof(StringKeyedDictionary<>), (t, c) => typeof(StringKeyedDictionary<>).GetGenericType(t.GetGenericArguments()[0]).CreateInstance(typeof(StringSegmentComparer), ToComparer(c)) },
+#if !NET35
+            { typeof(ConcurrentDictionary<,>), CreateCollectionWithGenericEqualityComparer },
+#endif
+            { typeof(Hashtable), (_, c) => new Hashtable((IEqualityComparer?)ToComparer(c)) },
+            { typeof(SortedList), (_, c) => new SortedList((IComparer?)ToComparer(c)) },
+            { typeof(ListDictionary), (_, c) => new ListDictionary((IComparer?)ToComparer(c)) },
+#pragma warning disable CS8509 // The switch expression does not handle all possible values of its input type (it is not exhaustive). - intended, the exception is turned to ArgumentException
+            { typeof(HybridDictionary), (_, c) => new HybridDictionary(c switch { ComparerType.CaseInsensitive => true, ComparerType.None => false }) },
+#pragma warning restore CS8509 // The switch expression does not handle all possible values of its input type (it is not exhaustive).
+            { typeof(OrderedDictionary), (_, c) => new OrderedDictionary((IEqualityComparer?)ToComparer(c)) },
         };
 
         #endregion
@@ -439,6 +465,43 @@ namespace KGySoft.Serialization.Xml
             return result.ToString();
         }
 
+        private protected static object CreateKnownCollectionWithComparer(Type type, string comparerName)
+        {
+            if (!Enum<ComparerType>.TryParse(comparerName, out ComparerType comparerType) || comparerType is not (>= ComparerType.None and <= ComparerType.EnumComparer))
+                Throw.ArgumentException(Res.XmlSerializationInvalidComparer(type, comparerName));
+
+            bool isGeneric = type.IsGenericType;
+            Type collectionType = isGeneric ? type.GetGenericTypeDefinition() : type;
+            
+            if (!knownCollectionWithComparerFactory.TryGetValue(collectionType, out var factory))
+                Throw.ArgumentException(Res.XmlSerializationInvalidComparer(type, comparerName));
+
+            try
+            {
+                return factory.Invoke(type, comparerType);
+            }
+            catch
+            {
+                throw new ArgumentException(Res.XmlSerializationInvalidComparer(type, comparerName));
+            }
+        }
+
+        private protected static void HandleReadOnly(ref object? result, bool readOnly)
+        {
+            if (!readOnly)
+                return;
+
+            switch (result)
+            {
+                case OrderedDictionary orderedDictionary:
+                    if (!orderedDictionary.IsReadOnly)
+                        result = orderedDictionary.AsReadOnly();
+                    break;
+
+                // we could throw an ArgumentException here but other attributes are also ignored when used in unexpected context
+            }
+        }
+
         #endregion
 
         #region Private Methods
@@ -578,6 +641,72 @@ namespace KGySoft.Serialization.Xml
             SerializationHelper.CopyFields(source, target);
         }
 
+        private static object CreateCollectionWithGenericEqualityComparer(Type type, ComparerType comparerType)
+        {
+            Type t = type.GetGenericArguments()[0];
+            object? comparer = comparerType switch
+            {
+                ComparerType.Default => typeof(EqualityComparer<>).GetPropertyValue(t, nameof(EqualityComparer<_>.Default)),
+                ComparerType.EnumComparer => typeof(EnumComparer<>).GetPropertyValue(t, nameof(EnumComparer<_>.Comparer)),
+                _ => ToComparer(comparerType)
+            };
+
+            return type.CreateInstance(typeof(IEqualityComparer<>).GetGenericType(t), comparer);
+        }
+
+        private static object CreateCollectionWithGenericEqualityComparerAndHashingStrategy(Type type, ComparerType comparerType)
+        {
+            Type t = type.GetGenericArguments()[0];
+            object? comparer = comparerType switch
+            {
+                ComparerType.Default => typeof(EqualityComparer<>).GetPropertyValue(t, nameof(EqualityComparer<_>.Default)),
+                ComparerType.EnumComparer => typeof(EnumComparer<>).GetPropertyValue(t, nameof(EnumComparer<_>.Comparer)),
+                _ => ToComparer(comparerType)
+            };
+
+            return type.CreateInstance(new[] { typeof(IEqualityComparer<>).GetGenericType(t), typeof(HashingStrategy) }, comparer, HashingStrategy.Auto);
+        }
+
+        private static object CreateCollectionWithGenericComparer(Type type, ComparerType comparerType)
+        {
+            Type t = type.GetGenericArguments()[0];
+            object? comparer = comparerType switch
+            {
+                ComparerType.Default => typeof(Comparer<>).GetPropertyValue(t, nameof(Comparer<_>.Default)),
+                ComparerType.EnumComparer => typeof(EnumComparer<>).GetPropertyValue(t, nameof(EnumComparer<_>.Comparer)),
+                _ => ToComparer(comparerType)
+            };
+
+            return type.CreateInstance(typeof(IComparer<>).GetGenericType(t), comparer);
+        }
+
+        private static object? ToComparer(ComparerType comparerType) => comparerType switch
+        {
+            ComparerType.None => null,
+            ComparerType.Default => Comparer.Default,
+            ComparerType.DefaultInvariant => Comparer.DefaultInvariant,
+            ComparerType.CaseInsensitive => CaseInsensitiveComparer.Default,
+            ComparerType.CaseInsensitiveInvariant => CaseInsensitiveComparer.DefaultInvariant,
+            ComparerType.Ordinal => StringComparer.Ordinal,
+            ComparerType.OrdinalIgnoreCase => StringComparer.OrdinalIgnoreCase,
+            ComparerType.Invariant => StringComparer.InvariantCulture,
+            ComparerType.InvariantIgnoreCase => StringComparer.InvariantCultureIgnoreCase,
+#if NET9_0_OR_GREATER // TODO - https://github.com/dotnet/runtime/issues/77679
+#error check if already available
+            ComparerType.OrdinalNonRandomized => StringComparer.OrdinalNonRandomized,
+            ComparerType.OrdinalIgnoreCaseNonRandomized => StringComparer.OrdinalIgnoreCaseNonRandomized,
+#endif
+            ComparerType.StringSegmentOrdinal => StringSegmentComparer.Ordinal,
+            ComparerType.StringSegmentOrdinalIgnoreCase => StringSegmentComparer.OrdinalIgnoreCase,
+            ComparerType.StringSegmentInvariant => StringSegmentComparer.InvariantCulture,
+            ComparerType.StringSegmentInvariantIgnoreCase => StringSegmentComparer.InvariantCultureIgnoreCase,
+            ComparerType.StringSegmentOrdinalRandomized => StringSegmentComparer.OrdinalRandomized,
+            ComparerType.StringSegmentOrdinalIgnoreCaseRandomized => StringSegmentComparer.OrdinalIgnoreCaseRandomized,
+            ComparerType.StringSegmentOrdinalNonRandomized => StringSegmentComparer.OrdinalNonRandomized,
+            ComparerType.StringSegmentOrdinalIgnoreCaseNonRandomized => StringSegmentComparer.OrdinalIgnoreCaseNonRandomized,
+            _ => Throw.ArgumentException<object>(default!) // will be replaced to another ArgumentException containing the collection type
+        };
+
         #endregion
 
         #endregion
@@ -585,7 +714,7 @@ namespace KGySoft.Serialization.Xml
         #region Instance Methods
 
         #region Private Protected Methods
-        
+
         private protected void ResolveMember(Type type, string memberOrItemName, string? strDeclaringType, string? strItemType, out PropertyInfo? property, out FieldInfo? field, out Type? itemType)
         {
             property = null;
@@ -649,7 +778,7 @@ namespace KGySoft.Serialization.Xml
 
         private protected bool SkipMember(MemberInfo member)
         {
-            if (!SafeMode || member is not PropertyInfo || !unsafeMembers.TryGetValue(member.Name, out HashSet<Type>? types))
+            if (!SafeMode || member is not PropertyInfo || !unsafeMembers.TryGetValue(member.Name, out ICollection<Type>? types))
                 return false;
 
             // Skipping known unsafe members in SafeMode, which do not make functional difference anyway

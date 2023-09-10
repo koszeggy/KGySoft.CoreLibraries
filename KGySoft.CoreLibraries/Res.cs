@@ -1125,7 +1125,7 @@ namespace KGySoft
         /// <summary>Cannot serialize collection "{0}" with following options: "{1}". You may either use fallback options (eg. RecursiveSerializationAsFallback), provide a type converter or apply DesignerSerializationVisibilityAttribute with value Content on the container collection property or field.</summary>
         internal static string XmlSerializationCannotSerializeCollection(Type type, XmlSerializationOptions options) => Get("XmlSerialization_CannotSerializeCollectionFormat", type.GetName(TypeNameKind.LongName), options.ToString<XmlSerializationOptions>());
 
-        /// <summary>Cannot serialize known collection "{0}" with following options: "{1}" because it has an unrecognized comparer.
+        /// <summary>Cannot serialize known collection "{0}" with following options: "{1}" because it has an unsupported comparer.
         /// You can force serialization by the RecursiveSerializationAsFallback option but then the comparer will be ignored and deserialization will use a default comparer.
         /// You can also use the BinarySerializationAsFallback option, which serializes also the comparer but the deserialization might not work in safe mode.</summary>
         internal static string XmlSerializationCannotSerializeUnsupportedComparer(Type type, XmlSerializationOptions options) => Get("XmlSerialization_CannotSerializeUnsupportedComparerFormat", type.GetName(TypeNameKind.LongName), options.ToString<XmlSerializationOptions>());
@@ -1207,8 +1207,11 @@ namespace KGySoft
         /// <summary>Circular reference found during serialization. Object is already serialized: "{0}". To avoid circular references use DesignerSerializationVisibilityAttribute with Hidden value on members directly or indirectly reference themselves.</summary>
         internal static string XmlSerializationCircularReference(object obj) => Get("XmlSerialization_CircularReferenceFormat", obj);
 
-        /// <summary>Value type '{0}' cannot be deserialized from raw data in safe mode because it contains references. If the XML data is from a trusted source you may try to use unsafe mode to attempt the deserialization with marshaling.</summary>
+        /// <summary>Value type "{0}" cannot be deserialized from raw data in safe mode because it contains references. If the XML data is from a trusted source you may try to use unsafe mode to attempt the deserialization with marshaling.</summary>
         internal static string XmlSerializationValueTypeContainsReferenceSafe(Type type) => Get("XmlSerialization_ValueTypeContainsReferenceSafeFormat", type.GetName(TypeNameKind.LongName));
+
+        /// <summary>Invalid comparer for collection type "{0}": {1}</summary>
+        internal static string XmlSerializationInvalidComparer(Type type, string name) => Get("XmlSerialization_InvalidComparerFormat", type.GetName(TypeNameKind.LongName), name);
 
         #endregion
 

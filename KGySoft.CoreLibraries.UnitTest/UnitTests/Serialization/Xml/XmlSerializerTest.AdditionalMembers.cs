@@ -121,7 +121,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 XElement xElement = KGyXmlSerializer.Serialize(obj, options);
                 Console.WriteLine(xElement);
                 object deserializedObject = safeMode ? KGyXmlSerializer.DeserializeSafe(xElement, expectedTypes) : KGyXmlSerializer.Deserialize(xElement);
-                AssertDeepEquals(obj, deserializedObject);
+                AssertDeepEquals(obj, deserializedObject, true);
 
                 // XmlReader/Writer - as object
                 StringBuilder sb = new StringBuilder();
@@ -136,7 +136,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                     deserializedObject = safeMode ? KGyXmlSerializer.DeserializeSafe(reader, expectedTypes) : KGyXmlSerializer.Deserialize(reader);
                 }
 
-                AssertDeepEquals(obj, deserializedObject);
+                AssertDeepEquals(obj, deserializedObject, true);
                 if (!hasRandomContent)
                     Assert.AreEqual(xElement.ToString(), sb.ToString(), "XElement and XmlWriter Serialize are not compatible");
 
@@ -151,7 +151,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                     KGyXmlSerializer.DeserializeContentSafe(xElementComp, deserializedObject, expectedTypes);
                 else
                     KGyXmlSerializer.DeserializeContent(xElementComp, deserializedObject);
-                AssertDeepEquals(obj, deserializedObject);
+                AssertDeepEquals(obj, deserializedObject, true);
 
                 // XmlReader/Writer - as component
                 sb = new StringBuilder();
@@ -175,7 +175,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                     reader.ReadEndElement();
                 }
 
-                AssertDeepEquals(obj, deserializedObject);
+                AssertDeepEquals(obj, deserializedObject, true);
                 Assert.AreEqual(xElementComp.ToString(), sb.ToString(), "XElement and XmlWriter SerializeContent are not compatible");
             }
             catch (Exception e)
@@ -244,8 +244,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                             itemReader.ReadEndElement();
                         }
 
-                        AssertDeepEquals(item, deserXElement);
-                        AssertDeepEquals(item, deserReader);
+                        AssertDeepEquals(item, deserXElement, true);
+                        AssertDeepEquals(item, deserReader, true);
                         Assert.AreEqual(xItem.ToString(), sbItem.ToString(), "XElement and XmlWriter serializers are not compatible");
                     }
                     writer.WriteEndDocument();
@@ -265,7 +265,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                         {
                             object deserXElement = safeMode ?  KGyXmlSerializer.DeserializeSafe(element, expectedTypes) : KGyXmlSerializer.Deserialize(element);
                             object deserReader = safeMode ? KGyXmlSerializer.DeserializeSafe(reader, expectedTypes) : KGyXmlSerializer.Deserialize(reader);
-                            AssertDeepEquals(deserXElement, deserReader);
+                            AssertDeepEquals(deserXElement, deserReader, true);
 
                             deserializedObjects.Add(deserXElement);
                         }
@@ -277,7 +277,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                     }
                 }
 
-                AssertItemsEqual(referenceObjects, deserializedObjects.ToArray());
+                AssertItemsEqual(referenceObjects, deserializedObjects.ToArray(), true);
 
                 Assert.AreEqual(xElement.ToString(), sb.ToString(), "XElement and XmlWriter serializers are not compatible");
             }

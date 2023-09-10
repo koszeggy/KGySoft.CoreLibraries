@@ -972,7 +972,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
 
-            // these cannot be serialized as content because they can be deserialized by initializer constructor only as they implement neither ICollection<T> nor IList
+            // these cannot be serialized as content because they implement neither ICollection<T> nor IList so they can be deserialized by initializer constructor only
             referenceObjects = new object[]
             {
                 // non-populatable
@@ -998,31 +998,157 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         }
 
         /// <summary>
-        /// Simple generic collections
+        /// Simple non-generic collections
         /// </summary>
         [Test]
-        public void SerializeGenericCollectionsWithComparer()
+        public void SerializeTrustedNonGenericCollections()
         {
-            IEnumerable[] referenceObjects =
+            // natively supported collections, also by system serializer
+            object[] referenceObjects =
             {
-                new HashSet<int> { 1, 2, 3 },
+                new ArrayList { 1, "alpha", DateTime.Now },
+                new StringCollection { "alpha", "beta", "gamma" },
             };
 
-            SystemSerializeObject(referenceObjects);
+            //SystemSerializeObject(referenceObjects); // InvalidOperationException: The type System.Collections.ArrayList may not be used in this context.
             SystemSerializeObjects(referenceObjects);
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
-            throw new NotImplementedException();
-            return;
 
-            // these can be deserialized by initializer constructor only because they implement neither ICollection<T> nor IList or if they do, they are read-only
-            referenceObjects = new IEnumerable[]
+            // these collections are not supported by system serializer
+            referenceObjects = new object[]
             {
+                new Hashtable { { 1, "alpha" }, { (byte)2, "beta" }, { 3m, "gamma" } },
+                new SortedList { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } },
+                new ListDictionary { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } },
+                new HybridDictionary(false) { { "alpha", 1 }, { "Alpha", 2 }, { "ALPHA", 3 } },
+                new OrderedDictionary { { "alpha", 1 }, { "Alpha", 2 }, { "ALPHA", 3 } },
             };
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback, false);
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
+
+            // these cannot be serialized as content because they implement neither ICollection<T> nor IList so they can be deserialized by initializer constructor only
+            referenceObjects = new object[]
+            {
+                new Queue(new object[] { 1, (byte)2, 3m, new string[] { "alpha", "beta", "gamma" } }),
+                new Stack(new object[] { 1, (byte)2, 3m, new string[] { "alpha", "beta", "gamma" } }),
+                new BitArray(new[] { true, false, true })
+            };
+
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, false);
+
+            // StringDictionary is not supported at all because it implements only IEnumerable and has no collection initializer constructor.
+            // Binary fallback can be used though.
+            referenceObjects = new IEnumerable[]
+            {
+                new StringDictionary { { "a", "alpha" }, { "b", "beta" }, { "c", "gamma" }, { "x", null } },
+            };
+
+            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback), "Serialization of collection \"System.Collections.Specialized.StringDictionary\" is not supported with following options: \"RecursiveSerializationAsFallback\", because it does not implement IList, IDictionary or ICollection<T> interfaces and has no initializer constructor that can accept an array or list.");
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, false);
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
+        }
+
+        /// <summary>
+        /// Simple generic collections
+        /// </summary>
+        [Test]
+        public void SerializeTrustedCollectionsWithComparer()
+        {
+            object[] referenceObjects =
+            {
+                new HashSet<byte>(EqualityComparer<byte>.Default) { 1, 2, 3 },
+                new HashSet<ConsoleColor>(EnumComparer<ConsoleColor>.Comparer) { ConsoleColor.Red, ConsoleColor.Green, ConsoleColor.Blue },
+                new HashSet<string>(StringComparer.Ordinal) { "alpha", "beta", "gamma" },
+                new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "alpha", "beta", "gamma" },
+                new HashSet<string>(StringComparer.InvariantCulture) { "alpha", "beta", "gamma" },
+                new HashSet<string>(StringComparer.InvariantCultureIgnoreCase) { "alpha", "beta", "gamma" },
+                new HashSet<string>(StringSegmentComparer.Ordinal) { "alpha", "beta", "gamma" },
+                new HashSet<string>(StringSegmentComparer.OrdinalIgnoreCase) { "alpha", "beta", "gamma" },
+                new HashSet<string>(StringSegmentComparer.InvariantCulture) { "alpha", "beta", "gamma" },
+                new HashSet<string>(StringSegmentComparer.InvariantCultureIgnoreCase) { "alpha", "beta", "gamma" },
+                new HashSet<string>(StringSegmentComparer.OrdinalRandomized) { "alpha", "beta", "gamma" },
+                new HashSet<string>(StringSegmentComparer.OrdinalIgnoreCaseRandomized) { "alpha", "beta", "gamma" },
+                new HashSet<string>(StringSegmentComparer.OrdinalNonRandomized) { "alpha", "beta", "gamma" },
+                new HashSet<string>(StringSegmentComparer.OrdinalIgnoreCaseNonRandomized) { "alpha", "beta", "gamma" },
+
+                new SortedSet<byte>(Comparer<byte>.Default) { 1, 2, 3 },
+                new SortedSet<ConsoleColor>(EnumComparer<ConsoleColor>.Comparer) { ConsoleColor.Red, ConsoleColor.Green, ConsoleColor.Blue },
+
+                new ThreadSafeHashSet<ConsoleColor>(EqualityComparer<ConsoleColor>.Default) { ConsoleColor.Red, ConsoleColor.Green, ConsoleColor.Blue },
+                new ThreadSafeHashSet<ConsoleColor>(EnumComparer<ConsoleColor>.Comparer) { ConsoleColor.Red, ConsoleColor.Green, ConsoleColor.Blue },
+
+                new Dictionary<string, int>(EqualityComparer<string>.Default) { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } },
+                new Dictionary<string, int>(StringComparer.Ordinal) { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } },
+                new Dictionary<ConsoleColor, int>(EnumComparer<ConsoleColor>.Comparer) { { ConsoleColor.Red, 1 }, { ConsoleColor.Green, 2 }, { ConsoleColor.Blue, 3 } },
+
+                new SortedList<string, int>(Comparer<string>.Default) { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } },
+                new SortedList<string, int>(StringComparer.Ordinal) { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } },
+                new SortedList<ConsoleColor, int>(EnumComparer<ConsoleColor>.Comparer) { { ConsoleColor.Red, 1 }, { ConsoleColor.Green, 2 }, { ConsoleColor.Blue, 3 } },
+
+                new SortedDictionary<string, int>(Comparer<string>.Default) { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } },
+                new SortedDictionary<string, int>(StringComparer.Ordinal) { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } },
+                new SortedDictionary<ConsoleColor, int>(EnumComparer<ConsoleColor>.Comparer) { { ConsoleColor.Red, 1 }, { ConsoleColor.Green, 2 }, { ConsoleColor.Blue, 3 } },
+
+                new CircularSortedList<string, int>(Comparer<string>.Default) { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } },
+                new CircularSortedList<string, int>(StringComparer.Ordinal) { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } },
+                new CircularSortedList<ConsoleColor, int>(EnumComparer<ConsoleColor>.Comparer) { { ConsoleColor.Red, 1 }, { ConsoleColor.Green, 2 }, { ConsoleColor.Blue, 3 } },
+
+                new ThreadSafeDictionary<string, int>(EqualityComparer<string>.Default) { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } },
+                new ThreadSafeDictionary<string, int>(StringComparer.Ordinal) { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } },
+                new ThreadSafeDictionary<ConsoleColor, int>(EnumComparer<ConsoleColor>.Comparer) { { ConsoleColor.Red, 1 }, { ConsoleColor.Green, 2 }, { ConsoleColor.Blue, 3 } },
+
+                new StringKeyedDictionary<int>(StringSegmentComparer.Ordinal) { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } },
+                new StringKeyedDictionary<int>(StringSegmentComparer.OrdinalIgnoreCase) { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } },
+
+#if !NET35
+		        new ConcurrentDictionary<string, int>(EqualityComparer<string>.Default) { ["alpha"] = 1, ["beta"] = 2, ["gamma"] = 3 },
+                new ConcurrentDictionary<string, int>(StringComparer.Ordinal) { ["alpha"] = 1, ["beta"] = 2, ["gamma"] = 3 },
+                new ConcurrentDictionary<ConsoleColor, int>(EnumComparer<ConsoleColor>.Comparer) { [ConsoleColor.Red] = 1, [ConsoleColor.Green] = 2, [ConsoleColor.Blue] = 3 },
+#endif
+
+                new Hashtable(StringComparer.Ordinal) { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } },
+                new Hashtable(StringSegmentComparer.Ordinal) { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } },
+
+                new SortedList(Comparer.Default) { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } },
+                new SortedList(Comparer.DefaultInvariant) { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } },
+                new SortedList(CaseInsensitiveComparer.Default) { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } },
+                new SortedList(CaseInsensitiveComparer.DefaultInvariant) { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } },
+                new SortedList(StringComparer.Ordinal) { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } },
+                new SortedList(StringSegmentComparer.Ordinal) { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } },
+
+                new ListDictionary(Comparer.Default) { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } },
+                new ListDictionary(StringComparer.Ordinal) { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } },
+                new ListDictionary(StringSegmentComparer.Ordinal) { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } },
+
+                new HybridDictionary(false) { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } },
+                new HybridDictionary(true) { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } },
+
+                new OrderedDictionary(StringComparer.Ordinal) { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } },
+                new OrderedDictionary(StringSegmentComparer.Ordinal) { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } },
+                new OrderedDictionary(StringComparer.Ordinal) { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } }.AsReadOnly(),
+            };
+
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, alsoAsContent: false);
+
+            // unsupported (culture-aware) comparer
+            referenceObjects = new object[]
+            {
+                new HashSet<string>(StringComparer.CurrentCulture) { "alpha", "beta", "gamma" },
+            };
+
+            // Default: serialization denied
+            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, alsoAsContent: false), "unsupported comparer");
+
+            // Forced recursive: the deserialized instance uses a default comparer
+            Throws<AssertionException>(() => KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback, alsoAsContent: false), "Types are different. System.CultureAwareComparer <-> System.Collections.Generic.GenericEqualityComparer`1[System.String]");
+
+            // Forced binary: works correctly
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, alsoAsContent: false);
         }
 
         [Test]
@@ -1127,59 +1253,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
 
             Throws<AssertionException>(() => KGySerializeObjects(referenceObjects, XmlSerializationOptions.ExcludeFields), "Equality check failed at type ValueTuple`2[Int32,String]: (13, alpha) <-> (0, )");
-        }
-
-        /// <summary>
-        /// Simple non-generic collections
-        /// </summary>
-        [Test]
-        public void SerializeTrustedNonGenericCollections()
-        {
-            IEnumerable[] referenceObjects =
-            {
-                new ArrayList { 1, "alpha", DateTime.Now },
-                new StringCollection { "alpha", "beta", "gamma" },
-            };
-
-            //SystemSerializeObject(referenceObjects); - NotSupportedException: Cannot serialize interface System.Collections.IEnumerable.
-            SystemSerializeObjects(referenceObjects);
-
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
-
-            // these collections are not supported by system serializer
-            referenceObjects = new IEnumerable[]
-            {
-                new Hashtable { { 1, "alpha" }, { (byte)2, "beta" }, { 3m, "gamma" } },
-                new SortedList { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } },
-                new ListDictionary { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } },
-                new HybridDictionary(false) { { "alpha", 1 }, { "Alpha", 2 }, { "ALPHA", 3 } },
-                new OrderedDictionary { { "alpha", 1 }, { "Alpha", 2 }, { "ALPHA", 3 } },
-            };
-
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.None); // all
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None); // all  
-
-            // these collections cannot be populated but they have supported initializer constructor
-            referenceObjects = new IEnumerable[]
-            {
-                new Queue(new object[] { 1, (byte)2, 3m, new string[] { "alpha", "beta", "gamma" } }),
-                new Stack(new object[] { 1, (byte)2, 3m, new string[] { "alpha", "beta", "gamma" } }),
-                new BitArray(new[] { true, false, true })
-            };
-
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, false);
-
-            // these collections are not supported at all, binary fallback needed
-            referenceObjects = new IEnumerable[]
-            {
-                new StringDictionary { { "a", "alpha" }, { "b", "beta" }, { "c", "gamma" }, { "x", null } },
-            };
-
-            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback), "Serialization of collection \"System.Collections.Specialized.StringDictionary\" is not supported with following options: \"RecursiveSerializationAsFallback\", because it does not implement IList, IDictionary or ICollection<T> interfaces and has no initializer constructor that can accept an array or list.");
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, false);
         }
 
         /// <summary>
@@ -1471,6 +1544,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             using (var reader = XmlReader.Create(new StringReader(xml.ToString()), new XmlReaderSettings { CloseInput = true }))
                 list = XmlSerializer.DeserializeSafe<List<int>>(reader);
             AssertItemsEqual(obj, list);
+        }
+
+        [Test]
+        public void Test()
+        {
+            // records
+            // ref properties
+            // tuples
+            throw new NotImplementedException();
         }
 
         #endregion

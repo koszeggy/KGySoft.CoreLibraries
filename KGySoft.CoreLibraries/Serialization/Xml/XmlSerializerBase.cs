@@ -117,7 +117,6 @@ namespace KGySoft.Serialization.Xml
             typeof(Stack),
             Reflector.BitArrayType,
             Reflector.StringCollectionType,
-            typeof(StringDictionary),
 
             typeof(CircularList<>),
 
@@ -145,8 +144,8 @@ namespace KGySoft.Serialization.Xml
             { typeof(Hashtable), ComparerType.None },
             { typeof(SortedList), ComparerType.Default },
             { typeof(ListDictionary), ComparerType.None },
-            { typeof(HybridDictionary), ComparerType.None }, // ISSUE: case sensitivity
-            { typeof(OrderedDictionary), ComparerType.None }, // ISSUE: read-only
+            { typeof(HybridDictionary), ComparerType.None },
+            { typeof(OrderedDictionary), ComparerType.None }, // ISSUE: can be read-only
         };
 
         private static readonly Type[] escapedNativelySupportedTypes = 
@@ -218,9 +217,14 @@ namespace KGySoft.Serialization.Xml
         private protected static ComparerType? GetComparer([NoEnumeration]IEnumerable collection)
         {
             Type type = collection.GetType();
+
             bool isGeneric = type.IsGenericType;
             if (!knownCollectionsWithComparer.TryGetValue(isGeneric ? type.GetGenericTypeDefinition() : type, out ComparerType defaultComparer))
                 return null;
+
+            // special handling for HybridDictionary, which has no actual comparer but can be case insensitive
+            if (type == typeof(HybridDictionary))
+                return collection.IsCaseInsensitive() ? ComparerType.CaseInsensitive : ComparerType.None;
 
             object? comparer = collection.GetComparer();
             ComparerType comparerType = ToComparerType(comparer, isGeneric ? type.GetGenericArguments()[0] : null);
@@ -327,17 +331,28 @@ namespace KGySoft.Serialization.Xml
                 : Equals(StringSegmentComparer.OrdinalIgnoreCaseNonRandomized, stringSegmentComparer) ? ComparerType.StringSegmentOrdinalIgnoreCaseNonRandomized
                 : ComparerType.Unknown,
 
-            Comparer nonGenericComparer => Equals(nonGenericComparer, Comparer.DefaultInvariant) ? ComparerType.DefaultInvariant
+            // Comparer does not override Equals so comparing its CompareInfo and defaulting to reference equality of Comparer if needed
+            Comparer nonGenericComparer => nonGenericComparer.CompareInfo() is CompareInfo compareInfo 
+                    ? Equals(compareInfo, Comparer.DefaultInvariant.CompareInfo()) ? ComparerType.DefaultInvariant
+                    : Equals(compareInfo, Comparer.Default.CompareInfo()) ? ComparerType.Default
+                    : ComparerType.Unknown
+                : Equals(nonGenericComparer, Comparer.DefaultInvariant) ? ComparerType.DefaultInvariant
                 : Equals(nonGenericComparer, Comparer.Default) ? ComparerType.Default
                 : ComparerType.Unknown,
 
-            CaseInsensitiveComparer caseInsensitiveComparer => Equals(caseInsensitiveComparer, CaseInsensitiveComparer.DefaultInvariant) ? ComparerType.CaseInsensitiveInvariant
+            // Same as for Comparer but CaseInsensitiveComparer is not even sealed
+            CaseInsensitiveComparer caseInsensitiveComparer => caseInsensitiveComparer.GetType() != typeof(CaseInsensitiveComparer) ? ComparerType.Unknown
+                : caseInsensitiveComparer.CompareInfo() is CompareInfo compareInfo
+                    ? Equals(compareInfo, CaseInsensitiveComparer.DefaultInvariant.CompareInfo()) ? ComparerType.CaseInsensitiveInvariant
+                    : Equals(compareInfo, CaseInsensitiveComparer.Default.CompareInfo()) ? ComparerType.CaseInsensitive
+                    : ComparerType.Unknown
+                : Equals(caseInsensitiveComparer, CaseInsensitiveComparer.DefaultInvariant) ? ComparerType.CaseInsensitiveInvariant
                 : Equals(caseInsensitiveComparer, CaseInsensitiveComparer.Default) ? ComparerType.CaseInsensitive
                 : ComparerType.Unknown,
 
             _ => collectionGenericArgument is null ? ComparerType.Unknown
                 : Equals(comparer, typeof(EqualityComparer<>).GetPropertyValue(collectionGenericArgument, nameof(EqualityComparer<_>.Default)))
-                || Equals(comparer, typeof(Comparer<>).GetPropertyValue(collectionGenericArgument, nameof(Comparer<_>.Default))) ? ComparerType.Default
+                    || Equals(comparer, typeof(Comparer<>).GetPropertyValue(collectionGenericArgument, nameof(Comparer<_>.Default))) ? ComparerType.Default
                 : Equals(comparer, typeof(EnumComparer<>).GetPropertyValue(collectionGenericArgument, nameof(EnumComparer<_>.Comparer))) ? ComparerType.EnumComparer
                 : ComparerType.Unknown
         };

@@ -21,6 +21,7 @@ using System;
 using System.Collections;
 #if !NET35
 using System.Collections.Concurrent;
+using System.Collections.ObjectModel;
 #endif
 using System.Collections.Generic;
 #if NETCOREAPP
@@ -444,17 +445,22 @@ namespace KGySoft.CoreLibraries
         private static bool CheckItemsEqual(IEnumerable referenceObjects, IEnumerable targetObjects, bool forceEqualityByMembers, List<string> errors, HashSet<object> checkedObjects)
         {
             Type type = referenceObjects.GetType();
-            if (referenceObjects is Hashtable || referenceObjects is StringDictionary)
+            if (referenceObjects is Hashtable or StringDictionary)
             {
                 referenceObjects = referenceObjects.Convert<List<DictionaryEntry>>().OrderBy(i => i.Key.ToString()).ToList();
                 targetObjects = targetObjects.Convert<List<DictionaryEntry>>().OrderBy(i => i.Key.ToString()).ToList();
             }
+            else if (type.DeclaringType == typeof(Hashtable) // HashTable.KeyCollection/ValueCollection
 #if !NET35
-            else if (type.IsGenericTypeOf(typeof(ConcurrentBag<>)))
+                || type.IsGenericTypeOf(typeof(ReadOnlyCollection<>)) // ConcurrentDictionary.Keys/Values
+                || type.IsGenericTypeOf(typeof(ConcurrentBag<>))
+#endif
+                )
             {
-                referenceObjects = referenceObjects.Cast<object>().OrderBy(i => i).ToList();
-                targetObjects = targetObjects.Cast<object>().OrderBy(i => i).ToList();
+                referenceObjects = referenceObjects.Cast<object>().OrderBy(i => i?.ToString()).ToList();
+                targetObjects = targetObjects.Cast<object>().OrderBy(i => i?.ToString()).ToList();
             }
+#if !NET35
             else if (type.IsGenericTypeOf(typeof(ConcurrentDictionary<,>))
 #if NETCOREAPP
                 || type.IsGenericTypeOf(typeof(ImmutableDictionary<,>.Builder))

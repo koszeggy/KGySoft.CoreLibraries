@@ -809,7 +809,7 @@ In safe mode you must specify every non-natively supported type that are expecte
     <value>Cannot serialize collection "{0}" with following options: "{1}". You may either use fallback options (eg. RecursiveSerializationAsFallback), provide a type converter or apply DesignerSerializationVisibilityAttribute with value Content on the container collection property or field.</value>
   </data>
   <data name="XmlSerialization_CannotSerializeUnsupportedComparerFormat" xml:space="preserve">
-    <value>Cannot serialize known collection "{0}" with following options: "{1}" because it has an unrecognized comparer.
+    <value>Cannot serialize known collection "{0}" with following options: "{1}" because it has an unsupported comparer.
 You can force serialization by the RecursiveSerializationAsFallback option but then the comparer will be ignored and deserialization will use a default comparer.
 You can also use the BinarySerializationAsFallback option, which serializes also the comparer but the deserialization might not work in safe mode.</value>
   </data>
@@ -886,7 +886,10 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
     <value>Circular reference found during serialization. Object is already serialized: "{0}". To avoid circular references use DesignerSerializationVisibilityAttribute with Hidden value on members directly or indirectly reference themselves.</value>
   </data>
   <data name="XmlSerialization_ValueTypeContainsReferenceSafeFormat" xml:space="preserve">
-    <value>Value type '{0}' cannot be deserialized from raw data in safe mode because it contains references. If the XML data is from a trusted source you may try to use unsafe mode to attempt the deserialization with marshaling.</value>
+    <value>Value type "{0}" cannot be deserialized from raw data in safe mode because it contains references. If the XML data is from a trusted source you may try to use unsafe mode to attempt the deserialization with marshaling.</value>
+  </data>
+  <data name="XmlSerialization_InvalidComparerFormat" xml:space="preserve">
+    <value>Invalid comparer for collection type "{0}": {1}</value>
   </data>
   <data name="XmlSerialization_InvalidEscapedContentFormat" xml:space="preserve">
     <value>Invalid escaped string content: "{0}".</value>

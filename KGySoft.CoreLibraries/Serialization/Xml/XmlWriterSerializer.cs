@@ -18,6 +18,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
@@ -136,7 +137,7 @@ namespace KGySoft.Serialization.Xml
                 {
                     if (!objType.IsCollection())
                         Throw.NotSupportedException(Res.XmlSerializationSerializingNonPopulatableCollectionNotSupported(objType));
-                    if (!objType.IsReadWriteCollection(obj))
+                    if (!ForceReadonlyMembersAndCollections && !objType.IsReadWriteCollection(obj))
                         Throw.NotSupportedException(Res.XmlSerializationSerializingReadOnlyCollectionNotSupported(objType));
 
                     SerializeCollection(enumerable, objType.GetCollectionElementType()!, false, writer, DesignerSerializationVisibility.Visible, ComparerType.None);
@@ -232,8 +233,11 @@ namespace KGySoft.Serialization.Xml
             if (typeNeeded)
                 writer.WriteAttributeString(XmlSerializer.AttributeType, GetTypeString(collection.GetType()));
 
-            if (comparer > ComparerType.Default)
+            if (comparer > ComparerType.None)
                 writer.WriteAttributeString(XmlSerializer.AttributeComparer, Enum<ComparerType>.ToString(comparer));
+
+            if (collection is OrderedDictionary { IsReadOnly: true })
+                writer.WriteAttributeString(XmlSerializer.AttributeReadOnly, Boolean.TrueString);
 
             // serializing main properties first
             SerializeMembers(collection, writer, visibility);

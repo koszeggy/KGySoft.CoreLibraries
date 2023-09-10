@@ -953,6 +953,11 @@ namespace KGySoft.Reflection
             if (property.PropertyType.IsPointer)
                 return new IntPtr(Pointer.Unbox((Pointer)property.GetValue(instance, null)!));
 
+            // TODO: support ByRef properties, and then remove this
+#warning support ByRef properties, and then remove this
+            if (property.PropertyType.IsByRef)
+                return property.GetValue(instance);
+
 #if NETSTANDARD2_0
             if (!property.GetGetMethod(true).IsStatic && property.DeclaringType?.IsValueType == true)
                 return property.GetValue(instance);
