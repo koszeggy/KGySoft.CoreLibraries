@@ -2918,6 +2918,23 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             Throws<SerializationException>(() => DeserializeObject(data, formatter), Res.BinarySerializationCannotResolveExpectedTypeInAssemblySafe(typeName, asmName));
         }
 
+
+        [Test]
+        public void SerializeRecords()
+        {
+            object[] referenceObjects =
+            {
+                new ClassRecord("alpha", 1),
+                new ValueRecord("alpha", 1),
+            };
+
+            SystemSerializeObject(referenceObjects);
+            SystemSerializeObjects(referenceObjects);
+
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
+        }
+
 #if NETFRAMEWORK // starting with .NET Core it is not part of the core framework anymore
         [Test]
         public void SafeModeDeleteAttackTest()

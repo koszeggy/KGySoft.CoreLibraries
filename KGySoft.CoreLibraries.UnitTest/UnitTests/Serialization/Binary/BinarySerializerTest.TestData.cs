@@ -1774,6 +1774,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
         #endregion
 
+        #region ClassRecord record class
+
+        [Serializable]
+        private sealed record ClassRecord(string StringProp, int IntProp);
+
+        #endregion
+
         #endregion
 
         #region Nested structs
@@ -2094,6 +2101,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             #endregion
         }
+
+        #endregion
+
+        #region ValueRecord record struct
+
+        [Serializable]
+        private record struct ValueRecord(string StringProp, int IntProp);
 
         #endregion
 
