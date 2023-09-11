@@ -21,6 +21,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
@@ -247,6 +248,8 @@ namespace KGySoft.Serialization.Xml
             { typeof(OrderedDictionary), (_, c) => new OrderedDictionary((IEqualityComparer?)ToComparer(c)) },
         };
 
+        private static StringKeyedDictionary<Type>? knownCollectionTypes;
+
         #endregion
 
         #region Instance Fields
@@ -261,9 +264,36 @@ namespace KGySoft.Serialization.Xml
 
         #region Properties
 
+        #region Static Properties
+
+        private static StringKeyedDictionary<Type> KnownCollectionTypes
+        {
+            get
+            {
+                if (knownCollectionTypes == null)
+                {
+                    var result = new StringKeyedDictionary<Type>();
+
+                    // populating with full names only because assembly name is checked by the caller
+                    foreach (Type type in XmlSerializerBase.TrustedCollections.Concat(knownCollectionWithComparerFactory.Keys))
+                        result[type.FullName!] = type;
+
+                    knownCollectionTypes = result;
+                }
+
+                return knownCollectionTypes;
+            }
+        }
+
+        #endregion
+
+        #region Instance Properties
+
         private protected bool SafeMode { get; }
         private protected Type? RootType { get; }
         private protected IEnumerable<Type>? ExpectedTypes => expectedTypes?.Values;
+
+        #endregion
 
         #endregion
 
@@ -825,7 +855,9 @@ namespace KGySoft.Serialization.Xml
         /// </summary>
         private Type? DoResolveType(AssemblyName? asmName, string typeName)
         {
-            if (expectedTypes?.TryGetValue(typeName, out Type? result) == true || SerializationHelper.TryGetKnownSimpleType(typeName, out result))
+            if (expectedTypes?.TryGetValue(typeName, out Type? result) == true
+                || SerializationHelper.TryGetKnownSimpleType(typeName, out result)
+                || KnownCollectionTypes.TryGetValue(typeName, out result))
             {
                 if (asmName == null)
                     return result;

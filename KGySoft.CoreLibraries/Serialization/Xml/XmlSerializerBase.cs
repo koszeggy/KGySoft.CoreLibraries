@@ -170,6 +170,12 @@ namespace KGySoft.Serialization.Xml
 
         #region Properties
 
+        #region Internal Properties
+
+        internal static HashSet<Type> TrustedCollections => trustedCollections;
+
+        #endregion
+
         #region Private Protected Properties
 
         private protected XmlSerializationOptions Options { get; }

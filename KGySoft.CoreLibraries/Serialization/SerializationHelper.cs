@@ -15,6 +15,8 @@
 
 #region Usings
 
+#region Used Namespaces
+
 using System;
 using System.Diagnostics.CodeAnalysis;
 #if NETFRAMEWORK
@@ -31,7 +33,13 @@ using KGySoft.Collections;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
 
+#endregion
+
+#region Used Aliases
+
 using TypeExtensions = KGySoft.CoreLibraries.TypeExtensions;
+
+#endregion
 
 #endregion
 
