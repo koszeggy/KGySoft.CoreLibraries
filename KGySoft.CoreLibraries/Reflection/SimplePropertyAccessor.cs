@@ -106,9 +106,12 @@ namespace KGySoft.Reflection
             if (Property.PropertyType.IsPointer)
                 Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(Property.PropertyType));
 
-#if !NETSTANDARD2_0
+#if NETSTANDARD2_0
+            if (Property.PropertyType.IsByRef)
+                Throw.PlatformNotSupportedException(Res.ReflectionRefReturnTypeNetStandard20(Property.PropertyType));
+#else
             // for struct instance properties: Dynamic method
-            if (declaringType!.IsValueType && !getterMethod.IsStatic)
+            if (declaringType!.IsValueType && !getterMethod.IsStatic || Property.PropertyType.IsByRef)
             {
                 DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(getterMethod, DynamicMethodOptions.OmitParameters);
                 return dm.CreateDelegate(typeof(NonGenericGetter));

@@ -56,6 +56,13 @@
 ! BinaryTypeConverter class: It does not support any custom type anymore, only the ones that are natively supported
   by the BinarySerializationFormatter class in safe mode, without storing any type names to resolve.
 
++ KGySoft.Reflection namespace:
+===============================
++ PropertyAccessor class:
+  + Get method: Supporting ref properties
++ MethodIAccessor class:
+  + Invoke method: Supporting ref return values
+
 ! KGySoft.Resources namespace:
 ==============================
 ! ResXDataNode class:
@@ -149,7 +156,6 @@
   ! DeserializeSafe and DeserializeContentSafe methods:
     ! These methods cannot deserialize any custom types anymore without declaring the expected types in the new
       overloads. Natively supported simple types are recognized even if they are not specified as expected types.
-    ! 
   + Serialize* methods: Supporting more collections without fallback options (if they use a supported comparer):
     + Dictionary<TKey, TValue>
     + SortedList<TKey, TValue>
@@ -165,10 +171,11 @@
     + ListDictionary
     + HybridDictionary
     + OrderedDictionary
-  + SerializeContent methods: 
   + New DeserializeSafe and DeserializeContentSafe overloads with expectedCustomTypes parameters.
   + Deserialize* methods: binary serialized content was disabled in safe mode. Now it's enabled but types resolved
     by name must be declared in the expectedCustomTypes parameter of the new Deserialize[Content]Safe overloads.
+  - SerializeContent methods: ForcedSerializationOfReadOnlyMembersAndCollections option was ignored for collection
+    members directly in the root instance.
 
 
 ~~~~~~~~~

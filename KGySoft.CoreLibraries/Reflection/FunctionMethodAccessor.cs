@@ -89,13 +89,14 @@ namespace KGySoft.Reflection
             if (method.ReturnType.IsPointer)
                 Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(method.ReturnType));
 
-#if !NETSTANDARD2_0
+#if NETSTANDARD2_0
+            if (method.ReturnType.IsByRef)
+                Throw.PlatformNotSupportedException(Res.ReflectionRefReturnTypeNetStandard20(method.ReturnType));
+#else
             bool hasRefParameters = ParameterTypes.Any(p => p.IsByRef);
-
-            // ReSharper disable once PossibleNullReferenceException - declaring type was already checked above
-            if (hasRefParameters || (!method.IsStatic && declaringType!.IsValueType))
+            if (hasRefParameters || (!method.IsStatic && declaringType!.IsValueType) || method.ReturnType.IsByRef)
             {
-                // for struct instance methods or methods with ref/out parameters: Dynamic method
+                // for struct instance methods, methods with ref/out parameters or ref return types: Dynamic method
                 DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(method, hasRefParameters ? DynamicMethodOptions.HandleByRefParameters : DynamicMethodOptions.None);
                 return dm.CreateDelegate(typeof(AnyFunction));
             } 
@@ -118,7 +119,6 @@ namespace KGySoft.Reflection
                 methodParameters[i] = Expression.Convert(Expression.ArrayIndex(argumentsParameter, Expression.Constant(i)), parameterType);
             }
 
-            // ReSharper disable once AssignNullToNotNullAttribute - declaring type was already checked above
             MethodCallExpression methodToCall = Expression.Call(
                 method.IsStatic ? null : Expression.Convert(instanceParameter, declaringType!), // (TInstance)instance
                 method, // method info

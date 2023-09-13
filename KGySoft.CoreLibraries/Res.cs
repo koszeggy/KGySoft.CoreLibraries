@@ -946,6 +946,9 @@ namespace KGySoft
         /// <summary>Setting instance property '{0}' of value type '{1}' is not supported by PropertyAccessor in the .NET Standard 2.0 version of this library. If possible, try to use the .NET Standard 2.1 version or any .NET Core/Framework versions instead.</summary>
         internal static string ReflectionSetStructPropertyNetStandard20(string propertyName, Type type) => Get("Reflection_SetStructPropertyNetStandard20Format", propertyName, type.GetName(TypeNameKind.LongName));
 
+        /// <summary>Ref return type '{0}' is not supported in the .NET Standard 2.0 version of this library. If possible, try to use the .NET Standard 2.1 version or any .NET Core/Framework versions instead.</summary>
+        internal static string ReflectionRefReturnTypeNetStandard20(Type type) => Get("Reflection_RefReturnTypeNetStandard20Format", type.GetName(TypeNameKind.LongName));
+
         /// <summary>This method can be used to access static properties but {0}.{1} is an instance property.</summary>
         internal static string ReflectionStaticPropertyExpectedGeneric(string propertyName, Type type) => Get("Reflection_StaticPropertyExpectedGenericFormat", type.GetName(TypeNameKind.LongName), propertyName);
 

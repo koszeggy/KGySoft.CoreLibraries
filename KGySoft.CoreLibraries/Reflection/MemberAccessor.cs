@@ -377,6 +377,9 @@ namespace KGySoft.Reflection
             bool treatCtorAsMethod = (options & DynamicMethodOptions.TreatCtorAsMethod) != DynamicMethodOptions.None;
             Type returnType = method != null ? method.ReturnType : treatCtorAsMethod ? Reflector.VoidType : declaringType;
             Type dmReturnType = returnType == Reflector.VoidType ? Reflector.VoidType : Reflector.ObjectType;
+            bool isRefReturn = returnType.IsByRef;
+            if (isRefReturn)
+                returnType = returnType.GetElementType()!;
 
             (string methodName, List<Type> methodParameters) = GetNameAndParams(methodBase, options);
 
@@ -390,9 +393,6 @@ namespace KGySoft.Reflection
             // generating local variables for ref/out parameters and initializing ref parameters
             GenerateLocalsForRefParams(methodBase, ilGenerator, options);
 
-            // return value is the last local variable
-            LocalBuilder? returnValue = returnType == Reflector.VoidType ? null : ilGenerator.DeclareLocal(returnType);
-
             // if instance method:
             if ((method != null && !method.IsStatic) || treatCtorAsMethod)
             {
@@ -403,14 +403,6 @@ namespace KGySoft.Reflection
                     // We are just unboxing the value type without storing it in a typed local variable
                     // This makes possible to preserve the modified content of a value type without using ref parameter
                     ilGenerator.Emit(OpCodes.Unbox, declaringType); // unboxing the instance
-
-                    // If instance parameter was a ref parameter, then it should be unboxed into a local variable:
-                    //LocalBuilder unboxedInstance = il.DeclareLocal(declaringType);
-                    //il.Emit(OpCodes.Ldarg_0); // loading 0th argument (instance)
-                    //il.Emit(OpCodes.Ldind_Ref); // as a reference - in dm instance parameter must be defined as: Reflector.ObjectType.MakeByRefType()
-                    //il.Emit(OpCodes.Unbox_Any, declaringType); // unboxing the instance
-                    //il.Emit(OpCodes.Stloc_0); // saving value into 0. local
-                    //il.Emit(OpCodes.Ldloca_S, unboxedInstance);
                 }
             }
 
@@ -440,24 +432,21 @@ namespace KGySoft.Reflection
                 // calling the method
                 ilGenerator.Emit(methodBase.IsVirtual ? OpCodes.Callvirt : OpCodes.Call, method!);
 
-            // If instance parameter was a ref parameter, then local variable should be boxed back:
-            //il.Emit(OpCodes.Ldarg_0); // loading instance parameter
-            //il.Emit(OpCodes.Ldloc_0); // loading unboxedInstance local variable
-            //il.Emit(OpCodes.Box, declaringType); // boxing
-            //il.Emit(OpCodes.Stind_Ref); // storing the boxed object value
+            // handling ref return
+            if (isRefReturn)
+            {
+                if (returnType.IsValueType)
+                    ilGenerator.Emit(OpCodes.Ldobj, returnType);
+                else
+                    ilGenerator.Emit(OpCodes.Ldind_Ref);
+            }
 
             // assigning back ref/out parameters
             AssignRefParams(methodBase, ilGenerator, options);
 
-            // setting return value
-            if (returnValue != null)
-            {
-                ilGenerator.Emit(OpCodes.Stloc, returnValue); // storing return value to local variable
-
-                ilGenerator.Emit(OpCodes.Ldloc, returnValue); // loading return value from its local variable
-                if (returnType.IsValueType)
-                    ilGenerator.Emit(OpCodes.Box, returnType); // boxing if value type
-            }
+            // boxing return value if value type
+            if (returnType != Reflector.VoidType && returnType.IsValueType)
+                ilGenerator.Emit(OpCodes.Box, returnType);
 
             // returning
             ilGenerator.Emit(OpCodes.Ret);

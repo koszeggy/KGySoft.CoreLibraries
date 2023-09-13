@@ -639,6 +639,9 @@ If possible, try to use the generic SetInstanceValue method, or reference the .N
   <data name="Reflection_SetStructPropertyNetStandard20Format" xml:space="preserve">
     <value>Setting instance property '{0}' of value type '{1}' is not supported by PropertyAccessor in the .NET Standard 2.0 version of this library. If possible, try to use the .NET Standard 2.1 version or any .NET Core/Framework versions instead.</value>
   </data>
+  <data name="Reflection_RefReturnTypeNetStandard20Format" xml:space="preserve">
+    <value>Ref return type '{0}' is not supported in the .NET Standard 2.0 version of this library. If possible, try to use the .NET Standard 2.1 version or any .NET Core/Framework versions instead.</value>
+  </data>
   <data name="Reflection_StaticPropertyExpectedGenericFormat" xml:space="preserve">
     <value>This method can be used to access static properties but {0}.{1} is an instance property.</value>
   </data>
