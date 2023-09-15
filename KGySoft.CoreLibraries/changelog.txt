@@ -64,8 +64,12 @@
 + MethodIAccessor class:
   + Invoke method: Supporting ref return values
 + Reflector class:
-  + [Try]GetProperty/[Try]SetProperty: Supporting getting/setting ref properties if reflection way is Auto or
-    DynamicDelegate. The behavior of SystemReflection and TypeDescriptor ways are platform dependent.
+  + [Try]GetProperty/[Try]SetProperty methods: Supporting getting/setting ref properties if reflection way is Auto
+    or DynamicDelegate. The behavior of SystemReflection and TypeDescriptor ways are platform dependent.
+  + [Try]InvokeMethod methods: Supporting ref return values if reflection way is Auto or DynamicDelegate.
+    The behavior of SystemReflection way is platform dependent.
+  + [Try]GetIndexedMember/[Try]SetIndexedMember methods: Supporting getting/setting ref indexer properties if
+    reflection way is Auto or DynamicDelegate. The behavior of SystemReflection way is platform dependent.
 
 ! KGySoft.Resources namespace:
 ==============================

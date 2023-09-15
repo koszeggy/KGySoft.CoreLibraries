@@ -139,7 +139,6 @@ namespace KGySoft.Reflection
                 {
 #if NETSTANDARD2_0
                     Throw.PlatformNotSupportedException(Res.ReflectionRefReturnTypeNetStandard20(Property.PropertyType));
-
 #else
                     DynamicMethod dm = CreateSetRefAsDynamicMethod(Property.GetGetMethod(true)!);
                     return dm.CreateDelegate(typeof(NonGenericSetter));
