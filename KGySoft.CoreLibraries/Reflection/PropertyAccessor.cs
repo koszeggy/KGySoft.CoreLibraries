@@ -511,11 +511,13 @@ namespace KGySoft.Reflection
 
             if (isSetter)
             {
-                if (!Property.PropertyType.CanAcceptValue(value))
+                bool isByRef = Property.PropertyType.IsByRef;
+                Type propertyType = isByRef ? Property.PropertyType.GetElementType()! : Property.PropertyType;
+                if (!propertyType.CanAcceptValue(value) || isByRef && value == null && propertyType.IsValueType)
                 {
                     if (value == null)
-                        Throw.ArgumentNullException(Argument.value, Res.NotAnInstanceOfType(Property.PropertyType));
-                    Throw.ArgumentException(Argument.value, Res.NotAnInstanceOfType(Property.PropertyType));
+                        Throw.ArgumentNullException(Argument.value, Res.NotAnInstanceOfType(propertyType));
+                    Throw.ArgumentException(Argument.value, Res.NotAnInstanceOfType(propertyType));
                 }
             }
 

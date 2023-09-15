@@ -60,8 +60,12 @@
 ===============================
 + PropertyAccessor class:
   + Get method: Supporting ref properties
+  + Set method: Supporting ref properties (even though they are technically read-only properties)
 + MethodIAccessor class:
   + Invoke method: Supporting ref return values
++ Reflector class:
+  + [Try]GetProperty/[Try]SetProperty: Supporting getting/setting ref properties if reflection way is Auto or
+    DynamicDelegate. The behavior of SystemReflection and TypeDescriptor ways are platform dependent.
 
 ! KGySoft.Resources namespace:
 ==============================

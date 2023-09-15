@@ -134,7 +134,21 @@ namespace KGySoft.Reflection
         private protected override Delegate CreateSetter()
         {
             if (!CanWrite)
+            {
+                if (Property.PropertyType.IsByRef)
+                {
+#if NETSTANDARD2_0
+                    Throw.PlatformNotSupportedException(Res.ReflectionRefReturnTypeNetStandard20(Property.PropertyType));
+
+#else
+                    DynamicMethod dm = CreateSetRefAsDynamicMethod(Property.GetGetMethod(true)!);
+                    return dm.CreateDelegate(typeof(NonGenericSetter));
+#endif
+                }
+
                 Throw.NotSupportedException(Res.ReflectionPropertyHasNoSetter(MemberInfo.DeclaringType, MemberInfo.Name));
+            }
+
             MethodInfo setterMethod = Property.GetSetMethod(true)!;
             Type? declaringType = setterMethod.DeclaringType;
             if (!setterMethod.IsStatic && declaringType == null)
@@ -274,6 +288,57 @@ namespace KGySoft.Reflection
             return lambda.Compile();
 #endif
         }
+
+        #endregion
+
+        #region Private Methods
+
+#if !NETSTANDARD2_0
+        private DynamicMethod CreateSetRefAsDynamicMethod(MethodInfo getterMethod)
+        {
+            Debug.Assert(getterMethod.ReturnType.IsByRef);
+
+            Type propertyElementType = getterMethod.ReturnType.GetElementType()!;
+            Type? declaringType = getterMethod.DeclaringType;
+            if (!getterMethod.IsStatic && declaringType == null)
+                Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
+            if (Property.PropertyType.IsPointer)
+                Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(Property.PropertyType));
+
+            var dm = new DynamicMethod("<SetRefProperty>__" + Property.Name, Reflector.VoidType, new[]
+            {
+                Reflector.ObjectType, // instance
+                Reflector.ObjectType // value
+            }, declaringType!, true);
+
+            ILGenerator ilGenerator = dm.GetILGenerator();
+
+            // if instance property
+            if (!getterMethod.IsStatic)
+            {
+                // loading 0th argument (instance)
+                ilGenerator.Emit(OpCodes.Ldarg_0);
+                if (declaringType!.IsValueType)
+                    ilGenerator.Emit(OpCodes.Unbox, declaringType); // unboxing the instance
+            }
+
+            // calling the getter
+            ilGenerator.Emit(getterMethod.IsVirtual ? OpCodes.Callvirt : OpCodes.Call, getterMethod);
+
+            // loading 1st argument (value)
+            ilGenerator.Emit(OpCodes.Ldarg_1);
+            ilGenerator.Emit(propertyElementType.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, propertyElementType);
+
+            // setting the returned reference
+            if (propertyElementType.IsGenericType)
+                ilGenerator.Emit(OpCodes.Stobj, propertyElementType);
+            else
+                ilGenerator.Emit(OpCodes.Stind_Ref);
+
+            ilGenerator.Emit(OpCodes.Ret);
+            return dm;
+        }
+#endif
 
         #endregion
 

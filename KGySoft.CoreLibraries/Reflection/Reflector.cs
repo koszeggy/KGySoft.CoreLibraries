@@ -206,9 +206,10 @@ namespace KGySoft.Reflection
         {
             if (property == null!)
                 Throw.ArgumentNullException(Argument.property);
-            if (!property.CanWrite)
+            bool isByRef = property.PropertyType.IsByRef;
+            if (!property.CanWrite && !isByRef)
                 Throw.InvalidOperationException(Res.ReflectionPropertyHasNoSetter(property.DeclaringType, property.Name));
-            bool isStatic = property.GetSetMethod(true)!.IsStatic;
+            bool isStatic = (isByRef ? property.GetGetMethod(true) : property.GetSetMethod(true))!.IsStatic;
             if (instance == null && !isStatic)
                 Throw.ArgumentNullException(Argument.instance, Res.ReflectionInstanceIsNull);
 

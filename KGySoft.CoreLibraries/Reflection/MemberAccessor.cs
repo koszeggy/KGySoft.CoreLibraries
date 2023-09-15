@@ -415,7 +415,7 @@ namespace KGySoft.Reflection
                 PropertyInfo? pi = MemberInfo as PropertyInfo;
                 if (pi == null)
                     Throw.InvalidOperationException(Res.ReflectionCannotTreatPropertySetter);
-                ilGenerator.Emit(OpCodes.Ldarg_1); // loading value parameter (always the 1st param in setter delegate because static properties are set by expressions)
+                ilGenerator.Emit(OpCodes.Ldarg_1); // loading value parameter
                 ilGenerator.Emit(pi.PropertyType.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, pi.PropertyType);
             }
 
