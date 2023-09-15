@@ -62,6 +62,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             public readonly string ReadOnlyReferenceField;
 
             public int IntField;
+            public string StringField;
 
             #endregion
 
@@ -74,12 +75,17 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             #region Static Properties
 
             public static int StaticIntProp { get; set; }
+            public static ref int StaticRefProperty => ref StaticIntField;
+            public static ref readonly int StaticRefReadonlyProperty => ref StaticIntField;
 
             #endregion
 
             #region Instance Properties
 
             public int IntProp { get; set; }
+            public ref int RefIntProperty => ref IntField;
+            public ref string RefStringProperty => ref StringField;
+            public ref readonly int RefReadonlyProperty => ref ReadOnlyValueField;
 
             #endregion
 
@@ -100,6 +106,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
                     IntProp = value;
                 }
             }
+
+            public ref string this[string i] => ref StringField;
 
             #endregion
 
@@ -202,6 +210,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
                 return intValue;
             }
 
+            public ref int TestRefFunction(int intValue)
+            {
+                Console.WriteLine($"{nameof(TestClass)}.{nameof(TestRefFunction)}({intValue}) invoked");
+                IntField = intValue;
+                return ref IntField;
+            }
+
             #endregion
 
             #endregion
@@ -272,6 +287,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             #region Instance Properties
 
             public int IntProp { get; set; }
+            public ref int RefIntProperty => ref StaticIntField; // returning IntField would cause CS8170
+            public ref readonly int RefReadonlyProperty => ref StaticIntField; // returning IntField would cause CS8170
 
             #endregion
 
@@ -686,6 +703,53 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             result = Reflector.InvokeMethod(test, nameof(TestClass.TestFunction).ToLowerInvariant(), true, parameters);
             Assert.AreEqual(arg1, result);
             Assert.AreEqual(arg1, test.IntProp);
+        }
+
+        [Test]
+        public void ClassInstanceRefReturnFunctionMethodInvoke()
+        {
+            var test = new TestClass(0);
+            MethodInfo mi = test.GetType().GetMethod(nameof(TestClass.TestRefFunction));
+            MethodAccessor accessor = MethodAccessor.GetAccessor(mi);
+            int arg = 1;
+            object[] args = { arg };
+
+            Console.Write("System Reflection...");
+            object[] parameters = (object[])args.Clone();
+            object result = mi.Invoke(test, parameters);
+            Assert.AreEqual(arg, result);
+            Assert.AreEqual(arg, test.IntField);
+
+            test = new TestClass(0);
+            Console.Write("Method Accessor...");
+            parameters = (object[])args.Clone();
+            result = accessor.Invoke(test, parameters);
+            Assert.AreEqual(arg, result);
+            Assert.AreEqual(arg, test.IntField);
+            Throws<ArgumentNullException>(() => accessor.Invoke(null, arg), Res.ReflectionInstanceIsNull);
+            //Throws<ArgumentException>(() => accessor.Invoke(new object(), arg), Res.NotAnInstanceOfType(test.GetType()));  // ISSUE: simply returns null even though object has no TestRefFunction method
+            Throws<ArgumentException>(() => accessor.Invoke(test, "1"), Res.ReflectionParametersInvalid);
+
+            test = new TestClass(0);
+            Console.Write("Reflector (by MethodInfo)...");
+            parameters = (object[])args.Clone();
+            result = Reflector.InvokeMethod(test, mi, parameters);
+            Assert.AreEqual(arg, result);
+            Assert.AreEqual(arg, test.IntField);
+
+            test = new TestClass(0);
+            Console.Write("Reflector (by name)...");
+            parameters = (object[])args.Clone();
+            result = Reflector.InvokeMethod(test, nameof(TestClass.TestRefFunction), parameters);
+            Assert.AreEqual(arg, result);
+            Assert.AreEqual(arg, test.IntField);
+
+            test = new TestClass(0);
+            Console.Write("Reflector (by name, ignore case)...");
+            parameters = (object[])args.Clone();
+            result = Reflector.InvokeMethod(test, nameof(TestClass.TestRefFunction).ToLowerInvariant(), true, parameters);
+            Assert.AreEqual(arg, result);
+            Assert.AreEqual(arg, test.IntField);
         }
 
         [Test]
@@ -1346,6 +1410,130 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         }
 
         [Test]
+        public void ClassInstanceRefPropertyAccess()
+        {
+            // value property
+            object test = new TestClass(0);
+            PropertyInfo pi = test.GetType().GetProperty(nameof(TestClass.RefIntProperty));
+            PropertyAccessor accessor = PropertyAccessor.GetAccessor(pi);
+            object result;
+            int value = 1;
+
+            Console.Write("System Reflection...");
+#if NET8_0_OR_GREATER // ArgumentException : Property set method not found.
+            pi.SetValue(test, value, null);
+#else
+            ((TestClass)test).RefIntProperty = value;
+#endif
+            result = pi.GetValue(test, null);
+            Assert.AreEqual(value, result);
+
+            test = new TestClass(0);
+            Console.Write("Property Accessor...");
+            accessor.Set(test, value);
+            result = PropertyAccessor.GetAccessor(pi).Get(test);
+            Assert.AreEqual(value, result);
+
+            Throws<ArgumentNullException>(() => accessor.Set(null, value), Res.ReflectionInstanceIsNull);
+            Throws<ArgumentNullException>(() => accessor.Set(test, null), Res.NotAnInstanceOfType(value.GetType()));
+            //Throws<ArgumentException>(() => accessor.Set(new object(), value), Res.NotAnInstanceOfType(test.GetType())); // ISSUE: executes without any exception even though object has no RefIntProperty
+            Throws<ArgumentException>(() => accessor.Set(test, "1"), Res.NotAnInstanceOfType(value.GetType()));
+            Throws<ArgumentNullException>(() => accessor.Get(null), Res.ReflectionInstanceIsNull);
+            //Throws<ArgumentException>(() => accessor.Get(new object()), Res.NotAnInstanceOfType(test.GetType())); // ISSUE: simply returns null even though object has no RefIntProperty
+
+            test = new TestClass(0);
+            Console.Write("Reflector (by PropertyInfo)...");
+            Reflector.SetProperty(test, pi, value);
+            result = Reflector.GetProperty(test, pi);
+            Assert.AreEqual(value, result);
+            Throws<ArgumentNullException>(() => Reflector.SetProperty(null, pi, value), Res.ReflectionInstanceIsNull);
+            Throws<ArgumentNullException>(() => Reflector.SetProperty(test, pi, null), Res.NotAnInstanceOfType(value.GetType()));
+            //Throws<ArgumentException>(() => Reflector.SetProperty(new object(), pi, value), Res.NotAnInstanceOfType(test.GetType())); // ISSUE: executes without any exception even though object has no RefIntProperty
+            Throws<ArgumentException>(() => Reflector.SetProperty(test, pi, "1"), Res.NotAnInstanceOfType(value.GetType()));
+            Throws<ArgumentNullException>(() => Reflector.GetProperty(null, pi), Res.ReflectionInstanceIsNull);
+            //Throws<ArgumentException>(() => Reflector.GetProperty(new object(), pi), Res.NotAnInstanceOfType(test.GetType())); // ISSUE: simply returns null even though object has no RefIntProperty
+
+            test = new TestClass(0);
+            Console.Write("Reflector (by name)...");
+            Reflector.SetProperty(test, nameof(TestClass.RefIntProperty), value);
+            result = Reflector.GetProperty(test, nameof(TestClass.RefIntProperty));
+            Assert.AreEqual(value, result);
+            Reflector.SetProperty(test, nameof(TestClass.RefIntProperty).ToLowerInvariant(), true, value);
+            result = Reflector.GetProperty(test, nameof(TestClass.RefIntProperty).ToLowerInvariant(), true);
+            Assert.AreEqual(value, result);
+            Throws<ArgumentNullException>(() => Reflector.SetProperty(instance: null!, nameof(TestClass.RefIntProperty), value), Res.ArgumentNull);
+            Throws<ArgumentNullException>(() => Reflector.SetProperty(test, nameof(TestClass.RefIntProperty), null), Res.NotAnInstanceOfType(value.GetType()));
+            Throws<ReflectionException>(() => Reflector.SetProperty(new object(), nameof(TestClass.RefIntProperty), value), Res.ReflectionInstancePropertyDoesNotExist(nameof(TestClass.RefIntProperty), typeof(object)));
+            Throws<ReflectionException>(() => Reflector.SetProperty(test, nameof(TestClass.StaticIntProp), value), Res.ReflectionInstancePropertyDoesNotExist(nameof(TestClass.StaticIntProp), typeof(TestClass)));
+            Throws<ArgumentException>(() => Reflector.SetProperty(test, nameof(TestClass.RefIntProperty), "1"), Res.NotAnInstanceOfType(value.GetType()));
+            Throws<ArgumentNullException>(() => Reflector.GetProperty(instance: null!, nameof(TestClass.RefIntProperty)), Res.ArgumentNull);
+            Throws<ReflectionException>(() => Reflector.GetProperty(new object(), nameof(TestClass.RefIntProperty)), Res.ReflectionInstancePropertyDoesNotExist(nameof(TestClass.RefIntProperty), typeof(object)));
+            Throws<ReflectionException>(() => Reflector.GetProperty(test, nameof(TestClass.StaticIntProp)), Res.ReflectionInstancePropertyDoesNotExist(nameof(TestClass.StaticIntProp), typeof(TestClass)));
+        }
+
+        [Test]
+        public void ClassInstanceRefReadonlyPropertyAccess()
+        {
+            // value property
+            object test = new TestClass(0);
+            PropertyInfo pi = test.GetType().GetProperty(nameof(TestClass.RefReadonlyProperty));
+            PropertyAccessor accessor = PropertyAccessor.GetAccessor(pi);
+            object result;
+            int value = 1;
+
+            Console.Write("System Reflection...");
+#if NET8_0_OR_GREATER // ArgumentException : Property set method not found.
+            pi.SetValue(test, value, null);
+#else
+            typeof(TestClass).GetField(nameof(TestClass.ReadOnlyValueField))!.SetValue(test, value);
+#endif
+            result = pi.GetValue(test, null);
+            Assert.AreEqual(value, result);
+
+            test = new TestClass(0);
+            Console.Write("Property Accessor...");
+            accessor.Set(test, value);
+            result = PropertyAccessor.GetAccessor(pi).Get(test);
+            Assert.AreEqual(value, result);
+
+            Throws<ArgumentNullException>(() => accessor.Set(null, value), Res.ReflectionInstanceIsNull);
+            Throws<ArgumentNullException>(() => accessor.Set(test, null), Res.NotAnInstanceOfType(value.GetType()));
+            //Throws<ArgumentException>(() => accessor.Set(new object(), value), Res.NotAnInstanceOfType(test.GetType())); // ISSUE: executes without any exception even though object has no RefIntProperty
+            Throws<ArgumentException>(() => accessor.Set(test, "1"), Res.NotAnInstanceOfType(value.GetType()));
+            Throws<ArgumentNullException>(() => accessor.Get(null), Res.ReflectionInstanceIsNull);
+            //Throws<ArgumentException>(() => accessor.Get(new object()), Res.NotAnInstanceOfType(test.GetType())); // ISSUE: simply returns null even though object has no RefIntProperty
+
+            test = new TestClass(0);
+            Console.Write("Reflector (by PropertyInfo)...");
+            Reflector.SetProperty(test, pi, value);
+            result = Reflector.GetProperty(test, pi);
+            Assert.AreEqual(value, result);
+            Throws<ArgumentNullException>(() => Reflector.SetProperty(null, pi, value), Res.ReflectionInstanceIsNull);
+            Throws<ArgumentNullException>(() => Reflector.SetProperty(test, pi, null), Res.NotAnInstanceOfType(value.GetType()));
+            //Throws<ArgumentException>(() => Reflector.SetProperty(new object(), pi, value), Res.NotAnInstanceOfType(test.GetType())); // ISSUE: executes without any exception even though object has no RefIntProperty
+            Throws<ArgumentException>(() => Reflector.SetProperty(test, pi, "1"), Res.NotAnInstanceOfType(value.GetType()));
+            Throws<ArgumentNullException>(() => Reflector.GetProperty(null, pi), Res.ReflectionInstanceIsNull);
+            //Throws<ArgumentException>(() => Reflector.GetProperty(new object(), pi), Res.NotAnInstanceOfType(test.GetType())); // ISSUE: simply returns null even though object has no RefIntProperty
+
+            test = new TestClass(0);
+            Console.Write("Reflector (by name)...");
+            Reflector.SetProperty(test, nameof(TestClass.RefReadonlyProperty), value);
+            result = Reflector.GetProperty(test, nameof(TestClass.RefReadonlyProperty));
+            Assert.AreEqual(value, result);
+            Reflector.SetProperty(test, nameof(TestClass.RefReadonlyProperty).ToLowerInvariant(), true, value);
+            result = Reflector.GetProperty(test, nameof(TestClass.RefReadonlyProperty).ToLowerInvariant(), true);
+            Assert.AreEqual(value, result);
+            Throws<ArgumentNullException>(() => Reflector.SetProperty(instance: null!, nameof(TestClass.RefReadonlyProperty), value), Res.ArgumentNull);
+            Throws<ArgumentNullException>(() => Reflector.SetProperty(test, nameof(TestClass.RefReadonlyProperty), null), Res.NotAnInstanceOfType(value.GetType()));
+            Throws<ReflectionException>(() => Reflector.SetProperty(new object(), nameof(TestClass.RefReadonlyProperty), value), Res.ReflectionInstancePropertyDoesNotExist(nameof(TestClass.RefReadonlyProperty), typeof(object)));
+            Throws<ReflectionException>(() => Reflector.SetProperty(test, nameof(TestClass.StaticIntProp), value), Res.ReflectionInstancePropertyDoesNotExist(nameof(TestClass.StaticIntProp), typeof(TestClass)));
+            Throws<ArgumentException>(() => Reflector.SetProperty(test, nameof(TestClass.RefReadonlyProperty), "1"), Res.NotAnInstanceOfType(value.GetType()));
+            Throws<ArgumentNullException>(() => Reflector.GetProperty(instance: null!, nameof(TestClass.RefReadonlyProperty)), Res.ArgumentNull);
+            Throws<ReflectionException>(() => Reflector.GetProperty(new object(), nameof(TestClass.RefReadonlyProperty)), Res.ReflectionInstancePropertyDoesNotExist(nameof(TestClass.RefReadonlyProperty), typeof(object)));
+            Throws<ReflectionException>(() => Reflector.GetProperty(test, nameof(TestClass.StaticIntProp)), Res.ReflectionInstancePropertyDoesNotExist(nameof(TestClass.StaticIntProp), typeof(TestClass)));
+        }
+
+        [Test]
         public void ClassStaticPropertyAccess()
         {
             Type testType = typeof(TestClass);
@@ -1403,6 +1591,108 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         }
 
         [Test]
+        public void ClassStaticRefPropertyAccess()
+        {
+            Type testType = typeof(TestClass);
+            PropertyInfo pi = testType.GetProperty(nameof(TestClass.StaticRefProperty));
+            PropertyAccessor accessor = PropertyAccessor.GetAccessor(pi);
+            object result, value = 1;
+
+            Console.Write("System Reflection...");
+#if NET8_0_OR_GREATER // ArgumentException : Property set method not found.
+            pi.SetValue(null, value, null);
+#else
+            TestClass.StaticRefProperty = 1;
+#endif
+            result = pi.GetValue(null, null);
+            Assert.AreEqual(value, result);
+
+            TestClass.StaticIntProp = 0;
+            Console.Write("Property Accessor...");
+            accessor.Set(null, value);
+            result = accessor.Get(null);
+            Assert.AreEqual(value, result);
+            Throws<ArgumentNullException>(() => accessor.Set(null, null), Res.NotAnInstanceOfType(value.GetType()));
+            Throws<ArgumentException>(() => accessor.Set(null, "1"), Res.NotAnInstanceOfType(value.GetType()));
+
+            TestClass.StaticIntProp = 0;
+            Console.Write("Reflector (by PropertyInfo)...");
+            Reflector.SetProperty(null, pi, value);
+            result = Reflector.GetProperty(null, pi);
+            Assert.AreEqual(value, result);
+            Throws<ArgumentNullException>(() => Reflector.SetProperty(null, pi, null), Res.NotAnInstanceOfType(value.GetType()));
+            Throws<ArgumentException>(() => Reflector.SetProperty(null, pi, "1"), Res.NotAnInstanceOfType(value.GetType()));
+
+            TestClass.StaticIntProp = 0;
+            Console.Write("Reflector (by name)...");
+            Reflector.SetProperty(testType, nameof(TestClass.StaticRefProperty), value);
+            result = Reflector.GetProperty(testType, nameof(TestClass.StaticRefProperty));
+            Assert.AreEqual(value, result);
+            Reflector.SetProperty(testType, nameof(TestClass.StaticRefProperty).ToLowerInvariant(), true, value);
+            result = Reflector.GetProperty(testType, nameof(TestClass.StaticRefProperty).ToLowerInvariant(), true);
+            Assert.AreEqual(value, result);
+            Throws<ArgumentNullException>(() => Reflector.SetProperty(type: null!, nameof(TestClass.StaticRefProperty), value), Res.ArgumentNull);
+            Throws<ArgumentNullException>(() => Reflector.SetProperty(testType, nameof(TestClass.StaticRefProperty), null), Res.NotAnInstanceOfType(value.GetType()));
+            Throws<ReflectionException>(() => Reflector.SetProperty(Reflector.ObjectType, nameof(TestClass.StaticRefProperty), value), Res.ReflectionStaticPropertyDoesNotExist(nameof(TestClass.StaticRefProperty), typeof(object)));
+            Throws<ReflectionException>(() => Reflector.SetProperty(testType, nameof(TestClass.IntProp), value), Res.ReflectionStaticPropertyDoesNotExist(nameof(TestClass.IntProp), testType));
+            Throws<ArgumentException>(() => Reflector.SetProperty(testType, nameof(TestClass.StaticIntProp), "1"), Res.NotAnInstanceOfType(value.GetType()));
+            Throws<ArgumentNullException>(() => Reflector.GetProperty(type: null!, nameof(TestClass.StaticRefProperty)), Res.ArgumentNull);
+            Throws<ReflectionException>(() => Reflector.GetProperty(Reflector.ObjectType, nameof(TestClass.StaticRefProperty)), Res.ReflectionStaticPropertyDoesNotExist(nameof(TestClass.StaticRefProperty), typeof(object)));
+            Throws<ReflectionException>(() => Reflector.GetProperty(testType, nameof(TestClass.IntProp)), Res.ReflectionStaticPropertyDoesNotExist(nameof(TestClass.IntProp), testType));
+        }
+
+        [Test]
+        public void ClassStaticRefReadonlyPropertyAccess()
+        {
+            Type testType = typeof(TestClass);
+            PropertyInfo pi = testType.GetProperty(nameof(TestClass.StaticRefReadonlyProperty));
+            PropertyAccessor accessor = PropertyAccessor.GetAccessor(pi);
+            object result, value = 1;
+
+            Console.Write("System Reflection...");
+#if NET8_0_OR_GREATER // ArgumentException : Property set method not found.
+            pi.SetValue(null, value, null);
+#else
+            TestClass.StaticIntField = 1;
+#endif
+            result = pi.GetValue(null, null);
+            Assert.AreEqual(value, result);
+
+            TestClass.StaticIntProp = 0;
+            Console.Write("Property Accessor...");
+            accessor.Set(null, value);
+            result = accessor.Get(null);
+            Assert.AreEqual(value, result);
+            Throws<ArgumentNullException>(() => accessor.Set(null, null), Res.NotAnInstanceOfType(value.GetType()));
+            Throws<ArgumentException>(() => accessor.Set(null, "1"), Res.NotAnInstanceOfType(value.GetType()));
+
+            TestClass.StaticIntProp = 0;
+            Console.Write("Reflector (by PropertyInfo)...");
+            Reflector.SetProperty(null, pi, value);
+            result = Reflector.GetProperty(null, pi);
+            Assert.AreEqual(value, result);
+            Throws<ArgumentNullException>(() => Reflector.SetProperty(null, pi, null), Res.NotAnInstanceOfType(value.GetType()));
+            Throws<ArgumentException>(() => Reflector.SetProperty(null, pi, "1"), Res.NotAnInstanceOfType(value.GetType()));
+
+            TestClass.StaticIntProp = 0;
+            Console.Write("Reflector (by name)...");
+            Reflector.SetProperty(testType, nameof(TestClass.StaticRefReadonlyProperty), value);
+            result = Reflector.GetProperty(testType, nameof(TestClass.StaticRefReadonlyProperty));
+            Assert.AreEqual(value, result);
+            Reflector.SetProperty(testType, nameof(TestClass.StaticRefReadonlyProperty).ToLowerInvariant(), true, value);
+            result = Reflector.GetProperty(testType, nameof(TestClass.StaticRefReadonlyProperty).ToLowerInvariant(), true);
+            Assert.AreEqual(value, result);
+            Throws<ArgumentNullException>(() => Reflector.SetProperty(type: null!, nameof(TestClass.StaticRefReadonlyProperty), value), Res.ArgumentNull);
+            Throws<ArgumentNullException>(() => Reflector.SetProperty(testType, nameof(TestClass.StaticRefReadonlyProperty), null), Res.NotAnInstanceOfType(value.GetType()));
+            Throws<ReflectionException>(() => Reflector.SetProperty(Reflector.ObjectType, nameof(TestClass.StaticRefReadonlyProperty), value), Res.ReflectionStaticPropertyDoesNotExist(nameof(TestClass.StaticRefReadonlyProperty), typeof(object)));
+            Throws<ReflectionException>(() => Reflector.SetProperty(testType, nameof(TestClass.IntProp), value), Res.ReflectionStaticPropertyDoesNotExist(nameof(TestClass.IntProp), testType));
+            Throws<ArgumentException>(() => Reflector.SetProperty(testType, nameof(TestClass.StaticRefReadonlyProperty), "1"), Res.NotAnInstanceOfType(value.GetType()));
+            Throws<ArgumentNullException>(() => Reflector.GetProperty(type: null!, nameof(TestClass.StaticRefReadonlyProperty)), Res.ArgumentNull);
+            Throws<ReflectionException>(() => Reflector.GetProperty(Reflector.ObjectType, nameof(TestClass.StaticRefReadonlyProperty)), Res.ReflectionStaticPropertyDoesNotExist(nameof(TestClass.StaticRefReadonlyProperty), typeof(object)));
+            Throws<ReflectionException>(() => Reflector.GetProperty(testType, nameof(TestClass.IntProp)), Res.ReflectionStaticPropertyDoesNotExist(nameof(TestClass.IntProp), testType));
+        }
+
+        [Test]
         public void ClassInstanceIndexerAccess()
         {
             var test = new TestClass(0);
@@ -1420,21 +1710,21 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             test = new TestClass(0);
             Console.Write("Property Accessor...");
             parameters = (object[])args.Clone();
-            PropertyAccessor.GetAccessor(pi).Set(test, value, parameters);
-            result = PropertyAccessor.GetAccessor(pi).Get(test, parameters);
+            accessor.Set(test, value, parameters);
+            result = accessor.Get(test, parameters);
             Assert.AreEqual(value, result);
             Throws<ArgumentNullException>(() => accessor.Set(null, value, parameters), Res.ReflectionInstanceIsNull);
             Throws<ArgumentNullException>(() => accessor.Set(test, null, parameters), Res.NotAnInstanceOfType(value.GetType()));
             Throws<ArgumentNullException>(() => accessor.Set(test, value, null), Res.ArgumentNull);
             Throws<ArgumentException>(() => accessor.Set(new object(), value, parameters), Res.NotAnInstanceOfType(test.GetType()));
             Throws<ArgumentException>(() => accessor.Set(test, "1", parameters), Res.NotAnInstanceOfType(value.GetType()));
-            Throws<ArgumentException>(() => accessor.Set(test, value, Res.ReflectionEmptyIndices));
+            Throws<ArgumentException>(() => accessor.Set(test, value), Res.ReflectionEmptyIndices);
             Throws<ArgumentException>(() => accessor.Set(test, value, "1"), Res.ReflectionParametersInvalid);
             Assert.DoesNotThrow(() => accessor.Set(test, value, 1, "2"), "More parameters than needed are okay");
             Throws<ArgumentNullException>(() => accessor.Get(null, parameters), Res.ReflectionInstanceIsNull);
             Throws<ArgumentNullException>(() => accessor.Get(test, null), Res.ArgumentNull);
-            Throws<ArgumentException>(() => accessor.Get(new object()), Res.NotAnInstanceOfType(test.GetType()));
-            Throws<ArgumentException>(() => accessor.Get(test, Res.ReflectionEmptyIndices));
+            Throws<ArgumentException>(() => accessor.Get(new object(), parameters), Res.NotAnInstanceOfType(test.GetType()));
+            Throws<ArgumentException>(() => accessor.Get(test), Res.ReflectionEmptyIndices);
             Throws<ArgumentException>(() => accessor.Get(test, "1"), Res.ReflectionParametersInvalid);
             Assert.DoesNotThrow(() => accessor.Get(test, 1, "2"), "More parameters than needed are okay");
 
@@ -1486,12 +1776,90 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Throws<ReflectionException>(() => Reflector.SetIndexedMember(new object(), value, args), Res.ReflectionIndexerNotFound(Reflector.ObjectType));
             Throws<ArgumentException>(() => Reflector.SetIndexedMember(test, "1", args), Res.NotAnInstanceOfType(value.GetType()));
             Throws<ArgumentException>(() => Reflector.SetIndexedMember(test, value), Res.ReflectionEmptyIndices);
-            Throws<ReflectionException>(() => Reflector.SetIndexedMember(test, value, "1"), Res.ReflectionIndexerNotFound(test.GetType()));
+            Throws<ReflectionException>(() => Reflector.SetIndexedMember(test, value, 1m), Res.ReflectionIndexerNotFound(test.GetType()));
             Throws<ArgumentNullException>(() => Reflector.GetIndexedMember(null, args), Res.ArgumentNull);
             Throws<ArgumentNullException>(() => Reflector.GetIndexedMember(test, null), Res.ArgumentNull);
             Throws<ReflectionException>(() => Reflector.GetIndexedMember(new object(), args), Res.ReflectionIndexerNotFound(Reflector.ObjectType));
             Throws<ArgumentException>(() => Reflector.GetIndexedMember(test), Res.ReflectionEmptyIndices);
-            Throws<ReflectionException>(() => Reflector.GetIndexedMember(test, "1"), Res.ReflectionIndexerNotFound(test.GetType()));
+            Throws<ReflectionException>(() => Reflector.GetIndexedMember(test, 1m), Res.ReflectionIndexerNotFound(test.GetType()));
+        }
+
+        [Test]
+        public void ClassInstanceRefIndexerAccess()
+        {
+            var test = new TestClass(0);
+            PropertyInfo pi = test.GetType().GetProperty("Item", new[] { typeof(string) });
+            PropertyAccessor accessor = PropertyAccessor.GetAccessor(pi);
+            string arg = "x";
+            object[] args = { arg };
+            object result;
+            string value = "alpha";
+
+            Console.Write("System Reflection...");
+            object[] parameters = (object[])args.Clone();
+#if NET8_0_OR_GREATER // ArgumentException : Property set method not found.
+            pi.SetValue(test, value, parameters);
+#else
+            test[arg] = value;
+#endif
+            result = pi.GetValue(test, parameters);
+            Assert.AreEqual(value, result);
+
+            test = new TestClass(0);
+            Console.Write("Property Accessor...");
+            parameters = (object[])args.Clone();
+            accessor.Set(test, value, parameters);
+            result = accessor.Get(test, parameters);
+            Assert.AreEqual(value, result);
+            Throws<ArgumentNullException>(() => accessor.Set(null, value, parameters), Res.ReflectionInstanceIsNull);
+            Throws<ArgumentNullException>(() => accessor.Set(test, value, null), Res.ArgumentNull);
+            //Throws<ArgumentException>(() => accessor.Set(new object(), value, parameters), Res.NotAnInstanceOfType(test.GetType())); // ISSUE: executes without any exception even though object has no indexers
+            Throws<ArgumentException>(() => accessor.Set(test, 1, parameters), Res.NotAnInstanceOfType(value.GetType()));
+            Throws<ArgumentException>(() => accessor.Set(test, value), Res.ReflectionEmptyIndices);
+            Throws<ArgumentException>(() => accessor.Set(test, value, 1), Res.ReflectionParametersInvalid);
+            Assert.DoesNotThrow(() => accessor.Set(test, value, "1", 2), "More parameters than needed are okay");
+            Throws<ArgumentNullException>(() => accessor.Get(null, parameters), Res.ReflectionInstanceIsNull);
+            Throws<ArgumentNullException>(() => accessor.Get(test, null), Res.ArgumentNull);
+            //Throws<ArgumentException>(() => accessor.Get(new object(), parameters), Res.NotAnInstanceOfType(test.GetType())); // ISSUE: simply returns null even though object has no indexers
+            Throws<ArgumentException>(() => accessor.Get(test), Res.ReflectionEmptyIndices);
+            Throws<ArgumentException>(() => accessor.Get(test, 1), Res.ReflectionParametersInvalid);
+            Assert.DoesNotThrow(() => accessor.Get(test, "1", 2), "More parameters than needed are okay");
+
+            test = new TestClass(0);
+            Console.Write("Reflector (by PropertyInfo)...");
+            parameters = (object[])args.Clone();
+            Reflector.SetProperty(test, pi, value, ReflectionWays.Auto, parameters);
+            result = Reflector.GetProperty(test, pi, ReflectionWays.Auto, parameters);
+            Assert.AreEqual(value, result);
+            Throws<ArgumentNullException>(() => Reflector.SetProperty(null, pi, value, args), Res.ReflectionInstanceIsNull);
+            Throws<ArgumentNullException>(() => Reflector.SetProperty(test, pi, value, null), Res.ArgumentNull);
+            //Throws<ArgumentException>(() => Reflector.SetProperty(new object(), pi, value, args), Res.NotAnInstanceOfType(test.GetType())); // ISSUE: executes without any exception even though object has no indexers
+            Throws<ArgumentException>(() => Reflector.SetProperty(test, pi, 1, args), Res.NotAnInstanceOfType(value.GetType()));
+            Throws<ArgumentException>(() => Reflector.SetProperty(test, pi, value), Res.ReflectionEmptyIndices);
+            Throws<ArgumentException>(() => Reflector.SetProperty(test, pi, value, 1), Res.ReflectionParametersInvalid);
+            Throws<ArgumentNullException>(() => Reflector.GetProperty(null, pi, args), Res.ReflectionInstanceIsNull);
+            Throws<ArgumentNullException>(() => Reflector.GetProperty(test, pi, null), Res.ArgumentNull);
+            //Throws<ArgumentException>(() => Reflector.GetProperty(new object(), pi, args), Res.NotAnInstanceOfType(test.GetType())); // ISSUE: simply returns null even though object has no indexers
+            Throws<ArgumentException>(() => Reflector.GetProperty(test, pi), Res.ReflectionEmptyIndices);
+            Throws<ArgumentException>(() => Reflector.GetProperty(test, pi, 1), Res.ReflectionParametersInvalid);
+
+            test = new TestClass(0);
+            Console.Write("Reflector (by parameters match)...");
+            parameters = (object[])args.Clone();
+            Reflector.SetIndexedMember(test, value, parameters);
+            result = Reflector.GetIndexedMember(test, parameters);
+            Assert.AreEqual(value, result);
+            Throws<ArgumentNullException>(() => Reflector.SetIndexedMember(null, value, args), Res.ArgumentNull);
+            Throws<ArgumentNullException>(() => Reflector.SetIndexedMember(test, value, null), Res.ArgumentNull);
+            Throws<ReflectionException>(() => Reflector.SetIndexedMember(new object(), value, args), Res.ReflectionIndexerNotFound(Reflector.ObjectType));
+            Throws<ArgumentException>(() => Reflector.SetIndexedMember(test, 1, args), Res.NotAnInstanceOfType(value.GetType()));
+            Throws<ArgumentException>(() => Reflector.SetIndexedMember(test, value), Res.ReflectionEmptyIndices);
+            Throws<ReflectionException>(() => Reflector.SetIndexedMember(test, value, 1m), Res.ReflectionIndexerNotFound(test.GetType()));
+            Throws<ArgumentNullException>(() => Reflector.GetIndexedMember(null, args), Res.ArgumentNull);
+            Throws<ArgumentNullException>(() => Reflector.GetIndexedMember(test, null), Res.ArgumentNull);
+            Throws<ReflectionException>(() => Reflector.GetIndexedMember(new object(), args), Res.ReflectionIndexerNotFound(Reflector.ObjectType));
+            Throws<ArgumentException>(() => Reflector.GetIndexedMember(test), Res.ReflectionEmptyIndices);
+            Throws<ReflectionException>(() => Reflector.GetIndexedMember(test, 1m), Res.ReflectionIndexerNotFound(test.GetType()));
         }
 
         #endregion
@@ -1510,8 +1878,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             pi.SetValue(test, value, null);
             result = pi.GetValue(test, null);
             Assert.AreEqual(value, result);
-
             test = new TestStruct(0);
+
             Console.Write("Property Accessor...");
             if (!ThrowsOnFramework<PlatformNotSupportedException>(() => accessor.Set(test, value),
                 TargetFramework.NetStandard20))
@@ -1568,6 +1936,139 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Throws<ArgumentException>(() => Reflector.SetProperty(test, nameof(TestStruct.IntProp), "1"), Res.NotAnInstanceOfType(value.GetType()));
 #endif
             Throws<ReflectionException>(() => Reflector.GetProperty(new object(), nameof(TestStruct.IntProp)), Res.ReflectionInstancePropertyDoesNotExist(nameof(TestStruct.IntProp), typeof(object)));
+            Throws<ReflectionException>(() => Reflector.GetProperty(test, nameof(TestStruct.StaticIntProp)), Res.ReflectionInstancePropertyDoesNotExist(nameof(TestStruct.StaticIntProp), typeof(TestStruct)));
+        }
+
+        [Test]
+        public void StructInstanceRefPropertyAccess()
+        {
+            object test = new TestStruct(0);
+            PropertyInfo pi = test.GetType().GetProperty(nameof(TestStruct.RefIntProperty));
+            PropertyAccessor accessor = PropertyAccessor.GetAccessor(pi);
+            object result;
+            int value = 1;
+
+            Console.Write("System Reflection...");
+#if NET8_0_OR_GREATER // ArgumentException : Property set method not found.
+            pi.SetValue(test, value, null);
+#else
+            ((TestStruct)test).RefIntProperty = 1;
+#endif
+            result = pi.GetValue(test, null);
+            Assert.AreEqual(value, result);
+
+            test = new TestStruct(0);
+            Console.Write("Property Accessor...");
+            if (!ThrowsOnFramework<PlatformNotSupportedException>(() => accessor.Set(test, value),
+                TargetFramework.NetStandard20))
+            {
+                result = accessor.Get(test);
+                Assert.AreEqual(value, result);
+                Throws<ArgumentNullException>(() => accessor.Set(null, value), Res.ReflectionInstanceIsNull);
+                Throws<ArgumentNullException>(() => accessor.Set(test, null), Res.NotAnInstanceOfType(value.GetType()));
+                Throws<ArgumentException>(() => accessor.Set(new object(), value), Res.NotAnInstanceOfType(test.GetType()));
+                Throws<ArgumentException>(() => accessor.Set(test, "1"), Res.NotAnInstanceOfType(value.GetType()));
+                Throws<ArgumentNullException>(() => accessor.Get(null), Res.ReflectionInstanceIsNull);
+                Throws<ArgumentException>(() => accessor.Get(new object()), Res.NotAnInstanceOfType(test.GetType()));
+            }
+
+            test = new TestStruct(0);
+            Console.Write("Reflector (by PropertyInfo)...");
+            Reflector.SetProperty(test, pi, value);
+            result = Reflector.GetProperty(test, pi);
+            Assert.AreEqual(value, result);
+            Throws<ArgumentNullException>(() => Reflector.SetProperty(null, pi, value), Res.ReflectionInstanceIsNull);
+            Throws<ArgumentNullException>(() => Reflector.GetProperty(null, pi), Res.ReflectionInstanceIsNull);
+#if !(NETSTANDARD_TEST && NETCOREAPP2_0) // For value types system reflection is used to set properties in .NET Standard 2.0 that provides different errors
+            Throws<ArgumentNullException>(() => Reflector.SetProperty(test, pi, null), Res.NotAnInstanceOfType(value.GetType()));
+            Throws<ArgumentException>(() => Reflector.SetProperty(new object(), pi, value), Res.NotAnInstanceOfType(test.GetType()));
+            Throws<ArgumentException>(() => Reflector.SetProperty(test, pi, "1"), Res.NotAnInstanceOfType(value.GetType()));
+#endif
+            Throws<ArgumentException>(() => Reflector.GetProperty(new object(), pi), Res.NotAnInstanceOfType(test.GetType()));
+
+            test = new TestStruct(0);
+            Console.Write("Reflector (by name)...");
+            Reflector.SetProperty(test, nameof(TestStruct.RefIntProperty), value);
+            result = Reflector.GetProperty(test, nameof(TestStruct.RefIntProperty));
+            Assert.AreEqual(value, result);
+            Reflector.SetProperty(test, nameof(TestStruct.RefIntProperty).ToLowerInvariant(), true, value);
+            result = Reflector.GetProperty(test, nameof(TestStruct.RefIntProperty).ToLowerInvariant(), true);
+            Assert.AreEqual(value, result);
+            Throws<ArgumentNullException>(() => Reflector.SetProperty(instance: null!, nameof(TestStruct.RefIntProperty), value), Res.ArgumentNull);
+            Throws<ArgumentNullException>(() => Reflector.GetProperty(instance: null!, nameof(TestStruct.RefIntProperty)), Res.ArgumentNull);
+#if !(NETSTANDARD_TEST && NETCOREAPP2_0) // For value types system reflection is used to set properties in .NET Standard 2.0 that provides different errors
+            Throws<ArgumentNullException>(() => Reflector.SetProperty(test, nameof(TestStruct.RefIntProperty), null), Res.NotAnInstanceOfType(value.GetType()));
+            Throws<ReflectionException>(() => Reflector.SetProperty(new object(), nameof(TestStruct.RefIntProperty), value), Res.ReflectionInstancePropertyDoesNotExist(nameof(TestStruct.RefIntProperty), typeof(object)));
+            Throws<ReflectionException>(() => Reflector.SetProperty(test, nameof(TestStruct.StaticIntProp), value), Res.ReflectionInstancePropertyDoesNotExist(nameof(TestStruct.StaticIntProp), typeof(TestStruct)));
+            Throws<ArgumentException>(() => Reflector.SetProperty(test, nameof(TestStruct.RefIntProperty), "1"), Res.NotAnInstanceOfType(value.GetType()));
+#endif
+            Throws<ReflectionException>(() => Reflector.GetProperty(new object(), nameof(TestStruct.RefIntProperty)), Res.ReflectionInstancePropertyDoesNotExist(nameof(TestStruct.RefIntProperty), typeof(object)));
+            Throws<ReflectionException>(() => Reflector.GetProperty(test, nameof(TestStruct.StaticIntProp)), Res.ReflectionInstancePropertyDoesNotExist(nameof(TestStruct.StaticIntProp), typeof(TestStruct)));
+        }
+
+        [Test]
+        public void StructInstanceRefReadonlyPropertyAccess()
+        {
+            object test = new TestStruct(0);
+            PropertyInfo pi = test.GetType().GetProperty(nameof(TestStruct.RefReadonlyProperty));
+            PropertyAccessor accessor = PropertyAccessor.GetAccessor(pi);
+            object result, value = 1;
+
+            Console.Write("System Reflection...");
+#if NET8_0_OR_GREATER // ArgumentException : Property set method not found.
+            pi.SetValue(test, value, null);
+#else
+            typeof(TestStruct).GetField(nameof(TestStruct.StaticIntField))!.SetValue(null, value);
+#endif
+            result = pi.GetValue(test, null);
+            Assert.AreEqual(value, result);
+
+            test = new TestStruct(0);
+            Console.Write("Property Accessor...");
+            if (!ThrowsOnFramework<PlatformNotSupportedException>(() => accessor.Set(test, value),
+                TargetFramework.NetStandard20))
+            {
+                result = accessor.Get(test);
+                Assert.AreEqual(value, result);
+                Throws<ArgumentNullException>(() => accessor.Set(null, value), Res.ReflectionInstanceIsNull);
+                Throws<ArgumentNullException>(() => accessor.Set(test, null), Res.NotAnInstanceOfType(value.GetType()));
+                Throws<ArgumentException>(() => accessor.Set(new object(), value), Res.NotAnInstanceOfType(test.GetType()));
+                Throws<ArgumentException>(() => accessor.Set(test, "1"), Res.NotAnInstanceOfType(value.GetType()));
+                Throws<ArgumentNullException>(() => accessor.Get(null), Res.ReflectionInstanceIsNull);
+                Throws<ArgumentException>(() => accessor.Get(new object()), Res.NotAnInstanceOfType(test.GetType()));
+            }
+
+            test = new TestStruct(0);
+            Console.Write("Reflector (by PropertyInfo)...");
+            Reflector.SetProperty(test, pi, value);
+            result = Reflector.GetProperty(test, pi);
+            Assert.AreEqual(value, result);
+            Throws<ArgumentNullException>(() => Reflector.SetProperty(null, pi, value), Res.ReflectionInstanceIsNull);
+            Throws<ArgumentNullException>(() => Reflector.GetProperty(null, pi), Res.ReflectionInstanceIsNull);
+#if !(NETSTANDARD_TEST && NETCOREAPP2_0) // For value types system reflection is used to set properties in .NET Standard 2.0 that provides different errors
+            Throws<ArgumentNullException>(() => Reflector.SetProperty(test, pi, null), Res.NotAnInstanceOfType(value.GetType()));
+            Throws<ArgumentException>(() => Reflector.SetProperty(new object(), pi, value), Res.NotAnInstanceOfType(test.GetType()));
+            Throws<ArgumentException>(() => Reflector.SetProperty(test, pi, "1"), Res.NotAnInstanceOfType(value.GetType()));
+#endif
+            Throws<ArgumentException>(() => Reflector.GetProperty(new object(), pi), Res.NotAnInstanceOfType(test.GetType()));
+
+            test = new TestStruct(0);
+            Console.Write("Reflector (by name)...");
+            Reflector.SetProperty(test, nameof(TestStruct.RefReadonlyProperty), value);
+            result = Reflector.GetProperty(test, nameof(TestStruct.RefReadonlyProperty));
+            Assert.AreEqual(value, result);
+            Reflector.SetProperty(test, nameof(TestStruct.RefReadonlyProperty).ToLowerInvariant(), true, value);
+            result = Reflector.GetProperty(test, nameof(TestStruct.RefReadonlyProperty).ToLowerInvariant(), true);
+            Assert.AreEqual(value, result);
+            Throws<ArgumentNullException>(() => Reflector.SetProperty(instance: null!, nameof(TestStruct.RefReadonlyProperty), value), Res.ArgumentNull);
+            Throws<ArgumentNullException>(() => Reflector.GetProperty(instance: null!, nameof(TestStruct.RefReadonlyProperty)), Res.ArgumentNull);
+#if !(NETSTANDARD_TEST && NETCOREAPP2_0) // For value types system reflection is used to set properties in .NET Standard 2.0 that provides different errors
+            Throws<ArgumentNullException>(() => Reflector.SetProperty(test, nameof(TestStruct.RefReadonlyProperty), null), Res.NotAnInstanceOfType(value.GetType()));
+            Throws<ReflectionException>(() => Reflector.SetProperty(new object(), nameof(TestStruct.RefReadonlyProperty), value), Res.ReflectionInstancePropertyDoesNotExist(nameof(TestStruct.RefReadonlyProperty), typeof(object)));
+            Throws<ReflectionException>(() => Reflector.SetProperty(test, nameof(TestStruct.StaticIntProp), value), Res.ReflectionInstancePropertyDoesNotExist(nameof(TestStruct.StaticIntProp), typeof(TestStruct)));
+            Throws<ArgumentException>(() => Reflector.SetProperty(test, nameof(TestStruct.RefReadonlyProperty), "1"), Res.NotAnInstanceOfType(value.GetType()));
+#endif
+            Throws<ReflectionException>(() => Reflector.GetProperty(new object(), nameof(TestStruct.RefReadonlyProperty)), Res.ReflectionInstancePropertyDoesNotExist(nameof(TestStruct.RefReadonlyProperty), typeof(object)));
             Throws<ReflectionException>(() => Reflector.GetProperty(test, nameof(TestStruct.StaticIntProp)), Res.ReflectionInstancePropertyDoesNotExist(nameof(TestStruct.StaticIntProp), typeof(TestStruct)));
         }
 
@@ -1657,13 +2158,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
                 Throws<ArgumentNullException>(() => accessor.Set(test, value, null), Res.ArgumentNull);
                 Throws<ArgumentException>(() => accessor.Set(new object(), value, parameters), Res.NotAnInstanceOfType(test.GetType()));
                 Throws<ArgumentException>(() => accessor.Set(test, "1", parameters), Res.NotAnInstanceOfType(value.GetType()));
-                Throws<ArgumentException>(() => accessor.Set(test, value, Res.ReflectionEmptyIndices));
+                Throws<ArgumentException>(() => accessor.Set(test, value), Res.ReflectionEmptyIndices);
                 Throws<ArgumentException>(() => accessor.Set(test, value, "1"), Res.ReflectionParametersInvalid);
                 Assert.DoesNotThrow(() => accessor.Set(test, value, 1, "2"), "More parameters than needed are okay");
                 Throws<ArgumentNullException>(() => accessor.Get(null, parameters), Res.ReflectionInstanceIsNull);
                 Throws<ArgumentNullException>(() => accessor.Get(test, null), Res.ArgumentNull);
                 Throws<ArgumentException>(() => accessor.Get(new object()), Res.NotAnInstanceOfType(test.GetType()));
-                Throws<ArgumentException>(() => accessor.Get(test, Res.ReflectionEmptyIndices));
+                Throws<ArgumentException>(() => accessor.Get(test), Res.ReflectionEmptyIndices);
                 Throws<ArgumentException>(() => accessor.Get(test, "1"), Res.ReflectionParametersInvalid);
                 Assert.DoesNotThrow(() => accessor.Get(test, 1, "2"), "More parameters than needed are okay");
             }
