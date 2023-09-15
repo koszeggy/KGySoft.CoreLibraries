@@ -365,7 +365,7 @@ namespace KGySoft.Serialization.Xml
                 FieldInfo? field = property != null ? null : (FieldInfo)member.Key;
 
                 // read-only property
-                if (property?.CanWrite == false)
+                if (property is { CanWrite: false, PropertyType.IsByRef: false })
                 {
                     object? existingValue = property.Get(result);
                     if (property.PropertyType.IsValueType)
@@ -388,8 +388,8 @@ namespace KGySoft.Serialization.Xml
                     continue;
                 }
 
-                // read-write property
-                if (property != null)
+                // read-write property (including ref properties)
+                if (property is not null)
                 {
                     property.Set(result, member.Value);
                     continue;
@@ -426,7 +426,7 @@ namespace KGySoft.Serialization.Xml
             var property = (PropertyInfo)member;
 
             // Read-only property
-            if (!property.CanWrite)
+            if (!(property.CanWrite || property.PropertyType.IsByRef))
             {
                 if (property.PropertyType.IsValueType)
                 {
@@ -446,7 +446,7 @@ namespace KGySoft.Serialization.Xml
                 return;
             }
 
-            // Read-write property
+            // Read-write property (including ref properties)
             property.Set(obj, deserializedValue);
         }
 
@@ -772,6 +772,8 @@ namespace KGySoft.Serialization.Xml
                 itemType = ResolveType(strItemType);
 
             itemType ??= property?.PropertyType ?? field?.FieldType;
+            if (itemType?.IsByRef == true)
+                itemType = itemType.GetElementType();
         }
 
         private protected bool TryDeserializeByConverter(MemberInfo member, Type memberType, Func<string?> readStringValue, out object? result)

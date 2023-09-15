@@ -180,8 +180,10 @@
     + HybridDictionary
     + OrderedDictionary
   + New DeserializeSafe and DeserializeContentSafe overloads with expectedCustomTypes parameters.
-  + Deserialize* methods: binary serialized content was disabled in safe mode. Now it's enabled but types resolved
-    by name must be declared in the expectedCustomTypes parameter of the new Deserialize[Content]Safe overloads.
+  + Deserialize* methods:
+    + Binary serialized content was disabled in safe mode. Now it's enabled but types resolved by name must be
+      declared in the expectedCustomTypes parameter of the new Deserialize[Content]Safe overloads.
+    + Supporting the deserialization of ref properties
   - SerializeContent methods: ForcedSerializationOfReadOnlyMembersAndCollections option was ignored for collection
     members directly in the root instance.
 

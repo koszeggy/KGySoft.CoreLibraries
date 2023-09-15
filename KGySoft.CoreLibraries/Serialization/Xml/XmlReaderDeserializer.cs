@@ -272,7 +272,7 @@ namespace KGySoft.Serialization.Xml
                             {
                                 if (property is not null)
                                 {
-                                    if (!property.CanWrite || itemType?.CanBeCreatedWithoutParameters() != true)
+                                    if (!(property.CanWrite || property.PropertyType.IsByRef) || itemType?.CanBeCreatedWithoutParameters() != true)
                                         existingValue = property.Get(obj);
                                 }
                                 else if (itemType?.CanBeCreatedWithoutParameters() != true)

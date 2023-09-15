@@ -965,7 +965,7 @@ namespace KGySoft.Reflection
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static unsafe void Set(this PropertyInfo property, object? instance, object? value, params object?[] indexerParams)
         {
-            Debug.Assert(property.CanWrite);
+            Debug.Assert(property.CanWrite || property.PropertyType.IsByRef);
 
             if (property.PropertyType.IsPointer)
             {
@@ -974,6 +974,9 @@ namespace KGySoft.Reflection
             }
 
 #if NETSTANDARD2_0
+            if (property.PropertyType.IsByRef)
+                Throw.PlatformNotSupportedException(Res.ReflectionRefReturnTypeNetStandard20(property.PropertyType));
+
             if (!property.GetSetMethod(true).IsStatic && property.DeclaringType?.IsValueType == true)
             {
                 property.SetValue(instance, value, indexerParams);
