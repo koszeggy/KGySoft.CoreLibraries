@@ -121,7 +121,7 @@ namespace KGySoft.Serialization.Xml
         /// To avoid circular references use <see cref="DesignerSerializationVisibilityAttribute"/> with <see cref="DesignerSerializationVisibility.Hidden"/> value on back-referencing properties.</note></para>
         /// <para>If both <see cref="BinarySerializationAsFallback"/> and <see cref="RecursiveSerializationAsFallback"/> options are enabled, then binary serialization
         /// has higher priority, except for properties that are marked by <see cref="DesignerSerializationVisibility.Content"/> visibility, which causes the property to be serialized recursively.</para>
-        /// <para><c>Key</c> and <c>Value</c> properties of <see cref="DictionaryEntry"/> and <see cref="KeyValuePair{TKey,TValue}"/> instances are always serialized recursively because these are natively supported types.</para>
+        /// <para><c>Key</c> and <c>Value</c> properties of <see cref="DictionaryEntry"/> and <see cref="KeyValuePair{TKey,TValue}"/> instances are always serialized recursively because those are natively supported types.</para>
         /// <para>Default state at serialization methods: <strong>Disabled</strong></para>
         /// </summary>
         RecursiveSerializationAsFallback = 1 << 2,
@@ -210,5 +210,14 @@ namespace KGySoft.Serialization.Xml
         /// <para>Default state at serialization methods: <strong>Disabled</strong></para>
         /// </summary>
         IgnoreTypeForwardedFromAttribute = 1 << 13,
+
+        /// <summary>
+        /// <para>Indicates that properties with <see langword="ref"/> return type should also be serialized, which are omitted without using this flag.
+        /// It treats <see langword="ref readonly"/> properties like regular read-only properties regarding collections (see the details at the <see cref="None"/> option).</para>
+        /// <note>As objects with <see langword="ref"/> return type are not considered trusted types it might be needed to
+        /// combine this flag with the <see cref="RecursiveSerializationAsFallback"/> option.</note>
+        /// <para>Default state at serialization methods: <strong>Disabled</strong></para>
+        /// </summary>
+        IncludeRefProperties = 1 << 14,
     }
 }

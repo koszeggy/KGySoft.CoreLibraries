@@ -187,6 +187,7 @@ namespace KGySoft.Serialization.Xml
         private protected bool ExcludeFields => (Options & XmlSerializationOptions.ExcludeFields) != XmlSerializationOptions.None;
         private protected bool ForceReadonlyMembersAndCollections => (Options & XmlSerializationOptions.ForcedSerializationOfReadOnlyMembersAndCollections) != XmlSerializationOptions.None;
         private protected bool IgnoreTypeForwardedFromAttribute => (Options & XmlSerializationOptions.IgnoreTypeForwardedFromAttribute) != XmlSerializationOptions.None;
+        private protected bool IncludeRefProperties => (Options & XmlSerializationOptions.IncludeRefProperties) != XmlSerializationOptions.None;
 
         #endregion
 
@@ -368,6 +369,9 @@ namespace KGySoft.Serialization.Xml
                 : ComparerType.Unknown
         };
 
+        private static bool IsReadOnly(MemberInfo member)
+            => Attribute.GetCustomAttribute(member, typeof(IsReadOnlyAttribute), false) != null;
+
         #endregion
 
         #endregion
@@ -393,16 +397,20 @@ namespace KGySoft.Serialization.Xml
             Type type = obj.GetType();
 
             // getting read-write non-indexer readable instance properties
-            IEnumerable<MemberInfo> properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                    .Where(p => p.GetIndexParameters().Length == 0
-                        && p.CanRead
-                        && (p.CanWrite
-                            // read-only are accepted only if forced
+            IEnumerable<MemberInfo> properties = (type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                    .Select(p => (Info: p, Type: p.PropertyType.IsByRef ? p.PropertyType.GetElementType()! : p.PropertyType, p.PropertyType.IsByRef ))
+                    .Where(p => p.Info.GetIndexParameters().Length == 0
+                        && p.Info.CanRead && (!p.IsByRef || IncludeRefProperties)
+                        && (p.Info.CanWrite
+                            // read-only is accepted only if forced,
                             || ForceReadonlyMembersAndCollections
+                            // or if it's a non-readonly ref property
+                            || IncludeRefProperties && p.IsByRef && !IsReadOnly(p.Info)
                             // or is XmlSerializable
-                            || (ProcessXmlSerializable && typeof(IXmlSerializable).IsAssignableFrom(p.PropertyType))
+                            || (ProcessXmlSerializable && typeof(IXmlSerializable).IsAssignableFrom(p.Type))
                             // or the collection is not read-only (regardless of constructors)
-                            || p.PropertyType.IsCollection() && p.PropertyType.IsReadWriteCollection(p.Get(obj))))
+                            || p.Type.IsCollection() && p.Type.IsReadWriteCollection(p.Info.Get(obj))))
+                    .Select(p => p.Info))
 #if NET35
                     .Cast<MemberInfo>()
 #endif
