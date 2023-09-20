@@ -1644,12 +1644,22 @@ namespace KGySoft.Resources
             {
                 Debug.Assert(typeResolver == null || !safeMode, "No typeResolver is expected in safe mode");
                 byte[] serializedData = FromBase64WrappedString(text);
-                var serializer = new BinarySerializationFormatter(safeMode ? BinarySerializationOptions.SafeMode : BinarySerializationOptions.None)
+                var options = safeMode ? BinarySerializationOptions.SafeMode : BinarySerializationOptions.None;
+                if (safeMode && expectedType is not null)
+                    options |= BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes;
+                var serializer = new BinarySerializationFormatter(options);
+                if (typeResolver != null)
                 {
-                    Binder = typeResolver != null
-                        ? new ResXSerializationBinder(typeResolver)
-                        : new ForwardedTypesSerializationBinder { SafeMode = safeMode }
-                };
+                    Debug.Assert(!safeMode);
+                    serializer.Binder = new ResXSerializationBinder(typeResolver);
+                }
+                else
+                {
+                    var binder = new ForwardedTypesSerializationBinder { SafeMode = safeMode };
+                    if (expectedType != null)
+                        binder.AddType(expectedType);
+                    serializer.Binder = binder;
+                }
 
                 object? result = null;
                 if (serializedData.Length > 0)

@@ -869,13 +869,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
 #if !NET8_0_OR_GREATER
             Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, true), "In safe mode it is not allowed to deserialize resource \"0_NonSerializableClass\" because it was serialized by BinaryFormatter.");
-#endif
-            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, false), Res.BinarySerializationCannotCreateSerializableObjectSafe(typeof(NonSerializableClass)));
-
-#if !NET8_0_OR_GREATER
             KGySerializeObjects(referenceObjects, true, safeMode: false);
 #endif
-            KGySerializeObjects(referenceObjects, false, safeMode: false);
+            KGySerializeObjects(referenceObjects, false);
         }
 
         [Test]

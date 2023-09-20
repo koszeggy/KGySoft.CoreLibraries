@@ -87,7 +87,7 @@
       cause an OutOfMemoryException.
     ! Resources serialized by the safe BinarySerializationFormatter (non-compatible mode) can only be deserialized
       if the expectedType is specified and the stream does not contain nested custom types, or if the serialization
-      stream does not contain any type name to resolve.
+      stream does not contain any type names to resolve other than the expected type.
   ! Embedded MemoryStream in non-compatible mode is added as a byte array rather than a binary serialized stream.
     This affects the result of the GetObject methods in ResXResourceManager, HybridResourceManager and
     DynamimcResourceManager classes but their GetStream methods still work the same way.
