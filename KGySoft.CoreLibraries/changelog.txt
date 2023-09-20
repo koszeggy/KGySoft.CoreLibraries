@@ -186,6 +186,8 @@
     + Supporting the deserialization of ref properties
   - SerializeContent methods: ForcedSerializationOfReadOnlyMembersAndCollections option was ignored for collection
     members directly in the root instance.
++ XmlSerializationOptions enumeration:
+  + New IncludeRefProperties flag
 
 
 ~~~~~~~~~
