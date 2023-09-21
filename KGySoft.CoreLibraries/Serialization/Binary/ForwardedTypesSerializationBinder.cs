@@ -323,16 +323,21 @@ namespace KGySoft.Serialization.Binary
             Type? ResolveType(AssemblyName? asmName, string typName)
             {
                 // there is no rule for such type name
-                if (!mapping.TryGetValue(typName, out Dictionary<Type, HashSet<string>>? byTypeMap))
-                    return null;
-
-                foreach (KeyValuePair<Type, HashSet<string>> map in byTypeMap)
+                if (mapping.TryGetValue(typName, out Dictionary<Type, HashSet<string>>? byTypeMap))
                 {
-                    if (map.Value.Any(name => name.Length == 0 || AssemblyResolver.IdentityMatches(new AssemblyName(name), asmName, false)))
-                        return map.Key;
+                    foreach (KeyValuePair<Type, HashSet<string>> map in byTypeMap)
+                    {
+                        if (map.Value.Any(name => name.Length == 0 || AssemblyResolver.IdentityMatches(new AssemblyName(name), asmName, false)))
+                            return map.Key;
+                    }
+
                 }
 
-                // letting the default logic take over
+                // As ThrowError is not set the TypeResolver will return null here
+                if (SafeMode)
+                    throw new ArgumentException();
+
+                // Letting the fallback logic in TypeResolver take over
                 return null;
             }
 

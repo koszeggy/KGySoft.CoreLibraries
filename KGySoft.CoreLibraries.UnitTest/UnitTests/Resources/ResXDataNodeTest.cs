@@ -16,6 +16,7 @@
 #region Usings
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
@@ -224,14 +225,24 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         }
 
         [Test]
-        public void TypeResolveTest()
+        public void RegenerateInCompatibleMode()
         {
-            // TODO:
-            // - System.Int32 with some specified other expected type
-            // - Expected: typedef List<>, item is int, is int auto accepted?
-            // - int without specifying expected
-            // - enum without specifying expected
-            throw new NotImplementedException();
+            // Creating a node with a cached data
+            var nodeSrc = new ResXDataNode("test", new List<ConsoleColor> { ConsoleColor.Blue });
+            
+            // List is written by BinarySerializationFormatter where ConsoleColor type is stored by name
+            DataNodeInfo nodeInfoNonCompatible = nodeSrc.GetDataNodeInfo(null, false);
+            Assert.IsFalse(nodeInfoNonCompatible.CompatibleFormat);
+
+            // creating a clone in non-compatible format without the cached value
+            var clone = new ResXDataNode(nodeInfoNonCompatible, null);
+
+            // Trying to convert the clone to a compatible-format: deserialization occurs without an expected type so safe mode should fail here to prevent a security hole
+            Throws<SerializationException>(() => clone.GetDataNodeInfo(null, true), "System.ConsoleColor");
+
+            // but it works in non-safe mode (when BinaryFormatter is available)
+            DataNodeInfo nodeInfoCompatible = clone.GetDataNodeInfo(null, true, false);
+            Assert.IsTrue(nodeInfoCompatible.CompatibleFormat);
         }
 
         #endregion
