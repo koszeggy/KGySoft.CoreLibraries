@@ -669,31 +669,8 @@ namespace KGySoft.Serialization.Binary
                 expectedTypes = new Dictionary<(string?, string), Type>();
 
                 // Adding allowed types resolved by name. Including also possible object root in case supported types were forced to be saved recursively.
-                var types = new Queue<Type>(expectedCustomTypes ?? Reflector.EmptyArray<Type>());
-                types.Enqueue(rootType);
-
-#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
-                while (types.TryDequeue(out Type? type))
-#else
-                while (types.Count > 0)
-#endif
+                foreach (Type type in new RootTypeEnumerator(rootType, expectedCustomTypes))
                 {
-#if !(NETCOREAPP || NETSTANDARD2_1_OR_GREATER)
-                    var type = types.Dequeue(); 
-#endif
-                    if (type == null!)
-                        Throw.ArgumentException(Argument.expectedCustomTypes, Res.ArgumentContainsNull);
-
-                    while (type!.HasElementType)
-                        type = type.GetElementType();
-
-                    if (type.IsConstructedGenericType())
-                    {
-                        foreach (Type arg in type.GetGenericArguments())
-                            types.Enqueue(arg);
-                        type = type.GetGenericTypeDefinition();
-                    }
-
                     // skipping primitive types that are never resolved by name
                     if (primitiveTypes.ContainsKey(type))
                         continue;

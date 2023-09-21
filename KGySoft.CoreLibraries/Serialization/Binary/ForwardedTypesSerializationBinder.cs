@@ -188,6 +188,7 @@ namespace KGySoft.Serialization.Binary
         {
             if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
+
             string? fullName = type.FullName;
             if (fullName == null || !type.IsRuntimeType() || type.HasElementType
                 || type.IsConstructedGenericType()

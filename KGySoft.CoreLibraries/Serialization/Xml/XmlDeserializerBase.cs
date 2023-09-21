@@ -310,32 +310,8 @@ namespace KGySoft.Serialization.Xml
             expectedTypes = new StringKeyedDictionary<Type>();
 
             // Adding allowed types. Skipping possible object root type because object is parsed anyway.
-            var types = new Queue<Type>(expectedCustomTypes ?? Reflector.EmptyArray<Type>());
-            if (RootType is not null)
-                types.Enqueue(RootType);
-
-#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
-            while (types.TryDequeue(out Type? type))
-#else
-            while (types.Count > 0)
-#endif
+            foreach (Type type in new RootTypeEnumerator(RootType, expectedCustomTypes))
             {
-#if !(NETCOREAPP || NETSTANDARD2_1_OR_GREATER)
-                    var type = types.Dequeue(); 
-#endif
-                if (type == null!)
-                    Throw.ArgumentException(Argument.expectedCustomTypes, Res.ArgumentContainsNull);
-
-                while (type!.HasElementType)
-                    type = type.GetElementType();
-
-                if (type.IsConstructedGenericType())
-                {
-                    foreach (Type arg in type.GetGenericArguments())
-                        types.Enqueue(arg);
-                    type = type.GetGenericTypeDefinition();
-                }
-
                 // Unlike in binary serialization, using only full name for expected types
                 string typeName = type.FullName!;
                 if (typeName == null!)

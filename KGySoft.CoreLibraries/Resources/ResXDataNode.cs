@@ -1656,8 +1656,12 @@ namespace KGySoft.Resources
                 else
                 {
                     var binder = new ForwardedTypesSerializationBinder { SafeMode = safeMode };
-                    if (expectedType != null)
-                        binder.AddType(expectedType);
+                    if (expectedType is not null)
+                    {
+                        foreach (Type type in new RootTypeEnumerator(expectedType))
+                            binder.AddType(type);
+                    }
+
                     serializer.Binder = binder;
                 }
 
