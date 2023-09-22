@@ -916,6 +916,64 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 
         #endregion
 
+        #region ClassRecord record class
+
+        private sealed record ClassRecord(string StringProp, int IntProp)
+        {
+            #region Constructors
+            
+            public ClassRecord() : this(default, default)
+            {
+            }
+
+            #endregion
+        }
+
+        #endregion
+
+        #region TrustedComplexClass
+
+        private class TrustedComplexClass
+        {
+            #region Fields
+
+            // Though a queue cannot be populated by interface methods, the field can be reset, even if readonly
+            public readonly Queue<int> QueueField = new();
+
+            #endregion
+
+            #region Properties
+
+            // Read-only property: the already existing instance will be used on deserialization so the unsupported comparer is no problem
+            public Dictionary<string, int> DictionaryProperty { get; } = new(StringComparer.CurrentCulture);
+
+            #endregion
+        }
+
+        #endregion
+
+        #region RefPropertyClass class
+
+        private sealed class RefPropertyClass
+        {
+            #region Fields
+
+            private readonly List<int> list = new();
+
+            private int intField;
+
+            #endregion
+
+            #region Properties
+
+            public ref int RefProperty => ref intField;
+            public ref readonly List<int> RefReadOnlyCollection => ref list;
+
+            #endregion
+        }
+
+        #endregion
+
         #endregion
 
         #region Nested structs
@@ -1116,6 +1174,21 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 
             public int*[] PointerArray { get; set; }
             public void** PointerOfPointer { get; set; }
+
+            #endregion
+        }
+
+        #endregion
+
+        #region ValueRecord record struct
+
+        private record struct ValueRecord(string StringProp, int IntProp)
+        {
+            #region Constructors
+
+            public ValueRecord() : this(default, default)
+            {
+            }
 
             #endregion
         }

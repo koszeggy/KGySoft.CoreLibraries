@@ -1298,8 +1298,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             //SystemSerializeObjects(referenceObjects); - NullReferenceException
 
             var expectedTypes = GetExpectedTypes(referenceObjects).Concat(new[] { typeof(Version), typeof(TestEnum), typeof(BinarySerializableSealedClass) }).ToList();
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.None, expectedTypes: expectedTypes);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, expectedTypes: expectedTypes);
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback, expectedTypes: expectedTypes);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback, expectedTypes: expectedTypes);
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, expectedTypes: expectedTypes); // everything
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, expectedTypes: expectedTypes); // as content, nested collections and non-simple types; otherwise every element
@@ -1333,7 +1333,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             // SystemSerializeObjects(referenceObjects); // InvalidOperationException: _LibrariesTest.Libraries.Serialization.XmlSerializerTest+CustomGenericCollection`1[[System.Collections.Generic.KeyValuePair`2[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[System.Object, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]] is inaccessible due to its protection level. Only public types can be processed.
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // all
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // all
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback, false); // all
 
 #if !NET35
             // these collections are not supported recursively at all
@@ -1425,6 +1425,75 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.FullyQualifiedNames);
             KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.FullyQualifiedNames | XmlSerializationOptions.IgnoreTypeForwardedFromAttribute);
         }
+
+        [Test]
+        public void SerializeRecords()
+        {
+            object[] referenceObjects =
+            {
+                new ClassRecord("alpha", 1),
+                new ValueRecord("alpha", 1),
+            };
+
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback);
+        }
+
+        [Test]
+        public void SerializeTrustedComplexObject()
+        {
+            var testObj = new TrustedComplexClass
+            {
+                DictionaryProperty = { { "alpha", 1 }, { "beta", 2 } }
+            };
+
+            testObj.QueueField.Enqueue(1);
+
+            KGySerializeObject(testObj, XmlSerializationOptions.None);
+        }
+
+        [Test]
+        public void SerializeRefProperty()
+        {
+            var testObj = new RefPropertyClass
+            {
+                RefProperty = 1,
+                RefReadOnlyCollection = { 1, 2, 3 }
+            };
+
+            // Ref properties are ignored by default
+            Throws<AssertionException>(() => KGySerializeObject(testObj, XmlSerializationOptions.RecursiveSerializationAsFallback), "Equality check failed");
+
+            // But they can be included. Ref readonly is handled as normal read-only: they are considered for collections
+            KGySerializeObject(testObj, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.IncludeRefProperties);
+
+            // Binary: IncludeRefProperties is needed for content serialization
+            KGySerializeObject(testObj, XmlSerializationOptions.BinarySerializationAsFallback | XmlSerializationOptions.IncludeRefProperties, safeMode: false);
+        }
+
+#if NET47_OR_GREATER || NETCOREAPP
+        [Test]
+        public void SerializeTuples()
+        {
+            object[] referenceObjects =
+            {
+                ValueTuple.Create(),
+                ValueTuple.Create(1),
+                ValueTuple.Create(1, 2u),
+                ValueTuple.Create(1, 2u, 3L),
+                ValueTuple.Create(1, 2u, 3L, 4ul),
+                ValueTuple.Create(1, 2u, 3L, 4ul, "5"),
+                ValueTuple.Create(1, 2u, 3L, 4ul, "5", '6'),
+                ValueTuple.Create(1, 2u, 3L, 4ul, "5", '6', 7f),
+                ValueTuple.Create(1, 2u, 3L, 4ul, "5", '6', 7f, 8d), // TRest is is ValueTuple`1
+                (1, 2u, 3L, 4ul, "5", '6', 7f, 8d, 9m), // TRest is ValueTuple`2
+                new ValueTuple<int, uint, long, ulong, string, char, float, double> { Item1 = 1, Item2 = 2u, Item3 = 3L, Item4 = 4ul, Item5 = "5", Item6 = '6', Item7 = 7f, Rest = 8d, }, // TRest is not a nested tuple
+            };
+
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback);
+        }
+#endif
 
         [Test]
         public void UsePropertySetterIfPossibleTest()
@@ -1544,15 +1613,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             using (var reader = XmlReader.Create(new StringReader(xml.ToString()), new XmlReaderSettings { CloseInput = true }))
                 list = XmlSerializer.DeserializeSafe<List<int>>(reader);
             AssertItemsEqual(obj, list);
-        }
-
-        [Test]
-        public void Test()
-        {
-            // records
-            // ref properties
-            // tuples
-            throw new NotImplementedException();
         }
 
         #endregion
