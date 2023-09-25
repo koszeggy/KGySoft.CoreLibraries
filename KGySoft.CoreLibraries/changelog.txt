@@ -15,6 +15,11 @@
   ! Parse methods: When parsing a Type it is no longer allowed to load assemblies during the operation
     if the value to parse contains assembly qualified names of unloaded assemblies. You still can use the
     Reflector.ResolveType method with the appropriate options to allow loading assemblies.
+! TypeExtensions class:
+  ! RegisterTypeConverter: When this method was called repeatedly for the same type the 2nd and further calls had
+    no effect. From now on the latest registration will be used and possible temporary registrations can be removed.
+  + New UnregisterTypeConverter method: It allows removing the custom type converter registrations added by the
+    RegisterTypeConverter method.
 + ArrayExtensions class:
   + New AsSection overload for ArraySegment<T>
   + New AsArray2D overload for ArraySegment<T>

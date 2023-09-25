@@ -154,6 +154,22 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
             Assert.AreEqual(testData, retrieved);
         }
 
+        [Test]
+        public void RegistrationTest()
+        {
+            var attr = new TypeConverterAttribute(typeof(BinaryTypeConverter));
+            if (TypeDescriptor.GetAttributes(typeof(ConsoleColor)).Contains(attr))
+                Assert.Inconclusive("A custom TypeConverter for ConsoleColor is already registered");
+
+            Assert.IsFalse(TypeDescriptor.GetAttributes(typeof(ConsoleColor)).Contains(attr));
+            typeof(ConsoleColor).RegisterTypeConverter<BinaryTypeConverter>();
+            Assert.IsTrue(TypeDescriptor.GetAttributes(typeof(ConsoleColor)).Contains(attr));
+            Assert.IsInstanceOf<BinaryTypeConverter>(TypeDescriptor.GetConverter(typeof(ConsoleColor)));
+            typeof(ConsoleColor).UnregisterTypeConverter<BinaryTypeConverter>();
+            Assert.IsFalse(TypeDescriptor.GetAttributes(typeof(ConsoleColor)).Contains(attr));
+            Assert.IsNotInstanceOf<BinaryTypeConverter>(TypeDescriptor.GetConverter(typeof(ConsoleColor)));
+        }
+
         #endregion
     }
 }

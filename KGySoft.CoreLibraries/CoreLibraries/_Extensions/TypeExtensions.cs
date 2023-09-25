@@ -133,6 +133,9 @@ namespace KGySoft.CoreLibraries
 
         private static IThreadSafeCacheAccessor<(Type, string), bool>? matchesNameCache;
 
+        // Using TypeConverterAttribute in key instead of TypeConverter because its Equals is by value
+        private volatile static LockingDictionary<(Type Type, TypeConverterAttribute Converter), (TypeDescriptionProvider Provider, int Count)>? registeredTypeConverters;
+
         #endregion
 
         #region Properties
@@ -333,10 +336,62 @@ namespace KGySoft.CoreLibraries
         {
             if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
-            TypeConverterAttribute attr = new TypeConverterAttribute(typeof(TConverter));
+            var attr = new TypeConverterAttribute(typeof(TConverter));
 
-            if (!TypeDescriptor.GetAttributes(type).Contains(attr))
-                TypeDescriptor.AddAttributes(type, attr);
+            if (registeredTypeConverters == null)
+                Interlocked.CompareExchange(ref registeredTypeConverters, new(), null);
+
+            try
+            {
+                registeredTypeConverters.Lock();
+                var key = (type, attr);
+                if (registeredTypeConverters.TryGetValue(key, out var value))
+                {
+                    registeredTypeConverters[key] = (value.Provider, value.Count + 1);
+                    return;
+                }
+
+                registeredTypeConverters[key] = (TypeDescriptor.AddAttributes(type, attr), 1);
+            }
+            finally
+            {
+                registeredTypeConverters.Unlock();
+            }
+        }
+
+        [SecuritySafeCritical]
+        public static bool UnregisterTypeConverter<TConverter>(this Type type) where TConverter : TypeConverter
+        {
+            if (type == null!)
+                Throw.ArgumentNullException(Argument.type);
+
+            if (registeredTypeConverters == null)
+                return false;
+
+            var attr = new TypeConverterAttribute(typeof(TConverter));
+
+            try
+            {
+                registeredTypeConverters.Lock();
+                var key = (type, attr);
+                if (!registeredTypeConverters.TryGetValue(key, out var value))
+                    return false;
+
+                if (value.Count > 1)
+                {
+                    registeredTypeConverters[key] = (value.Provider, value.Count - 1);
+                    return true;
+                }
+
+                TypeDescriptor.RemoveProvider(value.Provider, type);
+                registeredTypeConverters.Remove(key);
+                TypeDescriptor.Refresh(type);
+                return true;
+            }
+            finally
+            {
+                registeredTypeConverters.Unlock();
+            }
         }
 
         /// <summary>

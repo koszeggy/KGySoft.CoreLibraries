@@ -836,27 +836,37 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             typeof(List<TestEnum>).RegisterTypeConverter<ByteListConverter>();
             typeof(HashSet<byte>).RegisterTypeConverter<ByteListConverter>();
             typeof(HashSet<TestEnum>).RegisterTypeConverter<ByteListConverter>();
-            IEnumerable[] referenceObjects =
+            try
             {
-                new List<int> {1, 2, 3}, // no converter - raw
-                new List<byte> {1, 2, 3}, // full mscorlib
-                new List<TestEnum> {(TestEnum) 1, (TestEnum) 2, (TestEnum) 3}, // mscorlib generic type with custom element
+                IEnumerable[] referenceObjects =
+                {
+                    new List<int> { 1, 2, 3 }, // no converter - raw
+                    new List<byte> { 1, 2, 3 }, // full mscorlib
+                    new List<TestEnum> { (TestEnum)1, (TestEnum)2, (TestEnum)3 }, // mscorlib generic type with custom element
 
-                new HashSet<int> {1, 2, 3}, // no converter - raw
-                new HashSet<byte> {1, 2, 3}, // non-mscorlib type with mscorlib element
-                new HashSet<TestEnum> {(TestEnum) 1, (TestEnum) 2, (TestEnum) 3}, // full non-mscorlib generic type
-            };
+                    new HashSet<int> { 1, 2, 3 }, // no converter - raw
+                    new HashSet<byte> { 1, 2, 3 }, // non-mscorlib type with mscorlib element
+                    new HashSet<TestEnum> { (TestEnum)1, (TestEnum)2, (TestEnum)3 }, // full non-mscorlib generic type
+                };
 
-            //SystemSerializeObjects(referenceObjects); // system serializer fails on generic types
+                //SystemSerializeObjects(referenceObjects); // system serializer fails on generic types
 
 #if !NETFRAMEWORK
-            // To be able to resolve HashSet in safe mode
-            Reflector.ResolveAssembly("System.Core");
+                // To be able to resolve HashSet in safe mode
+                Reflector.ResolveAssembly("System.Core");
 #endif
 #if !NET8_0_OR_GREATER
-            KGySerializeObjects(referenceObjects, true, false, safeMode: false); // system reader fails on full non-mscorlib type parsing 
+                KGySerializeObjects(referenceObjects, true, false, safeMode: false); // system reader fails on full non-mscorlib type parsing 
 #endif
-            KGySerializeObjects(referenceObjects, false);
+                KGySerializeObjects(referenceObjects, false);
+            }
+            finally
+            {
+                typeof(List<byte>).UnregisterTypeConverter<ByteListConverter>();
+                typeof(List<TestEnum>).UnregisterTypeConverter<ByteListConverter>();
+                typeof(HashSet<byte>).UnregisterTypeConverter<ByteListConverter>();
+                typeof(HashSet<TestEnum>).UnregisterTypeConverter<ByteListConverter>();
+            }
         }
 
         [Test]
