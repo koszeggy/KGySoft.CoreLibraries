@@ -369,6 +369,11 @@ namespace KGySoft.CoreLibraries
         /// <param name="type">The <see cref="Type"/> to be associated with the <typeparamref name="TConverter"/> to unregister.</param>
         /// <returns><see langword="true"/> if the type converter was successfully unregistered; <see langword="false"/> if <typeparamref name="TConverter"/>
         /// was not registered by the <see cref="RegisterTypeConverter{TConverter}">RegisterTypeConverter</see> method.</returns>
+        /// <remarks>
+        /// <para>After calling this method the original type converter will be restored for the specified <paramref name="type"/>.</para>
+        /// <para>If <see cref="RegisterTypeConverter{TConverter}">RegisterTypeConverter</see> was called multiple times for the same <paramref name="type"/>
+        /// and <typeparamref name="TConverter"/>, then this method should be also called the same number of times to restore the original converter.</para>
+        /// </remarks>
         [SecuritySafeCritical]
         public static bool UnregisterTypeConverter<TConverter>(this Type type) where TConverter : TypeConverter
         {
