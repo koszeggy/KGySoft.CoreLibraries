@@ -327,10 +327,12 @@ namespace KGySoft.CoreLibraries
         /// <remarks>
         /// <para>After calling this method the <see cref="TypeDescriptor.GetConverter(Type)">TypeDescriptor.GetConverter</see>
         /// method will return the converter defined in <typeparamref name="TConverter"/>.</para>
-        /// <note>Please note that if <see cref="TypeDescriptor.GetConverter(Type)">TypeDescriptor.GetConverter</see>
-        /// has already been called for <paramref name="type"/> before registering the new converter, then the further calls
-        /// after the registering may continue to return the original converter. So make sure you register your custom converters
-        /// at the start of your application.</note></remarks>
+        /// <para>To remove the registered converter and restore the previous one call
+        /// the <see cref="UnregisterTypeConverter{TConverter}">UnregisterTypeConverter</see> method.</para>
+        /// <note>If you want to permanently set a custom converter for a type, then it is recommended to register it at the start of your application
+        /// or service. It is also possible to register a converter temporarily, and then restore the previous converter by calling
+        /// the <see cref="UnregisterTypeConverter{TConverter}">UnregisterTypeConverter</see> method but then you must make sure there is no
+        /// running concurrent operation on a different thread that expects to use an other converter for the same type.</note></remarks>
         [SecuritySafeCritical]
         public static void RegisterTypeConverter<TConverter>(this Type type) where TConverter : TypeConverter
         {
@@ -352,6 +354,7 @@ namespace KGySoft.CoreLibraries
                 }
 
                 registeredTypeConverters[key] = (TypeDescriptor.AddAttributes(type, attr), 1);
+                TypeDescriptor.Refresh(type);
             }
             finally
             {
@@ -359,6 +362,13 @@ namespace KGySoft.CoreLibraries
             }
         }
 
+        /// <summary>
+        /// Unregisters a type converter for a type that was registered by the <see cref="RegisterTypeConverter{TConverter}">RegisterTypeConverter</see> method.
+        /// </summary>
+        /// <typeparam name="TConverter">The <see cref="TypeConverter"/> to be unregistered.</typeparam>
+        /// <param name="type">The <see cref="Type"/> to be associated with the <typeparamref name="TConverter"/> to unregister.</param>
+        /// <returns><see langword="true"/> if the type converter was successfully unregistered; <see langword="false"/> if <typeparamref name="TConverter"/>
+        /// was not registered by the <see cref="RegisterTypeConverter{TConverter}">RegisterTypeConverter</see> method.</returns>
         [SecuritySafeCritical]
         public static bool UnregisterTypeConverter<TConverter>(this Type type) where TConverter : TypeConverter
         {

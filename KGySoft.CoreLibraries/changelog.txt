@@ -16,8 +16,11 @@
     if the value to parse contains assembly qualified names of unloaded assemblies. You still can use the
     Reflector.ResolveType method with the appropriate options to allow loading assemblies.
 ! TypeExtensions class:
-  ! RegisterTypeConverter: When this method was called repeatedly for the same type the 2nd and further calls had
-    no effect. From now on the latest registration will be used and possible temporary registrations can be removed.
+  ! RegisterTypeConverter method:
+    + When this method was called repeatedly for the same type the 2nd and further calls had no effect. From now on
+      the latest registration will be used and possible temporary registrations can be removed.
+    - If this method was called after a TypeDescriptor.GetConverter call for the same type, then the further
+      TypeDescriptor.GetConverter calls continued to return the original converter.
   + New UnregisterTypeConverter method: It allows removing the custom type converter registrations added by the
     RegisterTypeConverter method.
 + ArrayExtensions class:
