@@ -943,8 +943,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 new LinkedList<int[]>(new int[][] { new int[] { 1, 2, 3 }, null }),
 
                 // trusted with a known comparer
-                new SortedSet<int> { 1, 2, 3 },
-
                 new ThreadSafeHashSet<int> { 1, 2, 3 },
 
                 new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } },
@@ -965,6 +963,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 new StringKeyedDictionary<int> { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } },
 
 #if !NET35
+                new SortedSet<int> { 1, 2, 3 },
                 new ConcurrentDictionary<int, string>(new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } }),
 #endif
             };
@@ -1075,11 +1074,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 new HashSet<string>(StringSegmentComparer.OrdinalNonRandomized) { "alpha", "beta", "gamma" },
                 new HashSet<string>(StringSegmentComparer.OrdinalIgnoreCaseNonRandomized) { "alpha", "beta", "gamma" },
 
-                new SortedSet<byte>(Comparer<byte>.Default) { 1, 2, 3 },
-                new SortedSet<ConsoleColor>(EnumComparer<ConsoleColor>.Comparer) { ConsoleColor.Red, ConsoleColor.Green, ConsoleColor.Blue },
-
-                new ThreadSafeHashSet<ConsoleColor>(EqualityComparer<ConsoleColor>.Default) { ConsoleColor.Red, ConsoleColor.Green, ConsoleColor.Blue },
-                new ThreadSafeHashSet<ConsoleColor>(EnumComparer<ConsoleColor>.Comparer) { ConsoleColor.Red, ConsoleColor.Green, ConsoleColor.Blue },
+                new ThreadSafeHashSet<byte>(EqualityComparer<byte>.Default) { 1, 2, 3 },
+                new ThreadSafeHashSet<ConsoleColor>(ComparerHelper<ConsoleColor>.EqualityComparer) { ConsoleColor.Red, ConsoleColor.Green, ConsoleColor.Blue },
 
                 new Dictionary<string, int>(EqualityComparer<string>.Default) { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } },
                 new Dictionary<string, int>(StringComparer.Ordinal) { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } },
@@ -1099,13 +1095,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 
                 new ThreadSafeDictionary<string, int>(EqualityComparer<string>.Default) { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } },
                 new ThreadSafeDictionary<string, int>(StringComparer.Ordinal) { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } },
-                new ThreadSafeDictionary<ConsoleColor, int>(EnumComparer<ConsoleColor>.Comparer) { { ConsoleColor.Red, 1 }, { ConsoleColor.Green, 2 }, { ConsoleColor.Blue, 3 } },
+                new ThreadSafeDictionary<ConsoleColor, int>(ComparerHelper<ConsoleColor>.EqualityComparer) { { ConsoleColor.Red, 1 }, { ConsoleColor.Green, 2 }, { ConsoleColor.Blue, 3 } },
 
                 new StringKeyedDictionary<int>(StringSegmentComparer.Ordinal) { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } },
                 new StringKeyedDictionary<int>(StringSegmentComparer.OrdinalIgnoreCase) { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } },
 
 #if !NET35
-		        new ConcurrentDictionary<string, int>(EqualityComparer<string>.Default) { ["alpha"] = 1, ["beta"] = 2, ["gamma"] = 3 },
+                new SortedSet<byte>(Comparer<byte>.Default) { 1, 2, 3 },
+                new SortedSet<ConsoleColor>(EnumComparer<ConsoleColor>.Comparer) { ConsoleColor.Red, ConsoleColor.Green, ConsoleColor.Blue },
+
+                new ConcurrentDictionary<string, int>(EqualityComparer<string>.Default) { ["alpha"] = 1, ["beta"] = 2, ["gamma"] = 3 },
                 new ConcurrentDictionary<string, int>(StringComparer.Ordinal) { ["alpha"] = 1, ["beta"] = 2, ["gamma"] = 3 },
                 new ConcurrentDictionary<ConsoleColor, int>(EnumComparer<ConsoleColor>.Comparer) { [ConsoleColor.Red] = 1, [ConsoleColor.Green] = 2, [ConsoleColor.Blue] = 3 },
 #endif
@@ -1252,7 +1251,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
 
-            Throws<AssertionException>(() => KGySerializeObjects(referenceObjects, XmlSerializationOptions.ExcludeFields), "Equality check failed at type ValueTuple`2[Int32,String]: (13, alpha) <-> (0, )");
+            Throws<AssertionException>(() => KGySerializeObjects(referenceObjects, XmlSerializationOptions.ExcludeFields), "Equality check failed");
         }
 
         /// <summary>

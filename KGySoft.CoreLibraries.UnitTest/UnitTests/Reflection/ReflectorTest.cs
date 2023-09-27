@@ -84,7 +84,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             public int IntProp { get; set; }
             public ref int RefIntProperty => ref IntField;
-            public ref string RefStringProperty => ref StringField;
             public ref readonly int RefReadonlyProperty => ref ReadOnlyValueField;
 
             #endregion
@@ -716,7 +715,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             Console.Write("System Reflection...");
             object[] parameters = (object[])args.Clone();
+#if NETCOREAPP3_0_OR_GREATER // NotSupportedException : ByRef return value not supported in reflection invocation.
             object result = mi.Invoke(test, parameters);
+#else
+            object result = test.TestRefFunction(arg);
+#endif
             Assert.AreEqual(arg, result);
             Assert.AreEqual(arg, test.IntField);
 
@@ -1420,12 +1423,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             int value = 1;
 
             Console.Write("System Reflection...");
-#if NET8_0_OR_GREATER // ArgumentException : Property set method not found.
+#if NET9_0_OR_GREATER // ArgumentException : Property set method not found.
             pi.SetValue(test, value, null);
 #else
             ((TestClass)test).RefIntProperty = value;
 #endif
+#if NETCOREAPP3_0_OR_GREATER // NotSupportedException : ByRef return value not supported in reflection invocation.
             result = pi.GetValue(test, null);
+#else
+            result = ((TestClass)test).RefIntProperty;
+#endif
             Assert.AreEqual(value, result);
 
             test = new TestClass(0);
@@ -1482,12 +1489,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             int value = 1;
 
             Console.Write("System Reflection...");
-#if NET8_0_OR_GREATER // ArgumentException : Property set method not found.
+#if NET9_0_OR_GREATER // ArgumentException : Property set method not found.
             pi.SetValue(test, value, null);
 #else
             typeof(TestClass).GetField(nameof(TestClass.ReadOnlyValueField))!.SetValue(test, value);
 #endif
+#if NETCOREAPP3_0_OR_GREATER // NotSupportedException : ByRef return value not supported in reflection invocation.
             result = pi.GetValue(test, null);
+#else
+            result = ((TestClass)test).RefReadonlyProperty;
+#endif
             Assert.AreEqual(value, result);
 
             test = new TestClass(0);
@@ -1599,12 +1610,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             object result, value = 1;
 
             Console.Write("System Reflection...");
-#if NET8_0_OR_GREATER // ArgumentException : Property set method not found.
+#if NET9_0_OR_GREATER // ArgumentException : Property set method not found.
             pi.SetValue(null, value, null);
 #else
             TestClass.StaticRefProperty = 1;
 #endif
+#if NETCOREAPP3_0_OR_GREATER // NotSupportedException : ByRef return value not supported in reflection invocation.
             result = pi.GetValue(null, null);
+#else
+            result = TestClass.StaticRefProperty;
+#endif
             Assert.AreEqual(value, result);
 
             TestClass.StaticIntProp = 0;
@@ -1650,12 +1665,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             object result, value = 1;
 
             Console.Write("System Reflection...");
-#if NET8_0_OR_GREATER // ArgumentException : Property set method not found.
+#if NET9_0_OR_GREATER // ArgumentException : Property set method not found.
             pi.SetValue(null, value, null);
 #else
             TestClass.StaticIntField = 1;
 #endif
+#if NETCOREAPP3_0_OR_GREATER // NotSupportedException : ByRef return value not supported in reflection invocation.
             result = pi.GetValue(null, null);
+#else
+            result = TestClass.StaticRefReadonlyProperty;
+#endif
             Assert.AreEqual(value, result);
 
             TestClass.StaticIntProp = 0;
@@ -1797,12 +1816,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             Console.Write("System Reflection...");
             object[] parameters = (object[])args.Clone();
-#if NET8_0_OR_GREATER // ArgumentException : Property set method not found.
+#if NET9_0_OR_GREATER // ArgumentException : Property set method not found.
             pi.SetValue(test, value, parameters);
 #else
             test[arg] = value;
 #endif
+#if NETCOREAPP3_0_OR_GREATER // NotSupportedException : ByRef return value not supported in reflection invocation.
             result = pi.GetValue(test, parameters);
+#else
+            result = test[arg];
+#endif
             Assert.AreEqual(value, result);
 
             test = new TestClass(0);
@@ -1949,12 +1972,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             int value = 1;
 
             Console.Write("System Reflection...");
-#if NET8_0_OR_GREATER // ArgumentException : Property set method not found.
+#if NET9_0_OR_GREATER // ArgumentException : Property set method not found.
             pi.SetValue(test, value, null);
 #else
             ((TestStruct)test).RefIntProperty = 1;
 #endif
+#if NETCOREAPP3_0_OR_GREATER // NotSupportedException : ByRef return value not supported in reflection invocation.
             result = pi.GetValue(test, null);
+#else
+            result = ((TestStruct)test).RefIntProperty;
+#endif
             Assert.AreEqual(value, result);
 
             test = new TestStruct(0);
@@ -2015,12 +2042,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             object result, value = 1;
 
             Console.Write("System Reflection...");
-#if NET8_0_OR_GREATER // ArgumentException : Property set method not found.
+#if NET9_0_OR_GREATER // ArgumentException : Property set method not found.
             pi.SetValue(test, value, null);
 #else
             typeof(TestStruct).GetField(nameof(TestStruct.StaticIntField))!.SetValue(null, value);
 #endif
+#if NETCOREAPP3_0_OR_GREATER // NotSupportedException : ByRef return value not supported in reflection invocation.
             result = pi.GetValue(test, null);
+#else
+            result = ((TestStruct)test).RefReadonlyProperty;
+#endif
             Assert.AreEqual(value, result);
 
             test = new TestStruct(0);

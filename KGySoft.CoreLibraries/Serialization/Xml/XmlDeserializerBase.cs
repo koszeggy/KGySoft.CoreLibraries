@@ -17,7 +17,9 @@
 
 using System;
 using System.Collections;
+#if !NET35
 using System.Collections.Concurrent;
+#endif
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
@@ -229,7 +231,6 @@ namespace KGySoft.Serialization.Xml
         {
             { Reflector.DictionaryGenType, CreateCollectionWithGenericEqualityComparer },
             { typeof(HashSet<>), CreateCollectionWithGenericEqualityComparer },
-            { typeof(SortedSet<>), CreateCollectionWithGenericComparer },
             { typeof(ThreadSafeHashSet<>), CreateCollectionWithGenericEqualityComparerAndHashingStrategy },
             { typeof(SortedList<,>), CreateCollectionWithGenericComparer },
             { typeof(SortedDictionary<,>), CreateCollectionWithGenericComparer },
@@ -237,6 +238,7 @@ namespace KGySoft.Serialization.Xml
             { typeof(ThreadSafeDictionary<,>), CreateCollectionWithGenericEqualityComparerAndHashingStrategy },
             { typeof(StringKeyedDictionary<>), (t, c) => typeof(StringKeyedDictionary<>).GetGenericType(t.GetGenericArguments()[0]).CreateInstance(typeof(StringSegmentComparer), ToComparer(c)) },
 #if !NET35
+            { typeof(SortedSet<>), CreateCollectionWithGenericComparer },
             { typeof(ConcurrentDictionary<,>), CreateCollectionWithGenericEqualityComparer },
 #endif
             { typeof(Hashtable), (_, c) => new Hashtable((IEqualityComparer?)ToComparer(c)) },

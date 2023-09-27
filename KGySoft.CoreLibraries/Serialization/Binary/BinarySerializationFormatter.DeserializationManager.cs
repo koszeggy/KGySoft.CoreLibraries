@@ -30,7 +30,7 @@ using System.Numerics;
 #endif
 using System.Reflection;
 using System.Runtime.CompilerServices;
-#if NET7_0_OR_GREATER
+#if NET6_0_OR_GREATER
 using System.Runtime.InteropServices;
 #endif
 using System.Runtime.Serialization;

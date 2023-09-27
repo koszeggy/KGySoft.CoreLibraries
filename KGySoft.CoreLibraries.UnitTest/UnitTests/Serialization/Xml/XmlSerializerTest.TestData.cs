@@ -927,6 +927,18 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             }
 
             #endregion
+
+            #region Methods
+
+#if NET35 // Compiler bug: CS0656: Missing compiler required member 'System.Type.op_Equality'
+            public bool Equals(ClassRecord other) => ReferenceEquals(this, other)
+                || (other is not null
+                    && EqualityContract == other.EqualityContract
+                    && StringProp == other.StringProp
+                    && IntProp == other.IntProp);
+#endif
+
+            #endregion
         }
 
         #endregion

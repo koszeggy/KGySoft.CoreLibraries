@@ -57,7 +57,6 @@ namespace KGySoft.CoreLibraries
         internal static IEqualityComparer<T> GetEqualityComparer(IEqualityComparer<T>? comparer) => comparer ?? EqualityComparer;
 #endif
 
-
         internal static bool IsDefaultComparer(IEqualityComparer<T>? comparer)
             => comparer == null
                 || ReferenceEquals(comparer, EqualityComparer)

@@ -486,7 +486,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 #if NETFRAMEWORK
             SystemSerializeObjects(referenceObjects);
 #endif
-            KGySerializeObjects(referenceObjects, true, false); // the system serializer cannot deserialize the -0 correctly on older platforms
+
+#if NET5_0 || NET6_0
+            KGySerializeObjects(referenceObjects, true, safeMode: false); // Half has no TypeConverter so uses BinaryFormatter on these platforms
+#else
+            KGySerializeObjects(referenceObjects, true, false); // the system serializer cannot deserialize the -0 correctly on older platforms 
+#endif
             KGySerializeObjects(referenceObjects, false);
         }
 
@@ -513,7 +518,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 #endif
             };
 
-            KGySerializeObjects(referenceObjects, true, false); 
+#if NET6_0
+            KGySerializeObjects(referenceObjects, true, safeMode: false);
+#else
+            KGySerializeObjects(referenceObjects, true);
+#endif
+
             KGySerializeObjects(referenceObjects, false);
         }
 
@@ -751,13 +761,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 #if NETFRAMEWORK
             SystemSerializeObjects(referenceObjects);
 #endif
+
 #if NETCOREAPP3_0 // .NET Core 3.0 fails to deserialize empty byte array - returns null instead
-            KGySerializeObjects(referenceObjects, true, false);
-            KGySerializeObjects(referenceObjects, false, false);
-#else
-#if !NET8_0_OR_GREATER
             KGySerializeObjects(referenceObjects, true, safeMode: false); // apart from simple byte[] BinaryFormatter is used, which is not supported in safe mode
-#endif
+            KGySerializeObjects(referenceObjects, false, false);
+#elif !NET8_0_OR_GREATER
+            KGySerializeObjects(referenceObjects, true, safeMode: false); // apart from simple byte[] BinaryFormatter is used, which is not supported in safe mode
+#else
             KGySerializeObjects(referenceObjects, false);
 #endif
         }

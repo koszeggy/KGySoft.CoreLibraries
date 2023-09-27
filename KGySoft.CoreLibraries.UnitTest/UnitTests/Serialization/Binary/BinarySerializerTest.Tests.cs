@@ -1267,7 +1267,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #if NETCOREAPP3_0_OR_GREATER
                 Vector64.Create(1, 2, 3, 4),
                 Vector64.Create(1.2f, 3.4f),
+#if NET6_0 // Only in .NET 6 Expression.Field works incorrectly for Vector128. Not a big problem because affects ForceRecursiveSerializationOfSupportedTypes only
+                Vector128.Create(1, 2),
+#else
                 Vector128.Create(1, 2, 3, 4),
+#endif
                 Vector128.Create(1.2d, 3.4d),
                 Vector256.Create(1, 2, 3, 4),
                 Vector256.Create(1.2d, 3.4d, 5.6d, 7.8d),
@@ -1592,7 +1596,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode);
 
-#if !NET7_0_OR_GREATER // forced recursive serialization is dangerous for ConcurrentBag in .NET 7 and above: https://github.com/dotnet/runtime/issues/67491
+#if !NET6_0_OR_GREATER // .NET6: Expression.Field gets fields of Vector128<int> incorrectly; .NET 7+: ConcurrentBag: https://github.com/dotnet/runtime/issues/67491
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.RecursiveSerializationAsFallback);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.RecursiveSerializationAsFallback);
 #endif
@@ -2010,7 +2014,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
 #if NETCOREAPP3_0_OR_GREATER
                 Vector64.Create(1, 2, 3, 4),
+#if NET6_0 // Only in .NET 6 Expression.Field works incorrectly for Vector128. Not a big problem because affects the TestSurrogateSelector only
+                Vector128.Create(1, 2),
+#else
                 Vector128.Create(1, 2, 3, 4),
+#endif
                 Vector256.Create(1, 2, 3, 4),
 #endif
 #if NET8_0_OR_GREATER
@@ -2091,12 +2099,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             };
 
             // default
-            SystemSerializeObjects(referenceObjects); // system serialization fails: IBinarySerializable, Rune, etc. is not serializable
+            //SystemSerializeObjects(referenceObjects); // system serialization fails: IBinarySerializable, Rune, etc. is not serializable
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
             var selector = new TestSurrogateSelector();
             string title = nameof(TestSurrogateSelector);
-            SystemSerializeObjects(referenceObjects, title, surrogateSelector: selector); // system deserialization fails: Invalid BinaryFormatter stream.
+            //SystemSerializeObjects(referenceObjects, title, surrogateSelector: selector); // system deserialization fails: Invalid BinaryFormatter stream.
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, title, surrogateSelector: selector);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.TryUseSurrogateSelectorForAnyType, title, surrogateSelector: selector);
             Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, title, surrogateSelector: selector), Res.BinarySerializationSurrogateNotAllowedInSafeMode);
@@ -2864,7 +2872,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #if !NET35
 		        Reflector.ResolveType("System.Collections.ObjectModel.ObservableCollection`1+SimpleMonitor"),
 #endif
-                typeof(List<>), Reflector.ResolveType("System.UnitySerializationHolder"), EqualityComparer<int>.Default.GetType(), typeof(IEqualityComparer<>)
+                typeof(List<>),
+#if !NETCOREAPP2_0
+                Reflector.ResolveType("System.UnitySerializationHolder"),
+#endif
+                EqualityComparer<int>.Default.GetType(),
+                typeof(IEqualityComparer<>)
             });
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.SafeMode, expectedTypes: expectedTypes);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.IgnoreTypeForwardedFromAttribute | BinarySerializationOptions.SafeMode, expectedTypes: expectedTypes);

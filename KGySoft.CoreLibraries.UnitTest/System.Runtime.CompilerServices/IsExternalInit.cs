@@ -1,4 +1,4 @@
-﻿#if NETFRAMEWORK || NETCOREAPP3_0
+﻿#if NETFRAMEWORK || NETCOREAPP && !NET
 // ReSharper disable once CheckNamespace
 namespace System.Runtime.CompilerServices
 {

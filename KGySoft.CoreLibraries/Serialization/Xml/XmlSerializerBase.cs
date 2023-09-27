@@ -130,7 +130,6 @@ namespace KGySoft.Serialization.Xml
         private static readonly Dictionary<Type, ComparerType> knownCollectionsWithComparer = new()
         {
             { typeof(HashSet<>), ComparerType.Default },
-            { typeof(SortedSet<>), ComparerType.Default },
             { typeof(ThreadSafeHashSet<>), ComparerType.Default },
             { Reflector.DictionaryGenType, ComparerType.Default },
             { typeof(SortedList<,>), ComparerType.Default },
@@ -139,6 +138,7 @@ namespace KGySoft.Serialization.Xml
             { typeof(ThreadSafeDictionary<,>), ComparerType.Default },
             { typeof(StringKeyedDictionary<>), ComparerType.StringSegmentOrdinal },
 #if !NET35
+            { typeof(SortedSet<>), ComparerType.Default },
             { typeof(ConcurrentDictionary<,>), ComparerType.Default },
 #endif
             { typeof(Hashtable), ComparerType.None },
@@ -238,6 +238,10 @@ namespace KGySoft.Serialization.Xml
 
             object? comparer = collection.GetComparer();
             ComparerType comparerType = ToComparerType(comparer, isGeneric ? type.GetGenericArguments()[0] : null);
+#if NETFRAMEWORK
+            if (comparerType == ComparerType.EnumComparer && type.Assembly == typeof(XmlSerializerBase).Assembly)
+                comparerType = ComparerType.Default;
+#endif
             return comparerType == defaultComparer ? ComparerType.None : comparerType;
         }
 
@@ -370,7 +374,12 @@ namespace KGySoft.Serialization.Xml
         };
 
         private static bool IsReadOnly(MemberInfo member)
+#if NET471_OR_GREATER || NETSTANDARD2_1_OR_GREATER || NETCOREAPP
             => Attribute.GetCustomAttribute(member, typeof(IsReadOnlyAttribute), false) != null;
+#else
+            // newer compilers may auto-generate an IsReadOnlyAttribute in every assembly that uses ref readonly members
+            => Attribute.GetCustomAttributes(member, false).Any(a => a.GetType().FullName == "System.Runtime.CompilerServices.IsReadOnlyAttribute");
+#endif
 
         #endregion
 

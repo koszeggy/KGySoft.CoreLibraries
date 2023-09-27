@@ -240,9 +240,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             // Trying to convert the clone to a compatible-format: deserialization occurs without an expected type so safe mode should fail here to prevent a security hole
             Throws<SerializationException>(() => clone.GetDataNodeInfo(null, true), "System.ConsoleColor");
 
+#if !NET8_0_OR_GREATER
             // but it works in non-safe mode (when BinaryFormatter is available)
             DataNodeInfo nodeInfoCompatible = clone.GetDataNodeInfo(null, true, false);
             Assert.IsTrue(nodeInfoCompatible.CompatibleFormat);
+#endif
         }
 
         #endregion
