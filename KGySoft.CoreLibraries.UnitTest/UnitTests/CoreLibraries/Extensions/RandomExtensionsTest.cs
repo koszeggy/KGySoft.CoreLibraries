@@ -19,14 +19,15 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
 #if NETFRAMEWORK
 using System.Diagnostics;
 #endif
 #if !NET6_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
 #endif
+#if NETCOREAPP3_0_OR_GREATER && !NETSTANDARD_TEST || NET5_0_OR_GREATER
 using System.Globalization;
+#endif
 #if !NET35
 using System.Numerics;
 #endif
@@ -64,6 +65,22 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
         #endregion
 
         #region Nested classes
+
+        #region Person class
+        
+        public class Person
+        {
+            #region Properties
+            
+            public string FirstName { get; set; }
+            public string LastName { get; set; }
+            public DateTime BirthDate { get; set; }
+            public List<string> PhoneNumbers { get; set; }
+
+            #endregion
+        }
+
+        #endregion
 
         #region Recursive class
 
@@ -831,25 +848,10 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
         public void NextObjectTest()
         {
             var rnd = new Random();
-            void Test<T>(GenerateObjectSettings settings = null)
+            void Test<T>(bool dumpProperties = false, GenerateObjectSettings settings = null)
             {
                 var obj = rnd.NextObject<T>(settings);
-                Console.WriteLine($"{typeof(T).GetName(TypeNameKind.ShortName)}: {AsString(obj)}");
-            }
-
-            static string AsString(object obj)
-            {
-                if (obj == null)
-                    return "<null>";
-
-                // KeyValuePair has a similar ToString to this one
-                if (obj is DictionaryEntry de)
-                    return $"[{de.Key}, {de.Value}]";
-
-                if (obj is not IEnumerable enumerable || enumerable is string)
-                    return obj.ToStringInternal(CultureInfo.InvariantCulture);
-
-                return enumerable.Cast<object>().Select(AsString).Join(", ");
+                Console.WriteLine($"{typeof(T).GetName(TypeNameKind.ShortName)}: {obj.Dump(dumpProperties)}");
             }
 
             // native types
@@ -899,6 +901,9 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test<ConsoleColor>();
             Test<Enum>();
 
+            // custom type
+            Test<Person>(true);
+
             // arrays
             Test<byte[]>();
             Test<byte?[]>();
@@ -915,12 +920,13 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test<Cache<int, int>>(); // populate
             Test<Queue>(); // ICollection ctor
 #if NETFRAMEWORK
-            Test<CounterCreationDataCollection>(new GenerateObjectSettings { SubstitutionForObjectType = typeof(CounterCreationData) }); // populate, typed object  
+            Test<CounterCreationDataCollection>(false, new GenerateObjectSettings { SubstitutionForObjectType = typeof(CounterCreationData) }); // populate, typed object  
 #endif
 
             // key-value
             Test<DictionaryEntry>();
             Test<KeyValuePair<int, string>>();
+            Test<ValueTuple<int, string>>();
 
             // reflection types
             Test<Assembly>();
@@ -930,7 +936,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
 
             // base types
             var cfg = new GenerateObjectSettings { AllowDerivedTypesForNonSealedClasses = true };
-            Test<EventArgs>(cfg);
+            Test<EventArgs>(true, cfg);
 
             // abstract types/interfaces
             Test<Enum>();

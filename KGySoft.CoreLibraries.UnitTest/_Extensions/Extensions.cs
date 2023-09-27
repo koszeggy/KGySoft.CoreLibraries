@@ -90,7 +90,7 @@ namespace KGySoft.CoreLibraries
             return new String(chars);
         }
 
-        internal static string Dump(this object o)
+        internal static string Dump(this object o, bool dumpProperties = true)
         {
             if (o == null)
                 return "<null>";
@@ -99,9 +99,14 @@ namespace KGySoft.CoreLibraries
                 return convertible.ToString(CultureInfo.InvariantCulture);
 
             if (o is IEnumerable enumerable)
-                return $"[{enumerable.Cast<object>().Select(Dump).Join(", ")}]";
+                return $"[{enumerable.Cast<object>().Select(e => e.Dump(dumpProperties)).Join(", ")}]";
 
-            return $"{{{o.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance).Select(p => $"{p.Name} = {Dump(p.GetValue(o, null))}").Join(", ")}}}";
+            if (!dumpProperties)
+                return o.ToString();
+
+            return $"{{{o.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                .Where(p => p.CanRead && p.GetIndexParameters().Length == 0)
+                .Select(p => $"{p.Name} = {Dump(p.GetValue(o, null), true)}").Join(", ")}}}";
         }
 
         #endregion
