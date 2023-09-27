@@ -116,13 +116,15 @@ namespace KGySoft.CoreLibraries
 #endif
             };
 
-        private static readonly Func<Type, ThreadSafeDictionary<Type, Delegate>> conversionAddValueFactory = _ => new ThreadSafeDictionary<Type, Delegate> { PreserveMergedKeys = true };
+        private static readonly Func<Type, ThreadSafeDictionary<Type, List<Delegate>>> conversionAddValueFactory = _ => new ThreadSafeDictionary<Type, List<Delegate>> { PreserveMergedKeys = true };
 
         /// <summary>
         /// The conversions used in <see cref="ObjectExtensions.Convert"/> and <see cref="StringExtensions.Parse"/> methods.
-        /// Main key is the target type, the inner one is the source type.
+        /// Main key is the target type, the inner one is the source type. The inner value is practically a stack so always the last item is active.
+        /// It is a list because any conversion can be removed by the UnregisterConversion method.
+        /// It is always locked manually but race conditions are practically not expected for it, especially at that deep level.
         /// </summary>
-        private static ThreadSafeDictionary<Type, ThreadSafeDictionary<Type, Delegate>>? conversions;
+        private static ThreadSafeDictionary<Type, ThreadSafeDictionary<Type, List<Delegate>>>? registeredConversions;
 
         private static IThreadSafeCacheAccessor<Type, int>? sizeOfCache;
         private static IThreadSafeCacheAccessor<Type, bool>? hasReferenceCache;
@@ -140,13 +142,13 @@ namespace KGySoft.CoreLibraries
 
         #region Properties
 
-        private static ThreadSafeDictionary<Type, ThreadSafeDictionary<Type, Delegate>> Conversions
+        private static ThreadSafeDictionary<Type, ThreadSafeDictionary<Type, List<Delegate>>> Conversions
         {
             get
             {
-                if (conversions == null)
-                    Interlocked.CompareExchange(ref conversions, new ThreadSafeDictionary<Type, ThreadSafeDictionary<Type, Delegate>> { PreserveMergedKeys = true }, null);
-                return conversions;
+                if (registeredConversions == null)
+                    Interlocked.CompareExchange(ref registeredConversions, new ThreadSafeDictionary<Type, ThreadSafeDictionary<Type, List<Delegate>>> { PreserveMergedKeys = true }, null);
+                return registeredConversions;
             }
         }
 
@@ -332,7 +334,8 @@ namespace KGySoft.CoreLibraries
         /// <note>If you want to permanently set a custom converter for a type, then it is recommended to register it at the start of your application
         /// or service. It is also possible to register a converter temporarily, and then restore the previous converter by calling
         /// the <see cref="UnregisterTypeConverter{TConverter}">UnregisterTypeConverter</see> method but then you must make sure there is no
-        /// running concurrent operation on a different thread that expects to use an other converter for the same type.</note></remarks>
+        /// running concurrent operation on a different thread that expects to use an other converter for the same type.</note>
+        /// </remarks>
         [SecuritySafeCritical]
         public static void RegisterTypeConverter<TConverter>(this Type type) where TConverter : TypeConverter
         {
@@ -421,10 +424,16 @@ namespace KGySoft.CoreLibraries
         /// will be able to use the registered <paramref name="conversion"/> between <paramref name="sourceType"/> and <paramref name="targetType"/>.</para>
         /// <para>Calling the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see> methods for the same source and target types multiple times
         /// will override the old registered conversion with the new one.</para>
-        /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="long"/> to <see cref="IntPtr"/>,
-        /// then conversions from other convertible types become automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
         /// <para><paramref name="sourceType"/> and <paramref name="targetType"/> can be interface, abstract or even a generic type definition.
         /// Preregistered conversions:
+        /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="long"/> to <see cref="IntPtr"/>,
+        /// then conversions from other convertible types become automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
+        /// <para>The <see cref="O:KGySoft.CoreLibraries.TypeExtensions.UnregisterConversion">UnregisterConversion</see> methods can be used to remove a registered conversion.
+        /// Registered conversions can be removed in any order but always the lastly set will be the active one.</para>
+        /// <note>If you want to permanently set a custom conversion, then it is recommended to register it at the start of your application
+        /// or service. It is also possible to register a conversion temporarily, and then restore the previous one by calling
+        /// the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.UnregisterConversion">UnregisterConversion</see> methods but then you must make sure there is no
+        /// running concurrent operation on a different thread that suppose to use different conversion for the same type.</note>
         /// <list type="bullet">
         /// <item><see cref="KeyValuePair{TKey,TValue}"/> to another <see cref="KeyValuePair{TKey,TValue}"/></item>
         /// <item><see cref="KeyValuePair{TKey,TValue}"/> to <see cref="DictionaryEntry"/></item>
@@ -449,10 +458,16 @@ namespace KGySoft.CoreLibraries
         /// will be able to use the registered <paramref name="conversion"/> between <paramref name="sourceType"/> and <paramref name="targetType"/>.</para>
         /// <para>Calling the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.RegisterConversion">RegisterConversion</see> methods for the same source and target types multiple times
         /// will override the old registered conversion with the new one.</para>
-        /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="long"/> to <see cref="IntPtr"/>,
-        /// then conversions from other convertible types become automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
         /// <para><paramref name="sourceType"/> and <paramref name="targetType"/> can be interface, abstract or even a generic type definition.
         /// Preregistered conversions:
+        /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="long"/> to <see cref="IntPtr"/>,
+        /// then conversions from other convertible types become automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
+        /// <para>The <see cref="O:KGySoft.CoreLibraries.TypeExtensions.UnregisterConversion">UnregisterConversion</see> methods can be used to remove a registered conversion.
+        /// Registered conversions can be removed in any order but always the lastly set will be the active one.</para>
+        /// <note>If you want to permanently set a custom conversion, then it is recommended to register it at the start of your application
+        /// or service. It is also possible to register a conversion temporarily, and then restore the previous one by calling
+        /// the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.UnregisterConversion">UnregisterConversion</see> methods but then you must make sure there is no
+        /// running concurrent operation on a different thread that suppose to use different conversion for the same type.</note>
         /// <list type="bullet">
         /// <item><see cref="KeyValuePair{TKey,TValue}"/> to another <see cref="KeyValuePair{TKey,TValue}"/></item>
         /// <item><see cref="KeyValuePair{TKey,TValue}"/> to <see cref="DictionaryEntry"/></item>
@@ -464,6 +479,30 @@ namespace KGySoft.CoreLibraries
         /// </remarks>
         public static void RegisterConversion(this Type sourceType, Type targetType, Conversion conversion)
             => DoRegisterConversion(sourceType, targetType, conversion);
+
+        /// <summary>
+        /// Unregisters a conversion previously set by the <see cref="RegisterConversion(Type,Type,ConversionAttempt)"/> method.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="RegisterConversion(Type,Type,ConversionAttempt)"/> method for details.
+        /// </summary>
+        /// <param name="sourceType">The source <see cref="Type"/> of the <paramref name="conversion"/> to remove.</param>
+        /// <param name="targetType">The result <see cref="Type"/> of the <paramref name="conversion"/> to remove.</param>
+        /// <param name="conversion">The <see cref="ConversionAttempt"/> delegate to remove.</param>
+        /// <returns><see langword="true"/> if the conversion was successfully unregistered; <see langword="false"/> if <paramref name="conversion"/>
+        /// was not registered by the <see cref="RegisterConversion(Type,Type,ConversionAttempt)"/> method.</returns>
+        public static bool UnregisterConversion(this Type sourceType, Type targetType, ConversionAttempt conversion)
+            => DoUnregisterConversion(sourceType, targetType, conversion);
+
+        /// <summary>
+        /// Unregisters a conversion previously set by the <see cref="RegisterConversion(Type,Type,Conversion)"/> method.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="RegisterConversion(Type,Type,Conversion)"/> method for details.
+        /// </summary>
+        /// <param name="sourceType">The source <see cref="Type"/> of the <paramref name="conversion"/> to remove.</param>
+        /// <param name="targetType">The result <see cref="Type"/> of the <paramref name="conversion"/> to remove.</param>
+        /// <param name="conversion">The <see cref="Conversion"/> delegate to remove.</param>
+        /// <returns><see langword="true"/> if the conversion was successfully unregistered; <see langword="false"/> if <paramref name="conversion"/>
+        /// was not registered by the <see cref="RegisterConversion(Type,Type,Conversion)"/> method.</returns>
+        public static bool UnregisterConversion(this Type sourceType, Type targetType, Conversion conversion)
+            => DoUnregisterConversion(sourceType, targetType, conversion);
 
         /// <summary>
         /// Gets the name of the <paramref name="type"/> by the specified <paramref name="kind"/>.
@@ -699,18 +738,25 @@ namespace KGySoft.CoreLibraries
         internal static IList<Delegate> GetConversions(this Type sourceType, Type targetType, bool? exactMatch)
         {
             // the exact match first
-            ThreadSafeDictionary<Type, ThreadSafeDictionary<Type, Delegate>>? conv = conversions;
+            ThreadSafeDictionary<Type, ThreadSafeDictionary<Type, List<Delegate>>>? conv = registeredConversions;
             if (conv == null)
                 return Reflector.EmptyArray<Delegate>();
 
             Delegate? exactConversion = null;
             if (exactMatch != false)
             {
-                if (conv.TryGetValue(targetType, out ThreadSafeDictionary<Type, Delegate>? conversionsOfTarget)
-                    && conversionsOfTarget.TryGetValue(sourceType, out exactConversion)
-                    && exactMatch == true)
+                if (conv.TryGetValue(targetType, out ThreadSafeDictionary<Type, List<Delegate>>? conversionsOfTarget)
+                    && conversionsOfTarget.TryGetValue(sourceType, out List<Delegate>? conversionsOfSource))
                 {
-                    return new[] { exactConversion };
+                    lock (conversionsOfSource)
+                    {
+                        if (conversionsOfSource.Count > 0)
+                        {
+                            exactConversion = conversionsOfSource[conversionsOfSource.Count - 1];
+                            if (exactMatch == true)
+                                return new[] { exactConversion };
+                        }
+                    }
                 }
             }
 
@@ -722,17 +768,23 @@ namespace KGySoft.CoreLibraries
                 result.Add(exactConversion);
 
             // non-exact matches: targets can match generic type, sources can match also interfaces and abstract types
-            foreach (KeyValuePair<Type, ThreadSafeDictionary<Type, Delegate>> conversionsForTarget in conv)
+            foreach (KeyValuePair<Type, ThreadSafeDictionary<Type, List<Delegate>>> conversionsForTarget in conv)
             {
                 if (conversionsForTarget.Key.IsAssignableFrom(targetType) || targetType.IsImplementationOfGenericType(conversionsForTarget.Key))
                 {
                     bool exactTarget = targetType == conversionsForTarget.Key;
-                    foreach (KeyValuePair<Type, Delegate> conversionForSource in conversionsForTarget.Value)
+                    foreach (KeyValuePair<Type, List<Delegate>> conversionsForSource in conversionsForTarget.Value)
                     {
-                        if (exactTarget && conversionForSource.Key == sourceType)
+                        if (exactTarget && conversionsForSource.Key == sourceType)
                             continue;
-                        if (conversionForSource.Key.IsAssignableFrom(sourceType) || sourceType.IsImplementationOfGenericType(conversionForSource.Key))
-                            result.Add(conversionForSource.Value);
+                        if (conversionsForSource.Key.IsAssignableFrom(sourceType) || sourceType.IsImplementationOfGenericType(conversionsForSource.Key))
+                        {
+                            lock (conversionsForSource.Value)
+                            {
+                                if (conversionsForSource.Value.Count > 0)
+                                    result.Add(conversionsForSource.Value[conversionsForSource.Value.Count - 1]);
+                            }
+                        }
                     }
                 }
             }
@@ -742,7 +794,7 @@ namespace KGySoft.CoreLibraries
 
         internal static ICollection<Type> GetConversionSourceTypes(this Type targetType)
         {
-            ThreadSafeDictionary<Type, ThreadSafeDictionary<Type, Delegate>>? conv = conversions;
+            ThreadSafeDictionary<Type, ThreadSafeDictionary<Type, List<Delegate>>>? conv = registeredConversions;
             return conv == null ? Type.EmptyTypes
                 : conv.TryGetValue(targetType, out var conversionsForTarget) ? conversionsForTarget.Keys
                 : Type.EmptyTypes;
@@ -753,7 +805,7 @@ namespace KGySoft.CoreLibraries
             var result = new HashSet<Type>();
 
             // iterating all conversions and adding possible intermediate types
-            foreach (KeyValuePair<Type, ThreadSafeDictionary<Type, Delegate>> conversionsForTarget in Conversions)
+            foreach (KeyValuePair<Type, ThreadSafeDictionary<Type, List<Delegate>>> conversionsForTarget in Conversions)
             {
                 // skipping if key is the exact targetType (those conversions are returned by GetConversionSourceTypes)
                 if (targetType == conversionsForTarget.Key)
@@ -768,15 +820,14 @@ namespace KGySoft.CoreLibraries
 
                 // iterating the sources of the current target type and adding the non-exact target type if there is at least one match
                 // ReSharper disable once LoopCanBeConvertedToQuery - performance, sparing an enumerator and delegate allocation
-                foreach (KeyValuePair<Type, Delegate> conversionForSource in conversionsForTarget.Value)
+                foreach (KeyValuePair<Type, List<Delegate>> conversionsForSource in conversionsForTarget.Value)
                 {
-                    if (conversionForSource.Key.IsAssignableFrom(sourceType) || sourceType.IsImplementationOfGenericType(conversionForSource.Key))
+                    if (conversionsForSource.Key.IsAssignableFrom(sourceType) || sourceType.IsImplementationOfGenericType(conversionsForSource.Key))
                     {
                         result.Add(conversionsForTarget.Key);
                         break;
                     }
                 }
-
             }
 
             // At last, we add the string type as an ultimate fallback. We exploit here that HashSet preserves order if there was no deletion so
@@ -1078,8 +1129,41 @@ namespace KGySoft.CoreLibraries
             if (conversion == null!)
                 Throw.ArgumentNullException(Argument.conversion);
 
-            Conversions.GetOrAdd(targetType, conversionAddValueFactory)[sourceType] = conversion;
+            List<Delegate> conversionsForSource = Conversions
+                .GetOrAdd(targetType, conversionAddValueFactory)
+                .GetOrAdd(sourceType, _ => new List<Delegate>(1));
+
+            lock (conversionsForSource)
+                conversionsForSource.Add(conversion);
         }
+
+        private static bool DoUnregisterConversion(this Type sourceType, Type targetType, Delegate conversion)
+        {
+            if (sourceType == null!)
+                Throw.ArgumentNullException(Argument.sourceType);
+            if (targetType == null!)
+                Throw.ArgumentNullException(Argument.targetType);
+            if (conversion == null!)
+                Throw.ArgumentNullException(Argument.conversion);
+
+            if (registeredConversions?.TryGetValue(targetType, out ThreadSafeDictionary<Type, List<Delegate>>? conversionsForTarget) != true
+                || !conversionsForTarget!.TryGetValue(sourceType, out List<Delegate>? conversionsForSource))
+            {
+                return false;
+            }
+
+            lock (conversionsForSource)
+            {
+                var i = conversionsForSource.LastIndexOf(conversion);
+                if (i < 0)
+                    return false;
+
+                // never removing the list itself
+                conversionsForSource.RemoveAt(i);
+                return true;
+            }
+        }
+
 
         [SecuritySafeCritical]
         private static unsafe int GetSize(Type type)

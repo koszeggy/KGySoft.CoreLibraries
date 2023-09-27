@@ -129,6 +129,8 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
         [Test]
         public void ConvertTest()
         {
+            #region Local Methods
+
             static void Test<TTarget>(object source, TTarget expectedResult)
             {
                 Console.Write($"{source?.GetType().GetName(TypeNameKind.ShortName) ?? "<null>"} ({AsString(source)}) -> {typeof(TTarget).GetName(TypeNameKind.ShortName)} ");
@@ -151,6 +153,10 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
 
                 return enumerable.Cast<object>().Select(AsString).Join(", ");
             }
+
+            static object DateTimeToLongConversion(object obj, Type type, CultureInfo cultureInfo) => ((DateTime)obj).Ticks;
+
+            #endregion
 
             // IConvertible or natively supported
             Test("1", 1);
@@ -243,9 +249,14 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             // Registered conversions
             Throws<ArgumentException>(() => Test(now, now.Ticks));
             Throws<ArgumentException>(() => Test(now, (double)now.Ticks));
-            typeof(DateTime).RegisterConversion(typeof(long), (obj, _, _) => ((DateTime)obj).Ticks);
+
+            typeof(DateTime).RegisterConversion(typeof(long), DateTimeToLongConversion);
             Test(now, now.Ticks);
             Test(now, (double)now.Ticks); // DateTime -> long -> double
+            typeof(DateTime).UnregisterConversion(typeof(long), DateTimeToLongConversion);
+
+            Throws<ArgumentException>(() => Test(now, now.Ticks));
+            Throws<ArgumentException>(() => Test(now, (double)now.Ticks));
         }
 
         [Test]

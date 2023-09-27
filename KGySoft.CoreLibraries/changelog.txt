@@ -23,6 +23,7 @@
       TypeDescriptor.GetConverter calls continued to return the original converter.
   + New UnregisterTypeConverter method: It allows removing the custom type converter registrations added by the
     RegisterTypeConverter method.
+  + New UnregisterConversions method to remove the conversions set by the RegisterConversion methods.
 + ArrayExtensions class:
   + New AsSection overload for ArraySegment<T>
   + New AsArray2D overload for ArraySegment<T>
