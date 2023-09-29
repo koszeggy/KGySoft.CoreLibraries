@@ -946,7 +946,7 @@ namespace KGySoft.Reflection
 
         [SecuritySafeCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        internal static unsafe object? Get(this PropertyInfo property, object? instance)
+        internal static object? Get(this PropertyInfo property, object? instance)
         {
             Debug.Assert(property.CanRead);
 
@@ -969,7 +969,7 @@ namespace KGySoft.Reflection
 
         [SecuritySafeCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        internal static unsafe void Set(this PropertyInfo property, object? instance, object? value, params object?[] indexerParams)
+        internal static void Set(this PropertyInfo property, object? instance, object? value, params object?[] indexerParams)
         {
             Debug.Assert(property.CanWrite || property.PropertyType.IsByRef);
 
@@ -1066,6 +1066,13 @@ namespace KGySoft.Reflection
             => InvokeMethod(type, methodName, new[] { genericArgument }, new[] { parameterType }, parameters);
 
         /// <summary>
+        /// For static methods by name and parameter types.
+        /// </summary>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        internal static object? InvokeMethod(this Type type, string methodName, Type genericArgument, Type[] parameterTypes, params object?[] parameters)
+            => InvokeMethod(type, methodName, new[] { genericArgument }, parameterTypes, parameters);
+
+        /// <summary>
         /// For constructors by exact parameter types.
         /// </summary>
         [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -1099,9 +1106,8 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Invokes a constructor on an already created instance.
         /// </summary>
-        internal static bool TryInvokeCtor(object instance, params object?[] ctorArgs)
+        internal static bool TryInvokeCtor(object instance, params object[] ctorArgs)
         {
-            Debug.Assert(ctorArgs.Length <= 2, "Constructors with more than 2 arguments are not cached. Use MethodBase.Invoke instead.");
             ActionMethodAccessor? accessor = GetCtorMethod(instance.GetType(), ctorArgs);
             if (accessor == null)
                 return false;

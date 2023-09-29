@@ -28,6 +28,9 @@ using System.Linq.Expressions;
 using System.Numerics;
 #endif
 using System.Reflection;
+#if !(NETSTANDARD2_0 || NETCOREAPP3_0_OR_GREATER)
+using System.Reflection.Emit;
+#endif
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 #if NETFRAMEWORK || NETSTANDARD2_0
@@ -139,9 +142,15 @@ namespace KGySoft.Reflection
 #if NETFRAMEWORK || NETSTANDARD2_0
         private static bool? canCreateUninitializedObject;
 #endif
+
+#if !NETSTANDARD2_0
         private static bool? isTypedReferenceSupported;
         private static int typedReferenceValueIndex;
-        private static int referenceRawDataOffset;
+#endif
+
+#if !(NETSTANDARD2_0 || NETCOREAPP3_0_OR_GREATER)
+        private static Func<object, StrongBox<byte>>? reinterpretAsBoxedByte;
+#endif
 
         #endregion
 
@@ -151,6 +160,7 @@ namespace KGySoft.Reflection
 
         #region Internal Properties
 
+#if !NETSTANDARD2_0
         internal static bool CanUseTypedReference
         {
             [SecuritySafeCritical]
@@ -162,6 +172,7 @@ namespace KGySoft.Reflection
                 return InitTypedReferenceUsage();
             }
         }
+#endif
 
         #endregion
 
@@ -3925,34 +3936,23 @@ namespace KGySoft.Reflection
 
         #endregion
 
-        #region TypedReference reflection
+        #region TypedReference/Raw data access reflection
+#if !NETSTANDARD2_0
 
-        /// <summary>
-        /// Gets a pointer to the raw data (first field member or array header) of a reference created from a reference type (including boxed values).
-        /// </summary>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SecurityCritical]
-        internal static unsafe byte* GetReferencedDataAddress(TypedReference typedRef)
+        internal static ref byte GetRawData(object obj)
         {
-            Debug.Assert(typedReferenceValueIndex >= 0, "Check CanUseTypedReference before calling this method");
-            Debug.Assert(!__reftype(typedRef).IsValueType, "A reference of a reference type is expected");
-
-            // Dereferencing the TypedReference of the reference manually to access the raw data
-            // Steps:
-            // - Firstly typedRef is cast to IntPtr* so can be indexed as an array
-            // - As a pointer array, selecting the element, which contains the pointer to the value.
-            //   If it was always the first item, we could just return **(byte***)&typedRef + offset but it wouldn't work on Mono.
-            // - Then dereferencing the pointer in the typedRef itself, which is also a pointer (byte**) to a reference (see the assert)
-            // - Then we get the address of the raw data itself, which points to the method table pointer.
-            //   We do not dereference this one but adding an offset to return the address of the first field
-            // See more details in my SO answer here: https://stackoverflow.com/a/55552250/5114784
-#pragma warning disable CS8500 // This takes the address of, gets the size of, or declares a pointer to a managed type
-            return *(byte**)((IntPtr*)&typedRef)[typedReferenceValueIndex] + referenceRawDataOffset;
-#pragma warning restore CS8500 // This takes the address of, gets the size of, or declares a pointer to a managed type
+#if NETCOREAPP3_0_OR_GREATER
+            return ref Unsafe.As<StrongBox<byte>>(obj).Value;
+#else
+            return ref (reinterpretAsBoxedByte ??= GenerateReinterpretCast()).Invoke(obj).Value;
+#endif
         }
 
         /// <summary>
         /// Gets a pointer to the actual value (first field if the struct has fields) of a reference created from a value type.
+        /// If the value is on the heap it must be pinned before calling this method.
         /// </summary>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SecurityCritical]
@@ -3979,14 +3979,13 @@ namespace KGySoft.Reflection
             int typedRefSize = sizeof(TypedReference);
 #pragma warning restore CS8500 // This takes the address of, gets the size of, or declares a pointer to a managed type
 
-            // Regular TypedReference: we assume that its first field is IntPtr Value
-            // (.NET Core 3.0 and above: ByReference<byte>), and the second one is IntPtr Type
+            // Regular TypedReference: we assume that its first field is and IntPtr Value
+            // (.NET Core 3.x/.NET 5.0/6.0: ByReference<byte>; .NET 7+: ref byte), and the second one is IntPtr Type
             // The current Mono implementation is different, still, we try to prepare for changes.
             if (typedRefSize == IntPtr.Size * 2)
             {
                 isTypedReferenceSupported = true;
                 typedReferenceValueIndex = 0;
-                referenceRawDataOffset = EnvironmentHelper.IsMono ? IntPtr.Size * 2 : IntPtr.Size;
                 return true;
             }
 
@@ -3997,7 +3996,6 @@ namespace KGySoft.Reflection
             {
                 isTypedReferenceSupported = true;
                 typedReferenceValueIndex = 1;
-                referenceRawDataOffset = IntPtr.Size * 2;
                 return true;
             }
 
@@ -4006,6 +4004,18 @@ namespace KGySoft.Reflection
             return false;
         }
 
+#if !NETCOREAPP3_0_OR_GREATER
+        private static Func<object, StrongBox<byte>> GenerateReinterpretCast()
+        {
+            var dm = new DynamicMethod(nameof(reinterpretAsBoxedByte), typeof(StrongBox<byte>), new[] { ObjectType }, typeof(Reflector), true);
+            ILGenerator il = dm.GetILGenerator();
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ret);
+            return (Func<object, StrongBox<byte>>)dm.CreateDelegate(typeof(Func<object, StrongBox<byte>>));
+        }
+#endif
+
+#endif
         #endregion
 
         #endregion

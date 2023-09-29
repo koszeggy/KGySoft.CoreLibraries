@@ -21,7 +21,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Runtime.Serialization;
 using System.Security;
 
 using KGySoft.CoreLibraries;
@@ -220,14 +219,9 @@ namespace KGySoft.Serialization.Binary
         {
             if (obj == null!)
                 Throw.ArgumentNullException(Argument.obj);
-            if (!obj.GetType().IsManaged()
-#if !NETCOREAPP3_0_OR_GREATER
-                && Reflector.CanUseTypedReference
-#endif
-            )
-            {
+
+            if (!obj.GetType().IsManaged())
                 return SerializeValueTypeRaw(obj);
-            }
 
             // Fallback with marshaling. Throws an ArgumentException on error
             byte[] result = new byte[Marshal.SizeOf(obj)];
@@ -413,14 +407,8 @@ namespace KGySoft.Serialization.Binary
             if ((uint)offset > (uint)data.Length)
                 Throw.ArgumentOutOfRangeException(Argument.offset);
 
-            if (!type.IsManaged()
-#if !NETCOREAPP3_0_OR_GREATER
-                && Reflector.CanUseTypedReference 
-#endif
-            )
-            {
+            if (!type.IsManaged())
                 return DeserializeValueTypeRaw(type, data, offset);
-            }
 
             // Fallback with marshaling. Throws an ArgumentException on error
             int len = Marshal.SizeOf(type);
@@ -558,52 +546,46 @@ namespace KGySoft.Serialization.Binary
 
         #region Private Methods
 
-#if NETCOREAPP3_0_OR_GREATER
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [SecurityCritical]
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         private static byte[] SerializeValueTypeRaw(ValueType obj)
         {
+            Debug.Assert(!obj.GetType().IsManaged(), "Unmanaged type expected");
+
+#if NETSTANDARD2_0
+            // .NET Standard 2.0: cannot use GetRawData so calling the generic version by reflection
+            Type type = obj.GetType();
+            return (byte[])typeof(BinarySerializer).InvokeMethod(nameof(SerializeValueType), type, type.MakeByRefType(), obj)!;
+#else
             int len = obj.GetType().SizeOf();
             byte[] result = new byte[len];
+
 #if NET5_0_OR_GREATER
-            Unsafe.CopyBlock(ref MemoryMarshal.GetArrayDataReference(result), ref Unsafe.As<StrongBox<byte>>(obj).Value, (uint)len);
+            Unsafe.CopyBlock(ref MemoryMarshal.GetArrayDataReference(result), ref Reflector.GetRawData(obj), (uint)len);
+#elif NETCOREAPP3_0_OR_GREATER
+            Unsafe.CopyBlock(ref result[0], ref Reflector.GetRawData(obj), (uint)len);
 #else
-            Unsafe.CopyBlock(ref result[0], ref Unsafe.As<StrongBox<byte>>(obj).Value, (uint)len);
-#endif
-            return result;
-        }
-#else
-        [SecurityCritical]
-        private static unsafe byte[] SerializeValueTypeRaw(ValueType obj)
-        {
-            Debug.Assert(Reflector.CanUseTypedReference);
-            int len = obj.GetType().SizeOf();
-            byte[] result = new byte[len];
-            TypedReference boxReference = __makeref(obj);
-
-            while (true)
+            unsafe
             {
-                // We need to obtain a pinned pointer to the object. Not using GCHandle because it is terribly slow
-                // and besides throws an exception for non-blittable types (eg. bool, char, decimal, DateTime, etc.).
-                byte* rawData = Reflector.GetReferencedDataAddress(boxReference);
-                ref byte rawDataRef = ref *rawData;
-                fixed (byte* pinnedRawData = &rawDataRef)
-                {
-                    // trying again if object was relocated between first dereferencing and the actual pinning
-                    if (pinnedRawData != Reflector.GetReferencedDataAddress(boxReference))
-                        continue;
-
+                fixed (byte* pinnedRawData = &Reflector.GetRawData(obj))
                     Marshal.Copy((IntPtr)pinnedRawData, result, 0, len);
-                }
-
-                return result;
             }
-        }
 #endif
+
+            return result;
+#endif
+        }
 
         [SecurityCritical]
         private static object DeserializeValueTypeRaw(Type type, byte[] data, int offset)
         {
+            Debug.Assert(!type.IsManaged(), "Unmanaged type expected");
             Debug.Assert(offset >= 0);
+
+#if NETSTANDARD2_0
+            // .NET Standard 2.0: cannot use GetRawData so calling the generic version by reflection
+            return typeof(BinarySerializer).InvokeMethod(nameof(DeserializeValueType), type, new[] { typeof(byte[]), typeof(int) }, data, offset)!;
+#else
             int len = type.SizeOf();
             if (offset + len > data.Length)
                 Throw.ArgumentException(Argument.data, Res.BinarySerializationDataLengthTooSmall);
@@ -614,35 +596,19 @@ namespace KGySoft.Serialization.Binary
 
 #if NETCOREAPP3_0_OR_GREATER
             ref byte src = ref data[offset];
-            ref byte dst = ref Unsafe.As<StrongBox<byte>>(result).Value;
+            ref byte dst = ref Reflector.GetRawData(result);
             
             // must use unaligned because data[offset] is not necessarily a pointer aligned address (we could check it but it isn't worth it)
             Unsafe.CopyBlockUnaligned(ref dst, ref src, (uint)len);
+#else
+            unsafe
+            {
+                fixed (byte* pinnedRawData = &Reflector.GetRawData(result))
+                    Marshal.Copy(data, offset, (IntPtr)pinnedRawData, len);
+            }
+#endif
 
             return result;
-#else
-            Debug.Assert(Reflector.CanUseTypedReference);
-            TypedReference boxReference = __makeref(result);
-            while (true)
-            {
-                unsafe
-                {
-                    // We need to obtain a pinned pointer to the object. Not using GCHandle because it is terribly slow
-                    // and besides throws an exception for non-blittable types (eg. bool, char, decimal, DateTime, etc.).
-                    byte* rawData = Reflector.GetReferencedDataAddress(boxReference);
-                    ref byte rawDataRef = ref *rawData;
-                    fixed (byte* pinnedRawData = &rawDataRef)
-                    {
-                        // trying again if object was relocated between first dereferencing and the actual pinning
-                        if (pinnedRawData != Reflector.GetReferencedDataAddress(boxReference))
-                            continue;
-
-                        Marshal.Copy(data, offset, (IntPtr)pinnedRawData, len);
-                    }
-                }
-
-                return result;
-            }
 #endif
         }
 

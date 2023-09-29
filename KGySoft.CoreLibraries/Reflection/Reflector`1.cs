@@ -79,29 +79,14 @@ namespace KGySoft.Reflection
                 if (typeof(T).IsPrimitive)
                     return Buffer.ByteLength(new T[1]);
 
-                if (!Reflector.CanUseTypedReference)
-                    return typeof(T).SizeOf();
-
                 // We can't use stackalloc because T is not constrained here so we need to create an array
                 var items = new T[2];
 
-                // In .NET Core 3+ we could use Unsafe.ByteOffset for ref items[0]/[1] (if there wasn't Unsafe.SizeOf in the first place), which is not available here.
-                // So we need to pin the array and use unmanaged pointers. Not using the slow GCHandle.Alloc, which throws an exception for non-blittable types anyway.
-                TypedReference arrayReference = __makeref(items);
-                while (true)
-                {
-                    byte* unpinnedAddress = Reflector.GetReferencedDataAddress(arrayReference);
-                    ref byte asRef = ref *unpinnedAddress;
-                    fixed (byte* pinnedAddress = &asRef)
-                    {
-                        // If GC has relocated the array in the meantime, then trying again
-                        if (pinnedAddress != Reflector.GetReferencedDataAddress(arrayReference))
-                            continue;
-
-                        // Now we can safely obtain the address of the pinned items. We can't use T* here so using typed references again.
-                        return (int)(Reflector.GetValueAddress(__makeref(items[1])) - Reflector.GetValueAddress(__makeref(items[0])));
-                    }
-                }
+#pragma warning disable CS8500 // This takes the address of, gets the size of, or declares a pointer to a managed type
+                // pinning the array and getting the distance between the items, in bytes
+                fixed (T* pinnedItems = items)
+                    return (int)((byte*)&pinnedItems[1] - (byte*)&pinnedItems[0]);
+#pragma warning restore CS8500 // This takes the address of, gets the size of, or declares a pointer to a managed type
             }
 
             #endregion

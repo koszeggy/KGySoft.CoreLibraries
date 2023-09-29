@@ -56,6 +56,7 @@ namespace KGySoft.CoreLibraries
         #region Nested Types
 
         #region SizeOfHelper struct
+#if !NETSTANDARD2_0
 
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
         private struct SizeOfHelper<T> // where T : struct // ISSUE: this prevents nullable structs
@@ -68,6 +69,7 @@ namespace KGySoft.CoreLibraries
             #endregion
         }
 
+#endif
         #endregion
 
         #endregion
@@ -1166,7 +1168,7 @@ namespace KGySoft.CoreLibraries
 
 
         [SecuritySafeCritical]
-        private static unsafe int GetSize(Type type)
+        private static int GetSize(Type type)
         {
             if (!type.IsValueType)
                 return IntPtr.Size;
@@ -1174,26 +1176,24 @@ namespace KGySoft.CoreLibraries
             if (type.IsPrimitive)
                 return Buffer.ByteLength(Array.CreateInstance(type, 1));
 
+#if NETSTANDARD2_0
+            return GetSizeFallback(type);
+#else
             // If TypedReference layout is not recognized on current platform, then using a slow/unreliable fallback
             if (!Reflector.CanUseTypedReference)
                 return GetSizeFallback(type);
 
-            // non-primitive struct: measuring the distance between two elements in a packed struct
+            // Non-primitive struct: measuring the distance between two elements in a packed struct.
+            // Unlike in Reflector<T> we cannot use an array here because we cannot obtain the address of the non strongly-typed items.
             Type helperType = typeof(SizeOfHelper<>).MakeGenericType(type); // not GetGenericType because GetSize result is also cached
             object instance = Activator.CreateInstance(helperType)!;
 
-            // pinning the created boxed object (not using GCHandle.Alloc because it is very slow and fails for non-blittable structs)
-            TypedReference boxReference = __makeref(instance);
-            while (true)
-            {
-                byte* unpinnedAddress = Reflector.GetReferencedDataAddress(boxReference);
-                ref byte asRef = ref *unpinnedAddress;
-                fixed (byte* pinnedAddress = &asRef)
+            // Pinning the created boxed object (not using GCHandle.Alloc because it is very slow and fails for non-blittable structs)
+            // NOTE: would not be needed if we could access the ref byte of a field or non-generic array element so we could use Unsafe.ByteOffset
+            unsafe
+	        {
+                fixed (byte* _ = &Reflector.GetRawData(instance))
                 {
-                    // the instance has been relocated before pinning: trying again
-                    if (pinnedAddress != Reflector.GetReferencedDataAddress(boxReference))
-                        continue;
-
                     // Now we can access the address of the fields safely. MakeTypedReference works here because primitive types are handled above
                     TypedReference refItem1 = TypedReference.MakeTypedReference(instance, new[] { helperType.GetField(nameof(SizeOfHelper<_>.Item1))! });
                     TypedReference refItem2 = TypedReference.MakeTypedReference(instance, new[] { helperType.GetField(nameof(SizeOfHelper<_>.Item2))! });
@@ -1201,25 +1201,17 @@ namespace KGySoft.CoreLibraries
 
                     return (int)(Reflector.GetValueAddress(refItem2) - Reflector.GetValueAddress(refItem1));
                 }
-            }
+	        }
+#endif
         }
 
         [SecurityCritical]
         private static int GetSizeFallback(Type type)
         {
-#if NETSTANDARD2_0 // DynamicMethod is not available. Fallback: using Marshal.SizeOf (which has a different result sometimes)
-            try
-            {
-                // not SizeOf(Type) because that throws an exception for generics such as KeyValuePair<int, int>, whereas an instance of it works.
-                return Marshal.SizeOf(Activator.CreateInstance(type));
-            }
-            catch (ArgumentException)
-            {
-                // contains a reference or whatever
-                return default;
-            }
+#if NETSTANDARD2_0 // DynamicMethod is not available. Fallback: calling the generic Reflector<T>.SizeOf by reflection
+            return (int)typeof(Reflector<>).GetPropertyValue(type, nameof(Reflector<_>.SizeOf))!;
 #else
-            // Emitting the SizeOf OpCode for the type
+            // Emitting the SizeOf OpCode for the type, compiling a delegate and execute it, which is quite slow
             var dm = new DynamicMethod(nameof(GetSize), Reflector.UIntType, Type.EmptyTypes, typeof(TypeExtensions), true);
             ILGenerator gen = dm.GetILGenerator();
             gen.Emit(OpCodes.Sizeof, type);
