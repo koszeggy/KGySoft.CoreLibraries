@@ -24,7 +24,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 #endif
 using System.Collections.Generic;
-#if NETCOREAPP
+#if NETCOREAPP && !NETSTANDARD_TEST
 using System.Collections.Immutable;
 #endif
 using System.Collections.ObjectModel;
@@ -215,7 +215,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 CaseInsensitiveComparer.Default,
                 new CaseInsensitiveComparer(CultureInfo.GetCultureInfo("en")),
 
-#if NET46_OR_GREATER || NETCOREAPP
+#if NET46_OR_GREATER || NETCOREAPP && !(NETCOREAPP2_0 && NETSTANDARD_TEST)
                 new Vector2(1, 2),
                 new Vector3(1, 2, 3),
                 new Vector4(1, 2, 3, 4),
@@ -783,7 +783,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new Type[] { typeof(int), typeof(List<int>), null },
                 Array.CreateInstance(Reflector.RuntimeType, 3), // runtime type array, set below
 
-#if NET46_OR_GREATER || NETCOREAPP
+#if NET46_OR_GREATER || NETCOREAPP && !(NETCOREAPP2_0 && NETSTANDARD_TEST)
                 new[] { new Vector2(1, 2) },
                 new[] { new Vector3(1, 2, 3) },
                 new[] { new Vector4(1, 2, 3, 4) },
@@ -1055,7 +1055,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new BitVector32?[] { new BitVector32(13), null },
                 new BitVector32.Section?[] { BitVector32.CreateSection(13), null },
 
-#if NET46_OR_GREATER || NETCOREAPP
+#if NET46_OR_GREATER || NETCOREAPP && !(NETCOREAPP2_0 && NETSTANDARD_TEST)
                 new Vector2?[] { new Vector2(1, 2), null, null },
                 new Vector3?[] { new Vector3(1, 2, 3), null },
                 new Vector4?[] { new Vector4(1, 2, 3, 4), null },
@@ -1066,10 +1066,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #endif
 
 #if NETCOREAPP3_0_OR_GREATER
-                new Rune?[] { new Rune('a'), null },
+#if  !NETSTANDARD_TEST
+		        new Rune?[] { new Rune('a'), null },
+                new Vector64<int>?[] { Vector64.Create(1, 2), null },
+#endif
                 new Index?[] { new Index(1), null },
                 new Range?[] { new Range(5, 10), null },
-                new Vector64<int>?[] { Vector64.Create(1, 2), null },
 #endif
 
 #if NET5_0_OR_GREATER
@@ -1085,7 +1087,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new Int128?[] { 1, null },
                 new UInt128?[] { 1, null },
 #endif
-#if NETCOREAPP
+#if NETCOREAPP && !NETSTANDARD_TEST
                 new ImmutableArray<int>?[] { ImmutableArray.Create(1, 2, 3, 4), ImmutableArray<int>.Empty, new ImmutableArray<int>(), null },
                 new ImmutableArray<int?>?[] { ImmutableArray.Create<int?>(1, 2, 3, 4, null), ImmutableArray<int?>.Empty, new ImmutableArray<int?>(), null },
 #endif
@@ -1264,7 +1266,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new ConcurrentDictionary<TestEnumByte, int>(new Dictionary<TestEnumByte, int> { { TestEnumByte.One, 1 }, { TestEnumByte.Two, 2 } }, EnumComparer<TestEnumByte>.Comparer),
 #endif
 
-#if NETCOREAPP3_0_OR_GREATER
+#if NETCOREAPP3_0_OR_GREATER && !NETSTANDARD_TEST
                 Vector64.Create(1, 2, 3, 4),
                 Vector64.Create(1.2f, 3.4f),
 #if NET6_0 // Only in .NET 6 Expression.Field works incorrectly for Vector128. Not a big problem because affects ForceRecursiveSerializationOfSupportedTypes only
@@ -1280,7 +1282,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 Vector512.Create(1, 2, 3, 4, 5, 6, 7, 8),
                 Vector512.Create(1d, 2d, 3d, 4d, 5d, 6d, 7d, 8d),
 #endif
-#if NETCOREAPP
+#if NETCOREAPP && !NETSTANDARD_TEST
                 new ImmutableArray<int>(),
                 ImmutableArray<int>.Empty,
                 ImmutableArray.Create(1, 2, 3, 4),
@@ -1562,10 +1564,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new Dictionary<int, ConcurrentStack<int>> { { 1, new ConcurrentStack<int>(new[] { 1, 2 }) }, { 2, null } },
 #endif
 
-#if NETCOREAPP3_0_OR_GREATER
+#if NETCOREAPP3_0_OR_GREATER && !NETSTANDARD_TEST
                 new Dictionary<int, Vector128<int>> { { 1, Vector128.Create(1, 2, 3, 4) } },
 #endif
-#if NETCOREAPP
+#if NETCOREAPP && !NETSTANDARD_TEST
                 new Dictionary<int, ImmutableArray<int>> { { 1, new[] { 1, 2, 3, 4 }.ToImmutableArray() } },
                 new Dictionary<int, ImmutableArray<int>.Builder> { { 1, new[] { 1, 2, 3, 4 }.ToImmutableArray().ToBuilder() } },
                 new Dictionary<int, ImmutableList<int>> { { 1, new[] { 1, 2, 3, 4 }.ToImmutableList() } },
@@ -1584,7 +1586,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #if !NET35
                 new ConcurrentDictionary<int, int[]>(new Dictionary<int, int[]> { { 1, new[] { 1, 2 } }, { 2, null } }),
 #endif
-#if NETCOREAPP
+#if NETCOREAPP && !NETSTANDARD_TEST
                 new Dictionary<int, int[]> { { 1, new[] { 1, 2 } }, { 2, null } }.ToImmutableDictionary(), // ImmutableDictionary
                 new Dictionary<int, int[]> { { 1, new[] { 1, 2 } }, { 2, null } }.ToImmutableSortedDictionary(), // ImmutableSortedDictionary
 #endif
@@ -1990,7 +1992,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new Complex(1.2, 3.4),
 #endif
 
-#if NET46_OR_GREATER || NETCOREAPP
+#if NET46_OR_GREATER || NETCOREAPP && !(NETCOREAPP2_0 && NETSTANDARD_TEST)
                 new Vector2(1, 2),
                 new Vector3(1, 2, 3),
                 new Vector4(1, 2, 3, 4),
@@ -2012,7 +2014,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new Range(1, 2),
 #endif
 
-#if NETCOREAPP3_0_OR_GREATER
+#if NETCOREAPP3_0_OR_GREATER && !NETSTANDARD_TEST
                 Vector64.Create(1, 2, 3, 4),
 #if NET6_0 // Only in .NET 6 Expression.Field works incorrectly for Vector128. Not a big problem because affects the TestSurrogateSelector only
                 Vector128.Create(1, 2),
@@ -2093,7 +2095,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 // Pointer fields
                 // new UnsafeStruct(), - TestSurrogateSelector calls Reflector.SetField now
 
-#if NETCOREAPP
+#if NETCOREAPP && !NETSTANDARD_TEST
 		        new[] { 1, 2, 3 }.ToImmutableList(),
 #endif
             };
@@ -2432,7 +2434,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             SystemSerializeObject(referenceObjects, safeCompare: true);
             SystemSerializeObjects(referenceObjects, safeCompare: true);
 
-#if NETCOREAPP
+#if NETCOREAPP && !NETSTANDARD_TEST
             // ImmutableArray
             object[] array = new object[1];
             object immutableArray = typeof(ImmutableArray<object>).CreateInstance(array.GetType(), array);

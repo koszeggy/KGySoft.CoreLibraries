@@ -1318,7 +1318,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 new CustomGenericCollection<KeyValuePair<int, object>> { new KeyValuePair<int, object>(1, "alpha"), new KeyValuePair<int, object>(2, DateTime.Now), new KeyValuePair<int, object>(3, new object()), new KeyValuePair<int, object>(4, new object[] { 1, "alpha", DateTime.Now, null }), new KeyValuePair<int, object>(5, null) },
                 new CustomNonGenericCollection { new KeyValuePair<int, object>(1, "alpha"), new KeyValuePair<int, object>(2, DateTime.Now), new KeyValuePair<int, object>(3, new object()), new KeyValuePair<int, object>(4, new object[] { 1, "alpha", DateTime.Now, null }), new KeyValuePair<int, object>(5, null) },
                 new CustomGenericDictionary<string, Dictionary<int, string>> { { "hu", new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } } }, { "en", new Dictionary<int, string> { { 1, "apple" }, { 2, "frog" }, { 3, "cat" } } } },
-                new CustomNonGenericDictionary { { "hu", new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } } }, { "en", new Dictionary<int, string> { { 1, "apple" }, { 2, "frog" }, { 3, "cat" } } } },
+                new CustomNonGenericDictionary { { 1, "alpha" }, { 2u, 'b' } },
 
                 // read-only
                 new ReadOnlyCollection<int>(new[] { 1, 2, 3 }),
@@ -1451,6 +1451,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             KGySerializeObject(testObj, XmlSerializationOptions.None);
         }
 
+#if !(NETCOREAPP2_0 && NETSTANDARD_TEST)
         [Test]
         public void SerializeRefProperty()
         {
@@ -1469,6 +1470,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             // Binary: IncludeRefProperties is needed for content serialization
             KGySerializeObject(testObj, XmlSerializationOptions.BinarySerializationAsFallback | XmlSerializationOptions.IncludeRefProperties, safeMode: false);
         }
+#endif
 
 #if NET47_OR_GREATER || NETCOREAPP
         [Test]

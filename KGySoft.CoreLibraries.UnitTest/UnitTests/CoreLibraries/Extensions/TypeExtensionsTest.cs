@@ -99,6 +99,9 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Assert.AreEqual(16, Reflector<decimal>.SizeOf);
             Assert.AreEqual(1, Reflector<_>.SizeOf);
             Assert.AreEqual(IntPtr.Size, Reflector<nint>.SizeOf);
+
+            Assert.AreEqual(Reflector<bool?>.SizeOf, typeof(bool?).SizeOf());
+            Assert.AreEqual(Reflector<(decimal?, DateTime)>.SizeOf, typeof((decimal?, DateTime)).SizeOf());
         }
 
         #endregion

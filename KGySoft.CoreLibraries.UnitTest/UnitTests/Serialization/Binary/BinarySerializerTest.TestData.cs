@@ -1024,7 +1024,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #if NET47_OR_GREATER || !NETFRAMEWORK
             private readonly ValueTuple<T> valueTuple;
 #endif
-#if NETCOREAPP
+#if NETCOREAPP && !NETSTANDARD_TEST
             private readonly ImmutableArray<T> valueImmutableArray;
             private readonly ImmutableArray<T>.Builder valueImmutableArrayBuilder;
             private readonly ImmutableList<T> valueImmutableList;
@@ -1059,7 +1059,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #if NET47_OR_GREATER || !NETFRAMEWORK
                 valueTuple = new ValueTuple<T>(value);
 #endif
-#if NETCOREAPP
+#if NETCOREAPP && !NETSTANDARD_TEST
                 valueImmutableArray = ImmutableArray.Create(value);
                 valueImmutableArrayBuilder = ImmutableArray.CreateBuilder<T>();
                 valueImmutableArrayBuilder.Add(value);
@@ -1095,7 +1095,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #if NET47_OR_GREATER || !NETFRAMEWORK
                 && Equals(valueTuple, other.valueTuple)
 #endif
-#if NETCOREAPP
+#if NETCOREAPP && !NETSTANDARD_TEST
                 && Equals(valueImmutableArray[0], other.valueImmutableArray[0])
                 && Equals(valueImmutableArrayBuilder[0], other.valueImmutableArrayBuilder[0])
                 && Equals(valueImmutableList[0], other.valueImmutableList[0])

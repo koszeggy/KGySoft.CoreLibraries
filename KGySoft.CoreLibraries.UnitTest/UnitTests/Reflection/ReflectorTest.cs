@@ -704,6 +704,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Assert.AreEqual(arg1, test.IntProp);
         }
 
+#if !(NETCOREAPP2_0 && NETSTANDARD_TEST)
         [Test]
         public void ClassInstanceRefReturnFunctionMethodInvoke()
         {
@@ -754,6 +755,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Assert.AreEqual(arg, result);
             Assert.AreEqual(arg, test.IntField);
         }
+#endif
 
         [Test]
         public void ClassStaticSimpleFunctionMethodInvoke()
@@ -1412,6 +1414,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Throws<ReflectionException>(() => Reflector.GetProperty(test, nameof(TestClass.StaticIntProp)), Res.ReflectionInstancePropertyDoesNotExist(nameof(TestClass.StaticIntProp), typeof(TestClass)));
         }
 
+#if !(NETCOREAPP2_0 && NETSTANDARD_TEST)
         [Test]
         public void ClassInstanceRefPropertyAccess()
         {
@@ -1543,6 +1546,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Throws<ReflectionException>(() => Reflector.GetProperty(new object(), nameof(TestClass.RefReadonlyProperty)), Res.ReflectionInstancePropertyDoesNotExist(nameof(TestClass.RefReadonlyProperty), typeof(object)));
             Throws<ReflectionException>(() => Reflector.GetProperty(test, nameof(TestClass.StaticIntProp)), Res.ReflectionInstancePropertyDoesNotExist(nameof(TestClass.StaticIntProp), typeof(TestClass)));
         }
+#endif
 
         [Test]
         public void ClassStaticPropertyAccess()
@@ -1601,6 +1605,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Throws<ReflectionException>(() => Reflector.GetProperty(testType, nameof(TestClass.IntProp)), Res.ReflectionStaticPropertyDoesNotExist(nameof(TestClass.IntProp), testType));
         }
 
+#if !(NETCOREAPP2_0 && NETSTANDARD_TEST)
         [Test]
         public void ClassStaticRefPropertyAccess()
         {
@@ -1710,6 +1715,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Throws<ReflectionException>(() => Reflector.GetProperty(Reflector.ObjectType, nameof(TestClass.StaticRefReadonlyProperty)), Res.ReflectionStaticPropertyDoesNotExist(nameof(TestClass.StaticRefReadonlyProperty), typeof(object)));
             Throws<ReflectionException>(() => Reflector.GetProperty(testType, nameof(TestClass.IntProp)), Res.ReflectionStaticPropertyDoesNotExist(nameof(TestClass.IntProp), testType));
         }
+#endif
 
         [Test]
         public void ClassInstanceIndexerAccess()
@@ -1803,6 +1809,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Throws<ReflectionException>(() => Reflector.GetIndexedMember(test, 1m), Res.ReflectionIndexerNotFound(test.GetType()));
         }
 
+#if !(NETCOREAPP2_0 && NETSTANDARD_TEST)
         [Test]
         public void ClassInstanceRefIndexerAccess()
         {
@@ -1884,6 +1891,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Throws<ArgumentException>(() => Reflector.GetIndexedMember(test), Res.ReflectionEmptyIndices);
             Throws<ReflectionException>(() => Reflector.GetIndexedMember(test, 1m), Res.ReflectionIndexerNotFound(test.GetType()));
         }
+#endif
 
         #endregion
 
@@ -1962,6 +1970,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Throws<ReflectionException>(() => Reflector.GetProperty(test, nameof(TestStruct.StaticIntProp)), Res.ReflectionInstancePropertyDoesNotExist(nameof(TestStruct.StaticIntProp), typeof(TestStruct)));
         }
 
+#if !(NETCOREAPP2_0 && NETSTANDARD_TEST)
         [Test]
         public void StructInstanceRefPropertyAccess()
         {
@@ -2102,6 +2111,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Throws<ReflectionException>(() => Reflector.GetProperty(new object(), nameof(TestStruct.RefReadonlyProperty)), Res.ReflectionInstancePropertyDoesNotExist(nameof(TestStruct.RefReadonlyProperty), typeof(object)));
             Throws<ReflectionException>(() => Reflector.GetProperty(test, nameof(TestStruct.StaticIntProp)), Res.ReflectionInstancePropertyDoesNotExist(nameof(TestStruct.StaticIntProp), typeof(TestStruct)));
         }
+#endif
 
         [Test]
         public void StructStaticPropertyAccess()
