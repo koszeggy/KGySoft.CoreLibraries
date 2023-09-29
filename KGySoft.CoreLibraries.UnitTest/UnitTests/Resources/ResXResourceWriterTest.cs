@@ -521,7 +521,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 #if NET6_0
             KGySerializeObjects(referenceObjects, true, safeMode: false);
 #else
-            KGySerializeObjects(referenceObjects, true);
+            KGySerializeObjects(referenceObjects, true, checkCompatibleEquality: false); // System serializer converts UTC DateTime to local time
 #endif
 
             KGySerializeObjects(referenceObjects, false);
