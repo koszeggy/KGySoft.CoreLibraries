@@ -44,9 +44,9 @@ namespace KGySoft.Serialization.Binary
     /// </summary>
     /// <remarks>
     /// <note type="security"><para>If a deserialization stream may come from an untrusted source, then make sure to set the <see cref="SafeMode"/> property
-    /// to <see langword="true"/> to prevent loading assemblies when resolving types by the fallback logic.</para>
+    /// to <see langword="true"/> to prevent loading assemblies and resolving any types but the explicitly specified ones.</para>
     /// <para>See the security notes at the <strong>Remarks</strong> section of the <see cref="BinarySerializationFormatter"/> class for more details.</para></note>
-    /// <para>By default, the <see cref="ForwardedTypesSerializationBinder"/> does nothing. Resolving types from legacy
+    /// <para>Without specifying any expected types the <see cref="ForwardedTypesSerializationBinder"/> does nothing special. Resolving types from legacy
     /// assemblies works automatically if at least a chunk version of the assembly exists on the current platform containing nothing but a bunch
     /// of <see cref="TypeForwardedToAttribute"/> attributes (this is the case for the original .NET Framework assemblies on .NET Core and .NET Standard).</para>
     /// <para>To resolve types that are not forwarded by the <see cref="TypeForwardedToAttribute"/> from an existing assembly with the
@@ -66,7 +66,9 @@ namespace KGySoft.Serialization.Binary
     /// <para>The following example demonstrates the usage of the <see cref="ForwardedTypesSerializationBinder"/> when types have to be deserialized from a stream,
     /// which have been originally serialized by another version of the assembly.
     /// <code lang="C#"><![CDATA[
-    /// var binder = new ForwardedTypesSerializationBinder();
+    /// // If SafeMode is true you must declare every type name that can occur in the serialization stream;
+    /// // otherwise, just the ones with changed identity. 
+    /// var binder = new ForwardedTypesSerializationBinder { SafeMode = true };
     ///
     /// // MyType will be able to be deserialized if the assembly name in the
     /// // serialization stream matches any of the enlisted ones.
@@ -151,13 +153,12 @@ namespace KGySoft.Serialization.Binary
         public bool WriteLegacyIdentity { get; set; }
 
         /// <summary>
-        /// Gets or sets whether loading assemblies is prohibited on deserialization, when there is no rule specified for a type
-        /// and the default resolve logic is used.
+        /// Gets or sets whether all of the type names that occur in the serialization stream must have a defined mapping to a type.
         /// <br/>Default value: <see langword="false"/>.
         /// </summary>
         /// <remarks>
-        /// <para>If <see cref="SafeMode"/> is <see langword="true"/>, and there is no rule specified for a type, then it ensures that no assembly loading will occur when using the default type resolving logic.</para>
-        /// <para>If <see cref="SafeMode"/> is <see langword="false"/>, then <see cref="BindToType">BindToType</see> may load assemblies during the deserialization.</para>
+        /// <para>If <see cref="SafeMode"/> is <see langword="true"/>, and there is no rule specified for a type, then a <see cref="SerializationException"/> will be thrown when <see cref="BindToType">BindToType</see> is called.</para>
+        /// <para>If <see cref="SafeMode"/> is <see langword="false"/>, then <see cref="BindToType">BindToType</see> is allowed to resolve the type automatically and can even load assemblies during the deserialization.</para>
         /// <para>To prevent the consumer <see cref="IFormatter"/> from loading assemblies the <see cref="BindToType">BindToType</see> method never returns <see langword="null"/>;
         /// instead, it throws a <see cref="SerializationException"/> if a type could not be resolved.</para>
         /// <note>See also the security notes at the <strong>Remarks</strong> section of the <see cref="BinarySerializationFormatter"/> class for more details.</note>
@@ -310,10 +311,10 @@ namespace KGySoft.Serialization.Binary
 
         /// <summary>
         /// Retrieves a type by its <paramref name="assemblyName"/> and <paramref name="typeName"/>.
+        /// If <see cref="SafeMode"/> is <see langword="true"/>, then an explicit mapping must exist that can be added by
+        /// the <see cref="AddType">AddType</see> or <see cref="AddTypes">AddTypes</see> methods.
         /// </summary>
-        /// <returns>
-        /// The type of the resolved object to create.
-        /// </returns>
+        /// <returns>The type of the resolved object to create.</returns>
         /// <param name="assemblyName">Specifies the <see cref="Assembly"/> name of the serialized object.</param>
         /// <param name="typeName">Specifies the <see cref="Type"/> name of the serialized object.</param>
         /// <exception cref="SerializationException">The type cannot be resolved or the assembly cannot be loaded.</exception>
@@ -323,7 +324,7 @@ namespace KGySoft.Serialization.Binary
 
             Type? ResolveType(AssemblyName? asmName, string typName)
             {
-                // there is no rule for such type name
+                // Checking if there is a rule for such type name
                 if (mapping.TryGetValue(typName, out Dictionary<Type, HashSet<string>>? byTypeMap))
                 {
                     foreach (KeyValuePair<Type, HashSet<string>> map in byTypeMap)
@@ -331,10 +332,10 @@ namespace KGySoft.Serialization.Binary
                         if (map.Value.Any(name => name.Length == 0 || AssemblyResolver.IdentityMatches(new AssemblyName(name), asmName, false)))
                             return map.Key;
                     }
-
                 }
 
-                // As ThrowError is not set the TypeResolver will return null here
+                // In SafeMode throwing an exception here to prevent even the exact match (with None options) of an unexpected type.
+                // As ThrowError is not set in the options the TypeResolver will suppress this exception and returns null eventually.
                 if (SafeMode)
                     throw new ArgumentException();
 
@@ -345,10 +346,9 @@ namespace KGySoft.Serialization.Binary
             #endregion
 
             string fullName = String.IsNullOrEmpty(assemblyName) ? typeName : typeName + ", " + assemblyName;
-            Type? result = Reflector.ResolveType(fullName, ResolveType);
-            if (result is null && !SafeMode)
-                result = Reflector.ResolveType(fullName, ResolveTypeOptions.AllowPartialAssemblyMatch | ResolveTypeOptions.TryToLoadAssemblies);
 
+            // Actually options don't really matter in SafeMode because our custom ResolveType always throws an exception
+            Type? result = Reflector.ResolveType(fullName, ResolveType, SafeMode ? ResolveTypeOptions.None : ResolveTypeOptions.AllowPartialAssemblyMatch | ResolveTypeOptions.TryToLoadAssemblies);
             if (result is not null)
                 return result;
 

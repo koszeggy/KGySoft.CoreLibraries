@@ -35,18 +35,15 @@ namespace KGySoft.Serialization.Binary
     /// </summary>
     /// <remarks>
     /// <note type="security"><para>If a deserialization stream may come from an untrusted source, then make sure to set the <see cref="SafeMode"/> property
-    /// to <see langword="true"/> to prevent loading assemblies when resolving types.</para>
+    /// to <see langword="true"/> to prevent loading assemblies when resolving types. Please note though that you cannot use this class for <see cref="BinarySerializationFormatter"/> when the <see cref="BinarySerializationOptions.SafeMode"/> flag
+    /// is enabled in its <see cref="BinarySerializationFormatter.Options"/> property, even if the <see cref="SafeMode"/> property is set to <see langword="true"/>.</para>
     /// <para>See the security notes at the <strong>Remarks</strong> section of the <see cref="BinarySerializationFormatter"/> class for more details.</para></note>
     /// <note>This binder does not use exact type mapping just tries to resolve type information automatically.
     /// To customize type mapping or use a custom resolve logic you can use the <see cref="ForwardedTypesSerializationBinder"/>
     /// or <see cref="CustomSerializationBinder"/> classes, respectively.</note>
     /// <para>The <see cref="WeakAssemblySerializationBinder"/> class allows resolving type information by weak assembly identity,
     /// or by completely ignoring assembly information (if <see cref="IgnoreAssemblyNameOnResolve"/> property is <see langword="true"/>.)</para>
-    /// <para>It also makes possible to prevent loading assembles during deserialization if the <see cref="SafeMode"/> property is <see langword="true"/>.
-    /// <note type="tip">You can make even a <see cref="BinaryFormatter"/> safe by assigning a <see cref="WeakAssemblySerializationBinder"/>
-    /// with <see cref="SafeMode"/> = <see langword="true"/> to its <see cref="IFormatter.Binder"/> property so it cannot resolve any type
-    /// whose assembly is not already loaded.
-    /// </note></para>
+    /// <para>It also makes possible to prevent loading assembles during deserialization if the <see cref="SafeMode"/> property is <see langword="true"/>.</para>
     /// <para>If <see cref="WeakAssemblySerializationBinder"/> is used on serialization, then it can omit assembly information from the serialization stream
     /// if the <see cref="OmitAssemblyNameOnSerialize"/> property is <see langword="true"/>.</para>
     /// </remarks>

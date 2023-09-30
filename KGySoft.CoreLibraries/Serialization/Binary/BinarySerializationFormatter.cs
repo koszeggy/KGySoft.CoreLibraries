@@ -147,61 +147,63 @@ namespace KGySoft.Serialization.Binary
     /// field values (including private ones), which can change from version to version. Therefore, binary serialization is recommended only for in-process purposes,
     /// such as deep cloning or undo/redo, etc. If it is known that a type will be deserialized in another environment and it can be completely restored by its public members,
     /// then a text-based serialization (see also <see cref="XmlSerializer"/>) can be a better choice.</note>
-    /// <note type="security"><para>Do not use binary serialization if the serialization stream may come from an untrusted source (eg. remote service, file or database).
-    /// If you still need to do so (eg. due to compatibility), then it is highly recommended to enable the <see cref="BinarySerializationOptions.SafeMode"/> option, which prevents
-    /// loading assemblies during the deserialization as well as instantiating non-serializable types, and guards against some attacks that may cause <see cref="OutOfMemoryException"/>.
-    /// When using <see cref="BinarySerializationOptions.SafeMode"/> you must preload every assembly referred by the serialization stream.</para>
-    /// <para>Please note though that even some system types can be dangerous. In the .NET Framework there are some serializable types in the fundamental core assemblies that
-    /// can be exploited for several attacks (causing unresponsiveness, <see cref="StackOverflowException"/> or even files to be deleted). Starting with .NET Core these types are not
-    /// serializable anymore and some of them have been moved to separate NuGet packages anyway, but the <see cref="BinaryFormatter"/> in the .NET Framework is still vulnerable against such attacks.
-    /// When using the <see cref="BinarySerializationOptions.SafeMode"/> flag, the <see cref="BinarySerializationFormatter"/> is protected against the known security issues
-    /// on all platforms but of course it cannot guard you against the already loaded potentially harmful types.</para>
-    /// <para>Please also note that <see cref="BinarySerializationOptions.SafeMode"/> cannot prevent deserializing invalid content if a serializable type does not implement <see cref="ISerializable"/>
-    /// and it does not validate the incoming <see cref="SerializationInfo"/> in its serialization constructor. All serializable types that can have an invalid state regarding the field values
+    /// <note type="security"><para>If the serialization stream may come from an untrusted source (eg. remote service, file or database) make sure you enable
+    /// the <see cref="BinarySerializationOptions.SafeMode"/> option. It prevents loading assemblies during the deserialization, denies resolving unexpected natively not supported types by name,
+    /// does not allow instantiating natively not supported types that are not serializable, and guards against some attacks that may cause <see cref="OutOfMemoryException"/>.
+    /// When using <see cref="BinarySerializationOptions.SafeMode"/> all of the natively not supported types, whose assembly qualified names are
+    /// stored in the serialization stream must be explicitly declared as expected types in the deserialization methods, including apparently innocent types such as <see langword="enum"/>s.</para>
+    /// <para>Please also note that in safe mode even some system types are forbidden to use even if they are serializable and are specified as expected types.
+    /// In the .NET Framework there are some serializable types in the fundamental core assemblies that can be exploited for several attacks (causing unresponsiveness,
+    /// <see cref="StackOverflowException"/> or even files to be deleted). Starting with .NET Core these types are not serializable anymore and some of them have been moved to separate NuGet packages anyway,
+    /// but the <see cref="BinaryFormatter"/> class in the .NET Framework is still vulnerable against such attacks. When using the <see cref="BinarySerializationOptions.SafeMode"/> flag,
+    /// the <see cref="BinarySerializationFormatter"/> is protected against the known security issues on all platforms but of course it cannot guard you against every potentially harmful type if
+    /// you explicitly specify them as expected types in the deserialization methods.</para>
+    /// <para>Please also note that the <see cref="IFormatter"/> infrastructure has other security flaws as well that can be reduced by the serializable types themselves.
+    /// Most serializable types do not validate the incoming data. All serializable types that can have an invalid state regarding the field values
     /// should implement <see cref="ISerializable"/> and should throw a <see cref="SerializationException"/> from their serialization constructor if validation fails.
-    /// Other exceptions thrown by the constructor will be wrapped into a <see cref="SerializationException"/>.</para>
-    /// <para>To be completely secured use binary serialization in-process only, or (especially when targeting the .NET Framework), set the <see cref="Binder"/> property to a <see cref="SerializationBinder"/>
-    /// instance that uses strict mapping. For example, you can use the <see cref="CustomSerializationBinder"/> class with handlers that throw exceptions for unexpected assemblies and types.</para>
-    /// <para>Please also note that if the <see cref="Binder"/> property is set, then using <see cref="BinarySerializationOptions.SafeMode"/> cannot prevent loading assemblies by the binder itself.
-    /// It can just assure that if the binder returns <see langword="null"/>, then the default resolve logic will not allow loading assemblies. The binders in this library that can perform automatic
-    /// type resolving, such the <see cref="WeakAssemblySerializationBinder"/> and <see cref="ForwardedTypesSerializationBinder"/> have their own <c>SafeMode</c> property.
-    /// If you use them, make sure to set their <c>SafeMode</c> property to <see langword="true"/> to prevent loading assemblies by the binders themselves.</para>
-    /// <para>Similarly, if the <see cref="SurrogateSelector"/> property is set, then they provide a custom serialization even for types that are not serializable. The surrogate selectors in this library,
-    /// such as the <see cref="CustomSerializerSurrogateSelector"/> and <see cref="NameInvariantSurrogateSelector"/> types have their own <c>SafeMode</c> property.
-    /// If you use them, make sure to set their <c>SafeMode</c> property to <see langword="true"/> to prevent deserializing non-serializable types.</para></note>
+    /// The <see cref="BinarySerializationFormatter"/> wraps every other exception thrown by the constructor into a <see cref="SerializationException"/>.
+    /// Not even the core .NET types have such validation, which is one reason why this library supports so many types natively. And for custom types
+    /// see the example at the <a href="#example">Example: How to implement a custom serializable type</a> section.</para>
+    /// <para>Starting with version 8.0.0 the in safe mode the <see cref="Binder"/> property can only be <see langword="null"/> or a <see cref="ForwardedTypesSerializationBinder"/> instance if you set
+    /// its <see cref="ForwardedTypesSerializationBinder.SafeMode"/> to <see langword="true"/>. Furthermore, in safe mode it is not allowed to set any surrogate selectors in the <see cref="SurrogateSelector"/> property.
+    /// Please note that this library also contains a sort of serialization binders and surrogates, many of them having their own <c>SafeMode</c> properties
+    /// (eg. <see cref="WeakAssemblySerializationBinder"/>, <see cref="CustomSerializerSurrogateSelector"/> or <see cref="NameInvariantSurrogateSelector"/>), still,
+    /// not even they are allowed to be used when the <see cref="BinarySerializationOptions.SafeMode"/> option is enabled. It's because their safe mode provide some not too strict general protection only,
+    /// instead of being able to filter a specific set of predefined types.</para>
+    /// <para>If you must disable <see cref="BinarySerializationOptions.SafeMode"/> for some reason, then use binary serialization in-process only, or apply some cryptographically secure encryption
+    /// to the serialization stream.</para></note>
     /// <para><see cref="BinarySerializationFormatter"/> aims to serialize objects effectively where the serialized data is almost always more compact than the results produced by the <see cref="BinaryFormatter"/> class.</para>
     /// <para><see cref="BinarySerializationFormatter"/> natively supports all of the primitive types and a sort of other simple types, arrays, generic and non-generic collections.
     /// <note>Serialization of natively supported types produce an especially compact result because these types are not serialized by traversing and storing the fields of the object graph recursively.
-    /// This means not just better performance for these types but also prevents compatibility issues between different platforms because these types are not encoded by assembly identity and type name.
-    /// Serialization of complex types can be somewhat slower for the first time than by <see cref="BinaryFormatter"/> but the serialized result is almost always shorter than the one by <see cref="BinaryFormatter"/>,
+    /// This means not just better performance and improved security for these types but also prevents compatibility issues between different platforms because these types are not encoded by assembly identity and type name.
+    /// Serialization of natively not supported types can be somewhat slower for the first time than by <see cref="BinaryFormatter"/> but the serialized result is almost always shorter than the one by <see cref="BinaryFormatter"/>,
     /// especially when generic types are involved.</note></para>
-    /// <para>Even if a type is not marked to be serializable by the <see cref="SerializableAttribute"/>, then you can use the <see cref="BinarySerializationOptions.RecursiveSerializationAsFallback"/> option to force their serialization.
-    /// Alternatively, you can implement the <see cref="IBinarySerializable"/> interface, which can be used to produce a more compact custom serialization than the one provided by implementing the <see cref="ISerializable"/> interface.
-    /// A custom serialization logic can be applied also by setting the <see cref="SurrogateSelector"/> property.<para>
-    /// </para>Similarly to <see cref="BinaryFormatter"/>, <see cref="ISerializable"/> implementations are also supported, and they are considered only for types marked by the <see cref="SerializableAttribute"/>, unless
-    /// the <see cref="BinarySerializationOptions.RecursiveSerializationAsFallback"/> option is enabled for the serialization.</para>
-    /// <para>As <see cref="BinarySerializationFormatter"/> implements <see cref="IFormatter"/> it fully supports <see cref="SerializationBinder"/> and <see cref="ISurrogateSelector"/> implementations.
-    /// <note type="tip">A <see cref="SerializationBinder"/> can be used to deserialize types of unmatching assembly identity and to specify custom type-name mappings in both directions.
+    /// <para>Even if a type is not marked to be serializable by the <see cref="SerializableAttribute"/>, then you can use the <see cref="BinarySerializationOptions.RecursiveSerializationAsFallback"/>
+    /// option to force its serialization. Please note though that such types might not be able to be deserialized when <see cref="BinarySerializationOptions.SafeMode"/> is enabled. Alternatively, you can implement
+    /// the <see cref="IBinarySerializable"/> interface, which can be used to produce a more compact custom serialization than the one provided by implementing the <see cref="ISerializable"/> interface.</para>
+    /// <para>As <see cref="BinarySerializationFormatter"/> implements <see cref="IFormatter"/> it fully supports <see cref="SerializationBinder"/> and <see cref="ISurrogateSelector"/> implementations,
+    /// though for security they are mainly disabled in safe mode. See security notes above for more details.</para>
+    /// <para>A <see cref="SerializationBinder"/> can be used to deserialize types of unmatching assembly identity and to specify custom type-name mappings in both directions.
     /// Though <see cref="BinarySerializationFormatter"/> automatically handles <see cref="TypeForwardedToAttribute"/> and <see cref="TypeForwardedFromAttribute"/> (see also
     /// the <see cref="BinarySerializationOptions.IgnoreTypeForwardedFromAttribute"/> option), you can use also the <see cref="ForwardedTypesSerializationBinder"/>, especially for types without a defined forwarding.
     /// The <see cref="WeakAssemblySerializationBinder"/> can also be general solution if you need to ignore the assembly version or the complete assembly identity on resolving a type.
     /// If the name of the type has also been changed, then the <see cref="CustomSerializationBinder"/> can be used.
-    /// See also the <strong>Remarks</strong> section of the <see cref="Binder"/> property for more details.</note>
-    /// <note type="tip">An <see cref="ISurrogateSelector"/> can be used to customize serialization and deserialization. It can be used for types that cannot be handled anyway for some reason.
+    /// See also the <strong>Remarks</strong> section of the <see cref="Binder"/> property for more details.</para>
+    /// <para>An <see cref="ISurrogateSelector"/> can be used to customize serialization and deserialization. It can be used for types that cannot be handled anyway for some reason.
     /// For example, if you need to deserialize types, whose field names have been renamed you can use the <see cref="CustomSerializerSurrogateSelector"/>.
-    /// Or, if the produced raw data has to be compatible with the obfuscated version of a type, then it can be achieved by the <see cref="NameInvariantSurrogateSelector"/>.</note>
-    /// </para>
-    /// <para>There are three ways to serialize/deserialize an object. To serialize into a byte array use the <see cref="Serialize">Serialize</see> method. Its result can be deserialized by the <see cref="O:KGySoft.Serialization.Binary.BinarySerializationFormatter.Deserialize">Deserialize</see> methods.
-    /// Additionally, you can use the <see cref="SerializeToStream">SerializeToStream</see>/<see cref="O:KGySoft.Serialization.Binary.BinarySerializationFormatter.DeserializeFromStream">DeserializeFromStream</see> methods to dump/read the result to and from a <see cref="Stream"/>, and the
-    /// the <see cref="SerializeByWriter">SerializeByWriter</see>/<see cref="O:KGySoft.Serialization.Binary.BinarySerializationFormatter.DeserializeByReader">DeserializeByReader</see> methods to use specific <see cref="BinaryWriter"/> and <see cref="BinaryReader"/> instances for
-    /// serialization and deserialization, respectively.</para>
+    /// Or, if the produced raw data has to be compatible with the obfuscated version of a type, then it can be achieved by the <see cref="NameInvariantSurrogateSelector"/>.</para>
+    /// <para>There are three ways to serialize/deserialize an object. To serialize into a byte array use the <see cref="Serialize">Serialize</see> method.
+    /// Its result can be deserialized by the <see cref="O:KGySoft.Serialization.Binary.BinarySerializationFormatter.Deserialize">Deserialize</see> methods.
+    /// Additionally, you can use the <see cref="SerializeToStream">SerializeToStream</see>/<see cref="O:KGySoft.Serialization.Binary.BinarySerializationFormatter.DeserializeFromStream">DeserializeFromStream</see> methods to dump/read the result
+    /// to and from a <see cref="Stream"/>, and the the <see cref="SerializeByWriter">SerializeByWriter</see>/<see cref="O:KGySoft.Serialization.Binary.BinarySerializationFormatter.DeserializeByReader">DeserializeByReader</see>
+    /// methods to use specific <see cref="BinaryWriter"/> and <see cref="BinaryReader"/> instances for serialization and deserialization, respectively.</para>
     /// <note type="warning">In .NET Framework almost every type was serializable by <see cref="BinaryFormatter"/>. In .NET Core this principle has been
     /// radically changed. Many types are just simply not marked by the <see cref="SerializableAttribute"/> anymore (eg. <see cref="MemoryStream"/>,
     /// <see cref="CultureInfo"/>, <see cref="Encoding"/>), and also there are some others, which still implement <see cref="ISerializable"/> but their <see cref="ISerializable.GetObjectData">GetObjectData</see>
     /// throw a <see cref="PlatformNotSupportedException"/> now. Binary serialization of these types is not recommended anymore. If you still must serialize or deserialize such types
     /// see the <strong>Remarks</strong> section of the <see cref="CustomSerializerSurrogateSelector"/> for more details.</note>
     /// <h2>Natively supported simple types</h2>
-    /// <para>Following types are natively supported. When these types are serialized, no recursive traversal of the fields occurs:
+    /// <para>Following types are natively supported. When these types are serialized, no type name is stored and there is no recursive traversal of the fields:
     /// <list type="bullet">
     /// <item><see langword="null"/> reference</item>
     /// <item>Non-derived <see cref="object"/> instances.</item>
@@ -234,8 +236,8 @@ namespace KGySoft.Serialization.Binary
     /// <item><see cref="CompareInfo"/></item>
     /// <item><see cref="Comparer"/></item>
     /// <item><see cref="CaseInsensitiveComparer"/></item>
-    /// <item><see cref="Enum"/> types</item>
-    /// <item><see cref="Type"/> instances if they are runtime types.</item>
+    /// <item><see cref="Enum"/> types, though their names are saved in the serialization stream so they must be specified as expected types when deserializing in safe mode.</item>
+    /// <item><see cref="Type"/> instances if they are runtime types. For natively not supported types their names are stored in the stream so in safe mode deserialization they must be specified as expected types.</item>
     /// <item>Known <see cref="StringComparer"/> implementations.</item>
     /// <item><see cref="StringSegmentComparer"/> implementations.</item>
     /// <item><see cref="Nullable{T}"/> types if type parameter is any of the supported types.</item>
@@ -268,9 +270,12 @@ namespace KGySoft.Serialization.Binary
     /// </list>
     /// <note>
     /// <list type="bullet">
-    /// <item>Serializing <see cref="Enum"/> types will result a longer raw data than serializing their numeric value, though the result will be still shorter than the one produced by <see cref="BinaryFormatter"/>.</item>
-    /// <item>If <see cref="KeyValuePair{TKey,TValue}"/> contains non-natively supported type arguments or <see cref="DictionaryEntry"/> has non-natively supported keys an values, then for them recursive serialization may occur.
-    /// If they contain non-serializable types, then the <see cref="BinarySerializationOptions.RecursiveSerializationAsFallback"/> option should be enabled.</item>
+    /// <item>Serializing <see cref="Enum"/> types will end up in a longer result raw data than serializing their numeric value, though the result will be still shorter than the one produced by <see cref="BinaryFormatter"/>.
+    /// Please note that when deserializing in safe mode enums must be specified among the expected custom types. It's because though enums themselves are harmless, their type must be resolved just like any other type
+    /// so a manipulated serialization stream may contain some altered type identity that could be resolved to a harmful type.</item>
+    /// <item>If a <see cref="KeyValuePair{TKey,TValue}"/> contains natively not supported type arguments or <see cref="DictionaryEntry"/> has natively not supported keys an values,
+    /// then for them recursive serialization may occur. If they contain non-serializable types, then the <see cref="BinarySerializationOptions.RecursiveSerializationAsFallback"/> option should be enabled.
+    /// The same applies also for <see cref="Tuple"/> and <see cref="ValueTuple"/> types.</item>
     /// </list>
     /// </note>
     /// </para>
@@ -316,10 +321,10 @@ namespace KGySoft.Serialization.Binary
     /// <note>
     /// <list type="bullet">
     /// <item><see cref="Array"/>s can be single- and multidimensional, jagged (array of arrays) and don't have to be zero index-based. Arrays and other generic collections can be nested.</item>
-    /// <item>If a collection uses a non-default <see cref="IEqualityComparer{T}"/> or <see cref="IComparer{T}"/> implementation, then it is possible that the type cannot be serialized without enabling
+    /// <item>If a collection uses an unsupported <see cref="IEqualityComparer{T}"/> or <see cref="IComparer{T}"/> implementation, then it is possible that the type cannot be serialized without enabling
     /// <see cref="BinarySerializationOptions.RecursiveSerializationAsFallback"/> option, unless the comparer is decorated by <see cref="SerializableAttribute"/> or implements the <see cref="IBinarySerializable"/> interface.</item>
     /// <item>If an <see cref="Array"/> has <see cref="object"/> element type or <see cref="object"/> is used in generic arguments of the collections above and an element is not a natively supported type, then recursive serialization of fields
-    /// may occur. For non-serializable types the <see cref="BinarySerializationOptions.RecursiveSerializationAsFallback"/> option might be enabled.</item>
+    /// may occur. For non-serializable types the <see cref="BinarySerializationOptions.RecursiveSerializationAsFallback"/> option might be needed to be enabled.</item>
     /// <item>Even if a generic collection of <see cref="object"/> contains natively supported types only, the result will be somewhat longer than in case of a more specific element type.</item>
     /// </list>
     /// </note>
@@ -345,7 +350,7 @@ namespace KGySoft.Serialization.Binary
     /// </list>
     /// <note>
     /// <list type="bullet">
-    /// <item>If a collection uses a non-default <see cref="IEqualityComparer"/> or <see cref="IComparer"/> implementation, then it is possible that the type cannot be serialized without enabling
+    /// <item>If a collection uses an unsupported <see cref="IEqualityComparer"/> or <see cref="IComparer"/> implementation, then it is possible that the type cannot be serialized without enabling
     /// <see cref="BinarySerializationOptions.RecursiveSerializationAsFallback"/> option, unless the comparer is decorated by <see cref="SerializableAttribute"/> or implements the <see cref="IBinarySerializable"/> interface.</item>
     /// <item>If an element in these collections is not a natively supported type, then recursive serialization of fields may occur. For non-serializable types the <see cref="BinarySerializationOptions.RecursiveSerializationAsFallback"/>
     /// option might be enabled.</item>
@@ -360,7 +365,7 @@ namespace KGySoft.Serialization.Binary
     /// only after restoring the whole content so fields will be already restored.</note>
     /// </para>
     /// </remarks>
-    /// <example>
+    /// <h2>Example: Size comparison to BinaryFormatter</h2>
     /// <note type="tip">Try also <a href="https://dotnetfiddle.net/nQfFrQ" target="_blank">online</a>.</note>
     /// The following example demonstrates the length difference produced by the <see cref="BinarySerializationFormatter"/> and <see cref="BinaryFormatter"/> classes. Feel free to change the generated type.
     /// <code lang="C#"><![CDATA[
@@ -430,7 +435,92 @@ namespace KGySoft.Serialization.Binary
     /// // Deserialized object [{Key = 1418272504, Value = [aqez]}, {Key = 552276491, Value = [addejibude, yifefa]}]
     /// // Length by BinarySerializationFormatter: 50
     /// // Length by BinaryFormatter: 2217]]></code>
-    /// </example>
+    /// <h2>Example: How to implement a custom serializable type<a name="example">&#160;</a></h2>
+    /// <note type="tip">For the most compact result and to avoid using the obsoleted serialization infrastructure in .NET 8.0 and above it is recommended to implement the <see cref="IBinarySerializable"/> interface.
+    /// <br/>See the <strong>Remarks</strong> section of the <see cref="IBinarySerializable"/> interface for details and examples.</note>
+    /// <para>The following example shows how to apply validation for a serializable class that does not implement <see cref="ISerializable"/> so it will be serialized by its fields.</para>
+    /// <code lang="C#"><![CDATA[
+    /// using System;
+    /// using System.Runtime.Serialization;
+    ///  
+    /// [Serializable]
+    /// public class Example1
+    /// {
+    ///     public int IntProp { get; set; }
+    ///     public string StringProp { get; set; }
+    ///
+    ///     // Regular validation when constructing the class normally
+    ///     public Example1(int intValue, string stringValue)
+    ///     {
+    ///         if (intValue <= 0)
+    ///             throw new ArgumentOutOfRangeException(nameof(intValue));
+    ///         if (stringValue == null)
+    ///             throw new ArgumentNullException(nameof(stringValue));
+    ///         if (stringValue.Length == 0)
+    ///             throw new ArgumentException("Value is empty", nameof(stringValue));
+    ///
+    ///         IntProp = intValue;
+    ///         StringProp = stringValue;
+    ///     }
+    ///
+    ///     // The validation for deserialization. This is executed once the instance is deserialized.
+    ///     // Another way for post-validation if you implement the IDeserializationCallback interface.
+    ///     [OnDeserialized]
+    ///     private void OnDeserialized(StreamingContext context)
+    ///     {
+    ///         if (IntProp <= 0 || String.IsNullOrEmpty(StringProp))
+    ///             throw new SerializationException("Invalid serialization stream");
+    ///     }
+    /// }]]></code>
+    /// <para>The example above may not be applicable if you if you need to validate the values in advance just like in the constructor.
+    /// In that case you can implement the <see cref="ISerializable"/> interface and do the validation in the special serialization constructor:</para>
+    /// <code lang="C#"><![CDATA[
+    /// using System;
+    /// using System.Runtime.Serialization;
+    ///  
+    /// [Serializable]
+    /// public class Example2 : ISerializable
+    /// {
+    ///     public int IntProp { get; set; }
+    ///     public string StringProp { get; set; }
+    ///
+    ///     // Regular validation when constructing the class normally
+    ///     public Example2(int intValue, string stringValue)
+    ///     {
+    ///         if (intValue <= 0)
+    ///             throw new ArgumentOutOfRangeException(nameof(intValue));
+    ///         if (stringValue == null)
+    ///             throw new ArgumentNullException(nameof(stringValue));
+    ///         if (stringValue.Length == 0)
+    ///             throw new ArgumentException("Value is empty", nameof(stringValue));
+    ///
+    ///         IntProp = intValue;
+    ///         StringProp = stringValue;
+    ///     }
+    ///
+    ///     // Deserialization constructor with validation
+    ///     private Example2(SerializationInfo info, StreamingContext context)
+    ///     {
+    ///         // GetValue throws SerializationException internally if the specified name is not found
+    ///         if (info.GetValue(nameof(IntProp), typeof(int)) is not int i || i <= 0)
+    ///             throw new SerializationException("IntProp is invalid");
+    ///         if (info.GetValue(nameof(StringProp), typeof(string)) is not string s || s.Length == 0)
+    ///             throw new SerializationException("StringProp is invalid");
+    ///
+    ///         IntProp = i;
+    ///         StringProp = s;
+    ///     }
+    ///
+    ///     // Serialization
+    ///     void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
+    ///     {
+    ///         info.AddValue(nameof(IntProp), IntProp);
+    ///         info.AddValue(nameof(StringProp), StringProp);
+    ///     }
+    /// }]]></code>
+    /// <note type="caution">The examples above are compatible also with <see cref="BinaryFormatter"/>.
+    /// Still, it is not recommended to use <see cref="BinaryFormatter"/> because it is vulnerable at multiple levels.
+    /// See the security notes at the top of the page for more details.</note>
     /// <seealso cref="BinarySerializer"/>
     [SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Supports many types natively, which is intended. See also DataTypes enum.")]
     public sealed partial class BinarySerializationFormatter : IFormatter
@@ -931,9 +1021,7 @@ namespace KGySoft.Serialization.Binary
         /// A wrapper type for 7-bit encoded types if they are encoded by index rather than DataTypes.
         /// </summary>
         // ReSharper disable once UnusedTypeParameter - used for encoding compressed type
-        private struct Compressible<T> where T : struct
-        {
-        }
+        private struct Compressible<T> where T : struct;
 
         #endregion
 
@@ -942,9 +1030,7 @@ namespace KGySoft.Serialization.Binary
         /// <summary>
         /// An indicator type for generic method parameters.
         /// </summary>
-        private struct GenericMethodDefinitionPlaceholder
-        {
-        }
+        private struct GenericMethodDefinitionPlaceholder;
 
         #endregion
 
@@ -1780,10 +1866,8 @@ namespace KGySoft.Serialization.Binary
         /// define the missing mappings by the <see cref="ForwardedTypesSerializationBinder.AddType">AddType</see> method and set its <see cref="ForwardedTypesSerializationBinder.WriteLegacyIdentity"/> property to <see langword="true"/>.
         /// Alternatively, you can use the <see cref="WeakAssemblySerializationBinder"/> or you can just serialize the object without
         /// assembly information by setting the <see cref="BinarySerializationOptions.OmitAssemblyQualifiedNames"/> flag in the <see cref="Options"/>.</note>
-        /// <note type="security"><para>If you use binders for deserialization, then setting the <see cref="BinarySerializationOptions.SafeMode"/> flag in the <see cref="Options"/>
-        /// cannot prevent loading assemblies by the binder itself. The binders in this library that can perform automatic type resolving,
-        /// such the <see cref="WeakAssemblySerializationBinder"/> and <see cref="ForwardedTypesSerializationBinder"/> have their own <c>SafeMode</c> property.
-        /// Make sure to set them to <see langword="true"/> to prevent loading assemblies by the binders themselves.</para>
+        /// <note type="security"><para>If the <see cref="BinarySerializationOptions.SafeMode"/> flag is set in the <see cref="Options"/> property,
+        /// then it is not allowed to use any binders other than the <see cref="ForwardedTypesSerializationBinder"/> with its <see cref="ForwardedTypesSerializationBinder.SafeMode"/> enabled.</para>
         /// <para>See the security notes at the <strong>Remarks</strong> section of the <see cref="BinarySerializationFormatter"/> class for more details.</para></note>
         /// </remarks>
         public SerializationBinder? Binder { get; set; }
@@ -1796,6 +1880,11 @@ namespace KGySoft.Serialization.Binary
         /// <summary>
         /// Gets or sets an <see cref="ISurrogateSelector"/> can be used to customize serialization and deserialization.
         /// </summary>
+        /// <remarks>
+        /// <note type="security"><para>If the <see cref="BinarySerializationOptions.SafeMode"/> flag is set in the <see cref="Options"/> property,
+        /// then it is not allowed to use any surrogate selectors.</para>
+        /// <para>See the security notes at the <strong>Remarks</strong> section of the <see cref="BinarySerializationFormatter"/> class for more details.</para></note>
+        /// </remarks>
         public ISurrogateSelector? SurrogateSelector { get; set; }
 
         #endregion
@@ -1826,7 +1915,7 @@ namespace KGySoft.Serialization.Binary
         private static DataTypes GetCollectionOrElementType(DataTypes dt) => (dt & DataTypes.CollectionTypesAll) != DataTypes.Null ? dt & DataTypes.CollectionTypesAll : dt & ~DataTypes.CollectionTypesAll;
         private static bool IsElementType(DataTypes dt) => (dt & ~DataTypes.CollectionTypesAll) != DataTypes.Null;
         private static bool IsCollectionType(DataTypes dt) => (dt & DataTypes.CollectionTypesAll) != DataTypes.Null;
-        private static bool IsCompressible(DataTypes dt) => (uint)((dt & DataTypes.SimpleTypesLow) - DataTypes.Int16) <= DataTypes.UIntPtr - DataTypes.Int16;
+        private static bool IsCompressible(DataTypes dt) => (dt & DataTypes.SimpleTypesLow) - DataTypes.Int16 <= DataTypes.UIntPtr - DataTypes.Int16;
         private static bool IsCompressed(DataTypes dt) => (dt & DataTypes.Store7BitEncoded) != DataTypes.Null;
         private static bool IsEnum(DataTypes dt) => (dt & DataTypes.Enum) != DataTypes.Null;
         private static bool IsPureType(DataTypes dt) => !IsEnum(dt) && (dt & DataTypes.ImpureType) != DataTypes.ImpureType;
@@ -2072,40 +2161,138 @@ namespace KGySoft.Serialization.Binary
         }
 
         /// <summary>
-        /// Deserializes the specified part of a byte array into an object.
+        /// Deserializes the specified part of a byte array into an object. If <see cref="BinarySerializationOptions.SafeMode"/> is enabled
+        /// in <see cref="Options"/> and <paramref name="rawData"/> contains natively not supported types by name, then you should use
+        /// the other overloads to specify the expected types.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="Deserialize{T}(byte[], int, Type[])"/> overload for details.
         /// </summary>
         /// <param name="rawData">Contains the raw data representation of the object to deserialize.</param>
         /// <param name="offset">Points to the starting position of the object data in <paramref name="rawData"/>. This parameter is optional.
         /// <br/>Default value: <c>0</c>.</param>
         /// <returns>The deserialized data.</returns>
-        /// <overloads>In the two-parameter overload the start offset of the data to deserialize can be specified.</overloads>
         public object? Deserialize(byte[] rawData, int offset = 0)
             => Deserialize<object?>(rawData, offset, (IEnumerable<Type>?)null);
 
+        /// <summary>
+        /// Deserializes the specified part of a byte array into an object.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="Deserialize{T}(byte[], int, Type[])"/> overload for details.
+        /// </summary>
+        /// <param name="rawData">Contains the raw data representation of the object to deserialize.</param>
+        /// <param name="offset">Points to the starting position of the object data in <paramref name="rawData"/>.</param>
+        /// <param name="expectedCustomTypes">The types that are expected to present in <paramref name="rawData"/> by name.
+        /// If <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <see cref="Options"/>
+        /// or <paramref name="rawData"/> does not contain any types by name, then this parameter is optional.</param>
+        /// <returns>The deserialized object.</returns>
         public object? Deserialize(byte[] rawData, int offset, params Type[]? expectedCustomTypes)
             => Deserialize<object?>(rawData, offset, (IEnumerable<Type>?)expectedCustomTypes);
 
+        /// <summary>
+        /// Deserializes a byte array into an object.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="Deserialize{T}(byte[], int, Type[])"/> overload for details.
+        /// </summary>
+        /// <param name="rawData">Contains the raw data representation of the object to deserialize.</param>
+        /// <param name="expectedCustomTypes">The types that are expected to present in <paramref name="rawData"/> by name.
+        /// If <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <see cref="Options"/>
+        /// or <paramref name="rawData"/> does not contain any types by name, then this parameter is optional.</param>
+        /// <returns>The deserialized object.</returns>
         public object? Deserialize(byte[] rawData, params Type[]? expectedCustomTypes)
             => Deserialize<object?>(rawData, 0, (IEnumerable<Type>?)expectedCustomTypes);
 
+        /// <summary>
+        /// Deserializes the specified part of a byte array into an instance of <typeparamref name="T"/>.
+        /// </summary>
+        /// <typeparam name="T">The expected type of the result.</typeparam>
+        /// <param name="rawData">Contains the raw data representation of the object to deserialize.</param>
+        /// <param name="offset">Points to the starting position of the object data in <paramref name="rawData"/>.</param>
+        /// <param name="expectedCustomTypes">The types that are expected to present in <paramref name="rawData"/> by name.
+        /// If <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <see cref="Options"/>
+        /// or <paramref name="rawData"/> does not contain any types by name, then this parameter is optional.</param>
+        /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
+        /// <remarks>
+        /// <para><paramref name="expectedCustomTypes"/> must be specified if <see cref="BinarySerializationOptions.SafeMode"/> is enabled in <see cref="Options"/>
+        /// and <paramref name="rawData"/> contains types encoded by their names. Natively supported types are not needed to be included
+        /// unless the original object was serialized with the <see cref="BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes"/> option enabled.</para>
+        /// <para><typeparamref name="T"/> is allowed to be an interface or abstract type but if it's different from the actual type of the result,
+        /// then the actual type also might needed to be included in <paramref name="expectedCustomTypes"/>.</para>
+        /// <para>You can specify <paramref name="expectedCustomTypes"/> even if <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <see cref="Options"/>
+        /// as it may improve the performance of type resolving and can help avoiding possible ambiguities if types were not serialized with full assembly identity
+        /// (eg. if <see cref="BinarySerializationOptions.OmitAssemblyQualifiedNames"/> was enabled on serialization).</para>
+        /// <para>If a type in <paramref name="expectedCustomTypes"/> has a different assembly identity in the deserialization stream, and it is not indicated
+        /// by a <see cref="TypeForwardedFromAttribute"/> declared on the type, then you should set the <see cref="Binder"/> property to
+        /// a <see cref="ForwardedTypesSerializationBinder"/> instance to specify the expected types.</para>
+        /// <para>For arrays it is enough to specify the element type and for generic types you can specify the
+        /// natively not supported generic type definition and generic type arguments separately.
+        /// If <paramref name="expectedCustomTypes"/> contains constructed generic types, then the generic type definition and
+        /// the type arguments will be treated as expected types in any combination.</para>
+        /// </remarks>
         public T Deserialize<T>(byte[] rawData, int offset, params Type[]? expectedCustomTypes)
             => Deserialize<T>(rawData, offset, (IEnumerable<Type>?)expectedCustomTypes);
 
+        /// <summary>
+        /// Deserializes a byte array into an instance of <typeparamref name="T"/>.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="Deserialize{T}(byte[], int, Type[])"/> overload for details.
+        /// </summary>
+        /// <typeparam name="T">The expected type of the result.</typeparam>
+        /// <param name="rawData">Contains the raw data representation of the object to deserialize.</param>
+        /// <param name="expectedCustomTypes">The types that are expected to present in <paramref name="rawData"/> by name.
+        /// If <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <see cref="Options"/>
+        /// or <paramref name="rawData"/> does not contain any types by name, then this parameter is optional.</param>
+        /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
         public T Deserialize<T>(byte[] rawData, params Type[]? expectedCustomTypes)
             => Deserialize<T>(rawData, 0, (IEnumerable<Type>?)expectedCustomTypes);
 
+        /// <summary>
+        /// Deserializes the specified part of a byte array into an object.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="Deserialize{T}(byte[], int, Type[])"/> overload for details.
+        /// </summary>
+        /// <param name="rawData">Contains the raw data representation of the object to deserialize.</param>
+        /// <param name="offset">Points to the starting position of the object data in <paramref name="rawData"/>.</param>
+        /// <param name="expectedCustomTypes">The types that are expected to present in <paramref name="rawData"/> by name.
+        /// If <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <see cref="Options"/>
+        /// or <paramref name="rawData"/> does not contain any types by name, then this parameter can be <see langword="null"/>.</param>
+        /// <returns>The deserialized object.</returns>
         public object? Deserialize(byte[] rawData, int offset, IEnumerable<Type>? expectedCustomTypes)
             => Deserialize<object?>(rawData, offset, expectedCustomTypes);
 
+        /// <summary>
+        /// Deserializes a byte array into an object.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="Deserialize{T}(byte[], int, Type[])"/> overload for details.
+        /// </summary>
+        /// <param name="rawData">Contains the raw data representation of the object to deserialize.</param>
+        /// <param name="expectedCustomTypes">The types that are expected to present in <paramref name="rawData"/> by name.
+        /// If <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <see cref="Options"/>
+        /// or <paramref name="rawData"/> does not contain any types by name, then this parameter can be <see langword="null"/>.</param>
+        /// <returns>The deserialized object.</returns>
         public object? Deserialize(byte[] rawData, IEnumerable<Type>? expectedCustomTypes)
             => Deserialize<object?>(rawData, 0, expectedCustomTypes);
 
+        /// <summary>
+        /// Deserializes the specified part of a byte array into an instance of <typeparamref name="T"/>.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="Deserialize{T}(byte[], int, Type[])"/> overload for details.
+        /// </summary>
+        /// <typeparam name="T">The expected type of the result.</typeparam>
+        /// <param name="rawData">Contains the raw data representation of the object to deserialize.</param>
+        /// <param name="offset">Points to the starting position of the object data in <paramref name="rawData"/>.</param>
+        /// <param name="expectedCustomTypes">The types that are expected to present in <paramref name="rawData"/> by name.
+        /// If <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <see cref="Options"/>
+        /// or <paramref name="rawData"/> does not contain any types by name, then this parameter can be <see langword="null"/>.</param>
+        /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
         public T Deserialize<T>(byte[] rawData, int offset, IEnumerable<Type>? expectedCustomTypes)
         {
             using var br = new BinaryReader(offset == 0 ? new MemoryStream(rawData) : new MemoryStream(rawData, offset, rawData.Length - offset));
             return DeserializeByReader<T>(br, expectedCustomTypes);
         }
 
+        /// <summary>
+        /// Deserializes a byte array into an instance of <typeparamref name="T"/>.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="Deserialize{T}(byte[], int, Type[])"/> overload for details.
+        /// </summary>
+        /// <typeparam name="T">The expected type of the result.</typeparam>
+        /// <param name="rawData">Contains the raw data representation of the object to deserialize.</param>
+        /// <param name="expectedCustomTypes">The types that are expected to present in <paramref name="rawData"/> by name.
+        /// If <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <see cref="Options"/>
+        /// or <paramref name="rawData"/> does not contain any types by name, then this parameter can be <see langword="null"/>.</param>
+        /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
         public T Deserialize<T>(byte[] rawData, IEnumerable<Type>? expectedCustomTypes)
             => Deserialize<T>(rawData, 0, expectedCustomTypes);
 
@@ -2118,22 +2305,79 @@ namespace KGySoft.Serialization.Binary
         public void SerializeToStream(Stream stream, object? data) => SerializeByWriter(new BinaryWriter(stream), data);
 
         /// <summary>
-        /// Deserializes data beginning at current position of given <paramref name="stream"/>.
+        /// Deserializes the content of the specified serialization <paramref name="stream"/> from its current position into an object.
+        /// If <see cref="BinarySerializationOptions.SafeMode"/> is enabled in <see cref="Options"/> and <paramref name="stream"/>
+        /// contains natively not supported types by name, then you should use the other overloads to specify the expected types.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeFromStream{T}(Stream, Type[])"/> overload for details.
         /// </summary>
-        /// <param name="stream">The stream, from which the data is read. The stream must support reading and will remain open after deserialization.</param>
+        /// <param name="stream">The <see cref="Stream"/> containing the serialized data. The stream must support reading and will remain open after deserialization.</param>
         /// <returns>The deserialized data.</returns>
         public object? DeserializeFromStream(Stream stream)
             => DeserializeByReader<object?>(new BinaryReader(stream), (IEnumerable<Type>?)null);
 
+        /// <summary>
+        /// Deserializes the content of the specified serialization <paramref name="stream"/> from its current position into an object.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeFromStream{T}(Stream, Type[])"/> overload for details.
+        /// </summary>
+        /// <param name="stream">The <see cref="Stream"/> containing the serialized data. The stream must support reading and will remain open after deserialization.</param>
+        /// <param name="expectedCustomTypes">The types that are expected to present in the serialization <paramref name="stream"/> by name.
+        /// If <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <see cref="Options"/>
+        /// or <paramref name="stream"/> does not contain any types by name, then this parameter is optional.</param>
+        /// <returns>The deserialized object.</returns>
         public object? DeserializeFromStream(Stream stream, params Type[]? expectedCustomTypes)
             => DeserializeByReader<object?>(new BinaryReader(stream), (IEnumerable<Type>?)expectedCustomTypes);
 
+        /// <summary>
+        /// Deserializes the content of the specified serialization <paramref name="stream"/> from its current position into an instance of <typeparamref name="T"/>.
+        /// </summary>
+        /// <typeparam name="T">The expected type of the result.</typeparam>
+        /// <param name="stream">The <see cref="Stream"/> containing the serialized data. The stream must support reading and will remain open after deserialization.</param>
+        /// <param name="expectedCustomTypes">The types that are expected to present in the serialization <paramref name="stream"/> by name.
+        /// If <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <see cref="Options"/>
+        /// or <paramref name="stream"/> does not contain any types by name, then this parameter is optional.</param>
+        /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
+        /// <remarks>
+        /// <para><paramref name="expectedCustomTypes"/> must be specified if <see cref="BinarySerializationOptions.SafeMode"/> is enabled in <see cref="Options"/>
+        /// and the serialization <paramref name="stream"/> contains types encoded by their names. Natively supported types are not needed to be included
+        /// unless the original object was serialized with the <see cref="BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes"/> option enabled.</para>
+        /// <para><typeparamref name="T"/> is allowed to be an interface or abstract type but if it's different from the actual type of the result,
+        /// then the actual type also might needed to be included in <paramref name="expectedCustomTypes"/>.</para>
+        /// <para>You can specify <paramref name="expectedCustomTypes"/> even if <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <see cref="Options"/>
+        /// as it may improve the performance of type resolving and can help avoiding possible ambiguities if types were not serialized with full assembly identity
+        /// (eg. if <see cref="BinarySerializationOptions.OmitAssemblyQualifiedNames"/> was enabled on serialization).</para>
+        /// <para>If a type in <paramref name="expectedCustomTypes"/> has a different assembly identity in the deserialization stream, and it is not indicated
+        /// by a <see cref="TypeForwardedFromAttribute"/> declared on the type, then you should set the <see cref="Binder"/> property to
+        /// a <see cref="ForwardedTypesSerializationBinder"/> instance to specify the expected types.</para>
+        /// <para>For arrays it is enough to specify the element type and for generic types you can specify the
+        /// natively not supported generic type definition and generic type arguments separately.
+        /// If <paramref name="expectedCustomTypes"/> contains constructed generic types, then the generic type definition and
+        /// the type arguments will be treated as expected types in any combination.</para>
+        /// </remarks>
         public T DeserializeFromStream<T>(Stream stream, params Type[]? expectedCustomTypes)
             => DeserializeByReader<T>(new BinaryReader(stream), (IEnumerable<Type>?)expectedCustomTypes);
 
+        /// <summary>
+        /// Deserializes the content of the specified serialization <paramref name="stream"/> from its current position into an object.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeFromStream{T}(Stream, Type[])"/> overload for details.
+        /// </summary>
+        /// <param name="stream">The <see cref="Stream"/> containing the serialized data. The stream must support reading and will remain open after deserialization.</param>
+        /// <param name="expectedCustomTypes">The types that are expected to present in the serialization <paramref name="stream"/> by name.
+        /// If <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <see cref="Options"/>
+        /// or <paramref name="stream"/> does not contain any types by name, then this parameter can be <see langword="null"/>.</param>
+        /// <returns>The deserialized object.</returns>
         public object? DeserializeFromStream(Stream stream, IEnumerable<Type>? expectedCustomTypes)
             => DeserializeByReader<object?>(new BinaryReader(stream), expectedCustomTypes);
 
+        /// <summary>
+        /// Deserializes the content of the specified serialization <paramref name="stream"/> from its current position into an instance of <typeparamref name="T"/>.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeFromStream{T}(Stream, Type[])"/> overload for details.
+        /// </summary>
+        /// <typeparam name="T">The expected type of the result.</typeparam>
+        /// <param name="stream">The <see cref="Stream"/> containing the serialized data. The stream must support reading and will remain open after deserialization.</param>
+        /// <param name="expectedCustomTypes">The types that are expected to present in the serialization <paramref name="stream"/> by name.
+        /// If <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <see cref="Options"/>
+        /// or <paramref name="stream"/> does not contain any types by name, then this parameter can be <see langword="null"/>.</param>
+        /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
         public T DeserializeFromStream<T>(Stream stream, IEnumerable<Type>? expectedCustomTypes)
             => DeserializeByReader<T>(new BinaryReader(stream), expectedCustomTypes);
 
@@ -2157,26 +2401,84 @@ namespace KGySoft.Serialization.Binary
         }
 
         /// <summary>
-        /// Deserializes data beginning at current position of given <paramref name="reader"/>.
+        /// Deserializes the content of a serialization stream wrapped by the specified <paramref name="reader"/> from its current position into an object.
+        /// If <see cref="BinarySerializationOptions.SafeMode"/> is enabled in <see cref="Options"/> and the stream
+        /// contains natively not supported types by name, then you should use the other overloads to specify the expected types.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeByReader{T}(BinaryReader, Type[])"/> overload for details.
         /// </summary>
-        /// <remarks>
-        /// <note>If data was serialized by <see cref="Serialize">Serialize</see> or <see cref="SerializeToStream">SerializeToStream</see> methods, then
-        /// <paramref name="reader"/> must use UTF-8 encoding to get correct result. If data was serialized by the <see cref="SerializeByWriter">SerializeByWriter</see> method, then you must use the same encoding as there.</note>
-        /// </remarks>
-        /// <param name="reader">The reader that will be used to deserialize data. The reader will remain opened after deserialization.</param>
+        /// <param name="reader">The reader that wraps the stream containing the serialized data. The reader will remain open after deserialization.</param>
         /// <returns>The deserialized data.</returns>
         public object? DeserializeByReader(BinaryReader reader)
             => DeserializeByReader<object?>(reader, (IEnumerable<Type>?)null);
 
+        /// <summary>
+        /// Deserializes the content of a serialization stream wrapped by the specified <paramref name="reader"/> from its current position into an object.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeByReader{T}(BinaryReader, Type[])"/> overload for details.
+        /// </summary>
+        /// <param name="reader">The reader that wraps the stream containing the serialized data. The reader will remain open after deserialization.</param>
+        /// <param name="expectedCustomTypes">The types that are expected to present in the serialization stream by name.
+        /// If <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <see cref="Options"/>
+        /// or the stream does not contain any types by name, then this parameter is optional.</param>
+        /// <returns>The deserialized object.</returns>
         public object? DeserializeByReader(BinaryReader reader, params Type[]? expectedCustomTypes)
             => DeserializeByReader<object?>(reader, (IEnumerable<Type>?)expectedCustomTypes);
 
+        /// <summary>
+        /// Deserializes the content of a serialization stream wrapped by the specified <paramref name="reader"/> from its current position
+        /// into an instance of <typeparamref name="T"/>.
+        /// </summary>
+        /// <typeparam name="T">The expected type of the result.</typeparam>
+        /// <param name="reader">The reader that wraps the stream containing the serialized data. The reader will remain open after deserialization.</param>
+        /// <param name="expectedCustomTypes">The types that are expected to present in the serialization stream by name.
+        /// If <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <see cref="Options"/>
+        /// or the stream does not contain any types by name, then this parameter is optional.</param>
+        /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
+        /// <remarks>
+        /// <note>If data was serialized by <see cref="Serialize">Serialize</see> or <see cref="SerializeToStream">SerializeToStream</see> methods, then
+        /// <paramref name="reader"/> must use UTF-8 encoding to get the correct result. If data was serialized by
+        /// the <see cref="SerializeByWriter">SerializeByWriter</see> method, then you must use the same encoding as was used there.</note>
+        /// <para><paramref name="expectedCustomTypes"/> must be specified if <see cref="BinarySerializationOptions.SafeMode"/> is enabled in <see cref="Options"/>
+        /// and the serialization stream contains types encoded by their names. Natively supported types are not needed to be included
+        /// unless the original object was serialized with the <see cref="BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes"/> option enabled.</para>
+        /// <para><typeparamref name="T"/> is allowed to be an interface or abstract type but if it's different from the actual type of the result,
+        /// then the actual type also might needed to be included in <paramref name="expectedCustomTypes"/>.</para>
+        /// <para>You can specify <paramref name="expectedCustomTypes"/> even if <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <see cref="Options"/>
+        /// as it may improve the performance of type resolving and can help avoiding possible ambiguities if types were not serialized with full assembly identity
+        /// (eg. if <see cref="BinarySerializationOptions.OmitAssemblyQualifiedNames"/> was enabled on serialization).</para>
+        /// <para>If a type in <paramref name="expectedCustomTypes"/> has a different assembly identity in the deserialization stream, and it is not indicated
+        /// by a <see cref="TypeForwardedFromAttribute"/> declared on the type, then you should set the <see cref="Binder"/> property to
+        /// a <see cref="ForwardedTypesSerializationBinder"/> instance to specify the expected types.</para>
+        /// <para>For arrays it is enough to specify the element type and for generic types you can specify the
+        /// natively not supported generic type definition and generic type arguments separately.
+        /// If <paramref name="expectedCustomTypes"/> contains constructed generic types, then the generic type definition and
+        /// the type arguments will be treated as expected types in any combination.</para>
+        /// </remarks>
         public T DeserializeByReader<T>(BinaryReader reader, params Type[]? expectedCustomTypes)
             => DeserializeByReader<T>(reader, (IEnumerable<Type>?)expectedCustomTypes);
 
+        /// <summary>
+        /// Deserializes the content of a serialization stream wrapped by the specified <paramref name="reader"/> from its current position into an object.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeByReader{T}(BinaryReader, Type[])"/> overload for details.
+        /// </summary>
+        /// <param name="reader">The reader that wraps the stream containing the serialized data. The reader will remain open after deserialization.</param>
+        /// <param name="expectedCustomTypes">The types that are expected to present in the serialization stream by name.
+        /// If <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <see cref="Options"/>
+        /// or the stream does not contain any types by name, then this parameter can be <see langword="null"/>.</param>
+        /// <returns>The deserialized object.</returns>
         public object? DeserializeByReader(BinaryReader reader, IEnumerable<Type>? expectedCustomTypes)
             => DeserializeByReader<object?>(reader, expectedCustomTypes);
 
+        /// <summary>
+        /// Deserializes the content of a serialization stream wrapped by the specified <paramref name="reader"/> from its current position
+        /// into an instance of <typeparamref name="T"/>.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeByReader{T}(BinaryReader, Type[])"/> overload for details.
+        /// </summary>
+        /// <typeparam name="T">The expected type of the result.</typeparam>
+        /// <param name="reader">The reader that wraps the stream containing the serialized data. The reader will remain open after deserialization.</param>
+        /// <param name="expectedCustomTypes">The types that are expected to present in the serialization stream by name.
+        /// If <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <see cref="Options"/>
+        /// or the stream does not contain any types by name, then this parameter can be <see langword="null"/>.</param>
+        /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
         [SecuritySafeCritical]
         public T DeserializeByReader<T>(BinaryReader reader, IEnumerable<Type>? expectedCustomTypes)
         {

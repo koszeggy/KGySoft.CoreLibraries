@@ -41,7 +41,7 @@ namespace KGySoft.Serialization.Binary
     /// <example>
     /// <code lang="C#"><![CDATA[
     /// // deserializing a renamed type
-    /// var formatter = new BinaryFormatter(); // or a BinarySerializationFormatter
+    /// var formatter = new BinaryFormatter(); // or a BinarySerializationFormatter in non-safe mode
     /// formatter.Binder = new CustomSerializationBinder
     /// {
     ///     TypeResolver = (asmName, typeName) =>

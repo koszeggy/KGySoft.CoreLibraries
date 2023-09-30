@@ -35,7 +35,8 @@ namespace KGySoft.Serialization.Binary
     /// </summary>
     /// <remarks>
     /// <note type="security"><para>If you deserialize a stream from an untrusted source make sure that you set the <see cref="SafeMode"/> property,
-    /// which prevents supporting non-serializable types.</para>
+    /// which prevents supporting non-serializable types. Please note though that you cannot use this class for <see cref="BinarySerializationFormatter"/> when the <see cref="BinarySerializationOptions.SafeMode"/> flag
+    /// is enabled in its <see cref="BinarySerializationFormatter.Options"/> property, even if the <see cref="SafeMode"/> property is set to <see langword="true"/>.</para>
     /// <para>See also the security notes at the <strong>Remarks</strong> section of the <see cref="BinarySerializationFormatter"/> class for more details.</para></note>
     /// <para>You can use this surrogate selector for any non-primitive types that do not implement <see cref="ISerializable"/> interface.</para>
     /// <note>Versioning by this surrogate selector can be accomplished only if new fields are always defined after the old ones on every level of the hierarchy.
@@ -45,7 +46,7 @@ namespace KGySoft.Serialization.Binary
     /// <seealso cref="WeakAssemblySerializationBinder" />
     /// <seealso cref="CustomSerializerSurrogateSelector" />
     /// <seealso cref="BinarySerializationFormatter" />
-    [Obsolete("It's not recommended to use this class. To make different kinds of builds of an assembly binary serialization-compatible is a sign that binary serialization is used in an insecure way.")]
+    [Obsolete("It's not recommended to use this class. If you need to make different kinds of builds of an assembly binary serialization-compatible, then it is a sign that binary serialization is used in an insecure way.")]
     public class NameInvariantSurrogateSelector : ISurrogateSelector, ISerializationSurrogate
     {
         #region Fields

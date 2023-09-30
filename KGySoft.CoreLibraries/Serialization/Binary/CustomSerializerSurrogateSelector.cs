@@ -38,6 +38,7 @@ namespace KGySoft.Serialization.Binary
     /// An <see cref="ISurrogateSelector"/> implementation that makes possible to serialize and deserialize any objects,
     /// including non-serializable ones by an <see cref="IFormatter"/> such as <see cref="BinarySerializationFormatter"/>
     /// or the legacy <see cref="BinaryFormatter"/>.
+    /// <br/>When targeting .NET 8 or later this class is marked as obsolete.
     /// </summary>
     /// <remarks>
     /// <note type="security"><para>Do no use the <see cref="CustomSerializerSurrogateSelector"/> class to be able to deserialize any type
@@ -47,7 +48,9 @@ namespace KGySoft.Serialization.Binary
     /// <para>By using the <see cref="CustomSerializerSurrogateSelector"/> you can serialize and deserialize any types.
     /// <note>The <see cref="BinarySerializationFormatter"/> is also able to serialize non-serializable types by itself
     /// by using the <see cref="BinarySerializationOptions.RecursiveSerializationAsFallback"/> option. But the
-    /// <see cref="CustomSerializerSurrogateSelector"/> provides more control and can be used also for other formatters.</note>
+    /// <see cref="CustomSerializerSurrogateSelector"/> provides more control and can be used also for other formatters.
+    /// Please note though that you cannot use this class for <see cref="BinarySerializationFormatter"/> when the <see cref="BinarySerializationOptions.SafeMode"/> flag
+    /// is enabled in its <see cref="BinarySerializationFormatter.Options"/> property, even if the <see cref="SafeMode"/> property is set to <see langword="true"/>.</note>
     /// </para>
     /// <para>To serialize a non-serializable type, or a type, which contains non-serializable types, it is usually enough to assign
     /// a <see cref="CustomSerializerSurrogateSelector"/> to the formatter:

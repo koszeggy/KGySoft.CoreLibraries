@@ -69,17 +69,17 @@ namespace KGySoft.Serialization.Binary
         ForcedSerializationValueTypesAsFallback = 1 << 1,
 
         /// <summary>
-        /// <para>Makes possible to serialize any object even if object is not marked with <see cref="SerializableAttribute"/>.</para>
+        /// <para>Makes possible to serialize any non-natively supported types if they are not marked by <see cref="SerializableAttribute"/>.</para>
         /// <para>This flag is considered on serialization.
         /// <note type="caution">Though this flag makes possible to serialize non-serializable types, deserializing such stream will not work
-        /// when the <see cref="SafeMode"/> flag is enabled (unless an applicable <see cref="BinarySerializationFormatter.SurrogateSelector"/> is used).</note>
+        /// when the <see cref="SafeMode"/> flag is enabled (unless the <see cref="AllowNonSerializableExpectedCustomTypes"/> option is also set).</note>
         /// </para>
         /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
         /// </summary>
         RecursiveSerializationAsFallback = 1 << 2,
 
         /// <summary>
-        /// <para>If a type has methods decorated with <see cref="OnSerializingAttribute"/>, <see cref="OnSerializedAttribute"/>, <see cref="OnDeserializingAttribute"/> or <see cref="OnDeserializedAttribute"/>,
+        /// <para>If a type has methods decorated by <see cref="OnSerializingAttribute"/>, <see cref="OnSerializedAttribute"/>, <see cref="OnDeserializingAttribute"/> or <see cref="OnDeserializedAttribute"/>,
         /// or the type implements <see cref="IDeserializationCallback"/>, then these methods are called during the process. By setting this flag these methods can be ignored.</para>
         /// <para>This flag is considered both on serialization and deserialization.</para>
         /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
@@ -96,11 +96,11 @@ namespace KGySoft.Serialization.Binary
         /// <summary>
         /// <para>If enabled, type references will be stored without assembly identification. This can make possible
         /// to restore a type even if the version of the assembly has been modified since last serialization while makes serialized data more compact;
-        /// however, it cannot be guaranteed that the correct type will be even found on deserialization.
+        /// however, it cannot be guaranteed that the correct type will be even found on deserialization without specifying the expected types.
         /// <note type="caution">If there are types with the same name in the same namespace in different assemblies, then by using this flag, these types cannot be distinguished.
         /// In <see cref="SafeMode"/> the deserialization may fail if the specified expected types are not unique only by the full type name.</note>
         /// <note>If you want to deserialize a type that was stored with strong assembly reference (without this flag) from a different version of an assembly,
-        /// then use <see cref="WeakAssemblySerializationBinder"/> instead (cannot be used in <see cref="SafeMode"/>).</note></para>
+        /// then use the <see cref="ForwardedTypesSerializationBinder"/> or <see cref="WeakAssemblySerializationBinder"/> classes instead (the latter cannot be used in <see cref="SafeMode"/>).</note></para>
         /// <para>This flag is considered on serialization.</para>
         /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
         /// </summary>
@@ -111,7 +111,8 @@ namespace KGySoft.Serialization.Binary
         /// When this option is enabled, names of the base classes, and fields that have been serialized but have been since then
         /// removed, will be ignored.
         /// <note type="caution">When this flag is enabled, an erroneous deserialization may silently succeed. When a field has
-        /// been renamed or relocated into another base class, use an <see cref="ISurrogateSelector"/> implementation to apply mappings instead.</note></para>
+        /// been renamed or relocated into another base class, use an <see cref="ISurrogateSelector"/> implementation to apply mappings instead
+        /// (but note that surrogate selectors cannot be used in safe mode).</note></para>
         /// <para>This flag is considered on deserialization.</para>
         /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
         /// </summary>
@@ -128,7 +129,8 @@ namespace KGySoft.Serialization.Binary
         IgnoreTypeForwardedFromAttribute = 1 << 7,
 
         /// <summary>
-        /// <para>This flag ignores <see cref="ISerializable"/> implementations forcing to serialize a default object graph (unless an applicable surrogate is defined).</para>
+        /// <para>This flag ignores <see cref="ISerializable"/> implementations for natively not supported types,
+        /// forcing to serialize a default object graph (unless an applicable surrogate selector is defined).</para>
         /// <para>This flag is considered both on serialization and deserialization.
         /// <note>Usually this flag must have the same value at serialization and deserialization; otherwise, the deserialization may fail.</note></para>
         /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
@@ -164,21 +166,19 @@ namespace KGySoft.Serialization.Binary
         TryUseSurrogateSelectorForAnyType = 1 << 11,
 
         /// <summary>
-        /// <para>If this flag is enabled, then it is ensured that no assembly loading is allowed during deserialization, unless a <see cref="BinarySerializationFormatter.Binder"/>
-        /// is specified that can load assemblies. All of the assemblies that are referred by the serialization stream must be preloaded before starting the deserialization.</para>
-        /// <para>Additionally, it ensures that during the deserialization collections are allocated with limited capacity to prevent
+        /// <para>If this flag is enabled, then it is ensured that no assembly loading is allowed during deserialization. All of the assemblies that are referred
+        /// by the serialization stream must be preloaded before starting the deserialization. Non-natively supported types, whose assembly qualified names are
+        /// stored in the serialization stream must be explicitly declared as expected types in the deserialization methods, including <see langword="enum"/>s.</para>
+        /// <para>Additionally, safe mode ensures that during the deserialization natively supported collections are allocated with limited capacity to prevent
         /// possible attacks that can cause <see cref="OutOfMemoryException"/>. Deserializing an invalid stream still may cause to throw a <see cref="SerializationException"/>.</para>
-        /// <para>It also disallows deserializing non-serializable types, unless the <see cref="BinarySerializationFormatter.SurrogateSelector"/> property is set that allows
-        /// deserializing a type explicitly. Please note that deserializing non-serializable types is allowed without this flag by default (see also the <see cref="RecursiveSerializationAsFallback"/> flag).</para>
-        /// <para>In .NET Core / .NET 5.0 and above, deserializing non-natively supported system types in safe mode may require to preload some core legacy assemblies
-        /// such as <c>mscorlib.dll</c>, <c>System.dll</c>, <c>System.Core.dll</c>, etc., which contain only type forwards on recent .NET platforms.
-        /// You can avoid this if the stream was serialized with the <see cref="IgnoreTypeForwardedFromAttribute"/> option (so every non-natively supported type
-        /// was serialized with its actual identity), or with the <see cref="OmitAssemblyQualifiedNames"/> option (so types can be located in any already loaded assembly).</para>
+        /// <para>It also disallows deserializing the natively not supported non-serializable types, though this can be relaxed by enabling
+        /// the <see cref="AllowNonSerializableExpectedCustomTypes"/> flag.</para>
         /// <note>In safe mode no version mismatch is tolerated even for system assemblies. If you want to deserialize a stream in safe mode that contains
-        /// different assembly identities from the loaded ones, then use <see cref="WeakAssemblySerializationBinder"/>, and set
-        /// its <see cref="WeakAssemblySerializationBinder.SafeMode"/> property to <see langword="true"/>.</note>
-        /// <note type="security">Please note that even enabling this flag may not prevent every possible attacks, especially when targeting the .NET Framework.
-        /// <br/>See the security notes at the <strong>Remarks</strong> section of the <see cref="BinarySerializationFormatter"/> class for more details.</note>
+        /// different assembly identities from the loaded ones, then use <see cref="ForwardedTypesSerializationBinder"/>, and set
+        /// its <see cref="ForwardedTypesSerializationBinder.SafeMode"/> property to <see langword="true"/>.</note>
+        /// <note type="security">In safe mode it is not allowed to set the <see cref="BinarySerializationFormatter.SurrogateSelector"/>
+        /// or <see cref="BinarySerializationFormatter.Binder"/> properties (except for using the <see cref="ForwardedTypesSerializationBinder"/> in <see cref="ForwardedTypesSerializationBinder.SafeMode"/>)
+        /// because they could be used as a workaround for the security considerations described above.</note>
         /// <para>This flag is considered on deserialization.</para>
         /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Enabled</strong></para>
         /// </summary>
