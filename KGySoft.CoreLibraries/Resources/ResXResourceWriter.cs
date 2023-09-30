@@ -603,12 +603,12 @@ namespace KGySoft.Resources
 
         /// <summary>
         /// Gets or sets whether it is prohibited to load assemblies when writing <see cref="ResXDataNode"/> instances whose raw .resx content
-        /// needs to be regenerated and whose value has not been deserialized yet. This can occur only if <see cref="CompatibleFormat"/> is <see langword="true"/>,
-        /// and when the <see cref="ResXDataNode"/> instances to write have been read from another .resx source.
+        /// is needed to be regenerated and whose value has not been deserialized yet. This can occur only if <see cref="CompatibleFormat"/> is <see langword="true"/>,
+        /// and when the <see cref="ResXDataNode"/> instances to write had been read from another .resx source previously.
         /// <br/>Default value: <see langword="false"/>.
         /// </summary>
         /// <remarks>
-        /// <para>This property affects only <see cref="AddResource(ResXDataNode)"/> and <see cref="AddMetadata(ResXDataNode)"/> methods when <see cref="CompatibleFormat"/>
+        /// <para>This property affects <see cref="AddResource(ResXDataNode)"/> and <see cref="AddMetadata(ResXDataNode)"/> methods only when <see cref="CompatibleFormat"/>
         /// is <see langword="true"/>, and the <see cref="ResXDataNode"/> to write contains no deserialized value but only raw .resx data that is not compatible with
         /// the <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a> class.</para>
         /// </remarks>

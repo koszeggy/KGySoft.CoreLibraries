@@ -60,7 +60,7 @@ namespace KGySoft.Resources
     /// <item><term>Parsing</term><description>A string can be parsed to a <see cref="ResXFileRef"/> instance by <see cref="Parse"/> and <see cref="TryParse"/> methods.</description></item>
     /// </list></para>
     /// <note type="security">The <see cref="TypeConverter"/> that is assigned to the <see cref="ResXFileRef"/> type may load assemblies when its <see cref="TypeConverter.ConvertFrom(ITypeDescriptorContext,CultureInfo,object)">ConvertFrom</see> method is called.
-    /// The recommended way to retrieve a file resource is via the <see cref="ResXDataNode"/> class. Its <see cref="ResXDataNode.GetValueSafe">GetValueSafe</see> method guarantees that no assembly is loaded
+    /// The recommended way to retrieve a file resource is via the <see cref="ResXDataNode"/> class. Its <see cref="O:KGySoft.Resources.ResXDataNode.GetValueSafe">GetValueSafe</see> methods guarantees that no assembly is loaded
     /// during the deserialization, including retrieving resources from file references.</note>
     /// </remarks>
     /// <seealso cref="ResXDataNode"/>

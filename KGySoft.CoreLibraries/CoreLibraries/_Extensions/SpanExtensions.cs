@@ -18,7 +18,6 @@
 
 using System;
 using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Numerics;
 #if NETCOREAPP3_0_OR_GREATER
@@ -439,7 +438,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="value">When this method returns with <see langword="true"/> result, then this parameter contains the result of the parsing.
         /// It will be <see langword="null"/> if <paramref name="s"/> represents <see langword="null"/> and <typeparamref name="T"/> is a reference or nullable type.</param>
         /// <returns><see langword="true"/>, if <paramref name="s"/> could be parsed as <typeparamref name="T"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
-        public static bool TryParse<T>(this ReadOnlySpan<char> s, CultureInfo? culture, out T value)
+        public static bool TryParse<T>(this ReadOnlySpan<char> s, CultureInfo? culture, out T? value)
             => Parser.TryParse(s, culture, out value, out var _);
 
         /// <summary>

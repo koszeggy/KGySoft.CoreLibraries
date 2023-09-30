@@ -290,7 +290,7 @@ namespace KGySoft.Resources
     /// methods, which return always the resources, metadata and aliases, respectively.</description></item>
     /// <item><term>Security</term>
     /// <description>If <see cref="SafeMode"/> is <see langword="true"/>, no deserialization, assembly loading and type resolving occurs until a deserialization is explicitly requested
-    /// by calling the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> or <see cref="ResXDataNode.GetValueSafe">ResXDataNode.GetValueSafe</see> method on the <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see>
+    /// by calling the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> or <see cref="O:KGySoft.Resources.ResXDataNode.GetValueSafe">ResXDataNode.GetValueSafe</see> methods on the <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see>
     /// instances returned by the <see cref="GetEnumerator">GetEnumerator</see> and <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> methods.</description></item>
     /// <item><term>Base path</term>
     /// <description>The <see cref="BasePath"/> property, which is used for resolving file references can be set during the enumeration, too.</description></item>
@@ -1118,7 +1118,7 @@ namespace KGySoft.Resources
                 return null;
 
             // full name only
-            int posComma = typeName!.IndexOf(',');
+            int posComma = typeName.IndexOf(',');
             if (posComma < 0)
                 return null;
 

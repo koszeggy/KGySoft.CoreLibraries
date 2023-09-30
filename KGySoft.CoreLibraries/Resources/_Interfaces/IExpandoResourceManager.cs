@@ -50,7 +50,7 @@ namespace KGySoft.Resources
         /// <remarks>
         /// <para>When <see cref="SafeMode"/> is <see langword="true"/>, then <see cref="GetObject">GetObject</see> and <see cref="GetMetaObject">GetMetaObject</see> methods
         /// return <see cref="ResXDataNode"/> instances instead of deserialized objects, if they are returned from .resx resource. You can retrieve the deserialized
-        /// objects by calling the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> or <see cref="ResXDataNode.GetValueSafe">ResXDataNode.GetValueSafe</see> method.</para>
+        /// objects by calling the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> or <see cref="O:KGySoft.Resources.ResXDataNode.GetValueSafe">ResXDataNode.GetValueSafe</see> methods.</para>
         /// <para>When <see cref="SafeMode"/> is <see langword="true"/>, then <see cref="GetString">GetString</see> and <see cref="GetMetaString">GetMetaString</see> methods
         /// will return a <see cref="string"/> also for non-string objects.
         /// For non-string values the raw XML string value will be returned for resources from a .resx source and the result of the <see cref="Object.ToString">ToString</see> method

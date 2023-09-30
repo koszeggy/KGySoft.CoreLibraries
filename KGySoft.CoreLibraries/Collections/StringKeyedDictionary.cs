@@ -74,7 +74,7 @@ namespace KGySoft.Collections
     /// By default, the <see cref="StringKeyedDictionary{TValue}"/> uses case-sensitive ordinal comparison.
     /// <note>Please note that when using a non-ordinal comparison, then depending on the targeted platform there might occur new string allocations when using
     /// query members with <see cref="StringSegment"/> or <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> parameter values.
-    /// See the properties and the <see cref="StringSegmentComparer.Create"/> method of the <see cref="StringSegmentComparer"/> class for more details.</note></para>
+    /// See the properties and the <see cref="O:KGySoft.CoreLibraries.StringSegmentComparer.Create">StringSegmentComparer.Create</see> methods of the <see cref="StringSegmentComparer"/> class for more details.</note></para>
     /// </remarks>
     /// <threadsafety instance="false"/>
     /// <seealso cref="IStringKeyedDictionary{TValue}"/>

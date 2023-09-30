@@ -394,7 +394,7 @@ namespace KGySoft.Serialization.Binary
                 }
 
                 Debug.Assert(obj != null);
-                DataTypes dataType = GetDataType(obj.GetType());
+                DataTypes dataType = GetDataType(obj!.GetType());
 
                 // Pure simple types and enums
                 if (IsPureSimpleType(dataType) || IsEnum(dataType))

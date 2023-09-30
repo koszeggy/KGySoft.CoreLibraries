@@ -145,7 +145,8 @@ namespace KGySoft.Serialization.Binary
         /// </summary>
         /// <remarks>
         /// <note>This method produces compatible serialized data with <see cref="Serialize">Serialize</see>
-        /// and <see cref="SerializeToStream">SerializeToStream</see> methods only when encoding of the writer is UTF-8. Otherwise, you must use <see cref="DeserializeByReader">DeserializeByReader</see> with the same encoding as here.</note>
+        /// and <see cref="SerializeToStream">SerializeToStream</see> methods only when encoding of the writer is UTF-8.
+        /// Otherwise, you must use <see cref="O:KGySoft.Serialization.Binary.BinarySerializationFormatter.DeserializeByReader">DeserializeByReader</see> with the same encoding as here.</note>
         /// </remarks>
         /// <param name="writer">The writer that will used to serialize data. The writer will remain opened after serialization.</param>
         /// <param name="data">The data that will be written by the writer.</param>

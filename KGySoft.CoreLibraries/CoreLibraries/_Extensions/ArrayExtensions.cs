@@ -111,7 +111,7 @@ namespace KGySoft.CoreLibraries
         /// It must have sufficient capacity for the specified dimensions.</param>
         /// <param name="height">The height of the array to be returned.</param>
         /// <param name="width">The width of the array to be returned.</param>
-        /// <returns>An <see cref="Array2D{T}"/> instance using the specified <paramref name="array"/> as its underlying buffer that has the specified dimensions.</returns>
+        /// <returns>An <see cref="Array2D{T}"/> instance using the specified <paramref name="arraySegment"/> as its underlying buffer that has the specified dimensions.</returns>
         public static Array2D<T> AsArray2D<T>(this ArraySegment<T> arraySegment, int height, int width) => new Array2D<T>(arraySegment.AsSection(), height, width);
 
         /// <summary>
@@ -139,7 +139,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="depth">The depth of the array to be returned.</param>
         /// <param name="height">The height of the array to be returned.</param>
         /// <param name="width">The width of the array to be returned.</param>
-        /// <returns>An <see cref="Array3D{T}"/> instance using the specified <paramref name="array"/> as its underlying buffer that has the specified dimensions.</returns>
+        /// <returns>An <see cref="Array3D{T}"/> instance using the specified <paramref name="arraySegment"/> as its underlying buffer that has the specified dimensions.</returns>
         public static Array3D<T> AsArray3D<T>(this ArraySegment<T> arraySegment, int depth, int height, int width) => new Array3D<T>(arraySegment.AsSection(), depth, height, width);
 
         #endregion

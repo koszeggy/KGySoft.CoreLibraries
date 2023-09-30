@@ -234,7 +234,7 @@ namespace KGySoft.Resources
     /// <item>If the <see cref="SafeMode"/> property is <see langword="true"/> the return value of <see cref="O:KGySoft.Resources.ResXResourceManager.GetObject">GetObject</see>
     /// and <see cref="GetMetaObject">GetMetaObject</see> methods is a <see cref="ResXDataNode"/> rather than the resource or metadata value.
     /// This makes possible to check the raw .resx content before deserialization if the .resx file is from an untrusted source.
-    /// The actual value can be obtained by the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> or <see cref="ResXDataNode.GetValueSafe">ResXDataNode.GetValueSafe</see> method.
+    /// The actual value can be obtained by the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> or <see cref="O:KGySoft.Resources.ResXDataNode.GetValueSafe">ResXDataNode.GetValueSafe</see> methods.
     /// See also the third example at the <see cref="ResXResourceSet"/> class.</item>
     /// <item>If the <see cref="SafeMode"/> property is <see langword="true"/>, then <see cref="O:KGySoft.Resources.ResXResourceManager.GetString">GetString</see>
     /// and <see cref="GetMetaString">GetMetaString</see> methods will not throw an <see cref="InvalidOperationException"/>
@@ -495,7 +495,7 @@ namespace KGySoft.Resources
         /// <remarks>
         /// <para>When <see cref="SafeMode"/> is <see langword="true"/>, then <see cref="O:KGySoft.Resources.ResXResourceManager.GetObject">GetObject</see> and <see cref="GetMetaObject">GetMetaObject</see> methods
         /// return <see cref="ResXDataNode"/> instances instead of deserialized objects. You can retrieve the deserialized objects by calling
-        /// the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> or <see cref="ResXDataNode.GetValueSafe">ResXDataNode.GetValueSafe</see> method.</para>
+        /// the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> or <see cref="O:KGySoft.Resources.ResXDataNode.GetValueSafe">ResXDataNode.GetValueSafe</see> methods.</para>
         /// <para>When <see cref="SafeMode"/> is <see langword="true"/>, then <see cref="O:KGySoft.Resources.ResXResourceManager.GetString">GetString</see> and <see cref="GetMetaString">GetMetaString</see> methods
         /// will return a <see cref="string"/> also for non-string objects. For non-string values the raw XML string value will be returned.</para>
         /// <para>When <see cref="SafeMode"/> is <see langword="true"/>, then <see cref="O:KGySoft.Resources.ResXResourceManager.GetStream">GetStream</see> and <see cref="GetMetaStream">GetMetaStream</see> methods
@@ -662,7 +662,7 @@ namespace KGySoft.Resources
         /// of the fallback culture. If the <see cref="Assembly"/> of <paramref name="resourceSource"/> does not define this attribute, then <see cref="CultureInfo.InvariantCulture">CultureInfo.InvariantCulture</see> will be used as the default culture.</para>
         /// </remarks>
         public ResXResourceManager(Type resourceSource)
-            // ReSharper disable once ConstantConditionalAccessQualifier - it CAN be null even if it is not allowed. Exception is thrown from the base via the overloaded ctor.
+            // ReSharper disable once ConditionalAccessQualifierIsNonNullableAccordingToAPIContract - it CAN be null even if it is not allowed. Exception is thrown from the base via the overloaded ctor.
             : this(resourceSource?.Name!, resourceSource?.Assembly!)
         {
         }
@@ -1179,7 +1179,7 @@ namespace KGySoft.Resources
                         first = false;
                     }
 
-                    rs.Save(GetResourceFileName((string)enumerator.Key!), compatibleFormat);
+                    rs.Save(GetResourceFileName((string)enumerator.Key), compatibleFormat);
                     result = true;
                 }
             }
@@ -1570,7 +1570,7 @@ namespace KGySoft.Resources
                     return null;
 
                 // update the cache with the most recent ResourceSet
-                ResXResourceSet result = Unwrap(rs)!;
+                ResXResourceSet result = Unwrap(rs);
                 lastUsedResourceSet = new KeyValuePair<string, ResXResourceSet>(culture.Name, result);
                 return result;
             }

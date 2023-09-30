@@ -911,7 +911,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="culture">A culture whose linguistic rules are used to perform a comparison.</param>
         /// <param name="options">Specifies the options for the comparisons.</param>
         /// <returns>A new <see cref="StringSegmentComparer"/> object that performs string comparisons according to the comparison rules used by
-        /// the <paramref name="culture"/> parameter and the case rule specified by the <paramref name="ignoreCase"/> parameter.</returns>
+        /// the <paramref name="culture"/> <paramref name="options"/> parameters.</returns>
         /// <remarks>
         /// <para>If <paramref name="culture"/> is either the <see cref="CultureInfo.InvariantCulture"/> or the <see cref="CultureInfo.CurrentCulture"/>,
         /// then depending on the targeted platform, the <see cref="GetHashCode(StringSegment)"/> and <see cref="GetHashCode(ReadOnlySpan{char})"/> methods might allocate a new string.

@@ -349,7 +349,7 @@ namespace KGySoft.Resources
     /// <item>The constructors of <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourceset" target="_blank">System.Resources.ResXResourceSet</a> throw an <see cref="ArgumentException"/> on any
     /// kind of error, including when an object cannot be deserialized. This <see cref="ResXResourceSet"/> implementation does not deserialize anything on construction just parses the raw XML content. If there is a syntax error in the .resx
     /// content an <see cref="XmlException"/> will be thrown from the constructors. If an entry cannot be deserialized, the <see cref="GetObject(string)">GetObject</see>, <see cref="GetMetaObject">GetMetaObject</see>,
-    /// <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> and <see cref="ResXDataNode.GetValueSafe">ResXDataNode.GetValueSafe</see> methods will throw
+    /// <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> and <see cref="O:KGySoft.Resources.ResXDataNode.GetValueSafe">ResXDataNode.GetValueSafe</see> methods will throw
     /// an <see cref="XmlException"/>, <see cref="TypeLoadException"/>, <see cref="SerializationException"/> or <see cref="NotSupportedException"/> based on the nature of the error.</item>
     /// <item>This <see cref="ResXResourceSet"/> is a sealed class.</item>
     /// </list>
@@ -421,7 +421,7 @@ namespace KGySoft.Resources
         /// <remarks>
         /// <para>When <see cref="SafeMode"/> is <see langword="true"/>, then <see cref="O:KGySoft.Resources.ResXResourceSet.GetObject">GetObject</see> and <see cref="GetMetaObject">GetMetaObject</see> methods
         /// return <see cref="ResXDataNode"/> instances instead of deserialized objects. You can retrieve the deserialized objects by calling
-        /// the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> or <see cref="ResXDataNode.GetValueSafe">ResXDataNode.GetValueSafe</see> method.</para>
+        /// the <see cref="ResXDataNode.GetValue">ResXDataNode.GetValue</see> or <see cref="O:KGySoft.Resources.ResXDataNode.GetValueSafe">ResXDataNode.GetValueSafe</see> methods.</para>
         /// <para>When <see cref="SafeMode"/> is <see langword="true"/>, then <see cref="O:KGySoft.Resources.ResXResourceSet.GetString">GetString</see> and <see cref="GetMetaString">GetMetaString</see> methods
         /// will return a <see cref="string"/> also for non-string objects. For non-string elements the raw XML string value will be returned.</para>
         /// <para>If <see cref="SafeMode"/> is <see langword="true"/>, then <see cref="AutoFreeXmlData"/> property is ignored. The raw XML data of a node
@@ -994,6 +994,7 @@ namespace KGySoft.Resources
         /// <seealso cref="ResXResourceWriter.CompatibleFormat"/>
         public void Save(string fileName, bool compatibleFormat = false, bool forceEmbeddedResources = false, string? newBasePath = null)
         {
+            // ReSharper disable once UsingStatementResourceInitialization - these properties never throw exception on initialization
             using (var writer = new ResXResourceWriter(fileName) { BasePath = newBasePath ?? basePath, CompatibleFormat = compatibleFormat })
                 Save(writer, forceEmbeddedResources);
         }
@@ -1015,6 +1016,7 @@ namespace KGySoft.Resources
         /// <seealso cref="ResXResourceWriter.CompatibleFormat"/>
         public void Save(Stream stream, bool compatibleFormat = false, bool forceEmbeddedResources = false, string? newBasePath = null)
         {
+            // ReSharper disable once UsingStatementResourceInitialization - these properties never throw exception on initialization
             using (var writer = new ResXResourceWriter(stream) { BasePath = newBasePath ?? basePath, CompatibleFormat = compatibleFormat })
                 Save(writer, forceEmbeddedResources);
         }
@@ -1036,6 +1038,7 @@ namespace KGySoft.Resources
         /// <seealso cref="ResXResourceWriter.CompatibleFormat"/>
         public void Save(TextWriter textWriter, bool compatibleFormat = false, bool forceEmbeddedResources = false, string? newBasePath = null)
         {
+            // ReSharper disable once UsingStatementResourceInitialization - these properties never throw exception on initialization
             using (var writer = new ResXResourceWriter(textWriter) { BasePath = newBasePath ?? basePath, CompatibleFormat = compatibleFormat })
                 Save(writer, forceEmbeddedResources);
         }

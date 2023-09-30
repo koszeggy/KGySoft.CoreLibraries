@@ -707,10 +707,11 @@ namespace KGySoft.Serialization.Binary
             /// Use for known types only
             /// </summary>
             [SecurityCritical]
+            [SuppressMessage("ReSharper", "MemberCanBePrivate.Local", Justification = "Needed to be internal for .NET Framework 3.5")]
             internal static object CreateKnownEmptyObject(Type type)
             {
                 if (type.IsValueType)
-                    return Activator.CreateInstance(type);
+                    return Activator.CreateInstance(type)!;
 
 #if NETFRAMEWORK || NETSTANDARD2_0
                 if (!Reflector.TryCreateUninitializedObject(type, out object? obj))

@@ -237,7 +237,7 @@ namespace KGySoft.Resources
     /// </para>
     /// <para>Unlike <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxdatanode" target="_blank">System.Resources.ResXDataNode</a>, this <see cref="ResXDataNode"/> implementation
     /// really preserves the original information stored in the .resx file. No deserialization, assembly loading and type resolving occurs until a deserialization is explicitly
-    /// requested by calling the <see cref="GetValue">GetValue</see> or <see cref="GetValueSafe">GetValueSafe</see> methods.</para>
+    /// requested by calling the <see cref="GetValue">GetValue</see> or <see cref="O:KGySoft.Resources.ResXDataNode.GetValueSafe">GetValueSafe</see> methods.</para>
     /// <note>When serialized in compatibility mode (see <see cref="ResXResourceWriter.CompatibleFormat">ResXResourceWriter.CompatibleFormat</see>, <see cref="O:KGySoft.Resources.ResXResourceSet.Save">ResXResourceSet.Save</see>, <see cref="ResXResourceManager.SaveResourceSet">ResXResourceManager.SaveResourceSet</see> and <see cref="ResXResourceManager.SaveAllResources">ResXResourceManager.SaveAllResources</see>),
     /// the result will be able to be parsed by the <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxdatanode" target="_blank">System.Resources.ResXDataNode</a> type, too.</note>
     /// <para><strong>Incompatibility</strong> with <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxdatanode" target="_blank">System.Resources.ResXDataNode</a>:
@@ -271,8 +271,8 @@ namespace KGySoft.Resources
     /// <item><term>Raw content</term><description>You can use the <see cref="ValueData"/> property to read the original raw <see cref="string"/> content stored in the .resx file for this element.</description></item>
     /// <item><term>Advanced string representation</term><description>The <see cref="ToString">ToString</see> method displays the string representation (either of the deserialized object if already cached, or the raw content) so can be used easily in a format argument and provides more debugging information.</description></item>
     /// <item><term>Security</term>
-    /// <description>No deserialization, assembly loading and type resolving occurs until a deserialization is explicitly requested by calling the <see cref="GetValue">GetValue</see> or <see cref="GetValueSafe">GetValueSafe</see> methods.
-    /// If you use the <see cref="GetValueSafe">GetValueSafe</see> method, then it is guaranteed that no new assembly is loaded during the deserialization, even if the resource was serialized by <see cref="BinaryFormatter"/>.
+    /// <description>No deserialization, assembly loading and type resolving occurs until a deserialization is explicitly requested by calling the <see cref="GetValue">GetValue</see> or <see cref="O:KGySoft.Resources.ResXDataNode.GetValueSafe">GetValueSafe</see> methods.
+    /// If you use the <see cref="O:KGySoft.Resources.ResXDataNode.GetValueSafe">GetValueSafe</see> method, then it is guaranteed that no new assembly is loaded during the deserialization, even if the resource was serialized by <see cref="BinaryFormatter"/>.
     /// Additionally, you can check the <see cref="TypeName"/>, <see cref="MimeType"/> and <see cref="AssemblyAliasValue"/> properties to get information
     /// about the type before obtaining the object. You can even check the raw string content by the <see cref="ValueData"/> property.
     /// </description></item>
@@ -356,7 +356,7 @@ namespace KGySoft.Resources
                 if (String.IsNullOrEmpty(assemblyQualifiedTypeName))
                     return;
 
-                int genericEnd = assemblyQualifiedTypeName!.LastIndexOf(']');
+                int genericEnd = assemblyQualifiedTypeName.LastIndexOf(']');
                 int asmNamePos = assemblyQualifiedTypeName.IndexOf(',', genericEnd + 1);
                 if (asmNamePos > 0 && asmNamePos < assemblyQualifiedTypeName.Length - 1)
                 {
@@ -424,7 +424,7 @@ namespace KGySoft.Resources
 
             public override object? ConvertFrom(ITypeDescriptorContext? context, CultureInfo? culture, object? value)
                 // should not be checked by as cast because due to the CLR behavior that would allow sbyte[] as well
-                => value?.GetType() == Reflector.ByteArrayType ? new MemoryStream((byte[])value!) : base.ConvertFrom(context, culture, value!);
+                => value?.GetType() == Reflector.ByteArrayType ? new MemoryStream((byte[])value) : base.ConvertFrom(context, culture, value!);
 
             #endregion
         }
@@ -974,7 +974,7 @@ namespace KGySoft.Resources
         /// <remarks>
         /// <note type="security">When using this method make sure that the .resx data to be deserialized is from a trusted source.
         /// This method might load assemblies during type resolve and allows resolving file references.
-        /// To disallow loading assemblies or resolving file references use the <see cref="GetValueSafe(bool)">GetValueSafe</see> method instead.</note>
+        /// To disallow loading assemblies or resolving file references use the <see cref="O:KGySoft.Resources.ResXDataNode.GetValueSafe">GetValueSafe</see> methods instead.</note>
         /// <para>If the stored value currently exists in memory, it is returned directly.</para>
         /// <para>If the resource is a file reference, <see cref="GetValue">GetValue</see> tries to open the file and deserialize its content.</para>
         /// <para>If the resource is not a file reference, <see cref="GetValue">GetValue</see> tries to deserialize the value from the raw .resx string content.</para>
@@ -984,7 +984,7 @@ namespace KGySoft.Resources
 
         /// <summary>
         /// Retrieves the object that is stored by this node, not allowing loading assemblies during the possible deserialization.
-        /// <br/>See the <strong>Remarks</strong> section of the <see cref="GetValueSafe(bool)"/> overload for details.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="O:KGySoft.Resources.ResXDataNode.GetValueSafe"/> overloads for details.
         /// </summary>
         /// <returns>The object that corresponds to the stored value.</returns>
         /// <param name="typeResolver">Starting with version 8.0.0 this parameter must be <see langword="null"/>.</param>
@@ -1611,8 +1611,8 @@ namespace KGySoft.Resources
                 if (type == null)
                 {
                     string newMessage = safeMode
-                        ? Res.ResourcesTypeLoadExceptionSafeAt(typeName!, dataNodeInfo.Line, dataNodeInfo.Column)
-                        : Res.ResourcesTypeLoadExceptionAt(typeName!, dataNodeInfo.Line, dataNodeInfo.Column);
+                        ? Res.ResourcesTypeLoadExceptionSafeAt(typeName, dataNodeInfo.Line, dataNodeInfo.Column)
+                        : Res.ResourcesTypeLoadExceptionAt(typeName, dataNodeInfo.Line, dataNodeInfo.Column);
                     XmlException xml = ResXCommon.CreateXmlException(newMessage, dataNodeInfo.Line, dataNodeInfo.Column);
                     Throw.TypeLoadException(newMessage, xml);
                 }
@@ -1620,7 +1620,7 @@ namespace KGySoft.Resources
                 TypeConverter byteArrayConverter = type == typeof(MemoryStream) ? MemoryStreamConverter.Instance : TypeDescriptor.GetConverter(type);
                 if (!byteArrayConverter.CanConvertFrom(Reflector.ByteArrayType))
                 {
-                    string message = Res.ResourcesConvertFromByteArrayNotSupportedAt(typeName!, dataNodeInfo.Line, dataNodeInfo.Column, Res.ResourcesConvertFromByteArrayNotSupported(byteArrayConverter.GetType()));
+                    string message = Res.ResourcesConvertFromByteArrayNotSupportedAt(typeName, dataNodeInfo.Line, dataNodeInfo.Column, Res.ResourcesConvertFromByteArrayNotSupported(byteArrayConverter.GetType()));
                     XmlException xml = ResXCommon.CreateXmlException(message, dataNodeInfo.Line, dataNodeInfo.Column);
                     Throw.NotSupportedException(message, xml);
                 }
@@ -1633,7 +1633,7 @@ namespace KGySoft.Resources
                 }
                 catch (NotSupportedException e)
                 {
-                    string message = Res.ResourcesConvertFromByteArrayNotSupportedAt(typeName!, dataNodeInfo.Line, dataNodeInfo.Column, e.Message);
+                    string message = Res.ResourcesConvertFromByteArrayNotSupportedAt(typeName, dataNodeInfo.Line, dataNodeInfo.Column, e.Message);
                     XmlException xml = ResXCommon.CreateXmlException(message, dataNodeInfo.Line, dataNodeInfo.Column, e);
                     Throw.NotSupportedException(message, xml);
                 }

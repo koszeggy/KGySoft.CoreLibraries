@@ -67,7 +67,7 @@ using NUnit.Framework;
 
 #if NET5_0_OR_GREATER
 #pragma warning disable SYSLIB0011 // Type or member is obsolete - this class uses BinaryFormatter for comparisons. It's safe because both serialization and deserialization is in the same process.
-#pragma warning disable CS0618 // Use of obsolete symbol - as above  
+#pragma warning disable CS0618 // Use of obsolete symbol - as above, as well as indicating some obsolete types as expected ones when deserializing a Hashtable or other non-generic collections
 #endif
 
 #endregion
@@ -1101,10 +1101,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.SafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes, expectedTypes: expectedTypes);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.SafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes, expectedTypes: expectedTypes);
 
-#pragma warning disable 618 // obsolete
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForcedSerializationValueTypesAsFallback);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForcedSerializationValueTypesAsFallback);
-#pragma warning restore 618
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
@@ -1636,9 +1634,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new Dictionary<Dictionary<int[], string>, Dictionary<int, string>> { { new Dictionary<int[], string> { { new int[] { 1 }, "key.value1" } }, new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } } }, { new Dictionary<int[], string> { { new int[] { 2 }, "key.value2" } }, new Dictionary<int, string> { { 1, "apple" }, { 2, "frog" }, { 3, "cat" } } } },
 
                 // dictionary with many non-system types
-#pragma warning disable CS0618 // Type or member is obsolete
                 new SortedList<ConsoleColor, Dictionary<BinarySerializationOptions, IBinarySerializable>> { { ConsoleColor.White, new Dictionary<BinarySerializationOptions, IBinarySerializable> { { BinarySerializationOptions.ForcedSerializationValueTypesAsFallback, new BinarySerializableStruct { IntProp = 1, StringProp = "alpha" } } } } },
-#pragma warning restore CS0618 // Type or member is obsolete
 
                 // List containing primitive, optionally customizable, always recursive and self type
                 new List<object> { 1, DateTime.Today, ConsoleColor.Blue, new List<object> { 1 } },

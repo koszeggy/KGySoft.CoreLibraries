@@ -953,10 +953,10 @@ namespace KGySoft
         internal static string ReflectionStaticPropertyExpectedGeneric(string propertyName, Type type) => Get("Reflection_StaticPropertyExpectedGenericFormat", type.GetName(TypeNameKind.LongName), propertyName);
 
         /// <summary>This method can be used to access instance properties but {0}.{1} is a static property.</summary>
-        internal static string ReflectionInstancePropertyExpectedGeneric(string propertyName, Type? type) => Get("Reflection_InstancePropertyExpectedGenericFormat", type.GetName(TypeNameKind.LongName), propertyName);
+        internal static string ReflectionInstancePropertyExpectedGeneric(string propertyName, Type? type) => Get("Reflection_InstancePropertyExpectedGenericFormat", type?.GetName(TypeNameKind.LongName), propertyName);
 
         /// <summary>Cannot access {0}.{1} property with the provided type arguments and/or parameters.</summary>
-        internal static string ReflectionCannotInvokePropertyGeneric(string propertyName, Type? type) => Get("Reflection_CannotInvokePropertyGenericFormat", type.GetName(TypeNameKind.LongName), propertyName);
+        internal static string ReflectionCannotInvokePropertyGeneric(string propertyName, Type? type) => Get("Reflection_CannotInvokePropertyGenericFormat", type?.GetName(TypeNameKind.LongName), propertyName);
 
         /// <summary>This method can be used to access static fields but {0}.{1} is an instance field.</summary>
         internal static string ReflectionStaticFieldExpectedGeneric(string fieldName, Type type) => Get("Reflection_StaticFieldExpectedGenericFormat", type.GetName(TypeNameKind.LongName), fieldName);
