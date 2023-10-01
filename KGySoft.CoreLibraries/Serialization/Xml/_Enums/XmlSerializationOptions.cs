@@ -26,7 +26,6 @@ using System.ComponentModel;
 #if !NET35
 using System.Runtime.CompilerServices; 
 #endif
-using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Xml;
 using System.Xml.Serialization;
@@ -54,11 +53,12 @@ namespace KGySoft.Serialization.Xml
     {
         /// <summary>
         /// <para>Represents no enabled options.</para>
-        /// <para>
-        /// With every options disabled only those types are serialized, which are guaranteed to be able to deserialized perfectly. Such types are:
+        /// <para>With every options disabled only those types are serialized, which are guaranteed to be able to deserialized perfectly. Such types are:
         /// <list type="bullet">
-        /// <item><term>Natively supported types</term><description>Primitive types along with their <see cref="Nullable{T}"/> counterpart and the most common framework types such as <see cref="Enum"/> instances, <see cref="DateTime"/>, <see cref="DateTimeOffset"/>,
-        /// <see cref="TimeSpan"/> and even <see cref="Type"/> itself as long as it is a runtime type instance.</description></item>
+        /// <item><term>Natively supported types</term><description>Primitive types along with their <see cref="Nullable{T}"/> counterpart and the most common framework types.
+        /// See the complete list of the natively supported types at the <strong>Remarks</strong> section of the <see cref="XmlSerializer"/> class.</description></item>
+        /// <item><term><see cref="Enum"/> types</term><description>Please note that in safe mode deserialization their names must be specified as expected custom types.</description></item>
+        /// <item><term><see cref="Type"/> instances</term><description>Only if they are runtime types. And in safe mode deserialization the natively not supported types must be included in expected custom types.</description></item>
         /// <item><term><see cref="IXmlSerializable"/> instances</term><description>Types that implement the <see cref="IXmlSerializable"/> interface can be serialized.</description></item>
         /// <item><term>Types with <see cref="TypeConverter"/></term><description>If the converter supports serializing to and from <see cref="string"/> type.</description></item>
         /// <item><term>Simple objects</term><description>A type can be serialized with the default options if it meets the following criteria:
@@ -71,16 +71,11 @@ namespace KGySoft.Serialization.Xml
         /// <item>The type has no instance events.</item>
         /// </list>
         /// <note>A type can be serialized if these criteria are true for the serialized properties and fields recursively.</note></description></item>
-        /// <item><term>Collections</term><description><see cref="Array"/>, <see cref="List{T}"/>, <see cref="LinkedList{T}"/>, <see cref="Queue{T}"/>, <see cref="Stack{T}"/>,
-        /// <see cref="ArrayList"/>, <see cref="Queue"/>,  <see cref="Stack"/>, <see cref="BitArray"/>, <see cref="StringCollection"/>,
-        /// <see cref="CircularList{T}"/>, <see cref="ConcurrentBag{T}"/>, <see cref="ConcurrentQueue{T}"/> and <see cref="ConcurrentStack{T}"/> instances are supported by the default options. To support other collections
-        /// you can use fallback options, for example <see cref="XmlSerializationOptions.RecursiveSerializationAsFallback"/>.
-        /// <note>The reason of fallback options or attributes have to be used even for simple collections such as <see cref="Dictionary{TKey,TValue}"/> is that they can be instantiated by special settings such as an equality comparer,
-        /// which cannot be retrieved by the public members when the collection is being serialized. However, if a property or field returns a non-<see langword="null"/> instance after the container object is created, then the returned instance is tried to be used on deserialization.
-        /// This makes possible to deserialize even custom-initialized dictionaries and other objects.</note>
+        /// <item><term>Collections</term><description>Arrays, a sort of known lists and dictionaries are supported natively as long as they use a supported comparer.
+        /// See the complete list of the natively supported collections at the <strong>Remarks</strong> section of the <see cref="XmlSerializer"/> class.
+        /// To support other collections you can use fallback options, for example <see cref="XmlSerializationOptions.RecursiveSerializationAsFallback"/>.
         /// </description></item>
-        /// </list>
-        /// </para>
+        /// </list></para>
         /// </summary>
         None,
 
@@ -106,7 +101,7 @@ namespace KGySoft.Serialization.Xml
         /// <para>Default state at serialization methods: <strong>Disabled</strong></para>
         /// <note type="security">When using <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.DeserializeSafe">DeserializeSafe</see>
         /// and <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.DeserializeContentSafe">DeserializeContentSafe</see> methods, then
-        /// deserialization will throw an <see cref="InvalidOperationException"/> if the XML stream contains such content.</note>
+        /// types that occur in the binary serialization stream by name must be included in the specified expected custom types as well.</note>
         /// </summary>
         BinarySerializationAsFallback = 1 << 1,
 
@@ -193,7 +188,7 @@ namespace KGySoft.Serialization.Xml
         /// <para>By default read-only properties and fields are serialized only if they are <see cref="IXmlSerializable"/> implementations or collections that can be populated.
         /// This option forces to serialize read-only fields and properties, as well as collections that are read-only and have no recognizable initializer constructor.
         /// <note>Public properties with private setter accessor are serializable even without this option.</note>
-        /// <note>Read-only collections witch recognizable collection initializer constructor are serializable even without this option.</note>
+        /// <note>Read-only collections with recognizable collection initializer constructor are serializable even without this option.</note>
         /// <note type="caution">Enabling this option can make it possible that properties without setter accessor will not be able to deserialized.
         /// Deserialization will fail if the read-only property returns a <see langword="null"/> value or its content cannot be restored (eg. it has a simple type or is a read-only collection).
         /// Use this option only if an object has to be serialized only for information (eg. in logs) and deserialization is not necessary.</note>

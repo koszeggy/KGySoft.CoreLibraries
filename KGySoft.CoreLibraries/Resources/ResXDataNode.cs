@@ -36,8 +36,6 @@ using KGySoft.Reflection;
 using KGySoft.Serialization;
 using KGySoft.Serialization.Binary;
 
-using static System.Net.Mime.MediaTypeNames;
-
 #endregion
 
 #region Suppressions
@@ -1013,6 +1011,7 @@ namespace KGySoft.Resources
 
         /// <summary>
         /// Retrieves the object that is stored by this node, not allowing loading assemblies during the possible deserialization.
+        /// If the resource not a natively supported type, then you should use the other overloads.
         /// </summary>
         /// <returns>The object that corresponds to the stored value.</returns>
         /// <param name="cleanupRawData"><see langword="true"/> to free the underlying XML data once the value is deserialized; otherwise, <see langword="false"/>. This parameter is optional.
@@ -1034,9 +1033,54 @@ namespace KGySoft.Resources
         public object? GetValueSafe(bool cleanupRawData = false)
             => DoGetValue(null, null, cleanupRawData, true);
 
+        /// <summary>
+        /// Retrieves the object that is stored by this node, specifying the expected type of the result.
+        /// </summary>
+        /// <returns>The object that corresponds to the stored value.</returns>
+        /// <param name="expectedType">The expected type of the result. Can be <see langword="null"/> if the result is a natively supported type
+        /// or the result is already cached in this <see cref="ResXDataNode"/> instance.</param>
+        /// <param name="cleanupRawData"><see langword="true"/> to free the underlying XML data once the value is deserialized; otherwise, <see langword="false"/>. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
+        /// <exception cref="TypeLoadException">The corresponding type or its container assembly could not be loaded.</exception>
+        /// <exception cref="SerializationException">An error occurred during the binary deserialization of the resource.</exception>
+        /// <exception cref="FileNotFoundException">The resource is a file reference and the referenced file cannot be found.</exception>
+        /// <exception cref="NotSupportedException">Unsupported MIME type or an appropriate type converter is not available.
+        /// <br/>-or-<br/>
+        /// The value has not been deserialized yet and <see cref="FileRef"/> is not <see langword="null"/>.
+        /// </exception>
+        /// <remarks>
+        /// <note type="security">When using this method it is guaranteed that no new assembly is loaded during the deserialization.
+        /// To allow loading assemblies or to use a custom <see cref="ITypeResolutionService"/> use the <see cref="GetValue">GetValue</see> method instead.</note>
+        /// <para>If the stored value currently exists in memory, it is returned directly.</para>
+        /// <para>If the resource is a file reference and is has not been deserialized yet, then this method throws a <see cref="NotSupportedException"/>.
+        /// You can only use the <see cref="GetValue">GetValue</see> method to deserialize a file reference.</para>
+        /// </remarks>
         public object? GetValueSafe(Type? expectedType, bool cleanupRawData = false)
             => DoGetValue(null, null, cleanupRawData, true, expectedType);
 
+        /// <summary>
+        /// Retrieves the object that is stored by this node, specifying the expected type of the result.
+        /// </summary>
+        /// <returns>An instance of <typeparamref name="T"/> that corresponds to the stored value.</returns>
+        /// <typeparam name="T">The expected tpe of the result. For types that are not supported natively it should not be an interface or an abstract type
+        /// but the exact type of the resource. Otherwise, if there is no cached result stored in this <see cref="ResXDataNode"/> instance
+        /// the deserialization will fail due to an unexpected type.</typeparam>
+        /// <param name="cleanupRawData"><see langword="true"/> to free the underlying XML data once the value is deserialized; otherwise, <see langword="false"/>. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
+        /// <exception cref="TypeLoadException">The corresponding type or its container assembly could not be loaded.</exception>
+        /// <exception cref="SerializationException">An error occurred during the binary deserialization of the resource.</exception>
+        /// <exception cref="FileNotFoundException">The resource is a file reference and the referenced file cannot be found.</exception>
+        /// <exception cref="NotSupportedException">Unsupported MIME type or an appropriate type converter is not available.
+        /// <br/>-or-<br/>
+        /// The value has not been deserialized yet and <see cref="FileRef"/> is not <see langword="null"/>.
+        /// </exception>
+        /// <remarks>
+        /// <note type="security">When using this method it is guaranteed that no new assembly is loaded during the deserialization.
+        /// To allow loading assemblies or to use a custom <see cref="ITypeResolutionService"/> use the <see cref="GetValue">GetValue</see> method instead.</note>
+        /// <para>If the stored value currently exists in memory, it is returned directly.</para>
+        /// <para>If the resource is a file reference and is has not been deserialized yet, then this method throws a <see cref="NotSupportedException"/>.
+        /// You can only use the <see cref="GetValue">GetValue</see> method to deserialize a file reference.</para>
+        /// </remarks>
         public T? GetValueSafe<T>(bool cleanupRawData = false)
         {
             var result = DoGetValue(null, null, cleanupRawData, true, typeof(T));
@@ -1564,6 +1608,7 @@ namespace KGySoft.Resources
         {
             #region Local Methods to reduce complexity
 
+#if !NET8_0_OR_GREATER
             static object? DeserializeByBinaryFormatter(DataNodeInfo dataNodeInfo, ITypeResolutionService? typeResolver, bool safeMode)
             {
                 byte[] serializedData = FromBase64WrappedString(dataNodeInfo.ValueData ?? String.Empty);
@@ -1593,6 +1638,7 @@ namespace KGySoft.Resources
 
                 return result;
             }
+#endif
 
             static object? DeserializeByTypeConverter(DataNodeInfo dataNodeInfo, ITypeResolutionService? typeResolver, bool safeMode, Type? expectedType, string typeName)
             {

@@ -77,13 +77,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 (decimal)1,
                 DateTime.UtcNow,
                 DateTime.Now,
+                Guid.NewGuid(),
             };
 
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, false);
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None, expectedTypes: Reflector.EmptyArray<Type>());
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, false, expectedTypes: Reflector.EmptyArray<Type>());
 
             // These types cannot be serialized with system serializer
             referenceObjects = new object[]
@@ -94,11 +95,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 new DateTimeOffset(DateTime.UtcNow),
                 new DateTimeOffset(DateTime.Now.Ticks, new TimeSpan(1, 1, 0)),
                 new TimeSpan(1, 2, 3, 4, 5),
+                new DictionaryEntry(1, "alpha"),
+                new KeyValuePair<int?,string>(1, "alpha"), // this includes Nullable<T>
 #if !NET35
                 new BigInteger(1),
 #endif
 #if NETCOREAPP3_0_OR_GREATER && !NETSTANDARD_TEST
                 new Rune('a'),
+#endif
+#if NET5_0_OR_GREATER
+                (Half)1,
 #endif
 #if NET6_0_OR_GREATER
                 DateOnly.FromDateTime(DateTime.Today),
@@ -110,8 +116,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 #endif
             };
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, false);
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None, expectedTypes: Reflector.EmptyArray<Type>());
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, false, expectedTypes: Reflector.EmptyArray<Type>());
         }
 
         [Test]
@@ -932,8 +938,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             // SystemSerializeObject(referenceObjects); // InvalidOperationException: The type may not be used in this context.
             SystemSerializeObjects(referenceObjects);
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None, expectedTypes: Reflector.EmptyArray<Type>());
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, expectedTypes: Reflector.EmptyArray<Type>());
 
             // these collections are not supported by system serializer
             referenceObjects = new object[]
@@ -968,8 +974,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 #endif
             };
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None, expectedTypes: Reflector.EmptyArray<Type>());
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, expectedTypes: Reflector.EmptyArray<Type>());
 
             // these cannot be serialized as content because they implement neither ICollection<T> nor IList so they can be deserialized by initializer constructor only
             referenceObjects = new object[]
@@ -992,8 +998,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 #endif
             };
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, false);
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None, expectedTypes: Reflector.EmptyArray<Type>());
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, false, expectedTypes: Reflector.EmptyArray<Type>());
         }
 
         /// <summary>
@@ -1012,8 +1018,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             //SystemSerializeObject(referenceObjects); // InvalidOperationException: The type System.Collections.ArrayList may not be used in this context.
             SystemSerializeObjects(referenceObjects);
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None, expectedTypes: Reflector.EmptyArray<Type>());
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, expectedTypes: Reflector.EmptyArray<Type>());
 
             // these collections are not supported by system serializer
             referenceObjects = new object[]
@@ -1025,8 +1031,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 new OrderedDictionary { { "alpha", 1 }, { "Alpha", 2 }, { "ALPHA", 3 } },
             };
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None, expectedTypes: Reflector.EmptyArray<Type>());
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, expectedTypes: Reflector.EmptyArray<Type>());
 
             // these cannot be serialized as content because they implement neither ICollection<T> nor IList so they can be deserialized by initializer constructor only
             referenceObjects = new object[]
@@ -1036,19 +1042,19 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 new BitArray(new[] { true, false, true })
             };
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, false);
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None, expectedTypes: Reflector.EmptyArray<Type>());
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, false, expectedTypes: Reflector.EmptyArray<Type>());
 
             // StringDictionary is not supported at all because it implements only IEnumerable and has no collection initializer constructor.
             // Binary fallback can be used though.
-            referenceObjects = new IEnumerable[]
+            referenceObjects = new object[]
             {
                 new StringDictionary { { "a", "alpha" }, { "b", "beta" }, { "c", "gamma" }, { "x", null } },
             };
 
             Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback), "Serialization of collection \"System.Collections.Specialized.StringDictionary\" is not supported with following options: \"RecursiveSerializationAsFallback\", because it does not implement IList, IDictionary or ICollection<T> interfaces and has no initializer constructor that can accept an array or list.");
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, false);
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, false, expectedTypes: Reflector.EmptyArray<Type>());
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, expectedTypes: Reflector.EmptyArray<Type>());
         }
 
         /// <summary>
@@ -1131,8 +1137,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 new OrderedDictionary(StringComparer.Ordinal) { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } }.AsReadOnly(),
             };
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, alsoAsContent: false);
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None, expectedTypes: new[] { typeof(ConsoleColor) });
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, alsoAsContent: false, expectedTypes: new[] { typeof(ConsoleColor) });
 
             // unsupported (culture-aware) comparer
             referenceObjects = new object[]

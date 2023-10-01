@@ -17,19 +17,25 @@
 
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 #if NET35
 using System.Diagnostics.CodeAnalysis;
 #endif
 using System.IO;
+#if !NET35
+using System.Numerics;
+#endif
 using System.Runtime.Serialization;
 using System.Text;
 using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Serialization;
 
+using KGySoft.Collections;
 using KGySoft.ComponentModel;
 using KGySoft.Reflection;
 using KGySoft.Serialization.Binary;
@@ -45,12 +51,10 @@ namespace KGySoft.Serialization.Xml
     /// <remarks>
     /// <note type="security"><para>The <see cref="XmlSerializer"/> supports polymorphism and stores type information whenever the type of a member or collection element differs from the
     /// type of the stored instance. If the XML content to deserialize is from an untrusted source make sure to use the <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.DeserializeSafe">DeserializeSafe</see>
-    /// and <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.DeserializeContentSafe">DeserializeContentSafe</see> methods to prevent loading assemblies during the deserialization.
-    /// Please note though that it cannot protect you from all possible threats if a type of the already loaded assemblies can be exploited for a security attack.
-    /// The <see cref="XmlSerializer"/> can only create objects by using their default constructor and is able to set the public fields and properties.
-    /// It can also create collections by special initializer constructors and can populate them by the standard interface implementations.</para>
-    /// <para>In safe mode you must preload every assembly that are referred in the XML content. Additionally, in safe mode an <see cref="InvalidOperationException"/> is thrown for content
-    /// that is serialized by <see cref="BinarySerializationFormatter"/> (see the <see cref="XmlSerializationOptions.BinarySerializationAsFallback"/> option).</para></note>
+    /// and <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.DeserializeContentSafe">DeserializeContentSafe</see> methods to prevent resolving any type names during the deserialization.
+    /// Instead, they require to specify every natively not supported type that can occur in the serialized data whose names then will be mapped to the specified expected types.</para>
+    /// <para>The <see cref="XmlSerializer"/> can only create objects by using their default constructor and is able to set the public fields and properties.
+    /// It can also create collections by special initializer constructors and can populate them by the standard interface implementations.</para></note>
     /// <para><see cref="XmlSerializer"/> supports serialization of any simple types and complex objects with their public properties and fields as well as several collection types.
     /// <note>Unlike the <a href="https://docs.microsoft.com/en-us/dotnet/api/system.xml.serialization.xmlserializer" target="_blank">System.Xml.Serialization.XmlSerializer</a> class,
     /// this <see cref="XmlSerializer"/> is not designed for customizing output format (though <see cref="IXmlSerializable"/> implementations are considered). Not even <c>Xml...Attribute</c>s
@@ -76,10 +80,10 @@ namespace KGySoft.Serialization.Xml
     /// <see cref="XElement"/> node or by an <see cref="XmlWriter"/>, which already opened and XML element before calling the <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.SerializeContent">SerializeContent</see> method. When deserializing,
     /// the result object should be created by the caller, and the content can be deserialized by the <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.DeserializeContent">DeserializeContent</see> methods.</note>
     /// </para>
-    /// <para><strong>Options:</strong>
-    /// <br/>By specifying the <see cref="XmlSerializationOptions"/> argument in the <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.Serialize">Serialize</see> and <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.SerializeContent">SerializeContent</see>
-    /// methods you can override the default behavior of serialization. The default options and the <see cref="XmlSerializationOptions.None"/> option ensure that only those types are serialized, which are guaranteed to be able to deserialized perfectly.
-    /// For details see the description of the <see cref="XmlSerializationOptions.None"/> option.</para>
+    /// <h2>Options</h2>
+    /// <para>By specifying the <see cref="XmlSerializationOptions"/> argument in the <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.Serialize">Serialize</see> and <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.SerializeContent">SerializeContent</see>
+    /// methods you can override the default behavior of serialization. The <see cref="XmlSerializationOptions.None"/> option and the default <c>options</c> parameter value of the serialization methods ensure that
+    /// only those types are serialized, which are guaranteed to be able to deserialized perfectly. For details see the description of the <see cref="XmlSerializationOptions.None"/> option.</para>
     /// <para>If a type cannot be serialized with the currently used options a <see cref="SerializationException"/> will be thrown.</para>
     /// <para>You can use <see cref="XmlSerializationOptions.RecursiveSerializationAsFallback"/> option to enable recursive serialization of every type of objects and collections. A collection type can be serialized if
     /// it implements the <see cref="ICollection{T}"/>, <see cref="IList"/> or <see cref="IDictionary"/> interfaces, and it can be deserialized if it has a default constructor, or an initializer constructor with a single parameter that can accept an <see cref="Array"/>
@@ -93,6 +97,83 @@ namespace KGySoft.Serialization.Xml
     /// (or you can use the <see cref="CoreLibraries.TypeExtensions.RegisterTypeConverter{TConverter}">RegisterTypeConverter</see> extension method for types).</note>
     /// </para>
     /// <para>See the <see cref="XmlSerializationOptions"/> enumeration for further options.</para>
+    /// <h2>Natively supported types</h2>
+    /// <para>The names of natively supported types are recognized during deserialization so they are not needed to be declared as expected custom types in safe mode.</para>
+    /// <para>When <em>serializing</em>, a wider range of types are supported without specifying any fallback options than the specified lists below.
+    /// For the specific conditions see the description of the <see cref="XmlSerializationOptions.None"/> option.</para>
+    /// <para>When <em>deserializing</em> in safe mode, refer to the following couple of lists to see which types are recognized without specifying them as expected custom types.</para>
+    /// <para><strong>Natively supported simple types</strong>:
+    /// <list type="bullet">
+    /// <item><see cref="object"/></item>
+    /// <item><see cref="bool"/></item>
+    /// <item><see cref="sbyte"/></item>
+    /// <item><see cref="byte"/></item>
+    /// <item><see cref="short"/></item>
+    /// <item><see cref="ushort"/></item>
+    /// <item><see cref="int"/></item>
+    /// <item><see cref="uint"/></item>
+    /// <item><see cref="long"/></item>
+    /// <item><see cref="ulong"/></item>
+    /// <item><see cref="char"/></item>
+    /// <item><see cref="string"/></item>
+    /// <item><see cref="float"/></item>
+    /// <item><see cref="double"/></item>
+    /// <item><see cref="decimal"/></item>
+    /// <item><see cref="DateTime"/></item>
+    /// <item><see cref="TimeSpan"/></item>
+    /// <item><see cref="DateTimeOffset"/></item>
+    /// <item><see cref="IntPtr"/></item>
+    /// <item><see cref="UIntPtr"/></item>
+    /// <item><see cref="Guid"/>, though the serialization/deserialization itself happens by its type converter</item>
+    /// <item><see cref="Nullable{T}"/> types if type parameter is any of the supported types.</item>
+    /// <item><see cref="KeyValuePair{TKey,TValue}"/> if <see cref="KeyValuePair{TKey,TValue}.Key"/> and <see cref="KeyValuePair{TKey,TValue}.Value"/> are any of the supported types.</item>
+    /// <item><see cref="DictionaryEntry"/></item>
+    /// <item><see cref="BigInteger"/> (in .NET Framework 4.0 and above)</item>
+    /// <item><see cref="Rune"/> (in .NET Core 3.0 and above)</item>
+    /// <item><see cref="Half"/> (in .NET 5.0 and above)</item>
+    /// <item><see cref="DateOnly"/> (in .NET 6.0 and above)</item>
+    /// <item><see cref="TimeOnly"/> (in .NET 6.0 and above)</item>
+    /// <item><see cref="Int128"/> (in .NET 7.0 and above)</item>
+    /// <item><see cref="UInt128"/> (in .NET 7.0 and above)</item>
+    /// </list></para>
+    /// <para><strong>Natively supported collections</strong>:
+    /// <list type="bullet">
+    /// <item><see cref="Array"/></item>
+    /// <item><see cref="List{T}"/></item>
+    /// <item><see cref="LinkedList{T}"/></item>
+    /// <item><see cref="CircularList{T}"/></item>
+    /// <item><see cref="Queue{T}"/></item>
+    /// <item><see cref="Stack{T}"/></item>
+    /// <item><see cref="HashSet{T}"/></item>
+    /// <item><see cref="ThreadSafeHashSet{T}"/></item>
+    /// <item><see cref="ArrayList"/></item>
+    /// <item><see cref="Queue"/></item>
+    /// <item><see cref="Stack"/></item>
+    /// <item><see cref="BitArray"/></item>
+    /// <item><see cref="StringCollection"/></item>
+    /// <item><see cref="Dictionary{TKey,TValue}"/></item>
+    /// <item><see cref="SortedList{TKey,TValue}"/></item>
+    /// <item><see cref="SortedDictionary{TKey,TValue}"/></item>
+    /// <item><see cref="CircularSortedList{TKey,TValue}"/></item>
+    /// <item><see cref="ThreadSafeDictionary{TKey,TValue}"/></item>
+    /// <item><see cref="StringKeyedDictionary{TValue}"/></item>
+    /// <item><see cref="Hashtable"/></item>
+    /// <item><see cref="SortedList"/></item>
+    /// <item><see cref="ListDictionary"/></item>
+    /// <item><see cref="HybridDictionary"/></item>
+    /// <item><see cref="OrderedDictionary"/></item>
+    /// <item><see cref="SortedSet{T}"/> (in .NET Framework 4.0 and above)</item>
+    /// <item><see cref="ConcurrentBag{T}"/> (in .NET Framework 4.0 and above)</item>
+    /// <item><see cref="ConcurrentQueue{T}"/> (in .NET Framework 4.0 and above)</item>
+    /// <item><see cref="ConcurrentStack{T}"/> (in .NET Framework 4.0 and above)</item>
+    /// <item><see cref="ConcurrentDictionary{TKey,TValue}"/> (in .NET Framework 4.0 and above)</item>
+    /// </list>
+    /// <note>Please note that if a collection uses a custom or culture-aware comparer, some fallback option might be needed to be able to serialize it.
+    /// <see cref="XmlSerializationOptions.RecursiveSerializationAsFallback"/> will omit the custom comparers so it is not guaranteed that such a collection
+    /// can be deserialized perfectly, whereas <see cref="XmlSerializationOptions.BinarySerializationAsFallback"/> may successfully serialize also the comparer
+    /// but for safe mode deserialization it may be needed to specify the also the comparer as an expected custom type.</note>
+    /// </para>
+    /// <h2>Comparison with System.Xml.Serialization.XmlSerializer</h2>
     /// <para><strong>New features and improvements</strong> compared to <a href="https://docs.microsoft.com/en-us/dotnet/api/system.xml.serialization.xmlserializer" target="_blank">System.Xml.Serialization.XmlSerializer</a>:
     /// <list type="bullet">
     /// <item><term>Strings</term><description>If a string contains only white spaces, then system <see cref="System.Xml.Serialization.XmlSerializer"/> cannot deserialize it properly. <see cref="string"/> instances containing
@@ -104,8 +185,7 @@ namespace KGySoft.Serialization.Xml
     /// This <see cref="XmlSerializer"/> does not require setter accessor for a collection property if the property is not <see langword="null"/> after initialization and can be populated by using the usual collection interfaces.</description></item>
     /// <item><term>Objects without default constructors</term><description>The system serializer requires that the deserialized types have default constructors. On deserializing fields and properties, this <see cref="XmlSerializer"/> implementation tries to use
     /// the return value of the members. If they are not <see langword="null"/> after creating their container object, then the returned instances will be used instead of creating a new instance.</description></item>
-    /// </list>
-    /// </para>
+    /// </list></para>
     /// </remarks>
     /// <example>
     /// <note type="tip">Try also <a href="https://dotnetfiddle.net/M2dfrx" target="_blank">online</a>.</note>

@@ -936,7 +936,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
 
             // base types
             var cfg = new GenerateObjectSettings { AllowDerivedTypesForNonSealedClasses = true };
-            Test<EventArgs>(true, cfg);
+            Test<EventArgs>(false, cfg);
 
             // abstract types/interfaces
             Test<Enum>();
