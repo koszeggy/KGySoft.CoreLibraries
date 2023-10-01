@@ -36,6 +36,8 @@ using KGySoft.Reflection;
 using KGySoft.Serialization;
 using KGySoft.Serialization.Binary;
 
+using static System.Net.Mime.MediaTypeNames;
+
 #endregion
 
 #region Suppressions
@@ -1560,18 +1562,11 @@ namespace KGySoft.Resources
 
         private object? NodeInfoToObjectByMime(DataNodeInfo dataNodeInfo, ITypeResolutionService? typeResolver, bool safeMode, Type? expectedType)
         {
-            string mimeType = dataNodeInfo.MimeType!;
-            string text = dataNodeInfo.ValueData ?? String.Empty;
+            #region Local Methods to reduce complexity
 
-            // 1.) BinaryFormatter
-            if (mimeType.In(ResXCommon.BinSerializedMimeTypes))
+            static object? DeserializeByBinaryFormatter(DataNodeInfo dataNodeInfo, ITypeResolutionService? typeResolver, bool safeMode)
             {
-#if NET8_0_OR_GREATER
-                Throw.NotSupportedException(Res.ResourcesBinaryFormatterNotSupported(mimeType, dataNodeInfo.Line, dataNodeInfo.Column));
-#else
-                if (safeMode)
-                    Throw.SerializationException(Res.ResourcesBinaryFormatterSafeModeNotSupported(dataNodeInfo.Name, dataNodeInfo.Line, dataNodeInfo.Column));
-                byte[] serializedData = FromBase64WrappedString(text);
+                byte[] serializedData = FromBase64WrappedString(dataNodeInfo.ValueData ?? String.Empty);
                 using var surrogate = new CustomSerializerSurrogateSelector { IgnoreNonExistingFields = true, SafeMode = safeMode };
 #if !NETFRAMEWORK
                 // Supporting MemoryStream even where it is not serializable anymore
@@ -1597,16 +1592,10 @@ namespace KGySoft.Resources
                 }
 
                 return result;
-#endif
             }
 
-            // 2.) By TypeConverter from byte[]
-            if (mimeType == ResXCommon.ByteArraySerializedObjectMimeType)
+            static object? DeserializeByTypeConverter(DataNodeInfo dataNodeInfo, ITypeResolutionService? typeResolver, bool safeMode, Type? expectedType, string typeName)
             {
-                string? typeName = AssemblyQualifiedName;
-                if (String.IsNullOrEmpty(typeName))
-                    throw ResXCommon.CreateXmlException(Res.ResourcesMissingAttribute(ResXCommon.TypeStr, dataNodeInfo.Line, dataNodeInfo.Column), dataNodeInfo.Line, dataNodeInfo.Column);
-
                 Type? type = ResolveType(typeName, typeResolver, safeMode, expectedType);
                 if (type == null)
                 {
@@ -1625,7 +1614,7 @@ namespace KGySoft.Resources
                     Throw.NotSupportedException(message, xml);
                 }
 
-                byte[] serializedData = FromBase64WrappedString(text);
+                byte[] serializedData = FromBase64WrappedString(dataNodeInfo.ValueData ?? String.Empty);
 
                 try
                 {
@@ -1636,14 +1625,13 @@ namespace KGySoft.Resources
                     string message = Res.ResourcesConvertFromByteArrayNotSupportedAt(typeName, dataNodeInfo.Line, dataNodeInfo.Column, e.Message);
                     XmlException xml = ResXCommon.CreateXmlException(message, dataNodeInfo.Line, dataNodeInfo.Column, e);
                     Throw.NotSupportedException(message, xml);
+                    return default;
                 }
             }
 
-            // 3.) BinarySerializationFormatter
-            if (mimeType == ResXCommon.KGySoftSerializedObjectMimeType)
+            static object? DeserializeFromBinarySerializationFormatter(DataNodeInfo dataNodeInfo, ITypeResolutionService? typeResolver, bool safeMode, Type? expectedType)
             {
-                Debug.Assert(typeResolver == null || !safeMode, "No typeResolver is expected in safe mode");
-                byte[] serializedData = FromBase64WrappedString(text);
+                byte[] serializedData = FromBase64WrappedString(dataNodeInfo.ValueData ?? String.Empty);
                 var options = safeMode ? BinarySerializationOptions.SafeMode : BinarySerializationOptions.None;
                 if (safeMode && expectedType is not null)
                     options |= BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes;
@@ -1674,6 +1662,39 @@ namespace KGySoft.Resources
                 }
 
                 return result;
+            }
+
+            #endregion
+
+            string mimeType = dataNodeInfo.MimeType!;
+
+            // 1.) BinaryFormatter
+            if (mimeType.In(ResXCommon.BinSerializedMimeTypes))
+            {
+                if (safeMode)
+                    Throw.SerializationException(Res.ResourcesBinaryFormatterSafeModeNotSupported(dataNodeInfo.Name, dataNodeInfo.Line, dataNodeInfo.Column));
+#if NET8_0_OR_GREATER
+                Throw.NotSupportedException(Res.ResourcesBinaryFormatterNotSupported(mimeType, dataNodeInfo.Line, dataNodeInfo.Column));
+#else
+                return DeserializeByBinaryFormatter(dataNodeInfo, typeResolver, safeMode);
+#endif
+            }
+
+            // 2.) By TypeConverter from byte[]
+            if (mimeType == ResXCommon.ByteArraySerializedObjectMimeType)
+            {
+                string? typeName = AssemblyQualifiedName;
+                if (String.IsNullOrEmpty(typeName))
+                    throw ResXCommon.CreateXmlException(Res.ResourcesMissingAttribute(ResXCommon.TypeStr, dataNodeInfo.Line, dataNodeInfo.Column), dataNodeInfo.Line, dataNodeInfo.Column);
+
+                return DeserializeByTypeConverter(dataNodeInfo, typeResolver, safeMode, expectedType, typeName);
+            }
+
+            // 3.) BinarySerializationFormatter
+            if (mimeType == ResXCommon.KGySoftSerializedObjectMimeType)
+            {
+                Debug.Assert(typeResolver == null || !safeMode, "No typeResolver is expected in safe mode");
+                return DeserializeFromBinarySerializationFormatter(dataNodeInfo, typeResolver, safeMode, expectedType);
             }
 
             // 4.) SoapFormatter. We do not reference it explicitly. If cannot be loaded, NotSupportedException will be thrown.

@@ -15,10 +15,6 @@
 
 #region Usings
 
-using System.Collections.Specialized;
-
-using KGySoft.Annotations;
-
 #region Used Namespaces
 
 using System;
@@ -27,7 +23,9 @@ using System.Collections;
 using System.Collections.Concurrent;
 #endif
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
@@ -35,6 +33,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Xml.Serialization;
 
+using KGySoft.Annotations;
 using KGySoft.Collections;
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
@@ -322,6 +321,7 @@ namespace KGySoft.Serialization.Xml
             return true;
         }
 
+        [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Very straightforward switch with many branches")]
         private static ComparerType ToComparerType(object? comparer, Type? collectionGenericArgument) => comparer switch
         {
             null => ComparerType.None,
