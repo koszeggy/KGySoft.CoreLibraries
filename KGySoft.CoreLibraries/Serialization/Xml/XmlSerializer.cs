@@ -19,6 +19,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 #if NET35
 using System.Diagnostics.CodeAnalysis;
 #endif
@@ -387,8 +388,9 @@ namespace KGySoft.Serialization.Xml
 
         /// <summary>
         /// Deserializes an XML content to an object in safe mode.
-        /// Works for the results of the <see cref="Serialize(object,XmlSerializationOptions)"/> method.
-        /// <br/>See the security notes at the <strong>Remarks</strong> section of the <see cref="XmlSerializer"/> class for details about safe mode.
+        /// If <paramref name="content"/> contains names of natively not supported types, then you should use
+        /// the other overloads to specify the expected types.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeSafe{T}(XElement, Type[])"/> overload for details.
         /// </summary>
         /// <param name="content">XML content of the object.</param>
         /// <returns>The deserialized object.</returns>
@@ -398,23 +400,87 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="InvalidOperationException"><paramref name="content"/> cannot be deserialized in safe mode.</exception>
         public static object? DeserializeSafe(XElement content) => new XElementDeserializer(true).Deserialize(content);
-    
+
+        /// <summary>
+        /// Deserializes an XML content to an object in safe mode.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeSafe{T}(XElement, Type[])"/> overload for details.
+        /// </summary>
+        /// <param name="content">XML content of the object.</param>
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML <paramref name="content"/>.
+        /// If <paramref name="content"/> does not contain any natively not supported types, then this parameter is optional.</param>
+        /// <returns>The deserialized object.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="content"/> must not be <see langword="null"/>.</exception>
+        /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
+        /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
+        /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
+        /// <exception cref="InvalidOperationException"><paramref name="content"/> cannot be deserialized in safe mode.</exception>
         public static object? DeserializeSafe(XElement content, params Type[]? expectedCustomTypes)
             => new XElementDeserializer(true, expectedCustomTypes).Deserialize(content);
 
+        /// <summary>
+        /// Deserializes an XML content to an instance of <typeparamref name="T"/> in safe mode.
+        /// </summary>
+        /// <typeparam name="T">The expected type of the result.</typeparam>
+        /// <param name="content">XML content of the object.</param>
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML <paramref name="content"/>.
+        /// If <paramref name="content"/> does not contain any natively not supported types, then this parameter is optional.</param>
+        /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="content"/> must not be <see langword="null"/>.</exception>
+        /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
+        /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
+        /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
+        /// <exception cref="InvalidOperationException"><paramref name="content"/> cannot be deserialized in safe mode.</exception>
+        /// <remarks>
+        /// <para>This method works for the results of the <see cref="Serialize(object,XmlSerializationOptions)"/> method.</para>
+        /// <para><paramref name="expectedCustomTypes"/> must be specified if <paramref name="content"/> contains names of natively not supported types.</para>
+        /// <para><typeparamref name="T"/> is allowed to be an interface or abstract type but if it's different from the actual type of the result,
+        /// then the actual type also might needed to be included in <paramref name="expectedCustomTypes"/>.</para>
+        /// <para>For arrays it is enough to specify the element type and for generic types you can specify the
+        /// natively not supported generic type definition and generic type arguments separately.
+        /// If <paramref name="expectedCustomTypes"/> contains constructed generic types, then the generic type definition and
+        /// the type arguments will be treated as expected types in any combination.</para>
+        /// <note type="tip">See the <strong>Remarks</strong> section of the <see cref="XmlSerializer"/> class for the list of the natively supported types.</note>
+        /// </remarks>
         public static T DeserializeSafe<T>(XElement content, params Type[]? expectedCustomTypes)
             => (T)new XElementDeserializer(true, expectedCustomTypes, typeof(T)).Deserialize(content)!;
 
+        /// <summary>
+        /// Deserializes an XML content to an object in safe mode.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeSafe{T}(XElement, Type[])"/> overload for details.
+        /// </summary>
+        /// <param name="content">XML content of the object.</param>
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML <paramref name="content"/>.
+        /// If <paramref name="content"/> does not contain any natively not supported types, then this parameter can be <see langword="null"/>.</param>
+        /// <returns>The deserialized object.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="content"/> must not be <see langword="null"/>.</exception>
+        /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
+        /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
+        /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
+        /// <exception cref="InvalidOperationException"><paramref name="content"/> cannot be deserialized in safe mode.</exception>
         public static object? DeserializeSafe(XElement content, IEnumerable<Type>? expectedCustomTypes)
             => new XElementDeserializer(true, expectedCustomTypes).Deserialize(content);
 
+        /// <summary>
+        /// Deserializes an XML content to an instance of <typeparamref name="T"/> in safe mode.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeSafe{T}(XElement, Type[])"/> overload for details.
+        /// </summary>
+        /// <typeparam name="T">The expected type of the result.</typeparam>
+        /// <param name="content">XML content of the object.</param>
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML <paramref name="content"/>.
+        /// If <paramref name="content"/> does not contain any natively not supported types, then this parameter can be <see langword="null"/>.</param>
+        /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="content"/> must not be <see langword="null"/>.</exception>
+        /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
+        /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
+        /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
+        /// <exception cref="InvalidOperationException"><paramref name="content"/> cannot be deserialized in safe mode.</exception>
         public static T DeserializeSafe<T>(XElement content, IEnumerable<Type>? expectedCustomTypes)
             => (T)new XElementDeserializer(true, expectedCustomTypes, typeof(T)).Deserialize(content)!;
 
         /// <summary>
-        /// Deserializes an object using the provided <see cref="XmlReader"/> in <paramref name="reader"/> parameter.
+        /// Deserializes an object using the provided <see cref="XmlReader"/> in the <paramref name="reader"/> parameter.
         /// </summary>
-        /// <param name="reader">An <see cref="XmlReader"/> object to be used for deserialization.</param>
+        /// <param name="reader">An <see cref="XmlReader"/> object to be used for the deserialization.</param>
         /// <returns>The deserialized object.</returns>
         /// <remarks>
         /// <note>
@@ -429,16 +495,13 @@ namespace KGySoft.Serialization.Xml
         public static object? Deserialize(XmlReader reader) => new XmlReaderDeserializer(false).Deserialize(reader);
 
         /// <summary>
-        /// Deserializes an object using the provided <see cref="XmlReader"/> in <paramref name="reader"/> parameter.
-        /// <br/>See the security notes at the <strong>Remarks</strong> section of the <see cref="XmlSerializer"/> class for details about safe mode.
+        /// Deserializes an object in safe mode using the provided <see cref="XmlReader"/> in the <paramref name="reader"/> parameter.
+        /// If the serialization stream contains names of natively not supported types, then you should use
+        /// the other overloads to specify the expected types.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeSafe{T}(XmlReader, Type[])"/> overload for details.
         /// </summary>
-        /// <param name="reader">An <see cref="XmlReader"/> object to be used for deserialization.</param>
+        /// <param name="reader">An <see cref="XmlReader"/> object to be used for the deserialization.</param>
         /// <returns>The deserialized object.</returns>
-        /// <remarks>
-        /// <note>
-        /// The <paramref name="reader"/> position must be <em>before</em> the content to deserialize.
-        /// </note>
-        /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="reader"/> must not be <see langword="null"/>.</exception>
         /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
@@ -446,23 +509,87 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="XmlException">An error occurred while parsing the XML.</exception>
         /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
         public static object? DeserializeSafe(XmlReader reader) => new XmlReaderDeserializer(true).Deserialize(reader);
-    
+
+        /// <summary>
+        /// Deserializes an object in safe mode using the provided <see cref="XmlReader"/> in the <paramref name="reader"/> parameter.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeSafe{T}(XmlReader, Type[])"/> overload for details.
+        /// </summary>
+        /// <param name="reader">An <see cref="XmlReader"/> object to be used for the deserialization.</param>
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML data.
+        /// If the serialization stream does not contain any natively not supported types, then this parameter is optional.</param>
+        /// <returns>The deserialized object.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="reader"/> must not be <see langword="null"/>.</exception>
+        /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
+        /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
+        /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
+        /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
         public static object? DeserializeSafe(XmlReader reader, params Type[]? expectedCustomTypes)
             => new XmlReaderDeserializer(true, expectedCustomTypes).Deserialize(reader);
 
+        /// <summary>
+        /// Deserializes an instance of <typeparamref name="T"/> in safe mode using the provided <see cref="XmlReader"/> in the <paramref name="reader"/> parameter.
+        /// </summary>
+        /// <typeparam name="T">The expected type of the result.</typeparam>
+        /// <param name="reader">An <see cref="XmlReader"/> object to be used for the deserialization.</param>
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML data.
+        /// If the serialization stream does not contain any natively not supported types, then this parameter is optional.</param>
+        /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="reader"/> must not be <see langword="null"/>.</exception>
+        /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
+        /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
+        /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
+        /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
+        /// <remarks>
+        /// <para>The <paramref name="reader"/> position must be <em>before</em> the content to deserialize.</para>
+        /// <para><paramref name="expectedCustomTypes"/> must be specified if the serialization stream contains names of natively not supported types.</para>
+        /// <para><typeparamref name="T"/> is allowed to be an interface or abstract type but if it's different from the actual type of the result,
+        /// then the actual type also might needed to be included in <paramref name="expectedCustomTypes"/>.</para>
+        /// <para>For arrays it is enough to specify the element type and for generic types you can specify the
+        /// natively not supported generic type definition and generic type arguments separately.
+        /// If <paramref name="expectedCustomTypes"/> contains constructed generic types, then the generic type definition and
+        /// the type arguments will be treated as expected types in any combination.</para>
+        /// <note type="tip">See the <strong>Remarks</strong> section of the <see cref="XmlSerializer"/> class for the list of the natively supported types.</note>
+        /// </remarks>
         public static T DeserializeSafe<T>(XmlReader reader, params Type[]? expectedCustomTypes)
             => (T)new XmlReaderDeserializer(true, expectedCustomTypes, typeof(T)).Deserialize(reader)!;
-    
+
+        /// <summary>
+        /// Deserializes an object in safe mode using the provided <see cref="XmlReader"/> in the <paramref name="reader"/> parameter.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeSafe{T}(XmlReader, Type[])"/> overload for details.
+        /// </summary>
+        /// <param name="reader">An <see cref="XmlReader"/> object to be used for the deserialization.</param>
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML data.
+        /// If the serialization stream does not contain any natively not supported types, then this parameter can be <see langword="null"/>.</param>
+        /// <returns>The deserialized object.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="reader"/> must not be <see langword="null"/>.</exception>
+        /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
+        /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
+        /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
+        /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
         public static object? DeserializeSafe(XmlReader reader, IEnumerable<Type>? expectedCustomTypes)
             => new XmlReaderDeserializer(true, expectedCustomTypes).Deserialize(reader);
 
+        /// <summary>
+        /// Deserializes an instance of <typeparamref name="T"/> in safe mode using the provided <see cref="XmlReader"/> in the <paramref name="reader"/> parameter.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeSafe{T}(XmlReader, Type[])"/> overload for details.
+        /// </summary>
+        /// <typeparam name="T">The expected type of the result.</typeparam>
+        /// <param name="reader">An <see cref="XmlReader"/> object to be used for the deserialization.</param>
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML data.
+        /// If the serialization stream does not contain any natively not supported types, then this parameter can be <see langword="null"/>.</param>
+        /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="reader"/> must not be <see langword="null"/>.</exception>
+        /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
+        /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
+        /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
+        /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
         public static T DeserializeSafe<T>(XmlReader reader, IEnumerable<Type>? expectedCustomTypes)
             => (T)new XmlReaderDeserializer(true, expectedCustomTypes, typeof(T)).Deserialize(reader)!;
 
         /// <summary>
-        /// Deserializes an object using the provided <see cref="TextReader"/> in <paramref name="reader"/> parameter.
+        /// Deserializes an object using the provided <see cref="TextReader"/> in the <paramref name="reader"/> parameter.
         /// </summary>
-        /// <param name="reader">A <see cref="TextReader"/> object to be used for deserialization. The reader is not closed after deserialization.</param>
+        /// <param name="reader">A <see cref="TextReader"/> object to be used for the deserialization. The reader is not closed after the deserialization.</param>
         /// <returns>The deserialized object.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="reader"/> must not be <see langword="null"/>.</exception>
         /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
@@ -492,10 +619,12 @@ namespace KGySoft.Serialization.Xml
         }
 
         /// <summary>
-        /// Deserializes an object using the provided <see cref="TextReader"/> in <paramref name="reader"/> parameter.
-        /// <br/>See the security notes at the <strong>Remarks</strong> section of the <see cref="XmlSerializer"/> class for details about safe mode.
+        /// Deserializes an object in safe mode using the provided <see cref="TextReader"/> in the <paramref name="reader"/> parameter.
+        /// If the serialization stream contains names of natively not supported types, then you should use
+        /// the other overloads to specify the expected types.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeSafe{T}(XmlReader, Type[])"/> overload for details.
         /// </summary>
-        /// <param name="reader">A <see cref="TextReader"/> object to be used for deserialization. The reader is not closed after deserialization.</param>
+        /// <param name="reader">A <see cref="TextReader"/> object to be used for the deserialization. The reader is not closed after the deserialization.</param>
         /// <returns>The deserialized object.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="reader"/> must not be <see langword="null"/>.</exception>
         /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
@@ -503,10 +632,76 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="XmlException">An error occurred while parsing the XML.</exception>
         /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
+        public static object? DeserializeSafe(TextReader reader)
+            => DeserializeSafe<object?>(reader, (IEnumerable<Type>?)null);
+
+        /// <summary>
+        /// Deserializes an object in safe mode using the provided <see cref="TextReader"/> in the <paramref name="reader"/> parameter.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeSafe{T}(XmlReader, Type[])"/> overload for details.
+        /// </summary>
+        /// <param name="reader">A <see cref="TextReader"/> object to be used for the deserialization. The reader is not closed after the deserialization.</param>
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML data.
+        /// If the serialization stream does not contain any natively not supported types, then this parameter is optional.</param>
+        /// <returns>The deserialized object.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="reader"/> must not be <see langword="null"/>.</exception>
+        /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
+        /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
+        /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
+        /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
+        public static object? DeserializeSafe(TextReader reader, params Type[]? expectedCustomTypes)
+            => DeserializeSafe<object?>(reader, (IEnumerable<Type>?)expectedCustomTypes);
+
+        /// <summary>
+        /// Deserializes an instance of <typeparamref name="T"/> in safe mode using the provided <see cref="TextReader"/> in the <paramref name="reader"/> parameter.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeSafe{T}(XmlReader, Type[])"/> overload for details.
+        /// </summary>
+        /// <typeparam name="T">The expected type of the result.</typeparam>
+        /// <param name="reader">A <see cref="TextReader"/> object to be used for the deserialization. The reader is not closed after the deserialization.</param>
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML data.
+        /// If the serialization stream does not contain any natively not supported types, then this parameter is optional.</param>
+        /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="reader"/> must not be <see langword="null"/>.</exception>
+        /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
+        /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
+        /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
+        /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
+        public static T DeserializeSafe<T>(TextReader reader, params Type[]? expectedCustomTypes)
+            => DeserializeSafe<T>(reader, (IEnumerable<Type>?)expectedCustomTypes);
+
+        /// <summary>
+        /// Deserializes an object in safe mode using the provided <see cref="TextReader"/> in the <paramref name="reader"/> parameter.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeSafe{T}(XmlReader, Type[])"/> overload for details.
+        /// </summary>
+        /// <param name="reader">A <see cref="TextReader"/> object to be used for the deserialization. The reader is not closed after the deserialization.</param>
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML data.
+        /// If the serialization stream does not contain any natively not supported types, then this parameter can be <see langword="null"/>.</param>
+        /// <returns>The deserialized object.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="reader"/> must not be <see langword="null"/>.</exception>
+        /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
+        /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
+        /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
+        /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
+        public static object? DeserializeSafe(TextReader reader, IEnumerable<Type>? expectedCustomTypes)
+            => DeserializeSafe<object?>(reader, expectedCustomTypes);
+
+        /// <summary>
+        /// Deserializes an instance of <typeparamref name="T"/> in safe mode using the provided <see cref="TextReader"/> in the <paramref name="reader"/> parameter.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeSafe{T}(XmlReader, Type[])"/> overload for details.
+        /// </summary>
+        /// <typeparam name="T">The expected type of the result.</typeparam>
+        /// <param name="reader">A <see cref="TextReader"/> object to be used for the deserialization. The reader is not closed after the deserialization.</param>
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML data.
+        /// If the serialization stream does not contain any natively not supported types, then this parameter can be <see langword="null"/>.</param>
+        /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="reader"/> must not be <see langword="null"/>.</exception>
+        /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
+        /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
+        /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
+        /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
 #if NET35
         [SuppressMessage("Security", "CA3075:InsecureDTDProcessing", Justification = "False alarm for .NET 3.5, though the resolver is null also for that target.")]
 #endif
-        public static object? DeserializeSafe(TextReader reader)
+        public static T DeserializeSafe<T>(TextReader reader, IEnumerable<Type>? expectedCustomTypes)
         {
             if (reader == null!)
                 Throw.ArgumentNullException(Argument.reader);
@@ -522,13 +717,13 @@ namespace KGySoft.Serialization.Xml
 #endif
             };
 
-            return DeserializeSafe(xmlReader);
+            return DeserializeSafe<T>(xmlReader, expectedCustomTypes);
         }
 
         /// <summary>
-        /// Deserializes an object from the specified file passed in <paramref name="fileName"/> parameter.
+        /// Deserializes an object from the specified file passed in the <paramref name="fileName"/> parameter.
         /// </summary>
-        /// <param name="fileName">Name of the file that contains the serialized content.</param>
+        /// <param name="fileName">The path to the file that contains the serialized content.</param>
         /// <returns>The deserialized object.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="fileName"/> must not be <see langword="null"/>.</exception>
         /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
@@ -538,6 +733,7 @@ namespace KGySoft.Serialization.Xml
 #if NET35
         [SuppressMessage("Security", "CA3075:InsecureDTDProcessing", Justification = "False alarm for .NET 3.5, though the resolver is null also for that target.")]
 #endif
+        [SuppressMessage("ReSharper", "UsingStatementResourceInitialization", Justification = "The property initialization never throws exception")]
         public static object? Deserialize(string fileName)
         {
             if (fileName == null!)
@@ -559,10 +755,12 @@ namespace KGySoft.Serialization.Xml
         }
 
         /// <summary>
-        /// Deserializes an object from the specified file passed in <paramref name="fileName"/> parameter.
-        /// <br/>See the security notes at the <strong>Remarks</strong> section of the <see cref="XmlSerializer"/> class for details about safe mode.
+        /// Deserializes an object in safe mode from the specified file passed in the <paramref name="fileName"/> parameter.
+        /// If the file contains names of natively not supported types, then you should use
+        /// the other overloads to specify the expected types.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeSafe{T}(XmlReader, Type[])"/> overload for details.
         /// </summary>
-        /// <param name="fileName">Name of the file that contains the serialized content.</param>
+        /// <param name="fileName">The path to the file that contains the serialized content.</param>
         /// <returns>The deserialized object.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="fileName"/> must not be <see langword="null"/>.</exception>
         /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
@@ -570,21 +768,76 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="XmlException">An error occurred while parsing the XML.</exception>
         /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
-#if NET35
-        [SuppressMessage("Security", "CA3075:InsecureDTDProcessing", Justification = "False alarm for .NET 3.5, though the resolver is null also for that target.")]
-#endif
         public static object? DeserializeSafe(string fileName)
             => DeserializeSafe<object?>(fileName, (IEnumerable<Type>?)null);
 
+        /// <summary>
+        /// Deserializes an object in safe mode from the specified file passed in the <paramref name="fileName"/> parameter.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeSafe{T}(XmlReader, Type[])"/> overload for details.
+        /// </summary>
+        /// <param name="fileName">The path to the file that contains the serialized content.</param>
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML data.
+        /// If the serialization stream does not contain any natively not supported types, then this parameter is optional.</param>
+        /// <returns>The deserialized object.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="fileName"/> must not be <see langword="null"/>.</exception>
+        /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
+        /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
+        /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
+        /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
         public static object? DeserializeSafe(string fileName, params Type[]? expectedCustomTypes)
             => DeserializeSafe<object?>(fileName, (IEnumerable<Type>?)expectedCustomTypes);
 
+        /// <summary>
+        /// Deserializes an instance of <typeparamref name="T"/> in safe mode from the specified file passed in the <paramref name="fileName"/> parameter.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeSafe{T}(XmlReader, Type[])"/> overload for details.
+        /// </summary>
+        /// <typeparam name="T">The expected type of the result.</typeparam>
+        /// <param name="fileName">The path to the file that contains the serialized content.</param>
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML data.
+        /// If the serialization stream does not contain any natively not supported types, then this parameter is optional.</param>
+        /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="fileName"/> must not be <see langword="null"/>.</exception>
+        /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
+        /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
+        /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
+        /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
         public static T DeserializeSafe<T>(string fileName, params Type[]? expectedCustomTypes)
             => DeserializeSafe<T>(fileName, (IEnumerable<Type>?)expectedCustomTypes);
 
+        /// <summary>
+        /// Deserializes an object in safe mode from the specified file passed in the <paramref name="fileName"/> parameter.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeSafe{T}(XmlReader, Type[])"/> overload for details.
+        /// </summary>
+        /// <param name="fileName">The path to the file that contains the serialized content.</param>
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML data.
+        /// If the serialization stream does not contain any natively not supported types, then this parameter can be <see langword="null"/>.</param>
+        /// <returns>The deserialized object.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="fileName"/> must not be <see langword="null"/>.</exception>
+        /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
+        /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
+        /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
+        /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
         public static object? DeserializeSafe(string fileName, IEnumerable<Type>? expectedCustomTypes)
             => DeserializeSafe<object?>(fileName, expectedCustomTypes);
 
+        /// <summary>
+        /// Deserializes an instance of <typeparamref name="T"/> in safe mode from the specified file passed in the <paramref name="fileName"/> parameter.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeSafe{T}(XmlReader, Type[])"/> overload for details.
+        /// </summary>
+        /// <typeparam name="T">The expected type of the result.</typeparam>
+        /// <param name="fileName">The path to the file that contains the serialized content.</param>
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML data.
+        /// If the serialization stream does not contain any natively not supported types, then this parameter can be <see langword="null"/>.</param>
+        /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="fileName"/> must not be <see langword="null"/>.</exception>
+        /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
+        /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
+        /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
+        /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
+#if NET35
+        [SuppressMessage("Security", "CA3075:InsecureDTDProcessing", Justification = "False alarm for .NET 3.5, though the resolver is null also for that target.")]
+#endif
+        [SuppressMessage("ReSharper", "UsingStatementResourceInitialization", Justification = "The property initialization never throws exception")]
         public static T DeserializeSafe<T>(string fileName, IEnumerable<Type>? expectedCustomTypes)
         {
             if (fileName == null!)
@@ -606,9 +859,9 @@ namespace KGySoft.Serialization.Xml
         }
 
         /// <summary>
-        /// Deserializes an object from the provided <see cref="Stream"/> in <paramref name="stream"/> parameter.
+        /// Deserializes an object from the provided <see cref="Stream"/> in the <paramref name="stream"/> parameter.
         /// </summary>
-        /// <param name="stream">A <see cref="Stream"/> object to be used for deserialization. The stream is not closed after deserialization.</param>
+        /// <param name="stream">A <see cref="Stream"/> object to be used for the deserialization. The stream is not closed after the deserialization.</param>
         /// <returns>The deserialized object.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="stream"/> must not be <see langword="null"/>.</exception>
         /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
@@ -623,7 +876,8 @@ namespace KGySoft.Serialization.Xml
             if (stream == null!)
                 Throw.ArgumentNullException(Argument.stream);
 
-            XmlTextReader xmlReader = new XmlTextReader(stream)
+            // using XmlTextReader instead of XmlReader.Create so we can avoid newlines to be normalized even if they are not entitized
+            var xmlReader = new XmlTextReader(stream)
             {
                 WhitespaceHandling = WhitespaceHandling.Significant,
                 Normalization = false,
@@ -643,9 +897,12 @@ namespace KGySoft.Serialization.Xml
         }
 
         /// <summary>
-        /// Deserializes an object from the provided <see cref="Stream"/> in <paramref name="stream"/> parameter.
+        /// Deserializes an object in safe mode using the specified <paramref name="stream"/>.
+        /// If the serialization stream contains names of natively not supported types, then you should use
+        /// the other overloads to specify the expected types.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeSafe{T}(XmlReader, Type[])"/> overload for details.
         /// </summary>
-        /// <param name="stream">A <see cref="Stream"/> object to be used for deserialization. The stream is not closed after deserialization.</param>
+        /// <param name="stream">A <see cref="Stream"/> object to be used for the deserialization. The stream is not closed after the deserialization.</param>
         /// <returns>The deserialized object.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="stream"/> must not be <see langword="null"/>.</exception>
         /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
@@ -653,27 +910,81 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="XmlException">An error occurred while parsing the XML.</exception>
         /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
-#if NET35
-        [SuppressMessage("Security", "CA3075:InsecureDTDProcessing", Justification = "False alarm for .NET 3.5, though the resolver is null also for that target.")]
-#endif
         public static object? DeserializeSafe(Stream stream)
             => DeserializeSafe<object?>(stream, (IEnumerable<Type>?)null);
 
+        /// <summary>
+        /// Deserializes an object in safe mode using the specified <paramref name="stream"/>.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeSafe{T}(XmlReader, Type[])"/> overload for details.
+        /// </summary>
+        /// <param name="stream">A <see cref="Stream"/> object to be used for the deserialization. The stream is not closed after the deserialization.</param>
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML <paramref name="stream"/>.
+        /// If the serialization stream does not contain any natively not supported types, then this parameter is optional.</param>
+        /// <returns>The deserialized object.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="stream"/> must not be <see langword="null"/>.</exception>
+        /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
+        /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
+        /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
+        /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
         public static object? DeserializeSafe(Stream stream, params Type[]? expectedCustomTypes)
             => DeserializeSafe<object?>(stream, (IEnumerable<Type>?)expectedCustomTypes);
 
+        /// <summary>
+        /// Deserializes an instance of <typeparamref name="T"/> in safe mode using the specified <paramref name="stream"/>.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeSafe{T}(XmlReader, Type[])"/> overload for details.
+        /// </summary>
+        /// <typeparam name="T">The expected type of the result.</typeparam>
+        /// <param name="stream">A <see cref="Stream"/> object to be used for the deserialization. The stream is not closed after the deserialization.</param>
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML <paramref name="stream"/>.
+        /// If the serialization stream does not contain any natively not supported types, then this parameter is optional.</param>
+        /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="stream"/> must not be <see langword="null"/>.</exception>
+        /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
+        /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
+        /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
+        /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
         public static T DeserializeSafe<T>(Stream stream, params Type[]? expectedCustomTypes)
             => DeserializeSafe<T>(stream, (IEnumerable<Type>?)expectedCustomTypes);
 
+        /// <summary>
+        /// Deserializes an object in safe mode using the specified <paramref name="stream"/>.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeSafe{T}(XmlReader, Type[])"/> overload for details.
+        /// </summary>
+        /// <param name="stream">A <see cref="Stream"/> object to be used for the deserialization. The stream is not closed after the deserialization.</param>
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML <paramref name="stream"/>.
+        /// If the serialization stream does not contain any natively not supported types, then this parameter can be <see langword="null"/>.</param>
+        /// <returns>The deserialized object.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="stream"/> must not be <see langword="null"/>.</exception>
+        /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
+        /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
+        /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
+        /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
         public static object? DeserializeSafe(Stream stream, IEnumerable<Type>? expectedCustomTypes)
             => DeserializeSafe<object?>(stream, expectedCustomTypes);
 
+        /// <summary>
+        /// Deserializes an instance of <typeparamref name="T"/> in safe mode using the specified <paramref name="stream"/>.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeSafe{T}(XmlReader, Type[])"/> overload for details.
+        /// </summary>
+        /// <typeparam name="T">The expected type of the result.</typeparam>
+        /// <param name="stream">A <see cref="Stream"/> object to be used for the deserialization. The stream is not closed after the deserialization.</param>
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML <paramref name="stream"/>.
+        /// If the serialization stream does not contain any natively not supported types, then this parameter can be <see langword="null"/>.</param>
+        /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="stream"/> must not be <see langword="null"/>.</exception>
+        /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
+        /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
+        /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
+        /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
+#if NET35
+        [SuppressMessage("Security", "CA3075:InsecureDTDProcessing", Justification = "False alarm for .NET 3.5, though the resolver is null also for that target.")]
+#endif
         public static T DeserializeSafe<T>(Stream stream, IEnumerable<Type>? expectedCustomTypes)
         {
             if (stream == null!)
                 Throw.ArgumentNullException(Argument.stream);
 
-            XmlTextReader xmlReader = new XmlTextReader(stream)
+            var xmlReader = new XmlTextReader(stream)
             {
                 WhitespaceHandling = WhitespaceHandling.Significant,
                 Normalization = false,
@@ -687,70 +998,148 @@ namespace KGySoft.Serialization.Xml
         }
 
         /// <summary>
-        /// Restores inner state of an already created object passed in <paramref name="obj"/> parameter based on a saved XML.
-        /// Works for the results of the <see cref="SerializeContent(XElement,object,XmlSerializationOptions)"/> method and other <c>SerializeContent</c> overloads.
+        /// Restores the inner state of an already created object passed in the <paramref name="obj"/> parameter based on a saved XML.
+        /// Works for the results of the <see cref="SerializeContent(XElement,object,XmlSerializationOptions)"/> method.
         /// </summary>
         /// <param name="obj">The already constructed object whose inner state has to be deserialized.</param>
-        /// <param name="content">XML content of the object.</param>
+        /// <param name="content">The XML content of the object.</param>
         /// <exception cref="ArgumentNullException"><paramref name="obj"/> and <paramref name="content"/> must not be <see langword="null"/>.</exception>
-        /// <exception cref="ArgumentException"><paramref name="obj"/> must not be a value type.</exception>
         /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         public static void DeserializeContent(XElement content, object obj) => new XElementDeserializer(false).DeserializeContent(content, obj);
 
         /// <summary>
-        /// Restores inner state of an already created object passed in <paramref name="obj"/> parameter based on a saved XML.
-        /// Works for the results of the <see cref="SerializeContent(XElement,object,XmlSerializationOptions)"/> method and other <c>SerializeContent</c> overloads.
-        /// <br/>See the security notes at the <strong>Remarks</strong> section of the <see cref="XmlSerializer"/> class for details about safe mode.
+        /// Restores the inner state of an already created object passed in the <paramref name="obj"/> parameter based on a saved XML.
+        /// If <paramref name="content"/> contains names of natively not supported types, then you should use
+        /// the other overloads to specify the expected types.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeContentSafe(XElement, object, Type[])"/> overload for details.
         /// </summary>
         /// <param name="obj">The already constructed object whose inner state has to be deserialized.</param>
         /// <param name="content">XML content of the object.</param>
         /// <exception cref="ArgumentNullException"><paramref name="obj"/> and <paramref name="content"/> must not be <see langword="null"/>.</exception>
-        /// <exception cref="ArgumentException"><paramref name="obj"/> must not be a value type.</exception>
         /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="InvalidOperationException"><paramref name="content"/> cannot be deserialized in safe mode.</exception>
         public static void DeserializeContentSafe(XElement content, object obj) => new XElementDeserializer(true).DeserializeContent(content, obj);
 
+        /// <summary>
+        /// Restores the inner state of an already created object passed in the <paramref name="obj"/> parameter based on a saved XML.
+        /// </summary>
+        /// <param name="obj">The already constructed object whose inner state has to be deserialized.</param>
+        /// <param name="content">XML content of the object.</param>
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML <paramref name="content"/>.
+        /// If <paramref name="content"/> does not contain any natively not supported types, then this parameter is optional.</param>
+        /// <returns>The deserialized object.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="obj"/> and <paramref name="content"/> must not be <see langword="null"/>.</exception>
+        /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
+        /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
+        /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
+        /// <exception cref="InvalidOperationException"><paramref name="content"/> cannot be deserialized in safe mode.</exception>
+        /// <remarks>
+        /// <para>This method works for the results of the <see cref="SerializeContent(XElement,object,XmlSerializationOptions)"/> method.</para>
+        /// <para><paramref name="expectedCustomTypes"/> must be specified if <paramref name="content"/> contains names of natively not supported types.</para>
+        /// <para>For arrays it is enough to specify the element type and for generic types you can specify the
+        /// natively not supported generic type definition and generic type arguments separately.
+        /// If <paramref name="expectedCustomTypes"/> contains constructed generic types, then the generic type definition and
+        /// the type arguments will be treated as expected types in any combination.</para>
+        /// <note type="tip">See the <strong>Remarks</strong> section of the <see cref="XmlSerializer"/> class for the list of the natively supported types.</note>
+        /// </remarks>
         public static void DeserializeContentSafe(XElement content, object obj, params Type[]? expectedCustomTypes)
             => new XElementDeserializer(true, expectedCustomTypes).DeserializeContent(content, obj);
 
+        /// <summary>
+        /// Restores the inner state of an already created object passed in the <paramref name="obj"/> parameter based on a saved XML.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeContentSafe(XElement, object, Type[])"/> overload for details.
+        /// </summary>
+        /// <param name="obj">The already constructed object whose inner state has to be deserialized.</param>
+        /// <param name="content">XML content of the object.</param>
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML <paramref name="content"/>.
+        /// If <paramref name="content"/> does not contain any natively not supported types, then this parameter can be <see langword="null"/>.</param>
+        /// <returns>The deserialized object.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="obj"/> and <paramref name="content"/> must not be <see langword="null"/>.</exception>
+        /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
+        /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
+        /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
+        /// <exception cref="InvalidOperationException"><paramref name="content"/> cannot be deserialized in safe mode.</exception>
         public static void DeserializeContentSafe(XElement content, object obj, IEnumerable<Type>? expectedCustomTypes)
             => new XElementDeserializer(true, expectedCustomTypes).DeserializeContent(content, obj);
 
         /// <summary>
-        /// Restores inner state of an already created object passed in <paramref name="obj"/> parameter based on a saved XML.
-        /// Works for the results of the <see cref="SerializeContent(XmlWriter,object,XmlSerializationOptions)"/> method and other <c>SerializeContent</c> overloads.
+        /// Restores the inner state of an already created object passed in the <paramref name="obj"/> parameter based on a saved XML.
+        /// Works for the results of the <see cref="SerializeContent(XmlWriter,object,XmlSerializationOptions)"/> method.
         /// </summary>
         /// <param name="obj">The already constructed object whose inner state has to be deserialized.</param>
-        /// <param name="reader">An <see cref="XmlReader"/> instance to be used to read the XML content. Reader must be in at correct position for the successful deserialization.</param>
+        /// <param name="reader">An <see cref="XmlReader"/> instance to be used to read the XML content. The reader must be at the correct position for a successful deserialization.</param>
         /// <exception cref="ArgumentNullException"><paramref name="obj"/> and <paramref name="reader"/> must not be <see langword="null"/>.</exception>
-        /// <exception cref="ArgumentException"><paramref name="obj"/> must not be a value type.</exception>
         /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         public static void DeserializeContent(XmlReader reader, object obj) => new XmlReaderDeserializer(false).DeserializeContent(reader, obj);
 
         /// <summary>
-        /// Restores inner state of an already created object passed in <paramref name="obj"/> parameter based on a saved XML.
-        /// Works for the results of the <see cref="SerializeContent(XmlWriter,object,XmlSerializationOptions)"/> method and other <c>SerializeContent</c> overloads.
-        /// <br/>See the security notes at the <strong>Remarks</strong> section of the <see cref="XmlSerializer"/> class for details about safe mode.
+        /// Restores the inner state of an already created object passed in the <paramref name="obj"/> parameter based on a saved XML.
+        /// If the serialization stream contains names of natively not supported types, then you should use
+        /// the other overloads to specify the expected types.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeContentSafe(XmlReader, object, Type[])"/> overload for details.
         /// </summary>
         /// <param name="obj">The already constructed object whose inner state has to be deserialized.</param>
-        /// <param name="reader">An <see cref="XmlReader"/> instance to be used to read the XML content. Reader must be in at correct position for the successful deserialization.</param>
+        /// <param name="reader">An <see cref="XmlReader"/> instance to be used to read the XML content. The reader must be at the correct position for a successful deserialization.</param>
         /// <exception cref="ArgumentNullException"><paramref name="obj"/> and <paramref name="reader"/> must not be <see langword="null"/>.</exception>
-        /// <exception cref="ArgumentException"><paramref name="obj"/> must not be a value type.</exception>
         /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
         public static void DeserializeContentSafe(XmlReader reader, object obj) => new XmlReaderDeserializer(true).DeserializeContent(reader, obj);
 
+        /// <summary>
+        /// Restores the inner state of an already created object passed in the <paramref name="obj"/> parameter based on a saved XML.
+        /// </summary>
+        /// <param name="obj">The already constructed object whose inner state has to be deserialized.</param>
+        /// <param name="reader">An <see cref="XmlReader"/> instance to be used to read the XML content. The reader must be at the correct position for a successful deserialization.</param>
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML data.
+        /// If the serialization stream does not contain any natively not supported types, then this parameter is optional.</param>
+        /// <returns>The deserialized object.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="obj"/> and <paramref name="reader"/> must not be <see langword="null"/>.</exception>
+        /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
+        /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
+        /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
+        /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
+        /// <remarks>
+        /// <para>This method works for the results of the <see cref="SerializeContent(XmlWriter,object,XmlSerializationOptions)"/> method.</para>
+        /// <para><paramref name="expectedCustomTypes"/> must be specified if the serialization stream contains names of natively not supported types.</para>
+        /// <para>For arrays it is enough to specify the element type and for generic types you can specify the
+        /// natively not supported generic type definition and generic type arguments separately.
+        /// If <paramref name="expectedCustomTypes"/> contains constructed generic types, then the generic type definition and
+        /// the type arguments will be treated as expected types in any combination.</para>
+        /// <note type="tip">See the <strong>Remarks</strong> section of the <see cref="XmlSerializer"/> class for the list of the natively supported types.</note>
+        /// </remarks>
         public static void DeserializeContentSafe(XmlReader reader, object obj, params Type[]? expectedCustomTypes)
             => new XmlReaderDeserializer(true, expectedCustomTypes).DeserializeContent(reader, obj);
 
+        /// <summary>
+        /// Restores the inner state of an already created object passed in the <paramref name="obj"/> parameter based on a saved XML.
+        /// </summary>
+        /// <param name="obj">The already constructed object whose inner state has to be deserialized.</param>
+        /// <param name="reader">An <see cref="XmlReader"/> instance to be used to read the XML content. The reader must be at the correct position for a successful deserialization.</param>
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML data.
+        /// If the serialization stream does not contain any natively not supported types, then this parameter can be <see langword="null"/>.</param>
+        /// <returns>The deserialized object.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="obj"/> and <paramref name="reader"/> must not be <see langword="null"/>.</exception>
+        /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
+        /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
+        /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
+        /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
+        /// <remarks>
+        /// <para>This method works for the results of the <see cref="SerializeContent(XmlWriter,object,XmlSerializationOptions)"/> method.</para>
+        /// <para><paramref name="expectedCustomTypes"/> must be specified if the serialization stream contains names of natively not supported types.</para>
+        /// <para>For arrays it is enough to specify the element type and for generic types you can specify the
+        /// natively not supported generic type definition and generic type arguments separately.
+        /// If <paramref name="expectedCustomTypes"/> contains constructed generic types, then the generic type definition and
+        /// the type arguments will be treated as expected types in any combination.</para>
+        /// <note type="tip">See the <strong>Remarks</strong> section of the <see cref="XmlSerializer"/> class for the list of the natively supported types.</note>
+        /// </remarks>
         public static void DeserializeContentSafe(XmlReader reader, object obj, IEnumerable<Type>? expectedCustomTypes)
             => new XmlReaderDeserializer(true, expectedCustomTypes).DeserializeContent(reader, obj);
 
