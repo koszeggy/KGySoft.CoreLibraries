@@ -27,8 +27,11 @@
     <Authors>György Kőszeg</Authors>
     <Nullable>enable</Nullable>
 
-    <!--Suppression NETSDK1138: The target framework 'netcoreapp2.0'/'netcoreapp2.1'/'netcoreapp3.0' is out of support - this is not an application but a library so targeting the lowest possible versions is intended -->
-    <NoWarn>$(NoWarn);NETSDK1138</NoWarn>
+    <!--Suppressions
+      - NETSDK1138: The target framework 'netcoreapp2.0'/'netcoreapp2.1'/'netcoreapp3.0' is out of support - this is not an application but a library so targeting the lowest possible versions is intended
+      - NU1902, NU1903: netcoreapp2.1 has known vulnerabilities - it's a targeted plartform and not a referenced package. A consumer of this library can also pick newer supported platforms as well.
+      -->
+    <NoWarn>$(NoWarn);NETSDK1138;NU1902;NU1903</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

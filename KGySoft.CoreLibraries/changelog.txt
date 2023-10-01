@@ -9,6 +9,10 @@
 ! v8.0.0:
 ~~~~~~~~~
 
++ Assembly changes:
+===================
++ Targeting also .NET 8.0.
+
 ! KGySoft.CoreLibraries namespace:
 ==================================
 ! StringExtensions and SpanExtensions classes:
