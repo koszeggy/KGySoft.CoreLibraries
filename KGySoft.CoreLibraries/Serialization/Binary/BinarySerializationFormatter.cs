@@ -1021,7 +1021,9 @@ namespace KGySoft.Serialization.Binary
         /// A wrapper type for 7-bit encoded types if they are encoded by index rather than DataTypes.
         /// </summary>
         // ReSharper disable once UnusedTypeParameter - used for encoding compressed type
-        private struct Compressible<T> where T : struct;
+        private struct Compressible<T> where T : struct
+        {
+        }
 
         #endregion
 
@@ -1030,7 +1032,9 @@ namespace KGySoft.Serialization.Binary
         /// <summary>
         /// An indicator type for generic method parameters.
         /// </summary>
-        private struct GenericMethodDefinitionPlaceholder;
+        private struct GenericMethodDefinitionPlaceholder
+        {
+        }
 
         #endregion
 

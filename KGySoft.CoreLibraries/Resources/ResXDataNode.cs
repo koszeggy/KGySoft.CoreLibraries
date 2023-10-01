@@ -19,9 +19,7 @@ using System;
 using System.Collections;
 using System.ComponentModel;
 using System.ComponentModel.Design;
-#if NETFRAMEWORK
 using System.Diagnostics.CodeAnalysis;
-#endif
 using System.Globalization;
 using System.IO;
 using System.Reflection;
@@ -43,6 +41,9 @@ using KGySoft.Serialization.Binary;
 #if NET5_0 || NET6_0 || NET7_0
 #pragma warning disable SYSLIB0011 // Type or member is obsolete - this class uses IFormatter implementations for compatibility reasons
 #pragma warning disable CS0618 // Use of obsolete symbol - as above  
+#endif
+#if !NETCOREAPP3_0_OR_GREATER
+#pragma warning disable CS8604 // Possible null reference argument.
 #endif
 
 #endregion
@@ -1604,6 +1605,8 @@ namespace KGySoft.Resources
             }
         }
 
+        [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity",
+            Justification = "False alarm, the new analyzer includes the complexity of local methods. And moving them outside this method would be a bad idea.")]
         private object? NodeInfoToObjectByMime(DataNodeInfo dataNodeInfo, ITypeResolutionService? typeResolver, bool safeMode, Type? expectedType)
         {
             #region Local Methods to reduce complexity

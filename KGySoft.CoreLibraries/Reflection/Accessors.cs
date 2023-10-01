@@ -1140,7 +1140,7 @@ namespace KGySoft.Reflection
 
 #if NETFRAMEWORK && !NET35
         private static object GetPointerPropertyPartiallyTrusted(PropertyInfo property, object? instance)
-            => GetMethodByName(typeof(Pointer), "GetPointerValue")?.InvokeInstanceFunction<Pointer, object>((Pointer)property.GetValue(instance, null));
+            => GetMethodByName(typeof(Pointer), "GetPointerValue")?.InvokeInstanceFunction<Pointer, object>((Pointer)property.GetValue(instance, null))!;
 #endif
 
         [SecurityCritical]

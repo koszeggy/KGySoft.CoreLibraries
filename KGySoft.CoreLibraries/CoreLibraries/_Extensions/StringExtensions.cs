@@ -43,6 +43,9 @@ using KGySoft.Reflection;
 #if !NET6_0_OR_GREATER
 #pragma warning disable CS1574 // the documentation contains types that are not available in every target
 #endif
+#if !NETCOREAPP3_0_OR_GREATER
+#pragma warning disable CS8604 // Possible null reference argument.
+#endif
 
 #endregion
 

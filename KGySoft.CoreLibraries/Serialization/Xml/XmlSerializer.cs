@@ -17,14 +17,13 @@
 
 using System;
 using System.Collections;
+#if !NET35
 using System.Collections.Concurrent;
+#endif
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
-#if NET35
-using System.Diagnostics.CodeAnalysis;
-#endif
 using System.IO;
 #if !NET35
 using System.Numerics;
@@ -39,6 +38,14 @@ using KGySoft.Collections;
 using KGySoft.ComponentModel;
 using KGySoft.Reflection;
 using KGySoft.Serialization.Binary;
+
+#endregion
+
+#region Suppressions
+
+#if !NET7_0_OR_GREATER
+#pragma warning disable CS1574 // the documentation contains types that are not available in every target
+#endif
 
 #endregion
 
