@@ -57,9 +57,10 @@ namespace KGySoft.Serialization.Xml
     /// </summary>
     /// <remarks>
     /// <note type="security"><para>The <see cref="XmlSerializer"/> supports polymorphism and stores type information whenever the type of a member or collection element differs from the
-    /// type of the stored instance. If the XML content to deserialize is from an untrusted source make sure to use the <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.DeserializeSafe">DeserializeSafe</see>
-    /// and <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.DeserializeContentSafe">DeserializeContentSafe</see> methods to prevent resolving any type names during the deserialization.
-    /// Instead, they require to specify every natively not supported type that can occur in the serialized data whose names then will be mapped to the specified expected types.</para>
+    /// type of the stored instance. If the XML content to deserialize is from an untrusted source (eg. remote service, file or database) make sure to use
+    /// the <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.DeserializeSafe">DeserializeSafe</see> or <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.DeserializeContentSafe">DeserializeContentSafe</see>
+    /// methods to prevent resolving any type names during the deserialization.
+    /// They require to specify every natively not supported type that can occur in the serialized data whose names then will be mapped to the specified expected types.</para>
     /// <para>The <see cref="XmlSerializer"/> can only create objects by using their default constructor and is able to set the public fields and properties.
     /// It can also create collections by special initializer constructors and can populate them by the standard interface implementations.</para></note>
     /// <para><see cref="XmlSerializer"/> supports serialization of any simple types and complex objects with their public properties and fields as well as several collection types.
@@ -178,7 +179,7 @@ namespace KGySoft.Serialization.Xml
     /// <note>Please note that if a collection uses a custom or culture-aware comparer, some fallback option might be needed to be able to serialize it.
     /// <see cref="XmlSerializationOptions.RecursiveSerializationAsFallback"/> will omit the custom comparers so it is not guaranteed that such a collection
     /// can be deserialized perfectly, whereas <see cref="XmlSerializationOptions.BinarySerializationAsFallback"/> may successfully serialize also the comparer
-    /// but for safe mode deserialization it may be needed to specify the also the comparer as an expected custom type.</note>
+    /// but for safe mode deserialization it may be needed to specify also the comparer as an expected custom type.</note>
     /// </para>
     /// <h2>Comparison with System.Xml.Serialization.XmlSerializer</h2>
     /// <para><strong>New features and improvements</strong> compared to <a href="https://docs.microsoft.com/en-us/dotnet/api/system.xml.serialization.xmlserializer" target="_blank">System.Xml.Serialization.XmlSerializer</a>:

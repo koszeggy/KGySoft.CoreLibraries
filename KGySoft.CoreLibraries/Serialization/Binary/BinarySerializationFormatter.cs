@@ -158,7 +158,7 @@ namespace KGySoft.Serialization.Binary
     /// but the <see cref="BinaryFormatter"/> class in the .NET Framework is still vulnerable against such attacks. When using the <see cref="BinarySerializationOptions.SafeMode"/> flag,
     /// the <see cref="BinarySerializationFormatter"/> is protected against the known security issues on all platforms but of course it cannot guard you against every potentially harmful type if
     /// you explicitly specify them as expected types in the deserialization methods.</para>
-    /// <para>Please also note that the <see cref="IFormatter"/> infrastructure has other security flaws as well that can be reduced by the serializable types themselves.
+    /// <para>Please also note that the <see cref="IFormatter"/> infrastructure has other security flaws as well but some of these can be reduced by the serializable types themselves.
     /// Most serializable types do not validate the incoming data. All serializable types that can have an invalid state regarding the field values
     /// should implement <see cref="ISerializable"/> and should throw a <see cref="SerializationException"/> from their serialization constructor if validation fails.
     /// The <see cref="BinarySerializationFormatter"/> wraps every other exception thrown by the constructor into a <see cref="SerializationException"/>.
@@ -166,9 +166,9 @@ namespace KGySoft.Serialization.Binary
     /// see the example at the <a href="#example">Example: How to implement a custom serializable type</a> section.</para>
     /// <para>Starting with version 8.0.0 the in safe mode the <see cref="Binder"/> property can only be <see langword="null"/> or a <see cref="ForwardedTypesSerializationBinder"/> instance if you set
     /// its <see cref="ForwardedTypesSerializationBinder.SafeMode"/> to <see langword="true"/>. Furthermore, in safe mode it is not allowed to set any surrogate selectors in the <see cref="SurrogateSelector"/> property.
-    /// Please note that this library also contains a sort of serialization binders and surrogates, many of them having their own <c>SafeMode</c> properties
+    /// Please note that this library also contains a sort of serialization binders and surrogates, many of them have their own <c>SafeMode</c> properties
     /// (eg. <see cref="WeakAssemblySerializationBinder"/>, <see cref="CustomSerializerSurrogateSelector"/> or <see cref="NameInvariantSurrogateSelector"/>), still,
-    /// not even they are allowed to be used when the <see cref="BinarySerializationOptions.SafeMode"/> option is enabled. It's because their safe mode provide some not too strict general protection only,
+    /// not even they are allowed to be used when the <see cref="BinarySerializationOptions.SafeMode"/> option is enabled. It's because their safe mode provide just some not too strict general protection,
     /// instead of being able to filter a specific set of predefined types.</para>
     /// <para>If you must disable <see cref="BinarySerializationOptions.SafeMode"/> for some reason, then use binary serialization in-process only, or apply some cryptographically secure encryption
     /// to the serialization stream.</para></note>
@@ -364,7 +364,6 @@ namespace KGySoft.Serialization.Binary
     /// <note>Please note that if a value type was serialized by the <see cref="BinarySerializationOptions.CompactSerializationOfStructures"/> option, then the method of <see cref="OnDeserializingAttribute"/> can be invoked
     /// only after restoring the whole content so fields will be already restored.</note>
     /// </para>
-    /// </remarks>
     /// <h2>Example: Size comparison to BinaryFormatter</h2>
     /// <note type="tip">Try also <a href="https://dotnetfiddle.net/nQfFrQ" target="_blank">online</a>.</note>
     /// The following example demonstrates the length difference produced by the <see cref="BinarySerializationFormatter"/> and <see cref="BinaryFormatter"/> classes. Feel free to change the generated type.
@@ -521,6 +520,7 @@ namespace KGySoft.Serialization.Binary
     /// <note type="caution">The examples above are compatible also with <see cref="BinaryFormatter"/>.
     /// Still, it is not recommended to use <see cref="BinaryFormatter"/> because it is vulnerable at multiple levels.
     /// See the security notes at the top of the page for more details.</note>
+    /// </remarks>
     /// <seealso cref="BinarySerializer"/>
     [SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Supports many types natively, which is intended. See also DataTypes enum.")]
     public sealed partial class BinarySerializationFormatter : IFormatter
