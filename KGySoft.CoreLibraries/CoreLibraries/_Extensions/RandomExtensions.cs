@@ -1723,9 +1723,18 @@ namespace KGySoft.CoreLibraries
                 return Reflector.EmptyArray<char>();
 
             var result = new char[length];
-            fixed (char* s = result)
-            fixed (char* set = allowedCharacters)
-                FillChars(random, new MutableString(s, length), new MutableString(set, allowedCharacters.Length));
+#if NET40_OR_GREATER
+            if (EnvironmentHelper.IsPartiallyTrustedDomain)
+                FillCharsPartiallyTrusted(random, result, allowedCharacters);
+            else
+#endif
+            {
+                fixed (char* s = result)
+                fixed (char* set = allowedCharacters)
+                    FillChars(random, new MutableString(s, length), new MutableString(set, allowedCharacters.Length));
+
+            }
+
             return result;
         }
 
@@ -1755,9 +1764,17 @@ namespace KGySoft.CoreLibraries
                 return Reflector.EmptyArray<char>();
 
             var result = new char[length];
-            fixed (char* s = result)
-            fixed (char* set = allowedCharacters)
-                FillChars(random, new MutableString(s, length), new MutableString(set, allowedCharacters.Length));
+#if NET40_OR_GREATER
+            if (EnvironmentHelper.IsPartiallyTrustedDomain)
+                FillCharsPartiallyTrusted(random, result, allowedCharacters);
+            else
+#endif
+            {
+                fixed (char* s = result)
+                fixed (char* set = allowedCharacters)
+                    FillChars(random, new MutableString(s, length), new MutableString(set, allowedCharacters.Length));
+            }
+
             return result;
         }
 
@@ -1819,8 +1836,16 @@ namespace KGySoft.CoreLibraries
                 return Reflector.EmptyArray<char>();
 
             var result = new char[length];
-            fixed (char* s = result)
-                FillChars(random, new MutableString(s, length), strategy);
+#if NET40_OR_GREATER
+            if (EnvironmentHelper.IsPartiallyTrustedDomain)
+                FillCharsPartiallyTrusted(random, result, strategy);
+            else
+#endif
+            {
+                fixed (char* s = result)
+                    FillChars(random, new MutableString(s, length), strategy);
+            }
+
             return result;
         }
 
@@ -1847,9 +1872,16 @@ namespace KGySoft.CoreLibraries
             if (buffer.Length == 0)
                 return;
 
-            fixed (char* s = buffer)
-            fixed (char* set = allowedCharacters)
-                FillChars(random, new MutableString(s, buffer.Length), new MutableString(set, allowedCharacters.Length));
+#if NET40_OR_GREATER
+            if (EnvironmentHelper.IsPartiallyTrustedDomain)
+                FillCharsPartiallyTrusted(random, buffer, allowedCharacters);
+            else
+#endif
+            {
+                fixed (char* s = buffer)
+                fixed (char* set = allowedCharacters)
+                    FillChars(random, new MutableString(s, buffer.Length), new MutableString(set, allowedCharacters.Length));
+            }
         }
 
         /// <summary>
@@ -1875,9 +1907,16 @@ namespace KGySoft.CoreLibraries
             if (buffer.Length == 0)
                 return;
 
-            fixed (char* s = buffer)
-            fixed (char* set = allowedCharacters)
-                FillChars(random, new MutableString(s, buffer.Length), new MutableString(set, allowedCharacters.Length));
+#if NET40_OR_GREATER
+            if (EnvironmentHelper.IsPartiallyTrustedDomain)
+                FillCharsPartiallyTrusted(random, buffer, allowedCharacters);
+            else
+#endif
+            {
+                fixed (char* s = buffer)
+                fixed (char* set = allowedCharacters)
+                    FillChars(random, new MutableString(s, buffer.Length), new MutableString(set, allowedCharacters.Length));
+            }
         }
 
         /// <summary>
@@ -1902,8 +1941,15 @@ namespace KGySoft.CoreLibraries
             if (buffer.Length == 0)
                 return;
 
-            fixed (char* s = buffer)
-                FillChars(random, new MutableString(s, buffer.Length), strategy);
+#if NET40_OR_GREATER
+            if (EnvironmentHelper.IsPartiallyTrustedDomain)
+                FillCharsPartiallyTrusted(random, buffer, strategy);
+            else
+#endif
+            {
+                fixed (char* s = buffer)
+                    FillChars(random, new MutableString(s, buffer.Length), strategy);
+            }
         }
 
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
@@ -1990,11 +2036,22 @@ namespace KGySoft.CoreLibraries
             if (length == 0)
                 return String.Empty;
 
-            string result = new String('\0', length);
-            fixed (char* s = result)
-            fixed (char* set = allowedCharacters)
-                FillChars(random, new MutableString(s, length), new MutableString(set, allowedCharacters.Length));
-            return result;
+#if NET40_OR_GREATER
+            if (EnvironmentHelper.IsPartiallyTrustedDomain)
+            {
+                var result = new char[length];
+                FillCharsPartiallyTrusted(random, result, allowedCharacters);
+                return new String(result);
+            }
+            else
+#endif
+            {
+                string result = new String('\0', length);
+                fixed (char* s = result)
+                fixed (char* set = allowedCharacters)
+                    FillChars(random, new MutableString(s, length), new MutableString(set, allowedCharacters.Length));
+                return result;
+            }
         }
 
         /// <summary>
@@ -2027,11 +2084,22 @@ namespace KGySoft.CoreLibraries
             if (length == 0)
                 return String.Empty;
 
-            string result = new String('\0', length);
-            fixed (char* s = result)
-            fixed (char* set = allowedCharacters)
-                FillChars(random, new MutableString(s, length), new MutableString(set, allowedCharacters.Length));
-            return result;
+#if NET40_OR_GREATER
+            if (EnvironmentHelper.IsPartiallyTrustedDomain)
+            {
+                var result = new char[length];
+                FillCharsPartiallyTrusted(random, result, allowedCharacters);
+                return new String(result);
+            }
+            else
+#endif
+            {
+                string result = new String('\0', length);
+                fixed (char* s = result)
+                fixed (char* set = allowedCharacters)
+                    FillChars(random, new MutableString(s, length), new MutableString(set, allowedCharacters.Length));
+                return result;
+            }
         }
 
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
@@ -2100,10 +2168,21 @@ namespace KGySoft.CoreLibraries
             if (length == 0)
                 return String.Empty;
 
-            string result = new String('\0', length);
-            fixed (char* s = result)
-                FillChars(random, new MutableString(s, length), strategy);
-            return result;
+#if NET40_OR_GREATER
+            if (EnvironmentHelper.IsPartiallyTrustedDomain)
+            {
+                var result = new char[length];
+                FillCharsPartiallyTrusted(random, result, strategy);
+                return new String(result);
+            }
+            else
+#endif
+            {
+                string result = new String('\0', length);
+                fixed (char* s = result)
+                    FillChars(random, new MutableString(s, length), strategy);
+                return result;
+            }
         }
 
         /// <summary>
@@ -2502,6 +2581,10 @@ namespace KGySoft.CoreLibraries
 #else
             byte[] bytes = new byte[4];
             random.NextBytes(bytes);
+#if NET40_OR_GREATER
+            if (EnvironmentHelper.IsPartiallyTrustedDomain)
+                return BitConverter.ToUInt32(bytes, 0);
+#endif
             fixed (byte* p = bytes)
                 return *(uint*)p;
 #endif
@@ -2523,6 +2606,10 @@ namespace KGySoft.CoreLibraries
 #else
             byte[] bytes = new byte[8];
             random.NextBytes(bytes);
+#if NET40_OR_GREATER
+            if (EnvironmentHelper.IsPartiallyTrustedDomain)
+                return BitConverter.ToUInt64(bytes, 0);
+#endif
             fixed (byte* p = bytes)
                 return *(ulong*)p;
 #endif
@@ -2973,6 +3060,122 @@ namespace KGySoft.CoreLibraries
                     break;
             }
         }
+
+#if NET40_OR_GREATER
+
+        private static void FillCharsPartiallyTrusted(Random random, char[] target, bool checkInvalid = false)
+        {
+            for (int i = 0; i < target.Length; i++)
+            {
+                do
+                {
+                    target[i] = random.NextChar();
+                } while (checkInvalid && !target[i].IsValidCharacter());
+            }
+        }
+
+        private static void FillCharsPartiallyTrusted(Random random, char[] target, CharSet allowedCharacters, int start, int length)
+        {
+            for (int i = 0; i < length; i++)
+                target[i + start] = allowedCharacters[random.Next(allowedCharacters.Length)];
+        }
+
+        private static void FillCharsPartiallyTrusted(Random random, char[] target, string allowedCharacters)
+        {
+            for (int i = 0; i < target.Length; i++)
+                target[i] = allowedCharacters[random.Next(allowedCharacters.Length)];
+        }
+
+        private static void FillCharsPartiallyTrusted(Random random, char[] target, char[] allowedCharacters)
+        {
+            for (int i = 0; i < target.Length; i++)
+                target[i] = allowedCharacters[random.Next(allowedCharacters.Length)];
+        }
+
+        private static void FillCharsPartiallyTrusted(Random random, char[] target, StringCreation strategy)
+        {
+            #region Local Methods
+
+            static void ToUpper(char[] buf, int start, int length)
+            {
+                int end = start + length;
+                for (int i = start; i < end; i++)
+                    buf[i] = Char.ToUpperInvariant(buf[i]);
+            }
+
+            #endregion
+
+            switch (strategy)
+            {
+                case StringCreation.AnyChars:
+                    FillCharsPartiallyTrusted(random, target);
+                    break;
+
+                case StringCreation.AnyValidChars:
+                    FillCharsPartiallyTrusted(random, target, true);
+                    break;
+
+                case StringCreation.Ascii:
+                    FillCharsPartiallyTrusted(random, target, CharSet.Ascii, 0, target.Length);
+                    break;
+
+                case StringCreation.Digits:
+                    FillCharsPartiallyTrusted(random, target, CharSet.Digits, 0, target.Length);
+                    break;
+
+                case StringCreation.DigitsNoLeadingZeros:
+                    FillCharsPartiallyTrusted(random, target, CharSet.NonZeroDigits, 0, 1);
+                    if (target.Length > 1)
+                        FillCharsPartiallyTrusted(random, target, CharSet.Digits, 1, target.Length - 1);
+                    break;
+
+                case StringCreation.Letters:
+                    FillCharsPartiallyTrusted(random, target, CharSet.Letters, 0, target.Length);
+                    break;
+
+                case StringCreation.LettersAndDigits:
+                    FillCharsPartiallyTrusted(random, target, CharSet.LettersAndDigits, 0, target.Length);
+                    break;
+
+                case StringCreation.UpperCaseLetters:
+                    FillCharsPartiallyTrusted(random, target, CharSet.UpperCaseLetters, 0, target.Length);
+                    break;
+
+                case StringCreation.LowerCaseLetters:
+                    FillCharsPartiallyTrusted(random, target, CharSet.LowerCaseLetters, 0, target.Length);
+                    break;
+
+                case StringCreation.TitleCaseLetters:
+                    FillCharsPartiallyTrusted(random, target, CharSet.UpperCaseLetters, 0, 1);
+                    if (target.Length > 1)
+                        FillCharsPartiallyTrusted(random, target, CharSet.LowerCaseLetters, 1, target.Length - 1);
+                    break;
+
+                case StringCreation.UpperCaseWord:
+                    WordGeneratorPartiallyTrusted.GenerateWord(random, target);
+                    ToUpper(target, 0, target.Length);
+                    break;
+
+                case StringCreation.LowerCaseWord:
+                    WordGeneratorPartiallyTrusted.GenerateWord(random, target);
+                    break;
+
+                case StringCreation.TitleCaseWord:
+                    WordGeneratorPartiallyTrusted.GenerateWord(random, target);
+                    ToUpper(target, 0, 1);
+                    break;
+
+                case StringCreation.Sentence:
+                    WordGeneratorPartiallyTrusted.GenerateSentence(random, target);
+                    break;
+
+                default:
+                    Throw.InternalError($"Unexpected strategy: {strategy}");
+                    break;
+            }
+        }
+
+#endif
 
         #endregion
 

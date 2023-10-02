@@ -43,6 +43,8 @@
 - EnumerableExtensions:
   - IsNullOrEmpty (non-generic): the fallback implementation attempted to dispose the possibly disposable enumerable
     instance instead of the enumerator.
+- FastRandom class: Fixing possible VerificationException in .NET Framework 4.x in partially trusted domains.
+- RandomExtensions class: Fixing possible VerificationException in .NET Framework 4.x in partially trusted domains.
 
 * KGySoft.Collections namespace:
 ================================

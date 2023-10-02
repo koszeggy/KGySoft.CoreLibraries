@@ -24,6 +24,8 @@ using System.Diagnostics;
 #endif
 #if !NET6_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
+using System.Linq;
 #endif
 #if NETCOREAPP3_0_OR_GREATER && !NETSTANDARD_TEST || NET5_0_OR_GREATER
 using System.Globalization;
@@ -108,7 +110,13 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
 #if NETFRAMEWORK
         private class Sandbox : MarshalByRefObject
         {
-            internal void NextObjectTest() => new RandomExtensionsTest().NextObjectTest();
+            internal void Test()
+            {
+                var test = new RandomExtensionsTest();
+                test.NextObjectTest();
+                foreach (StringCreation stringCreation in Enum<StringCreation>.GetValues())
+                    test.NextStringTest(stringCreation);
+            }
         } 
 #endif
 
@@ -847,7 +855,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
         [Test]
         public void NextObjectTest()
         {
-            var rnd = new Random();
+            var rnd = new FastRandom();
             void Test<T>(bool dumpProperties = false, GenerateObjectSettings settings = null)
             {
                 var obj = rnd.NextObject<T>(settings);
@@ -961,20 +969,20 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
         {
             var domain = CreateSandboxDomain(
                 new ReflectionPermission(ReflectionPermissionFlag.MemberAccess),
-                new SecurityPermission(SecurityPermissionFlag.Execution | SecurityPermissionFlag.ControlEvidence | SecurityPermissionFlag.ControlPolicy | SecurityPermissionFlag.SkipVerification),
+                new SecurityPermission(SecurityPermissionFlag.Execution | SecurityPermissionFlag.ControlEvidence | SecurityPermissionFlag.ControlPolicy /*| SecurityPermissionFlag.SkipVerification - .NET Fiddle does not have this */),
                 new EventLogPermission(PermissionState.Unrestricted));
             var handle = Activator.CreateInstance(domain, Assembly.GetExecutingAssembly().FullName, typeof(Sandbox).FullName);
             var sandbox = (Sandbox)handle.Unwrap();
             try
             {
-                sandbox.NextObjectTest();
+                sandbox.Test();
             }
             catch (SecurityException e)
             {
                 Console.WriteLine(e);
                 throw;
             }
-        } 
+        }
 #endif
 
         #endregion

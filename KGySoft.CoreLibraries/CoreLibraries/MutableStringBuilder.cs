@@ -23,6 +23,9 @@ using System.Security;
 
 namespace KGySoft.CoreLibraries
 {
+    /// <summary>
+    /// NOTE: Do not use in a partially trusted domain because depending on its configuration it can throw VerificationException (.NET Fiddle)
+    /// </summary>
     [SecurityCritical]
     internal ref struct MutableStringBuilder
     {

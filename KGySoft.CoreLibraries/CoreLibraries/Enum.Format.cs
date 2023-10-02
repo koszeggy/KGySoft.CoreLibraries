@@ -22,6 +22,8 @@ using System.Globalization;
 using System.Security;
 #if NETFRAMEWORK && !NET35
 using System.Text;
+
+using Microsoft.SqlServer.Server;
 #endif
 
 #endregion
@@ -71,7 +73,7 @@ namespace KGySoft.CoreLibraries
             // returning as flags
             if ((format == EnumFormattingOptions.Auto && isFlags) || format == EnumFormattingOptions.CompoundFlagsOrNumber || format == EnumFormattingOptions.CompoundFlagsAndNumber)
             {
-#if NETFRAMEWORK && !NET35
+#if NET40_OR_GREATER
                 if (EnvironmentHelper.IsPartiallyTrustedDomain)
                     return FormatCompoundFlagsPartiallyTrusted(value, separator, format == EnumFormattingOptions.CompoundFlagsAndNumber);
 #endif
@@ -95,7 +97,14 @@ namespace KGySoft.CoreLibraries
         {
             // returning as flags
             if (isFlags)
+            {
+#if NET40_OR_GREATER
+                if (EnvironmentHelper.IsPartiallyTrustedDomain)
+                    return FormatCompoundFlagsPartiallyTrusted(value, EnumExtensions.DefaultFormatSeparator, false);
+#endif
+
                 return FormatCompoundFlags(value, EnumExtensions.DefaultFormatSeparator, false);
+            }
 
             // defined value exists
             if (ValueNamePairs.TryGetValue(value, out string? name))
@@ -501,7 +510,7 @@ namespace KGySoft.CoreLibraries
             return result;
         }
 
-#if NETFRAMEWORK && !NET35
+#if NET40_OR_GREATER
         private static string FormatCompoundFlagsPartiallyTrusted(TEnum e, string? separator, bool allowNumberWithNames)
         {
             EnsureRawValueNamePairs();

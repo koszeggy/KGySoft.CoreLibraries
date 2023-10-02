@@ -99,10 +99,20 @@ namespace KGySoft.CoreLibraries
         /// <param name="seed">A non-empty <see cref="Guid"/> value used to calculate a starting value for the pseudo-random number sequence.</param>
         /// <exception cref="ArgumentException"><paramref name="seed"/> is <see cref="Guid.Empty"/>.</exception>
         [SecuritySafeCritical]
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         public unsafe FastRandom(Guid seed)
         {
             if (seed == Guid.Empty)
                 Throw.ArgumentException(Argument.seed, Res.ArgumentEmpty);
+
+#if NET40_OR_GREATER
+            if (EnvironmentHelper.IsPartiallyTrustedDomain)
+            {
+                InitPartiallyTrusted(seed);
+                return;
+            }
+#endif
+
             state = *(State*)&seed;
         }
 
@@ -364,6 +374,14 @@ namespace KGySoft.CoreLibraries
             if (buffer == null!)
                 Throw.ArgumentNullException(Argument.buffer);
 
+#if NET40_OR_GREATER
+            if (EnvironmentHelper.IsPartiallyTrustedDomain)
+            {
+                FillBytesPartiallyTrusted(buffer);
+                return;
+            }
+#endif
+
             fixed (byte* pBuf = buffer)
                 FillBytes(pBuf, buffer.Length);
         }
@@ -446,6 +464,16 @@ namespace KGySoft.CoreLibraries
 
         #region Private Methods
 
+#if NET40_OR_GREATER
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private void InitPartiallyTrusted(Guid seed)
+        {
+            byte[] bytes = seed.ToByteArray();
+            state.A = BitConverter.ToUInt64(bytes, 0);
+            state.B = BitConverter.ToUInt64(bytes, 8);
+        }
+#endif
+
         private double SampleDouble()
             // double has 53 significant bits so using a [0..2^53) sample (64 - 11 bits)
             // (see https://en.wikipedia.org/wiki/Double-precision_floating-point_format)
@@ -495,6 +523,40 @@ namespace KGySoft.CoreLibraries
 
             state = stateLocal;
         }
+
+#if NET40_OR_GREATER
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        private void FillBytesPartiallyTrusted(byte[] buffer)
+        {
+            #region Local Methods
+
+            static void CopyTo(byte[] buf, ulong value, int offset, int length = 8)
+            {
+                for (int i = 0; i < length; i++)
+                {
+                    buf[offset + i] = (byte)value;
+                    value >>= 8;
+                }
+            }
+
+            #endregion
+
+            State stateLocal = state;
+
+            // filling up the buffer with 64-bit chunks as long as possible
+            int len = buffer.Length >> 3;
+            for (int i = 0; i < len; i++)
+                CopyTo(buffer, SampleUInt64(ref stateLocal), i << 3);
+            
+            // filling up the rest of the bytes (up to 7 bytes)
+            len <<= 3;
+            if (len < buffer.Length)
+                CopyTo(buffer, SampleUInt64(ref stateLocal), len, buffer.Length & 7);
+
+            state = stateLocal;
+        }
+
+#endif
 
         #endregion
 

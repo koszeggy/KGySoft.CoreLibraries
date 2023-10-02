@@ -25,6 +25,7 @@ namespace KGySoft.CoreLibraries
 {
     /// <summary>
     /// Similar to Span{char} but can be used in any platform.
+    /// NOTE: Do not use in a partially trusted domain because depending on its configuration it can throw VerificationException (.NET Fiddle)
     /// </summary>
     [SecurityCritical]
     [DebuggerDisplay("{" + nameof(ToStringDebugger) + "()}")]
