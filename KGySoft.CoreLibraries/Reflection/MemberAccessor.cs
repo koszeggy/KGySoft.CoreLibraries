@@ -386,7 +386,7 @@ namespace KGySoft.Reflection
             DynamicMethod dm = new DynamicMethod(methodName, // method name
                 dmReturnType, // return type
                 methodParameters.ToArray(), // parameters
-                declaringType, true); // owner
+                declaringType.IsInterface ? Reflector.ObjectType : declaringType, true); // owner
 
             ILGenerator ilGenerator = dm.GetILGenerator();
 

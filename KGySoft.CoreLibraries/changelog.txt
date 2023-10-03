@@ -71,13 +71,17 @@
 ! BinaryTypeConverter class: It does not support any custom type anymore, only the ones that are natively supported
   by the BinarySerializationFormatter class in safe mode, without storing any type names to resolve.
 
-+ KGySoft.Reflection namespace:
+* KGySoft.Reflection namespace:
 ===============================
 + PropertyAccessor class:
   + Get method: Supporting ref properties
   + Set method: Supporting ref properties (even though they are technically read-only properties)
-+ MethodIAccessor class:
+- MemberAccessor class:
+  - Fixing a possible Invalid owner error when generating an accessor for an interface member in some special cases.
++ MethodAccessor class:
   + Invoke method: Supporting ref return values
+  + GetAccessor method: Better support of generating invoker methods in .NET Framework 4.x in partially trusted
+    domains that can avoid the previously expected VerificationException (depending on the domain configuration).
 + Reflector class:
   + [Try]GetProperty/[Try]SetProperty methods: Supporting getting/setting ref properties if reflection way is Auto
     or DynamicDelegate. The behavior of SystemReflection and TypeDescriptor ways are platform dependent.

@@ -96,7 +96,12 @@ namespace KGySoft.Reflection
             bool hasRefParameters = ParameterTypes.Any(p => p.IsByRef);
 
             // ReSharper disable once PossibleNullReferenceException - declaring type was already checked above
-            if (hasRefParameters || (!methodBase.IsStatic && declaringType!.IsValueType) || method == null)
+            if (hasRefParameters || (!methodBase.IsStatic && declaringType!.IsValueType) || method == null
+#if NET40_OR_GREATER
+                // Partially trusted app domain: to avoid VerificationException if SecurityPermissionFlag.SkipVerification is not granted
+                || EnvironmentHelper.IsPartiallyTrustedDomain
+#endif
+                )
             {
                 // For struct instance methods, constructors or methods with ref/out parameters: Dynamic method
                 var options = methodBase is ConstructorInfo ? DynamicMethodOptions.TreatCtorAsMethod : DynamicMethodOptions.None;

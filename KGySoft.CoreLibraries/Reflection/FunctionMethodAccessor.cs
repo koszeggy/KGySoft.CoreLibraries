@@ -94,7 +94,12 @@ namespace KGySoft.Reflection
                 Throw.PlatformNotSupportedException(Res.ReflectionRefReturnTypeNetStandard20(method.ReturnType));
 #else
             bool hasRefParameters = ParameterTypes.Any(p => p.IsByRef);
-            if (hasRefParameters || (!method.IsStatic && declaringType!.IsValueType) || method.ReturnType.IsByRef)
+            if (hasRefParameters || (!method.IsStatic && declaringType!.IsValueType) || method.ReturnType.IsByRef
+#if NET40_OR_GREATER
+                // Partially trusted app domain: to avoid VerificationException if SecurityPermissionFlag.SkipVerification is not granted
+                || EnvironmentHelper.IsPartiallyTrustedDomain
+#endif
+                )
             {
                 // for struct instance methods, methods with ref/out parameters or ref return types: Dynamic method
                 DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(method, hasRefParameters ? DynamicMethodOptions.HandleByRefParameters : DynamicMethodOptions.None);
