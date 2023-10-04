@@ -48,6 +48,7 @@ using KGySoft.Reflection;
 
 using ReferenceEqualityComparer = KGySoft.CoreLibraries.ReferenceEqualityComparer;
 using System.Xml.Linq;
+using System.Runtime.Remoting;
 
 #endregion
 
@@ -1006,7 +1007,7 @@ namespace KGySoft.Serialization.Binary
 
                 string typeName = br.ReadString();
                 type = ResolveType(assembly, typeName);
-                result = new DataTypeDescriptor(type, new TypeByString(assembly.StoredName, typeName));
+                result = new DataTypeDescriptor(type,  $"{assembly.StoredName}, {typeName}");
                 CachedTypes.Add(result);
                 if (type.IsGenericTypeDefinition)
                     result = HandleGenericTypeDef(br, result, allowOpenTypes);
@@ -1913,7 +1914,13 @@ namespace KGySoft.Serialization.Binary
 
                 // if type result is IObjectReference, then calling its GetRealObject to return something
                 if (objRef != null)
+                {
+#if NETFRAMEWORK || NETSTANDARD2_0
+                    result = objRef.GetRealObjectSafe(Context);
+#else
                     result = objRef.GetRealObject(Context);
+#endif
+                }
 
                 // some post administration if the object was registered for tracking usages
                 if (trackUsages)
@@ -2023,7 +2030,11 @@ namespace KGySoft.Serialization.Binary
                 }
 
                 // Using surrogate
+#if NETFRAMEWORK || NETSTANDARD2_0
+                return surrogate.SetObjectDataSafe(obj, si, Context, selector);
+#else
                 return surrogate.SetObjectData(obj, si, Context, selector);
+#endif
             }
 
             [SecurityCritical]
@@ -2082,7 +2093,11 @@ namespace KGySoft.Serialization.Binary
                 }
 
                 // Using surrogate
+#if NETFRAMEWORK || NETSTANDARD2_0
+                return surrogate.SetObjectDataSafe(obj, si, Context, selector);
+#else
                 return surrogate.SetObjectData(obj, si, Context, selector);
+#endif
             }
 
             [SecurityCritical]
@@ -2396,7 +2411,7 @@ namespace KGySoft.Serialization.Binary
                     CachedAssemblies.Add((assembly, assemblyName));
                 }
 
-                var result = new DataTypeDescriptor(type, new TypeByString(assemblyName, typeName));
+                var result = new DataTypeDescriptor(type, $"{assemblyName}, {typeName}");
                 CachedTypes.Add(result);
                 return result;
             }
@@ -2521,13 +2536,13 @@ namespace KGySoft.Serialization.Binary
 
             private TypeAttributes EnsureAttributes(BinaryReader br, DataTypeDescriptor descriptor)
             {
-                MemberInfo type = (MemberInfo?)descriptor.StoredType ?? descriptor.GetTypeToCreate()!;
-                if (TypeAttributesCache.TryGetValue(type, out TypeAttributes result))
+                TypeIdentity id = descriptor.GetIdentity();
+                if (TypeAttributesCache.TryGetValue(id, out TypeAttributes result))
                     return result;
                 result = (TypeAttributes)br.ReadByte();
                 if (!result.AllFlagsDefined())
                     Throw.SerializationException(Res.BinarySerializationInvalidStreamData);
-                TypeAttributesCache.Add(type, result);
+                TypeAttributesCache.Add(id, result);
                 return result;
             }
 

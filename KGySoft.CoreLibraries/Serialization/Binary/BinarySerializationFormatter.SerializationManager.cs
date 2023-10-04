@@ -1617,7 +1617,7 @@ namespace KGySoft.Serialization.Binary
                     WriteType(bw, type);
 
                 // 2.) false for IsCustom object graph
-                MarkCustomSerialized(bw, type, false);
+                MarkCustomSerialized(bw, new TypeIdentity(type), false);
 
                 // 3.) Serializing fields
                 for (Type t = type; t != Reflector.ObjectType; t = t.BaseType!)
@@ -1657,12 +1657,23 @@ namespace KGySoft.Serialization.Binary
 
                 // Obtaining data to serialize
                 if (surrogate != null)
+                {
+#if NETFRAMEWORK || NETSTANDARD2_0
+                    surrogate.GetObjectDataSafe(data, si, Context);
+#else
                     surrogate.GetObjectData(data, si, Context);
+#endif
+                }
                 else
                 {
                     if (!RecursiveSerializationAsFallback && !type.IsSerializable)
                         ThrowNotSupported(type);
+
+#if NETFRAMEWORK || NETSTANDARD2_0
+                    ((ISerializable)data).GetObjectDataSafe(si, Context);
+#else              
                     ((ISerializable)data).GetObjectData(si, Context);
+#endif
                 }
 
                 Type? typeToWrite = type;
@@ -1690,15 +1701,15 @@ namespace KGySoft.Serialization.Binary
                 }
 
                 bool forcedType = knownElementType == null || !knownElementType.IsSealed;
-                MemberInfo typeToCache = forcedType
-                    ? typeToWrite ?? (MemberInfo)new TypeByString(si.AssemblyName, si.FullTypeName)
-                    : type;
+                var identity = new TypeIdentity(forcedType
+                    ? (object?)typeToWrite ?? $"{si.AssemblyName}, {si.FullTypeName}"
+                    : type);
 
                 // 1/a.) If type is not forced (eg. known collection element), then the IsCustom is the first to write. On custom
                 // serialization we write the type anyway though, because it can be changed by SerializationInfo. Not bothering with
                 // writing a bool flag whether type has changed though because for known types just a 7-bit encoded id is written.
                 if (!forcedType)
-                    MarkCustomSerialized(bw, typeToCache, true);
+                    MarkCustomSerialized(bw, identity, true);
 
                 // 2.) Writing actual type
                 if (typeToWrite != null)
@@ -1711,7 +1722,7 @@ namespace KGySoft.Serialization.Binary
 
                 // 1/b.) If type must be written, then IsCustom comes after the type.
                 if (forcedType)
-                    MarkCustomSerialized(bw, typeToCache, true);
+                    MarkCustomSerialized(bw, identity, true);
 
                 // 3.) Serialization part.
                 Write7BitInt(bw, si.MemberCount);
@@ -2239,13 +2250,13 @@ namespace KGySoft.Serialization.Binary
                 OnSerialized(data);
             }
 
-            private void WriteTypeAttributes(BinaryWriter bw, MemberInfo type, TypeAttributes attributes)
+            private void WriteTypeAttributes(BinaryWriter bw, TypeIdentity type, TypeAttributes attributes)
             {
                 bw.Write((byte)attributes);
                 TypeAttributesCache.Add(type, attributes);
             }
 
-            private void MarkCustomSerialized(BinaryWriter bw, MemberInfo type, bool isCustomSerialized)
+            private void MarkCustomSerialized(BinaryWriter bw, TypeIdentity type, bool isCustomSerialized)
             {
                 if (TypeAttributesCache.ContainsKey(type))
                     return;
@@ -2253,7 +2264,7 @@ namespace KGySoft.Serialization.Binary
                 var attr = TypeAttributes.RecursiveObjectGraph;
                 if (isCustomSerialized)
                     attr |= TypeAttributes.CustomSerialized;
-                if (type is Type t)
+                if (type.Identity is Type t)
                 {
                     if (t.IsValueType)
                         attr |= TypeAttributes.ValueType;
@@ -2272,7 +2283,8 @@ namespace KGySoft.Serialization.Binary
             private void MarkAttributes(BinaryWriter bw, Type elementType, DataTypes dataType)
             {
                 elementType = Nullable.GetUnderlyingType(elementType) ?? elementType;
-                if (TypeAttributesCache.ContainsKey(elementType))
+                var id = new TypeIdentity(elementType);
+                if (TypeAttributesCache.ContainsKey(id))
                     return;
 
                 TypeAttributes attr = IsEnum(dataType) ? TypeAttributes.Enum
@@ -2292,7 +2304,7 @@ namespace KGySoft.Serialization.Binary
                 if (elementType.IsSealed)
                     attr |= TypeAttributes.Sealed;
 
-                WriteTypeAttributes(bw, elementType, attr);
+                WriteTypeAttributes(bw, id, attr);
             }
 
             #endregion

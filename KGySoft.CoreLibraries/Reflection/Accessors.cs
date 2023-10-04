@@ -139,6 +139,19 @@ namespace KGySoft.Reflection
 
         #endregion
 
+        #region Serialization
+#if NETFRAMEWORK || NETSTANDARD2_0
+
+        private static MethodAccessor? methodISerializable_GetObjectData;
+        private static MethodAccessor? methodISurrogateSelector_GetSurrogate;
+        private static MethodAccessor? methodISerializationSurrogate_GetObjectData;
+        private static MethodAccessor? methodISerializationSurrogate_SetObjectData;
+        private static MethodAccessor? methodIObjectReference_GetRealObject;
+        private static MethodAccessor? methodFormatterServices_GetUninitializedObject;
+
+#endif
+        #endregion
+
         #endregion
 
         #region For Non-Public Members
@@ -294,6 +307,30 @@ namespace KGySoft.Reflection
             return propertiesIList_Item[listInterface];
         }
 
+        #endregion
+
+        #region Serialization
+#if NETFRAMEWORK || NETSTANDARD2_0
+
+        private static MethodAccessor ISerializable_GetObjectData => methodISerializable_GetObjectData
+            ??= MethodAccessor.GetAccessor(typeof(ISerializable).GetMethod(nameof(ISerializable.GetObjectData))!);
+
+        private static MethodAccessor ISurrogateSelector_GetSurrogate => methodISurrogateSelector_GetSurrogate
+            ??= MethodAccessor.GetAccessor(typeof(ISurrogateSelector).GetMethod(nameof(ISurrogateSelector.GetSurrogate))!);
+
+        private static MethodAccessor ISerializationSurrogate_GetObjectData => methodISerializationSurrogate_GetObjectData
+            ??= MethodAccessor.GetAccessor(typeof(ISerializationSurrogate).GetMethod(nameof(ISerializationSurrogate.GetObjectData))!);
+
+        private static MethodAccessor ISerializationSurrogate_SetObjectData => methodISerializationSurrogate_SetObjectData
+            ??= MethodAccessor.GetAccessor(typeof(ISerializationSurrogate).GetMethod(nameof(ISerializationSurrogate.SetObjectData))!);
+
+        private static MethodAccessor IObjectReference_GetRealObject => methodIObjectReference_GetRealObject
+            ??= MethodAccessor.GetAccessor(typeof(IObjectReference).GetMethod(nameof(IObjectReference.GetRealObject))!);
+
+        private static MethodAccessor FormatterServices_GetUninitializedObject => methodFormatterServices_GetUninitializedObject
+            ??= MethodAccessor.GetAccessor(typeof(FormatterServices).GetMethod(nameof(FormatterServices.GetUninitializedObject))!);
+
+#endif
         #endregion
 
         #endregion
@@ -602,6 +639,109 @@ namespace KGySoft.Reflection
         internal static void RemoveAt([NoEnumeration]this IEnumerable list, Type listInterface, int index) => IList_RemoveAt(listInterface).Invoke(list, index);
         internal static void SetElementAt([NoEnumeration]this IEnumerable list, Type listInterface, int index, object? item) => IList_Item(listInterface).Set(list, item, index);
 
+        #endregion
+
+        #region Serialization
+#if NETFRAMEWORK || NETSTANDARD2_0
+
+        [SecurityCritical]
+        internal static void GetObjectDataSafe(this ISerializable serializable, SerializationInfo si, StreamingContext ctx)
+        {
+            // Direct call: must be a separate method; otherwise, the caller of this method may get a SecurityException in a partially trusted domain
+            if (!EnvironmentHelper.IsPartiallyTrustedDomain)
+            {
+                GetObjectDataDirect(serializable, si, ctx);
+                return;
+            }
+
+            // Partially trusted access: generating the accessor that skips verification even if SecurityPermissionFlag.SkipVerification is not granted
+            ISerializable_GetObjectData.Invoke(serializable, si, ctx);
+        }
+
+        [SecurityCritical]
+        private static void GetObjectDataDirect(ISerializable serializable, SerializationInfo si, StreamingContext ctx) => serializable.GetObjectData(si, ctx);
+
+        [SecurityCritical]
+        internal static ISerializationSurrogate GetSurrogateSafe(this ISurrogateSelector surrogateSelector, Type type, StreamingContext ctx, out ISurrogateSelector selector)
+        {
+            // Direct call: must be a separate method; otherwise, the caller of this method may get a SecurityException in a partially trusted domain
+            if (!EnvironmentHelper.IsPartiallyTrustedDomain)
+                return GetSurrogateDirect(surrogateSelector, type, ctx, out selector);
+
+            // Partially trusted access: generating the accessor that skips verification even if SecurityPermissionFlag.SkipVerification is not granted
+            object[] parameters = { type, ctx, null! };
+            object result = ISurrogateSelector_GetSurrogate.Invoke(surrogateSelector, parameters)!;
+            selector = (ISurrogateSelector)parameters[2];
+            return (ISerializationSurrogate)result;
+        }
+
+        [SecurityCritical]
+        private static ISerializationSurrogate GetSurrogateDirect(ISurrogateSelector surrogateSelector, Type type, StreamingContext ctx, out ISurrogateSelector selector)
+            => surrogateSelector.GetSurrogate(type, ctx, out selector);
+
+        [SecurityCritical]
+        internal static void GetObjectDataSafe(this ISerializationSurrogate surrogate, object obj, SerializationInfo si, StreamingContext ctx)
+        {
+            // Direct call: must be a separate method; otherwise, the caller of this method may get a SecurityException in a partially trusted domain
+            if (!EnvironmentHelper.IsPartiallyTrustedDomain)
+            {
+                GetObjectDataDirect(surrogate, obj, si, ctx);
+                return;
+            }
+
+            // Partially trusted access: generating the accessor that skips verification even if SecurityException.SkipVerification is not granted
+            ISerializationSurrogate_GetObjectData.Invoke(surrogate, obj, si, ctx);
+        }
+
+        [SecurityCritical]
+        private static void GetObjectDataDirect(ISerializationSurrogate surrogate, object obj, SerializationInfo si, StreamingContext ctx)
+            => surrogate.GetObjectData(obj, si, ctx);
+
+        [SecurityCritical]
+        internal static object SetObjectDataSafe(this ISerializationSurrogate surrogate, object obj, SerializationInfo si, StreamingContext ctx, ISurrogateSelector? selector)
+        {
+            // Direct call: must be a separate method; otherwise, the caller of this method may get a SecurityException in a partially trusted domain
+            if (!EnvironmentHelper.IsPartiallyTrustedDomain)
+                return SetObjectDataDirect(surrogate, obj, si, ctx, selector);
+
+            // Partially trusted access: generating the accessor that skips verification even if SecurityException.SkipVerification is not granted
+            return ISerializationSurrogate_SetObjectData.Invoke(surrogate, obj, si, ctx, selector)!;
+        }
+
+        [SecurityCritical]
+        private static object SetObjectDataDirect(ISerializationSurrogate surrogate, object obj, SerializationInfo si, StreamingContext ctx, ISurrogateSelector? selector)
+            => surrogate.SetObjectData(obj, si, ctx, selector);
+
+        [SecurityCritical]
+        internal static object? GetRealObjectSafe(this IObjectReference objRef, StreamingContext ctx)
+        {
+            // Direct call: must be a separate method; otherwise, the caller of this method may get a SecurityException in a partially trusted domain
+            if (!EnvironmentHelper.IsPartiallyTrustedDomain)
+                return GetRealObjectDirect(objRef, ctx);
+
+            // Partially trusted access: generating the accessor that skips verification even if SecurityPermissionFlag.SkipVerification is not granted
+            return IObjectReference_GetRealObject.Invoke(objRef, ctx);
+        }
+
+        [SecurityCritical]
+        private static object? GetRealObjectDirect(IObjectReference objRef, StreamingContext ctx) => objRef.GetRealObject(ctx);
+
+        [SecurityCritical]
+        internal static object CreateUninitializedObjectSafe(Type type)
+        {
+            // Direct call: must be a separate method; otherwise, the caller of this method may get a SecurityException in a partially trusted domain
+            if (!EnvironmentHelper.IsPartiallyTrustedDomain)
+                return CreateUninitializedObjectDirect(type);
+
+            // Partially trusted access: generating the accessor that skips verification even if SecurityPermissionFlag.SkipVerification is not granted
+            return FormatterServices_GetUninitializedObject.Invoke(null, type)!;
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        [SecurityCritical]
+        private static object CreateUninitializedObjectDirect(Type t) => FormatterServices.GetUninitializedObject(t);
+
+#endif
         #endregion
 
         #endregion

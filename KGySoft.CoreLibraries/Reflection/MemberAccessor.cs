@@ -164,7 +164,7 @@ namespace KGySoft.Reflection
 
                 Throw.NotSupportedException(Res.ReflectionSecuritySettingsConflict, exception);
             }
-            catch (Exception e) when (!e.IsCritical())
+            catch (Exception e) when (!e.IsCriticalOr(e is NotSupportedException))
             {
                 // if we cannot obtain the stack trace we assume the VerificationException is due to the used security settings
                 Throw.NotSupportedException(Res.ReflectionSecuritySettingsConflict, exception);

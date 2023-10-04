@@ -117,7 +117,7 @@ namespace KGySoft.Serialization.Binary
             /// </summary>
             internal Type? Type { get; private set; }
 
-            internal TypeByString? StoredType { get; private set; }
+            internal string? StoredType { get; private set; }
 
             /// <summary>
             /// The array rank if <see cref="IsArray"/> is <see langword="true"/>. Gets 0 for zero-based arrays.
@@ -175,7 +175,7 @@ namespace KGySoft.Serialization.Binary
             /// Initializing from <see cref="Type"/> by <see cref="DeserializationManager.ReadType"/>.
             /// Here every non-native type is handled as recursive object (otherwise, they are decoded from <see cref="DataTypes"/>).
             /// </summary>
-            internal DataTypeDescriptor(Type type, TypeByString? storedType = null)
+            internal DataTypeDescriptor(Type type, string? storedType = null)
             {
                 if (type.IsGenericTypeOf(compressibleType))
                 {
@@ -216,6 +216,8 @@ namespace KGySoft.Serialization.Binary
             #endregion
 
             #region Internal Methods
+
+            internal TypeIdentity GetIdentity() => new TypeIdentity(StoredType ?? (object)GetTypeToCreate());
 
             /// <summary>
             /// Decodes self and element types

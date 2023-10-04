@@ -186,6 +186,11 @@ namespace KGySoft
         /// <summary>The specified serialization binder cannot be used in safe mode. Only ForwardedTypesSerializationBinder is allowed if its SafeMode property is set to true.</summary>
         internal static string BinarySerializationBinderNotAllowedInSafeMode => Get("BinarySerialization_BinderNotAllowedInSafeMode");
 
+        /// <summary>This operation is not supported in a partially trusted domain with the current security settings. You can try the following options:
+        /// - Grant SecurityPermission with the SecurityPermissionFlag.SkipVerification flag when creating the restricted AppDomain.
+        /// - Create the AppDomain with unrestricted permission set.</summary>
+        internal static string BinarySerializationSecuritySettingsConflict => Get("BinarySerialization_SecuritySettingsConflict");
+
         #endregion
 
         #region ByteArrayExtensions

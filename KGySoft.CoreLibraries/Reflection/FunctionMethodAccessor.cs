@@ -95,7 +95,7 @@ namespace KGySoft.Reflection
 #else
             bool hasRefParameters = ParameterTypes.Any(p => p.IsByRef);
             if (hasRefParameters || (!method.IsStatic && declaringType!.IsValueType) || method.ReturnType.IsByRef
-#if NETFRAMEWORK || NETSTANDARD2_0
+#if NETFRAMEWORK
                 // Partially trusted app domain: to avoid VerificationException if SecurityPermissionFlag.SkipVerification is not granted
                 || EnvironmentHelper.IsPartiallyTrustedDomain
 #endif

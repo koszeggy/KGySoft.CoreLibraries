@@ -727,6 +727,11 @@ Either try to use the ForceRecursiveSerializationOfSupportedTypes option on seri
   <data name="BinarySerialization_BinderNotAllowedInSafeMode" xml:space="preserve">
     <value>The specified serialization binder cannot be used in safe mode. Only ForwardedTypesSerializationBinder is allowed if its SafeMode property is set to true.</value>
   </data>
+  <data name="BinarySerialization_SecuritySettingsConflict" xml:space="preserve">
+    <value>This operation is not supported in a partially trusted domain with the current security settings. You can try the following options:
+- Grant SecurityPermission with the SecurityPermissionFlag.SkipVerification flag when creating the restricted AppDomain.
+- Create the AppDomain with unrestricted permission set.</value>
+  </data>
   <data name="BinarySerialization_DeserializeUnexpectedId" xml:space="preserve">
     <value>Unexpected id on deserialization. Serialization stream corrupted?</value>
   </data>

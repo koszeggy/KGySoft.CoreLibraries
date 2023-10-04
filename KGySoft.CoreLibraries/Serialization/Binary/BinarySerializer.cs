@@ -523,21 +523,29 @@ namespace KGySoft.Serialization.Binary
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="obj"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="obj"/> contains references and it cannot be serialized even by the <see cref="Marshal"/> class.</exception>
+        /// <exception cref="NotSupportedException">The method is called from a restricted <see cref="AppDomain"/> with insufficient permissions.</exception>
         [SecurityCritical]
-        public static unsafe byte[] SerializeValueType(ValueType obj)
+        public static byte[] SerializeValueType(ValueType obj)
         {
             if (obj == null!)
                 Throw.ArgumentNullException(Argument.obj);
 
-            if (!obj.GetType().IsManaged())
-                return SerializeValueTypeRaw(obj);
+#if NETFRAMEWORK || NETSTANDARD2_0
+            try
+#endif
+            {
+                if (!obj.GetType().IsManaged())
+                    return SerializeValueTypeRaw(obj);
 
-            // Fallback with marshaling. Throws an ArgumentException on error
-            byte[] result = new byte[Marshal.SizeOf(obj)];
-            fixed (void* ptr = result)
-                Marshal.StructureToPtr(obj, new IntPtr(ptr), false);
-
-            return result;
+                // Fallback with marshaling. Throws an ArgumentException on error
+                return SerializeValueTypeByMarshal(obj);
+            }
+#if NETFRAMEWORK || NETSTANDARD2_0
+            catch (VerificationException e) when (EnvironmentHelper.IsPartiallyTrustedDomain)
+            {
+                return Throw.NotSupportedException<byte[]>(Res.BinarySerializationSecuritySettingsConflict, e);
+            }
+#endif
         }
 
         /// <summary>
@@ -549,6 +557,7 @@ namespace KGySoft.Serialization.Binary
         /// <param name="result">When this method returns, the byte array representation of the <see cref="ValueType"/> instance. This parameter is passed uninitialized.</param>
         /// <returns><see langword="true"/>, if the specified <see cref="ValueType"/> contains no references and could be serialized; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="obj"/> is <see langword="null"/>.</exception>
+        /// <exception cref="NotSupportedException">The method is called from a restricted <see cref="AppDomain"/> with insufficient permissions.</exception>
         [SecuritySafeCritical]
         public static bool TrySerializeValueType(ValueType obj, [MaybeNullWhen(false)]out byte[] result)
         {
@@ -586,8 +595,18 @@ namespace KGySoft.Serialization.Binary
 #elif NETCOREAPP3_0_OR_GREATER
             Unsafe.As<byte, T>(ref result[0]) = value;
 #else
-            fixed (byte* dst = result)
-                *(T*)dst = value;
+#if NETFRAMEWORK || NETSTANDARD2_0
+            try
+#endif
+            {
+                DoSerializeValueType(value, result);
+            }
+#if NETFRAMEWORK || NETSTANDARD2_0
+            catch (VerificationException e) when (EnvironmentHelper.IsPartiallyTrustedDomain)
+            {
+                Throw.NotSupportedException(Res.BinarySerializationSecuritySettingsConflict, e);
+            }
+#endif
 #endif
             return result;
         }
@@ -643,8 +662,18 @@ namespace KGySoft.Serialization.Binary
 #elif NETCOREAPP3_0_OR_GREATER
             Unsafe.CopyBlock(ref result[0], ref Unsafe.As<T, byte>(ref array[0]), (uint)len);
 #else
-            fixed (void* src = array)
-                Marshal.Copy(new IntPtr(src), result, 0, len);
+#if NETFRAMEWORK || NETSTANDARD2_0
+            try
+#endif
+            {
+                DoSerializeValueArray(array, result, len);
+            }
+#if NETFRAMEWORK || NETSTANDARD2_0
+            catch (VerificationException e) when (EnvironmentHelper.IsPartiallyTrustedDomain)
+            {
+                return Throw.NotSupportedException<byte[]>(Res.BinarySerializationSecuritySettingsConflict, e);
+            }
+#endif
 #endif
 
             return result;
@@ -705,7 +734,7 @@ namespace KGySoft.Serialization.Binary
         /// <br/>-or-
         /// <br/>The specified <paramref name="type"/> contains references and it cannot be deserialized even by using the <see cref="Marshal"/> class.</exception>
         [SecuritySafeCritical]
-        public unsafe static object DeserializeValueType(Type type, byte[] data, int offset)
+        public static object DeserializeValueType(Type type, byte[] data, int offset)
         {
             if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
@@ -724,8 +753,18 @@ namespace KGySoft.Serialization.Binary
             if (offset + len > data.Length)
                 Throw.ArgumentException(Argument.data, Res.BinarySerializationDataLengthTooSmall);
 
-            fixed (void* src = &data[offset])
-                return Marshal.PtrToStructure(new IntPtr(src), type)!;
+#if NETFRAMEWORK || NETSTANDARD2_0
+            try
+#endif
+            {
+                return DeserializeValueTypeByMarshal(type, data, offset);
+            }
+#if NETFRAMEWORK || NETSTANDARD2_0
+            catch (VerificationException e) when (EnvironmentHelper.IsPartiallyTrustedDomain)
+            {
+                return Throw.NotSupportedException<byte[]>(Res.BinarySerializationSecuritySettingsConflict, e);
+            }
+#endif
         }
 
         /// <summary>
@@ -757,8 +796,18 @@ namespace KGySoft.Serialization.Binary
 #elif NETCOREAPP3_0_OR_GREATER
             return Unsafe.As<byte, T>(ref data[0]);
 #else
-            fixed (byte* src = data)
-                return *(T*)src;
+#if NETFRAMEWORK || NETSTANDARD2_0
+            try
+#endif
+            {
+                return DoDeserializeValueType<T>(data, 0);
+            }
+#if NETFRAMEWORK || NETSTANDARD2_0
+            catch (VerificationException e) when (EnvironmentHelper.IsPartiallyTrustedDomain)
+            {
+                return Throw.NotSupportedException<T>(Res.BinarySerializationSecuritySettingsConflict, e);
+            }
+#endif
 #endif
         }
 
@@ -793,8 +842,19 @@ namespace KGySoft.Serialization.Binary
 #if NETCOREAPP3_0_OR_GREATER
             return Unsafe.As<byte, T>(ref data[offset]);
 #else
-            fixed (byte* src = &data[offset])
-                return *(T*)src;
+
+#if NETFRAMEWORK || NETSTANDARD2_0
+            try
+#endif
+            {
+                return DoDeserializeValueType<T>(data, offset);
+            }
+#if NETFRAMEWORK || NETSTANDARD2_0
+            catch (VerificationException e) when (EnvironmentHelper.IsPartiallyTrustedDomain)
+            {
+                return Throw.NotSupportedException<T>(Res.BinarySerializationSecuritySettingsConflict, e);
+            }
+#endif
 #endif
         }
 
@@ -836,8 +896,18 @@ namespace KGySoft.Serialization.Binary
             // must use unaligned because data[offset] is not necessarily a pointer aligned address (we could check it but it isn't worth it)
             Unsafe.CopyBlockUnaligned(ref Unsafe.As<T, byte>(ref result[0]), ref data[offset], (uint)len);
 #else
-            fixed (void* dst = result)
-                Marshal.Copy(data, offset, new IntPtr(dst), len);
+#if NETFRAMEWORK || NETSTANDARD2_0
+            try
+#endif
+            {
+                DoDeserializeValueArray(data, offset, result, len);
+            }
+#if NETFRAMEWORK || NETSTANDARD2_0
+            catch (VerificationException e) when (EnvironmentHelper.IsPartiallyTrustedDomain)
+            {
+                return Throw.NotSupportedException<T[]>(Res.BinarySerializationSecuritySettingsConflict, e);
+            }
+#endif
 #endif
 
             return result;
@@ -854,6 +924,36 @@ namespace KGySoft.Serialization.Binary
         #endregion
 
         #region Private Methods
+
+#if !NETCOREAPP3_0_OR_GREATER
+        [SecurityCritical]
+        private static unsafe void DoSerializeValueType<T>(T value, byte[] result) where T : unmanaged
+        {
+            fixed (byte* dst = result)
+                *(T*)dst = value;
+        }
+
+        [SecuritySafeCritical]
+        private static unsafe T DoDeserializeValueType<T>(byte[] data, int offset) where T : unmanaged
+        {
+            fixed (byte* src = &data[offset])
+                return *(T*)src;
+        }
+
+        [SecurityCritical]
+        private static unsafe void DoSerializeValueArray<T>(T[] array, byte[] result, int len) where T : unmanaged
+        {
+            fixed (void* src = array)
+                Marshal.Copy(new IntPtr(src), result, 0, len);
+        }
+
+        [SecurityCritical]
+        private static unsafe void DoDeserializeValueArray<T>(byte[] data, int offset, T[] result, int len) where T : unmanaged
+        {
+            fixed (void* dst = result)
+                Marshal.Copy(data, offset, new IntPtr(dst), len);
+        }
+#endif
 
         [SecurityCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -883,6 +983,17 @@ namespace KGySoft.Serialization.Binary
 
             return result;
 #endif
+        }
+
+        [SecurityCritical]
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        private static unsafe byte[] SerializeValueTypeByMarshal(ValueType obj)
+        {
+            byte[] result = new byte[Marshal.SizeOf(obj)];
+            fixed (void* ptr = result)
+                Marshal.StructureToPtr(obj, new IntPtr(ptr), false);
+
+            return result;
         }
 
         [SecurityCritical]
@@ -919,6 +1030,14 @@ namespace KGySoft.Serialization.Binary
 
             return result;
 #endif
+        }
+
+        [SecurityCritical]
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        private static unsafe object DeserializeValueTypeByMarshal(Type type, byte[] data, int offset)
+        {
+            fixed (void* src = &data[offset])
+                return Marshal.PtrToStructure(new IntPtr(src), type)!;
         }
 
         #endregion

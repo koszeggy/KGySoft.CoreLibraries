@@ -2633,11 +2633,11 @@ namespace KGySoft.Reflection
             {
                 try
                 {
-                    result = DoCreateUninitializedObject(type);
+                    result = Accessors.CreateUninitializedObjectSafe(type);
                     canCreateUninitializedObject = true;
                     return true;
                 }
-                catch (SecurityException)
+                catch (Exception e) when (e is SecurityException)
                 {
                     canCreateUninitializedObject = false;
                 }
@@ -2663,16 +2663,6 @@ namespace KGySoft.Reflection
             return true;
 #endif
         }
-
-#if NETFRAMEWORK || NETSTANDARD2_0
-        /// <summary>
-        /// At JIT-time this method may throw a SecurityException from a partially trusted domain. A separate method because
-        /// the exception is thrown without even executing the code just by recognizing the GetUninitializedObject call in the body.
-        /// </summary>
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        [SecurityCritical]
-        private static object DoCreateUninitializedObject(Type t) => FormatterServices.GetUninitializedObject(t);
-#endif
 
         #endregion
 

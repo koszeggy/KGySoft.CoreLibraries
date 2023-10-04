@@ -95,7 +95,7 @@ namespace KGySoft
         [ContractAnnotation("=> halt")][DoesNotReturn]internal static void NotSupportedException() => throw CreateNotSupportedException(Res.NotSupported);
         [ContractAnnotation("=> halt")][DoesNotReturn]internal static T NotSupportedException<T>() => throw CreateNotSupportedException(Res.NotSupported);
         [ContractAnnotation("=> halt")][DoesNotReturn]internal static void NotSupportedException(string message) => throw CreateNotSupportedException(message);
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static T NotSupportedException<T>(string message) => throw CreateNotSupportedException(message);
+        [ContractAnnotation("=> halt")][DoesNotReturn]internal static T NotSupportedException<T>(string message, Exception? inner = null) => throw CreateNotSupportedException(message, inner);
         [ContractAnnotation("=> halt")][DoesNotReturn]internal static void NotSupportedException(string message, Exception inner) => throw CreateNotSupportedException(message, inner);
 
         [ContractAnnotation("=> halt")][DoesNotReturn]internal static void ObjectDisposedException() => throw CreateObjectDisposedException(Res.ObjectDisposed);

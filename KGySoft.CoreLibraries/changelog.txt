@@ -43,8 +43,8 @@
 - EnumerableExtensions:
   - IsNullOrEmpty (non-generic): the fallback implementation attempted to dispose the possibly disposable enumerable
     instance instead of the enumerator.
-- FastRandom class: Fixing possible VerificationException in .NET Framework 4.x in partially trusted domains.
-- RandomExtensions class: Fixing possible VerificationException in .NET Framework 4.x in partially trusted domains.
+- FastRandom class: Fixing possible VerificationException in .NET Framework in partially trusted domains.
+- RandomExtensions class: Fixing possible VerificationException in .NET Framework in partially trusted domains.
 
 * KGySoft.Collections namespace:
 ================================
@@ -80,8 +80,8 @@
   - Fixing a possible Invalid owner error when generating an accessor for an interface member in some special cases.
 + MethodAccessor class:
   + Invoke method: Supporting ref return values
-  + GetAccessor method: Better support of generating invoker methods in .NET Framework 4.x in partially trusted
-    domains that can avoid the previously expected VerificationException (depending on the domain configuration).
+  + GetAccessor method: Better support of generating invoker methods in .NET Framework in partially trusted domains
+    that can avoid the previously expected VerificationException (depending on the domain configuration).
 + Reflector class:
   + [Try]GetProperty/[Try]SetProperty methods: Supporting getting/setting ref properties if reflection way is Auto
     or DynamicDelegate. The behavior of SystemReflection and TypeDescriptor ways are platform dependent.
@@ -127,6 +127,7 @@
   ! If SafeMode is enabled, only ForwardedTypesSerializationBinder can be used for deserialization if its SafeMode
     is set to true. The reason for not allowing any 3rd party binders (not even the other binders in this library)
     is that a custom serialization logic could weaken the SafeMode rules of BinarySerializationFormatter.
+  + Better support of partially trusted application domains (.NET Framework, .NET Standard 2.0)
   + New Deserialize, DeserializeFromStream, DeserializeByReader overloads with expectedCustomTypes parameters.
   + Supporting the StringSegment struct natively
   + Supporting the CompareInfo class natively

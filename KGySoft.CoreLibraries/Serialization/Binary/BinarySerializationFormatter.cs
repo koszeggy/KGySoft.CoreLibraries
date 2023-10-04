@@ -977,43 +977,39 @@ namespace KGySoft.Serialization.Binary
 
         #endregion
 
-        #region Nested Classes
+        #region Nested Structs
 
-        /// <summary>
-        /// A mocked <see cref="Type"/> by name. Not derived from <see cref="Type"/> because that has tons of abstract methods.
-        /// </summary>
-        private sealed class TypeByString : MemberInfo
+        #region TypeIdentity struct
+
+        private readonly struct TypeIdentity : IEquatable<TypeIdentity>
         {
-            #region Properties
+            #region Fields
 
-            public override MemberTypes MemberType => MemberTypes.TypeInfo;
-            public override string Name { get; }
-            public override Type? DeclaringType => null;
-            public override Type? ReflectedType => null;
+            internal readonly object Identity; // Type or string
 
             #endregion
 
             #region Constructors
 
-            public TypeByString(string? assemblyName, string typeName) => Name = typeName + ", " + assemblyName;
+            internal TypeIdentity(object identity)
+            {
+                Debug.Assert(identity is Type or string, "Type or string identity expected");
+                Identity = identity;
+            }
 
             #endregion
 
             #region Methods
 
-            public override object[] GetCustomAttributes(bool inherit) => Reflector.EmptyObjects;
-            public override bool IsDefined(Type attributeType, bool inherit) => false;
-            public override object[] GetCustomAttributes(Type attributeType, bool inherit) => Reflector.EmptyObjects;
-            public override string ToString() => Name;
-            public override bool Equals(object? obj) => obj is TypeByString other && Name == other.Name;
-            public override int GetHashCode() => Name.GetHashCode();
+            public bool Equals(TypeIdentity other) => Identity.Equals(other.Identity);
+            public override bool Equals(object? obj) => obj is TypeIdentity other && Equals(other);
+            public override int GetHashCode() => Identity.GetHashCode();
+            public override string ToString() => Identity.ToString();
 
             #endregion
         }
 
         #endregion
-
-        #region Nested Structs
 
         #region Compressible<T> struct
 
