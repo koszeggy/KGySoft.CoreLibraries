@@ -28,7 +28,7 @@ namespace KGySoft
         private static bool? isMono;
         private static bool? isWindows;
 
-#if NETFRAMEWORK && !NET35
+#if NETFRAMEWORK || NETSTANDARD2_0
         private static bool? isPartiallyTrustedDomain;
 #endif
 
@@ -38,8 +38,13 @@ namespace KGySoft
 
         internal static bool IsMono => isMono ??= Type.GetType("Mono.Runtime") != null;
 
-#if NETFRAMEWORK && !NET35
-        internal static bool IsPartiallyTrustedDomain => isPartiallyTrustedDomain ??= !AppDomain.CurrentDomain.IsFullyTrusted;
+#if NETFRAMEWORK || NETSTANDARD2_0
+        internal static bool IsPartiallyTrustedDomain => isPartiallyTrustedDomain ??=
+#if NET35
+            !AppDomain.CurrentDomain.IsDefaultAppDomain();
+#else
+            !AppDomain.CurrentDomain.IsFullyTrusted;
+#endif
 #endif
 
         internal static bool IsWindows => isWindows ??= Environment.OSVersion.Platform == PlatformID.Win32NT;

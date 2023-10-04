@@ -1844,7 +1844,7 @@ namespace KGySoft.CoreLibraries
                     return String.Join(separator, strArray);
                 case IList<string?> strList:
                     // we can preallocate result
-#if NET40_OR_GREATER
+#if NETFRAMEWORK || NETSTANDARD2_0
                     if (EnvironmentHelper.IsPartiallyTrustedDomain)
                         goto default;
 #endif
@@ -1881,7 +1881,7 @@ namespace KGySoft.CoreLibraries
 #endif
                 case IList<string?> strList:
                     // we can preallocate result
-#if NET40_OR_GREATER
+#if NETFRAMEWORK || NETSTANDARD2_0
                     if (EnvironmentHelper.IsPartiallyTrustedDomain)
                         goto default;
 #endif

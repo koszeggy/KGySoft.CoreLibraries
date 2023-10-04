@@ -60,7 +60,7 @@ namespace KGySoft.CoreLibraries
 
             if (format == EnumFormattingOptions.DistinctFlags)
             {
-#if NETFRAMEWORK && !NET35
+#if NETFRAMEWORK || NETSTANDARD2_0
                 if (EnvironmentHelper.IsPartiallyTrustedDomain)
                     return FormatDistinctFlagsPartiallyTrusted(value, separator);
 #endif
@@ -73,7 +73,7 @@ namespace KGySoft.CoreLibraries
             // returning as flags
             if ((format == EnumFormattingOptions.Auto && isFlags) || format == EnumFormattingOptions.CompoundFlagsOrNumber || format == EnumFormattingOptions.CompoundFlagsAndNumber)
             {
-#if NET40_OR_GREATER
+#if NETFRAMEWORK || NETSTANDARD2_0
                 if (EnvironmentHelper.IsPartiallyTrustedDomain)
                     return FormatCompoundFlagsPartiallyTrusted(value, separator, format == EnumFormattingOptions.CompoundFlagsAndNumber);
 #endif
@@ -98,7 +98,7 @@ namespace KGySoft.CoreLibraries
             // returning as flags
             if (isFlags)
             {
-#if NET40_OR_GREATER
+#if NETFRAMEWORK || NETSTANDARD2_0
                 if (EnvironmentHelper.IsPartiallyTrustedDomain)
                     return FormatCompoundFlagsPartiallyTrusted(value, EnumExtensions.DefaultFormatSeparator, false);
 #endif
@@ -510,7 +510,7 @@ namespace KGySoft.CoreLibraries
             return result;
         }
 
-#if NET40_OR_GREATER
+#if NETFRAMEWORK || NETSTANDARD2_0
         private static string FormatCompoundFlagsPartiallyTrusted(TEnum e, string? separator, bool allowNumberWithNames)
         {
             EnsureRawValueNamePairs();

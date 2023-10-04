@@ -97,7 +97,7 @@ namespace KGySoft.Reflection
 
             // ReSharper disable once PossibleNullReferenceException - declaring type was already checked above
             if (hasRefParameters || (!methodBase.IsStatic && declaringType!.IsValueType) || method == null
-#if NET40_OR_GREATER
+#if NETFRAMEWORK || NETSTANDARD2_0
                 // Partially trusted app domain: to avoid VerificationException if SecurityPermissionFlag.SkipVerification is not granted
                 || EnvironmentHelper.IsPartiallyTrustedDomain
 #endif

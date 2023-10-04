@@ -24,8 +24,6 @@ using System.Diagnostics;
 #endif
 #if !NET6_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
-using System.Linq;
 #endif
 #if NETCOREAPP3_0_OR_GREATER && !NETSTANDARD_TEST || NET5_0_OR_GREATER
 using System.Globalization;
@@ -70,7 +68,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
 
         #region Person class
         
-        public class Person
+        internal class Person
         {
             #region Properties
             
@@ -117,7 +115,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
                 foreach (StringCreation stringCreation in Enum<StringCreation>.GetValues())
                     test.NextStringTest(stringCreation);
             }
-        } 
+        }
 #endif
 
         #endregion

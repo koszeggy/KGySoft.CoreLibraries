@@ -105,7 +105,7 @@ namespace KGySoft.CoreLibraries
             if (seed == Guid.Empty)
                 Throw.ArgumentException(Argument.seed, Res.ArgumentEmpty);
 
-#if NET40_OR_GREATER
+#if NETFRAMEWORK || NETSTANDARD2_0
             if (EnvironmentHelper.IsPartiallyTrustedDomain)
             {
                 InitPartiallyTrusted(seed);
@@ -374,7 +374,7 @@ namespace KGySoft.CoreLibraries
             if (buffer == null!)
                 Throw.ArgumentNullException(Argument.buffer);
 
-#if NET40_OR_GREATER
+#if NETFRAMEWORK || NETSTANDARD2_0
             if (EnvironmentHelper.IsPartiallyTrustedDomain)
             {
                 FillBytesPartiallyTrusted(buffer);
@@ -464,7 +464,7 @@ namespace KGySoft.CoreLibraries
 
         #region Private Methods
 
-#if NET40_OR_GREATER
+#if NETFRAMEWORK || NETSTANDARD2_0
         [MethodImpl(MethodImplOptions.NoInlining)]
         private void InitPartiallyTrusted(Guid seed)
         {
@@ -524,7 +524,7 @@ namespace KGySoft.CoreLibraries
             state = stateLocal;
         }
 
-#if NET40_OR_GREATER
+#if NETFRAMEWORK || NETSTANDARD2_0
         [MethodImpl(MethodImpl.AggressiveInlining)]
         private void FillBytesPartiallyTrusted(byte[] buffer)
         {

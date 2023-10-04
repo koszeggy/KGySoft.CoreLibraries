@@ -1723,7 +1723,7 @@ namespace KGySoft.CoreLibraries
                 return Reflector.EmptyArray<char>();
 
             var result = new char[length];
-#if NET40_OR_GREATER
+#if NETFRAMEWORK || NETSTANDARD2_0
             if (EnvironmentHelper.IsPartiallyTrustedDomain)
                 FillCharsPartiallyTrusted(random, result, allowedCharacters);
             else
@@ -1764,7 +1764,7 @@ namespace KGySoft.CoreLibraries
                 return Reflector.EmptyArray<char>();
 
             var result = new char[length];
-#if NET40_OR_GREATER
+#if NETFRAMEWORK || NETSTANDARD2_0
             if (EnvironmentHelper.IsPartiallyTrustedDomain)
                 FillCharsPartiallyTrusted(random, result, allowedCharacters);
             else
@@ -1836,7 +1836,7 @@ namespace KGySoft.CoreLibraries
                 return Reflector.EmptyArray<char>();
 
             var result = new char[length];
-#if NET40_OR_GREATER
+#if NETFRAMEWORK || NETSTANDARD2_0
             if (EnvironmentHelper.IsPartiallyTrustedDomain)
                 FillCharsPartiallyTrusted(random, result, strategy);
             else
@@ -1872,7 +1872,7 @@ namespace KGySoft.CoreLibraries
             if (buffer.Length == 0)
                 return;
 
-#if NET40_OR_GREATER
+#if NETFRAMEWORK || NETSTANDARD2_0
             if (EnvironmentHelper.IsPartiallyTrustedDomain)
                 FillCharsPartiallyTrusted(random, buffer, allowedCharacters);
             else
@@ -1907,7 +1907,7 @@ namespace KGySoft.CoreLibraries
             if (buffer.Length == 0)
                 return;
 
-#if NET40_OR_GREATER
+#if NETFRAMEWORK || NETSTANDARD2_0
             if (EnvironmentHelper.IsPartiallyTrustedDomain)
                 FillCharsPartiallyTrusted(random, buffer, allowedCharacters);
             else
@@ -1941,7 +1941,7 @@ namespace KGySoft.CoreLibraries
             if (buffer.Length == 0)
                 return;
 
-#if NET40_OR_GREATER
+#if NETFRAMEWORK || NETSTANDARD2_0
             if (EnvironmentHelper.IsPartiallyTrustedDomain)
                 FillCharsPartiallyTrusted(random, buffer, strategy);
             else
@@ -2036,7 +2036,7 @@ namespace KGySoft.CoreLibraries
             if (length == 0)
                 return String.Empty;
 
-#if NET40_OR_GREATER
+#if NETFRAMEWORK || NETSTANDARD2_0
             if (EnvironmentHelper.IsPartiallyTrustedDomain)
             {
                 var result = new char[length];
@@ -2084,7 +2084,7 @@ namespace KGySoft.CoreLibraries
             if (length == 0)
                 return String.Empty;
 
-#if NET40_OR_GREATER
+#if NETFRAMEWORK || NETSTANDARD2_0
             if (EnvironmentHelper.IsPartiallyTrustedDomain)
             {
                 var result = new char[length];
@@ -2168,7 +2168,7 @@ namespace KGySoft.CoreLibraries
             if (length == 0)
                 return String.Empty;
 
-#if NET40_OR_GREATER
+#if NETFRAMEWORK || NETSTANDARD2_0
             if (EnvironmentHelper.IsPartiallyTrustedDomain)
             {
                 var result = new char[length];
@@ -2581,7 +2581,7 @@ namespace KGySoft.CoreLibraries
 #else
             byte[] bytes = new byte[4];
             random.NextBytes(bytes);
-#if NET40_OR_GREATER
+#if NETFRAMEWORK || NETSTANDARD2_0
             if (EnvironmentHelper.IsPartiallyTrustedDomain)
                 return BitConverter.ToUInt32(bytes, 0);
 #endif
@@ -2606,7 +2606,7 @@ namespace KGySoft.CoreLibraries
 #else
             byte[] bytes = new byte[8];
             random.NextBytes(bytes);
-#if NET40_OR_GREATER
+#if NETFRAMEWORK || NETSTANDARD2_0
             if (EnvironmentHelper.IsPartiallyTrustedDomain)
                 return BitConverter.ToUInt64(bytes, 0);
 #endif
@@ -3061,8 +3061,7 @@ namespace KGySoft.CoreLibraries
             }
         }
 
-#if NET40_OR_GREATER
-
+#if NETFRAMEWORK || NETSTANDARD2_0
         private static void FillCharsPartiallyTrusted(Random random, char[] target, bool checkInvalid = false)
         {
             for (int i = 0; i < target.Length; i++)
@@ -3174,7 +3173,6 @@ namespace KGySoft.CoreLibraries
                     break;
             }
         }
-
 #endif
 
         #endregion
