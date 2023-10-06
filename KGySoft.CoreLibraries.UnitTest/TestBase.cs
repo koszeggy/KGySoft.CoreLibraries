@@ -378,7 +378,7 @@ namespace KGySoft.CoreLibraries
 #endif
 
                 if (reference is decimal decimalRef && check is decimal decimalCheck)
-                    return Check(BinarySerializer.SerializeValueType(decimalRef).SequenceEqual(BinarySerializer.SerializeValueType(decimalCheck)), $"Decimal equality failed: {decimalRef.ToRoundtripString()} <-> {decimalCheck.ToRoundtripString()}. Binary representation: 0x{BinarySerializer.SerializeValueType(decimalRef).ToHexValuesString()} <-> 0x{BinarySerializer.SerializeValueType(decimalCheck).ToHexValuesString()}", errors);
+                    return Check(Decimal.GetBits(decimalRef).SequenceEqual(Decimal.GetBits(decimalCheck)), $"Decimal equality failed: {decimalRef.ToRoundtripString()} <-> {decimalCheck.ToRoundtripString()}. Binary representation: 0x{Decimal.GetBits(decimalRef).Select(i => $"{i:X8}").Join(String.Empty)} <-> 0x{Decimal.GetBits(decimalCheck).Select(i => $"{i:X8}").Join(String.Empty)}", errors);
 
                 if (typeRef == typeof(StringBuilder))
                 {

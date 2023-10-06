@@ -29,6 +29,7 @@ using System.Collections.Immutable;
 #endif
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
 using System.IO;
@@ -90,16 +91,21 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #if !NET35
                 Assert.IsFalse(AppDomain.CurrentDomain.IsFullyTrusted);
 #endif
+                var smokeTestObj = ThreadSafeRandom.Instance.NextObject<Dictionary<int, List<string>>>();
+                byte[] raw = BinarySerializer.Serialize(smokeTestObj);
+                var clone = BinarySerializer.Deserialize<Dictionary<int, List<string>>>(raw);
+                AssertDeepEquals(smokeTestObj, clone);
 
-                // The test below may fail from ConsoleApp run with SecurityRuleSet.Level2 because PermissionSet.FullTrust is needed:
-                // - SerializationManager.WriteCustomObjectGraph: because of ISerializable.GetObjectData, surrogate.GetObjectData and TypeByString usage (for any derived MemberInfo)
-                // - DataTypeDescriptor.DecodeType: because of StoredType property usage
+                raw = BinarySerializer.Serialize(smokeTestObj, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
+                clone = BinarySerializer.Deserialize<Dictionary<int, List<string>>>(raw, 0, BinarySerializationOptions.None);
+                AssertDeepEquals(smokeTestObj, clone);
+
                 var test = new BinarySerializerTest();
                 test.SerializeComplexTypes();
-                test.SerializeComplexGenericCollections();
-                test.SerializationSurrogateTest();
+                test.SerializeComplexGenericCollections(false); // false: Setting read-only field in ArraySection does not work without SecurityPermissionFlag.SkipVerification
+                test.SerializationSurrogateTest(false); // Setting read-only field in StringSegment
                 test.SerializeRemoteObjects();
-                test.SerializationBinderTest();
+                test.SerializationBinderTest(false);
             }
         }
 #endif
@@ -1602,8 +1608,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #endif
         }
 
-        [Test]
-        public void SerializeComplexGenericCollections()
+        [TestCase(true)] // false is called from Sandbox.DoTest
+        public void SerializeComplexGenericCollections(bool includeForcedRecursive)
         {
             object[] referenceObjects =
             {
@@ -1679,8 +1685,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: expectedTypes);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: expectedTypes);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
+            if (includeForcedRecursive)
+            {
+                KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
+                KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
+            }
         }
 
         [Test]
@@ -1790,8 +1799,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         }
 #endif
 
-        [Test]
-        public void SerializationBinderTest()
+        [TestCase(true)] // false is called from Sandbox.DoTest
+        public void SerializationBinderTest(bool includeForcedRecursive)
         {
             object[] referenceObjects =
             {
@@ -1838,8 +1847,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             string title = "Serialization and Deserialization with TestSerializationBinder";
             SerializationBinder binder = new TestSerializationBinder();
 #if !(NET35 || NETCOREAPP)
-            SystemSerializeObject(referenceObjects, title, binder: binder);
-            SystemSerializeObjects(referenceObjects, title, binder: binder);
+            //SystemSerializeObject(referenceObjects, title, binder: binder); // Executes the special constructor on CustomSerializedSealedClass that should not be executed; 'The constructor to deserialize an object of type 'System.RuntimeType' was not found.'
+            //SystemSerializeObjects(referenceObjects, title, binder: binder); // On deserialization calls the binder with names that were not set by on serialization
 #endif
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None, title, binder: binder);
@@ -1858,8 +1867,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 | BinarySerializationOptions.IgnoreISerializable, // .NET Core 2: still, it has the GetObjectData that throws a PlatformNotSupportedException
                 title, safeCompare: true, binder: binder); // safeCompare: the cloned runtime types are not equal
 #else
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, title, binder: binder);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, title, binder: binder);
+            if (includeForcedRecursive)
+            {
+                KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, title, binder:binder);
+                KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, title, binder:binder);
+            }
 #endif
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.OmitAssemblyQualifiedNames, title, binder: binder);
@@ -1939,8 +1951,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.OmitAssemblyQualifiedNames, title, binder: binder);
         }
 
-        [Test]
-        public void SerializationSurrogateTest()
+        [TestCase(true)]
+        public void SerializationSurrogateTest(bool alsoForSupportedTypes)
         {
             object[] referenceObjects =
             {
@@ -2104,15 +2116,23 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             string title = nameof(TestSurrogateSelector);
             //SystemSerializeObjects(referenceObjects, title, surrogateSelector: selector); // system deserialization fails: Invalid BinaryFormatter stream.
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, title, surrogateSelector: selector);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.TryUseSurrogateSelectorForAnyType, title, surrogateSelector: selector);
+            if (alsoForSupportedTypes)
+                KGySerializeObjects(referenceObjects, BinarySerializationOptions.TryUseSurrogateSelectorForAnyType, title, surrogateSelector: selector);
             Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, title, surrogateSelector: selector), Res.BinarySerializationSurrogateNotAllowedInSafeMode);
 
             selector = new TestCloningSurrogateSelector();
             title = nameof(TestCloningSurrogateSelector);
-            SystemSerializeObjects(referenceObjects, title, surrogateSelector: selector);
+#if NETFRAMEWORK
+            if (!EnvironmentHelper.IsPartiallyTrustedDomain) // Setting read-only field StringSegment.str by the surrogate selector
+#endif
+            {
+                SystemSerializeObjects(referenceObjects, title, surrogateSelector: selector);
+            }
+
             Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, title, surrogateSelector: selector));
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, title, surrogateSelector: selector);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.TryUseSurrogateSelectorForAnyType, title, surrogateSelector: selector);
+            if (alsoForSupportedTypes)
+                KGySerializeObjects(referenceObjects, BinarySerializationOptions.TryUseSurrogateSelectorForAnyType, title, surrogateSelector: selector);
         }
 
         [Test]
