@@ -16,14 +16,12 @@
 #region Usings
 
 using System;
-#if !(NET35 || NETSTANDARD2_0)
+#if NETFRAMEWORK || NETSTANDARD2_0
 using System.Globalization;
 #endif
 using System.Security;
-#if NETFRAMEWORK && !NET35
+#if NETFRAMEWORK || NETSTANDARD2_0
 using System.Text;
-
-using Microsoft.SqlServer.Server;
 #endif
 
 #endregion
@@ -260,7 +258,7 @@ namespace KGySoft.CoreLibraries
             return result;
         }
 
-#if NETFRAMEWORK && !NET35
+#if NETFRAMEWORK || NETSTANDARD2_0
         private static string FormatDistinctFlagsPartiallyTrusted(TEnum e, string? separator)
         {
             EnsureRawValueNamePairs();
@@ -673,7 +671,7 @@ namespace KGySoft.CoreLibraries
         {
             if (!underlyingInfo.IsSigned)
             {
-#if NETFRAMEWORK && !NET35
+#if NETFRAMEWORK || NETSTANDARD2_0
                 if (EnvironmentHelper.IsPartiallyTrustedDomain)
                     return value.ToString(CultureInfo.InvariantCulture);
 #endif
@@ -681,7 +679,7 @@ namespace KGySoft.CoreLibraries
             }
 
             long signedValue = ToSigned(value);
-#if NETFRAMEWORK && !NET35
+#if NETFRAMEWORK || NETSTANDARD2_0
             if (EnvironmentHelper.IsPartiallyTrustedDomain)
                 return signedValue.ToString(CultureInfo.InvariantCulture);
 #endif

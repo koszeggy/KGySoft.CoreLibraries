@@ -18,7 +18,12 @@
 using System;
 using System.Globalization;
 using System.Linq;
-using KGySoft.Diagnostics;
+using System.Reflection;
+#if NETFRAMEWORK
+using System.Security;
+using System.Security.Permissions;
+#endif
+
 using NUnit.Framework;
 
 #endregion
@@ -28,6 +33,26 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
     [TestFixture]
     public class ByteArrayExtensionsTest : TestBase
     {
+        #region Nested classes
+
+#if NETFRAMEWORK
+        private class Sandbox : MarshalByRefObject
+        {
+            internal void DoTest()
+            {
+                Assert.IsTrue(EnvironmentHelper.IsPartiallyTrustedDomain);
+                var test = new ByteArrayExtensionsTest();
+                test.ToBase64String();
+                test.ToHexString();
+                test.ToHexStringIndented();
+                test.ToDecimalString();
+                test.ToDecimalStringIndented();
+            }
+        }
+#endif
+
+        #endregion
+
         #region Methods
 
         [Test]
@@ -176,6 +201,30 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Assert.IsTrue(Char.IsWhiteSpace(result[0]));
             Assert.IsFalse(result.Contains(Environment.NewLine));
         }
+
+#if NETFRAMEWORK
+        [Test]
+        [SecuritySafeCritical]
+        public void ByteArrayExtensions_PartiallyTrusted()
+        {
+            var domain = CreateSandboxDomain(
+                new EnvironmentPermission(PermissionState.Unrestricted),
+                new ReflectionPermission(ReflectionPermissionFlag.MemberAccess),
+                new SecurityPermission(SecurityPermissionFlag.SerializationFormatter | SecurityPermissionFlag.UnmanagedCode),
+                new FileIOPermission(PermissionState.Unrestricted));
+            var handle = Activator.CreateInstance(domain, Assembly.GetExecutingAssembly().FullName, typeof(Sandbox).FullName!);
+            var sandbox = (Sandbox)handle.Unwrap();
+            try
+            {
+                sandbox.DoTest();
+            }
+            catch (SecurityException e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+        }
+#endif
 
         #endregion
     }

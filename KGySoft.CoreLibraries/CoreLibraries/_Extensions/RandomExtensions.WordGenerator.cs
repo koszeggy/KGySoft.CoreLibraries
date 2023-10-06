@@ -17,7 +17,9 @@
 
 using System;
 using System.Linq;
+#if NETFRAMEWORK || NETSTANDARD2_0
 using System.Runtime.CompilerServices;
+#endif
 using System.Security;
 
 #endregion
@@ -485,7 +487,7 @@ namespace KGySoft.CoreLibraries
         #endregion
 
         #region WordGeneratorPartiallyTrusted class
-#if NETFRAMEWORK && !NET35
+#if NETFRAMEWORK || NETSTANDARD2_0
 
         private static class WordGeneratorPartiallyTrusted
         {

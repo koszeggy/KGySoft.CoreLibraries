@@ -26,7 +26,7 @@ using System.Numerics;
 #endif
 using System.Runtime.CompilerServices;
 using System.Security;
-#if NETCOREAPP3_0_OR_GREATER
+#if NETCOREAPP3_0_OR_GREATER || NETFRAMEWORK || NETSTANDARD2_0
 using System.Text;
 #endif
 using System.Text.RegularExpressions;
@@ -104,6 +104,16 @@ namespace KGySoft.CoreLibraries
                 return s;
             if (count == 0)
                 return String.Empty;
+
+#if NETFRAMEWORK || NETSTANDARD2_0
+            if (EnvironmentHelper.IsPartiallyTrustedDomain)
+            {
+                var sb = new StringBuilder(count * s.Length);
+                for (int i = 0; i < count; i++)
+                    sb.Append(s);
+                return sb.ToString();
+            }
+#endif
 
             string result = new String('\0', count * s.Length);
             fixed (char* pResult = result)

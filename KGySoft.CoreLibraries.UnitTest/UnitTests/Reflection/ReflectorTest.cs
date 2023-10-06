@@ -2981,7 +2981,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 #if NETFRAMEWORK
         [Test]
         [SecuritySafeCritical]
-        public void ReflectionFromPartiallyTrustedDomain()
+        public void ReflectorTest_PartiallyTrusted()
         {
             var domain = CreateSandboxDomain(
 #if NET35

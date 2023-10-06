@@ -716,15 +716,7 @@ namespace KGySoft.CoreLibraries
         internal static int SizeOf(this Type type)
         {
             if (sizeOfCache == null)
-            {
-                Func<Type, int> itemLoader =
-#if NETFRAMEWORK && !NET35
-                    EnvironmentHelper.IsPartiallyTrustedDomain ? GetSizeFallback : GetSize;
-#else
-                    GetSize; 
-#endif
-                Interlocked.CompareExchange(ref sizeOfCache, ThreadSafeCacheFactory.Create(itemLoader, LockFreeCacheOptions.Profile128), null);
-            }
+                Interlocked.CompareExchange(ref sizeOfCache, ThreadSafeCacheFactory.Create<Type, int>(GetSize, LockFreeCacheOptions.Profile128), null);
 
             return sizeOfCache[type];
         }
@@ -1179,6 +1171,11 @@ namespace KGySoft.CoreLibraries
 #if NETSTANDARD2_0
             return GetSizeFallback(type);
 #else
+
+#if NETFRAMEWORK
+            if (EnvironmentHelper.IsPartiallyTrustedDomain)
+                return GetSizeFallback(type);
+#endif
             // If TypedReference layout is not recognized on current platform, then using a slow/unreliable fallback
             if (!Reflector.CanUseTypedReference)
                 return GetSizeFallback(type);
@@ -1209,7 +1206,20 @@ namespace KGySoft.CoreLibraries
         private static int GetSizeFallback(Type type)
         {
 #if NETSTANDARD2_0 // DynamicMethod is not available. Fallback: calling the generic Reflector<T>.SizeOf by reflection
-            return (int)typeof(Reflector<>).GetPropertyValue(type, nameof(Reflector<_>.SizeOf))!;
+            if (!EnvironmentHelper.IsPartiallyTrustedDomain)
+                return (int)typeof(Reflector<>).GetPropertyValue(type, nameof(Reflector<_>.SizeOf))!;
+
+            // This can occur when the .NET Standard 2.0 build is used by .NET Framework in a partially trusted domain (not possible for NuGet references)
+            try
+            {
+                // not SizeOf(Type) because that throws an exception for generics such as KeyValuePair<int, int>, whereas an instance of it works.
+                return Marshal.SizeOf(Activator.CreateInstance(type));
+            }
+            catch (ArgumentException)
+            {
+                // contains a reference or whatever
+                return default;
+            }
 #else
             // Emitting the SizeOf OpCode for the type, compiling a delegate and execute it, which is quite slow
             var dm = new DynamicMethod(nameof(GetSize), Reflector.UIntType, Type.EmptyTypes, typeof(TypeExtensions), true);

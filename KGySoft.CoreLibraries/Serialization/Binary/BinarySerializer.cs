@@ -568,7 +568,19 @@ namespace KGySoft.Serialization.Binary
             if (obj.GetType().IsManaged())
                 return false;
 
-            result = SerializeValueTypeRaw(obj);
+#if NETFRAMEWORK || NETSTANDARD2_0
+            try
+#endif
+            {
+                result = SerializeValueTypeRaw(obj);
+            }
+#if NETFRAMEWORK || NETSTANDARD2_0
+            catch (VerificationException e) when (EnvironmentHelper.IsPartiallyTrustedDomain)
+            {
+                Throw.NotSupportedException(Res.BinarySerializationSecuritySettingsConflict, e);
+            }
+#endif
+
             return true;
         }
 
@@ -608,6 +620,7 @@ namespace KGySoft.Serialization.Binary
             }
 #endif
 #endif
+
             return result;
         }
 
@@ -745,18 +758,18 @@ namespace KGySoft.Serialization.Binary
             if ((uint)offset > (uint)data.Length)
                 Throw.ArgumentOutOfRangeException(Argument.offset);
 
-            if (!type.IsManaged())
-                return DeserializeValueTypeRaw(type, data, offset);
-
-            // Fallback with marshaling. Throws an ArgumentException on error
-            int len = Marshal.SizeOf(type);
-            if (offset + len > data.Length)
-                Throw.ArgumentException(Argument.data, Res.BinarySerializationDataLengthTooSmall);
-
 #if NETFRAMEWORK || NETSTANDARD2_0
             try
 #endif
             {
+                if (!type.IsManaged())
+                    return DeserializeValueTypeRaw(type, data, offset);
+
+                // Fallback with marshaling. Throws an ArgumentException on error
+                int len = Marshal.SizeOf(type);
+                if (offset + len > data.Length)
+                    Throw.ArgumentException(Argument.data, Res.BinarySerializationDataLengthTooSmall);
+
                 return DeserializeValueTypeByMarshal(type, data, offset);
             }
 #if NETFRAMEWORK || NETSTANDARD2_0

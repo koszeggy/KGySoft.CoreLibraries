@@ -23,6 +23,9 @@ using System.Linq;
 using System.Reflection;
 #endif
 using System.Security;
+#if NETFRAMEWORK || NETSTANDARD2_0
+using System.Text;
+#endif
 using System.Text.RegularExpressions;
 
 #endregion
@@ -225,6 +228,31 @@ namespace KGySoft.CoreLibraries
                 len += targetPathParts[i].Length;
             }
 
+            if (len == 0)
+                return ".";
+
+#if NETFRAMEWORK || NETSTANDARD2_0
+            if (EnvironmentHelper.IsPartiallyTrustedDomain)
+            {
+                var sb = new StringBuilder(len);
+                for (int i = 0; i < baseOnlyCount; i++)
+                {
+                    if (i > 0)
+                        sb.Append(Path.DirectorySeparatorChar);
+                    sb.Append("..");
+                }
+
+                for (int i = commonPathDepth; i < targetPathCount; i++)
+                {
+                    if (sb.Length > 0)
+                        sb.Append(Path.DirectorySeparatorChar);
+                    sb.Append(targetPathParts[i]);
+                }
+
+                return sb.ToString();
+            }
+#endif
+
             string result = new String('\0', len);
             fixed (char* pResult = result)
             {
@@ -244,8 +272,6 @@ namespace KGySoft.CoreLibraries
                 }
             }
 
-            if (result.Length == 0)
-                return ".";
             return result;
         }
 

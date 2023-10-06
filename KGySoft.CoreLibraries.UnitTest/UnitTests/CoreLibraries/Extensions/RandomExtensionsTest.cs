@@ -40,6 +40,7 @@ using System.Text;
 using System.Xml.Schema;
 
 using KGySoft.Collections;
+using KGySoft.Security.Cryptography;
 
 using NUnit.Framework;
 
@@ -111,7 +112,8 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             internal void Test()
             {
                 var test = new RandomExtensionsTest();
-                test.NextObjectTest();
+                test.NextObjectTest(false);
+                test.NextObjectTest(true);
                 foreach (StringCreation stringCreation in Enum<StringCreation>.GetValues())
                     test.NextStringTest(stringCreation);
             }
@@ -850,10 +852,11 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
         }
 #endif
 
-        [Test]
-        public void NextObjectTest()
+        [TestCase(false)]
+        [TestCase(true)]
+        public void NextObjectTest(bool secure)
         {
-            var rnd = new FastRandom();
+            Random rnd = secure ? SecureRandom.Instance : new FastRandom();
             void Test<T>(bool dumpProperties = false, GenerateObjectSettings settings = null)
             {
                 var obj = rnd.NextObject<T>(settings);

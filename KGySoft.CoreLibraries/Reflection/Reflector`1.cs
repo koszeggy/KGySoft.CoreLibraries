@@ -61,7 +61,7 @@ namespace KGySoft.Reflection
 
             // ReSharper disable once StaticMemberInGenericType - false alarm, value depends on T
             internal static readonly int Value =
-#if NETFRAMEWORK && !NET35
+#if NETFRAMEWORK || NETSTANDARD2_0
                 EnvironmentHelper.IsPartiallyTrustedDomain ? typeof(T).SizeOf() : Initialize();
 #else
                 Initialize(); 
@@ -71,6 +71,7 @@ namespace KGySoft.Reflection
 
             #region Methods
 
+            [SecurityCritical]
             private static unsafe int Initialize()
             {
                 if (!typeof(T).IsValueType)

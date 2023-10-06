@@ -17,6 +17,9 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
+#if NETFRAMEWORK || NETSTANDARD2_0
+using System.Globalization;
+#endif
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -60,7 +63,7 @@ namespace KGySoft.CoreLibraries
                 for (int i = 0; i < separator!.Length; i++)
                 {
                     char c = separator[i];
-                    if (c >= '0' && c <= '9' || c >= 'A' && c <= 'F' || c >= 'a' && c <= 'f')
+                    if (c is >= '0' and <= '9' or >= 'A' and <= 'F' or >= 'a' and <= 'f')
                         Throw.ArgumentException(Argument.separator, Res.ByteArrayExtensionsSeparatorInvalidHex);
                 }
             }
@@ -70,6 +73,23 @@ namespace KGySoft.CoreLibraries
                 return String.Empty;
 
             int len = (bytesLength << 1) + (useSeparator ? (bytesLength - 1) * separator!.Length : 0);
+#if NETFRAMEWORK || NETSTANDARD2_0
+            if (EnvironmentHelper.IsPartiallyTrustedDomain)
+            {
+                var sb = new StringBuilder(len);
+
+                // ReSharper disable once ForCanBeConvertedToForeach - performance
+                for (int i = 0; i < bytes.Length; i++)
+                {
+                    if (useSeparator && sb.Length != 0)
+                        sb.Append(separator!);
+                    sb.Append(bytes[i].ToString("X2", CultureInfo.InvariantCulture));
+                }
+
+                return sb.ToString();
+            }
+#endif
+
             string result = new String('\0', len);
             fixed (char* pResult = result)
             {
@@ -155,6 +175,24 @@ namespace KGySoft.CoreLibraries
             if (bytes.Length == 0)
                 return String.Empty;
 
+#if NETFRAMEWORK || NETSTANDARD2_0
+            if (EnvironmentHelper.IsPartiallyTrustedDomain)
+            {
+                var result = new StringBuilder(bytes.Length * (3 + separator.Length));
+
+                // ReSharper disable once ForCanBeConvertedToForeach - intended, performance
+                for (int i = 0; i < bytes.Length; i++)
+                {
+                    if (result.Length != 0)
+                        result.Append(separator);
+                    result.Append(bytes[i]);
+                }
+
+                return result.ToString();
+            }
+#endif
+
+            // Not allocating a string because we just calculate an upper length bound. Still, it will be faster than StringBuilder.
             var buf = new ArraySection<char>(bytes.Length * (3 + separator.Length), false);
             try
             {
@@ -170,6 +208,7 @@ namespace KGySoft.CoreLibraries
                         result.Append(bytes[i]);
                     }
 
+                    // This creates a _copy_ so the underlying array can be released
                     return result.ToString();
                 }
             }
@@ -544,6 +583,26 @@ namespace KGySoft.CoreLibraries
 
             int lineCount = (int)Math.Ceiling((double)text.Length / lineLength);
             int len = text.Length + lineCount * indentSize + (lineCount - 1) * Environment.NewLine.Length;
+
+#if NETFRAMEWORK || NETSTANDARD2_0
+            if (EnvironmentHelper.IsPartiallyTrustedDomain)
+            {
+                var sb = new StringBuilder(len);
+                int pos;
+                for (pos = 0; pos < text.Length - lineLength; pos += lineLength)
+                {
+                    sb.Append(indentChar, indentSize);
+                    sb.Append(text, pos, lineLength);
+                    sb.AppendLine();
+                }
+
+                sb.Append(indentChar, indentSize);
+                sb.Append(text, pos, text.Length - pos);
+                Debug.Assert(sb.Length == sb.Capacity, "Wrong length initialization");
+                return sb.ToString();
+            }
+#endif
+
             var result = new String('\0', len);
             fixed (char* pResult = result)
             {

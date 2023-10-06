@@ -88,9 +88,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         {
             internal void DoTest()
             {
-#if !NET35
-                Assert.IsFalse(AppDomain.CurrentDomain.IsFullyTrusted);
-#endif
+                Assert.IsTrue(EnvironmentHelper.IsPartiallyTrustedDomain);
                 var smokeTestObj = ThreadSafeRandom.Instance.NextObject<Dictionary<int, List<string>>>();
                 byte[] raw = BinarySerializer.Serialize(smokeTestObj);
                 var clone = BinarySerializer.Deserialize<Dictionary<int, List<string>>>(raw);
@@ -2585,7 +2583,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #if NETFRAMEWORK
         [Test]
         [SecuritySafeCritical]
-        public void SerializationFromPartiallyTrustedDomain()
+        public void BinarySerializerTest_PartiallyTrusted()
         {
             var domain = CreateSandboxDomain(
 #if NET35

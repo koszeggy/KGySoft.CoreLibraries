@@ -24,6 +24,10 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Reflection;
+#if NETFRAMEWORK
+using System.Security;
+using System.Security.Permissions;
+#endif
 
 using KGySoft.Collections;
 using KGySoft.Reflection;
@@ -35,8 +39,24 @@ using NUnit.Framework;
 namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
 {
     [TestFixture]
-    public class TypeExtensionsTest
+    public class TypeExtensionsTest : TestBase
     {
+        #region Nested classes
+
+#if NETFRAMEWORK
+        private class Sandbox : MarshalByRefObject
+        {
+            internal void DoTest()
+            {
+                Assert.IsTrue(EnvironmentHelper.IsPartiallyTrustedDomain);
+                var test = new TypeExtensionsTest();
+                test.SizeOfTest();
+            }
+        }
+#endif
+
+        #endregion
+
         #region Methods
 
         [Test]
@@ -103,6 +123,30 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Assert.AreEqual(Reflector<bool?>.SizeOf, typeof(bool?).SizeOf());
             Assert.AreEqual(Reflector<(decimal?, DateTime)>.SizeOf, typeof((decimal?, DateTime)).SizeOf());
         }
+
+#if NETFRAMEWORK
+        [Test]
+        [SecuritySafeCritical]
+        public void TypeExtensionsTest_PartiallyTrusted()
+        {
+            var domain = CreateSandboxDomain(
+                new ReflectionPermission(ReflectionPermissionFlag.MemberAccess), // DynamicMethod
+                // below: for an attached VisualStudio when a test fails
+                new SecurityPermission(SecurityPermissionFlag.UnmanagedCode),
+                new FileIOPermission(PermissionState.Unrestricted));
+            var handle = Activator.CreateInstance(domain, Assembly.GetExecutingAssembly().FullName, typeof(Sandbox).FullName!);
+            var sandbox = (Sandbox)handle.Unwrap();
+            try
+            {
+                sandbox.DoTest();
+            }
+            catch (SecurityException e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+        }
+#endif
 
         #endregion
     }

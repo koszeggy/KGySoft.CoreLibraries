@@ -22,6 +22,11 @@ using System.Linq;
 #if !NET35
 using System.Numerics;
 #endif
+#if NETFRAMEWORK
+using System.Reflection;
+using System.Security;
+using System.Security.Permissions;
+#endif
 #if NETCOREAPP3_0_OR_GREATER
 using System.Text;
 #endif
@@ -39,6 +44,22 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
     [TestFixture]
     public class StringExtensionsTest : TestBase
     {
+        #region Nested classes
+
+#if NETFRAMEWORK
+        private class Sandbox : MarshalByRefObject
+        {
+            internal void DoTest()
+            {
+                Assert.IsTrue(EnvironmentHelper.IsPartiallyTrustedDomain);
+                var test = new StringExtensionsTest();
+                test.RepeatTest("Alpha", 3, "AlphaAlphaAlpha");
+            }
+        }
+#endif
+
+        #endregion
+
         #region Methods
 
         [TestCase(null, null)]
@@ -204,11 +225,34 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
         public void IndexOfAnyTest()
         {
             const string s = "alpha, beta, gamma";
-            Throws<ArgumentException>(() => s.IndexOfAny("delta", null), "Specified argument contains a null element.");
+            Throws<ArgumentException>(() => s.IndexOfAny("delta", null!), "Specified argument contains a null element.");
             Assert.AreEqual(0, s.IndexOfAny("delta", ""));
             Assert.AreEqual(-1, s.IndexOfAny("delta", "epsilon"));
             Assert.AreEqual(13, s.IndexOfAny("delta", "gamma"));
         }
+
+#if NETFRAMEWORK
+        [Test]
+        [SecuritySafeCritical]
+        public void StringExtensions_PartiallyTrusted()
+        {
+            // These permissions are just for a possible attached VisualStudio when the test fails. The code does not require any special permissions.
+            var domain = CreateSandboxDomain(
+                new SecurityPermission(SecurityPermissionFlag.UnmanagedCode),
+                new FileIOPermission(PermissionState.Unrestricted));
+            var handle = Activator.CreateInstance(domain, Assembly.GetExecutingAssembly().FullName, typeof(Sandbox).FullName!);
+            var sandbox = (Sandbox)handle.Unwrap();
+            try
+            {
+                sandbox.DoTest();
+            }
+            catch (SecurityException e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+        }
+#endif
 
         #endregion
     }

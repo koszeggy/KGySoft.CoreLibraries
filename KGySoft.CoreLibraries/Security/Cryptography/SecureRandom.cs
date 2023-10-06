@@ -385,6 +385,10 @@ namespace KGySoft.Security.Cryptography
 #else
             byte[] bytes = new byte[4];
             provider.GetBytes(bytes);
+#if NETFRAMEWORK || NETSTANDARD2_0
+            if (EnvironmentHelper.IsPartiallyTrustedDomain)
+                return BitConverter.ToUInt32(bytes, 0);
+#endif
             fixed (byte* p = bytes)
                 return *(uint*)p;
 #endif
@@ -406,6 +410,10 @@ namespace KGySoft.Security.Cryptography
 #else
             byte[] bytes = new byte[8];
             provider.GetBytes(bytes);
+#if NETFRAMEWORK || NETSTANDARD2_0
+            if (EnvironmentHelper.IsPartiallyTrustedDomain)
+                return BitConverter.ToUInt64(bytes, 0);
+#endif
             fixed (byte* p = bytes)
                 return *(ulong*)p;
 #endif
