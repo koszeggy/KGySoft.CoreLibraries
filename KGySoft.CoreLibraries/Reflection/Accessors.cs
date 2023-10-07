@@ -992,7 +992,7 @@ namespace KGySoft.Reflection
         {
             if (field.FieldType.IsPointer)
             {
-#if NETFRAMEWORK && !NET35
+#if NETFRAMEWORK || NETSTANDARD2_0
                 if (EnvironmentHelper.IsPartiallyTrustedDomain)
                     return GetPointerFieldPartiallyTrusted(field, instance);
 #endif
@@ -1032,7 +1032,7 @@ namespace KGySoft.Reflection
 
             if (property.PropertyType.IsPointer)
             {
-#if NETFRAMEWORK && !NET35
+#if NETFRAMEWORK || NETSTANDARD2_0
                 if (EnvironmentHelper.IsPartiallyTrustedDomain)
                     return GetPointerPropertyPartiallyTrusted(property, instance);
 #endif
@@ -1205,7 +1205,7 @@ namespace KGySoft.Reflection
         private static unsafe object GetPointerField(FieldInfo field, object? instance)
             => new IntPtr(Pointer.Unbox((Pointer)field.GetValue(instance)!));
 
-#if NETFRAMEWORK && !NET35
+#if NETFRAMEWORK || NETSTANDARD2_0
         private static object? GetPointerFieldPartiallyTrusted(FieldInfo field, object? instance)
             => GetMethodByName(typeof(Pointer), "GetPointerValue")?.InvokeInstanceFunction<Pointer, object>((Pointer)field.GetValue(instance));
 #endif
@@ -1218,7 +1218,7 @@ namespace KGySoft.Reflection
         private static unsafe object GetPointerProperty(PropertyInfo property, object? instance)
             => new IntPtr(Pointer.Unbox((Pointer)property.GetValue(instance, null)!));
 
-#if NETFRAMEWORK && !NET35
+#if NETFRAMEWORK || NETSTANDARD2_0
         private static object GetPointerPropertyPartiallyTrusted(PropertyInfo property, object? instance)
             => GetMethodByName(typeof(Pointer), "GetPointerValue")?.InvokeInstanceFunction<Pointer, object>((Pointer)property.GetValue(instance, null))!;
 #endif

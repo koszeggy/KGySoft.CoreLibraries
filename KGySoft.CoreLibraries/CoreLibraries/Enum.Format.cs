@@ -16,7 +16,7 @@
 #region Usings
 
 using System;
-#if NETFRAMEWORK || NETSTANDARD2_0
+#if NETFRAMEWORK || NETSTANDARD || NETCOREAPP2_1_OR_GREATER
 using System.Globalization;
 #endif
 using System.Security;

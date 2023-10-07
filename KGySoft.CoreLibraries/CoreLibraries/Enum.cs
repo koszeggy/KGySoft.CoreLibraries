@@ -53,13 +53,12 @@ namespace KGySoft.CoreLibraries
         // These fields share the same data per underlying type
         private static readonly EnumComparer<TEnum> converter = EnumComparer<TEnum>.Comparer; // The comparer contains also some internal converter methods.
 
-#if NETFRAMEWORK && !NET35
+#if NETFRAMEWORK || NETSTANDARD2_0
         [SuppressMessage("Style", "IDE0044:Add readonly modifier", Justification = "Must not be readonly because it may cause a VerificationException from a partially trusted domain")]
         private static RangeInfo underlyingInfo = RangeInfo.GetRangeInfo(Enum.GetUnderlyingType(typeof(TEnum)));
 #else
         private static readonly RangeInfo underlyingInfo = RangeInfo.GetRangeInfo(Enum.GetUnderlyingType(typeof(TEnum)));
 #endif
-
 
         // These members can vary per TEnum and are initialized only on demand
         private static TEnum[]? values;
