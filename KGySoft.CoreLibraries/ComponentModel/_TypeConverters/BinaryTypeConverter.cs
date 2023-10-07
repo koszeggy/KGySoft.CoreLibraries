@@ -16,6 +16,7 @@
 #region Usings
 
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.Design.Serialization;
 using System.Globalization;
@@ -37,8 +38,9 @@ namespace KGySoft.ComponentModel
     /// </summary>
     /// <remarks>
     /// <note>This converter uses the <see cref="BinarySerializationFormatter"/> class in safe mode internally. The <see cref="ConvertFrom"/> method may
-    /// throw a <see cref="SerializationException"/> if the serialization stream contains any type name to resolve so this converter can be used only
-    /// for natively supported types.
+    /// throw a <see cref="SerializationException"/> if the serialization stream contains any type name to resolve other than the <see cref="Type"/> specified
+    /// in the <see cref="BinaryTypeConverter(System.Type)">constructor</see>. So it can be used for types only that do not use any types internally
+    /// that are not supported natively by the <see cref="BinarySerializationFormatter"/> class.
     /// <br/>See the <strong>Remarks</strong> section of the <see cref="BinarySerializationFormatter"/> class for the natively supported types.</note>
     /// </remarks>
     /// <seealso cref="TypeConverter" />
@@ -61,12 +63,42 @@ namespace KGySoft.ComponentModel
 
         #region Properties
 
+        #region Protected Properties
+
+        /// <summary>
+        /// Gets the type of the member this <see cref="BinaryTypeConverter"/> instance is referring to.
+        /// </summary>
+        /// <value>This property returns the type that was specified in the <see cref="BinaryTypeConverter(System.Type)">constructor</see>.</value>
+        protected Type? Type { get; }
+
+        #endregion
+
+        #region Private Properties
+
         private static MethodInfo DeserializeMethod => deserializeMethod ??= typeof(BinarySerializer)
             .GetMember(nameof(BinarySerializer.Deserialize), MemberTypes.Method, BindingFlags.Public | BindingFlags.Static)
             .Cast<MethodInfo>()
             .First(mi => !mi.IsGenericMethodDefinition && mi.GetParameters()
                 .Select(p => p.ParameterType)
                 .SequenceEqual(new[] { Reflector.ByteArrayType, Reflector.IntType, typeof(BinarySerializationOptions), typeof(Type[]) }))!;
+
+        #endregion
+
+        #endregion
+
+        #region Constructors
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref='BinaryTypeConverter'/> class.
+        /// </summary>
+        /// <param name="type">The type this converter is created for. If <see langword="null"/>, then the <see cref="ConvertFrom">ConvertFrom</see> method
+        /// will support only types that are natively supported by <see cref="BinarySerializationFormatter"/>.</param>
+        public BinaryTypeConverter(Type? type) => Type = type;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref='BinaryTypeConverter'/> class.
+        /// </summary>
+        public BinaryTypeConverter() { }
 
         #endregion
 
@@ -129,7 +161,7 @@ namespace KGySoft.ComponentModel
                 bytes = (byte[])value;
 
             return bytes != null
-                ? BinarySerializer.Deserialize(bytes, 0, BinarySerializationOptions.SafeMode)
+                ? BinarySerializer.Deserialize(bytes, 0, BinarySerializationOptions.SafeMode, (IEnumerable<Type>?)(Type is null ? null : new[] { Type }))
                 : base.ConvertFrom(context!, culture!, value!);
         }
 

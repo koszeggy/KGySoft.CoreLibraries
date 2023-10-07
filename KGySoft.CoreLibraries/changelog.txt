@@ -68,8 +68,11 @@
 
 ! KGySoft.ComponentModel namespace:
 ===================================
-! BinaryTypeConverter class: It does not support any custom type anymore, only the ones that are natively supported
-  by the BinarySerializationFormatter class in safe mode, without storing any type names to resolve.
+! BinaryTypeConverter class:
+  ! ConvertFrom method: It does not support any custom types anymore that contain nested custom types that are not
+    supported by the BinarySerializationFormatter class in safe mode natively.
+  + New constructor where the expected root type can be specified for the safe deserialization.
+  + New Type property.
 
 * KGySoft.Reflection namespace:
 ===============================

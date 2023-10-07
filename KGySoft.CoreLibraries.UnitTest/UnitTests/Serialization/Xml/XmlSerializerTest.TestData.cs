@@ -860,7 +860,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             #region Properties
 
             [TypeConverter(typeof(BinaryTypeConverter))]
-            public object BinProp { get; set; }
+            public ConsoleColor BinProp { get; set; }
 
             [TypeConverter(typeof(BinaryTypeConverter))]
             public Queue<string> BinPropReadOnly { get; } = new Queue<string>();

@@ -1233,7 +1233,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         {
             object[] referenceObjects =
             {
-                new BinaryMembers("One", "Two") { BinProp = DateTime.Now }
+                new BinaryMembers("One", "Two") { BinProp = ConsoleColor.Blue }
             };
 
             var expectedTypes = new[] { typeof(BinaryMembers), typeof(BinaryTypeConverter) };
