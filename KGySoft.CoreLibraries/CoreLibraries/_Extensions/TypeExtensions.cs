@@ -130,8 +130,8 @@ namespace KGySoft.CoreLibraries
 
         private static IThreadSafeCacheAccessor<Type, int>? sizeOfCache;
         private static IThreadSafeCacheAccessor<Type, bool>? hasReferenceCache;
-        private static IThreadSafeCacheAccessor<(Type GenTypeDef, Type T1, Type? T2), Type>? genericTypeCache;
-        private static IThreadSafeCacheAccessor<(MethodInfo GenMethodDef, Type T1, Type? T2), MethodInfo>? genericMethodsCache;
+        private static IThreadSafeCacheAccessor<(Type GenTypeDef, TypesKey TypeArgs), Type>? genericTypeCache;
+        private static IThreadSafeCacheAccessor<(MethodInfo GenMethodDef, TypesKey TypeArgs), MethodInfo>? genericMethodsCache;
         private static IThreadSafeCacheAccessor<Type, ConstructorInfo?>? defaultCtorCache;
         private static IThreadSafeCacheAccessor<Type, bool>? isDefaultGetHashCodeCache;
 
@@ -830,48 +830,20 @@ namespace KGySoft.CoreLibraries
             return result;
         }
 
-        internal static Type GetGenericType(this Type genTypeDef, Type t1, Type? t2 = null)
+        internal static Type GetGenericType(this Type genTypeDef, params Type[] typeArgs)
         {
+            Debug.Assert(!typeArgs.IsNullOrEmpty());
             if (genericTypeCache == null)
-                Interlocked.CompareExchange(ref genericTypeCache, ThreadSafeCacheFactory.Create<(Type, Type, Type?), Type>(CreateGenericType, LockFreeCacheOptions.Profile256), null);
-            return genericTypeCache[(genTypeDef, t1, t2)];
+                Interlocked.CompareExchange(ref genericTypeCache, ThreadSafeCacheFactory.Create<(Type, TypesKey), Type>(CreateGenericType, LockFreeCacheOptions.Profile256), null);
+            return genericTypeCache[(genTypeDef, new TypesKey(typeArgs))];
         }
 
-        internal static Type GetGenericType(this Type genTypeDef, params Type[] args)
+        internal static MethodInfo GetGenericMethod(this MethodInfo genMethodDef, params Type[] typeArgs)
         {
-            if (args == null!)
-                Throw.ArgumentNullException(Argument.args);
-            switch (args.Length)
-            {
-                case 1:
-                    return GetGenericType(genTypeDef, args[0]);
-                case 2:
-                    return GetGenericType(genTypeDef, args[0], args[1]);
-                default:
-                    return genTypeDef.MakeGenericType(args);
-            }
-        }
-
-        internal static MethodInfo GetGenericMethod(this MethodInfo genMethodDef, Type t1, Type? t2 = null)
-        {
+            Debug.Assert(!typeArgs.IsNullOrEmpty());
             if (genericMethodsCache == null)
-                Interlocked.CompareExchange(ref genericMethodsCache, ThreadSafeCacheFactory.Create<(MethodInfo, Type, Type?), MethodInfo>(CreateGenericMethod, LockFreeCacheOptions.Profile128), null);
-            return genericMethodsCache[(genMethodDef, t1, t2)];
-        }
-
-        internal static MethodInfo GetGenericMethod(this MethodInfo genMethodDef, Type[] args)
-        {
-            if (args == null!)
-                Throw.ArgumentNullException(Argument.args);
-            switch (args.Length)
-            {
-                case 1:
-                    return GetGenericMethod(genMethodDef, args[0]);
-                case 2:
-                    return GetGenericMethod(genMethodDef, args[0], args[1]);
-                default:
-                    return genMethodDef.MakeGenericMethod(args);
-            }
+                Interlocked.CompareExchange(ref genericMethodsCache, ThreadSafeCacheFactory.Create<(MethodInfo, TypesKey), MethodInfo>(CreateGenericMethod, LockFreeCacheOptions.Profile128), null);
+            return genericMethodsCache[(genMethodDef, new TypesKey(typeArgs))];
         }
 
         /// <summary>
@@ -1250,11 +1222,11 @@ namespace KGySoft.CoreLibraries
             return false;
         }
 
-        private static Type CreateGenericType((Type GenTypeDef, Type T1, Type? T2) key)
-            => key.GenTypeDef.MakeGenericType(key.T2 == null ? new[] { key.T1 } : new[] { key.T1, key.T2 });
+        private static Type CreateGenericType((Type GenTypeDef, TypesKey TypeArgs) key)
+            => key.GenTypeDef.MakeGenericType(key.TypeArgs.Types);
 
-        private static MethodInfo CreateGenericMethod((MethodInfo GenMethodDef, Type T1, Type? T2) key)
-            => key.GenMethodDef.MakeGenericMethod(key.T2 == null ? new[] { key.T1 } : new[] { key.T1, key.T2 });
+        private static MethodInfo CreateGenericMethod((MethodInfo GenMethodDef, TypesKey TypeArgs) key)
+            => key.GenMethodDef.MakeGenericMethod(key.TypeArgs.Types);
 
         #endregion
 

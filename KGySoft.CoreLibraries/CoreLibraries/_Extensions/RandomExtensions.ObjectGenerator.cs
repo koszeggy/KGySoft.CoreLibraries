@@ -51,51 +51,6 @@ namespace KGySoft.CoreLibraries
 
             #region Nested structs
 
-            #region DefaultGenericTypeKey struct
-
-            /// <summary>
-            /// Cache key for a generic type with its suggested arguments, with Equals/GetHashCode by array elements.
-            /// </summary>
-            private readonly struct DefaultGenericTypeKey : IEquatable<DefaultGenericTypeKey>
-            {
-                #region Fields
-
-                private readonly Type[] types;
-
-                #endregion
-
-                #region Properties
-
-                internal Type GenericType => types[0];
-                internal ArraySection<Type> SuggestedArguments => types.AsSection(1, types.Length - 1);
-
-                #endregion
-
-                #region Constructors
-
-                public DefaultGenericTypeKey(Type genericType, Type[] suggestedArguments)
-                {
-                    types = new Type[1 + suggestedArguments.Length];
-                    types[0] = genericType;
-                    suggestedArguments.CopyTo(types, 1);
-                }
-
-                #endregion
-
-                #region Methods
-
-                public override bool Equals(object? obj) => obj is DefaultGenericTypeKey key && Equals(key);
-                public bool Equals(DefaultGenericTypeKey other) => types.SequenceEqual(other.types);
-                public override int GetHashCode() => types.Aggregate(615762546, (hc, t) => hc * -1521134295 + t.GetHashCode());
-                public override string ToString() => $"{GenericType.Name}[{SuggestedArguments.Join(", ")}]";
-
-                #endregion
-            }
-
-            #endregion
-
-            #region GeneratorContext struct
-
             private struct GeneratorContext
             {
                 #region Fields
@@ -197,8 +152,6 @@ namespace KGySoft.CoreLibraries
 
             #endregion
 
-            #endregion
-
             #region Fields
 
 #if !NETSTANDARD2_0
@@ -288,7 +241,7 @@ namespace KGySoft.CoreLibraries
 
             private static IThreadSafeCacheAccessor<Assembly, Type[]>? assemblyTypesCache;
             private static IThreadSafeCacheAccessor<Type, Type[]>? typeImplementorsCache;
-            private static IThreadSafeCacheAccessor<DefaultGenericTypeKey, Type?>? defaultConstructedGenerics;
+            private static IThreadSafeCacheAccessor<(Type GenTypeDef, TypesKey TypeArgs), Type?>? defaultConstructedGenerics;
             private static IThreadSafeCacheAccessor<Type, Delegate?>? delegatesCache;
 
             #endregion
@@ -315,12 +268,12 @@ namespace KGySoft.CoreLibraries
                 }
             }
 
-            private static IThreadSafeCacheAccessor<DefaultGenericTypeKey, Type?> DefaultConstructedGenerics
+            private static IThreadSafeCacheAccessor<(Type, TypesKey), Type?> DefaultConstructedGenerics
             {
                 get
                 {
                     if (defaultConstructedGenerics == null)
-                        Interlocked.CompareExchange(ref defaultConstructedGenerics, ThreadSafeCacheFactory.Create<DefaultGenericTypeKey, Type?>(TryCreateDefaultGeneric, LockFreeCacheOptions.Profile128), null);
+                        Interlocked.CompareExchange(ref defaultConstructedGenerics, ThreadSafeCacheFactory.Create<(Type, TypesKey), Type?>(TryCreateDefaultGeneric, LockFreeCacheOptions.Profile128), null);
                     return defaultConstructedGenerics;
                 }
             }
@@ -405,7 +358,7 @@ namespace KGySoft.CoreLibraries
 
                         // Generic type for non-generic interface or for non-interface (eg. IList -> List<object> or BaseClass<MyType> -> DerivedClass<MyType>)
                         // Trying to resolve its constraints and see whether the construction is compatible with the provided type.
-                        Type? constructedType = DefaultConstructedGenerics[new DefaultGenericTypeKey(t, genericArguments)];
+                        Type? constructedType = DefaultConstructedGenerics[(t, new TypesKey(genericArguments))];
                         if (constructedType != null && type.IsAssignableFrom(constructedType))
                             result.Add(constructedType);
                     }
@@ -414,10 +367,10 @@ namespace KGySoft.CoreLibraries
                 return result.ToArray();
             }
 
-            private static Type? TryCreateDefaultGeneric(DefaultGenericTypeKey key)
+            private static Type? TryCreateDefaultGeneric((Type GenTypeDef, TypesKey TypeArgs) key)
             {
-                Type genericTypeDef = key.GenericType;
-                ArraySection<Type> suggestedArguments = key.SuggestedArguments;
+                Type genericTypeDef = key.GenTypeDef;
+                Type[] suggestedArguments = key.TypeArgs.Types;
                 Type[] genericParams = genericTypeDef.GetGenericArguments();
                 Type[] argumentsToCreate = new Type[genericParams.Length];
                 Type[][] constraints = new Type[genericParams.Length][];
