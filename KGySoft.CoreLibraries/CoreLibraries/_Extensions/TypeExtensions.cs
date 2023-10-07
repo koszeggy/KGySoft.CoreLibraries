@@ -593,12 +593,12 @@ namespace KGySoft.CoreLibraries
                 return false;
 
             elementType = type.GetCollectionElementType()!;
-            isDictionary = Reflector.IDictionaryType.IsAssignableFrom(type) || type.IsImplementationOfGenericType(Reflector.IDictionaryGenType);
 
             // Array
             if (type.IsArray)
                 return true;
 
+            isDictionary = Reflector.IDictionaryType.IsAssignableFrom(type) || type.IsImplementationOfGenericType(Reflector.IDictionaryGenType);
             bool isPopulatableCollection = type.IsCollection();
             foreach (ConstructorInfo ctor in type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
             {
@@ -680,6 +680,9 @@ namespace KGySoft.CoreLibraries
             return IsGenericReadWriteCollection(type, instance);
         }
 
+        /// <summary>
+        /// Almost the same as <see cref="IsReadWriteCollection"/> but returns false for fixed size collections making sure that Add/Clear methods work.
+        /// </summary>
         internal static bool IsPopulatableCollection(this Type type, object? instance)
         {
             if (instance == null)

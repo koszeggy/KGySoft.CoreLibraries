@@ -57,6 +57,8 @@ namespace KGySoft.ComponentModel
 #endif
         };
 
+        private static readonly Type[] deserializeParameters = { Reflector.ByteArrayType, Reflector.IntType, typeof(BinarySerializationOptions), typeof(Type[]) };
+        
         private static MethodInfo? deserializeMethod;
 
         #endregion
@@ -80,7 +82,7 @@ namespace KGySoft.ComponentModel
             .Cast<MethodInfo>()
             .First(mi => !mi.IsGenericMethodDefinition && mi.GetParameters()
                 .Select(p => p.ParameterType)
-                .SequenceEqual(new[] { Reflector.ByteArrayType, Reflector.IntType, typeof(BinarySerializationOptions), typeof(Type[]) }))!;
+                .SequenceEqual(deserializeParameters))!;
 
         #endregion
 
@@ -141,7 +143,7 @@ namespace KGySoft.ComponentModel
             byte[] result = BinarySerializer.Serialize(value, BinarySerializationOptions.RecursiveSerializationAsFallback);
             return destinationType == Reflector.ByteArrayType ? result
                 : destinationType == Reflector.StringType ? Convert.ToBase64String(result)
-                : new InstanceDescriptor(DeserializeMethod, new object[] { result, 0, BinarySerializationOptions.SafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes, new[] { destinationType } });
+                : new InstanceDescriptor(DeserializeMethod, new object[] { result, 0, BinarySerializationOptions.SafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes, new[] { Type ?? Reflector.ObjectType } });
         }
 
         /// <summary>

@@ -39,6 +39,11 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
 #if !(NETCOREAPP2_0 || NETCOREAPP2_1)
         [TestCase(42, typeof(InstanceDescriptor))]
 #endif
+        [TestCase(ConsoleColor.Blue, typeof(string))]
+        [TestCase(ConsoleColor.Blue, typeof(byte[]))]
+#if !(NETCOREAPP2_0 || NETCOREAPP2_1)
+        [TestCase(ConsoleColor.Blue, typeof(InstanceDescriptor))]
+#endif
         [TestCase(null, typeof(string))]
         [TestCase(null, typeof(byte[]))]
 #if !(NETCOREAPP2_0 || NETCOREAPP2_1)
@@ -46,7 +51,7 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
 #endif
         public void BinaryTypeConverterTest(object testData, Type targetType)
         {
-            var converter = new BinaryTypeConverter();
+            var converter = new BinaryTypeConverter(testData?.GetType() ?? typeof(object));
             object result = converter.ConvertTo(testData, targetType);
             Assert.IsInstanceOf(targetType, result);
 

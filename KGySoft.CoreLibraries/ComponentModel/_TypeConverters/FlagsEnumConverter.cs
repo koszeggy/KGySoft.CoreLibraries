@@ -197,7 +197,7 @@ namespace KGySoft.ComponentModel
             {
                 Enum enumValue = (Enum)Reflector.GetField(null, field)!;
                 if (enumValue.IsSingleFlag())
-                    enumFields.Add(new EnumFlagDescriptor(enumType, field.Name, enumValue.ToUInt64(), defaultValue, valueField, Attribute.GetCustomAttributes(field, false), context));
+                    enumFields.Add(new EnumFlagDescriptor(enumType, field.Name, enumValue.ToUInt64(), defaultValue, valueField, Reflector.GetAttributes(field, typeof(Attribute), false), context));
             }
 
             return enumFields;
