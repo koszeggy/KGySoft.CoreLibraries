@@ -473,7 +473,7 @@ namespace KGySoft.Serialization.Xml
 
                 // a.) Using explicitly defined type converter if can convert to and from string
                 // Note: ResolveType can load assemblies here. When serializing, it is not a problem since the serialized object tree is always under the consumer's control.
-                Attribute[] attrs = Attribute.GetCustomAttributes(member.MemberInfo, typeof(TypeConverterAttribute), true);
+                Attribute[] attrs = Reflector.GetAttributes(member.MemberInfo, typeof(TypeConverterAttribute), true);
                 if (attrs.Length > 0 && attrs[0] is TypeConverterAttribute convAttr && Reflector.ResolveType(convAttr.ConverterTypeName) is Type convType)
                 {
                     ConstructorInfo? ctor = convType.GetConstructor(new Type[] { Reflector.Type });

@@ -15,6 +15,8 @@
 
 #region Usings
 
+using System.ComponentModel;
+
 #region Used Namespaces
 
 using System;
@@ -44,9 +46,47 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Serialization
     [TestFixture]
     public class XmlSerializerPerformanceTest
     {
+        #region Nested classes
+
+        #region Person class
+
+        public class Person
+        {
+            #region Properties
+
+            public Guid Id { get; set; }
+            public string FirstName { get; set; }
+
+            [DefaultValue(null)]
+            public string MiddleName { get; set; }
+            public string LastName { get; set; }
+            public DateTime BirthDate { get; set; }
+            public PersonalDocument[] Documents { get; set; }
+
+            #endregion
+        }
+
+        #endregion
+
+        #region PersonalDocument class
+
+        public class PersonalDocument
+        {
+            #region Properties
+
+            public string DocumentType { get; set; }
+            public string DocumentId { get; set; }
+
+            #endregion
+        }
+
+        #endregion
+
+        #endregion
+
         #region Properties
 
-        private static object[] serializerTestSource => new object[]
+        private static object[] SerializerTestSource => new object[]
         {
             1,
             new byte[] { 1, 2, 3, 4, 5 },
@@ -57,16 +97,20 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Serialization
             new HashSet<int[]> { new int[] { 1, 2, 3, 4, 5 }, null },
             new Collection<int> { 1, 2, 3, 4, 5 },
             new DictionaryEntry(new object(), "dummy"),
+#if NET47_OR_GREATER || !NETFRAMEWORK
+            (1, "alpha"),  
+#endif
+            ThreadSafeRandom.Instance.NextObject<Person>()
         };
 
         #endregion
 
         #region Methods
 
-        [TestCaseSource(nameof(serializerTestSource))]
+        [TestCaseSource(nameof(SerializerTestSource))]
         public void SerializerTest(object obj)
         {
-            new PerformanceTest<object> { TestName = $"XmlSerializer Speed Test - {obj.GetType()}", Iterations = 1000 }
+            new PerformanceTest<object> { TestName = $"XmlSerializer Speed Test - {obj.GetType()}", Iterations = 1000, Repeat = 3 }
                 .AddCase(() =>
                 {
                     var serializer = new SystemXmlSerializer(obj.GetType());
@@ -79,10 +123,10 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Serialization
                 {
                     var sb = new StringBuilder();
                     using (var writer = XmlWriter.Create(sb, new XmlWriterSettings { Indent = true, OmitXmlDeclaration = true }))
-                        XmlSerializer.Serialize(writer, obj, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.IgnoreShouldSerialize | XmlSerializationOptions.IgnoreDefaultValueAttribute);
+                        XmlSerializer.Serialize(writer, obj);
                     return XmlSerializer.Deserialize(new StringReader(sb.ToString()));
                 }, "KGy SOFT XmlSerializer by XmlWriter")
-                .AddCase(() => XmlSerializer.Deserialize(XmlSerializer.Serialize(obj, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.IgnoreShouldSerialize | XmlSerializationOptions.IgnoreDefaultValueAttribute)),
+                .AddCase(() => XmlSerializer.Deserialize(XmlSerializer.Serialize(obj)),
                     "KGy SOFT XmlSerializer by XElement")
                 .DoTest()
                 .DumpResults(Console.Out);
@@ -100,7 +144,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Serialization
                 {
                     var sb = new StringBuilder();
                     using (var writer = XmlWriter.Create(sb, new XmlWriterSettings { Indent = true, OmitXmlDeclaration = true }))
-                        XmlSerializer.Serialize(writer, obj, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.IgnoreShouldSerialize | XmlSerializationOptions.IgnoreDefaultValueAttribute);
+                        XmlSerializer.Serialize(writer, obj);
                     return sb.ToString();
                 }, "KGy SOFT XmlSerializer")
                 .DoTest()

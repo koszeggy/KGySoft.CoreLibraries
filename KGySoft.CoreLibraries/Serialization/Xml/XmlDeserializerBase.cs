@@ -23,7 +23,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
@@ -760,7 +759,7 @@ namespace KGySoft.Serialization.Xml
             
             // Explicitly defined type converter if can convert from string.
             // Here allowing Reflector.ResolveType because type converters cannot be misused by an input stream. Still, allowing assembly loading in non-safe mode only.
-            Attribute[] attrs = Attribute.GetCustomAttributes(member, typeof(TypeConverterAttribute), true);
+            Attribute[] attrs = Reflector.GetAttributes(member, typeof(TypeConverterAttribute), true);
             if (attrs.Length > 0 && attrs[0] is TypeConverterAttribute convAttr
                 && Reflector.ResolveType(convAttr.ConverterTypeName, SafeMode ? ResolveTypeOptions.AllowPartialAssemblyMatch : ResolveTypeOptions.AllowPartialAssemblyMatch | ResolveTypeOptions.TryToLoadAssemblies) is Type convType)
             {

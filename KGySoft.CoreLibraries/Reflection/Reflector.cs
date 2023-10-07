@@ -152,6 +152,8 @@ namespace KGySoft.Reflection
         private static Func<object, StrongBox<byte>>? reinterpretAsBoxedByte;
 #endif
 
+        private static IThreadSafeCacheAccessor<(MemberInfo Member, Type Attribute, bool Inherit), Attribute[]>? attributesCache;
+
         #endregion
 
         #endregion
@@ -3915,6 +3917,17 @@ namespace KGySoft.Reflection
             Debug.Assert(interfaceMethod.Attributes.HasFlag<MethodAttributes>(MethodAttributes.SpecialName) && interfaceMethod.Name.StartsWith("add_", StringComparison.Ordinal));
             interfaceEvent = (EventInfo?)interfaceMethod.DeclaringType!.GetMember(interfaceMethod.Name.Substring(4), MemberTypes.Event, BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Static).FirstOrDefault();
             return interfaceEvent != null;
+        }
+
+        internal static Attribute[] GetAttributes(MemberInfo member, Type attributeType, bool inherit)
+        {
+            if (attributesCache == null)
+            {
+                Interlocked.CompareExchange(ref attributesCache, ThreadSafeCacheFactory.Create<(MemberInfo Member, Type Attribute, bool Inherit), Attribute[]>(key
+                    => Attribute.GetCustomAttributes(key.Member, key.Attribute, key.Inherit), LockFreeCacheOptions.Profile128), null);
+            }
+
+            return attributesCache[(member, attributeType, inherit)];
         }
 
         private static string? GetDefaultMember(Type type)
