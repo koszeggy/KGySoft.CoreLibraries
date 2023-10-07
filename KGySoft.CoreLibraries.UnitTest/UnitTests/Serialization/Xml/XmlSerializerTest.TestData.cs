@@ -698,7 +698,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 
             #region MultilineTypeConverter class
 
-            internal class MultilineTypeConverter : TypeConverter
+            private class MultilineTypeConverter : TypeConverter
             {
                 #region Methods
 

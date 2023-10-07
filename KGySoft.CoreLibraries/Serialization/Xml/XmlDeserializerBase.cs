@@ -756,13 +756,13 @@ namespace KGySoft.Serialization.Xml
 
         private protected bool TryDeserializeByConverter(MemberInfo member, Type memberType, Func<string?> readStringValue, out object? result)
         {
-            TypeConverter? converter = null;
-
+            TypeConverter? converter = null; 
+            
             // Explicitly defined type converter if can convert from string.
-            // Using the same resolve logic for the converter than for the usual ones in the input stream.
+            // Here allowing Reflector.ResolveType because type converters cannot be misused by an input stream. Still, allowing assembly loading in non-safe mode only.
             Attribute[] attrs = Attribute.GetCustomAttributes(member, typeof(TypeConverterAttribute), true);
             if (attrs.Length > 0 && attrs[0] is TypeConverterAttribute convAttr
-                && ResolveType(convAttr.ConverterTypeName) is Type convType)
+                && Reflector.ResolveType(convAttr.ConverterTypeName, SafeMode ? ResolveTypeOptions.AllowPartialAssemblyMatch : ResolveTypeOptions.AllowPartialAssemblyMatch | ResolveTypeOptions.TryToLoadAssemblies) is Type convType)
             {
                 ConstructorInfo? ctor = convType.GetConstructor(new Type[] { Reflector.Type });
                 object[] ctorParams = { memberType };

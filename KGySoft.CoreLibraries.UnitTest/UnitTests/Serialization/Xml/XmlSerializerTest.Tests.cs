@@ -424,7 +424,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             };
 
             // even escape can be omitted if deserialization is by XmlTextReader, which does not normalize newlines
-            var expectedTypes = new[] { typeof(BinarySerializableClass), typeof(ExplicitTypeConverterHolder), typeof(Point), typeof(ExplicitTypeConverterHolder.MultilineTypeConverter) };
+            var expectedTypes = new[] { typeof(BinarySerializableClass), typeof(ExplicitTypeConverterHolder), typeof(Point) };
             KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.EscapeNewlineCharacters, expectedTypes: expectedTypes);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.EscapeNewlineCharacters, expectedTypes: expectedTypes);
         }
@@ -1236,7 +1236,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 new BinaryMembers("One", "Two") { BinProp = ConsoleColor.Blue }
             };
 
-            var expectedTypes = new[] { typeof(BinaryMembers), typeof(BinaryTypeConverter) };
+            var expectedTypes = new[] { typeof(BinaryMembers) };
             KGySerializeObject(referenceObjects, XmlSerializationOptions.ForcedSerializationOfReadOnlyMembersAndCollections, expectedTypes: expectedTypes); // Queue as readonly property
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.ForcedSerializationOfReadOnlyMembersAndCollections, expectedTypes: expectedTypes); // Queue as readonly property
         }
