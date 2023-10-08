@@ -63,7 +63,8 @@
 - ThreadSafeDictionary<TKey, TValue> class:
   - Fixing non-generic IDictionary.Add implementation for null values.
   - The PreserveMergedKeys property was ignored on serialization.
-- ThreadSafeHashSet<T> class:
+* ThreadSafeHashSet<T> class:
+  + New TryAdd and TryRemove methods
   - The PreserveMergedItems property was ignored on serialization.
 
 ! KGySoft.ComponentModel namespace:

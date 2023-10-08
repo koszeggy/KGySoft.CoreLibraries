@@ -508,12 +508,17 @@ namespace KGySoft.Collections
         #region Public Methods
 
         /// <summary>
-        /// Adds the specified <paramref name="item"/> to the <see cref="ThreadSafeHashSet{T}"/>.
+        /// Tries to add the specified <paramref name="item"/> to the <see cref="ThreadSafeHashSet{T}"/>.
         /// </summary>
         /// <param name="item">The element to add to the set.</param>
         /// <returns><see langword="true"/> if <paramref name="item"/> was added to the <see cref="ThreadSafeHashSet{T}"/>;
         /// <see langword="false"/> if the element is already present judged by the <see cref="Comparer"/>.</returns>
-        public bool Add(T item)
+        /// <remarks>
+        /// <para>This method is functionally the same as the <see cref="Add">Add</see> method.
+        /// It is added to prevent mistakenly calling the <see cref="EnumerableExtensions.TryAdd{T}">EnumerableExtensions.TryAdd</see> extension method,
+        /// which would end up in a somewhat worse performance.</para>
+        /// </remarks>
+        public bool TryAdd(T item)
         {
             uint hashCode = GetHashCode(item);
             while (true)
@@ -544,6 +549,14 @@ namespace KGySoft.Collections
                 }
             }
         }
+
+        /// <summary>
+        /// Adds the specified <paramref name="item"/> to the <see cref="ThreadSafeHashSet{T}"/>.
+        /// </summary>
+        /// <param name="item">The element to add to the set.</param>
+        /// <returns><see langword="true"/> if <paramref name="item"/> was added to the <see cref="ThreadSafeHashSet{T}"/>;
+        /// <see langword="false"/> if the element is already present judged by the <see cref="Comparer"/>.</returns>
+        public bool Add(T item) => TryAdd(item);
 
         /// <summary>
         /// Tries to get the actual stored item for the specified <paramref name="equalValue"/> in the <see cref="ThreadSafeHashSet{T}"/>.
@@ -633,7 +646,12 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="item">The element to remove.</param>
         /// <returns><see langword="true"/> if the element is successfully removed; otherwise, <see langword="false"/>.</returns>
-        public bool Remove(T item)
+        /// <remarks>
+        /// <para>This method is functionally the same as the <see cref="Remove">Remove</see> method.
+        /// The only difference is that this method is not an interface implementation
+        /// so using this one will not end up in a virtual method call, which provides a slightly better performance.</para>
+        /// </remarks>
+        public bool TryRemove(T item)
         {
             uint hashCode = GetHashCode(item);
             while (true)
@@ -667,6 +685,13 @@ namespace KGySoft.Collections
                 }
             }
         }
+
+        /// <summary>
+        /// Tries to remove the specified <paramref name="item"/> from the <see cref="ThreadSafeHashSet{T}"/>.
+        /// </summary>
+        /// <param name="item">The element to remove.</param>
+        /// <returns><see langword="true"/> if the element is successfully removed; otherwise, <see langword="false"/>.</returns>
+        public bool Remove(T item) => TryRemove(item);
 
         /// <summary>
         /// Removes all items from the <see cref="ThreadSafeHashSet{T}"/>.
