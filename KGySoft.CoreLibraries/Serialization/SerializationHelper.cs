@@ -57,10 +57,10 @@ namespace KGySoft.Serialization
     {
         #region Fields
 
-        private static readonly IThreadSafeCacheAccessor<Type, FieldInfo[]> serializableFieldsCache = ThreadSafeCacheFactory.Create<Type, FieldInfo[]>(t =>
+        private static readonly LockFreeCache<Type, FieldInfo[]> serializableFieldsCache = new(t =>
             t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly)
                 .Where(f => !f.IsNotSerialized)
-                .OrderBy(f => f.MetadataToken).ToArray(), LockFreeCacheOptions.Profile1K);
+                .OrderBy(f => f.MetadataToken).ToArray(), null, LockFreeCacheOptions.Profile1K);
 
         private static readonly Type[] unsafeTypes =
         {

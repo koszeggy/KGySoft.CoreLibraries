@@ -285,8 +285,10 @@ namespace KGySoft.Resources
     /// <description>When serializing an object, the <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxdatanode" target="_blank">System.Resources.ResXDataNode</a> type
     /// throws an <see cref="InvalidOperationException"/> for non-serializable types. This implementation can serialize also such types (though their deserialization will not be allowed in safe mode).
     /// If compatibility mode is used (see <see cref="ResXResourceWriter.CompatibleFormat">ResXResourceWriter.CompatibleFormat</see> property and
-    /// the <see cref="O:KGySoft.Resources.ResXResourceSet.Save">ResXResourceSet.Save</see> methods), this is achieved by wrapping the non-serializable types into an <see cref="AnyObjectSerializerWrapper"/>
-    /// instance so the <see cref="BinaryFormatter"/> will able to handle them, too (only up to .NET 7). In order to serialize any object in .NET 8 or later, compatible mode must be disabled.</description></item>
+    /// the <see cref="O:KGySoft.Resources.ResXResourceSet.Save">ResXResourceSet.Save</see> methods), this is achieved by using the <see cref="CustomSerializerSurrogateSelector"/> while serializing
+    /// by the obsolete <see cref="BinaryFormatter"/> (only up to .NET 7). Though the serialization stream will be compatible with .NET Framework the resource itself might
+    /// not be able to be deserialized by the <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a> class.
+    /// In order to serialize any object in .NET 8 or later, compatible mode must be disabled so the much safer <see cref="BinarySerializationFormatter"/> class can be used.</description></item>
     /// <item><term>Support of generics</term>
     /// <description>This <see cref="ResXDataNode"/> class uses a special <see cref="SerializationBinder"/> implementation, which supports generic types correctly.</description></item>
     /// </list></para>

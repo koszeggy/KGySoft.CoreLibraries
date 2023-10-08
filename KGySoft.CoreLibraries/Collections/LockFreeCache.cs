@@ -27,6 +27,10 @@ using KGySoft.Threading;
 
 namespace KGySoft.Collections
 {
+    /// <summary>
+    /// Implements a lock-free and thread-safe cache.
+    /// Public API: <see cref="ThreadSafeCacheFactory.Create{TKey,TValue}(Func{TKey,TValue},IEqualityComparer{TKey},ThreadSafeCacheOptionsBase)"/> with <see cref="LockFreeCacheOptions"/>
+    /// </summary>
     internal partial class LockFreeCache<TKey, TValue> : IThreadSafeCacheAccessor<TKey, TValue>
         where TKey : notnull
     {
@@ -56,8 +60,12 @@ namespace KGySoft.Collections
 
         #region Indexers
 
-        public virtual TValue this[TKey key]
+        #region Internal Indexers
+
+        // not as an interface implementation so direct calls can be devirtualized
+        internal TValue this[TKey key]
         {
+            [MethodImpl(MethodImpl.AggressiveInlining)]
             get
             {
                 if (key == null!)
@@ -79,6 +87,14 @@ namespace KGySoft.Collections
                 return result;
             }
         }
+
+        #endregion
+
+        #region Explicitly implemented interface indexers
+        
+        TValue IThreadSafeCacheAccessor<TKey, TValue>.this[TKey key] => this[key];
+
+        #endregion
 
         #endregion
 

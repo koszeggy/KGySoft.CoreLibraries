@@ -97,8 +97,7 @@ namespace KGySoft.ComponentModel
 
         #region Static Fields
 
-        private static readonly IThreadSafeCacheAccessor<Type, StringKeyedDictionary<EventInfo>> eventsCache =
-            ThreadSafeCacheFactory.Create<Type, StringKeyedDictionary<EventInfo>>(GetEvents, LockFreeCacheOptions.Profile128);
+        private static readonly LockFreeCache<Type, StringKeyedDictionary<EventInfo>> eventsCache = new(GetEvents, null, LockFreeCacheOptions.Profile128);
 
         #endregion
 

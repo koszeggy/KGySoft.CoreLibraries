@@ -16,12 +16,13 @@
 #region Usings
 
 using System;
+using System.Runtime.CompilerServices;
 
 #endregion
 
 namespace KGySoft.Collections
 {
-    internal class ConditionallyStoringLockFreeCache<TKey, TValue> : LockFreeCache<TKey, TValue>
+    internal sealed class ConditionallyStoringLockFreeCache<TKey, TValue> : LockFreeCache<TKey, TValue>, IThreadSafeCacheAccessor<TKey, TValue>
         where TKey : notnull
     {
         #region Fields
@@ -40,10 +41,12 @@ namespace KGySoft.Collections
 
         #endregion
 
-        #region Indexers
+        #region Internal Indexers
 
-        public override TValue this[TKey key]
+        // not as an interface implementation so direct calls can be devirtualized
+        internal new TValue this[TKey key]
         {
+            [MethodImpl(MethodImpl.AggressiveInlining)]
             get
             {
                 if (key == null!)
@@ -70,6 +73,12 @@ namespace KGySoft.Collections
                 return result!;
             }
         }
+
+        #endregion
+
+        #region Explicitly implemented interface indexers
+
+        TValue IThreadSafeCacheAccessor<TKey, TValue>.this[TKey key] => this[key];
 
         #endregion
 

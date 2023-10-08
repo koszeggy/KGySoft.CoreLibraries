@@ -32,7 +32,7 @@ namespace KGySoft.Collections
 
         #region ExpiringValuesCacheAllowParallelLoad class
 
-        private class ExpiringValuesCacheAllowParallelLoad : ExpiringValuesCache<TKey, TValue>
+        private sealed class ExpiringValuesCacheAllowParallelLoad : ExpiringValuesCache<TKey, TValue>
         {
             #region Indexers
 

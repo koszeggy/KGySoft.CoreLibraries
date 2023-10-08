@@ -128,14 +128,14 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         private static ThreadSafeDictionary<Type, ThreadSafeDictionary<Type, List<Delegate>>>? registeredConversions;
 
-        private static IThreadSafeCacheAccessor<Type, int>? sizeOfCache;
-        private static IThreadSafeCacheAccessor<Type, bool>? hasReferenceCache;
-        private static IThreadSafeCacheAccessor<(Type GenTypeDef, TypesKey TypeArgs), Type>? genericTypeCache;
-        private static IThreadSafeCacheAccessor<(MethodInfo GenMethodDef, TypesKey TypeArgs), MethodInfo>? genericMethodsCache;
-        private static IThreadSafeCacheAccessor<Type, ConstructorInfo?>? defaultCtorCache;
-        private static IThreadSafeCacheAccessor<Type, bool>? isDefaultGetHashCodeCache;
+        private static LockFreeCache<Type, int>? sizeOfCache;
+        private static LockFreeCache<Type, bool>? hasReferenceCache;
+        private static LockFreeCache<(Type GenTypeDef, TypesKey TypeArgs), Type>? genericTypeCache;
+        private static LockFreeCache<(MethodInfo GenMethodDef, TypesKey TypeArgs), MethodInfo>? genericMethodsCache;
+        private static LockFreeCache<Type, ConstructorInfo?>? defaultCtorCache;
+        private static LockFreeCache<Type, bool>? isDefaultGetHashCodeCache;
 
-        private static IThreadSafeCacheAccessor<(Type, string), bool>? matchesNameCache;
+        private static LockFreeCache<(Type, string), bool>? matchesNameCache;
 
         // Using TypeConverterAttribute in key instead of TypeConverter because its Equals is by value
         private volatile static LockingDictionary<(Type Type, TypeConverterAttribute Converter), (TypeDescriptionProvider Provider, int Count)>? registeredTypeConverters;
@@ -705,8 +705,8 @@ namespace KGySoft.CoreLibraries
             if (defaultCtorCache == null)
             {
                 Interlocked.CompareExchange(ref defaultCtorCache,
-                    ThreadSafeCacheFactory.Create<Type, ConstructorInfo?>(t => t.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, Type.EmptyTypes, null), LockFreeCacheOptions.Profile128),
-                    null);
+                    new LockFreeCache<Type, ConstructorInfo?>(t => t.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, Type.EmptyTypes, null),
+                        null, LockFreeCacheOptions.Profile128), null);
             }
 
             return defaultCtorCache[type];
@@ -719,7 +719,7 @@ namespace KGySoft.CoreLibraries
         internal static int SizeOf(this Type type)
         {
             if (sizeOfCache == null)
-                Interlocked.CompareExchange(ref sizeOfCache, ThreadSafeCacheFactory.Create<Type, int>(GetSize, LockFreeCacheOptions.Profile128), null);
+                Interlocked.CompareExchange(ref sizeOfCache, new LockFreeCache<Type, int>(GetSize, null, LockFreeCacheOptions.Profile128), null);
 
             return sizeOfCache[type];
         }
@@ -728,7 +728,7 @@ namespace KGySoft.CoreLibraries
         internal static bool IsManaged(this Type type)
         {
             if (hasReferenceCache == null)
-                Interlocked.CompareExchange(ref hasReferenceCache, ThreadSafeCacheFactory.Create<Type, bool>(HasReference, LockFreeCacheOptions.Profile128), null);
+                Interlocked.CompareExchange(ref hasReferenceCache, new LockFreeCache<Type, bool>(HasReference, null, LockFreeCacheOptions.Profile128), null);
             return hasReferenceCache[type];
         }
 
@@ -837,7 +837,7 @@ namespace KGySoft.CoreLibraries
         {
             Debug.Assert(!typeArgs.IsNullOrEmpty());
             if (genericTypeCache == null)
-                Interlocked.CompareExchange(ref genericTypeCache, ThreadSafeCacheFactory.Create<(Type, TypesKey), Type>(CreateGenericType, LockFreeCacheOptions.Profile256), null);
+                Interlocked.CompareExchange(ref genericTypeCache, new LockFreeCache<(Type, TypesKey), Type>(CreateGenericType, null, LockFreeCacheOptions.Profile256), null);
             return genericTypeCache[(genTypeDef, new TypesKey(typeArgs))];
         }
 
@@ -845,7 +845,7 @@ namespace KGySoft.CoreLibraries
         {
             Debug.Assert(!typeArgs.IsNullOrEmpty());
             if (genericMethodsCache == null)
-                Interlocked.CompareExchange(ref genericMethodsCache, ThreadSafeCacheFactory.Create<(MethodInfo, TypesKey), MethodInfo>(CreateGenericMethod, LockFreeCacheOptions.Profile128), null);
+                Interlocked.CompareExchange(ref genericMethodsCache, new LockFreeCache<(MethodInfo, TypesKey), MethodInfo>(CreateGenericMethod, null, LockFreeCacheOptions.Profile128), null);
             return genericMethodsCache[(genMethodDef, new TypesKey(typeArgs))];
         }
 
@@ -968,7 +968,7 @@ namespace KGySoft.CoreLibraries
             if (isDefaultGetHashCodeCache == null)
             {
                 Interlocked.CompareExchange(ref isDefaultGetHashCodeCache,
-                    ThreadSafeCacheFactory.Create<Type, bool>(LoadCacheItem, LockFreeCacheOptions.Profile128),
+                    new LockFreeCache<Type, bool>(LoadCacheItem, null, LockFreeCacheOptions.Profile128),
                     null);
             }
 
@@ -987,7 +987,7 @@ namespace KGySoft.CoreLibraries
             if (matchesNameCache == null)
             {
                 Interlocked.CompareExchange(ref matchesNameCache,
-                    ThreadSafeCacheFactory.Create<(Type, string), bool>(IsNameMatch, LockFreeCacheOptions.Profile128),
+                    new LockFreeCache<(Type, string), bool>(IsNameMatch, null, LockFreeCacheOptions.Profile128),
                     null);
             }
 
@@ -1040,9 +1040,6 @@ namespace KGySoft.CoreLibraries
             {
                 // throwing an exception for unexpected types
                 Type expectedType = expectedTypes.First(t => t.FullName == typeName);
-
-                string actualFullName = expectedType.FullName!;
-                Debug.Assert(actualFullName != null!, "Possible open generic types should be filtered out by the caller");
 
                 string? actualAsmName = expectedType.Assembly.FullName;
                 if (actualAsmName == null)

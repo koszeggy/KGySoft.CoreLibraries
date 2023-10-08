@@ -58,10 +58,10 @@ namespace KGySoft.Reflection
         #region Private Fields
 
         private static Assembly? mscorlibAssembly;
-        private static IThreadSafeCacheAccessor<(string, int), Assembly?>? assemblyCache; // Key: Assembly name + options (as int due to faster GetHashCode)
+        private static ConditionallyStoringLockFreeCache<(string, int), Assembly?>? assemblyCache; // Key: Assembly name + options (as int due to faster GetHashCode)
 
 #if !NET35
-        private static IThreadSafeCacheAccessor<Type, (string?, bool)>? forwardedNamesCache; // Value: Forwarded assembly name + is core identity flag
+        private static LockFreeCache<Type, (string?, bool)>? forwardedNamesCache; // Value: Forwarded assembly name + is core identity flag
 #endif
 
         private static readonly string[] coreLibNames =
@@ -90,23 +90,23 @@ namespace KGySoft.Reflection
 
         #region Private Properties
 
-        private static IThreadSafeCacheAccessor<(string, int), Assembly?> AssemblyCache
+        private static ConditionallyStoringLockFreeCache<(string, int), Assembly?> AssemblyCache
         {
             get
             {
                 if (assemblyCache == null)
-                    Interlocked.CompareExchange(ref assemblyCache, ThreadSafeCacheFactory.Create<(string, int), Assembly?>(TryResolveAssembly, LockFreeCacheOptions.Profile128), null);
+                    Interlocked.CompareExchange(ref assemblyCache, new ConditionallyStoringLockFreeCache<(string, int), Assembly?>(TryResolveAssembly, LockFreeCacheOptions.Profile128), null);
                 return assemblyCache;
             }
         }
 
 #if !NET35
-        private static IThreadSafeCacheAccessor<Type, (string? ForwardedAssemblyName, bool IsCoreIdentity)> ForwardedNamesCache
+        private static LockFreeCache<Type, (string? ForwardedAssemblyName, bool IsCoreIdentity)> ForwardedNamesCache
         {
             get
             {
                 if (forwardedNamesCache == null)
-                    Interlocked.CompareExchange(ref forwardedNamesCache, ThreadSafeCacheFactory.Create<Type, (string?, bool)>(DoGetForwardedAssemblyName, LockFreeCacheOptions.Profile128), null);
+                    Interlocked.CompareExchange(ref forwardedNamesCache, new LockFreeCache<Type, (string?, bool)>(DoGetForwardedAssemblyName, null, LockFreeCacheOptions.Profile128), null);
                 return forwardedNamesCache;
             }
         }

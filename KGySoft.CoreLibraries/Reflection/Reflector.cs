@@ -138,7 +138,7 @@ namespace KGySoft.Reflection
 
         #region Private Fields
 
-        private static IThreadSafeCacheAccessor<Type, string?>? defaultMemberCache;
+        private static LockFreeCache<Type, string?>? defaultMemberCache;
 #if NETFRAMEWORK || NETSTANDARD2_0
         private static bool? canCreateUninitializedObject;
 #endif
@@ -152,7 +152,7 @@ namespace KGySoft.Reflection
         private static Func<object, StrongBox<byte>>? reinterpretAsBoxedByte;
 #endif
 
-        private static IThreadSafeCacheAccessor<(MemberInfo Member, Type Attribute, bool Inherit), Attribute[]>? attributesCache;
+        private static LockFreeCache<(MemberInfo Member, Type Attribute, bool Inherit), Attribute[]>? attributesCache;
 
         #endregion
 
@@ -180,12 +180,12 @@ namespace KGySoft.Reflection
 
         #region Private Properties
 
-        private static IThreadSafeCacheAccessor<Type, string?> DefaultMemberCache
+        private static LockFreeCache<Type, string?> DefaultMemberCache
         {
             get
             {
                 if (defaultMemberCache == null)
-                    Interlocked.CompareExchange(ref defaultMemberCache, ThreadSafeCacheFactory.Create<Type, string?>(GetDefaultMember, LockFreeCacheOptions.Profile128), null);
+                    Interlocked.CompareExchange(ref defaultMemberCache, new LockFreeCache<Type, string?>(GetDefaultMember, null, LockFreeCacheOptions.Profile128), null);
                 return defaultMemberCache;
             }
         }
@@ -3923,8 +3923,8 @@ namespace KGySoft.Reflection
         {
             if (attributesCache == null)
             {
-                Interlocked.CompareExchange(ref attributesCache, ThreadSafeCacheFactory.Create<(MemberInfo Member, Type Attribute, bool Inherit), Attribute[]>(key
-                    => Attribute.GetCustomAttributes(key.Member, key.Attribute, key.Inherit), LockFreeCacheOptions.Profile128), null);
+                Interlocked.CompareExchange(ref attributesCache, new LockFreeCache<(MemberInfo Member, Type Attribute, bool Inherit), Attribute[]>(key
+                    => Attribute.GetCustomAttributes(key.Member, key.Attribute, key.Inherit), null, LockFreeCacheOptions.Profile128), null);
             }
 
             return attributesCache[(member, attributeType, inherit)];

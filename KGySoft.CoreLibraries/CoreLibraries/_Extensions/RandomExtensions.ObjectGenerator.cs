@@ -239,51 +239,51 @@ namespace KGySoft.CoreLibraries
             private static readonly Type eventInfoType = typeof(EventInfo);
             private static readonly Type runtimeEventInfoType = typeof(Console).GetEvent(nameof(Console.CancelKeyPress))!.GetType();
 
-            private static IThreadSafeCacheAccessor<Assembly, Type[]>? assemblyTypesCache;
-            private static IThreadSafeCacheAccessor<Type, Type[]>? typeImplementorsCache;
-            private static IThreadSafeCacheAccessor<(Type GenTypeDef, TypesKey TypeArgs), Type?>? defaultConstructedGenerics;
-            private static IThreadSafeCacheAccessor<Type, Delegate?>? delegatesCache;
+            private static LockFreeCache<Assembly, Type[]>? assemblyTypesCache;
+            private static LockFreeCache<Type, Type[]>? typeImplementorsCache;
+            private static LockFreeCache<(Type GenTypeDef, TypesKey TypeArgs), Type?>? defaultConstructedGenerics;
+            private static LockFreeCache<Type, Delegate?>? delegatesCache;
 
             #endregion
 
             #region Properties
 
-            private static IThreadSafeCacheAccessor<Assembly, Type[]> AssemblyTypesCache
+            private static LockFreeCache<Assembly, Type[]> AssemblyTypesCache
             {
                 get
                 {
                     if (assemblyTypesCache == null)
-                        Interlocked.CompareExchange(ref assemblyTypesCache, ThreadSafeCacheFactory.Create<Assembly, Type[]>(LoadAssemblyTypes, LockFreeCacheOptions.Profile128), null);
+                        Interlocked.CompareExchange(ref assemblyTypesCache, new LockFreeCache<Assembly, Type[]>(LoadAssemblyTypes, null, LockFreeCacheOptions.Profile128), null);
                     return assemblyTypesCache;
                 }
             }
 
-            private static IThreadSafeCacheAccessor<Type, Type[]> TypeImplementorsCache
+            private static LockFreeCache<Type, Type[]> TypeImplementorsCache
             {
                 get
                 {
                     if (typeImplementorsCache == null)
-                        Interlocked.CompareExchange(ref typeImplementorsCache, ThreadSafeCacheFactory.Create<Type, Type[]>(SearchForImplementors, LockFreeCacheOptions.Profile128), null);
+                        Interlocked.CompareExchange(ref typeImplementorsCache, new LockFreeCache<Type, Type[]>(SearchForImplementors, null, LockFreeCacheOptions.Profile128), null);
                     return typeImplementorsCache;
                 }
             }
 
-            private static IThreadSafeCacheAccessor<(Type, TypesKey), Type?> DefaultConstructedGenerics
+            private static LockFreeCache<(Type, TypesKey), Type?> DefaultConstructedGenerics
             {
                 get
                 {
                     if (defaultConstructedGenerics == null)
-                        Interlocked.CompareExchange(ref defaultConstructedGenerics, ThreadSafeCacheFactory.Create<(Type, TypesKey), Type?>(TryCreateDefaultGeneric, LockFreeCacheOptions.Profile128), null);
+                        Interlocked.CompareExchange(ref defaultConstructedGenerics, new LockFreeCache<(Type, TypesKey), Type?>(TryCreateDefaultGeneric, null, LockFreeCacheOptions.Profile128), null);
                     return defaultConstructedGenerics;
                 }
             }
 
-            private static IThreadSafeCacheAccessor<Type, Delegate?> DelegatesCache
+            private static LockFreeCache<Type, Delegate?> DelegatesCache
             {
                 get
                 {
                     if (delegatesCache == null)
-                        Interlocked.CompareExchange(ref delegatesCache, ThreadSafeCacheFactory.Create<Type, Delegate?>(CreateDelegate, LockFreeCacheOptions.Profile128), null);
+                        Interlocked.CompareExchange(ref delegatesCache, new LockFreeCache<Type, Delegate?>(CreateDelegate, null, LockFreeCacheOptions.Profile128), null);
                     return delegatesCache;
                 }
             }
@@ -678,7 +678,7 @@ namespace KGySoft.CoreLibraries
                 if (type.In(fieldInfoType, runtimeFieldInfoType, mdFieldInfoType, rtFieldInfoType))
                 {
                     memberTypes = MemberTypes.Field;
-                    constants = type == mdFieldInfoType ? true : type == rtFieldInfoType ? false : (bool?)null;
+                    constants = type == mdFieldInfoType ? true : type == rtFieldInfoType ? false : null;
                 }
                 else if (type.In(propertyInfoType, runtimePropertyInfoType))
                     memberTypes = MemberTypes.Property;

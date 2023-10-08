@@ -70,7 +70,7 @@ namespace KGySoft.Serialization.Binary
             /// Can contain more elements only for generic collections. Will be instantiated only on deserialization.
             /// Thread safe accessor because the serialization info is stored in a static shared dictionary.
             /// </summary>
-            private IThreadSafeCacheAccessor<Type, CreateInstanceAccessor>? ctorCache;
+            private LockFreeCache<Type, CreateInstanceAccessor>? ctorCache;
 
             #endregion
 
@@ -509,7 +509,7 @@ namespace KGySoft.Serialization.Binary
                 }
 
                 if (ctorCache == null)
-                    Interlocked.CompareExchange(ref ctorCache, ThreadSafeCacheFactory.Create<Type, CreateInstanceAccessor>(GetCtorAccessor, LockFreeCacheOptions.Profile128), null);
+                    Interlocked.CompareExchange(ref ctorCache, new LockFreeCache<Type, CreateInstanceAccessor>(GetCtorAccessor, null, LockFreeCacheOptions.Profile128), null);
                 return ctorCache[descriptor.Type!];
             }
 

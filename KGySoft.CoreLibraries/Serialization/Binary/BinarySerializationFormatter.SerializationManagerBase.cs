@@ -112,8 +112,8 @@ namespace KGySoft.Serialization.Binary
             /// The result is <see cref="DataTypes.Null"/> if the type is ignored or the special support is disabled for it
             /// so it must be determined by the regular ways if it can be serialized.
             /// </summary>
-            private protected static readonly IThreadSafeCacheAccessor<Type, DataTypes> SpecialSupportCache
-                = ThreadSafeCacheFactory.Create<Type, DataTypes>(DetermineSpecialSupport, LockFreeCacheOptions.Profile256);
+            private protected static readonly LockFreeCache<Type, DataTypes> SpecialSupportCache
+                = new(DetermineSpecialSupport, null, LockFreeCacheOptions.Profile256);
 
             #endregion
 

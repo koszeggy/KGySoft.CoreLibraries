@@ -1634,8 +1634,8 @@ namespace KGySoft.Serialization.Binary
             #endregion
         };
 
-        private static readonly IThreadSafeCacheAccessor<Type, Dictionary<Type, IEnumerable<MethodInfo>?>> methodsByAttributeCache
-            = ThreadSafeCacheFactory.Create<Type, Dictionary<Type, IEnumerable<MethodInfo>?>>(_ => new Dictionary<Type, IEnumerable<MethodInfo>?>(4), LockFreeCacheOptions.Profile256);
+        private static readonly LockFreeCache<Type, Dictionary<Type, IEnumerable<MethodInfo>?>> methodsByAttributeCache
+            = new(_ => new Dictionary<Type, IEnumerable<MethodInfo>?>(4), null, LockFreeCacheOptions.Profile256);
 
         /// <summary>
         /// Types that cannot be serialized recursively even by a surrogate, including string and void

@@ -238,9 +238,9 @@ namespace KGySoft.Reflection
 
         #region Static Fields
 
-        private static IThreadSafeCacheAccessor<(string, int), Type?>? typeCacheByString; // Key: Type name + options (as int due to faster GetHashCode)
-        private static IThreadSafeCacheAccessor<(Assembly, string, int), Type?>? typeCacheByAssembly; // Key: Assembly + type name + options
-        private static IThreadSafeCacheAccessor<(Type, int), string>? typeNameCache; // Key: Type + kind (as int due to faster GetHashCode)
+        private static ConditionallyStoringLockFreeCache<(string, int), Type?>? typeCacheByString; // Key: Type name + options (as int due to faster GetHashCode)
+        private static ConditionallyStoringLockFreeCache<(Assembly, string, int), Type?>? typeCacheByAssembly; // Key: Assembly + type name + options
+        private static LockFreeCache<(Type, int), string>? typeNameCache; // Key: Type + kind (as int due to faster GetHashCode)
 
         #endregion
 
@@ -264,32 +264,32 @@ namespace KGySoft.Reflection
 
         #region Properties
 
-        private static IThreadSafeCacheAccessor<(string, int), Type?> TypeCacheByString
+        private static ConditionallyStoringLockFreeCache<(string, int), Type?> TypeCacheByString
         {
             get
             {
                 if (typeCacheByString == null)
-                    Interlocked.CompareExchange(ref typeCacheByString, ThreadSafeCacheFactory.Create<(string, int), Type?>(TryResolveType, LockFreeCacheOptions.Profile256), null);
+                    Interlocked.CompareExchange(ref typeCacheByString, new ConditionallyStoringLockFreeCache<(string, int), Type?>(TryResolveType, LockFreeCacheOptions.Profile256), null);
                 return typeCacheByString;
             }
         }
 
-        private static IThreadSafeCacheAccessor<(Assembly, string, int), Type?> TypeCacheByAssembly
+        private static ConditionallyStoringLockFreeCache<(Assembly, string, int), Type?> TypeCacheByAssembly
         {
             get
             {
                 if (typeCacheByAssembly == null)
-                    Interlocked.CompareExchange(ref typeCacheByAssembly, ThreadSafeCacheFactory.Create<(Assembly, string, int), Type?>(TryResolveTypeByAssembly, LockFreeCacheOptions.Profile256), null);
+                    Interlocked.CompareExchange(ref typeCacheByAssembly, new ConditionallyStoringLockFreeCache<(Assembly, string, int), Type?>(TryResolveTypeByAssembly, LockFreeCacheOptions.Profile256), null);
                 return typeCacheByAssembly;
             }
         }
 
-        private static IThreadSafeCacheAccessor<(Type, int), string> TypeNameCache
+        private static LockFreeCache<(Type, int), string> TypeNameCache
         {
             get
             {
                 if (typeNameCache == null)
-                    Interlocked.CompareExchange(ref typeNameCache, ThreadSafeCacheFactory.Create<(Type, int), string>(FormatType, LockFreeCacheOptions.Profile256), null);
+                    Interlocked.CompareExchange(ref typeNameCache, new LockFreeCache<(Type, int), string>(FormatType, null, LockFreeCacheOptions.Profile256), null);
                 return typeNameCache;
             }
         }

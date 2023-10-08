@@ -31,7 +31,7 @@ namespace KGySoft.CoreLibraries
 
         #region Static Fields
 
-        private static IThreadSafeCacheAccessor<Type, RangeInfo>? cache;
+        private static LockFreeCache<Type, RangeInfo>? cache;
 
         #endregion
 
@@ -142,7 +142,7 @@ namespace KGySoft.CoreLibraries
         internal static RangeInfo GetRangeInfo(Type type)
         {
             if (cache == null)
-                Interlocked.CompareExchange(ref cache, ThreadSafeCacheFactory.Create<Type, RangeInfo>(t => new RangeInfo(t), LockFreeCacheOptions.Profile16), null);
+                Interlocked.CompareExchange(ref cache, new LockFreeCache<Type, RangeInfo>(t => new RangeInfo(t), null, LockFreeCacheOptions.Profile16), null);
             return cache[type];
         }
 

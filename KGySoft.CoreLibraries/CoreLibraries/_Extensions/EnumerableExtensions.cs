@@ -50,7 +50,7 @@ namespace KGySoft.CoreLibraries
     {
         #region Fields
 
-        private static IThreadSafeCacheAccessor<Type, Type>? genericEnumerableCache;
+        private static LockFreeCache<Type, Type>? genericEnumerableCache;
 
         #endregion
 
@@ -2106,7 +2106,7 @@ namespace KGySoft.CoreLibraries
         private static bool IsGenericEnumerableOf([NoEnumeration]this IEnumerable collection, Type genericArgument)
         {
             if (genericEnumerableCache == null)
-                Interlocked.CompareExchange(ref genericEnumerableCache, ThreadSafeCacheFactory.Create<Type, Type>(t => Reflector.IEnumerableGenType.GetGenericType(t), LockFreeCacheOptions.Profile4), null);
+                Interlocked.CompareExchange(ref genericEnumerableCache, new LockFreeCache<Type, Type>(t => Reflector.IEnumerableGenType.GetGenericType(t), null, LockFreeCacheOptions.Profile4), null);
             return genericEnumerableCache[genericArgument].IsInstanceOfType(collection);
         }
 

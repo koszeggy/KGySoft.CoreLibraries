@@ -55,27 +55,27 @@ namespace KGySoft.Reflection
 
         #region ICollection<T>
 
-        private static IThreadSafeCacheAccessor<Type, PropertyAccessor>? propertiesICollection_IsReadOnly;
-        private static IThreadSafeCacheAccessor<Type, MethodAccessor>? methodsICollection_Add;
-        private static IThreadSafeCacheAccessor<Type, MethodAccessor>? methodsICollection_Clear;
-        private static IThreadSafeCacheAccessor<Type, PropertyAccessor>? propertiesICollection_Count;
-        private static IThreadSafeCacheAccessor<Type, MethodAccessor>? methodsICollection_Remove;
+        private static LockFreeCache<Type, PropertyAccessor>? propertiesICollection_IsReadOnly;
+        private static LockFreeCache<Type, MethodAccessor>? methodsICollection_Add;
+        private static LockFreeCache<Type, MethodAccessor>? methodsICollection_Clear;
+        private static LockFreeCache<Type, PropertyAccessor>? propertiesICollection_Count;
+        private static LockFreeCache<Type, MethodAccessor>? methodsICollection_Remove;
 
         #endregion
 
         #region IProducerConsumerCollection<T>
 
 #if !NET35
-        private static IThreadSafeCacheAccessor<Type, MethodAccessor>? methodsIProducerConsumerCollection_TryAdd;
+        private static LockFreeCache<Type, MethodAccessor>? methodsIProducerConsumerCollection_TryAdd;
 #endif
 
         #endregion
 
         #region IList<T>
 
-        private static IThreadSafeCacheAccessor<Type, MethodAccessor>? methodsIList_Insert;
-        private static IThreadSafeCacheAccessor<Type, MethodAccessor>? methodsIList_RemoveAt;
-        private static IThreadSafeCacheAccessor<Type, PropertyAccessor>? propertiesIList_Item;
+        private static LockFreeCache<Type, MethodAccessor>? methodsIList_Insert;
+        private static LockFreeCache<Type, MethodAccessor>? methodsIList_RemoveAt;
+        private static LockFreeCache<Type, PropertyAccessor>? propertiesIList_Item;
 
         #endregion
 
@@ -100,7 +100,7 @@ namespace KGySoft.Reflection
 
         #region IIListProvider<T>
 
-        private static IThreadSafeCacheAccessor<Type, MethodAccessor?>? methodsIIListProvider_GetCount;
+        private static LockFreeCache<Type, MethodAccessor?>? methodsIIListProvider_GetCount;
         private static bool? hasIIListProvider;
         private static Type? typeIIListProvider;
 
@@ -110,14 +110,14 @@ namespace KGySoft.Reflection
 
         #region Any Member
 
-        private static IThreadSafeCacheAccessor<(Type DeclaringType, string PropertyName), PropertyAccessor?>? properties;
-        private static IThreadSafeCacheAccessor<(Type DeclaringType, Type? FieldType, string? FieldNamePattern), FieldAccessor?>? fields;
-        private static IThreadSafeCacheAccessor<(Type DeclaringType, string MethodName), MethodAccessor?>? methodsByName;
-        private static IThreadSafeCacheAccessor<(Type DeclaringType, string MethodName, TypesKey ParameterTypes), MethodAccessor>? methodsByTypes;
-        private static IThreadSafeCacheAccessor<(Type DeclaringType, Type T, string MethodName), MethodAccessor>? staticGenericMethodsByName;
-        private static IThreadSafeCacheAccessor<(Type DeclaringType, TypesKey GenericArguments, string MethodName, TypesKey ParameterTypes), MethodAccessor>? staticGenericMethodsByTypes;
-        private static IThreadSafeCacheAccessor<(Type DeclaringType, TypesKey ParameterTypes), CreateInstanceAccessor>? constructors;
-        private static IThreadSafeCacheAccessor<(Type DeclaringType, TypesKey ParameterTypes), ActionMethodAccessor?>? ctorMethods;
+        private static LockFreeCache<(Type DeclaringType, string PropertyName), PropertyAccessor?>? properties;
+        private static LockFreeCache<(Type DeclaringType, Type? FieldType, string? FieldNamePattern), FieldAccessor?>? fields;
+        private static LockFreeCache<(Type DeclaringType, string MethodName), MethodAccessor?>? methodsByName;
+        private static LockFreeCache<(Type DeclaringType, string MethodName, TypesKey ParameterTypes), MethodAccessor>? methodsByTypes;
+        private static LockFreeCache<(Type DeclaringType, Type T, string MethodName), MethodAccessor>? staticGenericMethodsByName;
+        private static LockFreeCache<(Type DeclaringType, TypesKey GenericArguments, string MethodName, TypesKey ParameterTypes), MethodAccessor>? staticGenericMethodsByTypes;
+        private static LockFreeCache<(Type DeclaringType, TypesKey ParameterTypes), CreateInstanceAccessor>? constructors;
+        private static LockFreeCache<(Type DeclaringType, TypesKey ParameterTypes), ActionMethodAccessor?>? ctorMethods;
 
         #endregion
 
@@ -134,7 +134,7 @@ namespace KGySoft.Reflection
             if (propertiesICollection_IsReadOnly == null)
             {
                 Interlocked.CompareExchange(ref propertiesICollection_IsReadOnly,
-                    ThreadSafeCacheFactory.Create<Type, PropertyAccessor>(i => PropertyAccessor.GetAccessor(i.GetProperty(nameof(ICollection<_>.IsReadOnly))!), LockFreeCacheOptions.Profile16),
+                    new LockFreeCache<Type, PropertyAccessor>(i => PropertyAccessor.GetAccessor(i.GetProperty(nameof(ICollection<_>.IsReadOnly))!), null, LockFreeCacheOptions.Profile16),
                     null);
             }
 
@@ -146,7 +146,7 @@ namespace KGySoft.Reflection
             if (methodsICollection_Add == null)
             {
                 Interlocked.CompareExchange(ref methodsICollection_Add,
-                    ThreadSafeCacheFactory.Create<Type, MethodAccessor>(i => MethodAccessor.GetAccessor(i.GetMethod(nameof(ICollection<_>.Add))!), LockFreeCacheOptions.Profile16),
+                    new LockFreeCache<Type, MethodAccessor>(i => MethodAccessor.GetAccessor(i.GetMethod(nameof(ICollection<_>.Add))!), null, LockFreeCacheOptions.Profile16),
                     null);
             }
 
@@ -158,7 +158,7 @@ namespace KGySoft.Reflection
             if (methodsICollection_Clear == null)
             {
                 Interlocked.CompareExchange(ref methodsICollection_Clear,
-                    ThreadSafeCacheFactory.Create<Type, MethodAccessor>(i => MethodAccessor.GetAccessor(i.GetMethod(nameof(ICollection<_>.Clear))!), LockFreeCacheOptions.Profile16),
+                    new LockFreeCache<Type, MethodAccessor>(i => MethodAccessor.GetAccessor(i.GetMethod(nameof(ICollection<_>.Clear))!), null, LockFreeCacheOptions.Profile16),
                     null);
             }
 
@@ -170,7 +170,7 @@ namespace KGySoft.Reflection
             if (propertiesICollection_Count == null)
             {
                 Interlocked.CompareExchange(ref propertiesICollection_Count,
-                    ThreadSafeCacheFactory.Create<Type, PropertyAccessor>(i => PropertyAccessor.GetAccessor(i.GetProperty(nameof(ICollection<_>.Count))!), LockFreeCacheOptions.Profile16),
+                    new LockFreeCache<Type, PropertyAccessor>(i => PropertyAccessor.GetAccessor(i.GetProperty(nameof(ICollection<_>.Count))!), null, LockFreeCacheOptions.Profile16),
                     null);
             }
 
@@ -182,7 +182,7 @@ namespace KGySoft.Reflection
             if (methodsICollection_Remove == null)
             {
                 Interlocked.CompareExchange(ref methodsICollection_Remove,
-                    ThreadSafeCacheFactory.Create<Type, MethodAccessor>(i => MethodAccessor.GetAccessor(i.GetMethod(nameof(ICollection<_>.Remove))!), LockFreeCacheOptions.Profile16),
+                    new LockFreeCache<Type, MethodAccessor>(i => MethodAccessor.GetAccessor(i.GetMethod(nameof(ICollection<_>.Remove))!), null, LockFreeCacheOptions.Profile16),
                     null);
             }
 
@@ -199,7 +199,7 @@ namespace KGySoft.Reflection
             if (methodsIProducerConsumerCollection_TryAdd == null)
             {
                 Interlocked.CompareExchange(ref methodsIProducerConsumerCollection_TryAdd,
-                    ThreadSafeCacheFactory.Create<Type, MethodAccessor>(i => MethodAccessor.GetAccessor(i.GetMethod(nameof(IProducerConsumerCollection<_>.TryAdd))!), LockFreeCacheOptions.Profile16),
+                    new LockFreeCache<Type, MethodAccessor>(i => MethodAccessor.GetAccessor(i.GetMethod(nameof(IProducerConsumerCollection<_>.TryAdd))!), null, LockFreeCacheOptions.Profile16),
                     null);
             }
 
@@ -216,7 +216,7 @@ namespace KGySoft.Reflection
             if (methodsIList_Insert == null)
             {
                 Interlocked.CompareExchange(ref methodsIList_Insert,
-                    ThreadSafeCacheFactory.Create<Type, MethodAccessor>(i => MethodAccessor.GetAccessor(i.GetMethod(nameof(IList<_>.Insert))!), LockFreeCacheOptions.Profile16),
+                    new LockFreeCache<Type, MethodAccessor>(i => MethodAccessor.GetAccessor(i.GetMethod(nameof(IList<_>.Insert))!), null, LockFreeCacheOptions.Profile16),
                     null);
             }
 
@@ -228,7 +228,7 @@ namespace KGySoft.Reflection
             if (methodsIList_RemoveAt == null)
             {
                 Interlocked.CompareExchange(ref methodsIList_RemoveAt,
-                    ThreadSafeCacheFactory.Create<Type, MethodAccessor>(i => MethodAccessor.GetAccessor(i.GetMethod(nameof(IList<_>.RemoveAt))!), LockFreeCacheOptions.Profile16),
+                    new LockFreeCache<Type, MethodAccessor>(i => MethodAccessor.GetAccessor(i.GetMethod(nameof(IList<_>.RemoveAt))!), null, LockFreeCacheOptions.Profile16),
                     null);
             }
 
@@ -240,7 +240,7 @@ namespace KGySoft.Reflection
             if (propertiesIList_Item == null)
             {
                 Interlocked.CompareExchange(ref propertiesIList_Item,
-                    ThreadSafeCacheFactory.Create<Type, PropertyAccessor>(i => PropertyAccessor.GetAccessor(i.GetProperty("Item")!), LockFreeCacheOptions.Profile16),
+                    new LockFreeCache<Type, PropertyAccessor>(i => PropertyAccessor.GetAccessor(i.GetProperty("Item")!), null, LockFreeCacheOptions.Profile16),
                     null);
             }
 
@@ -310,7 +310,7 @@ namespace KGySoft.Reflection
             }
 
             if (methodsIIListProvider_GetCount == null)
-                Interlocked.CompareExchange(ref methodsIIListProvider_GetCount, ThreadSafeCacheFactory.Create<Type, MethodAccessor?>(GetGetCountMethod, LockFreeCacheOptions.Profile128), null);
+                Interlocked.CompareExchange(ref methodsIIListProvider_GetCount, new LockFreeCache<Type, MethodAccessor?>(GetGetCountMethod, null, LockFreeCacheOptions.Profile128), null);
 
             return methodsIIListProvider_GetCount[genericArgument];
         }
@@ -321,6 +321,7 @@ namespace KGySoft.Reflection
 
         #region Any Member
 
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         private static PropertyAccessor? GetProperty(Type type, string propertyName)
         {
             static PropertyAccessor? GetPropertyAccessor((Type DeclaringType, string PropertyName) key)
@@ -332,10 +333,11 @@ namespace KGySoft.Reflection
             }
 
             if (properties == null)
-                Interlocked.CompareExchange(ref properties, ThreadSafeCacheFactory.Create<(Type, string), PropertyAccessor?>(GetPropertyAccessor, LockFreeCacheOptions.Profile128), null);
+                Interlocked.CompareExchange(ref properties, new LockFreeCache<(Type, string), PropertyAccessor?>(GetPropertyAccessor, null, LockFreeCacheOptions.Profile128), null);
             return properties[(type, propertyName)];
         }
 
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         private static FieldAccessor? GetField(Type type, Type? fieldType, string? fieldNamePattern)
         {
             // Fields are meant to be used for non-visible members either by type or name pattern (or both)
@@ -356,7 +358,7 @@ namespace KGySoft.Reflection
             }
 
             if (fields == null)
-                Interlocked.CompareExchange(ref fields, ThreadSafeCacheFactory.Create<(Type, Type?, string?), FieldAccessor?>(GetFieldAccessor, LockFreeCacheOptions.Profile128), null);
+                Interlocked.CompareExchange(ref fields, new LockFreeCache<(Type, Type?, string?), FieldAccessor?>(GetFieldAccessor, null, LockFreeCacheOptions.Profile128), null);
             return fields[(type, fieldType, fieldNamePattern)];
         }
 
@@ -409,12 +411,12 @@ namespace KGySoft.Reflection
         {
             static MethodAccessor? GetMethodAccessor((Type DeclaringType, string MethodName) key)
             {
-                MethodInfo? method = key.DeclaringType.GetMethod(key.MethodName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                MethodInfo? method = key.DeclaringType.GetMethod(key.MethodName, BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
                 return method == null ? null : MethodAccessor.GetAccessor(method);
             }
 
             if (methodsByName == null)
-                Interlocked.CompareExchange(ref methodsByName, ThreadSafeCacheFactory.Create<(Type, string), MethodAccessor?>(GetMethodAccessor, LockFreeCacheOptions.Profile128), null);
+                Interlocked.CompareExchange(ref methodsByName, new LockFreeCache<(Type, string), MethodAccessor?>(GetMethodAccessor, null, LockFreeCacheOptions.Profile128), null);
             return methodsByName[(type, methodName)];
         }
 
@@ -440,7 +442,7 @@ namespace KGySoft.Reflection
             }
 
             if (methodsByTypes == null)
-                Interlocked.CompareExchange(ref methodsByTypes, ThreadSafeCacheFactory.Create<(Type, string, TypesKey), MethodAccessor>(GetMethodAccessor, LockFreeCacheOptions.Profile128), null);
+                Interlocked.CompareExchange(ref methodsByTypes, new LockFreeCache<(Type, string, TypesKey), MethodAccessor>(GetMethodAccessor, null, LockFreeCacheOptions.Profile128), null);
             return methodsByTypes[(type, methodName, parameterTypes)];
         }
 
@@ -454,7 +456,7 @@ namespace KGySoft.Reflection
             }
 
             if (staticGenericMethodsByName == null)
-                Interlocked.CompareExchange(ref staticGenericMethodsByName, ThreadSafeCacheFactory.Create<(Type, Type, string), MethodAccessor>(GetMethodAccessor, LockFreeCacheOptions.Profile128), null);
+                Interlocked.CompareExchange(ref staticGenericMethodsByName, new LockFreeCache<(Type, Type, string), MethodAccessor>(GetMethodAccessor, null, LockFreeCacheOptions.Profile128), null);
             return staticGenericMethodsByName[(type, typeArgument, methodName)];
         }
 
@@ -490,7 +492,7 @@ namespace KGySoft.Reflection
             }
 
             if (staticGenericMethodsByTypes == null)
-                Interlocked.CompareExchange(ref staticGenericMethodsByTypes, ThreadSafeCacheFactory.Create<(Type, TypesKey, string, TypesKey), MethodAccessor>(GetMethodAccessor, LockFreeCacheOptions.Profile128), null);
+                Interlocked.CompareExchange(ref staticGenericMethodsByTypes, new LockFreeCache<(Type, TypesKey, string, TypesKey), MethodAccessor>(GetMethodAccessor, null, LockFreeCacheOptions.Profile128), null);
             return staticGenericMethodsByTypes[(type, typeArguments, methodName, parameterTypes)];
         }
 
@@ -508,7 +510,7 @@ namespace KGySoft.Reflection
             Debug.Assert(parameterTypes.Types.Length > 0, "At least one parameter is expected.");
 
             if (constructors == null)
-                Interlocked.CompareExchange(ref constructors, ThreadSafeCacheFactory.Create<(Type, TypesKey), CreateInstanceAccessor>(GetCreateInstanceAccessor, LockFreeCacheOptions.Profile128), null);
+                Interlocked.CompareExchange(ref constructors, new LockFreeCache<(Type, TypesKey), CreateInstanceAccessor>(GetCreateInstanceAccessor, null, LockFreeCacheOptions.Profile128), null);
             return constructors[(type, parameterTypes)];
         }
 
@@ -523,7 +525,7 @@ namespace KGySoft.Reflection
             }
 
             if (ctorMethods == null)
-                Interlocked.CompareExchange(ref ctorMethods, ThreadSafeCacheFactory.Create<(Type, TypesKey), ActionMethodAccessor?>(GetCtorMethodAccessor, LockFreeCacheOptions.Profile128), null);
+                Interlocked.CompareExchange(ref ctorMethods, new LockFreeCache<(Type, TypesKey), ActionMethodAccessor?>(GetCtorMethodAccessor, null, LockFreeCacheOptions.Profile128), null);
             return ctorMethods[(type, ctorArgs.ToTypesKey())];
         }
 
@@ -946,6 +948,7 @@ namespace KGySoft.Reflection
         #region Any Member
         // Note: These methods could be completely replaced by Reflector methods but these use a smaller and more direct cache
 
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static FieldInfo GetFieldInfo(this Type type, string fieldNamePattern)
         {
             FieldInfo? field = (FieldInfo?)GetField(type, null, fieldNamePattern)?.MemberInfo;
@@ -954,6 +957,7 @@ namespace KGySoft.Reflection
             return field;
         }
 
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static object? GetPropertyValue(this Type genTypeDef, Type t, string propertyName)
         {
             Type type = genTypeDef.GetGenericType(t);
@@ -963,6 +967,7 @@ namespace KGySoft.Reflection
             return property.Get(null);
         }
 
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static object? GetPropertyValue(object instance, string propertyName)
         {
             PropertyAccessor? property = GetProperty(instance.GetType(), propertyName);
@@ -971,6 +976,7 @@ namespace KGySoft.Reflection
             return property.Get(instance);
         }
 
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static object? GetPropertyValue(this Type type, string propertyName)
         {
             PropertyAccessor? property = GetProperty(type, propertyName);
@@ -979,6 +985,7 @@ namespace KGySoft.Reflection
             return property.Get(null);
         }
 
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static void SetPropertyValue(object instance, string propertyName, object? value)
         {
             PropertyAccessor? property = GetProperty(instance.GetType(), propertyName);
@@ -1038,7 +1045,6 @@ namespace KGySoft.Reflection
 #endif
                 return GetPointerProperty(property, instance);
             }
-
 
 #if NETSTANDARD2_0
             if (!property.GetGetMethod(true).IsStatic && property.DeclaringType?.IsValueType == true)

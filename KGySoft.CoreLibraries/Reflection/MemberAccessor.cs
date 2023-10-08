@@ -86,7 +86,7 @@ namespace KGySoft.Reflection
 
         #region Fields
 
-        private static readonly IThreadSafeCacheAccessor<MemberInfo, MemberAccessor> accessorCache = ThreadSafeCacheFactory.Create<MemberInfo, MemberAccessor>(CreateAccessor, LockFreeCacheOptions.Profile8K);
+        private static readonly LockFreeCache<MemberInfo, MemberAccessor> accessorCache = new(CreateAccessor, null, LockFreeCacheOptions.Profile8K);
 
         #endregion
 

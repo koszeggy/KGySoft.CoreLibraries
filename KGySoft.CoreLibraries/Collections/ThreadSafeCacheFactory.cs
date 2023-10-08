@@ -32,8 +32,6 @@ namespace KGySoft.Collections
     {
         #region Methods
 
-        #region Public Methods
-
         /// <summary>
         /// Creates a thread safe cache instance that can be accessed as an <see cref="IThreadSafeCacheAccessor{TKey,TValue}"/> instance.
         /// </summary>
@@ -87,18 +85,6 @@ namespace KGySoft.Collections
         /// <returns>An <see cref="IThreadSafeCacheAccessor{TKey,TValue}"/> instance that can be used to read the underlying cache in a thread-safe manner.</returns>
         public static IThreadSafeCacheAccessor<TKey, TValue> Create<TKey, TValue>(Func<TKey, TValue> itemLoader, ThreadSafeCacheOptionsBase? options = null) where TKey : notnull
             => Create(itemLoader, null, options);
-
-        #endregion
-
-        #region Internal Methods
-        
-        internal static IThreadSafeCacheAccessor<TKey, TValue> Create<TKey, TValue>(ConditionallyStoringItemLoader<TKey, TValue> itemLoader, LockFreeCacheOptions options)
-            where TKey : notnull
-        {
-            return new ConditionallyStoringLockFreeCache<TKey, TValue>(itemLoader, options);
-        }
-
-        #endregion
 
         #endregion
     }

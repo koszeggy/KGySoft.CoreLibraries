@@ -50,7 +50,7 @@ namespace KGySoft.ComponentModel
         #region Instance Fields
 
         private ValidationResultsCollection? errors, warnings, infos;
-        private IThreadSafeCacheAccessor<string, ValidationResultsCollection>? resultsByNameCache;
+        private LockFreeCache<string, ValidationResultsCollection>? resultsByNameCache;
         private string? combinedMessage;
 
         #endregion
@@ -142,7 +142,7 @@ namespace KGySoft.ComponentModel
                     return Empty;
 
                 if (resultsByNameCache == null)
-                    Interlocked.CompareExchange(ref resultsByNameCache, ThreadSafeCacheFactory.Create<string, ValidationResultsCollection>(FilterByName, LockFreeCacheOptions.Profile128), null);
+                    Interlocked.CompareExchange(ref resultsByNameCache, new LockFreeCache<string, ValidationResultsCollection>(FilterByName, null, LockFreeCacheOptions.Profile128), null);
 
                 // ReSharper disable once ConstantConditionalAccessQualifier - resultsByNameCache can be nullified again in InvalidateCaches, in which rare case we just ignore the cache.
                 // Once a ValidationResultsCollection has been built and returned publicly, it is read-only so can never be invalidated

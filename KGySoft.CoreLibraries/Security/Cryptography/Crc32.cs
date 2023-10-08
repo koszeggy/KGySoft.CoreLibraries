@@ -54,7 +54,7 @@ namespace KGySoft.Security.Cryptography
 
         #region Static Fields
 
-        private static readonly IThreadSafeCacheAccessor<uint, uint[]> tablesCache = ThreadSafeCacheFactory.Create<uint, uint[]>(CreateTable, LockFreeCacheOptions.Profile4);
+        private static readonly LockFreeCache<uint, uint[]> tablesCache = new(CreateTable, null, LockFreeCacheOptions.Profile4);
 
         #endregion
 

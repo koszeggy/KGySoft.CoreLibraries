@@ -112,8 +112,8 @@ namespace KGySoft.ComponentModel
 
         #region Static Fields
 
-        private static readonly IThreadSafeCacheAccessor<Type, StringKeyedDictionary<Type>> reflectedPropertiesCache =
-            ThreadSafeCacheFactory.Create<Type, StringKeyedDictionary<Type>>(GetReflectedProperties, LockFreeCacheOptions.Profile128);
+        private static readonly LockFreeCache<Type, StringKeyedDictionary<Type>> reflectedPropertiesCache =
+            new(GetReflectedProperties, null, LockFreeCacheOptions.Profile128);
 
         private static Func<object, object?> customClone =
             o => o is string || o is Delegate ? o

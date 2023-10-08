@@ -994,12 +994,8 @@ namespace KGySoft.CoreLibraries
         }
 #endif
 
-        #endregion
-
-        #region Private Methods
-
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        private static int GetHashCodeOrdinalNonRandomized(string s)
+        internal static int GetHashCodeOrdinalNonRandomized(string s)
         {
             var result = 13;
 
@@ -1009,6 +1005,10 @@ namespace KGySoft.CoreLibraries
 
             return result;
         }
+
+        #endregion
+
+        #region Private Methods
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
         private static int GetHashCodeOrdinalIgnoreCaseNonRandomized(string s)

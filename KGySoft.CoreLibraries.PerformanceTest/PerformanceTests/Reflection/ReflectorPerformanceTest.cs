@@ -193,6 +193,9 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Reflection
                 .AddCase(() => (int)Reflector.InvokeMethod(t, nameInstance, p1, p2), "Reflector.InvokeMethod (instance by name)")
                 .AddCase(() => (int)Reflector.InvokeMethod(typeof(TestClass), nameStatic, p1, p2), "Reflector.InvokeMethod (static by name)")
 
+                .AddCase(() => (int)Accessors.InvokeMethod(t, nameInstance, p1, p2), "Accessors.InvokeMethod (instance by name)")
+                .AddCase(() => (int)Accessors.InvokeMethod(typeof(TestClass), nameStatic, p1, p2), "Accessors.InvokeMethod (static by name)")
+
                 .DoTest()
                 .DumpResults(Console.Out);
         }
@@ -288,7 +291,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Reflection
             PropertyDescriptorCollection propertyDescriptorCollection = TypeDescriptor.GetProperties(typeof(TestClass));
             PropertyDescriptor propertyDescriptor = propertyDescriptorCollection[nameInstance];
 
-            new PerformanceTest { TestName = "Set Property", Iterations = 1_000_000, TestTime = 25 }
+            new PerformanceTest { TestName = "Set Property", Iterations = 1_000_000, TestTime = 200, Repeat = 3 }
                 .AddCase(() => t.InstanceProperty = value, "Direct set (instance)")
                 .AddCase(() => TestClass.StaticProperty = value, "Direct set (static)")
 
@@ -296,7 +299,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Reflection
                 .AddCase(() => piStatic.SetValue(null, value, null), "PropertyInfo.SetValue (static)")
 
 #if !NET35
-                .AddCase(() => ((dynamic)t).InstanceProperty = value, "Dynamic set (instance)") 
+                .AddCase(() => ((dynamic)t).InstanceProperty = value, "Dynamic set (instance)")
 #endif
 
                 .AddCase(() => typeof(TestClass).GetProperty(nameInstance).SetValue(t, value, null), "Type.GetProperty(name).SetValue (instance)")
@@ -312,8 +315,8 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Reflection
                 .AddCase(() => accessorInstance.SetInstanceValue(t, value), "PropertyAccessor.SetInstanceValue<,>")
                 .AddCase(() => accessorStatic.SetStaticValue(value), "PropertyAccessor.SetStaticValue<>")
 
-                .AddCase(() => PropertyAccessor.GetAccessor(piInstance).Set(t, value), "PropertyAccessor.GetAcceccor(PropertyInfo).Set (instance)")
-                .AddCase(() => PropertyAccessor.GetAccessor(piStatic).Set(null, value), "PropertyAccessor.GetAcceccor(PropertyInfo).Set (static)")
+                .AddCase(() => PropertyAccessor.GetAccessor(piInstance).Set(t, value), "PropertyAccessor.GetAccessor(PropertyInfo).Set (instance)")
+                .AddCase(() => PropertyAccessor.GetAccessor(piStatic).Set(null, value), "PropertyAccessor.GetAccessor(PropertyInfo).Set (static)")
 
                 .AddCase(() => Reflector.SetProperty(t, piInstance, value), "Reflector.SetProperty (instance by PropertyInfo)")
                 .AddCase(() => Reflector.SetProperty(null, piStatic, value), "Reflector.SetProperty (static by PropertyInfo)")
@@ -321,10 +324,15 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Reflection
                 .AddCase(() => Reflector.SetProperty(t, nameInstance, value), "Reflector.SetProperty (instance by name)")
                 .AddCase(() => Reflector.SetProperty(typeof(TestClass), nameStatic, value), "Reflector.SetProperty (static by name)")
 
+                .AddCase(() => Accessors.Set(piInstance, t, value), "Accessors.Set (instance)")
+                .AddCase(() => Accessors.Set(piStatic, null, value), "Accessors.Set (static)")
+
+                .AddCase(() => Accessors.SetPropertyValue(t, nameInstance, value), "Accessors.SetPropertyValue (instance by name)")
+
                 .DoTest()
                 .DumpResults(Console.Out);
 
-            new PerformanceTest<int> { TestName = "Get Property", Iterations = 1_000_000, TestTime = 25 }
+            new PerformanceTest<int> { TestName = "Get Property", Iterations = 1_000_000, TestTime = 200, Repeat = 3 }
                 .AddCase(() => t.InstanceProperty, "Direct get (instance)")
                 .AddCase(() => TestClass.StaticProperty, "Direct get (static)")
 
@@ -332,7 +340,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Reflection
                 .AddCase(() => (int)piStatic.GetValue(null, null), "PropertyInfo.GetValue (static)")
 
 #if !NET35
-                .AddCase(() => ((dynamic)t).InstanceProperty, "Dynamic get (instance)") 
+                .AddCase(() => ((dynamic)t).InstanceProperty, "Dynamic get (instance)")
 #endif
 
                 .AddCase(() => (int)typeof(TestClass).GetProperty(nameInstance).GetValue(t, null), "Type.GetProperty(name).GetValue (instance)")
@@ -356,6 +364,12 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Reflection
 
                 .AddCase(() => (int)Reflector.GetProperty(t, nameInstance), "Reflector.GetProperty (instance by name)")
                 .AddCase(() => (int)Reflector.GetProperty(typeof(TestClass), nameStatic), "Reflector.GetProperty (static by name)")
+
+                .AddCase(() => (int)Accessors.Get(piInstance, t), "Accessors.Get (instance)")
+                .AddCase(() => (int)Accessors.Get(piStatic, null), "Accessors.Get (static)")
+
+                .AddCase(() => (int)Accessors.GetPropertyValue(t, nameInstance), "Accessors.GetPropertyValue (instance by name)")
+                .AddCase(() => (int)Accessors.GetPropertyValue(typeof(TestClass), nameStatic), "Accessors.GetPropertyValue (static by name)")
 
                 .DoTest()
                 .DumpResults(Console.Out);

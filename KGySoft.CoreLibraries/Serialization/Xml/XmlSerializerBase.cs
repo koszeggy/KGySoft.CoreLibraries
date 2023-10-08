@@ -155,11 +155,10 @@ namespace KGySoft.Serialization.Xml
 #endif
         };
 
-        private static readonly IThreadSafeCacheAccessor<Type, bool> trustedTypesCache
-            = ThreadSafeCacheFactory.Create<Type, bool>(IsTypeTrusted, LockFreeCacheOptions.Profile128);
+        private static readonly LockFreeCache<Type, bool> trustedTypesCache = new(IsTypeTrusted, null, LockFreeCacheOptions.Profile128);
 
-        private static readonly IThreadSafeCacheAccessor<(Type, XmlSerializationOptions), (MemberInfo Member, bool CheckIfInstanceIsReadWriteCollection)[]> serializableMembersCache
-            = ThreadSafeCacheFactory.Create<(Type, XmlSerializationOptions), (MemberInfo, bool)[]>(GetSerializableMembers, LockFreeCacheOptions.Profile128);
+        private static readonly LockFreeCache<(Type, XmlSerializationOptions), (MemberInfo Member, bool CheckIfInstanceIsReadWriteCollection)[]> serializableMembersCache
+            = new(GetSerializableMembers, null, LockFreeCacheOptions.Profile128);
 
         #endregion
 
@@ -623,7 +622,7 @@ namespace KGySoft.Serialization.Xml
 
             bool escapeNewline = EscapeNewlineCharacters;
             StringBuilder? escapedResult = null;
-            spacePreserve = IsWhiteSpace(result![0], escapeNewline);
+            spacePreserve = IsWhiteSpace(result[0], escapeNewline);
 
             // checking result for escaping
             for (int i = 0; i < result.Length; i++)
