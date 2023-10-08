@@ -18,10 +18,8 @@
 using System;
 using System.Collections;
 #if !NET35
-using System.Collections.Concurrent;
 #endif
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.ComponentModel;
 #if !NET35
 using System.Runtime.CompilerServices; 
@@ -30,7 +28,6 @@ using System.Runtime.Serialization;
 using System.Xml;
 using System.Xml.Serialization;
 
-using KGySoft.Collections;
 using KGySoft.Serialization.Binary;
 
 #endregion
@@ -46,7 +43,7 @@ using KGySoft.Serialization.Binary;
 namespace KGySoft.Serialization.Xml
 {
     /// <summary>
-    /// Options for serializer methods of <see cref="XmlSerializer"/> class.
+    /// Options for serializer methods of <see cref="Xml.XmlSerializer"/> class.
     /// </summary>
     [Flags]
     public enum XmlSerializationOptions
@@ -56,8 +53,8 @@ namespace KGySoft.Serialization.Xml
         /// <para>With every options disabled only those types are serialized, which are guaranteed to be able to deserialized perfectly. Such types are:
         /// <list type="bullet">
         /// <item><term>Natively supported types</term><description>Primitive types along with their <see cref="Nullable{T}"/> counterpart and the most common framework types.
-        /// See the complete list of the natively supported types at the <strong>Remarks</strong> section of the <see cref="XmlSerializer"/> class.</description></item>
-        /// <item><term><see cref="Enum"/> types</term><description>Please note that in safe mode deserialization their names must be specified as expected custom types.</description></item>
+        /// See the complete list of the natively supported types at the <strong>Remarks</strong> section of the <see cref="Xml.XmlSerializer"/> class.</description></item>
+        /// <item><term><see cref="Enum"/> types</term><description>Please note that in safe mode deserialization they must be specified as expected custom types.</description></item>
         /// <item><term><see cref="Type"/> instances</term><description>Only if they are runtime types. And in safe mode deserialization the natively not supported types must be included in expected custom types.</description></item>
         /// <item><term><see cref="IXmlSerializable"/> instances</term><description>Types that implement the <see cref="IXmlSerializable"/> interface can be serialized.</description></item>
         /// <item><term>Types with <see cref="TypeConverter"/></term><description>If the converter supports serializing to and from <see cref="string"/> type.</description></item>
@@ -66,13 +63,13 @@ namespace KGySoft.Serialization.Xml
         /// <item>The type has a parameterless constructor, or is a value type</item>
         /// <item>It has only public instance fields and properties. For properties, both accessors are public. Static members are ignored.
         /// <note>Compiler-generated backing fields are ignored so types with public auto properties are considered simple.</note></item>
-        /// <item>All fields and properties can be set, or, all read-only fields and properties are either <see cref="IXmlSerializable"/> implementations or collections of the types enlisted at next main bullet point.</item>
+        /// <item>All fields and properties can be set, or, all read-only fields and properties are either <see cref="IXmlSerializable"/> implementations or natively supported collections.</item>
         /// <item>None of the fields and properties are delegates.</item>
         /// <item>The type has no instance events.</item>
         /// </list>
         /// <note>A type can be serialized if these criteria are true for the serialized properties and fields recursively.</note></description></item>
         /// <item><term>Collections</term><description>Arrays, a sort of known lists and dictionaries are supported natively as long as they use a supported comparer.
-        /// See the complete list of the natively supported collections at the <strong>Remarks</strong> section of the <see cref="XmlSerializer"/> class.
+        /// See the complete list of the natively supported collections at the <strong>Remarks</strong> section of the <see cref="Xml.XmlSerializer"/> class.
         /// To support other collections you can use fallback options, for example <see cref="XmlSerializationOptions.RecursiveSerializationAsFallback"/>.
         /// </description></item>
         /// </list></para>
@@ -82,8 +79,8 @@ namespace KGySoft.Serialization.Xml
         /// <summary>
         /// <para>If enabled, collection elements and non binary-serialized complex objects will be identified by the assembly qualified type name; otherwise, only by full type name.
         /// Using fully qualified names makes possible to automatically load the assembly of a referenced type (unless safe mode is used on deserialization). Partial identity match is allowed,
-        /// so type resolving tolerates assembly version change. When resolving non-fully qualified type names, its assembly must be loaded before the deserialization;
-        /// otherwise, the type resolving will fail.</para>
+        /// so type resolving tolerates assembly version change. When resolving non-fully qualified type names, their assembly must be loaded before the deserialization;
+        /// otherwise, the type resolving will fail, even in non-safe mode.</para>
         /// <note type="security">When using <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.DeserializeSafe">DeserializeSafe</see>
         /// and <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.DeserializeContentSafe">DeserializeContentSafe</see> methods, no assemblies will be loaded
         /// during the deserialization, even when types use fully qualified names.</note>
@@ -152,7 +149,7 @@ namespace KGySoft.Serialization.Xml
         IgnoreShouldSerialize = 1 << 6,
 
         /// <summary>
-        /// <para>If enabled, <see cref="XmlSerializer"/> ignores <see cref="IXmlSerializable"/> implementations.</para>
+        /// <para>If enabled, <see cref="Xml.XmlSerializer"/> ignores <see cref="IXmlSerializable"/> implementations.</para>
         /// <para>Default state at serialization methods: <strong>Disabled</strong></para>
         /// </summary>
         IgnoreIXmlSerializable = 1 << 7,

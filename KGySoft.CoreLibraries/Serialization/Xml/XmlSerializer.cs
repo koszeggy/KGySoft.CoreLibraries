@@ -56,13 +56,10 @@ namespace KGySoft.Serialization.Xml
     /// <see cref="XElement"/>, <see cref="XmlWriter"/>, any <see cref="TextWriter"/> and any <see cref="Stream"/> implementations.
     /// </summary>
     /// <remarks>
-    /// <note type="security"><para>The <see cref="XmlSerializer"/> supports polymorphism and stores type information whenever the type of a member or collection element differs from the
-    /// type of the stored instance. If the XML content to deserialize is from an untrusted source (eg. remote service, file or database) make sure to use
+    /// <note type="security">The <see cref="XmlSerializer"/> supports polymorphism and stores type information whenever the type of a member or collection element differs from the
+    /// type of the member or collection element type. If the XML content to deserialize is from an untrusted source (eg. remote service, file or database) make sure to use
     /// the <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.DeserializeSafe">DeserializeSafe</see> or <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.DeserializeContentSafe">DeserializeContentSafe</see>
-    /// methods to prevent resolving any type names during the deserialization.
-    /// They require to specify every natively not supported type that can occur in the serialized data whose names then will be mapped to the specified expected types.</para>
-    /// <para>The <see cref="XmlSerializer"/> can only create objects by using their default constructor and is able to set the public fields and properties.
-    /// It can also create collections by special initializer constructors and can populate them by the standard interface implementations.</para></note>
+    /// methods to prevent resolving any type names during the deserialization. They require to specify every natively not supported type that can occur in the serialized data whose names then will be mapped to the specified expected types.</note>
     /// <para><see cref="XmlSerializer"/> supports serialization of any simple types and complex objects with their public properties and fields as well as several collection types.
     /// <note>Unlike the <a href="https://docs.microsoft.com/en-us/dotnet/api/system.xml.serialization.xmlserializer" target="_blank">System.Xml.Serialization.XmlSerializer</a> class,
     /// this <see cref="XmlSerializer"/> is not designed for customizing output format (though <see cref="IXmlSerializable"/> implementations are considered). Not even <c>Xml...Attribute</c>s
@@ -96,13 +93,19 @@ namespace KGySoft.Serialization.Xml
     /// <para>You can use <see cref="XmlSerializationOptions.RecursiveSerializationAsFallback"/> option to enable recursive serialization of every type of objects and collections. A collection type can be serialized if
     /// it implements the <see cref="ICollection{T}"/>, <see cref="IList"/> or <see cref="IDictionary"/> interfaces, and it can be deserialized if it has a default constructor, or an initializer constructor with a single parameter that can accept an <see cref="Array"/>
     /// or <see cref="List{T}"/> instance (non-dictionaries) or a <see cref="Dictionary{TKey,TValue}"/> instance (dictionary collections). Non-collection types must have a parameterless constructor to be able to be deserialized.
-    /// <note type="caution">Enabling the <see cref="XmlSerializationOptions.RecursiveSerializationAsFallback"/> option does not guarantee that the deserialized instances will be the same as the original ones.</note>
+    /// <note type="caution">Enabling the <see cref="XmlSerializationOptions.RecursiveSerializationAsFallback"/> option does not guarantee that the deserialized instances will be the same as the original ones.
+    /// The <see cref="XmlSerializer"/> can only instantiate objects by using their default constructor and is able to set the public fields and properties.
+    /// It can also create collections by special initializer constructors and can populate them by the standard interface implementations.</note>
     /// </para>
     /// <para>If <see cref="XmlSerializationOptions.BinarySerializationAsFallback"/> option is enabled, then types without a native support and appropriate <see cref="TypeConverter"/> will be serialized into a binary stream, which
     /// will be stored in the result XML. Though this provides the best compatibility of any type, it hides the whole inner structure of the serialized object. If a root level object without native support is serialized by the
     /// <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.Serialize">Serialize</see> using the <see cref="XmlSerializationOptions.BinarySerializationAsFallback"/>, then the whole XML result will be a single node with the binary content.
-    /// <note>To use binary serialization only for some types or properties you can specify the <see cref="BinaryTypeConverter"/> by the <see cref="TypeConverterAttribute"/> for a property or type
-    /// (or you can use the <see cref="CoreLibraries.TypeExtensions.RegisterTypeConverter{TConverter}">RegisterTypeConverter</see> extension method for types).</note>
+    /// The binary serialization is performed by the <see cref="BinarySerializationFormatter"/> class. In safe mode deserialization the specified expected types must include the types
+    /// present in the embedded binary stream(s) by name.
+    /// <note>To use binary serialization only for some types or properties you can specify the <see cref="BinaryTypeConverter"/> by the <see cref="TypeConverterAttribute"/> for a property, field or type
+    /// but please note that it will always perform a safe deserialization specifying only the type of the element as expected type so you cannot use it if the
+    /// corresponding type uses some type internally that is not supported by the <see cref="BinarySerializationFormatter"/> natively.
+    /// You can use also the <see cref="TypeExtensions.RegisterTypeConverter{TConverter}">RegisterTypeConverter</see> extension method to specify a type converter for types.</note>
     /// </para>
     /// <para>See the <see cref="XmlSerializationOptions"/> enumeration for further options.</para>
     /// <h2>Natively supported types</h2>
@@ -191,8 +194,8 @@ namespace KGySoft.Serialization.Xml
     /// but not for collection elements. And in many cases it simply cannot be predefined in advance what derived types will be used at run-time.</description></item>
     /// <item><term>Collections with read-only properties</term><description>Usually collection properties can be read-only. But to be able to use the system serializer we need to define a setter for such properties; otherwise, serialization may fail.
     /// This <see cref="XmlSerializer"/> does not require setter accessor for a collection property if the property is not <see langword="null"/> after initialization and can be populated by using the usual collection interfaces.</description></item>
-    /// <item><term>Objects without default constructors</term><description>The system serializer requires that the deserialized types have default constructors. On deserializing fields and properties, this <see cref="XmlSerializer"/> implementation tries to use
-    /// the return value of the members. If they are not <see langword="null"/> after creating their container object, then the returned instances will be used instead of creating a new instance.</description></item>
+    /// <item><term>Objects without default constructors</term><description>The system serializer requires that the deserialized types have default constructors. On deserializing fields and properties, this <see cref="XmlSerializer"/> implementation
+    /// is able to use the returned value of the members. If they are not <see langword="null"/> after creating their container object, then the returned instances can be reused instead of creating a new instance.</description></item>
     /// </list></para>
     /// </remarks>
     /// <example>

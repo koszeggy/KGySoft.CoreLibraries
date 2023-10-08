@@ -62,6 +62,7 @@ namespace KGySoft.Serialization.Binary
         /// if enabled. To be able to serialize string and array reference fields they must be decorated by <see cref="MarshalAsAttribute"/> using
         /// <see cref="UnmanagedType.ByValTStr"/> or <see cref="UnmanagedType.ByValArray"/>, respectively.
         /// </note></para>
+        /// <note>This option is obsolete. Use the <see cref="CompactSerializationOfStructures"/> flag instead.</note>
         /// <para>This flag is considered on serialization.</para>
         /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
         /// </summary>
