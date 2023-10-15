@@ -128,10 +128,12 @@ namespace KGySoft.Reflection
     {
         #region Fields
 
-        private Delegate? getter;
-        private Delegate? setter;
-        private Delegate? genericGetter;
+        private Action<object?, object?, object?[]?>? generalSetter;
+        private Func<object?, object?[]?, object?>? generalGetter;
         private Delegate? genericSetter;
+        private Delegate? genericGetter;
+        private Delegate? nonGenericSetter;
+        private Delegate? nonGenericGetter;
 
         #endregion
 
@@ -154,10 +156,12 @@ namespace KGySoft.Reflection
         #region Private Protected Properties
 
         private protected PropertyInfo Property => (PropertyInfo)MemberInfo;
-        private protected Delegate Getter => getter ??= CreateGetter();
-        private protected Delegate Setter => setter ??= CreateSetter();
-        private protected Delegate GenericGetter => genericGetter ??= CreateGenericGetter();
+        private protected Action<object?, object?, object?[]?> GeneralSetter => generalSetter ??= CreateGeneralSetter();
+        private protected Func<object?, object?[]?, object?> GeneralGetter => generalGetter ??= CreateGeneralGetter();
         private protected Delegate GenericSetter => genericSetter ??= CreateGenericSetter();
+        private protected Delegate GenericGetter => genericGetter ??= CreateGenericGetter();
+        private protected Delegate NonGenericSetter => nonGenericSetter ??= CreateNonGenericSetter();
+        private protected Delegate NonGenericGetter => nonGenericGetter ??= CreateNonGenericGetter();
 
         #endregion
 
@@ -254,7 +258,53 @@ namespace KGySoft.Reflection
         /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a read-only property.</exception>
         /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="PropertyAccessor"/>
         /// represents a read-only property or its declaring type is a value type.</exception>
-        public abstract void Set(object? instance, object? value, params object?[]? indexParameters);
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+            Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
+        public void Set(object? instance, object? value, params object?[]? indexParameters)
+        {
+            try
+            {
+                GeneralSetter.Invoke(instance, value, indexParameters);
+            }
+            catch (Exception e)
+            {
+                // Post-validation if there was any exception
+                PostValidate(instance, value, indexParameters, e, true, true);
+            }
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+            Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
+        public void Set(object? instance, object? value)
+        {
+            try
+            {
+                ((Action<object?, object?>)NonGenericSetter).Invoke(instance, value);
+            }
+            catch (Exception e)
+            {
+                // Post-validation if there was any exception
+                PostValidate(instance, value, Reflector.EmptyObjects, e, true, false);
+            }
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+            Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
+        public void Set(object? instance, object? value, object? index)
+        {
+            try
+            {
+                ((Action<object?, object?, object?>)NonGenericSetter).Invoke(instance, value, index);
+            }
+            catch (Exception e)
+            {
+                // Post-validation if there was any exception
+                PostValidate(instance, value, new[] { index }, e, true, false);
+            }
+        }
 
         /// <summary>
         /// Gets the value of the property.
@@ -282,7 +332,56 @@ namespace KGySoft.Reflection
         /// <br/>-or-
         /// <br/><paramref name="indexParameters"/> has too few elements.</exception>
         /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a write-only property.</exception>
-        public abstract object? Get(object? instance, params object?[]? indexParameters);
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+            Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
+        public object? Get(object? instance, params object?[]? indexParameters)
+        {
+            try
+            {
+                return GeneralGetter.Invoke(instance, indexParameters);
+            }
+            catch (Exception e)
+            {
+                // Post-validation if there was any exception
+                PostValidate(instance, null, indexParameters, e, false, true);
+                return null; // actually never reached, just to satisfy the compiler
+            }
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+            Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
+        public object? Get(object? instance)
+        {
+            try
+            {
+                return ((Func<object?, object?>)NonGenericGetter).Invoke(instance);
+            }
+            catch (Exception e)
+            {
+                // Post-validation if there was any exception
+                PostValidate(instance, null, Reflector.EmptyObjects, e, false, true);
+                return null; // actually never reached, just to satisfy the compiler
+            }
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+            Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
+        public object? Get(object? instance, object? index)
+        {
+            try
+            {
+                return ((Func<object?, object?, object?>)NonGenericGetter).Invoke(instance, index);
+            }
+            catch (Exception e)
+            {
+                // Post-validation if there was any exception
+                PostValidate(instance, null, new[] { index }, e, false, true);
+                return null; // actually never reached, just to satisfy the compiler
+            }
+        }
 
         /// <summary>
         /// Sets the strongly typed value of a static property. If the type of the property is not known at compile time
@@ -492,14 +591,20 @@ namespace KGySoft.Reflection
 
         #region Private Protected Methods
 
-        private protected abstract Delegate CreateGetter();
-        private protected abstract Delegate CreateSetter();
-        private protected abstract Delegate CreateGenericGetter();
+        private protected abstract Action<object?, object?, object?[]?> CreateGeneralSetter();
+        private protected abstract Func<object?, object?[]?, object?> CreateGeneralGetter();
         private protected abstract Delegate CreateGenericSetter();
+        private protected abstract Delegate CreateGenericGetter();
+        private protected abstract Delegate CreateNonGenericSetter();
+        private protected abstract Delegate CreateNonGenericGetter();
+
+        #endregion
+
+        #region Private Methods
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         [ContractAnnotation("=> halt"), DoesNotReturn]
-        private protected void PostValidate(object? instance, object? value, object?[]? indexParameters, Exception exception, bool isSetter)
+        private void PostValidate(object? instance, object? value, object?[]? indexParameters, Exception exception, bool isSetter, bool anyParams)
         {
             if (!IsStatic)
             {
@@ -524,15 +629,31 @@ namespace KGySoft.Reflection
             if (ParameterTypes.Length > 0)
             {
                 if (indexParameters == null)
+                {
+                    Debug.Assert(anyParams);
                     Throw.ArgumentNullException(Argument.indexParameters, Res.ArgumentNull);
-                if (indexParameters.Length == 0)
+                }
+
+                if (indexParameters.Length == 0 && anyParams)
                     Throw.ArgumentException(Argument.indexParameters, Res.ReflectionEmptyIndices);
-                if (indexParameters.Length < ParameterTypes.Length)
-                    Throw.ArgumentException(Argument.indexParameters, Res.ReflectionParametersInvalid);
+                if (indexParameters.Length != ParameterTypes.Length)
+                {
+                    string message = Res.ReflectionIndexerParamsLengthMismatch(ParameterTypes.Length, indexParameters.Length);
+                    if (anyParams)
+                        Throw.ArgumentException(Argument.indexParameters, message);
+                    else
+                        Throw.ArgumentException(message);
+                }
+
                 for (int i = 0; i < ParameterTypes.Length; i++)
                 {
                     if (!ParameterTypes[i].CanAcceptValue(indexParameters[i]))
-                        Throw.ArgumentException(Argument.indexParameters, Res.ReflectionParametersInvalid);
+                    {
+                        if (anyParams)
+                            Throw.ArgumentException(Argument.indexParameters, Res.ElementNotAnInstanceOfType(i, ParameterTypes[i]));
+                        else
+                            Throw.ArgumentException("index", Res.NotAnInstanceOfType(ParameterTypes[i]));
+                    }
                 }
             }
 
@@ -541,10 +662,6 @@ namespace KGySoft.Reflection
             // exceptions from the property itself: re-throwing the original exception
             ExceptionDispatchInfo.Capture(exception).Throw();
         }
-
-        #endregion
-
-        #region Private Methods
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         private T ThrowStatic<T>() => !IsStatic

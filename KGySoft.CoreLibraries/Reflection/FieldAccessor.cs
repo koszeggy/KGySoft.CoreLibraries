@@ -15,8 +15,6 @@
 
 #region Usings
 
-#region Used Namespaces
-
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -30,15 +28,6 @@ using System.Runtime.ExceptionServices;
 
 using KGySoft.Annotations;
 using KGySoft.CoreLibraries;
-
-#endregion
-
-#region Used Aliases
-
-using NonGenericSetter = System.Action<object?, object?>;
-using NonGenericGetter = System.Func<object?, object?>;
-
-#endregion
 
 #endregion
 
@@ -149,10 +138,10 @@ namespace KGySoft.Reflection
 
         #region Fields
 
-        private NonGenericGetter? getter;
-        private NonGenericSetter? setter;
-        private Delegate? genericGetter;
+        private Action<object?, object?>? setter;
+        private Func<object?, object?>? getter;
         private Delegate? genericSetter;
+        private Delegate? genericGetter;
 
         #endregion
 
@@ -180,10 +169,10 @@ namespace KGySoft.Reflection
         #region Private Properties
 
         private FieldInfo Field => (FieldInfo)MemberInfo;
-        private NonGenericGetter Getter => getter ??= CreateGetter();
-        private NonGenericSetter Setter => setter ??= CreateSetter();
-        private Delegate GenericGetter => genericGetter ??= CreateGenericGetter();
+        private Action<object?, object?> Setter => setter ??= CreateSetter();
+        private Func<object?, object?> Getter => getter ??= CreateGetter();
         private Delegate GenericSetter => genericSetter ??= CreateGenericSetter();
+        private Delegate GenericGetter => genericGetter ??= CreateGenericGetter();
 
         #endregion
 
@@ -424,7 +413,7 @@ namespace KGySoft.Reflection
 
         #region Private Methods
 
-        private NonGenericGetter CreateGetter()
+        private Func<object?, object?> CreateGetter()
         {
             Type? declaringType = Field.DeclaringType;
             if (!Field.IsStatic && declaringType == null)
@@ -438,13 +427,13 @@ namespace KGySoft.Reflection
                     Field.IsStatic ? null : Expression.Convert(instanceParameter, declaringType!), // (TInstance)instance
                     Field);
 
-            Expression<NonGenericGetter> lambda = Expression.Lambda<NonGenericGetter>(
+            var lambda = Expression.Lambda<Func<object?, object?>>(
                     Expression.Convert(member, Reflector.ObjectType), // object return type
                     instanceParameter); // instance (object)
             return lambda.Compile();
         }
 
-        private NonGenericSetter CreateSetter()
+        private Action<object?, object?> CreateSetter()
         {
             Type? declaringType = Field.DeclaringType;
             if (IsConstant)
@@ -469,7 +458,7 @@ namespace KGySoft.Reflection
                 Field);
 
             BinaryExpression assign = Expression.Assign(member, castValue);
-            Expression<NonGenericSetter> lambda = Expression.Lambda<NonGenericSetter>(
+            Expression<NonGenericSetter> lambda = Expression.Lambda<Action<object?, object?>>(
                 assign,
                 instanceParameter, // instance (object)
                 valueParameter);
@@ -494,7 +483,7 @@ namespace KGySoft.Reflection
             il.Emit(Field.IsStatic ? OpCodes.Stsfld : OpCodes.Stfld, Field); // processing assignment
             il.Emit(OpCodes.Ret); // returning without return value
 
-            return (NonGenericSetter)dm.CreateDelegate(typeof(NonGenericSetter));
+            return (Action<object?, object?>)dm.CreateDelegate(typeof(Action<object?, object?>));
 #endif
         }
 

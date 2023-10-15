@@ -52,11 +52,12 @@ namespace KGySoft
                 Throw.ArgumentNullException(arg ?? Argument.value);
         }
 
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static void ArgumentException(string message, Exception? inner = null) => throw CreateArgumentException(null, message, inner);
+        [ContractAnnotation("=> halt")][DoesNotReturn]internal static void ArgumentException(string message, Exception? inner = null) => throw CreateArgumentException((string?)null, message, inner);
+        [ContractAnnotation("=> halt")][DoesNotReturn]internal static void ArgumentException(string? paramName, string message, Exception? inner = null) => throw CreateArgumentException(paramName, message, inner);
         [ContractAnnotation("=> halt")][DoesNotReturn]internal static void ArgumentException(Argument arg, string message) => throw CreateArgumentException(arg, message);
         [ContractAnnotation("=> halt")][DoesNotReturn]internal static void ArgumentException(Argument arg, string message, Exception? inner) => throw CreateArgumentException(arg, message, inner);
         [ContractAnnotation("=> halt")][DoesNotReturn]internal static T ArgumentException<T>(Argument arg, string message) => throw CreateArgumentException(arg, message);
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static T ArgumentException<T>(string message, Exception? inner = null) => throw CreateArgumentException(null, message, inner);
+        [ContractAnnotation("=> halt")][DoesNotReturn]internal static T ArgumentException<T>(string message, Exception? inner = null) => throw CreateArgumentException((string?)null, message, inner);
 
         [ContractAnnotation("=> halt")][DoesNotReturn]internal static void ArgumentOutOfRangeException(Argument arg) => throw CreateArgumentOutOfRangeException(arg, Res.ArgumentOutOfRange);
         [ContractAnnotation("=> halt")][DoesNotReturn]internal static void ArgumentOutOfRangeException(Argument arg, string message) => throw CreateArgumentOutOfRangeException(arg, message);
@@ -127,6 +128,7 @@ namespace KGySoft
         private static Exception CreateArgumentNullException(string arg, string message) => new ArgumentNullException(arg, message);
         private static Exception CreateArgumentNullException(Argument arg, string message) => CreateArgumentNullException(Enum<Argument>.ToString(arg), message);
         private static Exception CreateArgumentException(Argument? arg, string message, Exception? inner = null) => arg.HasValue ? new ArgumentException(message, Enum<Argument>.ToString(arg.Value), inner) : new ArgumentException(message, inner);
+        private static Exception CreateArgumentException(string? paramName, string message, Exception? inner = null) => paramName != null ? new ArgumentException(message, paramName, inner) : new ArgumentException(message, inner);
         private static Exception CreateArgumentOutOfRangeException(string paramName, string message) => new ArgumentOutOfRangeException(paramName, message);
         private static Exception CreateArgumentOutOfRangeException(Argument arg, string message) => CreateArgumentOutOfRangeException(Enum<Argument>.ToString(arg), message);
         private static Exception CreateIndexOutOfRangeException(string message) => new IndexOutOfRangeException(message);

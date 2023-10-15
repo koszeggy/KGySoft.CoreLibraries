@@ -15,27 +15,16 @@
 
 #region Usings
 
-#region Used Namespaces
-
 using System;
-using System.Diagnostics.CodeAnalysis;
+#if NETSTANDARD2_0
 using System.Linq.Expressions;
+#endif
 using System.Reflection;
 #if !NETSTANDARD2_0
 using System.Reflection.Emit;
 #endif
-using System.Runtime.CompilerServices;
 
 using KGySoft.CoreLibraries;
-
-#endregion
-
-#region Used Aliases
-
-using NonGenericSetter = System.Action<object?, object?>;
-using NonGenericGetter = System.Func<object?, object?>;
-
-#endregion
 
 #endregion
 
@@ -54,48 +43,57 @@ namespace KGySoft.Reflection
 
         #region Methods
 
-        #region Public Methods
-
-        [MethodImpl(MethodImpl.AggressiveInlining)]
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types",
-            Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
-        public override void Set(object? instance, object? value, params object?[]? indexParameters)
-        {
-            try
-            {
-                // For the best performance not validating the arguments in advance
-                ((NonGenericSetter)Setter).Invoke(instance, value);
-            }
-            catch (Exception e)
-            {
-                // Post-validation if there was any exception
-                PostValidate(instance, value, indexParameters, e, true);
-            }
-        }
-
-        [MethodImpl(MethodImpl.AggressiveInlining)]
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types",
-            Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
-        public override object? Get(object? instance, params object?[]? indexParameters)
-        {
-            try
-            {
-                // For the best performance not validating the arguments in advance
-                return ((NonGenericGetter)Getter).Invoke(instance);
-            }
-            catch (Exception e)
-            {
-                // Post-validation if there was any exception
-                PostValidate(instance, null, indexParameters, e, false);
-                return null; // actually never reached, just to satisfy the compiler
-            }
-        }
-
-        #endregion
-
         #region Private Protected Methods
 
-        private protected override Delegate CreateGetter()
+        private protected override Action<object?, object?, object?[]?> CreateGeneralSetter()
+        {
+            Type? declaringType = Property.DeclaringType;
+            if (Property.PropertyType.IsPointer)
+                Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(Property.PropertyType));
+
+            if (!CanWrite)
+            {
+                if (Property.PropertyType.IsByRef)
+                {
+#if NETSTANDARD2_0
+                    Throw.PlatformNotSupportedException(Res.ReflectionRefReturnTypeNetStandard20(Property.PropertyType));
+#else
+                    DynamicMethod dm = CreateSetRefAsDynamicMethod(null);
+                    return (Action<object?, object?, object?[]?>)dm.CreateDelegate(typeof(Action<object?, object?, object?[]?>));
+#endif
+                }
+
+                Throw.NotSupportedException(Res.ReflectionPropertyHasNoSetter(MemberInfo.DeclaringType, MemberInfo.Name));
+            }
+
+            MethodInfo setterMethod = Property.GetSetMethod(true)!;
+            if (!setterMethod.IsStatic && declaringType == null)
+                Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
+
+#if NETSTANDARD2_0
+            ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
+            ParameterExpression valueParameter = Expression.Parameter(Reflector.ObjectType, "value");
+            ParameterExpression indexParametersParameter = Expression.Parameter(typeof(object[]), "indexParameters");
+            UnaryExpression castValue = Expression.Convert(valueParameter, Property.PropertyType);
+
+            MethodCallExpression setterCall = Expression.Call(
+                setterMethod.IsStatic ? null : Expression.Convert(instanceParameter, declaringType), // (TInstance)instance
+                setterMethod, // setter
+                castValue); // original parameter: (TProp)value
+
+            var lambda = Expression.Lambda<Action<object?, object?, object?[]?>>(
+                setterCall, // no return type
+                instanceParameter, // instance (object)
+                valueParameter, // value (object)
+                indexParametersParameter); // indexParameters (object[]) - ignored
+            return lambda.Compile();
+#else
+            DynamicMethod result = CreateMethodInvokerAsDynamicMethod(setterMethod, DynamicMethodOptions.TreatAsPropertySetter);
+            return (Action<object?, object?, object?[]?>)result.CreateDelegate(typeof(Action<object?, object?, object?[]?>));
+#endif
+        }
+
+        private protected override Func<object?, object?[]?, object?> CreateGeneralGetter()
         {
             if (!CanRead)
                 Throw.NotSupportedException(Res.ReflectionPropertyHasNoGetter(MemberInfo.DeclaringType, MemberInfo.Name));
@@ -109,30 +107,31 @@ namespace KGySoft.Reflection
 #if NETSTANDARD2_0
             if (Property.PropertyType.IsByRef)
                 Throw.PlatformNotSupportedException(Res.ReflectionRefReturnTypeNetStandard20(Property.PropertyType));
-#else
-            // for struct instance properties: Dynamic method
-            if (declaringType!.IsValueType && !getterMethod.IsStatic || Property.PropertyType.IsByRef)
-            {
-                DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(getterMethod, DynamicMethodOptions.OmitParameters);
-                return dm.CreateDelegate(typeof(NonGenericGetter));
-            }
-#endif
 
-            // For classes and static properties: Lambda expression (.NET Standard 2.0: also for structs, mutated content might be lost)
             ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
+            ParameterExpression indexParametersParameter = Expression.Parameter(typeof(object[]), "indexParameters");
 
             MemberExpression member = Expression.Property(
                 getterMethod.IsStatic ? null : Expression.Convert(instanceParameter, declaringType), // (TInstance)instance
                 Property);
 
-            LambdaExpression lambda = Expression.Lambda<NonGenericGetter>(
+            var lambda = Expression.Lambda<Func<object?, object?[]?, object?>>(
                 Expression.Convert(member, Reflector.ObjectType), // object return type
-                instanceParameter); // instance (object)
+                instanceParameter, // instance (object)
+                indexParametersParameter); // indexParameters (object[]) - ignored
             return lambda.Compile();
+#else
+            DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(getterMethod, DynamicMethodOptions.None);
+            return (Func<object?, object?[]?, object?>)dm.CreateDelegate(typeof(Func<object?, object?[]?, object?>));
+#endif
         }
 
-        private protected override Delegate CreateSetter()
+        private protected override Delegate CreateNonGenericSetter()
         {
+            Type? declaringType = Property.DeclaringType;
+            if (Property.PropertyType.IsPointer)
+                Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(Property.PropertyType));
+
             if (!CanWrite)
             {
                 if (Property.PropertyType.IsByRef)
@@ -140,8 +139,8 @@ namespace KGySoft.Reflection
 #if NETSTANDARD2_0
                     Throw.PlatformNotSupportedException(Res.ReflectionRefReturnTypeNetStandard20(Property.PropertyType));
 #else
-                    DynamicMethod dm = CreateSetRefAsDynamicMethod(Property.GetGetMethod(true)!);
-                    return dm.CreateDelegate(typeof(NonGenericSetter));
+                    DynamicMethod dm = CreateSetRefAsDynamicMethod(false);
+                    return (Action<object?, object?>)dm.CreateDelegate(typeof(Action<object?, object?>));
 #endif
                 }
 
@@ -149,11 +148,8 @@ namespace KGySoft.Reflection
             }
 
             MethodInfo setterMethod = Property.GetSetMethod(true)!;
-            Type? declaringType = setterMethod.DeclaringType;
             if (!setterMethod.IsStatic && declaringType == null)
                 Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
-            if (Property.PropertyType.IsPointer)
-                Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(Property.PropertyType));
 
             if (declaringType!.IsValueType && !setterMethod.IsStatic)
             {
@@ -161,13 +157,12 @@ namespace KGySoft.Reflection
                 Throw.PlatformNotSupportedException(Res.ReflectionSetStructPropertyNetStandard20(Property.Name, declaringType));
 #else
                 // for struct instance properties: Dynamic method
-                DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(setterMethod, DynamicMethodOptions.TreatAsPropertySetter);
-                return dm.CreateDelegate(typeof(NonGenericSetter));
+                DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(setterMethod, DynamicMethodOptions.TreatAsPropertySetter | DynamicMethodOptions.ExactParameters);
+                return (Action<object?, object?>)dm.CreateDelegate(typeof(Action<object?, object?>));
 #endif
             }
 
-            // for classes and static properties: Lambda expression
-            // Calling the setter method (works even in .NET 3.5, while Assign is available from .NET 4 only)
+#if NETSTANDARD2_0
             ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
             ParameterExpression valueParameter = Expression.Parameter(Reflector.ObjectType, "value");
             UnaryExpression castValue = Expression.Convert(valueParameter, Property.PropertyType);
@@ -177,18 +172,21 @@ namespace KGySoft.Reflection
                 setterMethod, // setter
                 castValue); // original parameter: (TProp)value
 
-            LambdaExpression lambda = Expression.Lambda<NonGenericSetter>(
+            var lambda = Expression.Lambda<Action<object?, object?>>(
                 setterCall, // no return type
                 instanceParameter, // instance (object)
-                valueParameter);
+                valueParameter); // value (object)
             return lambda.Compile();
+#else
+            DynamicMethod result = CreateMethodInvokerAsDynamicMethod(setterMethod, DynamicMethodOptions.TreatAsPropertySetter | DynamicMethodOptions.ExactParameters);
+            return (Action<object?, object?>)result.CreateDelegate(typeof(Action<object?, object?>));
+#endif
         }
 
-        private protected override Delegate CreateGenericGetter()
+        private protected override Delegate CreateNonGenericGetter()
         {
             if (!CanRead)
                 Throw.NotSupportedException(Res.ReflectionPropertyHasNoGetter(MemberInfo.DeclaringType, MemberInfo.Name));
-
             MethodInfo getterMethod = Property.GetGetMethod(true)!;
             Type? declaringType = getterMethod.DeclaringType;
             if (!getterMethod.IsStatic && declaringType == null)
@@ -196,57 +194,60 @@ namespace KGySoft.Reflection
             if (Property.PropertyType.IsPointer)
                 Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(Property.PropertyType));
 
-            MethodCallExpression getterCall;
-            ParameterExpression instanceParameter;
-            LambdaExpression lambda;
+#if NETSTANDARD2_0
+            if (Property.PropertyType.IsByRef)
+                Throw.PlatformNotSupportedException(Res.ReflectionRefReturnTypeNetStandard20(Property.PropertyType));
 
-            // Static property
-            if (getterMethod.IsStatic)
-            {
-                getterCall = Expression.Call(null, getterMethod);
-                lambda = Expression.Lambda(typeof(Func<>).GetGenericType(Property.PropertyType), getterCall);
-                return lambda.Compile();
-            }
+            ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
+            MemberExpression member = Expression.Property(
+                getterMethod.IsStatic ? null : Expression.Convert(instanceParameter, declaringType), // (TInstance)instance
+                Property);
 
-            // Class instance property
-            if (!declaringType!.IsValueType)
-            {
-                instanceParameter = Expression.Parameter(declaringType, "instance");
-                getterCall = Expression.Call(instanceParameter, getterMethod);
-                lambda = Expression.Lambda(typeof(ReferenceTypeFunction<,>).GetGenericType(declaringType, Property.PropertyType), getterCall, instanceParameter);
-                return lambda.Compile();
-            }
-
-#if NET35
-            // Expression.Call fails for .NET Framework 3.5 if the instance is a ByRef type so using DynamicMethod instead
-            var dm = new DynamicMethod("<GetProperty>__" + Property.Name, Property.PropertyType,
-                new[] { declaringType.MakeByRefType() }, declaringType, true);
-            ILGenerator il = dm.GetILGenerator();
-            il.Emit(OpCodes.Ldarg_0); // loading 0th argument: instance
-            il.Emit(getterMethod.IsVirtual ? OpCodes.Callvirt : OpCodes.Call, getterMethod); // calling the getter
-            il.Emit(OpCodes.Ret); // return
-            return dm.CreateDelegate(typeof(ValueTypeFunction<,>).GetGenericType(declaringType, Property.PropertyType));
-#else
-            // Struct instance property
-            instanceParameter = Expression.Parameter(declaringType.MakeByRefType(), "instance");
-            getterCall = Expression.Call(instanceParameter, getterMethod);
-            lambda = Expression.Lambda(typeof(ValueTypeFunction<,>).GetGenericType(declaringType, Property.PropertyType), getterCall, instanceParameter);
+            var lambda = Expression.Lambda<Func<object?, object?>>(
+                Expression.Convert(member, Reflector.ObjectType), // object return type
+                instanceParameter);
             return lambda.Compile();
+#else
+            DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(getterMethod, DynamicMethodOptions.ExactParameters);
+            return (Func<object?, object?>)dm.CreateDelegate(typeof(Func<object?, object?>));
 #endif
         }
 
         private protected override Delegate CreateGenericSetter()
         {
-            if (!CanWrite)
-                Throw.NotSupportedException(Res.ReflectionPropertyHasNoSetter(MemberInfo.DeclaringType, MemberInfo.Name));
-
-            MethodInfo setterMethod = Property.GetSetMethod(true)!;
-            Type? declaringType = setterMethod.DeclaringType;
-            if (!setterMethod.IsStatic && declaringType == null)
-                Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
             if (Property.PropertyType.IsPointer)
                 Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(Property.PropertyType));
 
+            Type? declaringType = Property.DeclaringType;
+            bool isByRef = Property.PropertyType.IsByRef;
+            bool isStatic = (isByRef ? Property.GetGetMethod(true) : Property.GetSetMethod(true))!.IsStatic;
+
+            if (!isStatic && declaringType == null)
+                Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
+
+            Type propertyType = isByRef ? Property.PropertyType.GetElementType()! : Property.PropertyType;
+            Type delegateType = isStatic ? typeof(Action<>).GetGenericType(propertyType)
+                : declaringType!.IsValueType ? typeof(ValueTypeAction<,>).GetGenericType(declaringType, propertyType)
+                : typeof(ReferenceTypeAction<,>).GetGenericType(declaringType, propertyType);
+
+            if (!CanWrite)
+            {
+                if (isByRef)
+                {
+#if NETSTANDARD2_0
+                    Throw.PlatformNotSupportedException(Res.ReflectionRefReturnTypeNetStandard20(Property.PropertyType));
+#else
+                    DynamicMethod dm = CreateSetRefAsDynamicMethod(true);
+                    return dm.CreateDelegate(delegateType);
+#endif
+                }
+
+                Throw.NotSupportedException(Res.ReflectionPropertyHasNoSetter(MemberInfo.DeclaringType, MemberInfo.Name));
+            }
+
+            MethodInfo setterMethod = Property.GetSetMethod(true)!;
+
+#if NETSTANDARD2_0
             ParameterExpression instanceParameter;
             ParameterExpression valueParameter = Expression.Parameter(Property.PropertyType, "value");
             MethodCallExpression setterCall;
@@ -256,7 +257,7 @@ namespace KGySoft.Reflection
             if (setterMethod.IsStatic)
             {
                 setterCall = Expression.Call(null, setterMethod, valueParameter);
-                lambda = Expression.Lambda(typeof(Action<>).GetGenericType(Property.PropertyType), setterCall, valueParameter);
+                lambda = Expression.Lambda(delegateType, setterCall, valueParameter);
                 return lambda.Compile();
             }
 
@@ -265,26 +266,74 @@ namespace KGySoft.Reflection
             {
                 instanceParameter = Expression.Parameter(declaringType, "instance");
                 setterCall = Expression.Call(instanceParameter, setterMethod, valueParameter);
-                lambda = Expression.Lambda(typeof(ReferenceTypeAction<,>).GetGenericType(declaringType, Property.PropertyType), setterCall, instanceParameter, valueParameter);
+                lambda = Expression.Lambda(delegateType, setterCall, instanceParameter, valueParameter);
                 return lambda.Compile();
             }
 
-#if NET35
-            // Expression.Call fails for .NET Framework 3.5 if the instance is a ByRef type so using DynamicMethod instead
-            var dm = new DynamicMethod("<SetProperty>__" + Property.Name, Reflector.VoidType,
-                new[] { declaringType.MakeByRefType(), Property.PropertyType }, declaringType, true);
-            ILGenerator il = dm.GetILGenerator();
-            il.Emit(OpCodes.Ldarg_0); // loading 0th argument: instance
-            il.Emit(OpCodes.Ldarg_1); // loading 1st argument: value
-            il.Emit(setterMethod.IsVirtual ? OpCodes.Callvirt : OpCodes.Call, setterMethod); // calling the setter
-            il.Emit(OpCodes.Ret); // return
-            return dm.CreateDelegate(typeof(ValueTypeAction<,>).GetGenericType(declaringType, Property.PropertyType));
-#else
             // Struct instance property
             instanceParameter = Expression.Parameter(declaringType.MakeByRefType(), "instance");
             setterCall = Expression.Call(instanceParameter, setterMethod, valueParameter);
-            lambda = Expression.Lambda(typeof(ValueTypeAction<,>).GetGenericType(declaringType, Property.PropertyType), setterCall, instanceParameter, valueParameter);
+            lambda = Expression.Lambda(delegateType, setterCall, instanceParameter, valueParameter);
             return lambda.Compile();
+#else
+            DynamicMethod result = CreateMethodInvokerAsDynamicMethod(setterMethod, DynamicMethodOptions.TreatAsPropertySetter | DynamicMethodOptions.ExactParameters | DynamicMethodOptions.StronglyTyped);
+            return result.CreateDelegate(delegateType);
+#endif
+        }
+
+        private protected override Delegate CreateGenericGetter()
+        {
+            if (!CanRead)
+                Throw.NotSupportedException(Res.ReflectionPropertyHasNoGetter(MemberInfo.DeclaringType, MemberInfo.Name));
+
+            MethodInfo getterMethod = Property.GetGetMethod(true)!;
+            Type? declaringType = getterMethod.DeclaringType;
+            bool isStatic = getterMethod.IsStatic;
+            if (!isStatic && declaringType == null)
+                Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
+            if (Property.PropertyType.IsPointer)
+                Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(Property.PropertyType));
+
+            bool isByRef = Property.PropertyType.IsByRef;
+            Type propertyType = isByRef ? Property.PropertyType.GetElementType()! : Property.PropertyType;
+            bool isValueType = declaringType?.IsValueType == true;
+            Type delegateType = isStatic
+                ? typeof(Func<>).GetGenericType(propertyType)
+                : (isValueType ? typeof(ValueTypeFunction<,>) : typeof(ReferenceTypeFunction<,>)).GetGenericType(declaringType!, propertyType);
+
+#if NETSTANDARD2_0
+            if (isByRef)
+                Throw.PlatformNotSupportedException(Res.ReflectionRefReturnTypeNetStandard20(Property.PropertyType));
+    
+            MethodCallExpression getterCall;
+            ParameterExpression instanceParameter;
+            LambdaExpression lambda;
+
+            // Static property
+            if (getterMethod.IsStatic)
+            {
+                getterCall = Expression.Call(null, getterMethod);
+                lambda = Expression.Lambda(delegateType, getterCall);
+                return lambda.Compile();
+            }
+
+            // Class instance property
+            if (!declaringType!.IsValueType)
+            {
+                instanceParameter = Expression.Parameter(declaringType, "instance");
+                getterCall = Expression.Call(instanceParameter, getterMethod);
+                lambda = Expression.Lambda(delegateType, getterCall, instanceParameter);
+                return lambda.Compile();
+            }
+
+            // Struct instance property
+            instanceParameter = Expression.Parameter(declaringType.MakeByRefType(), "instance");
+            getterCall = Expression.Call(instanceParameter, getterMethod);
+            lambda = Expression.Lambda(delegateType, getterCall, instanceParameter);
+            return lambda.Compile();
+#else
+            DynamicMethod result = CreateMethodInvokerAsDynamicMethod(getterMethod, DynamicMethodOptions.ExactParameters | DynamicMethodOptions.StronglyTyped);
+            return result.CreateDelegate(delegateType);
 #endif
         }
 
@@ -293,44 +342,51 @@ namespace KGySoft.Reflection
         #region Private Methods
 
 #if !NETSTANDARD2_0
-        private DynamicMethod CreateSetRefAsDynamicMethod(MethodInfo getterMethod)
+        private DynamicMethod CreateSetRefAsDynamicMethod(bool? generic)
         {
-            Debug.Assert(getterMethod.ReturnType.IsByRef);
-
-            Type propertyElementType = getterMethod.ReturnType.GetElementType()!;
+            MethodInfo getterMethod = Property.GetGetMethod(true)!;
             Type? declaringType = getterMethod.DeclaringType;
-            if (!getterMethod.IsStatic && declaringType == null)
+            bool isStatic = getterMethod.IsStatic;
+            if (!isStatic && declaringType == null)
                 Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
-            if (Property.PropertyType.IsPointer)
-                Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(Property.PropertyType));
 
-            var dm = new DynamicMethod("<SetRefProperty>__" + Property.Name, Reflector.VoidType, new[]
+            Debug.Assert(getterMethod.ReturnType.IsByRef);
+            Type propertyType = getterMethod.ReturnType.GetElementType()!;
+
+            Type[] paramTypes = generic switch
             {
-                Reflector.ObjectType, // instance
-                Reflector.ObjectType // value
-            }, declaringType!, true);
+                null => new[] { Reflector.ObjectType, Reflector.ObjectType, typeof(object[]) },
+                false => new[] { Reflector.ObjectType, Reflector.ObjectType },
+                true => isStatic
+                    ? new[] { propertyType }
+                    : new[] { declaringType!.IsValueType ? declaringType.MakeByRefType() : declaringType, propertyType }
+            };
+
+            var dm = new DynamicMethod("<SetRefProperty>__" + Property.Name, Reflector.VoidType, paramTypes,
+                GetOwner(), true);
 
             ILGenerator ilGenerator = dm.GetILGenerator();
 
             // if instance property
-            if (!getterMethod.IsStatic)
+            if (!isStatic)
             {
                 // loading 0th argument (instance)
                 ilGenerator.Emit(OpCodes.Ldarg_0);
-                if (declaringType!.IsValueType)
-                    ilGenerator.Emit(OpCodes.Unbox, declaringType); // unboxing the instance
+                if (generic != true)
+                    ilGenerator.Emit(declaringType.IsValueType ? OpCodes.Unbox : OpCodes.Castclass, declaringType);
             }
 
             // calling the getter
             ilGenerator.Emit(getterMethod.IsVirtual ? OpCodes.Callvirt : OpCodes.Call, getterMethod);
 
-            // loading 1st argument (value)
-            ilGenerator.Emit(OpCodes.Ldarg_1);
-            ilGenerator.Emit(propertyElementType.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, propertyElementType);
+            // loading value argument
+            ilGenerator.Emit(isStatic && generic == true ? OpCodes.Ldarg_0 : OpCodes.Ldarg_1);
+            if (generic != true)
+                ilGenerator.Emit(propertyType.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, propertyType);
 
             // setting the returned reference
-            if (propertyElementType.IsGenericType)
-                ilGenerator.Emit(OpCodes.Stobj, propertyElementType);
+            if (propertyType.IsValueType)
+                ilGenerator.Emit(OpCodes.Stobj, propertyType);
             else
                 ilGenerator.Emit(OpCodes.Stind_Ref);
 

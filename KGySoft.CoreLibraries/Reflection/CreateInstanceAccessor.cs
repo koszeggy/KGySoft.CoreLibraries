@@ -16,9 +16,15 @@
 #region Usings
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
+
+using KGySoft.Annotations;
+
+using KGySoft.CoreLibraries;
 
 #if !NET6_0_OR_GREATER
 using KGySoft.CoreLibraries;
@@ -126,15 +132,17 @@ namespace KGySoft.Reflection
     {
         #region Fields
 
-        private Delegate? initializer;
+        private Func<object?[]?, object>? generalInitializer;
         private Delegate? genericInitializer;
+        private Delegate? nonGenericInitializer;
 
         #endregion
 
         #region Properties
 
-        private protected Delegate Initializer => initializer ??= CreateInitializer();
+        private protected Func<object?[]?, object> GeneralInitializer => generalInitializer ??= CreateGeneralInitializer();
         private protected Delegate GenericInitializer => genericInitializer ??= CreateGenericInitializer();
+        private protected Delegate NonGenericInitializer => nonGenericInitializer ??= CreateNonGenericInitializer();
 
         #endregion
 
@@ -238,7 +246,107 @@ namespace KGySoft.Reflection
         /// <exception cref="ArgumentException">The type of one of the <paramref name="parameters"/> is invalid.
         /// <br/>-or-
         /// <br/><paramref name="parameters"/> has too few elements.</exception>
-        public abstract object CreateInstance(params object?[]? parameters);
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+            Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
+        public object CreateInstance(params object?[]? parameters)
+        {
+            try
+            {
+                return GeneralInitializer.Invoke(parameters);
+            }
+            catch (Exception e)
+            {
+                // Post-validation if there was any exception
+                PostValidate( parameters, e, true);
+                return null!; // actually never reached, just to satisfy the compiler
+            }
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+            Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
+        public object CreateInstance()
+        {
+            try
+            {
+                return ((Func<object>)NonGenericInitializer).Invoke();
+            }
+            catch (Exception e)
+            {
+                // Post-validation if there was any exception
+                PostValidate(Reflector.EmptyObjects, e, false);
+                return null; // actually never reached, just to satisfy the compiler
+            }
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+            Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
+        public object CreateInstance(object? param)
+        {
+            try
+            {
+                return ((Func<object?, object>)NonGenericInitializer).Invoke(param);
+            }
+            catch (Exception e)
+            {
+                // Post-validation if there was any exception
+                PostValidate(new [] { param }, e, false);
+                return null; // actually never reached, just to satisfy the compiler
+            }
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+            Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
+        public object CreateInstance(object? param1, object? param2)
+        {
+            try
+            {
+                return ((Func<object?, object?, object>)NonGenericInitializer).Invoke(param1, param2);
+            }
+            catch (Exception e)
+            {
+                // Post-validation if there was any exception
+                PostValidate(new [] { param1, param2 }, e, false);
+                return null; // actually never reached, just to satisfy the compiler
+            }
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+            Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
+        public object CreateInstance(object? param1, object? param2, object? param3)
+        {
+            try
+            {
+                return ((Func<object?, object?, object?, object>)NonGenericInitializer).Invoke(param1, param2, param3);
+            }
+            catch (Exception e)
+            {
+                // Post-validation if there was any exception
+                PostValidate(new [] { param1, param2, param3 }, e, false);
+                return null; // actually never reached, just to satisfy the compiler
+            }
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+            Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
+        public object CreateInstance(object? param1, object? param2, object? param3, object? param4)
+        {
+            try
+            {
+                return ((Func<object?, object?, object?, object?, object>)NonGenericInitializer).Invoke(param1, param2, param3, param4);
+            }
+            catch (Exception e)
+            {
+                // Post-validation if there was any exception
+                PostValidate(new [] { param1, param2, param3, param4 }, e, false);
+                return null; // actually never reached, just to satisfy the compiler
+            }
+        }
 
         /// <summary>
         /// Creates a new instance using the associated <see cref="Type"/> or parameterless constructor.
@@ -319,12 +427,52 @@ namespace KGySoft.Reflection
 
         #region Private Protected Methods
 
-        private protected abstract Delegate CreateInitializer();
+        private protected abstract Func<object?[]?, object> CreateGeneralInitializer();
         private protected abstract Delegate CreateGenericInitializer();
+        private protected abstract Delegate CreateNonGenericInitializer();
 
         #endregion
 
         #region Private Methods
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        [ContractAnnotation("=> halt"), DoesNotReturn]
+        private void PostValidate(object?[]? parameters, Exception exception, bool anyParams)
+        {
+            if (ParameterTypes.Length > 0)
+            {
+                if (parameters == null)
+                {
+                    Debug.Assert(anyParams);
+                    Throw.ArgumentNullException(Argument.parameters, Res.ArgumentNull);
+                }
+
+                if (parameters.Length != ParameterTypes.Length)
+                {
+                    string message = Res.ReflectionParamsLengthMismatch(ParameterTypes.Length, parameters.Length);
+                    if (anyParams)
+                        Throw.ArgumentException(Argument.parameters, message);
+                    else
+                        Throw.ArgumentException(message);
+                }
+
+                for (int i = 0; i < ParameterTypes.Length; i++)
+                {
+                    if (!ParameterTypes[i].CanAcceptValue(parameters[i]))
+                    {
+                        if (anyParams)
+                            Throw.ArgumentException(Argument.parameters, Res.ElementNotAnInstanceOfType(i, ParameterTypes[i]));
+                        else
+                            Throw.ArgumentException($"param{(ParameterTypes.Length > 1 ? i + 1 : null)}", Res.NotAnInstanceOfType(ParameterTypes[i]));
+                    }
+                }
+            }
+
+            ThrowIfSecurityConflict(exception);
+
+            // exceptions from the method itself: re-throwing the original exception
+            ExceptionDispatchInfo.Capture(exception).Throw();
+        }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         private T ThrowGeneric<T>() => Throw.ArgumentException<T>(Res.ReflectionCannotCreateInstanceGeneric(MemberInfo is Type type ? type : MemberInfo.DeclaringType!));

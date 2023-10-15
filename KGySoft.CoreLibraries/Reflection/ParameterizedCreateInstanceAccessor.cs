@@ -15,36 +15,18 @@
 
 #region Usings
 
-using System.Runtime.ExceptionServices;
-
-using KGySoft.Annotations;
-using KGySoft.CoreLibraries;
-
-#region Used Namespaces
-
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+#if NETSTANDARD2_0
 using System.Linq.Expressions;
-using System.Reflection;
-using System.Reflection.Emit;
-using System.Runtime.CompilerServices;
-
-#endregion
-
-#region Used Aliases
-
-using AnyCtor = System.Func<object?[]?, object>;
-
-#endregion
-
-#endregion
-
-#region Suppressions
-
-#if !(NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER)
-#pragma warning disable CS8763 // A method marked [DoesNotReturn] should not return - false alarm, ExceptionDispatchInfo.Throw() does not return either.
 #endif
+using System.Reflection;
+#if !NETSTANDARD2_0
+using System.Reflection.Emit;
+#endif
+
+using KGySoft.CoreLibraries;
 
 #endregion
 
@@ -66,56 +48,24 @@ namespace KGySoft.Reflection
 
         #region Methods
 
-        #region Public Methods
-
-        [MethodImpl(MethodImpl.AggressiveInlining)]
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types",
-            Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
-        public override object CreateInstance(params object?[]? parameters)
-        {
-            try
-            {
-                return ((AnyCtor)Initializer)(parameters);
-            }
-            catch (Exception e)
-            {
-                // Post-validation if there was any exception
-                PostValidate(parameters, e);
-                return null!; // actually never reached, just to satisfy the compiler
-            }
-        }
-
-        #endregion
-
-        #region Private Protected Methods
-
-        private protected override Delegate CreateInitializer()
+        private protected override Func<object?[]?, object> CreateGeneralInitializer()
         {
             ConstructorInfo ctor = (ConstructorInfo)MemberInfo;
             // TODO
             //if (ctor.IsStatic)
             //    Throw.InvalidOperationException(Res.ReflectionInstanceConstructorExpected);
 
-#if !NETSTANDARD2_0
-            // for constructors with ref/out parameters: Dynamic method
-            if (ParameterTypes.Any(p => p.IsByRef))
-            {
-                DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(ctor, DynamicMethodOptions.HandleByRefParameters);
-                return dm.CreateDelegate(typeof(AnyCtor));
-            }
-#endif
-
-            // for constructors that have no ref parameters: Lambda expression
+#if NETSTANDARD2_0
             ParameterExpression argumentsParameter = Expression.Parameter(typeof(object[]), "arguments");
             var ctorParameters = new Expression[ParameterTypes.Length];
             for (int i = 0; i < ParameterTypes.Length; i++)
             {
                 Type parameterType = ParameterTypes[i];
-#if NETSTANDARD2_0
+
                 // This just avoids error when ref parameters are used but does not assign results back
                 if (parameterType.IsByRef)
                     parameterType = parameterType.GetElementType()!;
-#endif
+
                 ctorParameters[i] = Expression.Convert(Expression.ArrayIndex(argumentsParameter, Expression.Constant(i)), parameterType);
             }
 
@@ -123,10 +73,39 @@ namespace KGySoft.Reflection
                 ctor, // constructor info
                 ctorParameters); // arguments cast to target types
 
-            LambdaExpression lambda = Expression.Lambda<AnyCtor>(
+            var lambda = Expression.Lambda<Func<object?[]?, object>>(
                 Expression.Convert(construct, Reflector.ObjectType), // return type converted to object
                 argumentsParameter);
             return lambda.Compile();
+#else
+            DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(ctor, DynamicMethodOptions.None);
+            return (Func<object?[]?, object>)dm.CreateDelegate(typeof(Func<object?[]?, object>));
+#endif
+        }
+
+        private protected override Delegate CreateNonGenericInitializer()
+        {
+            ConstructorInfo ctor = (ConstructorInfo)MemberInfo;
+            // TODO
+            //if (ctor.IsStatic)
+            //    Throw.InvalidOperationException(Res.ReflectionInstanceConstructorExpected);
+
+            Type delegateType = ParameterTypes.Length switch
+            {
+                0 => typeof(Func<object?>),
+                1 => typeof(Func<object?, object?>),
+                2 => typeof(Func<object?, object?, object?>),
+                3 => typeof(Func<object?, object?, object?, object?>),
+                4 => typeof(Func<object?, object?, object?, object?, object?>),
+                _ => Throw.InternalError<Type>("Unexpected number of parameters")
+            };
+
+#if NETSTANDARD2_0
+    throw new NotImplementedException("CreateNonGenericSpecializedInvoker - expressions");
+#else
+            DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(ctor, DynamicMethodOptions.ExactParameters);
+            return dm.CreateDelegate(delegateType);
+#endif
         }
 
         [SuppressMessage("ReSharper", "CoVariantArrayConversion", Justification = "Expression.New does not write the parameters")]
@@ -136,15 +115,11 @@ namespace KGySoft.Reflection
             // TODO
             //if (ctor.IsStatic)
             //    Throw.InvalidOperationException(Res.ReflectionInstanceConstructorExpected);
-            if (ParameterTypes.Length > 4 || ParameterTypes.Any(p => p.IsByRef))
+            if (ParameterTypes.Length > 4)
                 Throw.NotSupportedException(Res.ReflectionCtorGenericNotSupported);
             if (ParameterTypes.FirstOrDefault(p => p.IsPointer) is Type pointerParam)
                 Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(pointerParam));
 
-            var parameters = new ParameterExpression[ParameterTypes.Length];
-            for (int i = 0; i < parameters.Length; i++)
-                parameters[i] = Expression.Parameter(ParameterTypes[i], $"param{i + 1}");
-            NewExpression construct = Expression.New(ctor, parameters);
             Type delegateType = (ParameterTypes.Length switch
             {
                 0 => typeof(Func<>),
@@ -153,39 +128,29 @@ namespace KGySoft.Reflection
                 3 => typeof(Func<,,,>),
                 4 => typeof(Func<,,,,>),
                 _ => Throw.InternalError<Type>("Unexpected number of parameters")
-            }).GetGenericType(ParameterTypes.Append(ctor.DeclaringType!).ToArray());
-            LambdaExpression lambda = Expression.Lambda(delegateType, construct, parameters);
-            return lambda.Compile();
-        }
+            }).GetGenericType(StripByRefTypes(ParameterTypes).Append(ctor.DeclaringType!).ToArray());
 
-        #endregion
-
-        #region Private Methods
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        [ContractAnnotation("=> halt"), DoesNotReturn]
-        private void PostValidate(object?[]? parameters, Exception exception)
-        {
-            if (ParameterTypes.Length > 0)
+#if NETSTANDARD2_0
+            var parameters = new ParameterExpression[ParameterTypes.Length];
+            for (int i = 0; i < parameters.Length; i++)
             {
-                if (parameters == null)
-                    Throw.ArgumentNullException(Argument.parameters, Res.ArgumentNull);
-                if (parameters.Length < ParameterTypes.Length)
-                    Throw.ArgumentException(Argument.parameters, Res.ReflectionParametersInvalid);
-                for (int i = 0; i < ParameterTypes.Length; i++)
-                {
-                    if (!ParameterTypes[i].CanAcceptValue(parameters[i]))
-                        Throw.ArgumentException(Argument.parameters, Res.ReflectionParametersInvalid);
-                }
+                Type parameterType = ParameterTypes[i];
+
+                // This just avoids error when ref parameters are used but does not assign results back
+                if (parameterType.IsByRef)
+                    parameterType = parameterType.GetElementType()!;
+
+                parameters[i] = Expression.Parameter(parameterType, $"param{i + 1}");
             }
 
-            ThrowIfSecurityConflict(exception);
-
-            // exceptions from the method itself: re-throwing the original exception
-            ExceptionDispatchInfo.Capture(exception).Throw();
+            NewExpression construct = Expression.New(ctor, parameters);
+            LambdaExpression lambda = Expression.Lambda(delegateType, construct, parameters);
+            return lambda.Compile();
+#else
+            DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(ctor, DynamicMethodOptions.ExactParameters | DynamicMethodOptions.StronglyTyped);
+            return dm.CreateDelegate(delegateType);
+#endif
         }
-
-        #endregion
 
         #endregion
     }

@@ -402,13 +402,10 @@ namespace KGySoft
         /// <summary>Generic access of indexers with more than one index parameters is not supported. Use the non-generic Get/Set methods to access such indexers.</summary>
         internal static string ReflectionIndexerGenericNotSupported => Get("Reflection_IndexerGenericNotSupported");
 
-        /// <summary>The number or type of the specified parameters are invalid.</summary>
-        internal static string ReflectionParametersInvalid => Get("Reflection_ParametersInvalid");
-
-        /// <summary>Generic access of methods with more than four parameters or by reference arguments is not supported. Use the non-generic Invoke method to access such methods.</summary>
+        /// <summary>Generic access of methods with more than four parameters. Use the non-generic Invoke method to access such methods.</summary>
         internal static string ReflectionMethodGenericNotSupported => Get("Reflection_MethodGenericNotSupported");
 
-        /// <summary>Generic access of constructors with more than four parameters or by reference arguments is not supported. Use the non-generic CreateInstance method to access such constructors.</summary>
+        /// <summary>Generic access of constructors with more than four parameters. Use the non-generic CreateInstance method to access such constructors.</summary>
         internal static string ReflectionCtorGenericNotSupported => Get("Reflection_CtorGenericNotSupported");
 
         #endregion
@@ -571,6 +568,9 @@ namespace KGySoft
 
         /// <summary>Specified argument is expected to be an instance of type {0}.</summary>
         internal static string NotAnInstanceOfType(Type type) => Get("General_NotAnInstanceOfTypeFormat", type.GetName(TypeNameKind.LongName));
+
+        /// <summary>Element at index {0} is expected to be an instance of type {1}.</summary>
+        internal static string ElementNotAnInstanceOfType(int index, Type type) => Get("General_ElementNotAnInstanceOfTypeFormat", index, type.GetName(TypeNameKind.LongName));
 
         /// <summary>Value "{0}" contains illegal path characters.</summary>
         internal static string ValueContainsIllegalPathCharacters(string path) => Get("General_ValueContainsIllegalPathCharactersFormat", path);
@@ -899,6 +899,12 @@ namespace KGySoft
 
         /// <summary>No suitable static property "{0}" found on type "{1}".</summary>
         internal static string ReflectionStaticPropertyDoesNotExist(string propertyName, Type type) => Get("Reflection_StaticPropertyDoesNotExistFormat", propertyName, type.GetName(TypeNameKind.LongName));
+
+        /// <summary>Expected number of parameters: {0}, but it was {1}.</summary>
+        internal static string ReflectionParamsLengthMismatch(int expected, int actual) => Get("Reflection_ParamsLengthMismatchFormat", expected, actual);
+
+        /// <summary>Expected number of indexer parameters: {0}, but it was {1}.</summary>
+        internal static string ReflectionIndexerParamsLengthMismatch(int expected, int actual) => Get("Reflection_ParamsIndexerLengthMismatchFormat", expected, actual);
 
         /// <summary>Expected number of array index arguments: {0}.</summary>
         internal static string ReflectionIndexParamsLengthMismatch(int length) => Get("Reflection_IndexParamsLengthMismatchFormat", length);

@@ -17,19 +17,8 @@
 
 using KGySoft.CoreLibraries;
 
-#region Used Namespaces
-
 using System;
 using System.Linq.Expressions;
-using System.Runtime.CompilerServices;
-
-#endregion
-
-#region Aliases
-
-using DefaultCtor = System.Func<object>;
-
-#endregion
 
 #endregion
 
@@ -52,20 +41,11 @@ namespace KGySoft.Reflection
 
         #region Methods
 
-        #region Public Methods
-
-        [MethodImpl(MethodImpl.AggressiveInlining)]
-        public override object CreateInstance(params object?[]? parameters) => ((DefaultCtor)Initializer)();
-
-        #endregion
-
-        #region Private Protected Methods
-
         /// <summary>
         /// Creates object initialization delegate. Stored MemberInfo is a Type so it works
         /// also in case of value types where actually there is no parameterless constructor.
         /// </summary>
-        private protected override Delegate CreateInitializer()
+        private protected override Func<object?[]?, object> CreateGeneralInitializer()
         {
             Type type = (Type)MemberInfo;
             // TODO
@@ -75,7 +55,23 @@ namespace KGySoft.Reflection
             //    Throw.InvalidOperationException(Res.ReflectionNoDefaultCtor(type));
 
             NewExpression construct = Expression.New(type);
-            LambdaExpression lambda = Expression.Lambda<DefaultCtor>(
+            var lambda = Expression.Lambda<Func<object?[]?, object>>(
+                Expression.Convert(construct, Reflector.ObjectType), // return type converted to object
+                Expression.Parameter(typeof(object[]), "arguments")); // the ignored parameters
+            return lambda.Compile();
+        }
+
+        private protected override Delegate CreateNonGenericInitializer()
+        {
+            Type type = (Type)MemberInfo;
+            // TODO
+            //if (type.IsAbstract || type.ContainsGenericParameters)
+            //    Throw.InvalidOperationException(Res.ReflectionCannotCreateInstanceOfType(type));
+            //if (!type.IsValueType && type.GetDefaultConstructor() == null)
+            //    Throw.InvalidOperationException(Res.ReflectionNoDefaultCtor(type));
+
+            NewExpression construct = Expression.New(type);
+            var lambda = Expression.Lambda<Func<object>>(
                 Expression.Convert(construct, Reflector.ObjectType)); // return type converted to object
             return lambda.Compile();
         }
@@ -93,8 +89,6 @@ namespace KGySoft.Reflection
             LambdaExpression lambda = Expression.Lambda(typeof(Func<>).GetGenericType(type), construct);
             return lambda.Compile();
         }
-
-        #endregion
 
         #endregion
     }

@@ -111,16 +111,18 @@ namespace KGySoft.Reflection
     {
         #region Fields
 
-        private Delegate? invoker;
+        private Func<object?, object?[]?, object?>? generalInvoker;
         private Delegate? genericInvoker;
+        private Delegate? nonGenericInvoker;
 
         #endregion
 
         #region Properties
 
         private protected MethodBase Method => (MethodBase)MemberInfo;
-        private protected Delegate Invoker => invoker ??= CreateInvoker();
+        private protected Func<object?, object?[]?, object?> GeneralInvoker => generalInvoker ??= CreateGeneralInvoker();
         private protected Delegate GenericInvoker => genericInvoker ??= CreateGenericInvoker();
+        private protected Delegate NonGenericInvoker => nonGenericInvoker ??= CreateNonGenericInvoker();
 
         #endregion
 
@@ -131,7 +133,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="method">The method for which the accessor is to be created.</param>
         private protected MethodAccessor(MethodBase method) :
-            // ReSharper disable once ConstantConditionalAccessQualifier - null check is in base so it is needed here
+            // ReSharper disable once ConditionalAccessQualifierIsNonNullableAccordingToAPIContract - null check is in base so it is needed here
             base(method, method?.GetParameters().Select(p => p.ParameterType).ToArray())
         {
         }
@@ -206,7 +208,107 @@ namespace KGySoft.Reflection
         /// <exception cref="ArgumentException">The type of <paramref name="instance"/> or one of the <paramref name="parameters"/> is invalid.
         /// <br/>-or-
         /// <br/><paramref name="parameters"/> has too few elements.</exception>
-        public abstract object? Invoke(object? instance, params object?[]? parameters);
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+            Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
+        public object? Invoke(object? instance, params object?[]? parameters)
+        {
+            try
+            {
+                return GeneralInvoker.Invoke(instance, parameters);
+            }
+            catch (Exception e)
+            {
+                // Post-validation if there was any exception
+                PostValidate(instance, parameters, e, true);
+                return null; // actually never reached, just to satisfy the compiler
+            }
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+            Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
+        public object? Invoke(object? instance)
+        {
+            try
+            {
+                return ((Func<object?, object?>)NonGenericInvoker).Invoke(instance);
+            }
+            catch (Exception e)
+            {
+                // Post-validation if there was any exception
+                PostValidate(instance, Reflector.EmptyObjects, e, false);
+                return null; // actually never reached, just to satisfy the compiler
+            }
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+            Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
+        public object? Invoke(object? instance, object? param)
+        {
+            try
+            {
+                return ((Func<object?, object?, object?>)NonGenericInvoker).Invoke(instance, param);
+            }
+            catch (Exception e)
+            {
+                // Post-validation if there was any exception
+                PostValidate(instance, new[] { param }, e, false);
+                return null; // actually never reached, just to satisfy the compiler
+            }
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+            Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
+        public object? Invoke(object? instance, object? param1, object? param2)
+        {
+            try
+            {
+                return ((Func<object?, object?, object?, object?>)NonGenericInvoker).Invoke(instance, param1, param2);
+            }
+            catch (Exception e)
+            {
+                // Post-validation if there was any exception
+                PostValidate(instance, new[] { param1, param2 }, e, false);
+                return null; // actually never reached, just to satisfy the compiler
+            }
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+            Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
+        public object? Invoke(object? instance, object? param1, object? param2, object? param3)
+        {
+            try
+            {
+                return ((Func<object?, object?, object?, object?, object?>)NonGenericInvoker).Invoke(instance, param1, param2, param3);
+            }
+            catch (Exception e)
+            {
+                // Post-validation if there was any exception
+                PostValidate(instance, new[] { param1, param2, param3 }, e, false);
+                return null; // actually never reached, just to satisfy the compiler
+            }
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+            Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
+        public object? Invoke(object? instance, object? param1, object? param2, object? param3, object? param4)
+        {
+            try
+            {
+                return ((Func<object?, object?, object?, object?, object?, object?>)NonGenericInvoker).Invoke(instance, param1, param2, param3, param4);
+            }
+            catch (Exception e)
+            {
+                // Post-validation if there was any exception
+                PostValidate(instance, new[] { param1, param2, param3 }, e, false);
+                return null; // actually never reached, just to satisfy the compiler
+            }
+        }
 
         /// <summary>
         /// Invokes a parameterless static action method.
@@ -837,12 +939,17 @@ namespace KGySoft.Reflection
 
         #region Private Protected Methods
 
-        private protected abstract Delegate CreateInvoker();
+        private protected abstract Func<object?, object?[]?, object?> CreateGeneralInvoker();
         private protected abstract Delegate CreateGenericInvoker();
+        private protected abstract Delegate CreateNonGenericInvoker();
+
+        #endregion
+
+        #region Private Methods
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         [ContractAnnotation("=> halt"), DoesNotReturn]
-        private protected void PostValidate(object? instance, object?[]? parameters, Exception exception)
+        private protected void PostValidate(object? instance, object?[]? parameters, Exception exception, bool anyParams)
         {
             if (!Method.IsStatic)
             {
@@ -855,13 +962,29 @@ namespace KGySoft.Reflection
             if (ParameterTypes.Length > 0)
             {
                 if (parameters == null)
+                {
+                    Debug.Assert(anyParams);
                     Throw.ArgumentNullException(Argument.parameters, Res.ArgumentNull);
-                if (parameters.Length < ParameterTypes.Length)
-                    Throw.ArgumentException(Argument.parameters, Res.ReflectionParametersInvalid);
+                }
+
+                if (parameters.Length != ParameterTypes.Length)
+                {
+                    string message = Res.ReflectionParamsLengthMismatch(ParameterTypes.Length, parameters.Length);
+                    if (anyParams)
+                        Throw.ArgumentException(Argument.parameters, message);
+                    else
+                        Throw.ArgumentException(message);
+                }
+
                 for (int i = 0; i < ParameterTypes.Length; i++)
                 {
                     if (!ParameterTypes[i].CanAcceptValue(parameters[i]))
-                        Throw.ArgumentException(Argument.parameters, Res.ReflectionParametersInvalid);
+                    {
+                        if (anyParams)
+                            Throw.ArgumentException(Argument.parameters, Res.ElementNotAnInstanceOfType(i, ParameterTypes[i]));
+                        else
+                            Throw.ArgumentException($"param{(ParameterTypes.Length > 1 ? i + 1 : null)}", Res.NotAnInstanceOfType(ParameterTypes[i]));
+                    }
                 }
             }
 
@@ -870,10 +993,6 @@ namespace KGySoft.Reflection
             // exceptions from the method itself: re-throwing the original exception
             ExceptionDispatchInfo.Capture(exception).Throw();
         }
-
-        #endregion
-
-        #region Private Methods
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         private T ThrowStatic<T>() => !Method.IsStatic

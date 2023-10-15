@@ -36,28 +36,38 @@ namespace KGySoft.Reflection
     internal enum DynamicMethodOptions
     {
         /// <summary>
-        /// No special handling.
+        /// No special handling. The dynamic method will have object return value, object instance parameter (for non-constructors) and an object[] parameter for method parameters.
+        /// Possible ref/out parameters are handled automatically, the results are assigned back to the object array.
         /// </summary>
         None = 0,
 
         /// <summary>
-        /// Generates local variables for ref/out parameters and assigns them back in the object[] parameters array
+        /// Does not emit the object[] parameter but the exact number of object parameters (0..4) for method arguments. Also for for simple property getters or indexers.
+        /// Possible ref parameters are handled only as input parameters. Can be used together with <see cref="StronglyTyped"/>.
         /// </summary>
-        HandleByRefParameters = 1,
+        ExactParameters = 1,
 
         /// <summary>
-        /// Generates an object value parameter and also an object[] arguments parameter in case of indexers
+        /// Must be used with <see cref="ExactParameters"/>. It uses strongly typed parameters and return type.
+        /// For value types the instance parameter is passed by reference.
         /// </summary>
-        TreatAsPropertySetter = 1 << 1,
+        StronglyTyped = 1 << 1,
 
         /// <summary>
-        /// Does not emit the object[] parameter for method arguments (for simple property getters)
+        /// By default, generates an object value parameter and also an object[] arguments parameter in case of indexers.
+        /// If <see cref="ExactParameters"/> is set, then there will be one value parameter first and then the index (if any), which is a reversed order compared to indexer setter methods.
+        /// If <see cref="StronglyTyped"/> is also set, then value and index (if any) will be strongly typed.
         /// </summary>
-        OmitParameters = 1 << 2,
+        TreatAsPropertySetter = 1 << 2,
 
         /// <summary>
-        /// Treats a ConstructorInfo as a regular method
+        /// Treats a ConstructorInfo as a regular method, ie. instead of returning a new object adds the instance parameter and executes the constructor for it.
         /// </summary>
         TreatCtorAsMethod = 1 << 3,
+
+        /// <summary>
+        /// Generates object-returning methods with null return value for void methods. Cannot be used with <see cref="StronglyTyped"/>.
+        /// </summary>
+        ReturnNullForVoid = 1 << 4,
     }
 }

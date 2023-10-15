@@ -78,14 +78,24 @@
 * KGySoft.Reflection namespace:
 ===============================
 + PropertyAccessor class:
+  + New non-generic Get/Set overloads for up to 1 index parameter.
   + Get method: Supporting ref properties
   + Set method: Supporting ref properties (even though they are technically read-only properties)
-- MemberAccessor class:
-  - Fixing a possible Invalid owner error when generating an accessor for an interface member in some special cases.
+  + GetStaticValue/GetInstanceValue methods: Supporting ref properties
+  + SetStaticValue/SetInstanceValue methods: Supporting ref properties
 + MethodAccessor class:
-  + Invoke method: Supporting ref return values
+  + New non-generic Invoke overloads for up to 4 parameters.
+  + Invoke methods: Supporting ref return values
+  + Generic InvokeStaticAction/InvokeStaticFunction/InvokeInstanceAction/InvokeStaticAction methods: Supporting also
+    ref return values and parameters passed by reference, though only as input parameters.
   + GetAccessor method: Better support of generating invoker methods in .NET Framework in partially trusted domains
     that can avoid the previously expected VerificationException (depending on the domain configuration).
++ CreateInstanceAccessor class:
+  + New non-generic Invoke overloads for up to 4 parameters.
+  + Generic InvokeStaticAction/InvokeStaticFunction/InvokeInstanceAction/InvokeStaticAction methods: Supporting also
+    parameters passed by reference, though only as input parameters.
+- MemberAccessor class:
+  - Fixing a possible Invalid owner error when generating an accessor for an interface member in some special cases.
 + Reflector class:
   + [Try]GetProperty/[Try]SetProperty methods: Supporting getting/setting ref properties if reflection way is Auto
     or DynamicDelegate. The behavior of SystemReflection and TypeDescriptor ways are platform dependent.
