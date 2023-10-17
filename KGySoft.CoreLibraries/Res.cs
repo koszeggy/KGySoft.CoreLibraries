@@ -904,7 +904,7 @@ namespace KGySoft
         internal static string ReflectionParamsLengthMismatch(int expected, int actual) => Get("Reflection_ParamsLengthMismatchFormat", expected, actual);
 
         /// <summary>Expected number of indexer parameters: {0}, but it was {1}.</summary>
-        internal static string ReflectionIndexerParamsLengthMismatch(int expected, int actual) => Get("Reflection_ParamsIndexerLengthMismatchFormat", expected, actual);
+        internal static string ReflectionIndexerParamsLengthMismatch(int expected, int actual) => Get("Reflection_IndexerParamsLengthMismatchFormat", expected, actual);
 
         /// <summary>Expected number of array index arguments: {0}.</summary>
         internal static string ReflectionIndexParamsLengthMismatch(int length) => Get("Reflection_IndexParamsLengthMismatchFormat", length);

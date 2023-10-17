@@ -419,6 +419,9 @@ Hit rate: {8:P2}</value>
   <data name="General_NotAnInstanceOfTypeFormat" xml:space="preserve">
     <value>Specified argument is expected to be an instance of type {0}.</value>
   </data>
+  <data name="General_ElementNotAnInstanceOfTypeFormat" xml:space="preserve">
+    <value>Element at index {0} is expected to be an instance of type {1}.</value>
+  </data>
   <data name="ComponentModel_ReturnedTypeInvalidFormat" xml:space="preserve">
     <value>The returned value is not compatible with type {0}</value>
   </data>
@@ -556,6 +559,12 @@ Hit rate: {8:P2}</value>
   </data>
   <data name="Reflection_StaticPropertyDoesNotExistFormat" xml:space="preserve">
     <value>No suitable static property "{0}" found on type "{1}".</value>
+  </data>
+  <data name="Reflection_ParamsLengthMismatchFormat" xml:space="preserve">
+    <value>Expected number of parameters: {0}, but it was {1}.</value>
+  </data>
+  <data name="Reflection_IndexerParamsLengthMismatchFormat" xml:space="preserve">
+    <value>Expected number of indexer parameters: {0}, but it was {1}.</value>
   </data>
   <data name="Reflection_TypeArgsLengthMismatchFormat" xml:space="preserve">
     <value>Expected number of generic parameters: {0}.</value>
