@@ -361,7 +361,7 @@ namespace KGySoft.Reflection
             catch (Exception e)
             {
                 // Post-validation if there was any exception
-                PostValidate(instance, null, Reflector.EmptyObjects, e, false, true);
+                PostValidate(instance, null, Reflector.EmptyObjects, e, false, false);
                 return null; // actually never reached, just to satisfy the compiler
             }
         }
@@ -378,7 +378,7 @@ namespace KGySoft.Reflection
             catch (Exception e)
             {
                 // Post-validation if there was any exception
-                PostValidate(instance, null, new[] { index }, e, false, true);
+                PostValidate(instance, null, new[] { index }, e, false, false);
                 return null; // actually never reached, just to satisfy the compiler
             }
         }
