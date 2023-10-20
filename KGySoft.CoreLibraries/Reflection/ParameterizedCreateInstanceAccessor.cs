@@ -51,9 +51,10 @@ namespace KGySoft.Reflection
         private protected override Func<object?[]?, object> CreateGeneralInitializer()
         {
             ConstructorInfo ctor = (ConstructorInfo)MemberInfo;
-            // TODO
-            //if (ctor.IsStatic)
-            //    Throw.InvalidOperationException(Res.ReflectionInstanceConstructorExpected);
+            if (ctor.IsStatic)
+                Throw.InvalidOperationException(Res.ReflectionInstanceCtorExpected);
+            if (ctor.DeclaringType is { IsAbstract: true } or { ContainsGenericParameters: true })
+                Throw.InvalidOperationException(Res.ReflectionCannotCreateInstanceOfType(ctor.DeclaringType));
 
 #if NETSTANDARD2_0
             ParameterExpression argumentsParameter = Expression.Parameter(typeof(object[]), "arguments");
@@ -86,9 +87,10 @@ namespace KGySoft.Reflection
         private protected override Delegate CreateNonGenericInitializer()
         {
             ConstructorInfo ctor = (ConstructorInfo)MemberInfo;
-            // TODO
-            //if (ctor.IsStatic)
-            //    Throw.InvalidOperationException(Res.ReflectionInstanceConstructorExpected);
+            if (ctor.IsStatic)
+                Throw.InvalidOperationException(Res.ReflectionInstanceCtorExpected);
+            if (ctor.DeclaringType is { IsAbstract: true } or { ContainsGenericParameters: true })
+                Throw.InvalidOperationException(Res.ReflectionCannotCreateInstanceOfType(ctor.DeclaringType!));
 
             Type delegateType = ParameterTypes.Length switch
             {
@@ -112,9 +114,10 @@ namespace KGySoft.Reflection
         private protected override Delegate CreateGenericInitializer()
         {
             ConstructorInfo ctor = (ConstructorInfo)MemberInfo;
-            // TODO
-            //if (ctor.IsStatic)
-            //    Throw.InvalidOperationException(Res.ReflectionInstanceConstructorExpected);
+            if (ctor.IsStatic)
+                Throw.InvalidOperationException(Res.ReflectionInstanceCtorExpected);
+            if (ctor.DeclaringType is { IsAbstract: true } or { ContainsGenericParameters: true })
+                Throw.InvalidOperationException(Res.ReflectionCannotCreateInstanceOfType(ctor.DeclaringType!));
             if (ParameterTypes.Length > 4)
                 Throw.NotSupportedException(Res.ReflectionCtorGenericNotSupported);
             if (ParameterTypes.FirstOrDefault(p => p.IsPointer) is Type pointerParam)

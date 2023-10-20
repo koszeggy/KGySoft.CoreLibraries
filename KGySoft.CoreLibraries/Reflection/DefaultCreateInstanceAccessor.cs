@@ -48,11 +48,10 @@ namespace KGySoft.Reflection
         private protected override Func<object?[]?, object> CreateGeneralInitializer()
         {
             Type type = (Type)MemberInfo;
-            // TODO
-            //if (type.IsAbstract || type.ContainsGenericParameters)
-            //    Throw.InvalidOperationException(Res.ReflectionCannotCreateInstanceOfType(type));
-            //if (!type.IsValueType && type.GetDefaultConstructor() == null)
-            //    Throw.InvalidOperationException(Res.ReflectionNoDefaultCtor(type));
+            if (type.IsAbstract || type.ContainsGenericParameters)
+                Throw.InvalidOperationException(Res.ReflectionCannotCreateInstanceOfType(type));
+            if (!type.IsValueType && type.GetDefaultConstructor() == null)
+                Throw.InvalidOperationException(Res.ReflectionNoDefaultCtor(type));
 
             NewExpression construct = Expression.New(type);
             var lambda = Expression.Lambda<Func<object?[]?, object>>(
@@ -64,11 +63,10 @@ namespace KGySoft.Reflection
         private protected override Delegate CreateNonGenericInitializer()
         {
             Type type = (Type)MemberInfo;
-            // TODO
-            //if (type.IsAbstract || type.ContainsGenericParameters)
-            //    Throw.InvalidOperationException(Res.ReflectionCannotCreateInstanceOfType(type));
-            //if (!type.IsValueType && type.GetDefaultConstructor() == null)
-            //    Throw.InvalidOperationException(Res.ReflectionNoDefaultCtor(type));
+            if (type.IsAbstract || type.ContainsGenericParameters)
+                Throw.InvalidOperationException(Res.ReflectionCannotCreateInstanceOfType(type));
+            if (!type.IsValueType && type.GetDefaultConstructor() == null)
+                Throw.InvalidOperationException(Res.ReflectionNoDefaultCtor(type));
 
             NewExpression construct = Expression.New(type);
             var lambda = Expression.Lambda<Func<object>>(
@@ -79,11 +77,10 @@ namespace KGySoft.Reflection
         private protected override Delegate CreateGenericInitializer()
         {
             Type type = (Type)MemberInfo;
-            // TODO
-            //if (type.IsAbstract || type.ContainsGenericParameters)
-            //    Throw.InvalidOperationException(Res.ReflectionCannotCreateInstanceOfType(type));
-            //if (!type.IsValueType && type.GetDefaultConstructor() == null)
-            //    Throw.InvalidOperationException(Res.ReflectionNoDefaultCtor(type));
+            if (type.IsAbstract || type.ContainsGenericParameters)
+                Throw.InvalidOperationException(Res.ReflectionCannotCreateInstanceOfType(type));
+            if (!type.IsValueType && type.GetDefaultConstructor() == null)
+                Throw.InvalidOperationException(Res.ReflectionNoDefaultCtor(type));
 
             NewExpression construct = Expression.New(type);
             LambdaExpression lambda = Expression.Lambda(typeof(Func<>).GetGenericType(type), construct);

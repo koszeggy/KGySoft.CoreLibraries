@@ -18,6 +18,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Reflection;
 #if NETFRAMEWORK
 using System.Security;
@@ -206,6 +207,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
                 refStringValue = stringValue;
                 return intValue;
             }
+
+            public void LongTestAction(int p1, string p2, long p3, char p4, decimal p5) { }
+            public bool LongTestFunction(int p1, string p2, long p3, char p4, decimal p5) => true;
 
             public ref int TestRefFunction(int intValue)
             {
@@ -1058,6 +1062,58 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Assert.AreEqual(args[0], result);
             Assert.AreEqual(args[0], TestClass.StaticIntProp);
             Assert.AreNotEqual(args[2], parameters[2]);
+        }
+
+        [Test]
+        public void LongActionMethodInvoke()
+        {
+            var test = new TestClass();
+            var accessor = MethodAccessor.GetAccessor(typeof(TestClass).GetMethod(nameof(TestClass.LongTestAction))!);
+            
+            Assert.DoesNotThrow(() => accessor.Invoke(test, 1, "2", 3L, '4', 5m));
+            Throws<ArgumentException>(() => accessor.Invoke(test, Reflector.EmptyObjects), Res.ReflectionParamsLengthMismatch(5, 0));
+            Throws<ArgumentException>(() => accessor.Invoke(test, 1), Res.ReflectionParamsLengthMismatch(5, 1));
+            Throws<NotSupportedException>(() => accessor.InvokeInstanceAction(test, 1), Res.ReflectionMethodGenericNotSupported);
+        }
+
+        [Test]
+        public void LongFunctionMethodInvoke()
+        {
+            var test = new TestClass();
+            var accessor = MethodAccessor.GetAccessor(typeof(TestClass).GetMethod(nameof(TestClass.LongTestFunction))!);
+
+            Assert.DoesNotThrow(() => accessor.Invoke(test, 1, "2", 3L, '4', 5m));
+            Throws<ArgumentException>(() => accessor.Invoke(test, Reflector.EmptyObjects), Res.ReflectionParamsLengthMismatch(5, 0));
+            Throws<ArgumentException>(() => accessor.Invoke(test, 1), Res.ReflectionParamsLengthMismatch(5, 1));
+            Throws<NotSupportedException>(() => accessor.InvokeInstanceFunction<TestClass, int, bool>(test, 1), Res.ReflectionMethodGenericNotSupported);
+        }
+
+        [Test]
+        public void SpecialMethodInvoke()
+        {
+            // abstract method: pass
+            MethodInfo mi = typeof(Stream).GetMethod(nameof(Stream.Read), new[] { typeof(byte[]), typeof(int), typeof(int) })!;
+            MethodAccessor accessor = MethodAccessor.GetAccessor(mi);
+            Assert.IsTrue(mi.IsAbstract);
+            Assert.AreEqual(1, accessor.Invoke(new MemoryStream(new byte[1]), new object[] { new byte[1], 0, 1 }));
+            Assert.AreEqual(1, accessor.Invoke(new MemoryStream(new byte[1]), new byte[1], 0, 1));
+            Assert.AreEqual(1, accessor.InvokeInstanceFunction<Stream, byte[], int, int, int>(new MemoryStream(new byte[1]), new byte[1], 0, 1));
+
+            // interface: pass
+            mi = typeof(ICollection<int>).GetMethod(nameof(ICollection<_>.Contains))!;
+            accessor = MethodAccessor.GetAccessor(mi);
+            Assert.IsTrue(mi.DeclaringType!.IsInterface);
+            Assert.IsFalse((bool)accessor.Invoke(Reflector.EmptyArray<int>(), new object[] { 42 })!);
+            Assert.IsFalse((bool)accessor.Invoke(Reflector.EmptyArray<int>(), 42)!);
+            Assert.IsFalse(accessor.InvokeInstanceFunction<int[], int, bool>(Reflector.EmptyArray<int>(), 42));
+
+            // generic: fail
+            mi = typeof(List<>).GetMethod(nameof(List<_>.Contains))!;
+            accessor = MethodAccessor.GetAccessor(mi);
+            Assert.IsTrue(mi.DeclaringType!.IsGenericTypeDefinition);
+            Throws<InvalidOperationException>(() => accessor.Invoke(new List<int>(), new object[] { 42 }), Res.ReflectionGenericMember);
+            Throws<InvalidOperationException>(() => accessor.Invoke(new List<int>(), 42), Res.ReflectionGenericMember);
+            Throws<InvalidOperationException>(() => accessor.InvokeInstanceFunction<List<int>, int, bool>(new List<int>(), 42), Res.ReflectionGenericMember);
         }
 
         #endregion
@@ -3459,6 +3515,77 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             result = (TestClass)Reflector.CreateInstance(ci, parameters);
             Assert.AreEqual(args[0], result.IntProp);
             Assert.AreNotEqual(args[2], parameters[2]);
+        }
+
+        [Test]
+        public void InvalidTypeConstructionByType()
+        {
+            // abstract class
+            Type testType = typeof(Type);
+            var accessor = CreateInstanceAccessor.GetAccessor(testType);
+            Throws<InvalidOperationException>(() => accessor.CreateInstance(null), Res.ReflectionCannotCreateInstanceOfType(testType));
+            Throws<InvalidOperationException>(() => accessor.CreateInstance(), Res.ReflectionCannotCreateInstanceOfType(testType));
+            Throws<InvalidOperationException>(() => accessor.CreateInstance<Type>(), Res.ReflectionCannotCreateInstanceOfType(testType));
+
+            // interface
+            testType = typeof(IComparable);
+            accessor = CreateInstanceAccessor.GetAccessor(testType);
+            Throws<InvalidOperationException>(() => accessor.CreateInstance(null), Res.ReflectionCannotCreateInstanceOfType(testType));
+            Throws<InvalidOperationException>(() => accessor.CreateInstance(), Res.ReflectionCannotCreateInstanceOfType(testType));
+            Throws<InvalidOperationException>(() => accessor.CreateInstance<IComparable>(), Res.ReflectionCannotCreateInstanceOfType(testType));
+
+            // static type
+            testType = typeof(Res);
+            accessor = CreateInstanceAccessor.GetAccessor(testType);
+            Throws<InvalidOperationException>(() => accessor.CreateInstance(null), Res.ReflectionCannotCreateInstanceOfType(testType));
+            Throws<InvalidOperationException>(() => accessor.CreateInstance(), Res.ReflectionCannotCreateInstanceOfType(testType));
+            Throws<InvalidOperationException>(() => accessor.CreateInstance<Type>(), Res.ReflectionCannotCreateInstanceOfType(testType));
+
+            // generic type definition
+            testType = typeof(List<>);
+            accessor = CreateInstanceAccessor.GetAccessor(testType);
+            Throws<InvalidOperationException>(() => accessor.CreateInstance(null), Res.ReflectionCannotCreateInstanceOfType(testType));
+            Throws<InvalidOperationException>(() => accessor.CreateInstance(), Res.ReflectionCannotCreateInstanceOfType(testType));
+            Throws<InvalidOperationException>(() => accessor.CreateInstance<object>(), Res.ReflectionCannotCreateInstanceOfType(testType));
+
+            // no parameterless constructor
+            testType = typeof(string);
+            accessor = CreateInstanceAccessor.GetAccessor(testType);
+            Throws<InvalidOperationException>(() => accessor.CreateInstance(null), Res.ReflectionNoDefaultCtor(testType));
+            Throws<InvalidOperationException>(() => accessor.CreateInstance(), Res.ReflectionNoDefaultCtor(testType));
+            Throws<InvalidOperationException>(() => accessor.CreateInstance<string>(), Res.ReflectionNoDefaultCtor(testType));
+        }
+
+        [Test]
+        public void InvalidTypeConstructionByCtorInfo()
+        {
+            // abstract class
+            ConstructorInfo ci = typeof(Type).GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, Type.EmptyTypes, null)!;
+            var accessor = CreateInstanceAccessor.GetAccessor(ci);
+            Throws<InvalidOperationException>(() => accessor.CreateInstance(null), Res.ReflectionCannotCreateInstanceOfType(typeof(Type)));
+            Throws<InvalidOperationException>(() => accessor.CreateInstance(), Res.ReflectionCannotCreateInstanceOfType(typeof(Type)));
+            Throws<InvalidOperationException>(() => accessor.CreateInstance<Type>(), Res.ReflectionCannotCreateInstanceOfType(typeof(Type)));
+
+            // generic type definition
+            ci = typeof(List<>).GetConstructor(Type.EmptyTypes)!;
+            accessor = CreateInstanceAccessor.GetAccessor(ci);
+            Throws<InvalidOperationException>(() => accessor.CreateInstance(null), Res.ReflectionCannotCreateInstanceOfType(typeof(List<>)));
+            Throws<InvalidOperationException>(() => accessor.CreateInstance(), Res.ReflectionCannotCreateInstanceOfType(typeof(List<>)));
+            Throws<InvalidOperationException>(() => accessor.CreateInstance<Type>(), Res.ReflectionCannotCreateInstanceOfType(typeof(List<>)));
+
+            // static constructor
+            ci = typeof(Res).GetConstructor(BindingFlags.NonPublic | BindingFlags.Static, null, Type.EmptyTypes, null)!;
+            accessor = CreateInstanceAccessor.GetAccessor(ci);
+            Throws<InvalidOperationException>(() => accessor.CreateInstance(null), Res.ReflectionInstanceCtorExpected);
+            Throws<InvalidOperationException>(() => accessor.CreateInstance(), Res.ReflectionInstanceCtorExpected);
+            Throws<InvalidOperationException>(() => accessor.CreateInstance<object>(), Res.ReflectionInstanceCtorExpected);
+
+            // module constructor
+            ci = ((Type)Reflector.GetProperty(typeof(Module).Module, "RuntimeType"))!.GetConstructor(BindingFlags.NonPublic | BindingFlags.Static, Type.EmptyTypes)!;
+            accessor = CreateInstanceAccessor.GetAccessor(ci);
+            Throws<InvalidOperationException>(() => accessor.CreateInstance(null), Res.ReflectionInstanceCtorExpected);
+            Throws<InvalidOperationException>(() => accessor.CreateInstance(), Res.ReflectionInstanceCtorExpected);
+            Throws<InvalidOperationException>(() => accessor.CreateInstance<object>(), Res.ReflectionInstanceCtorExpected);
         }
 
         #endregion

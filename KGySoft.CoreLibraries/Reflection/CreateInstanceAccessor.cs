@@ -204,8 +204,6 @@ namespace KGySoft.Reflection
             switch (member)
             {
                 case ConstructorInfo ci:
-                    if (ci.IsStatic)
-                        Throw.ArgumentException(Argument.ctor, Res.ReflectionInstanceCtorExpected);
                     return new ParameterizedCreateInstanceAccessor(ci);
                 case Type t:
 #if NET6_0_OR_GREATER
@@ -439,6 +437,13 @@ namespace KGySoft.Reflection
         [ContractAnnotation("=> halt"), DoesNotReturn]
         private void PostValidate(object?[]? parameters, Exception exception, bool anyParams)
         {
+            // These could be just re-thrown at the end but we want to avoid parameter checks for them
+            Type? type = MemberInfo as Type ?? (MemberInfo as ConstructorInfo)?.DeclaringType;
+            if (type is null || MemberInfo is ConstructorInfo { IsStatic: true })
+                Throw.InvalidOperationException(Res.ReflectionInstanceCtorExpected);
+            if (type.IsAbstract || type.ContainsGenericParameters)
+                Throw.InvalidOperationException(Res.ReflectionCannotCreateInstanceOfType(type));
+
             if (ParameterTypes.Length > 0)
             {
                 if (parameters == null)

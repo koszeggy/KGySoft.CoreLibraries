@@ -390,10 +390,13 @@ Hit rate: {8:P2}</value>
     <value>Offset and length were out of bounds for the array.</value>
   </data>
   <data name="Reflection_MethodGenericNotSupported" xml:space="preserve">
-    <value>Generic access of methods with more than four parameters. Use the non-generic Invoke method to access such methods.</value>
+    <value>Generic access of methods with more than four parameters is not supported. Use the non-generic Invoke method to access such methods.</value>
   </data>
   <data name="Reflection_CtorGenericNotSupported" xml:space="preserve">
     <value>Generic access of constructors with more than four parameters. Use the non-generic CreateInstance method to access such constructors.</value>
+  </data>
+  <data name="Reflection_GenericMember" xml:space="preserve">
+    <value>Type or member with open generic arguments cannot be reflected.</value>
   </data>
   <data name="ArraySection_Null" xml:space="preserve">
     <value>The underlying array is null.</value>
@@ -677,7 +680,13 @@ If possible, try to use the generic SetInstanceValue method, or reference the .N
     <value>Cannot access {0}.{1} method with the provided type arguments and/or parameters.</value>
   </data>
   <data name="Reflection_CannotCreateInstanceGenericFormat" xml:space="preserve">
-    <value>Cannot create an instance of type {0} with the provided type arguments and/or parameters.</value>
+    <value>Cannot create an instance of type '{0}' with the provided type arguments and/or parameters.</value>
+  </data>
+  <data name="Reflection_CannotCreateInstanceOfTypeFormat" xml:space="preserve">
+    <value>Cannot create an instance of type '{0}' because abstract classes, interfaces and open generic types cannot be instantiated.</value>
+  </data>
+  <data name="Reflection_NoDefaultCtorFormat" xml:space="preserve">
+    <value>Type '{0}' does not have a parameterless constructor. Obtain the CreateInstanceAccessor by a ConstructorInfo instead.</value>
   </data>
   <data name="BinarySerialization_CannotResolveAssemblySafeFormat" xml:space="preserve">
     <value>Cannot resolve assembly in safe mode: "{0}".

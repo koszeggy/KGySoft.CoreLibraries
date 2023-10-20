@@ -52,6 +52,8 @@ namespace KGySoft.Reflection
         {
             MethodInfo method = (MethodInfo)MemberInfo;
             Type? declaringType = method.DeclaringType;
+            if (declaringType?.ContainsGenericParameters == true || method.ContainsGenericParameters)
+                Throw.InvalidOperationException(Res.ReflectionGenericMember);
             if (!method.IsStatic && declaringType == null)
                 Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
             if (method.ReturnType.IsPointer)
@@ -96,10 +98,12 @@ namespace KGySoft.Reflection
         {
             MethodInfo method = (MethodInfo)MemberInfo;
             Type? declaringType = method.DeclaringType;
+            if (declaringType?.ContainsGenericParameters == true || method.ContainsGenericParameters)
+                Throw.InvalidOperationException(Res.ReflectionGenericMember);
             if (!method.IsStatic && declaringType == null)
                 Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
-            //if (ParameterTypes.Length > 4) // TODO
-            //    Throw.NotSupportedException(Res.ReflectionMethodNonGenericNotSupported);
+            if (ParameterTypes.Length > 4)
+                Throw.NotSupportedException(); // will be handled in PostValidate
             if (method.ReturnType.IsPointer)
                 Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(method.ReturnType));
             if (ParameterTypes.FirstOrDefault(p => p.IsPointer) is Type pointerParam)
@@ -130,6 +134,8 @@ namespace KGySoft.Reflection
             Type? declaringType = Method.DeclaringType;
             bool isStatic = method.IsStatic;
             bool isValueType = declaringType?.IsValueType == true;
+            if (declaringType?.ContainsGenericParameters == true || method.ContainsGenericParameters)
+                Throw.InvalidOperationException(Res.ReflectionGenericMember);
             if (isStatic && declaringType == null)
                 Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
             if (ParameterTypes.Length > 4)

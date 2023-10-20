@@ -16,7 +16,9 @@
 #region Usings
 
 using System;
+#if NETSTANDARD2_0
 using System.Linq.Expressions;
+#endif
 using System.Reflection;
 #if !NETSTANDARD2_0
 using System.Reflection.Emit;
@@ -48,6 +50,8 @@ namespace KGySoft.Reflection
             Type? declaringType = Property.DeclaringType;
             if (declaringType == null)
                 Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
+            if (declaringType.ContainsGenericParameters)
+                Throw.InvalidOperationException(Res.ReflectionGenericMember);
             if (Property.PropertyType.IsPointer)
                 Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(Property.PropertyType));
 
@@ -103,12 +107,14 @@ namespace KGySoft.Reflection
 
         private protected override Func<object?, object?[]?, object?> CreateGeneralGetter()
         {
+            Type? declaringType = Property.DeclaringType;
+            if (declaringType == null)
+                Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
+            if (declaringType.ContainsGenericParameters)
+                Throw.InvalidOperationException(Res.ReflectionGenericMember);
             if (!CanRead)
                 Throw.NotSupportedException(Res.ReflectionPropertyHasNoGetter(MemberInfo.DeclaringType, MemberInfo.Name));
             MethodInfo getterMethod = Property.GetGetMethod(true)!;
-            Type? declaringType = getterMethod.DeclaringType;
-            if (declaringType == null)
-                Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
             if (Property.PropertyType.IsPointer)
                 Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(Property.PropertyType));
 
@@ -140,13 +146,15 @@ namespace KGySoft.Reflection
 
         private protected override Delegate CreateNonGenericSetter()
         {
-            // The 1 parameter overload was called for a more-params indexer
-            if (ParameterTypes.Length > 1)
-                Throw.NotSupportedException(); // Will be handled in PostValidate
-
             Type? declaringType = Property.DeclaringType;
             if (declaringType == null)
                 Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
+            if (declaringType.ContainsGenericParameters)
+                Throw.InvalidOperationException(Res.ReflectionGenericMember);
+
+            // The 1 parameter overload was called for a more-params indexer
+            if (ParameterTypes.Length > 1)
+                Throw.NotSupportedException(); // Will be handled in PostValidate
 
             if (!CanWrite)
             {
@@ -198,6 +206,11 @@ namespace KGySoft.Reflection
 
         private protected override Delegate CreateNonGenericGetter()
         {
+            Type? declaringType = Property.DeclaringType;
+            if (declaringType == null)
+                Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
+            if (declaringType.ContainsGenericParameters)
+                Throw.InvalidOperationException(Res.ReflectionGenericMember);
             if (!CanRead)
                 Throw.NotSupportedException(Res.ReflectionPropertyHasNoGetter(MemberInfo.DeclaringType, MemberInfo.Name));
 
@@ -206,9 +219,6 @@ namespace KGySoft.Reflection
                 Throw.NotSupportedException(); // Will be handled in PostValidate
 
             MethodInfo getterMethod = Property.GetGetMethod(true)!;
-            Type? declaringType = getterMethod.DeclaringType;
-            if (declaringType == null)
-                Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
             if (Property.PropertyType.IsPointer)
                 Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(Property.PropertyType));
 
@@ -238,12 +248,13 @@ namespace KGySoft.Reflection
 
         private protected override Delegate CreateGenericSetter()
         {
-            if (ParameterTypes.Length > 1)
-                Throw.NotSupportedException(Res.ReflectionIndexerGenericNotSupported);
-
             Type? declaringType = Property.DeclaringType;
             if (declaringType == null)
                 Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
+            if (declaringType.ContainsGenericParameters)
+                Throw.InvalidOperationException(Res.ReflectionGenericMember);
+            if (ParameterTypes.Length > 1)
+                Throw.NotSupportedException(Res.ReflectionIndexerGenericNotSupported);
             if (Property.PropertyType.IsPointer)
                 Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(Property.PropertyType));
 
@@ -283,12 +294,14 @@ namespace KGySoft.Reflection
 
         private protected override Delegate CreateGenericGetter()
         {
+            Type? declaringType = Property.DeclaringType;
+            if (declaringType == null)
+                Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
+            if (declaringType.ContainsGenericParameters)
+                Throw.InvalidOperationException(Res.ReflectionGenericMember);
             if (!CanRead)
                 Throw.NotSupportedException(Res.ReflectionPropertyHasNoGetter(MemberInfo.DeclaringType, MemberInfo.Name));
             MethodInfo getterMethod = Property.GetGetMethod(true)!;
-            Type? declaringType = getterMethod.DeclaringType;
-            if (declaringType == null)
-                Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
             if (Property.PropertyType.IsPointer)
                 Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(Property.PropertyType));
             if (ParameterTypes.Length > 1)
@@ -324,17 +337,15 @@ namespace KGySoft.Reflection
         private DynamicMethod CreateSetRefAsDynamicMethod(bool? generic)
         {
             MethodInfo getterMethod = Property.GetGetMethod(true)!;
+            Type? declaringType = getterMethod.DeclaringType;
             Debug.Assert(getterMethod.ReturnType.IsByRef);
             Debug.Assert(generic == null || ParameterTypes.Length == 1, "When creating a specialized delegate only 1 parameter is expected");
+            Debug.Assert(declaringType != null);
 
             Type propertyType = getterMethod.ReturnType.GetElementType()!;
-            Type? declaringType = getterMethod.DeclaringType;
-            if (declaringType == null)
-                Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
-
             Type[] parameterTypes =
             {
-                generic == true ? (declaringType.IsValueType ? declaringType.MakeByRefType() : declaringType) : Reflector.ObjectType, // instance
+                generic == true ? (declaringType!.IsValueType ? declaringType.MakeByRefType() : declaringType) : Reflector.ObjectType, // instance
                 generic == true ? propertyType : Reflector.ObjectType, // value
                 generic switch // indices/index
                 {
@@ -352,7 +363,7 @@ namespace KGySoft.Reflection
             Debug.Assert(!getterMethod.IsStatic, "Indexers are not expected to be static");
             ilGenerator.Emit(OpCodes.Ldarg_0);
             if (generic != true)
-                ilGenerator.Emit(declaringType.IsValueType ? OpCodes.Unbox : OpCodes.Castclass, declaringType);
+                ilGenerator.Emit(declaringType!.IsValueType ? OpCodes.Unbox : OpCodes.Castclass, declaringType);
 
             // assigning parameter(s)
             if (generic == null)

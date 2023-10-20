@@ -84,7 +84,7 @@ namespace KGySoft
         [ContractAnnotation("=> halt")][DoesNotReturn]internal static void KeyNotFoundException(string message) => throw CreateKeyNotFoundException(message);
         [ContractAnnotation("=> halt")][DoesNotReturn]internal static T KeyNotFoundException<T>(string message) => throw CreateKeyNotFoundException(message);
 
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static void InvalidOperationException(string message) => throw CreateInvalidOperationException(message);
+        [ContractAnnotation("=> halt")][DoesNotReturn]internal static void InvalidOperationException(string? message = null) => throw CreateInvalidOperationException(message);
         [ContractAnnotation("=> halt")][DoesNotReturn]internal static T InvalidOperationException<T>(string message) => throw CreateInvalidOperationException(message);
         [ContractAnnotation("=> halt")][DoesNotReturn]internal static T InvalidOperationException<T>(string message, Exception inner) => throw CreateInvalidOperationException(message, inner);
 
@@ -133,7 +133,7 @@ namespace KGySoft
         private static Exception CreateArgumentOutOfRangeException(Argument arg, string message) => CreateArgumentOutOfRangeException(Enum<Argument>.ToString(arg), message);
         private static Exception CreateIndexOutOfRangeException(string message) => new IndexOutOfRangeException(message);
         private static Exception CreateKeyNotFoundException(string message) => new KeyNotFoundException(message);
-        private static Exception CreateInvalidOperationException(string message, Exception? inner = null) => new InvalidOperationException(message, inner);
+        private static Exception CreateInvalidOperationException(string? message, Exception? inner = null) => new InvalidOperationException(message, inner);
         private static Exception CreateNotSupportedException(string message, Exception? inner = null) => new NotSupportedException(message, inner);
         private static Exception CreateObjectDisposedException(string message, string? name = null) => new ObjectDisposedException(name, message);
         private static Exception CreateReflectionException(string message, Exception? inner = null) => new ReflectionException(message, inner);

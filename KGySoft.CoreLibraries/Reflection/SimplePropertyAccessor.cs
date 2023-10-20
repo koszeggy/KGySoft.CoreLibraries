@@ -48,6 +48,8 @@ namespace KGySoft.Reflection
         private protected override Action<object?, object?, object?[]?> CreateGeneralSetter()
         {
             Type? declaringType = Property.DeclaringType;
+            if (declaringType?.ContainsGenericParameters == true)
+                Throw.InvalidOperationException(Res.ReflectionGenericMember);
             if (Property.PropertyType.IsPointer)
                 Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(Property.PropertyType));
 
@@ -95,10 +97,12 @@ namespace KGySoft.Reflection
 
         private protected override Func<object?, object?[]?, object?> CreateGeneralGetter()
         {
+            Type? declaringType = Property.DeclaringType;
+            if (declaringType?.ContainsGenericParameters == true)
+                Throw.InvalidOperationException(Res.ReflectionGenericMember);
             if (!CanRead)
                 Throw.NotSupportedException(Res.ReflectionPropertyHasNoGetter(MemberInfo.DeclaringType, MemberInfo.Name));
             MethodInfo getterMethod = Property.GetGetMethod(true)!;
-            Type? declaringType = getterMethod.DeclaringType;
             if (!getterMethod.IsStatic && declaringType == null)
                 Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
             if (Property.PropertyType.IsPointer)
@@ -129,6 +133,8 @@ namespace KGySoft.Reflection
         private protected override Delegate CreateNonGenericSetter()
         {
             Type? declaringType = Property.DeclaringType;
+            if (declaringType?.ContainsGenericParameters == true)
+                Throw.InvalidOperationException(Res.ReflectionGenericMember);
             if (Property.PropertyType.IsPointer)
                 Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(Property.PropertyType));
 
@@ -185,10 +191,12 @@ namespace KGySoft.Reflection
 
         private protected override Delegate CreateNonGenericGetter()
         {
+            Type? declaringType = Property.DeclaringType;
+            if (declaringType?.ContainsGenericParameters == true)
+                Throw.InvalidOperationException(Res.ReflectionGenericMember);
             if (!CanRead)
                 Throw.NotSupportedException(Res.ReflectionPropertyHasNoGetter(MemberInfo.DeclaringType, MemberInfo.Name));
             MethodInfo getterMethod = Property.GetGetMethod(true)!;
-            Type? declaringType = getterMethod.DeclaringType;
             if (!getterMethod.IsStatic && declaringType == null)
                 Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
             if (Property.PropertyType.IsPointer)
@@ -215,10 +223,12 @@ namespace KGySoft.Reflection
 
         private protected override Delegate CreateGenericSetter()
         {
+            Type? declaringType = Property.DeclaringType;
+            if (declaringType?.ContainsGenericParameters == true)
+                Throw.InvalidOperationException(Res.ReflectionGenericMember);
             if (Property.PropertyType.IsPointer)
                 Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(Property.PropertyType));
 
-            Type? declaringType = Property.DeclaringType;
             bool isByRef = Property.PropertyType.IsByRef;
             bool isStatic = (isByRef ? Property.GetGetMethod(true) : Property.GetSetMethod(true))!.IsStatic;
 
@@ -283,11 +293,13 @@ namespace KGySoft.Reflection
 
         private protected override Delegate CreateGenericGetter()
         {
+            Type? declaringType = Property.DeclaringType;
+            if (declaringType?.ContainsGenericParameters == true)
+                Throw.InvalidOperationException(Res.ReflectionGenericMember);
             if (!CanRead)
                 Throw.NotSupportedException(Res.ReflectionPropertyHasNoGetter(MemberInfo.DeclaringType, MemberInfo.Name));
 
             MethodInfo getterMethod = Property.GetGetMethod(true)!;
-            Type? declaringType = getterMethod.DeclaringType;
             bool isStatic = getterMethod.IsStatic;
             if (!isStatic && declaringType == null)
                 Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
@@ -347,9 +359,7 @@ namespace KGySoft.Reflection
             MethodInfo getterMethod = Property.GetGetMethod(true)!;
             Type? declaringType = getterMethod.DeclaringType;
             bool isStatic = getterMethod.IsStatic;
-            if (!isStatic && declaringType == null)
-                Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
-
+            Debug.Assert(isStatic || declaringType != null);
             Debug.Assert(getterMethod.ReturnType.IsByRef);
             Type propertyType = getterMethod.ReturnType.GetElementType()!;
 

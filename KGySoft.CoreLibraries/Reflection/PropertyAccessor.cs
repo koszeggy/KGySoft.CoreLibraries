@@ -606,6 +606,9 @@ namespace KGySoft.Reflection
         [ContractAnnotation("=> halt"), DoesNotReturn]
         private void PostValidate(object? instance, object? value, object?[]? indexParameters, Exception exception, bool isSetter, bool anyParams)
         {
+            if (Property.DeclaringType?.ContainsGenericParameters == true)
+                Throw.InvalidOperationException(Res.ReflectionGenericMember);
+
             if (!IsStatic)
             {
                 if (instance == null)

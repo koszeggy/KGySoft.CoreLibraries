@@ -951,6 +951,9 @@ namespace KGySoft.Reflection
         [ContractAnnotation("=> halt"), DoesNotReturn]
         private protected void PostValidate(object? instance, object?[]? parameters, Exception exception, bool anyParams)
         {
+            if (Method.ContainsGenericParameters || Method.DeclaringType?.ContainsGenericParameters == true)
+                Throw.InvalidOperationException(Res.ReflectionGenericMember);
+
             if (!Method.IsStatic)
             {
                 if (instance == null)
@@ -990,7 +993,7 @@ namespace KGySoft.Reflection
 
             ThrowIfSecurityConflict(exception);
 
-            // exceptions from the method itself: re-throwing the original exception
+            // exceptions from the delegate factory or from the method itself: re-throwing the original exception
             ExceptionDispatchInfo.Capture(exception).Throw();
         }
 

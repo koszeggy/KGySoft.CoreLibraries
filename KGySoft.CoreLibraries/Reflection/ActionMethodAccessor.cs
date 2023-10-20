@@ -50,6 +50,8 @@ namespace KGySoft.Reflection
         {
             var methodBase = (MethodBase)MemberInfo;
             Type? declaringType = methodBase.DeclaringType;
+            if (declaringType?.ContainsGenericParameters == true || methodBase.ContainsGenericParameters)
+                Throw.InvalidOperationException(Res.ReflectionGenericMember);
             if (!methodBase.IsStatic && declaringType == null)
                 Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
 
@@ -101,10 +103,12 @@ namespace KGySoft.Reflection
             if (Method is not MethodInfo method)
                 return Throw.InternalError<Delegate>($"Constructor {Method} is not expected in {nameof(CreateNonGenericInvoker)}");
             Type? declaringType = method.DeclaringType;
+            if (declaringType?.ContainsGenericParameters == true || method.ContainsGenericParameters)
+                Throw.InvalidOperationException(Res.ReflectionGenericMember);
             if (!method.IsStatic && declaringType == null)
                 Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
-            //if (ParameterTypes.Length > 4) // TODO
-            //    Throw.NotSupportedException(Res.ReflectionMethodNonGenericNotSupported);
+            if (ParameterTypes.Length > 4)
+                Throw.NotSupportedException(); // will be handled in PostValidate
             if (method.ReturnType.IsPointer == true)
                 Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(method.ReturnType));
             if (ParameterTypes.FirstOrDefault(p => p.IsPointer) is Type pointerParam)
@@ -137,6 +141,8 @@ namespace KGySoft.Reflection
             Type? declaringType = method.DeclaringType;
             bool isStatic = method.IsStatic;
             bool isValueType = declaringType?.IsValueType == true;
+            if (declaringType?.ContainsGenericParameters == true || method.ContainsGenericParameters)
+                Throw.InvalidOperationException(Res.ReflectionGenericMember);
             if (!isStatic && declaringType == null)
                 Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
             if (ParameterTypes.Length > 4)

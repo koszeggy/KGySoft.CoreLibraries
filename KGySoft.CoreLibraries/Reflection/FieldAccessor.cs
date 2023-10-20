@@ -413,40 +413,23 @@ namespace KGySoft.Reflection
 
         #region Private Methods
 
-        private Func<object?, object?> CreateGetter()
-        {
-            Type? declaringType = Field.DeclaringType;
-            if (!Field.IsStatic && declaringType == null)
-                Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
-            if (Field.FieldType.IsPointer)
-                Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(Field.FieldType));
-
-            ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
-            MemberExpression member = Expression.Field(
-                    // ReSharper disable once AssignNullToNotNullAttribute - the check above prevents null
-                    Field.IsStatic ? null : Expression.Convert(instanceParameter, declaringType!), // (TInstance)instance
-                    Field);
-
-            var lambda = Expression.Lambda<Func<object?, object?>>(
-                    Expression.Convert(member, Reflector.ObjectType), // object return type
-                    instanceParameter); // instance (object)
-            return lambda.Compile();
-        }
-
         private Action<object?, object?> CreateSetter()
         {
             Type? declaringType = Field.DeclaringType;
+            bool isValueType = declaringType?.IsValueType == true;
+            if (declaringType?.ContainsGenericParameters == true)
+                Throw.InvalidOperationException(Res.ReflectionGenericMember);
+            if (!Field.IsStatic && declaringType == null)
+                Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
             if (IsConstant)
                 Throw.InvalidOperationException(Res.ReflectionCannotSetConstantField(MemberInfo.DeclaringType, MemberInfo.Name));
-            if (declaringType == null)
-                Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
             if (Field.FieldType.IsPointer)
                 Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(Field.FieldType));
 
 #if NETSTANDARD2_0 // DynamicMethod and ILGenerator is not available in .NET Standard 2.0
             if (Field.IsInitOnly)
                 Throw.PlatformNotSupportedException(Res.ReflectionSetReadOnlyFieldNetStandard20(Field.Name, declaringType));
-            if (!Field.IsStatic && declaringType.IsValueType)
+            if (!Field.IsStatic && isValueType)
                 Throw.PlatformNotSupportedException(Res.ReflectionSetStructFieldNetStandard20(Field.Name, declaringType));
 
             ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
@@ -467,7 +450,7 @@ namespace KGySoft.Reflection
             // Expressions would not work for value types and read-only fields so using always dynamic methods
             DynamicMethod dm = new DynamicMethod(setterPrefix + Field.Name, // setter method name
                 Reflector.VoidType, // return type
-                new[] { Reflector.ObjectType, Reflector.ObjectType }, declaringType, true); // instance and value parameters
+                new[] { Reflector.ObjectType, Reflector.ObjectType }, declaringType ?? Reflector.ObjectType, true); // instance and value parameters
 
             ILGenerator il = dm.GetILGenerator();
 
@@ -475,7 +458,7 @@ namespace KGySoft.Reflection
             if (!Field.IsStatic)
             {
                 il.Emit(OpCodes.Ldarg_0); // loading 0th argument (instance)
-                il.Emit(declaringType.IsValueType ? OpCodes.Unbox : OpCodes.Castclass, declaringType); // casting object instance to target type
+                il.Emit(isValueType ? OpCodes.Unbox : OpCodes.Castclass, declaringType!); // casting object instance to target type
             }
 
             il.Emit(OpCodes.Ldarg_1); // loading 1st argument: value parameter
@@ -484,6 +467,101 @@ namespace KGySoft.Reflection
             il.Emit(OpCodes.Ret); // returning without return value
 
             return (Action<object?, object?>)dm.CreateDelegate(typeof(Action<object?, object?>));
+#endif
+        }
+
+        private Func<object?, object?> CreateGetter()
+        {
+            Type? declaringType = Field.DeclaringType;
+            if (declaringType?.ContainsGenericParameters == true)
+                Throw.InvalidOperationException(Res.ReflectionGenericMember);
+            if (!Field.IsStatic && declaringType == null)
+                Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
+            if (Field.FieldType.IsPointer)
+                Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(Field.FieldType));
+
+            ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
+            MemberExpression member = Expression.Field(
+                    // ReSharper disable once AssignNullToNotNullAttribute - the check above prevents null
+                    Field.IsStatic ? null : Expression.Convert(instanceParameter, declaringType!), // (TInstance)instance
+                    Field);
+
+            var lambda = Expression.Lambda<Func<object?, object?>>(
+                    Expression.Convert(member, Reflector.ObjectType), // object return type
+                    instanceParameter); // instance (object)
+            return lambda.Compile();
+        }
+
+        private Delegate CreateGenericSetter()
+        {
+            Type? declaringType = Field.DeclaringType;
+            bool isValueType = declaringType?.IsValueType == true;
+            if (declaringType?.ContainsGenericParameters == true)
+                Throw.InvalidOperationException(Res.ReflectionGenericMember);
+            if (IsConstant)
+                Throw.InvalidOperationException(Res.ReflectionCannotSetConstantField(MemberInfo.DeclaringType, MemberInfo.Name));
+            if (!Field.IsStatic && declaringType == null)
+                Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
+            if (Field.FieldType.IsPointer)
+                Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(Field.FieldType));
+
+#if NETSTANDARD2_0 // DynamicMethod and ILGenerator is not available in .NET Standard 2.0
+            if (Field.IsInitOnly)
+                Throw.PlatformNotSupportedException(Res.ReflectionSetReadOnlyFieldNetStandard20(Field.Name, declaringType));
+
+            ParameterExpression instanceParameter;
+            ParameterExpression valueParameter = Expression.Parameter(Field.FieldType, "value");
+            MemberExpression member;
+            BinaryExpression assign;
+            LambdaExpression lambda;
+
+            // Static field
+            if (Field.IsStatic)
+            {
+                member = Expression.Field(null, Field);
+                assign = Expression.Assign(member, valueParameter);
+                lambda = Expression.Lambda(typeof(Action<>).GetGenericType(Field.FieldType), assign, valueParameter);
+                return lambda.Compile();
+            }
+
+            // Class instance field
+            if (!isValueType)
+            {
+                instanceParameter = Expression.Parameter(declaringType, "instance");
+                member = Expression.Field(instanceParameter, Field);
+                assign = Expression.Assign(member, valueParameter);
+                lambda = Expression.Lambda(typeof(ReferenceTypeAction<,>).GetGenericType(declaringType, Field.FieldType), assign, instanceParameter, valueParameter);
+                return lambda.Compile();
+            }
+
+            // Struct instance field
+            instanceParameter = Expression.Parameter(declaringType.MakeByRefType(), "instance");
+            member = Expression.Field(instanceParameter, Field);
+            assign = Expression.Assign(member, valueParameter);
+            lambda = Expression.Lambda(typeof(ValueTypeAction<,>).GetGenericType(declaringType, Field.FieldType), assign, instanceParameter, valueParameter);
+            return lambda.Compile();
+#else
+            // Expressions would not work for read-only fields so using always dynamic methods
+            Type[] parameterTypes = (Field.IsStatic ? Type.EmptyTypes : new[] { isValueType ? declaringType!.MakeByRefType() : declaringType! })
+                .Append(Field.FieldType)
+                .ToArray();
+
+            var dm = new DynamicMethod(setterPrefix + Field.Name, Reflector.VoidType, parameterTypes, declaringType ?? Reflector.ObjectType, true);
+            ILGenerator il = dm.GetILGenerator();
+            il.Emit(OpCodes.Ldarg_0); // loading 0th argument: instance for instance fields, value for static fields
+            if (Field.IsStatic)
+                il.Emit(OpCodes.Stsfld, Field); // assigning static field
+            else
+            {
+                il.Emit(OpCodes.Ldarg_1); // loading 1st argument: value parameter for instance fields
+                il.Emit(OpCodes.Stfld, Field); // assigning instance field
+            }
+
+            il.Emit(OpCodes.Ret); // returning without return value
+            Type delegateType = Field.IsStatic ? typeof(Action<>).GetGenericType(parameterTypes)
+                : isValueType ? typeof(ValueTypeAction<,>).GetGenericType(declaringType!, Field.FieldType)
+                : typeof(ReferenceTypeAction<,>).GetGenericType(parameterTypes);
+            return dm.CreateDelegate(delegateType);
 #endif
         }
 
@@ -534,80 +612,13 @@ namespace KGySoft.Reflection
 #endif
         }
 
-        private Delegate CreateGenericSetter()
-        {
-            Type? declaringType = Field.DeclaringType;
-            if (IsConstant)
-                Throw.InvalidOperationException(Res.ReflectionCannotSetConstantField(MemberInfo.DeclaringType, MemberInfo.Name));
-            if (declaringType == null)
-                Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
-            if (Field.FieldType.IsPointer)
-                Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(Field.FieldType));
-
-#if NETSTANDARD2_0 // DynamicMethod and ILGenerator is not available in .NET Standard 2.0
-            if (Field.IsInitOnly)
-                Throw.PlatformNotSupportedException(Res.ReflectionSetReadOnlyFieldNetStandard20(Field.Name, declaringType));
-
-            ParameterExpression instanceParameter;
-            ParameterExpression valueParameter = Expression.Parameter(Field.FieldType, "value");
-            MemberExpression member;
-            BinaryExpression assign;
-            LambdaExpression lambda;
-
-            // Static field
-            if (Field.IsStatic)
-            {
-                member = Expression.Field(null, Field);
-                assign = Expression.Assign(member, valueParameter);
-                lambda = Expression.Lambda(typeof(Action<>).GetGenericType(Field.FieldType), assign, valueParameter);
-                return lambda.Compile();
-            }
-
-            // Class instance field
-            if (!declaringType.IsValueType)
-            {
-                instanceParameter = Expression.Parameter(declaringType, "instance");
-                member = Expression.Field(instanceParameter, Field);
-                assign = Expression.Assign(member, valueParameter);
-                lambda = Expression.Lambda(typeof(ReferenceTypeAction<,>).GetGenericType(declaringType, Field.FieldType), assign, instanceParameter, valueParameter);
-                return lambda.Compile();
-            }
-
-            // Struct instance field
-            instanceParameter = Expression.Parameter(declaringType.MakeByRefType(), "instance");
-            member = Expression.Field(instanceParameter, Field);
-            assign = Expression.Assign(member, valueParameter);
-            lambda = Expression.Lambda(typeof(ValueTypeAction<,>).GetGenericType(declaringType, Field.FieldType), assign, instanceParameter, valueParameter);
-            return lambda.Compile();
-#else
-            // Expressions would not work for read-only fields so using always dynamic methods
-            Type[] parameterTypes = (Field.IsStatic ? Type.EmptyTypes : new[] { declaringType.IsValueType ? declaringType.MakeByRefType() : declaringType })
-                .Append(Field.FieldType)
-                .ToArray();
-
-            var dm = new DynamicMethod(setterPrefix + Field.Name, Reflector.VoidType, parameterTypes, declaringType, true);
-            ILGenerator il = dm.GetILGenerator();
-            il.Emit(OpCodes.Ldarg_0); // loading 0th argument: instance for instance fields, value for static fields
-            if (Field.IsStatic)
-                il.Emit(OpCodes.Stsfld, Field); // assigning static field
-            else
-            {
-                il.Emit(OpCodes.Ldarg_1); // loading 1st argument: value parameter for instance fields
-                il.Emit(OpCodes.Stfld, Field); // assigning instance field
-            }
-
-            il.Emit(OpCodes.Ret); // returning without return value
-            Type delegateType = Field.IsStatic ? typeof(Action<>).GetGenericType(parameterTypes)
-                : declaringType.IsValueType ? typeof(ValueTypeAction<,>).GetGenericType(declaringType, Field.FieldType)
-                : typeof(ReferenceTypeAction<,>).GetGenericType(parameterTypes);
-            return dm.CreateDelegate(delegateType);
-#endif
-        }
-
         [MethodImpl(MethodImplOptions.NoInlining)]
         [ContractAnnotation("=> halt"), DoesNotReturn]
         private void PostValidate(object? instance, object? value, Exception exception, bool isSetter)
         {
+            if (Field.DeclaringType?.ContainsGenericParameters == true)
+                Throw.InvalidOperationException(Res.ReflectionGenericMember);
+
             if (!Field.IsStatic)
             {
                 if (instance == null)

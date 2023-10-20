@@ -402,11 +402,14 @@ namespace KGySoft
         /// <summary>Generic access of indexers with more than one index parameters is not supported. Use the non-generic Get/Set methods to access such indexers.</summary>
         internal static string ReflectionIndexerGenericNotSupported => Get("Reflection_IndexerGenericNotSupported");
 
-        /// <summary>Generic access of methods with more than four parameters. Use the non-generic Invoke method to access such methods.</summary>
+        /// <summary>Generic access of methods with more than four parameters is not supported. Use the non-generic Invoke method to access such methods.</summary>
         internal static string ReflectionMethodGenericNotSupported => Get("Reflection_MethodGenericNotSupported");
 
         /// <summary>Generic access of constructors with more than four parameters. Use the non-generic CreateInstance method to access such constructors.</summary>
         internal static string ReflectionCtorGenericNotSupported => Get("Reflection_CtorGenericNotSupported");
+
+        /// <summary>Type or member with open generic arguments cannot be reflected.</summary>
+        internal static string ReflectionGenericMember => Get("Reflection_GenericMember");
 
         #endregion
 
@@ -988,8 +991,14 @@ namespace KGySoft
         /// <summary>Cannot access {0}.{1} method with the provided type arguments and/or parameters.</summary>
         internal static string ReflectionCannotInvokeMethodGeneric(string methodName, Type? type) => Get("Reflection_CannotInvokeMethodGenericFormat", type?.GetName(TypeNameKind.LongName), methodName);
 
-        /// <summary>Cannot create an instance of type {0} with the provided type arguments and/or parameters.</summary>
+        /// <summary>Cannot create an instance of type '{0}' with the provided type arguments and/or parameters.</summary>
         internal static string ReflectionCannotCreateInstanceGeneric(Type type) => Get("Reflection_CannotCreateInstanceGenericFormat", type.GetName(TypeNameKind.LongName));
+
+        /// <summary>Cannot create an instance of type '{0}' because abstract classes, interfaces and open generic types cannot be instantiated.</summary>
+        internal static string ReflectionCannotCreateInstanceOfType(Type type) => Get("Reflection_CannotCreateInstanceOfTypeFormat", type.GetName(TypeNameKind.LongName));
+
+        /// <summary>Type '{0}' does not have a parameterless constructor. Obtain the CreateInstanceAccessor by a ConstructorInfo instead.</summary>
+        internal static string ReflectionNoDefaultCtor(Type type) => Get("Reflection_NoDefaultCtorFormat", type.GetName(TypeNameKind.LongName));
 
         #endregion
 
