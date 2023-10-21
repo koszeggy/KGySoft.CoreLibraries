@@ -17,7 +17,6 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 #if !NETSTANDARD2_0
@@ -430,18 +429,18 @@ namespace KGySoft.Reflection
             if (Field.IsInitOnly)
                 Throw.PlatformNotSupportedException(Res.ReflectionSetReadOnlyFieldNetStandard20(Field.Name, declaringType));
             if (!Field.IsStatic && isValueType)
-                Throw.PlatformNotSupportedException(Res.ReflectionSetStructFieldNetStandard20(Field.Name, declaringType));
+                Throw.PlatformNotSupportedException(Res.ReflectionSetStructFieldNetStandard20(Field.Name, declaringType!));
 
             ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
             ParameterExpression valueParameter = Expression.Parameter(Reflector.ObjectType, "value");
             UnaryExpression castValue = Expression.Convert(valueParameter, Field.FieldType);
 
             MemberExpression member = Expression.Field(
-                Field.IsStatic ? null : Expression.Convert(instanceParameter, declaringType), // (TInstance)instance
+                Field.IsStatic ? null : Expression.Convert(instanceParameter, declaringType!), // (TInstance)instance
                 Field);
 
             BinaryExpression assign = Expression.Assign(member, castValue);
-            Expression<NonGenericSetter> lambda = Expression.Lambda<Action<object?, object?>>(
+            Expression<Action<object?, object?>> lambda = Expression.Lambda<Action<object?, object?>>(
                 assign,
                 instanceParameter, // instance (object)
                 valueParameter);
@@ -527,15 +526,15 @@ namespace KGySoft.Reflection
             // Class instance field
             if (!isValueType)
             {
-                instanceParameter = Expression.Parameter(declaringType, "instance");
+                instanceParameter = Expression.Parameter(declaringType!, "instance");
                 member = Expression.Field(instanceParameter, Field);
                 assign = Expression.Assign(member, valueParameter);
-                lambda = Expression.Lambda(typeof(ReferenceTypeAction<,>).GetGenericType(declaringType, Field.FieldType), assign, instanceParameter, valueParameter);
+                lambda = Expression.Lambda(typeof(ReferenceTypeAction<,>).GetGenericType(declaringType!, Field.FieldType), assign, instanceParameter, valueParameter);
                 return lambda.Compile();
             }
 
             // Struct instance field
-            instanceParameter = Expression.Parameter(declaringType.MakeByRefType(), "instance");
+            instanceParameter = Expression.Parameter(declaringType!.MakeByRefType(), "instance");
             member = Expression.Field(instanceParameter, Field);
             assign = Expression.Assign(member, valueParameter);
             lambda = Expression.Lambda(typeof(ValueTypeAction<,>).GetGenericType(declaringType, Field.FieldType), assign, instanceParameter, valueParameter);

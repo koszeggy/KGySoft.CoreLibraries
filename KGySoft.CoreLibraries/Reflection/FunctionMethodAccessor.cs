@@ -109,10 +109,6 @@ namespace KGySoft.Reflection
             if (ParameterTypes.FirstOrDefault(p => p.IsPointer) is Type pointerParam)
                 Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(pointerParam));
 
-#if NETSTANDARD2_0
-    throw new NotImplementedException("CreateNonGenericSpecializedInvoker - expressions");
-#else
-            DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(method, DynamicMethodOptions.ExactParameters);
             Type delegateType = ParameterTypes.Length switch
             {
                 0 => typeof(Func<object?, object?>),
@@ -123,6 +119,33 @@ namespace KGySoft.Reflection
                 _ => Throw.InternalError<Type>("Unexpected number of parameters")
             };
 
+#if NETSTANDARD2_0
+            var parameters = new ParameterExpression[ParameterTypes.Length + 1];
+            parameters[0] = Expression.Parameter(Reflector.ObjectType, "instance");
+            var methodParameters = new Expression[ParameterTypes.Length];
+            for (int i = 0; i < ParameterTypes.Length; i++)
+            {
+                parameters[i + 1] = Expression.Parameter(Reflector.ObjectType, $"param{i + 1}");
+                Type parameterType = ParameterTypes[i];
+
+                // This just avoids error when ref parameters are used but does not assign results back
+                if (parameterType.IsByRef)
+                    parameterType = parameterType.GetElementType()!;
+
+                methodParameters[i] = Expression.Convert(parameters[i + 1], parameterType);
+            }
+
+            MethodCallExpression methodToCall = Expression.Call(
+                method.IsStatic ? null : Expression.Convert(parameters[0], declaringType!), // (TInstance)instance
+                method, // method info
+                methodParameters); // parameters cast to target types
+
+            var lambda = Expression.Lambda(delegateType,
+                Expression.Convert(methodToCall, Reflector.ObjectType), // return type converted to object
+                parameters);
+            return lambda.Compile();
+#else
+            DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(method, DynamicMethodOptions.ExactParameters);
             return dm.CreateDelegate(delegateType);
 #endif
         }
@@ -210,7 +233,16 @@ namespace KGySoft.Reflection
             {
                 parameters = new ParameterExpression[ParameterTypes.Length];
                 for (int i = 0; i < parameters.Length; i++)
-                    parameters[i] = Expression.Parameter(ParameterTypes[i], $"param{i + 1}");
+                {
+                    Type parameterType = ParameterTypes[i];
+
+                    // This just avoids error when ref parameters are used but does not assign results back
+                    if (parameterType.IsByRef)
+                        parameterType = parameterType.GetElementType()!;
+
+                    parameters[i] = Expression.Parameter(parameterType, $"param{i + 1}");
+                }
+
                 methodCall = Expression.Call(null, method, parameters);
 
                 lambda = Expression.Lambda(delegateType, methodCall, parameters);
@@ -226,10 +258,17 @@ namespace KGySoft.Reflection
                 parameters[0] = Expression.Parameter(declaringType!.MakeByRefType(), "instance");
 
             for (int i = 0; i < ParameterTypes.Length; i++)
-                parameters[i + 1] = Expression.Parameter(ParameterTypes[i], $"param{i + 1}");
+            {
+                Type parameterType = ParameterTypes[i];
+
+                // This just avoids error when ref parameters are used but does not assign results back
+                if (parameterType.IsByRef)
+                    parameterType = parameterType.GetElementType()!;
+
+                parameters[i + 1] = Expression.Parameter(parameterType, $"param{i + 1}");
+            }
 
             methodCall = Expression.Call(parameters[0], method, parameters.Skip(1));
-            delegateType = delegateType.GetGenericType(new[] { declaringType! }.Concat(ParameterTypes).Append(returnType).ToArray());
             lambda = Expression.Lambda(delegateType, methodCall, parameters);
             return lambda.Compile();
 #else

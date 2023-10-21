@@ -16,9 +16,7 @@
 #region Usings
 
 using System;
-#if !NETSTANDARD2_0
 using System.Collections.Generic;
-#endif
 using System.Diagnostics;
 #if !NETSTANDARD2_0
 using System.Diagnostics.CodeAnalysis; 
@@ -74,6 +72,10 @@ namespace KGySoft.Reflection
         internal delegate TResult ValueTypeFunction<TInstance, in T1, in T2, out TResult>(in TInstance instance, T1 arg1, T2 arg2) where TInstance : struct;
         internal delegate TResult ValueTypeFunction<TInstance, in T1, in T2, in T3, out TResult>(in TInstance instance, T1 arg1, T2 arg2, T3 arg3) where TInstance : struct;
         internal delegate TResult ValueTypeFunction<TInstance, in T1, in T2, in T3, in T4, out TResult>(in TInstance instance, T1 arg1, T2 arg2, T3 arg3, T4 arg4) where TInstance : struct;
+
+#if NET35
+        internal delegate TResult Func<in T1, in T2, in T3, in T4, in T5, out TResult>(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5);
+#endif
 
         #endregion
 

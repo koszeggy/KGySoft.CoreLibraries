@@ -73,13 +73,16 @@ namespace KGySoft.Reflection
                 Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
 
 #if NETSTANDARD2_0
+            if (!setterMethod.IsStatic && declaringType?.IsValueType == true)
+                Throw.PlatformNotSupportedException(Res.ReflectionSetStructPropertyNetStandard20(Property.Name, Property.PropertyType));
+
             ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
             ParameterExpression valueParameter = Expression.Parameter(Reflector.ObjectType, "value");
             ParameterExpression indexParametersParameter = Expression.Parameter(typeof(object[]), "indexParameters");
             UnaryExpression castValue = Expression.Convert(valueParameter, Property.PropertyType);
 
             MethodCallExpression setterCall = Expression.Call(
-                setterMethod.IsStatic ? null : Expression.Convert(instanceParameter, declaringType), // (TInstance)instance
+                setterMethod.IsStatic ? null : Expression.Convert(instanceParameter, declaringType!), // (TInstance)instance
                 setterMethod, // setter
                 castValue); // original parameter: (TProp)value
 
@@ -116,7 +119,7 @@ namespace KGySoft.Reflection
             ParameterExpression indexParametersParameter = Expression.Parameter(typeof(object[]), "indexParameters");
 
             MemberExpression member = Expression.Property(
-                getterMethod.IsStatic ? null : Expression.Convert(instanceParameter, declaringType), // (TInstance)instance
+                getterMethod.IsStatic ? null : Expression.Convert(instanceParameter, declaringType!), // (TInstance)instance
                 Property);
 
             var lambda = Expression.Lambda<Func<object?, object?[]?, object?>>(
@@ -157,24 +160,16 @@ namespace KGySoft.Reflection
             if (!setterMethod.IsStatic && declaringType == null)
                 Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
 
-            if (declaringType!.IsValueType && !setterMethod.IsStatic)
-            {
 #if NETSTANDARD2_0
+            if (!setterMethod.IsStatic && declaringType?.IsValueType == true)
                 Throw.PlatformNotSupportedException(Res.ReflectionSetStructPropertyNetStandard20(Property.Name, declaringType));
-#else
-                // for struct instance properties: Dynamic method
-                DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(setterMethod, DynamicMethodOptions.TreatAsPropertySetter | DynamicMethodOptions.ExactParameters);
-                return (Action<object?, object?>)dm.CreateDelegate(typeof(Action<object?, object?>));
-#endif
-            }
 
-#if NETSTANDARD2_0
             ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
             ParameterExpression valueParameter = Expression.Parameter(Reflector.ObjectType, "value");
             UnaryExpression castValue = Expression.Convert(valueParameter, Property.PropertyType);
 
             MethodCallExpression setterCall = Expression.Call(
-                setterMethod.IsStatic ? null : Expression.Convert(instanceParameter, declaringType), // (TInstance)instance
+                setterMethod.IsStatic ? null : Expression.Convert(instanceParameter, declaringType!), // (TInstance)instance
                 setterMethod, // setter
                 castValue); // original parameter: (TProp)value
 
@@ -208,7 +203,7 @@ namespace KGySoft.Reflection
 
             ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
             MemberExpression member = Expression.Property(
-                getterMethod.IsStatic ? null : Expression.Convert(instanceParameter, declaringType), // (TInstance)instance
+                getterMethod.IsStatic ? null : Expression.Convert(instanceParameter, declaringType!), // (TInstance)instance
                 Property);
 
             var lambda = Expression.Lambda<Func<object?, object?>>(

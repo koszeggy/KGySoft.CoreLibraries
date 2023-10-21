@@ -103,7 +103,28 @@ namespace KGySoft.Reflection
             };
 
 #if NETSTANDARD2_0
-    throw new NotImplementedException("CreateNonGenericSpecializedInvoker - expressions");
+            var parameters = new ParameterExpression[ParameterTypes.Length];
+            var ctorParameters = new Expression[ParameterTypes.Length];
+            for (int i = 0; i < ParameterTypes.Length; i++)
+            {
+                parameters[i] = Expression.Parameter(Reflector.ObjectType, $"param{i + 1}");
+                Type parameterType = ParameterTypes[i];
+
+                // This just avoids error when ref parameters are used but does not assign results back
+                if (parameterType.IsByRef)
+                    parameterType = parameterType.GetElementType()!;
+
+                ctorParameters[i] = Expression.Convert(parameters[i], parameterType);
+            }
+
+            NewExpression construct = Expression.New(
+                ctor, // constructor info
+                ctorParameters); // arguments cast to target types
+
+            var lambda = Expression.Lambda(delegateType,
+                Expression.Convert(construct, Reflector.ObjectType), // return type converted to object
+                parameters);
+            return lambda.Compile();
 #else
             DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(ctor, DynamicMethodOptions.ExactParameters);
             return dm.CreateDelegate(delegateType);

@@ -47,8 +47,6 @@ using KGySoft.Reflection;
 #region Used Aliases
 
 using ReferenceEqualityComparer = KGySoft.CoreLibraries.ReferenceEqualityComparer;
-using System.Xml.Linq;
-using System.Runtime.Remoting;
 
 #endregion
 

@@ -18,7 +18,9 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+#if NETSTANDARD2_0
 using System.Linq.Expressions;
+#endif
 using System.Reflection;
 #if !NETSTANDARD2_0
 using System.Reflection.Emit;
@@ -60,7 +62,6 @@ namespace KGySoft.Reflection
             if (method == null)
                 Throw.InternalError($"Constructors cannot be invoked by {nameof(ActionMethodAccessor)} in .NET Standard 2.0");
 
-            // For classes and static methods that have no ref parameters: Lambda expression
             ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
             ParameterExpression argumentsParameter = Expression.Parameter(typeof(object[]), "arguments");
             var methodParameters = new Expression[ParameterTypes.Length];
@@ -109,15 +110,11 @@ namespace KGySoft.Reflection
                 Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
             if (ParameterTypes.Length > 4)
                 Throw.NotSupportedException(); // will be handled in PostValidate
-            if (method.ReturnType.IsPointer == true)
+            if (method.ReturnType.IsPointer)
                 Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(method.ReturnType));
             if (ParameterTypes.FirstOrDefault(p => p.IsPointer) is Type pointerParam)
                 Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(pointerParam));
 
-#if NETSTANDARD2_0
-    throw new NotImplementedException("CreateNonGenericSpecializedInvoker - expressions");
-#else
-            DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(method, DynamicMethodOptions.ExactParameters | DynamicMethodOptions.ReturnNullForVoid);
             Type delegateType = ParameterTypes.Length switch
             {
                 0 => typeof(Func<object?, object?>),
@@ -128,6 +125,36 @@ namespace KGySoft.Reflection
                 _ => Throw.InternalError<Type>("Unexpected number of parameters")
             };
 
+#if NETSTANDARD2_0
+            var parameters = new ParameterExpression[ParameterTypes.Length + 1];
+            parameters[0] = Expression.Parameter(Reflector.ObjectType, "instance");
+            var methodParameters = new Expression[ParameterTypes.Length];
+            for (int i = 0; i < ParameterTypes.Length; i++)
+            {
+                parameters[i + 1] = Expression.Parameter(Reflector.ObjectType, $"param{i + 1}");
+                Type parameterType = ParameterTypes[i];
+
+                // This just avoids error when ref parameters are used but does not assign results back
+                if (parameterType.IsByRef)
+                    parameterType = parameterType.GetElementType()!;
+
+                methodParameters[i] = Expression.Convert(parameters[i + 1], parameterType);
+            }
+
+            MethodCallExpression methodToCall = Expression.Call(
+                method.IsStatic ? null : Expression.Convert(parameters[0], declaringType!), // (TInstance)instance
+                method, // method info
+                methodParameters); // parameters cast to target types
+
+            BlockExpression body = Expression.Block(
+                methodToCall, // the void method call
+                Expression.Constant(null)); // return null
+            var lambda = Expression.Lambda(delegateType,
+                body, // void method call + return null
+                parameters);
+            return lambda.Compile();
+#else
+            DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(method, DynamicMethodOptions.ExactParameters | DynamicMethodOptions.ReturnNullForVoid);
             return dm.CreateDelegate(delegateType);
 #endif
         }
@@ -211,7 +238,16 @@ namespace KGySoft.Reflection
             {
                 parameters = new ParameterExpression[ParameterTypes.Length];
                 for (int i = 0; i < parameters.Length; i++)
-                    parameters[i] = Expression.Parameter(ParameterTypes[i], $"param{i + 1}");
+                {
+                    Type parameterType = ParameterTypes[i];
+
+                    // This just avoids error when ref parameters are used but does not assign results back
+                    if (parameterType.IsByRef)
+                        parameterType = parameterType.GetElementType()!;
+
+                    parameters[i] = Expression.Parameter(parameterType, $"param{i + 1}");
+                }
+
                 methodCall = Expression.Call(null, method, parameters);
 
                 lambda = Expression.Lambda(delegateType, methodCall, parameters);
@@ -222,12 +258,20 @@ namespace KGySoft.Reflection
             parameters = new ParameterExpression[ParameterTypes.Length + 1];
 
             if (!isValueType)
-                parameters[0] = Expression.Parameter(declaringType, "instance");
+                parameters[0] = Expression.Parameter(declaringType!, "instance");
             else
-                parameters[0] = Expression.Parameter(declaringType.MakeByRefType(), "instance");
+                parameters[0] = Expression.Parameter(declaringType!.MakeByRefType(), "instance");
 
             for (int i = 0; i < ParameterTypes.Length; i++)
-                parameters[i + 1] = Expression.Parameter(ParameterTypes[i], $"param{i + 1}");
+            {
+                Type parameterType = ParameterTypes[i];
+
+                // This just avoids error when ref parameters are used but does not assign results back
+                if (parameterType.IsByRef)
+                    parameterType = parameterType.GetElementType()!;
+
+                parameters[i + 1] = Expression.Parameter(parameterType, $"param{i + 1}");
+            }
 
             methodCall = Expression.Call(parameters[0], method, parameters.Skip(1)); 
             lambda = Expression.Lambda(delegateType, methodCall, parameters);

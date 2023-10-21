@@ -417,7 +417,11 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
         [SecuritySafeCritical]
         public void TestEnum_PartiallyTrusted()
         {
-            var domain = CreateSandboxDomain(new ReflectionPermission(ReflectionPermissionFlag.MemberAccess));
+            var domain = CreateSandboxDomain(
+#if NET35
+                new SecurityPermission(SecurityPermissionFlag.ControlEvidence),
+#endif
+                new ReflectionPermission(ReflectionPermissionFlag.MemberAccess));
             var handle = Activator.CreateInstance(domain, Assembly.GetExecutingAssembly().FullName, typeof(Sandbox).FullName!);
             var sandbox = (Sandbox)handle.Unwrap();
             try

@@ -1275,15 +1275,18 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Console.Write("Method Accessor General...");
             parameters = (object[])args.Clone();
             accessor.Invoke(test, parameters);
-            Assert.AreEqual(args[0], ((TestStruct)test).IntProp);
             if (TestedFramework != TargetFramework.NetStandard20)
+            {
+                Assert.AreEqual(args[0], ((TestStruct)test).IntProp);
                 Assert.AreNotEqual(args[2], parameters[2]);
+            }
 
             test = new TestStruct(0);
             Console.Write("Method Accessor NonGeneric...");
             parameters = (object[])args.Clone();
             accessor.Invoke(test, parameters[0], parameters[1], parameters[2], parameters[3]);
-            Assert.AreEqual(args[0], ((TestStruct)test).IntProp);
+            if (TestedFramework != TargetFramework.NetStandard20)
+                Assert.AreEqual(args[0], ((TestStruct)test).IntProp);
 
             var testStruct = new TestStruct(0);
             Console.Write("Method Accessor Generic...");
@@ -1553,16 +1556,19 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             parameters = (object[])args.Clone();
             result = accessor.Invoke(test, parameters);
             Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[0], ((TestStruct)test).IntProp);
             if (TestedFramework != TargetFramework.NetStandard20)
+            {
+                Assert.AreEqual(args[0], ((TestStruct)test).IntProp);
                 Assert.AreNotEqual(args[2], parameters[2]);
+            }
 
             test = new TestStruct(0);
             Console.Write("Method Accessor NonGeneric...");
             parameters = (object[])args.Clone();
             result = accessor.Invoke(test, parameters[0], parameters[1], parameters[2], parameters[3]);
             Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[0], ((TestStruct)test).IntProp);
+            if (TestedFramework != TargetFramework.NetStandard20)
+                Assert.AreEqual(args[0], ((TestStruct)test).IntProp);
 
             var testStruct = new TestStruct(0);
             Console.Write("Method Accessor Generic...");
@@ -3581,7 +3587,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Throws<InvalidOperationException>(() => accessor.CreateInstance<object>(), Res.ReflectionInstanceCtorExpected);
 
             // module constructor
-            ci = ((Type)Reflector.GetProperty(typeof(Module).Module, "RuntimeType"))!.GetConstructor(BindingFlags.NonPublic | BindingFlags.Static, Type.EmptyTypes)!;
+            ci = ((Type)Reflector.GetProperty(typeof(Module).Module, "RuntimeType"))!.GetConstructor(BindingFlags.NonPublic | BindingFlags.Static, null, Type.EmptyTypes, null)!;
             accessor = CreateInstanceAccessor.GetAccessor(ci);
             Throws<InvalidOperationException>(() => accessor.CreateInstance(null), Res.ReflectionInstanceCtorExpected);
             Throws<InvalidOperationException>(() => accessor.CreateInstance(), Res.ReflectionInstanceCtorExpected);
