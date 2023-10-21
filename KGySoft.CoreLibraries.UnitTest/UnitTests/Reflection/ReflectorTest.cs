@@ -604,8 +604,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             parameters = (object[])args.Clone();
             accessor.Invoke(test, parameters);
             Assert.AreEqual(args[0], test.IntProp);
-            if (TestedFramework != TargetFramework.NetStandard20)
-                Assert.AreNotEqual(args[2], parameters[2]);
+            Assert.AreNotEqual(args[2], parameters[2]);
 
             test = new TestClass(0);
             Console.Write("Method Accessor NonGeneric...");
@@ -669,8 +668,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             parameters = (object[])args.Clone();
             MethodAccessor.GetAccessor(mi).Invoke(null, parameters);
             Assert.AreEqual(args[0], TestClass.StaticIntProp);
-            if (TestedFramework != TargetFramework.NetStandard20)
-                Assert.AreNotEqual(args[2], parameters[2]);
+            Assert.AreNotEqual(args[2], parameters[2]);
 
             TestClass.StaticIntProp = 0;
             Console.Write("Method Accessor NonGeneric...");
@@ -950,8 +948,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             result = accessor.Invoke(test, parameters);
             Assert.AreEqual(args[0], result);
             Assert.AreEqual(args[0], test.IntProp);
-            if (TestedFramework != TargetFramework.NetStandard20)
-                Assert.AreNotEqual(args[2], parameters[2]);
+            Assert.AreNotEqual(args[2], parameters[2]);
 
             test = new TestClass(0);
             Console.Write("Method Accessor NonGeneric...");
@@ -1023,8 +1020,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             result = MethodAccessor.GetAccessor(mi).Invoke(null, parameters);
             Assert.AreEqual(args[0], result);
             Assert.AreEqual(args[0], TestClass.StaticIntProp);
-            if (TestedFramework != TargetFramework.NetStandard20)
-                Assert.AreNotEqual(args[2], parameters[2]);
+            Assert.AreNotEqual(args[2], parameters[2]);
 
             TestClass.StaticIntProp = 0;
             Console.Write("Method Accessor NonGeneric...");
@@ -1139,24 +1135,24 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Console.Write("Method Accessor General...");
             parameters = (object[])args.Clone();
             accessor.Invoke(test, parameters);
-            if (TestedFramework != TargetFramework.NetStandard20)
-                Assert.AreEqual(arg1, ((TestStruct)test).IntProp);
+            Assert.AreEqual(arg1, ((TestStruct)test).IntProp);
 
             Throws<ArgumentNullException>(() => accessor.Invoke(null, args), Res.ReflectionInstanceIsNull);
             Throws<ArgumentException>(() => accessor.Invoke(new object(), args), Res.NotAnInstanceOfType(test.GetType()));
-            Throws<ArgumentException>(() => accessor.Invoke(test, new object[] { null, arg2 }), Res.ElementNotAnInstanceOfType(0, typeof(int)));
+            if (TestedFramework != TargetFramework.NetStandard20) // the fallback reflection accepts null as int
+                Throws<ArgumentException>(() => accessor.Invoke(test, new object[] { null, arg2 }), Res.ElementNotAnInstanceOfType(0, typeof(int)));
             Throws<ArgumentException>(() => accessor.Invoke(test, new object[] { arg2, arg1 }), Res.ElementNotAnInstanceOfType(0, typeof(int)));
             Throws<ArgumentException>(() => accessor.Invoke(test, new object[] { arg1 }), Res.ReflectionParamsLengthMismatch(2, 1));
 
             test = new TestStruct(0);
             Console.Write("Method Accessor NonGeneric...");
             accessor.Invoke(test, arg1, arg2);
-            if (TestedFramework != TargetFramework.NetStandard20)
-                Assert.AreEqual(arg1, ((TestStruct)test).IntProp);
+            Assert.AreEqual(arg1, ((TestStruct)test).IntProp);
 
             Throws<ArgumentNullException>(() => accessor.Invoke(null, arg1, arg2), Res.ReflectionInstanceIsNull);
             Throws<ArgumentException>(() => accessor.Invoke(new object(), arg1, arg2), Res.NotAnInstanceOfType(test.GetType()));
-            Throws<ArgumentException>(() => accessor.Invoke(test, null, arg2), Res.NotAnInstanceOfType(typeof(int)));
+            if (TestedFramework != TargetFramework.NetStandard20) // the fallback reflection accepts null as int
+                Throws<ArgumentException>(() => accessor.Invoke(test, null, arg2), Res.NotAnInstanceOfType(typeof(int)));
             Throws<ArgumentException>(() => accessor.Invoke(test, arg2, arg1), Res.NotAnInstanceOfType(typeof(int)));
             Throws<ArgumentException>(() => accessor.Invoke(test, arg1), Res.ReflectionParamsLengthMismatch(2, 1));
 
@@ -1275,18 +1271,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Console.Write("Method Accessor General...");
             parameters = (object[])args.Clone();
             accessor.Invoke(test, parameters);
-            if (TestedFramework != TargetFramework.NetStandard20)
-            {
-                Assert.AreEqual(args[0], ((TestStruct)test).IntProp);
-                Assert.AreNotEqual(args[2], parameters[2]);
-            }
+            Assert.AreEqual(args[0], ((TestStruct)test).IntProp);
+            Assert.AreNotEqual(args[2], parameters[2]);
 
             test = new TestStruct(0);
             Console.Write("Method Accessor NonGeneric...");
             parameters = (object[])args.Clone();
             accessor.Invoke(test, parameters[0], parameters[1], parameters[2], parameters[3]);
-            if (TestedFramework != TargetFramework.NetStandard20)
-                Assert.AreEqual(args[0], ((TestStruct)test).IntProp);
+            Assert.AreEqual(args[0], ((TestStruct)test).IntProp);
 
             var testStruct = new TestStruct(0);
             Console.Write("Method Accessor Generic...");
@@ -1345,8 +1337,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             parameters = (object[])args.Clone();
             accessor.Invoke(null, parameters);
             Assert.AreEqual(args[0], TestStruct.StaticIntProp);
-            if (TestedFramework != TargetFramework.NetStandard20)
-                Assert.AreNotEqual(args[2], parameters[2]);
+            Assert.AreNotEqual(args[2], parameters[2]);
 
             TestStruct.StaticIntProp = 0;
             Console.Write("Method Accessor NonGeneric...");
@@ -1403,11 +1394,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             parameters = (object[])args.Clone();
             result = accessor.Invoke(test, parameters);
             Assert.AreEqual(arg1, result);
-            if (TestedFramework != TargetFramework.NetStandard20)
-                Assert.AreEqual(arg1, ((TestStruct)test).IntProp);
+            Assert.AreEqual(arg1, ((TestStruct)test).IntProp);
             Throws<ArgumentNullException>(() => accessor.Invoke(null, args), Res.ReflectionInstanceIsNull);
             Throws<ArgumentException>(() => accessor.Invoke(new object(), args), Res.NotAnInstanceOfType(test.GetType()));
-            Throws<ArgumentException>(() => accessor.Invoke(test, new object[] { null, arg2 }), Res.ElementNotAnInstanceOfType(0, typeof(int)));
+            if (TestedFramework != TargetFramework.NetStandard20) // the fallback reflection accepts null as int
+                Throws<ArgumentException>(() => accessor.Invoke(test, new object[] { null, arg2 }), Res.ElementNotAnInstanceOfType(0, typeof(int)));
             Throws<ArgumentException>(() => accessor.Invoke(test, new object[] { arg2, arg1 }), Res.ElementNotAnInstanceOfType(0, typeof(int)));
             Throws<ArgumentException>(() => accessor.Invoke(test, new object[] { arg1 }), Res.ReflectionParamsLengthMismatch(2, 1));
 
@@ -1415,11 +1406,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Console.Write("Method Accessor NonGeneric...");
             result = accessor.Invoke(test, arg1, arg2);
             Assert.AreEqual(arg1, result);
-            if (TestedFramework != TargetFramework.NetStandard20)
-                Assert.AreEqual(arg1, ((TestStruct)test).IntProp);
+            Assert.AreEqual(arg1, ((TestStruct)test).IntProp);
             Throws<ArgumentNullException>(() => accessor.Invoke(null, arg1, arg2), Res.ReflectionInstanceIsNull);
             Throws<ArgumentException>(() => accessor.Invoke(new object(), arg1, arg2), Res.NotAnInstanceOfType(test.GetType()));
-            Throws<ArgumentException>(() => accessor.Invoke(test, null, arg2), Res.NotAnInstanceOfType(typeof(int)));
+            if (TestedFramework != TargetFramework.NetStandard20) // the fallback reflection accepts null as int
+                Throws<ArgumentException>(() => accessor.Invoke(test, null, arg2), Res.NotAnInstanceOfType(typeof(int)));
             Throws<ArgumentException>(() => accessor.Invoke(test, arg2, arg1), Res.NotAnInstanceOfType(typeof(int)));
             Throws<ArgumentException>(() => accessor.Invoke(test, arg1), Res.ReflectionParamsLengthMismatch(2, 1));
 
@@ -1556,19 +1547,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             parameters = (object[])args.Clone();
             result = accessor.Invoke(test, parameters);
             Assert.AreEqual(args[0], result);
-            if (TestedFramework != TargetFramework.NetStandard20)
-            {
-                Assert.AreEqual(args[0], ((TestStruct)test).IntProp);
-                Assert.AreNotEqual(args[2], parameters[2]);
-            }
+            Assert.AreEqual(args[0], ((TestStruct)test).IntProp);
+            Assert.AreNotEqual(args[2], parameters[2]);
 
             test = new TestStruct(0);
             Console.Write("Method Accessor NonGeneric...");
             parameters = (object[])args.Clone();
             result = accessor.Invoke(test, parameters[0], parameters[1], parameters[2], parameters[3]);
             Assert.AreEqual(args[0], result);
-            if (TestedFramework != TargetFramework.NetStandard20)
-                Assert.AreEqual(args[0], ((TestStruct)test).IntProp);
+            Assert.AreEqual(args[0], ((TestStruct)test).IntProp);
 
             var testStruct = new TestStruct(0);
             Console.Write("Method Accessor Generic...");
@@ -1635,8 +1622,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             result = accessor.Invoke(null, parameters);
             Assert.AreEqual(args[0], result);
             Assert.AreEqual(args[0], TestStruct.StaticIntProp);
-            if (TestedFramework != TargetFramework.NetStandard20)
-                Assert.AreNotEqual(args[2], parameters[2]);
+            Assert.AreNotEqual(args[2], parameters[2]);
 
             TestStruct.StaticIntProp = 0;
             Console.Write("Method Accessor NonGeneric...");
@@ -2391,33 +2377,29 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             test = new TestStruct(0);
             Console.Write("Property Accessor General...");
-            if (!ThrowsOnFramework<PlatformNotSupportedException>(() => accessor.Set(test, value, Reflector.EmptyObjects),
-                TargetFramework.NetStandard20))
-            {
-                result = accessor.Get(test, Reflector.EmptyObjects);
-                Assert.AreEqual(value, result);
-                Throws<ArgumentNullException>(() => accessor.Set(null, value, Reflector.EmptyObjects), Res.ReflectionInstanceIsNull);
+            accessor.Set(test, value, Reflector.EmptyObjects);
+            result = accessor.Get(test, Reflector.EmptyObjects);
+            Assert.AreEqual(value, result);
+            Throws<ArgumentNullException>(() => accessor.Set(null, value, Reflector.EmptyObjects), Res.ReflectionInstanceIsNull);
+            if (TestedFramework != TargetFramework.NetStandard20) // the fallback reflection accepts null as int
                 Throws<ArgumentNullException>(() => accessor.Set(test, null, Reflector.EmptyObjects), Res.NotAnInstanceOfType(value.GetType()));
-                Throws<ArgumentException>(() => accessor.Set(new object(), value, Reflector.EmptyObjects), Res.NotAnInstanceOfType(test.GetType()));
-                Throws<ArgumentException>(() => accessor.Set(test, "1", Reflector.EmptyObjects), Res.NotAnInstanceOfType(value.GetType()));
-                Throws<ArgumentNullException>(() => accessor.Get(null, Reflector.EmptyObjects), Res.ReflectionInstanceIsNull);
-                Throws<ArgumentException>(() => accessor.Get(new object(), Reflector.EmptyObjects), Res.NotAnInstanceOfType(test.GetType()));
-            }
+            Throws<ArgumentException>(() => accessor.Set(new object(), value, Reflector.EmptyObjects), Res.NotAnInstanceOfType(test.GetType()));
+            Throws<ArgumentException>(() => accessor.Set(test, "1", Reflector.EmptyObjects), Res.NotAnInstanceOfType(value.GetType()));
+            Throws<ArgumentNullException>(() => accessor.Get(null, Reflector.EmptyObjects), Res.ReflectionInstanceIsNull);
+            Throws<ArgumentException>(() => accessor.Get(new object(), Reflector.EmptyObjects), Res.NotAnInstanceOfType(test.GetType()));
 
             test = new TestStruct(0);
             Console.Write("Property Accessor NonGeneric...");
-            if (!ThrowsOnFramework<PlatformNotSupportedException>(() => accessor.Set(test, value),
-                TargetFramework.NetStandard20))
-            {
-                result = accessor.Get(test);
-                Assert.AreEqual(value, result);
-                Throws<ArgumentNullException>(() => accessor.Set(null, value), Res.ReflectionInstanceIsNull);
+            accessor.Set(test, value);
+            result = accessor.Get(test);
+            Assert.AreEqual(value, result);
+            Throws<ArgumentNullException>(() => accessor.Set(null, value), Res.ReflectionInstanceIsNull);
+            if (TestedFramework != TargetFramework.NetStandard20) // the fallback reflection accepts null as int
                 Throws<ArgumentNullException>(() => accessor.Set(test, null), Res.NotAnInstanceOfType(value.GetType()));
-                Throws<ArgumentException>(() => accessor.Set(new object(), value), Res.NotAnInstanceOfType(test.GetType()));
-                Throws<ArgumentException>(() => accessor.Set(test, "1"), Res.NotAnInstanceOfType(value.GetType()));
-                Throws<ArgumentNullException>(() => accessor.Get(null), Res.ReflectionInstanceIsNull);
-                Throws<ArgumentException>(() => accessor.Get(new object()), Res.NotAnInstanceOfType(test.GetType()));
-            }
+            Throws<ArgumentException>(() => accessor.Set(new object(), value), Res.NotAnInstanceOfType(test.GetType()));
+            Throws<ArgumentException>(() => accessor.Set(test, "1"), Res.NotAnInstanceOfType(value.GetType()));
+            Throws<ArgumentNullException>(() => accessor.Get(null), Res.ReflectionInstanceIsNull);
+            Throws<ArgumentException>(() => accessor.Get(new object()), Res.NotAnInstanceOfType(test.GetType()));
 
             var testStruct = new TestStruct(0);
             Console.Write("Property Accessor Generic...");
@@ -2750,46 +2732,44 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Assert.AreEqual(value, result);
 
             test = new TestStruct(0);
-            if (!ThrowsOnFramework<PlatformNotSupportedException>(() => accessor.Set(test, value, indexParameters),
-                TargetFramework.NetStandard20))
-            {
-                Console.Write("Property Accessor General...");
-                result = accessor.Get(test, indexParameters);
-                Assert.AreEqual(value, result);
-                Throws<ArgumentNullException>(() => accessor.Set(null, value, indexParameters), Res.ReflectionInstanceIsNull);
+            accessor.Set(test, value, indexParameters);
+            Console.Write("Property Accessor General...");
+            result = accessor.Get(test, indexParameters);
+            Assert.AreEqual(value, result);
+            Throws<ArgumentNullException>(() => accessor.Set(null, value, indexParameters), Res.ReflectionInstanceIsNull);
+            if (TestedFramework != TargetFramework.NetStandard20) // the fallback reflection accepts null as int
                 Throws<ArgumentNullException>(() => accessor.Set(test, null, indexParameters), Res.NotAnInstanceOfType(value.GetType()));
-                Throws<ArgumentNullException>(() => accessor.Set(test, value, null), Res.ArgumentNull);
-                Throws<ArgumentException>(() => accessor.Set(new object(), value, indexParameters), Res.NotAnInstanceOfType(test.GetType()));
-                Throws<ArgumentException>(() => accessor.Set(test, "1", indexParameters), Res.NotAnInstanceOfType(value.GetType()));
-                Throws<ArgumentException>(() => accessor.Set(test, value, Reflector.EmptyObjects), Res.ReflectionEmptyIndices);
-                Throws<ArgumentException>(() => accessor.Set(test, value, new object[] { "1" }), Res.ElementNotAnInstanceOfType(0, typeof(int)));
-                Assert.DoesNotThrow(() => accessor.Set(test, value, new object[] { 1, "2" }), "More parameters than needed are okay");
-                Throws<ArgumentNullException>(() => accessor.Get(null, indexParameters), Res.ReflectionInstanceIsNull);
-                Throws<ArgumentNullException>(() => accessor.Get(test, null), Res.ArgumentNull);
-                Throws<ArgumentException>(() => accessor.Get(new object(), indexParameters), Res.NotAnInstanceOfType(test.GetType()));
-                Throws<ArgumentException>(() => accessor.Get(test, Reflector.EmptyObjects), Res.ReflectionEmptyIndices);
-                Throws<ArgumentException>(() => accessor.Get(test, new object[] { "1" }), Res.ElementNotAnInstanceOfType(0, typeof(int)));
-                Assert.DoesNotThrow(() => accessor.Get(test, new object[] { 1, "2" }), "More parameters than needed are okay");
-            }
+            Throws<ArgumentNullException>(() => accessor.Set(test, value, null), Res.ArgumentNull);
+            Throws<ArgumentException>(() => accessor.Set(new object(), value, indexParameters), Res.NotAnInstanceOfType(test.GetType()));
+            Throws<ArgumentException>(() => accessor.Set(test, "1", indexParameters), Res.NotAnInstanceOfType(value.GetType()));
+            Throws<ArgumentException>(() => accessor.Set(test, value, Reflector.EmptyObjects), Res.ReflectionEmptyIndices);
+            Throws<ArgumentException>(() => accessor.Set(test, value, new object[] { "1" }), Res.ElementNotAnInstanceOfType(0, typeof(int)));
+            ThrowsOnFramework<ArgumentException>(() => accessor.Set(test, value, new object[] { 1, "2" }), Res.ReflectionIndexerParamsLengthMismatch(1, 2),
+                TargetFramework.NetStandard20); // On other platforms more parameters are accepted
+            Throws<ArgumentNullException>(() => accessor.Get(null, indexParameters), Res.ReflectionInstanceIsNull);
+            Throws<ArgumentNullException>(() => accessor.Get(test, null), Res.ArgumentNull);
+            Throws<ArgumentException>(() => accessor.Get(new object(), indexParameters), Res.NotAnInstanceOfType(test.GetType()));
+            Throws<ArgumentException>(() => accessor.Get(test, Reflector.EmptyObjects), Res.ReflectionEmptyIndices);
+            Throws<ArgumentException>(() => accessor.Get(test, new object[] { "1" }), Res.ElementNotAnInstanceOfType(0, typeof(int)));
+            ThrowsOnFramework<ArgumentException>(() => accessor.Get(test, new object[] { 1, "2" }), Res.ReflectionIndexerParamsLengthMismatch(1, 2),
+                TargetFramework.NetStandard20); // On other platforms more parameters are accepted
 
             test = new TestStruct(0);
-            if (!ThrowsOnFramework<PlatformNotSupportedException>(() => accessor.Set(test, value, index),
-                        TargetFramework.NetStandard20))
-            {
-                Console.Write("Property Accessor NonGeneric...");
-                result = accessor.Get(test, index);
-                Assert.AreEqual(value, result);
-                Throws<ArgumentNullException>(() => accessor.Set(null, value, index), Res.ReflectionInstanceIsNull);
+            accessor.Set(test, value, index);
+            Console.Write("Property Accessor NonGeneric...");
+            result = accessor.Get(test, index);
+            Assert.AreEqual(value, result);
+            Throws<ArgumentNullException>(() => accessor.Set(null, value, index), Res.ReflectionInstanceIsNull);
+            if (TestedFramework != TargetFramework.NetStandard20) // the fallback reflection accepts null as int
                 Throws<ArgumentNullException>(() => accessor.Set(test, null, index), Res.NotAnInstanceOfType(value.GetType()));
-                Throws<ArgumentException>(() => accessor.Set(test, value), Res.ReflectionIndexerParamsLengthMismatch(1, 0));
-                Throws<ArgumentException>(() => accessor.Set(new object(), value, index), Res.NotAnInstanceOfType(test.GetType()));
-                Throws<ArgumentException>(() => accessor.Set(test, "1", index), Res.NotAnInstanceOfType(value.GetType()));
-                Throws<ArgumentException>(() => accessor.Set(test, value, "1"), Res.NotAnInstanceOfType(typeof(int)));
-                Throws<ArgumentNullException>(() => accessor.Get(null, index), Res.ReflectionInstanceIsNull);
-                Throws<ArgumentException>(() => accessor.Get(test), Res.ReflectionIndexerParamsLengthMismatch(1, 0));
-                Throws<ArgumentException>(() => accessor.Get(new object(), index), Res.NotAnInstanceOfType(test.GetType()));
-                Throws<ArgumentException>(() => accessor.Get(test, "1"), Res.NotAnInstanceOfType(typeof(int)));
-            }
+            Throws<ArgumentException>(() => accessor.Set(test, value), Res.ReflectionIndexerParamsLengthMismatch(1, 0));
+            Throws<ArgumentException>(() => accessor.Set(new object(), value, index), Res.NotAnInstanceOfType(test.GetType()));
+            Throws<ArgumentException>(() => accessor.Set(test, "1", index), Res.NotAnInstanceOfType(value.GetType()));
+            Throws<ArgumentException>(() => accessor.Set(test, value, "1"), Res.NotAnInstanceOfType(typeof(int)));
+            Throws<ArgumentNullException>(() => accessor.Get(null, index), Res.ReflectionInstanceIsNull);
+            Throws<ArgumentException>(() => accessor.Get(test), Res.ReflectionIndexerParamsLengthMismatch(1, 0));
+            Throws<ArgumentException>(() => accessor.Get(new object(), index), Res.NotAnInstanceOfType(test.GetType()));
+            Throws<ArgumentException>(() => accessor.Get(test, "1"), Res.NotAnInstanceOfType(typeof(int)));
 
             var testStruct = new TestStruct(0);
             Console.Write("Property Accessor Generic...");
@@ -3046,21 +3026,22 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             test = new TestClass(0);
             Console.Write("Field Accessor...");
-            if (!ThrowsOnFramework<PlatformNotSupportedException>(() => accessor.Set(test, value),
+            accessor.Set(test, value);
+            result = accessor.Get(test);
+            Assert.AreEqual(value, result);
+            Throws<ArgumentNullException>(() => accessor.Set(null, value), Res.ReflectionInstanceIsNull);
+            if (TestedFramework != TargetFramework.NetStandard20) // the fallback reflection accepts null as int
+                Throws<ArgumentNullException>(() => accessor.Set(test, null), Res.NotAnInstanceOfType(value.GetType()));
+            Throws<ArgumentException>(() => accessor.Set(new object(), value), Res.NotAnInstanceOfType(test.GetType()));
+            Throws<ArgumentException>(() => accessor.Set(test, "1"), Res.NotAnInstanceOfType(value.GetType()));
+            Throws<ArgumentNullException>(() => accessor.Get(null), Res.ReflectionInstanceIsNull);
+            Throws<ArgumentException>(() => accessor.Get(new object()), Res.NotAnInstanceOfType(test.GetType()));
+
+            test = new TestClass(0);
+            Console.Write("Field Accessor Generic...");
+            if (!ThrowsOnFramework<PlatformNotSupportedException>(() => accessor.SetInstanceValue(test, value), Res.ReflectionSetReadOnlyFieldGenericNetStandard20(nameof(TestClass.ReadOnlyValueField), typeof(TestClass)),
                     TargetFramework.NetStandard20))
             {
-                result = accessor.Get(test);
-                Assert.AreEqual(value, result);
-                Throws<ArgumentNullException>(() => accessor.Set(null, value), Res.ReflectionInstanceIsNull);
-                Throws<ArgumentNullException>(() => accessor.Set(test, null), Res.NotAnInstanceOfType(value.GetType()));
-                Throws<ArgumentException>(() => accessor.Set(new object(), value), Res.NotAnInstanceOfType(test.GetType()));
-                Throws<ArgumentException>(() => accessor.Set(test, "1"), Res.NotAnInstanceOfType(value.GetType()));
-                Throws<ArgumentNullException>(() => accessor.Get(null), Res.ReflectionInstanceIsNull);
-                Throws<ArgumentException>(() => accessor.Get(new object()), Res.NotAnInstanceOfType(test.GetType()));
-
-                test = new TestClass(0);
-                Console.Write("Field Accessor Generic...");
-                accessor.SetInstanceValue(test, value);
                 result = accessor.GetInstanceValue<TestClass, int>(test);
                 Assert.AreEqual(value, result);
                 Throws<InvalidOperationException>(() => accessor.SetStaticValue(value), Res.ReflectionStaticFieldExpectedGeneric(nameof(TestClass.ReadOnlyValueField), fi.DeclaringType!));
@@ -3104,20 +3085,20 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             test = new TestClass(0);
             Console.Write("Field Accessor...");
-            if (!ThrowsOnFramework<PlatformNotSupportedException>(() => FieldAccessor.GetAccessor(fi).Set(test, value),
+            accessor.Set(test, value);
+            result = FieldAccessor.GetAccessor(fi).Get(test);
+            Assert.AreEqual(value, result);
+            Throws<ArgumentNullException>(() => accessor.Set(null, value), Res.ReflectionInstanceIsNull);
+            Throws<ArgumentException>(() => accessor.Set(new object(), value), Res.NotAnInstanceOfType(test.GetType()));
+            Throws<ArgumentException>(() => accessor.Set(test, 1), Res.NotAnInstanceOfType(value.GetType()));
+            Throws<ArgumentNullException>(() => accessor.Get(null), Res.ReflectionInstanceIsNull);
+            Throws<ArgumentException>(() => accessor.Get(new object()), Res.NotAnInstanceOfType(test.GetType()));
+
+            test = new TestClass(0);
+            Console.Write("Field Accessor Generic...");
+            if (!ThrowsOnFramework<PlatformNotSupportedException>(() => accessor.SetInstanceValue(test, value), Res.ReflectionSetReadOnlyFieldGenericNetStandard20(nameof(TestClass.ReadOnlyReferenceField), typeof(TestClass)),
                 TargetFramework.NetStandard20))
             {
-                result = FieldAccessor.GetAccessor(fi).Get(test);
-                Assert.AreEqual(value, result);
-                Throws<ArgumentNullException>(() => accessor.Set(null, value), Res.ReflectionInstanceIsNull);
-                Throws<ArgumentException>(() => accessor.Set(new object(), value), Res.NotAnInstanceOfType(test.GetType()));
-                Throws<ArgumentException>(() => accessor.Set(test, 1), Res.NotAnInstanceOfType(value.GetType()));
-                Throws<ArgumentNullException>(() => accessor.Get(null), Res.ReflectionInstanceIsNull);
-                Throws<ArgumentException>(() => accessor.Get(new object()), Res.NotAnInstanceOfType(test.GetType()));
-
-                test = new TestClass(0);
-                Console.Write("Field Accessor Generic...");
-                accessor.SetInstanceValue(test, value);
                 result = accessor.GetInstanceValue<TestClass, string>(test);
                 Assert.AreEqual(value, result);
                 Throws<InvalidOperationException>(() => accessor.SetStaticValue(value), Res.ReflectionStaticFieldExpectedGeneric(nameof(TestClass.ReadOnlyReferenceField), fi.DeclaringType!));
@@ -3213,18 +3194,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             test = new TestStruct(0);
             Console.Write("Field Accessor...");
-            if (!ThrowsOnFramework<PlatformNotSupportedException>(() => accessor.Set(test, value),
-                TargetFramework.NetStandard20))
-            {
-                result = accessor.Get(test);
-                Assert.AreEqual(value, result);
-                Throws<ArgumentNullException>(() => accessor.Set(null, value), Res.ReflectionInstanceIsNull);
+            accessor.Set(test, value);
+            result = accessor.Get(test);
+            Assert.AreEqual(value, result);
+            Throws<ArgumentNullException>(() => accessor.Set(null, value), Res.ReflectionInstanceIsNull);
+            if (TestedFramework != TargetFramework.NetStandard20) // the fallback reflection accepts null as int
                 Throws<ArgumentNullException>(() => accessor.Set(test, null), Res.NotAnInstanceOfType(value.GetType()));
-                Throws<ArgumentException>(() => accessor.Set(new object(), value), Res.NotAnInstanceOfType(test.GetType()));
-                Throws<ArgumentException>(() => accessor.Set(test, "1"), Res.NotAnInstanceOfType(value.GetType()));
-                Throws<ArgumentNullException>(() => accessor.Get(null), Res.ReflectionInstanceIsNull);
-                Throws<ArgumentException>(() => accessor.Get(new object()), Res.NotAnInstanceOfType(test.GetType()));
-            }
+            Throws<ArgumentException>(() => accessor.Set(new object(), value), Res.NotAnInstanceOfType(test.GetType()));
+            Throws<ArgumentException>(() => accessor.Set(test, "1"), Res.NotAnInstanceOfType(value.GetType()));
+            Throws<ArgumentNullException>(() => accessor.Get(null), Res.ReflectionInstanceIsNull);
+            Throws<ArgumentException>(() => accessor.Get(new object()), Res.NotAnInstanceOfType(test.GetType()));
 
             var testStruct = new TestStruct(0);
             Console.Write("Field Accessor Generic...");
@@ -3269,21 +3248,22 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             test = new TestStruct(0);
             Console.Write("Field Accessor...");
-            if (!ThrowsOnFramework<PlatformNotSupportedException>(() => accessor.Set(test, value),
+            accessor.Set(test, value);
+            result = accessor.Get(test);
+            Assert.AreEqual(value, result);
+            Throws<ArgumentNullException>(() => accessor.Set(null, value), Res.ReflectionInstanceIsNull);
+            if (TestedFramework != TargetFramework.NetStandard20) // the fallback reflection accepts null as int
+                Throws<ArgumentNullException>(() => accessor.Set(test, null), Res.NotAnInstanceOfType(value.GetType()));
+            Throws<ArgumentException>(() => accessor.Set(new object(), value), Res.NotAnInstanceOfType(test.GetType()));
+            Throws<ArgumentException>(() => accessor.Set(test, "1"), Res.NotAnInstanceOfType(value.GetType()));
+            Throws<ArgumentNullException>(() => accessor.Get(null), Res.ReflectionInstanceIsNull);
+            Throws<ArgumentException>(() => accessor.Get(new object()), Res.NotAnInstanceOfType(test.GetType()));
+
+            var testStruct = new TestStruct(0);
+            Console.Write("Field Accessor Generic...");
+            if (!ThrowsOnFramework<PlatformNotSupportedException>(() => accessor.SetInstanceValue(testStruct, value), Res.ReflectionSetReadOnlyFieldGenericNetStandard20(nameof(TestStruct.ReadOnlyValueField), typeof(TestStruct)),
                 TargetFramework.NetStandard20))
             {
-                result = accessor.Get(test);
-                Assert.AreEqual(value, result);
-                Throws<ArgumentNullException>(() => accessor.Set(null, value), Res.ReflectionInstanceIsNull);
-                Throws<ArgumentNullException>(() => accessor.Set(test, null), Res.NotAnInstanceOfType(value.GetType()));
-                Throws<ArgumentException>(() => accessor.Set(new object(), value), Res.NotAnInstanceOfType(test.GetType()));
-                Throws<ArgumentException>(() => accessor.Set(test, "1"), Res.NotAnInstanceOfType(value.GetType()));
-                Throws<ArgumentNullException>(() => accessor.Get(null), Res.ReflectionInstanceIsNull);
-                Throws<ArgumentException>(() => accessor.Get(new object()), Res.NotAnInstanceOfType(test.GetType()));
-
-                var testStruct = new TestStruct(0);
-                Console.Write("Field Accessor Generic...");
-                accessor.SetInstanceValue(testStruct, value);
                 result = accessor.GetInstanceValue<TestStruct, int>(testStruct);
                 Assert.AreEqual(value, result);
                 Throws<InvalidOperationException>(() => accessor.SetStaticValue(value), Res.ReflectionStaticFieldExpectedGeneric(nameof(TestStruct.ReadOnlyValueField), fi.DeclaringType!));
@@ -3325,20 +3305,20 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             test = new TestStruct(0);
             Console.Write("Field Accessor...");
-            if (!ThrowsOnFramework<PlatformNotSupportedException>(() => accessor.Set(test, value),
+            accessor.Set(test, value);
+            result = accessor.Get(test);
+            Assert.AreEqual(value, result);
+            Throws<ArgumentNullException>(() => accessor.Set(null, value), Res.ReflectionInstanceIsNull);
+            Throws<ArgumentException>(() => accessor.Set(new object(), value), Res.NotAnInstanceOfType(test.GetType()));
+            Throws<ArgumentException>(() => accessor.Set(test, 1), Res.NotAnInstanceOfType(value.GetType()));
+            Throws<ArgumentNullException>(() => accessor.Get(null), Res.ReflectionInstanceIsNull);
+            Throws<ArgumentException>(() => accessor.Get(new object()), Res.NotAnInstanceOfType(test.GetType()));
+
+            var testStruct = new TestStruct(0);
+            Console.Write("Field Accessor Generic...");
+            if (!ThrowsOnFramework<PlatformNotSupportedException>(() => accessor.SetInstanceValue(testStruct, value), Res.ReflectionSetReadOnlyFieldGenericNetStandard20(nameof(TestStruct.ReadOnlyReferenceField), typeof(TestStruct)),
                 TargetFramework.NetStandard20))
             {
-                result = accessor.Get(test);
-                Assert.AreEqual(value, result);
-                Throws<ArgumentNullException>(() => accessor.Set(null, value), Res.ReflectionInstanceIsNull);
-                Throws<ArgumentException>(() => accessor.Set(new object(), value), Res.NotAnInstanceOfType(test.GetType()));
-                Throws<ArgumentException>(() => accessor.Set(test, 1), Res.NotAnInstanceOfType(value.GetType()));
-                Throws<ArgumentNullException>(() => accessor.Get(null), Res.ReflectionInstanceIsNull);
-                Throws<ArgumentException>(() => accessor.Get(new object()), Res.NotAnInstanceOfType(test.GetType()));
-
-                var testStruct = new TestStruct(0);
-                Console.Write("Field Accessor Generic...");
-                accessor.SetInstanceValue(testStruct, value);
                 result = accessor.GetInstanceValue<TestStruct, string>(testStruct);
                 Assert.AreEqual(value, result);
                 Throws<InvalidOperationException>(() => accessor.SetStaticValue(value), Res.ReflectionStaticFieldExpectedGeneric(nameof(TestStruct.ReadOnlyReferenceField), fi.DeclaringType!));
@@ -3503,8 +3483,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             parameters = (object[])args.Clone();
             result = (TestClass)accessor.CreateInstance(parameters);
             Assert.AreEqual(args[0], result.IntProp);
-            if (TestedFramework != TargetFramework.NetStandard20)
-                Assert.AreNotEqual(args[2], parameters[2]);
+            Assert.AreNotEqual(args[2], parameters[2]);
 
             Console.Write("CreateInstanceAccessor NonGeneric...");
             parameters = (object[])args.Clone();
@@ -3685,8 +3664,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             parameters = (object[])args.Clone();
             result = (TestStruct)accessor.CreateInstance(parameters);
             Assert.AreEqual(args[0], result.IntProp);
-            if (TestedFramework != TargetFramework.NetStandard20)
-                Assert.AreNotEqual(args[2], parameters[2]);
+            Assert.AreNotEqual(args[2], parameters[2]);
 
             Console.Write("CreateInstanceAccessor NonGeneric...");
             parameters = (object[])args.Clone();

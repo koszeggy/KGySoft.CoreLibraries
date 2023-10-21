@@ -63,6 +63,13 @@ namespace KGySoft.Reflection
             if (method.ReturnType.IsByRef)
                 Throw.PlatformNotSupportedException(Res.ReflectionRefReturnTypeNetStandard20(method.ReturnType));
 
+            // Non-readonly value type or has ref/out parameters: using reflection as fallback so mutations are preserved and ref/out parameters are assigned back
+            if (!method.IsStatic && declaringType!.IsValueType && !(declaringType.IsReadOnly() || method.IsReadOnly())
+                || method.GetParameters().Any(p => p.ParameterType.IsByRef && (!p.IsIn || p.IsOut)))
+            {
+                return method.Invoke;
+            }
+
             ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "target");
             ParameterExpression argumentsParameter = Expression.Parameter(typeof(object[]), "arguments");
             var methodParameters = new Expression[ParameterTypes.Length];
@@ -70,7 +77,7 @@ namespace KGySoft.Reflection
             {
                 Type parameterType = ParameterTypes[i];
            
-                // This just avoids error when ref parameters are used but does not assign results back
+                // for in parameters
                 if (parameterType.IsByRef)
                     parameterType = parameterType.GetElementType()!;
 
@@ -120,6 +127,21 @@ namespace KGySoft.Reflection
             };
 
 #if NETSTANDARD2_0
+            if (method.ReturnType.IsByRef)
+                Throw.PlatformNotSupportedException(Res.ReflectionRefReturnTypeNetStandard20(method.ReturnType));
+
+            // For non-readonly value types using reflection as fallback so mutations are preserved
+            if (!method.IsStatic && declaringType!.IsValueType && !(declaringType.IsReadOnly() || method.IsReadOnly()))
+                return ParameterTypes.Length switch
+                {
+                    0 => new Func<object?, object?>(o => method.Invoke(o, null)),
+                    1 => new Func<object?, object?, object?>((o, p) => method.Invoke(o, new[] { p })),
+                    2 => new Func<object?, object?, object?, object?>((o, p1, p2) => method.Invoke(o, new[] { p1, p2 })),
+                    3 => new Func<object?, object?, object?, object?, object?>((o, p1, p2, p3) => method.Invoke(o, new[] { p1, p2, p3 })),
+                    4 => new Func<object?, object?, object?, object?, object?, object?>((o, p1, p2, p3, p4) => method.Invoke(o, new[] { p1, p2, p3, p4 })),
+                    _ => Throw.InternalError<Delegate>("Unexpected number of parameters")
+                };
+
             var parameters = new ParameterExpression[ParameterTypes.Length + 1];
             parameters[0] = Expression.Parameter(Reflector.ObjectType, "instance");
             var methodParameters = new Expression[ParameterTypes.Length];

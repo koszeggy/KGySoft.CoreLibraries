@@ -57,13 +57,17 @@ namespace KGySoft.Reflection
                 Throw.InvalidOperationException(Res.ReflectionCannotCreateInstanceOfType(ctor.DeclaringType));
 
 #if NETSTANDARD2_0
+            // Has ref/out parameters: using reflection as fallback so they will be assigned back
+            if (ctor.GetParameters().Any(p => p.ParameterType.IsByRef && (!p.IsIn || p.IsOut)))
+                return ctor.Invoke;
+
             ParameterExpression argumentsParameter = Expression.Parameter(typeof(object[]), "arguments");
             var ctorParameters = new Expression[ParameterTypes.Length];
             for (int i = 0; i < ParameterTypes.Length; i++)
             {
                 Type parameterType = ParameterTypes[i];
 
-                // This just avoids error when ref parameters are used but does not assign results back
+                // for in parameters
                 if (parameterType.IsByRef)
                     parameterType = parameterType.GetElementType()!;
 

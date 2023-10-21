@@ -69,12 +69,13 @@ namespace KGySoft.Reflection
             }
 
             MethodInfo setterMethod = Property.GetSetMethod(true)!;
-            if (!setterMethod.IsStatic && declaringType == null)
+            if (!setterMethod.IsStatic && declaringType is null)
                 Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
 
 #if NETSTANDARD2_0
-            if (!setterMethod.IsStatic && declaringType?.IsValueType == true)
-                Throw.PlatformNotSupportedException(Res.ReflectionSetStructPropertyNetStandard20(Property.Name, Property.PropertyType));
+            // Value type: using reflection as fallback so mutations are preserved
+            if (!setterMethod.IsStatic && declaringType!.IsValueType)
+                return Property.SetValue;
 
             ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
             ParameterExpression valueParameter = Expression.Parameter(Reflector.ObjectType, "value");
@@ -114,6 +115,10 @@ namespace KGySoft.Reflection
 #if NETSTANDARD2_0
             if (Property.PropertyType.IsByRef)
                 Throw.PlatformNotSupportedException(Res.ReflectionRefReturnTypeNetStandard20(Property.PropertyType));
+
+            // Non-readonly value type: using reflection as fallback so mutations are preserved
+            if (!getterMethod.IsStatic && declaringType!.IsValueType && !(declaringType.IsReadOnly() || getterMethod.IsReadOnly()))
+                return Property.GetValue;
 
             ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
             ParameterExpression indexParametersParameter = Expression.Parameter(typeof(object[]), "indexParameters");
@@ -161,8 +166,9 @@ namespace KGySoft.Reflection
                 Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
 
 #if NETSTANDARD2_0
-            if (!setterMethod.IsStatic && declaringType?.IsValueType == true)
-                Throw.PlatformNotSupportedException(Res.ReflectionSetStructPropertyNetStandard20(Property.Name, declaringType));
+            // Value type: using reflection as fallback so mutations are preserved
+            if (!setterMethod.IsStatic && declaringType!.IsValueType)
+                return new Action<object?, object?>(Property.SetValue);
 
             ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
             ParameterExpression valueParameter = Expression.Parameter(Reflector.ObjectType, "value");
@@ -200,6 +206,10 @@ namespace KGySoft.Reflection
 #if NETSTANDARD2_0
             if (Property.PropertyType.IsByRef)
                 Throw.PlatformNotSupportedException(Res.ReflectionRefReturnTypeNetStandard20(Property.PropertyType));
+
+            // Non-readonly value type: using reflection as fallback so mutations are preserved
+            if (!getterMethod.IsStatic && declaringType!.IsValueType&& !(declaringType.IsReadOnly() || getterMethod.IsReadOnly()))
+                return new Func<object?, object?>(Property.GetValue);
 
             ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
             MemberExpression member = Expression.Property(

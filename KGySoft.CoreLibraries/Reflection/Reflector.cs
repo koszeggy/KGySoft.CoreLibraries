@@ -3937,6 +3937,14 @@ namespace KGySoft.Reflection
             return argument?.Value as string;
         }
 
+        internal static bool IsReadOnly(this MemberInfo member)
+#if NET471_OR_GREATER || NETSTANDARD2_1_OR_GREATER || NETCOREAPP
+            => Attribute.GetCustomAttribute(member, typeof(IsReadOnlyAttribute), false) != null;
+#else
+            // newer compilers may auto-generate an IsReadOnlyAttribute in every assembly that uses readonly members
+            => Attribute.GetCustomAttributes(member, false).Any(a => a.GetType().FullName == "System.Runtime.CompilerServices.IsReadOnlyAttribute");
+#endif
+
         #endregion
 
         #region TypedReference/Raw data access reflection

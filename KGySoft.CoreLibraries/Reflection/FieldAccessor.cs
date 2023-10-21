@@ -426,10 +426,9 @@ namespace KGySoft.Reflection
                 Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(Field.FieldType));
 
 #if NETSTANDARD2_0 // DynamicMethod and ILGenerator is not available in .NET Standard 2.0
-            if (Field.IsInitOnly)
-                Throw.PlatformNotSupportedException(Res.ReflectionSetReadOnlyFieldNetStandard20(Field.Name, declaringType));
-            if (!Field.IsStatic && isValueType)
-                Throw.PlatformNotSupportedException(Res.ReflectionSetStructFieldNetStandard20(Field.Name, declaringType!));
+            // Read-only field or value type: using reflection as fallback
+            if (Field.IsInitOnly || isValueType && !Field.IsStatic)
+                return Field.SetValue;
 
             ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
             ParameterExpression valueParameter = Expression.Parameter(Reflector.ObjectType, "value");
@@ -506,7 +505,7 @@ namespace KGySoft.Reflection
 
 #if NETSTANDARD2_0 // DynamicMethod and ILGenerator is not available in .NET Standard 2.0
             if (Field.IsInitOnly)
-                Throw.PlatformNotSupportedException(Res.ReflectionSetReadOnlyFieldNetStandard20(Field.Name, declaringType));
+                Throw.PlatformNotSupportedException(Res.ReflectionSetReadOnlyFieldGenericNetStandard20(Field.Name, declaringType));
 
             ParameterExpression instanceParameter;
             ParameterExpression valueParameter = Expression.Parameter(Field.FieldType, "value");

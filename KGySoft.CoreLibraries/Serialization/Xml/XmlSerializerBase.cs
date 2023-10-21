@@ -276,7 +276,7 @@ namespace KGySoft.Serialization.Xml
                     // or when read-only members are forced to write,
                     || (options & XmlSerializationOptions.ForcedSerializationOfReadOnlyMembersAndCollections) != XmlSerializationOptions.None
                     // or if it's a non-readonly ref property with ref properties enabled
-                    || isByRef && (options & XmlSerializationOptions.IncludeRefProperties) != XmlSerializationOptions.None && !IsReadOnly(pi)
+                    || isByRef && (options & XmlSerializationOptions.IncludeRefProperties) != XmlSerializationOptions.None && !pi.IsReadOnly()
                     // or property is XmlSerializable (because in this case it must not be null to deserialize)
                     || ((options & XmlSerializationOptions.IgnoreIXmlSerializable) == XmlSerializationOptions.None && typeof(IXmlSerializable).IsAssignableFrom(propType)))
                 {
@@ -443,14 +443,6 @@ namespace KGySoft.Serialization.Xml
                 : Equals(comparer, typeof(EnumComparer<>).GetPropertyValue(collectionGenericArgument, nameof(EnumComparer<_>.Comparer))) ? ComparerType.EnumComparer
                 : ComparerType.Unknown
         };
-
-        private static bool IsReadOnly(MemberInfo member)
-#if NET471_OR_GREATER || NETSTANDARD2_1_OR_GREATER || NETCOREAPP
-            => Attribute.GetCustomAttribute(member, typeof(IsReadOnlyAttribute), false) != null;
-#else
-            // newer compilers may auto-generate an IsReadOnlyAttribute in every assembly that uses ref readonly members
-            => Attribute.GetCustomAttributes(member, false).Any(a => a.GetType().FullName == "System.Runtime.CompilerServices.IsReadOnlyAttribute");
-#endif
 
         #endregion
 
