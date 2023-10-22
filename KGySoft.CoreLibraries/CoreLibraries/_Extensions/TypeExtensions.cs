@@ -1149,9 +1149,16 @@ namespace KGySoft.CoreLibraries
                 return GetSizeFallback(type);
 #endif
             // If TypedReference layout is not recognized on current platform, then using a slow/unreliable fallback
-            if (!Reflector.CanUseTypedReference)
-                return GetSizeFallback(type);
+            return !Reflector.CanUseTypedReference ? GetSizeFallback(type) : GetSizeComplex(type);
+#endif
+        }
 
+        [SecurityCritical]
+#if NETFRAMEWORK
+        [MethodImpl(MethodImplOptions.NoInlining)]
+#endif
+        private static int GetSizeComplex(Type type)
+        {
             // Non-primitive struct: measuring the distance between two elements in a packed struct.
             // Unlike in Reflector<T> we cannot use an array here because we cannot obtain the address of the non strongly-typed items.
             Type helperType = typeof(SizeOfHelper<>).MakeGenericType(type); // not GetGenericType because GetSize result is also cached
@@ -1160,18 +1167,17 @@ namespace KGySoft.CoreLibraries
             // Pinning the created boxed object (not using GCHandle.Alloc because it is very slow and fails for non-blittable structs)
             // NOTE: would not be needed if we could access the ref byte of a field or non-generic array element so we could use Unsafe.ByteOffset
             unsafe
-	        {
+            {
                 fixed (byte* _ = &Reflector.GetRawData(instance))
                 {
-                    // Now we can access the address of the fields safely. MakeTypedReference works here because primitive types are handled above
+                    // Now we can access the address of the fields safely. MakeTypedReference works here because primitive types are handled in hte caller
                     TypedReference refItem1 = TypedReference.MakeTypedReference(instance, new[] { helperType.GetField(nameof(SizeOfHelper<_>.Item1))! });
                     TypedReference refItem2 = TypedReference.MakeTypedReference(instance, new[] { helperType.GetField(nameof(SizeOfHelper<_>.Item2))! });
                     Debug.Assert(__reftype(refItem1) == type && __reftype(refItem2) == type);
 
                     return (int)(Reflector.GetValueAddress(refItem2) - Reflector.GetValueAddress(refItem1));
                 }
-	        }
-#endif
+            }
         }
 
         [SecurityCritical]
