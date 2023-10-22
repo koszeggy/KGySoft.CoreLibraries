@@ -388,7 +388,7 @@ namespace KGySoft.Reflection
                 // loading 0th argument (instance)
                 ilGenerator.Emit(OpCodes.Ldarg_0);
                 if (generic != true)
-                    ilGenerator.Emit(declaringType.IsValueType ? OpCodes.Unbox : OpCodes.Castclass, declaringType);
+                    ilGenerator.Emit(declaringType!.IsValueType ? OpCodes.Unbox : OpCodes.Castclass, declaringType);
             }
 
             // calling the getter

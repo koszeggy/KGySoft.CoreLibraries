@@ -105,7 +105,7 @@ namespace KGySoft.Serialization.Xml
     /// <note>To use binary serialization only for some types or properties you can specify the <see cref="BinaryTypeConverter"/> by the <see cref="TypeConverterAttribute"/> for a property, field or type
     /// but please note that it will always perform a safe deserialization specifying only the type of the element as expected type so you cannot use it if the
     /// corresponding type uses some type internally that is not supported by the <see cref="BinarySerializationFormatter"/> natively.
-    /// You can use also the <see cref="TypeExtensions.RegisterTypeConverter{TConverter}">RegisterTypeConverter</see> extension method to specify a type converter for types.</note>
+    /// You can use also the <see cref="KGySoft.CoreLibraries.TypeExtensions.RegisterTypeConverter{TConverter}">RegisterTypeConverter</see> extension method to specify a type converter for types.</note>
     /// </para>
     /// <para>See the <see cref="XmlSerializationOptions"/> enumeration for further options.</para>
     /// <h2>Natively supported types</h2>

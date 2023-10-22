@@ -1004,7 +1004,7 @@ namespace KGySoft.Serialization.Binary
             public bool Equals(TypeIdentity other) => Identity.Equals(other.Identity);
             public override bool Equals(object? obj) => obj is TypeIdentity other && Equals(other);
             public override int GetHashCode() => Identity.GetHashCode();
-            public override string ToString() => Identity.ToString();
+            public override string ToString() => Identity.ToString()!;
 
             #endregion
         }
