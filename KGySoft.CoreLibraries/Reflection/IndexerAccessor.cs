@@ -55,7 +55,7 @@ namespace KGySoft.Reflection
             if (Property.PropertyType.IsPointer)
                 Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(Property.PropertyType));
 
-            if (!CanWrite)
+            if (!Property.CanWrite)
             {
                 if (Property.PropertyType.IsByRef)
                 {
@@ -161,7 +161,7 @@ namespace KGySoft.Reflection
             if (ParameterTypes.Length > 1)
                 Throw.NotSupportedException(); // Will be handled in PostValidate
 
-            if (!CanWrite)
+            if (!Property.CanWrite)
             {
                 if (Property.PropertyType.IsByRef)
                 {
@@ -272,7 +272,7 @@ namespace KGySoft.Reflection
             Type delegateType = (isValueType ? typeof(ValueTypeAction<,,>) : typeof(ReferenceTypeAction<,,>))
                 .GetGenericType(declaringType, Property.PropertyType.IsByRef ? Property.PropertyType.GetElementType()! : Property.PropertyType, ParameterTypes[0]);
 
-            if (!CanWrite)
+            if (!Property.CanWrite)
             {
                 if (Property.PropertyType.IsByRef)
                 {

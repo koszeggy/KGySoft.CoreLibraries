@@ -53,7 +53,7 @@ using KGySoft.Serialization.Xml;
 
 #region Suppressions
 
-#if !NET7_0_OR_GREATER
+#if !NET8_0_OR_GREATER
 #pragma warning disable CS1574 // the documentation contains types that are not available in every target
 #endif
 #if NET5_0_OR_GREATER
@@ -317,6 +317,10 @@ namespace KGySoft.Serialization.Binary
     /// <item><see cref="ImmutableDictionary{TKey,TValue}.Builder"/> (in .NET Core 2.0 and above)</item>
     /// <item><see cref="ImmutableSortedDictionary{TKey,TValue}"/> (in .NET Core 2.0 and above)</item>
     /// <item><see cref="ImmutableSortedDictionary{TKey,TValue}.Builder"/> (in .NET Core 2.0 and above)</item>
+    /// <item><see cref="Vector64{T}"/> (in .NET Core 3.0 and above)</item>
+    /// <item><see cref="Vector128{T}"/> (in .NET Core 3.0 and above)</item>
+    /// <item><see cref="Vector256{T}"/> (in .NET Core 3.0 and above)</item>
+    /// <item><see cref="Vector512{T}"/> (in .NET 8.0 and above)</item>
     /// </list>
     /// <note>
     /// <list type="bullet">

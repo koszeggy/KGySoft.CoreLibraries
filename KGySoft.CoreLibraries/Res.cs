@@ -827,7 +827,7 @@ namespace KGySoft
         internal static string PerformanceTestCallingGcCollect(bool value) => Get("PerformanceTest_CallingGcCollectFormat", FormatBool(value));
 
         /// <summary>Forced CPU Affinity: {0}</summary>
-        internal static string PerformanceTestCpuAffinity(int? affinity) => Get("PerformanceTest_CpuAffinityFormat", affinity == null ? No : affinity.ToString());
+        internal static string PerformanceTestCpuAffinity(int? affinity) => Get("PerformanceTest_CpuAffinityFormat", affinity == null ? No : affinity);
 
         /// <summary>Cases are sorted by {0}</summary>
         internal static string PerformanceTestSortOfCases(string sort) => Get("PerformanceTest_SortOfCasesFormat", sort);

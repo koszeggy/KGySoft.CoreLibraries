@@ -66,10 +66,8 @@ using NUnit.Framework;
 
 #region Suppressions
 
-#if NET5_0_OR_GREATER
 #pragma warning disable SYSLIB0011 // Type or member is obsolete - this class uses BinaryFormatter for comparisons. It's safe because both serialization and deserialization is in the same process.
 #pragma warning disable CS0618 // Use of obsolete symbol - as above, as well as indicating some obsolete types as expected ones when deserializing a Hashtable or other non-generic collections
-#endif
 
 #endregion
 

@@ -53,7 +53,7 @@ namespace KGySoft.Reflection
             if (Property.PropertyType.IsPointer)
                 Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(Property.PropertyType));
 
-            if (!CanWrite)
+            if (!Property.CanWrite)
             {
                 if (Property.PropertyType.IsByRef)
                 {
@@ -146,7 +146,7 @@ namespace KGySoft.Reflection
             if (Property.PropertyType.IsPointer)
                 Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(Property.PropertyType));
 
-            if (!CanWrite)
+            if (!Property.CanWrite)
             {
                 if (Property.PropertyType.IsByRef)
                 {
@@ -245,7 +245,7 @@ namespace KGySoft.Reflection
                 : declaringType!.IsValueType ? typeof(ValueTypeAction<,>).GetGenericType(declaringType, propertyType)
                 : typeof(ReferenceTypeAction<,>).GetGenericType(declaringType, propertyType);
 
-            if (!CanWrite)
+            if (!Property.CanWrite)
             {
                 if (isByRef)
                 {

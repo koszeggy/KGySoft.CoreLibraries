@@ -17,9 +17,7 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
-#if NET471_OR_GREATER || NETSTANDARD || NETCOREAPP
 using System.Linq;
-#endif
 using System.Linq.Expressions;
 using System.Reflection;
 #if !NETSTANDARD2_0

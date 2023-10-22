@@ -23,11 +23,14 @@ using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 
 using KGySoft.Annotations;
-
 using KGySoft.CoreLibraries;
 
-#if !NET6_0_OR_GREATER
-using KGySoft.CoreLibraries;
+#endregion
+
+#region Suppressions
+
+#if !(NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER)
+#pragma warning disable CS8763 // A method marked [DoesNotReturn] should not return - false alarm, ExceptionDispatchInfo.Throw() does not return either.
 #endif
 
 #endregion

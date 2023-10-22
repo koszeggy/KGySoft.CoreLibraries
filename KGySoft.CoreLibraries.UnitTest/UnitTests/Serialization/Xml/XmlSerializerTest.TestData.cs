@@ -931,11 +931,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             #region Methods
 
 #if NET35 // Compiler bug: CS0656: Missing compiler required member 'System.Type.op_Equality'
+#pragma warning disable CS8851 // Record defines 'Equals' but not 'GetHashCode'.
             public bool Equals(ClassRecord other) => ReferenceEquals(this, other)
                 || (other is not null
                     && EqualityContract == other.EqualityContract
                     && StringProp == other.StringProp
                     && IntProp == other.IntProp);
+#pragma warning restore CS8851 // Record defines 'Equals' but not 'GetHashCode'.
 #endif
 
             #endregion

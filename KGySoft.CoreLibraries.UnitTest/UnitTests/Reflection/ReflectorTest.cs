@@ -1010,7 +1010,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             parameters = (object[])args.Clone();
             inv.Invoke(null, parameters.AsSpan());
             Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[0], test.IntProp);
+            Assert.AreEqual(args[0], TestClass.StaticIntProp);
             Assert.AreNotEqual(args[2], parameters[2]);
 #endif
 
