@@ -49,7 +49,7 @@
   </ItemGroup>
 
   <!-- .NET Framework only references -->
-  <ItemGroup Condition="'$(TargetFramework)'=='net35' OR '$(TargetFramework)'=='net40' OR '$(TargetFramework)'=='net45' OR '$(TargetFramework)'=='net46'  OR '$(TargetFramework)'=='net47' OR '$(TargetFramework)'=='net472'">
+  <ItemGroup Condition="'$(TargetFramework)'=='net35' OR '$(TargetFramework)'=='net40' OR '$(TargetFramework)'=='net45' OR '$(TargetFramework)'=='net46' OR '$(TargetFramework)'=='net47' OR '$(TargetFramework)'=='net472'">
     <Reference Include="sysglobl" />
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>

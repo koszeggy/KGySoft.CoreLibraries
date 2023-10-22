@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <!--<TargetFrameworks>net35;net40;net45;net47;net472;netcoreapp2.0;netcoreapp2.1;netcoreapp3.0;net5.0;net6.0;net7.0;net8.0</TargetFrameworks>-->
-    <TargetFrameworks>net7.0</TargetFrameworks>
+    <TargetFrameworks>net48;net8.0</TargetFrameworks>
 
     <!--For UnitTesting the .NET Standard versions-->
     <!--<TargetFrameworks>netcoreapp2.0;netcoreapp3.0</TargetFrameworks>-->
@@ -38,7 +38,7 @@
   </ItemGroup>
 
   <!-- .NET Framework 4.x only references -->
-  <ItemGroup Condition="'$(TargetFramework)'=='net40' OR '$(TargetFramework)'=='net45' OR '$(TargetFramework)'=='net47' OR '$(TargetFramework)'=='net472'">
+  <ItemGroup Condition="'$(TargetFramework)'=='net40' OR '$(TargetFramework)'=='net45' OR '$(TargetFramework)'=='net47' OR '$(TargetFramework)'=='net472' OR '$(TargetFramework)'=='net48'">
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
 

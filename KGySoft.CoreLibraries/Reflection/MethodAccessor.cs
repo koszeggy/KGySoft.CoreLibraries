@@ -68,6 +68,8 @@ namespace KGySoft.Reflection
     /// <code lang="C#"><![CDATA[
     /// using System;
     /// using System.Reflection;
+    /// using System.Runtime.Versioning;
+    /// 
     /// using KGySoft.Diagnostics;
     /// using KGySoft.Reflection;
     /// 
@@ -78,15 +80,24 @@ namespace KGySoft.Reflection
     ///         public int TestMethod(int i) => i;
     ///     }
     /// 
-    ///     static void Main(string[] args)
+    ///     private static string PlatformName => ((TargetFrameworkAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(),
+    ///         typeof(TargetFrameworkAttribute))).FrameworkDisplayName;
+    /// 
+    ///     static void Main()
     ///     {
     ///         var instance = new TestClass();
     ///         MethodInfo method = instance.GetType().GetMethod(nameof(TestClass.TestMethod));
     ///         MethodAccessor accessor = MethodAccessor.GetAccessor(method);
+    /// #if NET8_0_OR_GREATER
+    ///         MethodInvoker invoker = MethodInvoker.Create(method);
+    /// #endif
     /// 
-    ///         new PerformanceTest { Iterations = 1_000_000 }
+    ///         new PerformanceTest { TestName = $"Method Invoke Test - {PlatformName}", Iterations = 1_000_000 }
     ///             .AddCase(() => instance.TestMethod(1), "Direct call")
-    ///             .AddCase(() => method.Invoke(instance, new object[] { 1 }), "MethodInfo.Invoke")
+    ///             .AddCase(() => method.Invoke(instance, new object[] { 1 }), "System.Reflection.MethodInfo.Invoke")
+    /// #if NET8_0_OR_GREATER
+    ///             .AddCase(() => invoker.Invoke(instance, 1), "System.Reflection.MethodInvoker.Invoke (.NET 8 or later)")
+    /// #endif
     ///             .AddCase(() => accessor.Invoke(instance, 1), "MethodAccessor.Invoke")
     ///             .AddCase(() => accessor.InvokeInstanceFunction<TestClass, int, int>(instance, 1), "MethodAccessor.InvokeInstanceFunction<,,>")
     ///             .DoTest()
@@ -94,8 +105,23 @@ namespace KGySoft.Reflection
     ///     }
     /// }
     /// 
-    /// // This code example produces a similar output to this one:
-    /// // ==[Performance Test Results]================================================
+    /// // This code example produces a similar output to these ones:
+    /// 
+    /// // ==[Method Invoke Test - .NET 8.0 Results]================================================
+    /// // Iterations: 1,000,000
+    /// // Warming up: Yes
+    /// // Test cases: 5
+    /// // Calling GC.Collect: Yes
+    /// // Forced CPU Affinity: No
+    /// // Cases are sorted by time (quickest first)
+    /// // --------------------------------------------------
+    /// // 1. Direct call: average time: 3.48 ms
+    /// // 2. MethodAccessor.InvokeInstanceFunction<,,>: average time: 5.78 ms (+2.30 ms / 166.09%)
+    /// // 3. MethodAccessor.Invoke: average time: 18.34 ms (+14.85 ms / 526.75%)
+    /// // 4. System.Reflection.MethodInvoker.Invoke (.NET 8 or later): average time: 28.83 ms (+25.35 ms / 828.24%)
+    /// // 5. System.Reflection.MethodInfo.Invoke: average time: 39.75 ms (+36.27 ms / 1,142.08%)
+    /// 
+    /// // ==[Method Invoke Test - .NET Framework 4.8 Results]================================================
     /// // Iterations: 1,000,000
     /// // Warming up: Yes
     /// // Test cases: 4
@@ -103,10 +129,10 @@ namespace KGySoft.Reflection
     /// // Forced CPU Affinity: No
     /// // Cases are sorted by time (quickest first)
     /// // --------------------------------------------------
-    /// // 1. Direct call: average time: 3.23 ms
-    /// // 2. MethodAccessor.InvokeInstanceFunction<,,>: average time: 5.72 ms (+2.49 ms / 177.25%)
-    /// // 3. MethodAccessor.Invoke: average time: 18.96 ms(+15.73 ms / 587.38%)
-    /// // 4. MethodInfo.Invoke: average time: 155.54 ms(+152.31 ms / 4,819.52%)]]></code>
+    /// // 1. Direct call: average time: 3.41 ms
+    /// // 2. MethodAccessor.InvokeInstanceFunction<,,>: average time: 12.20 ms (+8.80 ms / 358.22%)
+    /// // 3. MethodAccessor.Invoke: average time: 29.07 ms (+25.66 ms / 853.33%)
+    /// // 4. System.Reflection.MethodInfo.Invoke: average time: 203.79 ms (+200.38 ms / 5,982.90%)]]></code>
     /// </example>
     public abstract class MethodAccessor : MemberAccessor
     {

@@ -65,6 +65,8 @@ namespace KGySoft.Reflection
     /// <example><code lang="C#"><![CDATA[
     /// using System;
     /// using System.Reflection;
+    /// using System.Runtime.Versioning;
+    /// 
     /// using KGySoft.Diagnostics;
     /// using KGySoft.Reflection;
     /// 
@@ -75,23 +77,26 @@ namespace KGySoft.Reflection
     ///         public int TestField;
     ///     }
     /// 
+    ///     private static string PlatformName => ((TargetFrameworkAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(),
+    ///         typeof(TargetFrameworkAttribute))).FrameworkDisplayName;
+    /// 
     ///     static void Main(string[] args)
     ///     {
     ///         var instance = new TestClass();
     ///         FieldInfo field = instance.GetType().GetField(nameof(TestClass.TestField));
     ///         FieldAccessor accessor = FieldAccessor.GetAccessor(field);
     /// 
-    ///         new PerformanceTest { TestName = "Set Field", Iterations = 1_000_000 }
+    ///         new PerformanceTest { TestName = $"Set Field - {PlatformName}", Iterations = 1_000_000 }
     ///             .AddCase(() => instance.TestField = 1, "Direct set")
-    ///             .AddCase(() => field.SetValue(instance, 1), "FieldInfo.SetValue")
+    ///             .AddCase(() => field.SetValue(instance, 1), "System.Reflection.FieldInfo.SetValue")
     ///             .AddCase(() => accessor.Set(instance, 1), "FieldAccessor.Set")
     ///             .AddCase(() => accessor.SetInstanceValue(instance, 1), "FieldAccessor.SetInstanceValue<,>")
     ///             .DoTest()
     ///             .DumpResults(Console.Out);
     /// 
-    ///         new PerformanceTest<int> { TestName = "Get Field", Iterations = 1_000_000 }
+    ///         new PerformanceTest<int> { TestName = $"Get Field - {PlatformName}", Iterations = 1_000_000 }
     ///             .AddCase(() => instance.TestField, "Direct get")
-    ///             .AddCase(() => (int)field.GetValue(instance), "FieldInfo.GetValue")
+    ///             .AddCase(() => (int)field.GetValue(instance), "System.Reflection.FieldInfo.GetValue")
     ///             .AddCase(() => (int)accessor.Get(instance), "FieldAccessor.Get")
     ///             .AddCase(() => accessor.GetInstanceValue<TestClass, int>(instance), "FieldAccessor.GetInstanceValue<,>")
     ///             .DoTest()
@@ -99,8 +104,9 @@ namespace KGySoft.Reflection
     ///     }
     /// }
     /// 
-    /// // This code example produces a similar output to this one:
-    /// // ==[Set Field Results]================================================
+    /// // This code example produces a similar output to these ones:
+    /// 
+    /// // ==[Set Field - .NET 8.0 Results]================================================
     /// // Iterations: 1,000,000
     /// // Warming up: Yes
     /// // Test cases: 4
@@ -108,12 +114,12 @@ namespace KGySoft.Reflection
     /// // Forced CPU Affinity: No
     /// // Cases are sorted by time (quickest first)
     /// // --------------------------------------------------
-    /// // 1. Direct set: average time: 2.79 ms
-    /// // 2. FieldAccessor.SetInstanceValue<,>: average time: 7.51 ms (+4.72 ms / 269.41%)
-    /// // 3. FieldAccessor.Set: average time: 10.20 ms(+7.42 ms / 366.09%)
-    /// // 4. FieldInfo.SetValue: average time: 61.40 ms(+58.62 ms / 2,202.91%)
+    /// // 1. Direct set: average time: 2.83 ms
+    /// // 2. FieldAccessor.SetInstanceValue<,>: average time: 4.53 ms (+1.71 ms / 160.31%)
+    /// // 3. FieldAccessor.Set: average time: 10.84 ms (+8.01 ms / 383.41%)
+    /// // 4. System.Reflection.FieldInfo.SetValue: average time: 52.15 ms (+49.33 ms / 1,844.55%)
     /// // 
-    /// // ==[Get Field Results]================================================
+    /// // ==[Get Field - .NET 8.0 Results]================================================
     /// // Iterations: 1,000,000
     /// // Warming up: Yes
     /// // Test cases: 4
@@ -121,10 +127,36 @@ namespace KGySoft.Reflection
     /// // Forced CPU Affinity: No
     /// // Cases are sorted by time (quickest first)
     /// // --------------------------------------------------
-    /// // 1. Direct get: average time: 2.08 ms
-    /// // 2. FieldAccessor.GetInstanceValue<,>: average time: 4.84 ms (+2.77 ms / 233.33%)
-    /// // 3. FieldAccessor.Get: average time: 8.06 ms(+5.98 ms / 388.12%)
-    /// // 4. FieldInfo.GetValue: average time: 50.32 ms(+48.24 ms / 2,423.40%)]]></code>
+    /// // 1. Direct get: average time: 2.83 ms
+    /// // 2. FieldAccessor.GetInstanceValue<,>: average time: 3.75 ms (+0.92 ms / 132.42%)
+    /// // 3. FieldAccessor.Get: average time: 10.18 ms (+7.35 ms / 359.81%)
+    /// // 4. System.Reflection.FieldInfo.GetValue: average time: 54.13 ms (+51.30 ms / 1,913.66%)
+    /// 
+    /// // ==[Set Field - .NET Framework 4.8 Results]================================================
+    /// // Iterations: 1,000,000
+    /// // Warming up: Yes
+    /// // Test cases: 4
+    /// // Calling GC.Collect: Yes
+    /// // Forced CPU Affinity: No
+    /// // Cases are sorted by time (quickest first)
+    /// // --------------------------------------------------
+    /// // 1. Direct set: average time: 3.11 ms
+    /// // 2. FieldAccessor.SetInstanceValue<,>: average time: 11.45 ms (+8.34 ms / 367.99%)
+    /// // 3. FieldAccessor.Set: average time: 13.65 ms (+10.54 ms / 438.45%)
+    /// // 4. System.Reflection.FieldInfo.SetValue: average time: 99.95 ms (+96.84 ms / 3,211.03%)
+    /// // 
+    /// // ==[Get Field - .NET Framework 4.8 Results]================================================
+    /// // Iterations: 1,000,000
+    /// // Warming up: Yes
+    /// // Test cases: 4
+    /// // Calling GC.Collect: Yes
+    /// // Forced CPU Affinity: No
+    /// // Cases are sorted by time (quickest first)
+    /// // --------------------------------------------------
+    /// // 1. Direct get: average time: 2.15 ms
+    /// // 2. FieldAccessor.GetInstanceValue<,>: average time: 10.24 ms (+8.09 ms / 476.41%)
+    /// // 3. FieldAccessor.Get: average time: 10.56 ms (+8.41 ms / 491.29%)
+    /// // 4. System.Reflection.FieldInfo.GetValue: average time: 75.45 ms (+73.30 ms / 3,509.27%)]]></code>
     /// </example>
     public sealed class FieldAccessor : MemberAccessor
     {

@@ -61,6 +61,7 @@ namespace KGySoft.Reflection
     /// <example><code lang="C#"><![CDATA[
     /// using System;
     /// using System.Reflection;
+    /// using System.Runtime.Versioning;
     /// 
     /// using KGySoft.Diagnostics;
     /// using KGySoft.Reflection;
@@ -73,27 +74,36 @@ namespace KGySoft.Reflection
     ///         public TestClass(int i) { }
     ///     }
     /// 
-    ///     static void Main(string[] args)
+    ///     private static string PlatformName => ((TargetFrameworkAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(),
+    ///         typeof(TargetFrameworkAttribute))).FrameworkDisplayName;
+    /// 
+    ///     static void Main()
     ///     {
     ///         Type testType = typeof(TestClass);
     ///         ConstructorInfo ctor = testType.GetConstructor(Type.EmptyTypes);
     ///         CreateInstanceAccessor accessor = CreateInstanceAccessor.GetAccessor(testType);
-    /// 
-    ///         new PerformanceTest<TestClass> { TestName = "Default Constructor", Iterations = 1_000_000 }
+    ///         
+    ///         new PerformanceTest<TestClass> { TestName = $"Default Constructor - {PlatformName}", Iterations = 1_000_000 }
     ///             .AddCase(() => new TestClass(), "Direct call")
-    ///             .AddCase(() => (TestClass)Activator.CreateInstance(testType), "Activator.CreateInstance")
-    ///             .AddCase(() => (TestClass)ctor.Invoke(null), "ConstructorInfo.Invoke")
+    ///             .AddCase(() => (TestClass)Activator.CreateInstance(testType), "System.Activator.CreateInstance")
+    ///             .AddCase(() => (TestClass)ctor.Invoke(null), "System.Reflection.ConstructorInfo.Invoke")
     ///             .AddCase(() => (TestClass)accessor.CreateInstance(), "CreateInstanceAccessor.CreateInstance")
     ///             .AddCase(() => accessor.CreateInstance<TestClass>(), "CreateInstanceAccessor.CreateInstance<>")
     ///             .DoTest()
     ///             .DumpResults(Console.Out);
-    /// 
+    ///         
     ///         ctor = testType.GetConstructor(new[] { typeof(int) });
     ///         accessor = CreateInstanceAccessor.GetAccessor(ctor);
-    ///         new PerformanceTest<TestClass> { TestName = "Parameterized Constructor", Iterations = 1_000_000 }
+    /// #if NET8_0_OR_GREATER
+    ///         ConstructorInvoker invoker = ConstructorInvoker.Create(ctor);
+    /// #endif
+    ///         new PerformanceTest<TestClass> { TestName = $"Parameterized Constructor - {PlatformName}", Iterations = 1_000_000 }
     ///             .AddCase(() => new TestClass(1), "Direct call")
-    ///             .AddCase(() => (TestClass)Activator.CreateInstance(testType, 1), "Activator.CreateInstance")
-    ///             .AddCase(() => (TestClass)ctor.Invoke(new object[] { 1 }), "ConstructorInfo.Invoke")
+    ///             .AddCase(() => (TestClass)Activator.CreateInstance(testType, 1), "System.Activator.CreateInstance")
+    ///             .AddCase(() => (TestClass)ctor.Invoke(new object[] { 1 }), "System.Reflection.ConstructorInfo.Invoke")
+    /// #if NET8_0_OR_GREATER
+    ///             .AddCase(() => (TestClass)invoker.Invoke(1), "System.Reflection.ConstructorInvoker.Invoke (.NET 8 or later)")
+    /// #endif
     ///             .AddCase(() => (TestClass)accessor.CreateInstance(1), "CreateInstanceAccessor.CreateInstance")
     ///             .AddCase(() => accessor.CreateInstance<TestClass, int>(1), "CreateInstanceAccessor.CreateInstance<,>")
     ///             .DoTest()
@@ -101,8 +111,9 @@ namespace KGySoft.Reflection
     ///     }
     /// }
     /// 
-    /// // This code example produces a similar output to this one:
-    /// // ==[Default Constructor Results]================================================
+    /// // This code example produces a similar output to these ones:
+    /// 
+    /// // ==[Default Constructor - .NET 8.0 Results]================================================
     /// // Iterations: 1,000,000
     /// // Warming up: Yes
     /// // Test cases: 5
@@ -110,13 +121,28 @@ namespace KGySoft.Reflection
     /// // Forced CPU Affinity: No
     /// // Cases are sorted by time (quickest first)
     /// // --------------------------------------------------
-    /// // 1. Direct call: average time: 5.52 ms
-    /// // 2. CreateInstanceAccessor.CreateInstance<>: average time: 9.35 ms (+3.82 ms / 169.17%)
-    /// // 3. CreateInstanceAccessor.CreateInstance: average time: 9.64 ms(+4.12 ms / 174.58%)
-    /// // 4. Activator.CreateInstance: average time: 14.36 ms(+8.83 ms / 259.85%)
-    /// // 5. ConstructorInfo.Invoke: average time: 101.75 ms(+96.22 ms / 1,841.76%)
-    /// // 
-    /// // ==[Parameterized Constructor Results]================================================
+    /// // 1. Direct call: average time: 8.66 ms
+    /// // 2. CreateInstanceAccessor.CreateInstance<>: average time: 9.48 ms (+0.83 ms / 109.53%)
+    /// // 3. CreateInstanceAccessor.CreateInstance: average time: 9.90 ms (+1.25 ms / 114.41%)
+    /// // 4. System.Activator.CreateInstance: average time: 12.84 ms (+4.18 ms / 148.32%)
+    /// // 5. System.Reflection.ConstructorInfo.Invoke: average time: 13.30 ms (+4.65 ms / 153.70%)
+    /// //
+    /// // ==[Parameterized Constructor - .NET 8.0 Results]================================================
+    /// // Iterations: 1,000,000
+    /// // Warming up: Yes
+    /// // Test cases: 6
+    /// // Calling GC.Collect: Yes
+    /// // Forced CPU Affinity: No
+    /// // Cases are sorted by time (quickest first)
+    /// // --------------------------------------------------
+    /// // 1. Direct call: average time: 5.83 ms
+    /// // 2. CreateInstanceAccessor.CreateInstance<,>: average time: 9.58 ms (+3.74 ms / 164.15%)
+    /// // 3. CreateInstanceAccessor.CreateInstance: average time: 15.45 ms (+9.61 ms / 264.79%)
+    /// // 4. System.Reflection.ConstructorInvoker.Invoke (.NET 8 or later): average time: 16.64 ms (+10.81 ms / 285.30%)
+    /// // 5. System.Reflection.ConstructorInfo.Invoke: average time: 40.69 ms (+34.85 ms / 697.44%)
+    /// // 6. System.Activator.CreateInstance: average time: 271.66 ms (+265.83 ms / 4,656.86%)
+    /// 
+    /// // ==[Default Constructor - .NET Framework 4.8 Results]================================================
     /// // Iterations: 1,000,000
     /// // Warming up: Yes
     /// // Test cases: 5
@@ -124,11 +150,25 @@ namespace KGySoft.Reflection
     /// // Forced CPU Affinity: No
     /// // Cases are sorted by time (quickest first)
     /// // --------------------------------------------------
-    /// // 1. Direct call: average time: 5.03 ms
-    /// // 2. CreateInstanceAccessor.CreateInstance<,>: average time: 9.91 ms (+4.88 ms / 197.08%)
-    /// // 3. CreateInstanceAccessor.CreateInstance: average time: 19.62 ms(+14.59 ms / 390.25%)
-    /// // 4. ConstructorInfo.Invoke: average time: 156.54 ms(+151.51 ms / 3,113.43%)
-    /// // 5. Activator.CreateInstance: average time: 443.71 ms(+438.68 ms / 8,824.98%)]]></code>
+    /// // 1. Direct call: average time: 5.57 ms
+    /// // 2. CreateInstanceAccessor.CreateInstance<>: average time: 14.13 ms (+8.56 ms / 253.57%)
+    /// // 3. CreateInstanceAccessor.CreateInstance: average time: 32.48 ms (+26.91 ms / 582.84%)
+    /// // 4. System.Activator.CreateInstance: average time: 48.24 ms (+42.67 ms / 865.77%)
+    /// // 5. System.Reflection.ConstructorInfo.Invoke: average time: 204.87 ms (+199.30 ms / 3,676.54%)
+    /// //
+    /// // ==[Parameterized Constructor - .NET Framework 4.8 Results]================================================
+    /// // Iterations: 1,000,000
+    /// // Warming up: Yes
+    /// // Test cases: 5
+    /// // Calling GC.Collect: Yes
+    /// // Forced CPU Affinity: No
+    /// // Cases are sorted by time (quickest first)
+    /// // --------------------------------------------------
+    /// // 1. Direct call: average time: 5.43 ms
+    /// // 2. CreateInstanceAccessor.CreateInstance<,>: average time: 14.28 ms (+8.85 ms / 263.06%)
+    /// // 3. CreateInstanceAccessor.CreateInstance: average time: 18.96 ms (+13.53 ms / 349.15%)
+    /// // 4. System.Reflection.ConstructorInfo.Invoke: average time: 199.26 ms (+193.83 ms / 3,669.64%)
+    /// // 5. System.Activator.CreateInstance: average time: 682.53 ms (+677.10 ms / 12,569.87%)]]></code>
     /// </example>
     public abstract class CreateInstanceAccessor : MemberAccessor
     {

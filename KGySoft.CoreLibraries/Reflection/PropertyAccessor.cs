@@ -62,6 +62,8 @@ namespace KGySoft.Reflection
     /// <code lang="C#"><![CDATA[
     /// using System;
     /// using System.Reflection;
+    /// using System.Runtime.Versioning;
+    /// 
     /// using KGySoft.Diagnostics;
     /// using KGySoft.Reflection;
     /// 
@@ -72,23 +74,26 @@ namespace KGySoft.Reflection
     ///         public int TestProperty { get; set; }
     ///     }
     /// 
+    ///     private static string PlatformName => ((TargetFrameworkAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(),
+    ///         typeof(TargetFrameworkAttribute))).FrameworkDisplayName;
+    /// 
     ///     static void Main(string[] args)
     ///     {
     ///         var instance = new TestClass();
     ///         PropertyInfo property = instance.GetType().GetProperty(nameof(TestClass.TestProperty));
     ///         PropertyAccessor accessor = PropertyAccessor.GetAccessor(property);
     /// 
-    ///         new PerformanceTest { TestName = "Set Property", Iterations = 1_000_000 }
+    ///         new PerformanceTest { TestName = $"Set Property - {PlatformName}", Iterations = 1_000_000 }
     ///             .AddCase(() => instance.TestProperty = 1, "Direct set")
-    ///             .AddCase(() => property.SetValue(instance, 1), "PropertyInfo.SetValue")
+    ///             .AddCase(() => property.SetValue(instance, 1), "System.Reflection.PropertyInfo.SetValue")
     ///             .AddCase(() => accessor.Set(instance, 1), "PropertyAccessor.Set")
     ///             .AddCase(() => accessor.SetInstanceValue(instance, 1), "PropertyAccessor.SetInstanceValue<,>")
     ///             .DoTest()
     ///             .DumpResults(Console.Out);
     /// 
-    ///         new PerformanceTest<int> { TestName = "Get Property", Iterations = 1_000_000 }
+    ///         new PerformanceTest<int> { TestName = $"Get Property - {PlatformName}", Iterations = 1_000_000 }
     ///             .AddCase(() => instance.TestProperty, "Direct get")
-    ///             .AddCase(() => (int)property.GetValue(instance), "PropertyInfo.GetValue")
+    ///             .AddCase(() => (int)property.GetValue(instance), "System.Reflection.PropertyInfo.GetValue")
     ///             .AddCase(() => (int)accessor.Get(instance), "PropertyAccessor.Get")
     ///             .AddCase(() => accessor.GetInstanceValue<TestClass, int>(instance), "PropertyAccessor.GetInstanceValue<,>")
     ///             .DoTest()
@@ -96,8 +101,9 @@ namespace KGySoft.Reflection
     ///     }
     /// }
     /// 
-    /// // This code example produces a similar output to this one:
-    /// // ==[Set Property Results]================================================
+    /// // This code example produces a similar output to these ones:
+    /// 
+    /// // ==[Set Property - .NET 8.0 Results]================================================
     /// // Iterations: 1,000,000
     /// // Warming up: Yes
     /// // Test cases: 4
@@ -105,12 +111,12 @@ namespace KGySoft.Reflection
     /// // Forced CPU Affinity: No
     /// // Cases are sorted by time (quickest first)
     /// // --------------------------------------------------
-    /// // 1. Direct set: average time: 2.65 ms
-    /// // 2. PropertyAccessor.SetInstanceValue<,>: average time: 6.40 ms (+3.74 ms / 241.10%)
-    /// // 3. PropertyAccessor.Set: average time: 10.05 ms(+7.40 ms / 378.98%)
-    /// // 4. PropertyInfo.SetValue: average time: 124.49 ms(+121.84 ms / 4,692.95%)
+    /// // 1. Direct set: average time: 3.02 ms
+    /// // 2. PropertyAccessor.SetInstanceValue<,>: average time: 4.70 ms (+1.67 ms / 155.43%)
+    /// // 3. PropertyAccessor.Set: average time: 11.60 ms (+8.58 ms / 384.08%)
+    /// // 4. System.Reflection.PropertyInfo.SetValue: average time: 25.79 ms (+22.77 ms / 853.68%)
     /// // 
-    /// // ==[Get Property Results]================================================
+    /// // ==[Get Property - .NET 8.0 Results]================================================
     /// // Iterations: 1,000,000
     /// // Warming up: Yes
     /// // Test cases: 4
@@ -118,10 +124,36 @@ namespace KGySoft.Reflection
     /// // Forced CPU Affinity: No
     /// // Cases are sorted by time (quickest first)
     /// // --------------------------------------------------
-    /// // 1. Direct get: average time: 2.06 ms
-    /// // 2. PropertyAccessor.GetInstanceValue<,>: average time: 4.90 ms (+2.84 ms / 237.98%)
-    /// // 3. PropertyAccessor.Get: average time: 9.72 ms(+7.66 ms / 471.89%)
-    /// // 4. PropertyInfo.GetValue: average time: 81.46 ms(+79.41 ms / 3,955.18%)]]></code>
+    /// // 1. Direct get: average time: 2.86 ms
+    /// // 2. PropertyAccessor.GetInstanceValue<,>: average time: 4.80 ms (+1.95 ms / 168.15%)
+    /// // 3. PropertyAccessor.Get: average time: 11.56 ms (+8.71 ms / 404.98%)
+    /// // 4. System.Reflection.PropertyInfo.GetValue: average time: 17.05 ms (+14.20 ms / 597.12%)
+    /// 
+    /// // ==[Set Property - .NET Framework 4.8 Results]================================================
+    /// // Iterations: 1,000,000
+    /// // Warming up: Yes
+    /// // Test cases: 4
+    /// // Calling GC.Collect: Yes
+    /// // Forced CPU Affinity: No
+    /// // Cases are sorted by time (quickest first)
+    /// // --------------------------------------------------
+    /// // 1. Direct set: average time: 3.63 ms
+    /// // 2. PropertyAccessor.SetInstanceValue<,>: average time: 12.05 ms (+8.42 ms / 331.91%)
+    /// // 3. PropertyAccessor.Set: average time: 18.20 ms (+14.57 ms / 501.41%)
+    /// // 4. System.Reflection.PropertyInfo.SetValue: average time: 186.50 ms (+182.87 ms / 5,137.78%)
+    /// // 
+    /// // ==[Get Property - .NET Framework 4.8 Results]================================================
+    /// // Iterations: 1,000,000
+    /// // Warming up: Yes
+    /// // Test cases: 4
+    /// // Calling GC.Collect: Yes
+    /// // Forced CPU Affinity: No
+    /// // Cases are sorted by time (quickest first)
+    /// // --------------------------------------------------
+    /// // 1. Direct get: average time: 3.51 ms
+    /// // 2. PropertyAccessor.GetInstanceValue<,>: average time: 11.12 ms (+7.62 ms / 317.21%)
+    /// // 3. PropertyAccessor.Get: average time: 15.01 ms (+11.50 ms / 428.04%)
+    /// // 4. System.Reflection.PropertyInfo.GetValue: average time: 120.99 ms (+117.49 ms / 3,450.32%)]]></code>
     /// </example>
     public abstract class PropertyAccessor : MemberAccessor
     {
