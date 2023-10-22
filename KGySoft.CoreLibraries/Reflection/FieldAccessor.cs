@@ -17,6 +17,9 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
+#if NET471_OR_GREATER || NETSTANDARD || NETCOREAPP
+using System.Linq;
+#endif
 using System.Linq.Expressions;
 using System.Reflection;
 #if !NETSTANDARD2_0
@@ -45,22 +48,19 @@ namespace KGySoft.Reflection
     /// </summary>
     /// <remarks>
     /// <para>You can obtain a <see cref="FieldAccessor"/> instance by the static <see cref="GetAccessor">GetAccessor</see> method.</para>
-    /// <para>The <see cref="Get">Get</see> and <see cref="Set">Set</see> methods can be used to get and set the field, respectively.</para>
-    /// <para>If you know the field type at compile time, then you can use the generic <see cref="SetStaticValue{TField}">SetStaticValue</see>/<see cref="GetStaticValue{TField}">GetStaticValue</see>
+    /// <para>The non-generic <see cref="Get">Get</see> and <see cref="Set">Set</see> methods can be used to get and set the field in general cases.</para>
+    /// <para>If you know the field type at compile time, then you can use the generic <see cref="GetStaticValue{TField}">GetStaticValue</see>/<see cref="SetStaticValue{TField}">SetStaticValue</see>
     /// methods for static fields. If you know also the instance type, then
     /// the <see cref="O:KGySoft.Reflection.FieldAccessor.GetInstanceValue">GetInstanceValue</see>/<see cref="O:KGySoft.Reflection.FieldAccessor.SetInstanceValue">SetInstanceValue</see>
-    /// methods can be used for instance field for better performance.</para>
-    /// <para>The first call of these methods are slow because the delegates are generated on the first access, but further calls are much faster.</para>
+    /// methods can be used to access instance fields with better performance.</para>
+    /// <para>The first call of these methods are slower because the delegates are generated on the first access, but further calls are much faster.</para>
     /// <para>The already obtained accessors are cached so subsequent <see cref="GetAccessor">GetAccessor</see> calls return the already created accessors unless
     /// they were dropped out from the cache, which can store about 8000 elements.</para>
     /// <note>If you want to access a field by name rather than by a <see cref="FieldInfo"/>, then you can use the <see cref="O:KGySoft.Reflection.Reflector.SetField">SetField</see>
     /// and <see cref="O:KGySoft.Reflection.Reflector.SetField">GetField</see> methods in the <see cref="Reflector"/> class, which have some overloads with a <c>fieldName</c> parameter.</note>
-    /// <note type="warning">The .NET Standard 2.0 version of the <see cref="Set">Set</see> method throws a <see cref="PlatformNotSupportedException"/>
-    /// if the field to set is read-only or is an instance member of a value type (<see langword="struct"/>).
-    /// The generic <see cref="O:KGySoft.Reflection.FieldAccessor.SetInstanceValue">SetInstanceValue</see> methods also throw a <see cref="PlatformNotSupportedException"/>
-    /// for read-only fields when using the .NET Standard 2.0 build of the libraries, though they support non read-only value type fields.
-    /// <br/>If you reference the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly, then use the
-    /// <see cref="O:KGySoft.Reflection.Reflector.SetField">Reflector.SetField</see> methods to set read-only fields or value type instance fields in a non-generic way.</note>
+    /// <note type="caution">The generic setter methods of this class in the .NET Standard 2.0 version throw a <see cref="PlatformNotSupportedException"/>
+    /// for read-only fields. Use the non-generic <see cref="Set">Set</see>method or reference the .NET Standard 2.1 build or any .NET Framework or .NET Core/.NET builds
+    /// to setting support setting read-only fields by the generic setters.</note>
     /// </remarks>
     /// <example><code lang="C#"><![CDATA[
     /// using System;
@@ -239,19 +239,18 @@ namespace KGySoft.Reflection
         /// <note type="tip">If you know the type of the field at compile time (and also the declaring type for instance fields),
         /// then you can use the generic <see cref="SetStaticValue{TField}">SetStaticValue</see>
         /// or <see cref="O:KGySoft.Reflection.FieldAccessor.SetInstanceValue">SetInstanceValue</see> methods for better performance.</note>
-        /// <note type="caller">Calling the .NET Standard 2.0 version of this method throws a <see cref="PlatformNotSupportedException"/>
-        /// if the field to set is read-only or is an instance member of a value type (<see langword="struct"/>).
-        /// The <see cref="O:KGySoft.Reflection.FieldAccessor.SetInstanceValue">SetInstanceValue</see> methods support setting value fields though.
-        /// <br/>If you reference the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly, then use the
-        /// <see cref="O:KGySoft.Reflection.Reflector.SetField">Reflector.SetField</see> methods to set read-only fields or value type instance fields in a non-generic way.</note>
+        /// <note type="caller">If the field is read-only or is an instance field of a value type, then the .NET Standard 2.0 version of this method
+        /// defaults to use regular reflection to preserve mutations. To experience the best performance try to target .NET Standard 2.1
+        /// or any .NET Framework or .NET Core/.NET platforms instead.</note>
         /// </remarks>
-        /// <exception cref="InvalidOperationException">This <see cref="FieldAccessor"/> represents a constant field.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="FieldAccessor"/> represents a constant field or a field of an open generic type.</exception>
         /// <exception cref="ArgumentNullException">This <see cref="FieldAccessor"/> represents an instance field and <paramref name="instance"/> is <see langword="null"/>
         /// <br/>-or-
         /// <br/>This <see cref="FieldAccessor"/> represents a value type field and <paramref name="value"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">The type of <paramref name="instance"/> or <paramref name="value"/> is invalid.</exception>
+        /// <exception cref="NotSupportedException">On .NET Framework the code is executed in a partially trusted domain with insufficient permissions.</exception>
         /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="FieldAccessor"/>
-        /// represents a read-only field or its declaring type is a value type.</exception>
+        /// represents a read-only field.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("Design", "CA1031:Do not catch general exception types",
             Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
@@ -264,7 +263,7 @@ namespace KGySoft.Reflection
             }
             catch (Exception e)
             {
-                // Post-validation if there was any exception
+                // Post-validation if there was any exception. We do this for better performance on the happy path.
                 PostValidate(instance, value, e, true);
             }
         }
@@ -282,8 +281,10 @@ namespace KGySoft.Reflection
         /// then you can use the generic <see cref="GetStaticValue{TField}">GetStaticValue</see>
         /// or <see cref="O:KGySoft.Reflection.FieldAccessor.GetInstanceValue">GetInstanceValue</see> methods for better performance.</note>
         /// </remarks>
+        /// <exception cref="InvalidOperationException">This <see cref="FieldAccessor"/> represents a field of an open generic type.</exception>
         /// <exception cref="ArgumentNullException">This <see cref="FieldAccessor"/> represents an instance field and <paramref name="instance"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">The type of <paramref name="instance"/> is invalid.</exception>
+        /// <exception cref="NotSupportedException">On .NET Framework the code is executed in a partially trusted domain with insufficient permissions.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("Design", "CA1031:Do not catch general exception types",
             Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
@@ -296,7 +297,7 @@ namespace KGySoft.Reflection
             }
             catch (Exception e)
             {
-                // Post-validation if there was any exception
+                // Post-validation if there was any exception. We do this for better performance on the happy path.
                 PostValidate(instance, null, e, false);
                 return null; // actually never reached, just to satisfy the compiler
             }
@@ -308,8 +309,9 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <typeparam name="TField">The type of the field.</typeparam>
         /// <param name="value">The value to set.</param>
-        /// <exception cref="InvalidOperationException">This <see cref="FieldAccessor"/> represents a constant or an instance field.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="FieldAccessor"/> represents a constant, an instance field or a field of an open generic type.</exception>
         /// <exception cref="ArgumentException"><typeparamref name="TField"/> is invalid.</exception>
+        /// <exception cref="NotSupportedException">On .NET Framework the code is executed in a partially trusted domain with insufficient permissions.</exception>
         /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c>
         /// and this <see cref="FieldAccessor"/> represents a read-only field.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -327,8 +329,9 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <typeparam name="TField">The type of the field.</typeparam>
         /// <returns>The value of the field.</returns>
-        /// <exception cref="InvalidOperationException">This <see cref="FieldAccessor"/> represents an instance field.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="FieldAccessor"/> represents an instance field or a field of an open generic type.</exception>
         /// <exception cref="ArgumentException"><typeparamref name="TField"/> is invalid.</exception>
+        /// <exception cref="NotSupportedException">On .NET Framework the code is executed in a partially trusted domain with insufficient permissions.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public TField GetStaticValue<TField>() => GenericGetter is Func<TField> func ? func.Invoke() : ThrowStatic<TField>();
 
@@ -340,9 +343,10 @@ namespace KGySoft.Reflection
         /// <typeparam name="TField">The type of the field.</typeparam>
         /// <param name="instance">The instance that the field belongs to.</param>
         /// <param name="value">The value to set.</param>
-        /// <exception cref="InvalidOperationException">This <see cref="FieldAccessor"/> represents a constant or a static field.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="FieldAccessor"/> represents a constant, a static field or a field of an open generic type.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">The type arguments are invalid.</exception>
+        /// <exception cref="NotSupportedException">On .NET Framework the code is executed in a partially trusted domain with insufficient permissions.</exception>
         /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c>
         /// and this <see cref="FieldAccessor"/> represents a read-only field.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -363,9 +367,10 @@ namespace KGySoft.Reflection
         /// <typeparam name="TField">The type of the field.</typeparam>
         /// <param name="instance">The instance that the field belongs to.</param>
         /// <returns>The value of the field.</returns>
-        /// <exception cref="InvalidOperationException">This <see cref="FieldAccessor"/> represents a constant or a static field.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="FieldAccessor"/> represents a static field or a field of an open generic type.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">The type arguments are invalid.</exception>
+        /// <exception cref="NotSupportedException">On .NET Framework the code is executed in a partially trusted domain with insufficient permissions.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public TField GetInstanceValue<TInstance, TField>(TInstance instance) where TInstance : class
@@ -381,8 +386,9 @@ namespace KGySoft.Reflection
         /// <typeparam name="TField">The type of the field.</typeparam>
         /// <param name="instance">The instance that the field belongs to.</param>
         /// <param name="value">The value to set.</param>
-        /// <exception cref="InvalidOperationException">This <see cref="FieldAccessor"/> represents a constant or a static field.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="FieldAccessor"/> represents a constant, a static field or a field of an open generic type.</exception>
         /// <exception cref="ArgumentException">The type arguments are invalid.</exception>
+        /// <exception cref="NotSupportedException">On .NET Framework the code is executed in a partially trusted domain with insufficient permissions.</exception>
         /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c>
         /// and this <see cref="FieldAccessor"/> represents a read-only field.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -402,8 +408,9 @@ namespace KGySoft.Reflection
         /// <typeparam name="TField">The type of the field.</typeparam>
         /// <param name="instance">The instance that the field belongs to.</param>
         /// <returns>The value of the field.</returns>
-        /// <exception cref="InvalidOperationException">This <see cref="FieldAccessor"/> represents a constant or a static field.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="FieldAccessor"/> represents a static field or a field of an open generic type.</exception>
         /// <exception cref="ArgumentException">The type arguments are invalid.</exception>
+        /// <exception cref="NotSupportedException">On .NET Framework the code is executed in a partially trusted domain with insufficient permissions.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public TField GetInstanceValue<TInstance, TField>(in TInstance instance) where TInstance : struct
             => GenericGetter is ValueTypeFunction<TInstance, TField> func ? func.Invoke(instance) : ThrowInstance<TField>();

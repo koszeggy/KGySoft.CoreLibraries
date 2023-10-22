@@ -42,26 +42,27 @@ namespace KGySoft.Reflection
     /// </summary>
     /// <remarks>
     /// <para>You can obtain a <see cref="MethodAccessor"/> instance by the static <see cref="GetAccessor">GetAccessor</see> method.</para>
-    /// <para>The <see cref="Invoke">Invoke</see> method can be used to invoke the method. It can be used even for methods with parameters passed by reference.
-    /// To obtain the result of possible <see langword="ref"/>/<see langword="out"/> parameters, pass a preallocated array to the <see cref="Invoke">Invoke</see> method.
+    /// <para>The <see cref="Invoke(object, object[])"/> method can be used to invoke the method in general cases. It can be used even for methods with parameters passed by reference.
+    /// To obtain the result of possible <see langword="ref"/>/<see langword="out"/> parameters, pass a preallocated array to the <see cref="Invoke(object, object[])"/> method.
     /// The parameters passed by reference will be assigned back to the corresponding array elements.</para>
+    /// <para>The other non-generic <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> overloads can be used
+    /// for methods with no more than four parameters. They provide a better performance than the general <see cref="Invoke(object, object[])"/> method
+    /// but the result of parameters passed reference will not be assigned back.</para>
     /// <para>If you know the parameter types at compile time (and the return type for function methods), then you can use
     /// the <see cref="O:KGySoft.Reflection.MethodAccessor.InvokeStaticAction">InvokeStaticAction</see>/<see cref="O:KGySoft.Reflection.MethodAccessor.InvokeStaticFunction">InvokeStaticFunction</see>
     /// methods to invoke static methods. If you know also the instance type, then
     /// the <see cref="O:KGySoft.Reflection.MethodAccessor.InvokeInstanceAction">InvokeInstanceAction</see>/<see cref="O:KGySoft.Reflection.MethodAccessor.InvokeInstanceFunction">InvokeInstanceFunction</see>
-    /// methods can be used to invoke instance methods for better performance. These strongly typed methods can be used as
-    /// long as the methods to invoke have no more than four parameters and none of the parameters are passed by reference.</para>
-    /// <para>The first call of these methods are slow because the delegates are generated on the first access, but further calls are much faster.</para>
+    /// methods can be used to invoke instance methods with better performance. These strongly typed methods can be used as
+    /// long as the methods to invoke have no more than four parameters. Parameters passed by reference
+    /// are also supported but only as input parameters as they are not assigned back to the caller.</para>
+    /// <para>The first call of these methods are slower because the delegates are generated on the first access, but further calls are much faster.</para>
     /// <para>The already obtained accessors are cached so subsequent <see cref="GetAccessor">GetAccessor</see> calls return the already created accessors unless
     /// they were dropped out from the cache, which can store about 8000 elements.</para>
     /// <note>If you want to invoke a method by name rather than by a <see cref="MethodInfo"/>, then you can use the <see cref="O:KGySoft.Reflection.Reflector.InvokeMethod">InvokeMethod</see>
     /// methods in the <see cref="Reflector"/> class, which have some overloads with a <c>methodName</c> parameter.</note>
-    /// <note type="warning">The .NET Standard 2.0 version of the <see cref="Invoke">Invoke</see> method does not return the ref/out parameters.
-    /// Furthermore, if an instance method of a value type (<see langword="struct"/>) mutates the instance,
-    /// then the changes will not be applied to the instance on which the method is invoked.
-    /// <br/>If you reference the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly, then use the
-    /// <see cref="O:KGySoft.Reflection.Reflector.InvokeMethod">Reflector.InvokeMethod</see> overloads to invoke methods with ref/out parameters without losing the returned parameter values
-    /// and to preserve changes of the mutated value type instances.</note>
+    /// <note type="caution">The invoker methods of this class in the .NET Standard 2.0 version throw a <see cref="PlatformNotSupportedException"/> on
+    /// attempting to access a <see langword="ref"/>-returning method. You need to reference the .NET Standard 2.1 build or any .NET Framework or .NET Core/.NET builds
+    /// to support methods with <see langword="ref"/>-returns.</note>
     /// </remarks>
     /// <example>
     /// <code lang="C#"><![CDATA[
@@ -191,23 +192,33 @@ namespace KGySoft.Reflection
         /// <remarks>
         /// <para>Invoking the method for the first time is slower than the <see cref="MethodBase.Invoke(object,object[])">System.Reflection.MethodBase.Invoke</see>
         /// method but further calls are much faster.</para>
-        /// <note type="tip">If the method has no more than four parameters and none of them are passed by reference, then you can use the strongly typed
+        /// <para>If the method has <see langword="ref"/>/<see langword="out"/> parameters pass a preallocated array to <paramref name="parameters"/>.
+        /// The parameters passed by reference will be assigned back to the corresponding array elements.</para>
+        /// <note type="tip">If the method has no more than four parameters, then you can use the strongly typed
         /// <see cref="O:KGySoft.Reflection.MethodAccessor.InvokeStaticAction">InvokeStaticAction</see>, <see cref="O:KGySoft.Reflection.MethodAccessor.InvokeStaticFunction">InvokeStaticFunction</see>,
         /// <see cref="O:KGySoft.Reflection.MethodAccessor.InvokeInstanceAction">InvokeInstanceAction</see> or <see cref="O:KGySoft.Reflection.MethodAccessor.InvokeInstanceFunction">InvokeInstanceFunction</see>
         /// methods for better performance if the types are known at compile time.</note>
-        /// <note type="caller">The .NET Standard 2.0 version of this method does not assign back the ref/out parameters in the <paramref name="parameters"/> argument.
-        /// Furthermore, if an instance method of a value type (<see langword="struct"/>) mutates the instance,
-        /// then the changes will not be applied to the <paramref name="instance"/> parameter in the .NET Standard 2.0 version.
-        /// <br/>If you reference the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly, then use the
-        /// <see cref="O:KGySoft.Reflection.Reflector.InvokeMethod">Reflector.InvokeMethod</see> overloads to invoke methods with ref/out parameters without losing the returned parameter values
-        /// and to preserve changes of the mutated value type instances.</note>
+        /// <note type="caller">If the method is a non-<see langword="readonly"/> instance method of a value type or has <see langword="ref"/>/<see langword="out"/> parameters,
+        /// then the .NET Standard 2.0 version of this method defaults to use regular reflection to preserve possible mutations and be able to assign the parameter values back to
+        /// the <paramref name="parameters"/> array. To experience the best performance try to target .NET Standard 2.1 or any .NET Framework or .NET Core/.NET platforms instead.</note>
         /// </remarks>
-        /// <exception cref="ArgumentNullException">This <see cref="MethodAccessor"/> represents an instance method and <paramref name="instance"/> is <see langword="null"/>
+        /// <exception cref="ArgumentNullException">This <see cref="MethodAccessor"/> represents an instance method and <paramref name="instance"/> is <see langword="null"/>.
         /// <br/>-or-
         /// <br/>This <see cref="MethodAccessor"/> represents a method with parameters and <paramref name="parameters"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">The type of <paramref name="instance"/> or one of the <paramref name="parameters"/> is invalid.
         /// <br/>-or-
         /// <br/><paramref name="parameters"/> has too few elements.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents an open generic method or a method of an open generic type.</exception>
+        /// <exception cref="NotSupportedException">On .NET Framework the code is executed in a partially trusted domain with insufficient permissions.</exception>
+        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="MethodAccessor"/>
+        /// represents a <see langword="ref"/>-returning method.</exception>
+        /// <overloads>The <see cref="Invoke(object, object[])"/> overload can be used for any number of parameters or for methods
+        /// with <see langword="ref"/>/<see langword="out"/> parameters. The other non-generic overloads can be used for methods with no more than four parameters.
+        /// <note type="tip">If you know the parameter types at compile time (and the return type for function methods), then you can use
+        /// the <see cref="O:KGySoft.Reflection.MethodAccessor.InvokeStaticAction">InvokeStaticAction</see>/<see cref="O:KGySoft.Reflection.MethodAccessor.InvokeStaticFunction">InvokeStaticFunction</see>
+        /// methods for the best performance to invoke static methods. If you know also the instance type, then
+        /// the <see cref="O:KGySoft.Reflection.MethodAccessor.InvokeInstanceAction">InvokeInstanceAction</see>/<see cref="O:KGySoft.Reflection.MethodAccessor.InvokeInstanceFunction">InvokeInstanceFunction</see>
+        /// methods can be used for the best performance to invoke instance methods.</note></overloads>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("Design", "CA1031:Do not catch general exception types",
             Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
@@ -219,12 +230,27 @@ namespace KGySoft.Reflection
             }
             catch (Exception e)
             {
-                // Post-validation if there was any exception
+                // Post-validation if there was any exception. We do this for better performance on the happy path.
                 PostValidate(instance, parameters, e, true);
                 return null; // actually never reached, just to satisfy the compiler
             }
         }
 
+        /// <summary>
+        /// Invokes the method with no parameters. The return value of <see langword="void"/> methods is always <see langword="null"/>.
+        /// For static methods the <paramref name="instance"/> parameter is omitted (can be <see langword="null"/>).
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="Invoke(object,object[])"/> overload for details.
+        /// </summary>
+        /// <param name="instance">The instance that the method belongs to. Can be <see langword="null"/> for static methods.</param>
+        /// <returns>The return value of the method, or <see langword="null"/> for <see langword="void"/> methods.</returns>
+        /// <exception cref="ArgumentNullException">This <see cref="MethodAccessor"/> represents an instance method and <paramref name="instance"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException">The type of <paramref name="instance"/> is invalid.
+        /// <br/>-or-
+        /// <br/>The method expects parameters.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents an open generic method or a method of an open generic type.</exception>
+        /// <exception cref="NotSupportedException">On .NET Framework the code is executed in a partially trusted domain with insufficient permissions.</exception>
+        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="MethodAccessor"/>
+        /// represents a <see langword="ref"/>-returning method.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("Design", "CA1031:Do not catch general exception types",
             Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
@@ -236,12 +262,28 @@ namespace KGySoft.Reflection
             }
             catch (Exception e)
             {
-                // Post-validation if there was any exception
+                // Post-validation if there was any exception. We do this for better performance on the happy path.
                 PostValidate(instance, Reflector.EmptyObjects, e, false);
                 return null; // actually never reached, just to satisfy the compiler
             }
         }
 
+        /// <summary>
+        /// Invokes the method with one parameter. The return value of <see langword="void"/> methods is always <see langword="null"/>.
+        /// For static methods the <paramref name="instance"/> parameter is omitted (can be <see langword="null"/>).
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="Invoke(object,object[])"/> overload for details.
+        /// </summary>
+        /// <param name="instance">The instance that the method belongs to. Can be <see langword="null"/> for static methods.</param>
+        /// <param name="param">The value of the parameter.</param>
+        /// <returns>The return value of the method, or <see langword="null"/> for <see langword="void"/> methods.</returns>
+        /// <exception cref="ArgumentNullException">This <see cref="MethodAccessor"/> represents an instance method and <paramref name="instance"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException">The type of <paramref name="instance"/> or <paramref name="param"/> is invalid.
+        /// <br/>-or-
+        /// <br/>The method cannot be invoked with one parameter.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents an open generic method or a method of an open generic type.</exception>
+        /// <exception cref="NotSupportedException">On .NET Framework the code is executed in a partially trusted domain with insufficient permissions.</exception>
+        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="MethodAccessor"/>
+        /// represents a <see langword="ref"/>-returning method.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("Design", "CA1031:Do not catch general exception types",
             Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
@@ -253,12 +295,29 @@ namespace KGySoft.Reflection
             }
             catch (Exception e)
             {
-                // Post-validation if there was any exception
+                // Post-validation if there was any exception. We do this for better performance on the happy path.
                 PostValidate(instance, new[] { param }, e, false);
                 return null; // actually never reached, just to satisfy the compiler
             }
         }
 
+        /// <summary>
+        /// Invokes the method with two parameters. The return value of <see langword="void"/> methods is always <see langword="null"/>.
+        /// For static methods the <paramref name="instance"/> parameter is omitted (can be <see langword="null"/>).
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="Invoke(object,object[])"/> overload for details.
+        /// </summary>
+        /// <param name="instance">The instance that the method belongs to. Can be <see langword="null"/> for static methods.</param>
+        /// <param name="param1">The value of the first parameter.</param>
+        /// <param name="param2">The value of the second parameter.</param>
+        /// <returns>The return value of the method, or <see langword="null"/> for <see langword="void"/> methods.</returns>
+        /// <exception cref="ArgumentNullException">This <see cref="MethodAccessor"/> represents an instance method and <paramref name="instance"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException">The type of <paramref name="instance"/> or a specified parameter is invalid.
+        /// <br/>-or-
+        /// <br/>The method cannot be invoked with two parameters.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents an open generic method or a method of an open generic type.</exception>
+        /// <exception cref="NotSupportedException">On .NET Framework the code is executed in a partially trusted domain with insufficient permissions.</exception>
+        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="MethodAccessor"/>
+        /// represents a <see langword="ref"/>-returning method.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("Design", "CA1031:Do not catch general exception types",
             Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
@@ -270,12 +329,30 @@ namespace KGySoft.Reflection
             }
             catch (Exception e)
             {
-                // Post-validation if there was any exception
+                // Post-validation if there was any exception. We do this for better performance on the happy path.
                 PostValidate(instance, new[] { param1, param2 }, e, false);
                 return null; // actually never reached, just to satisfy the compiler
             }
         }
 
+        /// <summary>
+        /// Invokes the method with three parameters. The return value of <see langword="void"/> methods is always <see langword="null"/>.
+        /// For static methods the <paramref name="instance"/> parameter is omitted (can be <see langword="null"/>).
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="Invoke(object,object[])"/> overload for details.
+        /// </summary>
+        /// <param name="instance">The instance that the method belongs to. Can be <see langword="null"/> for static methods.</param>
+        /// <param name="param1">The value of the first parameter.</param>
+        /// <param name="param2">The value of the second parameter.</param>
+        /// <param name="param3">The value of the third parameter.</param>
+        /// <returns>The return value of the method, or <see langword="null"/> for <see langword="void"/> methods.</returns>
+        /// <exception cref="ArgumentNullException">This <see cref="MethodAccessor"/> represents an instance method and <paramref name="instance"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException">The type of <paramref name="instance"/> or a specified parameter is invalid.
+        /// <br/>-or-
+        /// <br/>The method cannot be invoked with three parameters.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents an open generic method or a method of an open generic type.</exception>
+        /// <exception cref="NotSupportedException">On .NET Framework the code is executed in a partially trusted domain with insufficient permissions.</exception>
+        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="MethodAccessor"/>
+        /// represents a <see langword="ref"/>-returning method.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("Design", "CA1031:Do not catch general exception types",
             Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
@@ -287,12 +364,31 @@ namespace KGySoft.Reflection
             }
             catch (Exception e)
             {
-                // Post-validation if there was any exception
+                // Post-validation if there was any exception. We do this for better performance on the happy path.
                 PostValidate(instance, new[] { param1, param2, param3 }, e, false);
                 return null; // actually never reached, just to satisfy the compiler
             }
         }
 
+        /// <summary>
+        /// Invokes the method with four parameters. The return value of <see langword="void"/> methods is always <see langword="null"/>.
+        /// For static methods the <paramref name="instance"/> parameter is omitted (can be <see langword="null"/>).
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="Invoke(object,object[])"/> overload for details.
+        /// </summary>
+        /// <param name="instance">The instance that the method belongs to. Can be <see langword="null"/> for static methods.</param>
+        /// <param name="param1">The value of the first parameter.</param>
+        /// <param name="param2">The value of the second parameter.</param>
+        /// <param name="param3">The value of the third parameter.</param>
+        /// <param name="param4">The value of the fourth parameter.</param>
+        /// <returns>The return value of the method, or <see langword="null"/> for <see langword="void"/> methods.</returns>
+        /// <exception cref="ArgumentNullException">This <see cref="MethodAccessor"/> represents an instance method and <paramref name="instance"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException">The type of <paramref name="instance"/> or a specified parameter is invalid.
+        /// <br/>-or-
+        /// <br/>The method cannot be invoked with four parameters.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents an open generic method or a method of an open generic type.</exception>
+        /// <exception cref="NotSupportedException">On .NET Framework the code is executed in a partially trusted domain with insufficient permissions.</exception>
+        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="MethodAccessor"/>
+        /// represents a <see langword="ref"/>-returning method.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("Design", "CA1031:Do not catch general exception types",
             Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
@@ -304,8 +400,8 @@ namespace KGySoft.Reflection
             }
             catch (Exception e)
             {
-                // Post-validation if there was any exception
-                PostValidate(instance, new[] { param1, param2, param3 }, e, false);
+                // Post-validation if there was any exception. We do this for better performance on the happy path.
+                PostValidate(instance, new[] { param1, param2, param3, param4 }, e, false);
                 return null; // actually never reached, just to satisfy the compiler
             }
         }
@@ -313,9 +409,8 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Invokes a parameterless static action method.
         /// </summary>
-        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters
-        /// or a method that has parameters passed by reference.</exception>
-        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents an instance method.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents an instance method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentException">This <see cref="MethodAccessor"/> does not represent a parameterless action method so
         /// type arguments should be specified (use the generic invoker method with matching type arguments).</exception>
         public void InvokeStaticAction()
@@ -328,13 +423,12 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Invokes a static action method with one parameter. If the type of the parameter is not known at compile time
-        /// the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// the non-generic <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> methods can be used.
         /// </summary>
         /// <typeparam name="T">The type of the parameter.</typeparam>
         /// <param name="param">The value of the parameter.</param>
-        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters
-        /// or a method that has parameters passed by reference.</exception>
-        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents an instance method.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents an instance method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         public void InvokeStaticAction<T>(T param)
         {
@@ -346,15 +440,14 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Invokes a static action method with two parameters. If the type of the parameters are not known at compile time
-        /// the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// the non-generic <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> methods can be used.
         /// </summary>
         /// <typeparam name="T1">The type of the first parameter.</typeparam>
         /// <typeparam name="T2">The type of the second parameter.</typeparam>
         /// <param name="param1">The value of the first parameter.</param>
         /// <param name="param2">The value of the second parameter.</param>
-        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters
-        /// or a method that has parameters passed by reference.</exception>
-        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents an instance method.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents an instance method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         public void InvokeStaticAction<T1, T2>(T1 param1, T2 param2)
         {
@@ -366,7 +459,7 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Invokes a static action method with three parameters. If the type of the parameters are not known at compile time
-        /// the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// the non-generic <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> methods can be used.
         /// </summary>
         /// <typeparam name="T1">The type of the first parameter.</typeparam>
         /// <typeparam name="T2">The type of the second parameter.</typeparam>
@@ -374,9 +467,8 @@ namespace KGySoft.Reflection
         /// <param name="param1">The value of the first parameter.</param>
         /// <param name="param2">The value of the second parameter.</param>
         /// <param name="param3">The value of the third parameter.</param>
-        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters
-        /// or a method that has parameters passed by reference.</exception>
-        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents an instance method.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents an instance method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         public void InvokeStaticAction<T1, T2, T3>(T1 param1, T2 param2, T3 param3)
         {
@@ -388,7 +480,7 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Invokes a static action method with four parameters. If the type of the parameters are not known at compile time
-        /// the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// the non-generic <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> methods can be used.
         /// </summary>
         /// <typeparam name="T1">The type of the first parameter.</typeparam>
         /// <typeparam name="T2">The type of the second parameter.</typeparam>
@@ -398,9 +490,8 @@ namespace KGySoft.Reflection
         /// <param name="param2">The value of the second parameter.</param>
         /// <param name="param3">The value of the third parameter.</param>
         /// <param name="param4">The value of the fourth parameter.</param>
-        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters
-        /// or a method that has parameters passed by reference.</exception>
-        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents an instance method.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents an instance method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         public void InvokeStaticAction<T1, T2, T3, T4>(T1 param1, T2 param2, T3 param3, T4 param4)
         {
@@ -412,35 +503,37 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Invokes a parameterless static function method. If the return type is not known at compile time
-        /// the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// the non-generic <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> methods can be used.
         /// </summary>
         /// <typeparam name="TResult">The return type of the method.</typeparam>
         /// <returns>The return value of the method.</returns>
-        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters
-        /// or a method that has parameters passed by reference.</exception>
-        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents an instance method.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents an instance method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
+        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="MethodAccessor"/>
+        /// represents a <see langword="ref"/>-returning method.</exception>
         public TResult InvokeStaticFunction<TResult>()
             => GenericInvoker is Func<TResult> func ? func.Invoke() : ThrowStatic<TResult>();
 
         /// <summary>
         /// Invokes a static function method with one parameter. If the type of the parameter or the return value
-        /// are not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// are not known at compile time the non-generic <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> methods can be used.
         /// </summary>
         /// <typeparam name="T">The type of the parameter.</typeparam>
         /// <typeparam name="TResult">The return type of the method.</typeparam>
         /// <param name="param">The value of the parameter.</param>
         /// <returns>The return value of the method.</returns>
-        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters
-        /// or a method that has parameters passed by reference.</exception>
-        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents an instance method.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents an instance method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
+        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="MethodAccessor"/>
+        /// represents a <see langword="ref"/>-returning method.</exception>
         public TResult InvokeStaticFunction<T, TResult>(T param)
             => GenericInvoker is Func<T, TResult> func ? func.Invoke(param) : ThrowStatic<TResult>();
 
         /// <summary>
         /// Invokes a static function method with two parameters. If the type of the parameters or the return value
-        /// are not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// are not known at compile time the non-generic <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> methods can be used.
         /// </summary>
         /// <typeparam name="T1">The type of the first parameter.</typeparam>
         /// <typeparam name="T2">The type of the second parameter.</typeparam>
@@ -448,16 +541,17 @@ namespace KGySoft.Reflection
         /// <param name="param1">The value of the first parameter.</param>
         /// <param name="param2">The value of the second parameter.</param>
         /// <returns>The return value of the method.</returns>
-        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters
-        /// or a method that has parameters passed by reference.</exception>
-        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents an instance method.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents an instance method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
+        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="MethodAccessor"/>
+        /// represents a <see langword="ref"/>-returning method.</exception>
         public TResult InvokeStaticFunction<T1, T2, TResult>(T1 param1, T2 param2)
             => GenericInvoker is Func<T1, T2, TResult> func ? func.Invoke(param1, param2) : ThrowStatic<TResult>();
 
         /// <summary>
         /// Invokes a static function method with three parameters. If the type of the parameters or the return value
-        /// are not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// are not known at compile time the non-generic <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> methods can be used.
         /// </summary>
         /// <typeparam name="T1">The type of the first parameter.</typeparam>
         /// <typeparam name="T2">The type of the second parameter.</typeparam>
@@ -467,16 +561,17 @@ namespace KGySoft.Reflection
         /// <param name="param2">The value of the second parameter.</param>
         /// <param name="param3">The value of the third parameter.</param>
         /// <returns>The return value of the method.</returns>
-        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters
-        /// or a method that has parameters passed by reference.</exception>
-        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents an instance method.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents an instance method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
+        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="MethodAccessor"/>
+        /// represents a <see langword="ref"/>-returning method.</exception>
         public TResult InvokeStaticFunction<T1, T2, T3, TResult>(T1 param1, T2 param2, T3 param3)
             => GenericInvoker is Func<T1, T2, T3, TResult> func ? func.Invoke(param1, param2, param3) : ThrowStatic<TResult>();
 
         /// <summary>
         /// Invokes a static function method with four parameters. If the type of the parameters or the return value
-        /// are not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// are not known at compile time the non-generic <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> methods can be used.
         /// </summary>
         /// <typeparam name="T1">The type of the first parameter.</typeparam>
         /// <typeparam name="T2">The type of the second parameter.</typeparam>
@@ -488,22 +583,22 @@ namespace KGySoft.Reflection
         /// <param name="param3">The value of the third parameter.</param>
         /// <param name="param4">The value of the fourth parameter.</param>
         /// <returns>The return value of the method.</returns>
-        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters
-        /// or a method that has parameters passed by reference.</exception>
-        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents an instance method.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents an instance method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
+        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="MethodAccessor"/>
+        /// represents a <see langword="ref"/>-returning method.</exception>
         public TResult InvokeStaticFunction<T1, T2, T3, T4, TResult>(T1 param1, T2 param2, T3 param3, T4 param4)
             => GenericInvoker is Func<T1, T2, T3, T4, TResult> func ? func.Invoke(param1, param2, param3, param4) : ThrowStatic<TResult>();
 
         /// <summary>
         /// Invokes a parameterless instance action method in a reference type. If the type of the declaring instance
-        /// is not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// is not known at compile time the non-generic <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> methods can be used.
         /// </summary>
         /// <typeparam name="TInstance">The type of the instance that declares the method.</typeparam>
         /// <param name="instance">The instance that the method belongs to.</param>
-        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters
-        /// or a method that has parameters passed by reference.</exception>
-        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
@@ -517,15 +612,14 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Invokes an instance action method with one parameter in a reference type. If the type of the parameter or the declaring instance
-        /// are not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// are not known at compile time the non-generic <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> methods can be used.
         /// </summary>
         /// <typeparam name="TInstance">The type of the instance that declares the method.</typeparam>
         /// <typeparam name="T">The type of the parameter.</typeparam>
         /// <param name="instance">The instance that the method belongs to.</param>
         /// <param name="param">The value of the parameter.</param>
-        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters
-        /// or a method that has parameters passed by reference.</exception>
-        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
@@ -539,7 +633,7 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Invokes an instance action method with two parameters in a reference type. If the type of the parameters or the declaring instance
-        /// are not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// are not known at compile time the non-generic <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> methods can be used.
         /// </summary>
         /// <typeparam name="TInstance">The type of the instance that declares the method.</typeparam>
         /// <typeparam name="T1">The type of the first parameter.</typeparam>
@@ -547,9 +641,8 @@ namespace KGySoft.Reflection
         /// <param name="instance">The instance that the method belongs to.</param>
         /// <param name="param1">The value of the first parameter.</param>
         /// <param name="param2">The value of the second parameter.</param>
-        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters
-        /// or a method that has parameters passed by reference.</exception>
-        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
@@ -563,7 +656,7 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Invokes an instance action method with three parameters in a reference type. If the type of the parameters or the declaring instance
-        /// are not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// are not known at compile time the non-generic <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> methods can be used.
         /// </summary>
         /// <typeparam name="TInstance">The type of the instance that declares the method.</typeparam>
         /// <typeparam name="T1">The type of the first parameter.</typeparam>
@@ -573,9 +666,8 @@ namespace KGySoft.Reflection
         /// <param name="param1">The value of the first parameter.</param>
         /// <param name="param2">The value of the second parameter.</param>
         /// <param name="param3">The value of the third parameter.</param>
-        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters
-        /// or a method that has parameters passed by reference.</exception>
-        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
@@ -589,7 +681,7 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Invokes an instance action method with four parameters in a reference type. If the type of the parameters or the declaring instance
-        /// are not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// are not known at compile time the non-generic <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> methods can be used.
         /// </summary>
         /// <typeparam name="TInstance">The type of the instance that declares the method.</typeparam>
         /// <typeparam name="T1">The type of the first parameter.</typeparam>
@@ -601,9 +693,8 @@ namespace KGySoft.Reflection
         /// <param name="param2">The value of the second parameter.</param>
         /// <param name="param3">The value of the third parameter.</param>
         /// <param name="param4">The value of the fourth parameter.</param>
-        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters
-        /// or a method that has parameters passed by reference.</exception>
-        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
@@ -617,17 +708,18 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Invokes a parameterless instance function method in a reference type. If the type of the return value or the declaring instance
-        /// are not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// are not known at compile time the non-generic <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> methods can be used.
         /// </summary>
         /// <typeparam name="TInstance">The type of the instance that declares the method.</typeparam>
         /// <typeparam name="TResult">The return type of the method.</typeparam>
         /// <param name="instance">The instance that the method belongs to.</param>
         /// <returns>The return value of the method.</returns>
-        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters
-        /// or a method that has parameters passed by reference.</exception>
-        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
+        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="MethodAccessor"/>
+        /// represents a <see langword="ref"/>-returning method.</exception>
         [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public TResult InvokeInstanceFunction<TInstance, TResult>(TInstance instance) where TInstance : class
             => GenericInvoker is ReferenceTypeFunction<TInstance, TResult> func
@@ -636,7 +728,7 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Invokes an instance function method with one parameter in a reference type. If the type of the parameter, the return value
-        /// or the declaring instance are not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// or the declaring instance are not known at compile time the non-generic <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> methods can be used.
         /// </summary>
         /// <typeparam name="TInstance">The type of the instance that declares the method.</typeparam>
         /// <typeparam name="T">The type of the parameter.</typeparam>
@@ -644,11 +736,12 @@ namespace KGySoft.Reflection
         /// <param name="instance">The instance that the method belongs to.</param>
         /// <param name="param">The value of the parameter.</param>
         /// <returns>The return value of the method.</returns>
-        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters
-        /// or a method that has parameters passed by reference.</exception>
-        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
+        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="MethodAccessor"/>
+        /// represents a <see langword="ref"/>-returning method.</exception>
         [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public TResult InvokeInstanceFunction<TInstance, T, TResult>(TInstance instance, T param) where TInstance : class
             => GenericInvoker is ReferenceTypeFunction<TInstance, T, TResult> func
@@ -657,7 +750,7 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Invokes an instance function method with two parameters in a reference type. If the type of the parameters, the return value
-        /// or the declaring instance are not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// or the declaring instance are not known at compile time the non-generic <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> methods can be used.
         /// </summary>
         /// <typeparam name="TInstance">The type of the instance that declares the method.</typeparam>
         /// <typeparam name="T1">The type of the first parameter.</typeparam>
@@ -667,11 +760,12 @@ namespace KGySoft.Reflection
         /// <param name="param1">The value of the first parameter.</param>
         /// <param name="param2">The value of the second parameter.</param>
         /// <returns>The return value of the method.</returns>
-        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters
-        /// or a method that has parameters passed by reference.</exception>
-        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
+        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="MethodAccessor"/>
+        /// represents a <see langword="ref"/>-returning method.</exception>
         [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public TResult InvokeInstanceFunction<TInstance, T1, T2, TResult>(TInstance instance, T1 param1, T2 param2) where TInstance : class
             => GenericInvoker is ReferenceTypeFunction<TInstance, T1, T2, TResult> func
@@ -680,7 +774,7 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Invokes an instance function method with three parameters in a reference type. If the type of the parameters, the return value
-        /// or the declaring instance are not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// or the declaring instance are not known at compile time the non-generic <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> methods can be used.
         /// </summary>
         /// <typeparam name="TInstance">The type of the instance that declares the method.</typeparam>
         /// <typeparam name="T1">The type of the first parameter.</typeparam>
@@ -692,11 +786,12 @@ namespace KGySoft.Reflection
         /// <param name="param2">The value of the second parameter.</param>
         /// <param name="param3">The value of the third parameter.</param>
         /// <returns>The return value of the method.</returns>
-        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters
-        /// or a method that has parameters passed by reference.</exception>
-        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
+        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="MethodAccessor"/>
+        /// represents a <see langword="ref"/>-returning method.</exception>
         [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public TResult InvokeInstanceFunction<TInstance, T1, T2, T3, TResult>(TInstance instance, T1 param1, T2 param2, T3 param3) where TInstance : class
             => GenericInvoker is ReferenceTypeFunction<TInstance, T1, T2, T3, TResult> func
@@ -705,7 +800,7 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Invokes an instance function method with four parameters in a reference type. If the type of the parameters, the return value
-        /// or the declaring instance are not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// or the declaring instance are not known at compile time the non-generic <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> methods can be used.
         /// </summary>
         /// <typeparam name="TInstance">The type of the instance that declares the method.</typeparam>
         /// <typeparam name="T1">The type of the first parameter.</typeparam>
@@ -719,11 +814,12 @@ namespace KGySoft.Reflection
         /// <param name="param3">The value of the third parameter.</param>
         /// <param name="param4">The value of the fourth parameter.</param>
         /// <returns>The return value of the method.</returns>
-        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters
-        /// or a method that has parameters passed by reference.</exception>
-        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
+        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="MethodAccessor"/>
+        /// represents a <see langword="ref"/>-returning method.</exception>
         [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public TResult InvokeInstanceFunction<TInstance, T1, T2, T3, T4, TResult>(TInstance instance, T1 param1, T2 param2, T3 param3, T4 param4) where TInstance : class
             => GenericInvoker is ReferenceTypeFunction<TInstance, T1, T2, T3, T4, TResult> func
@@ -732,13 +828,12 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Invokes a parameterless instance action method in a value type. If the type of the declaring instance
-        /// is not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// is not known at compile time the non-generic <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> methods can be used.
         /// </summary>
         /// <typeparam name="TInstance">The type of the instance that declares the method.</typeparam>
         /// <param name="instance">The instance that the method belongs to.</param>
-        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters
-        /// or a method that has parameters passed by reference.</exception>
-        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         public void InvokeInstanceAction<TInstance>(in TInstance instance) where TInstance : struct
         {
@@ -750,15 +845,14 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Invokes an instance action method with one parameter in a value type. If the type of the parameter or the declaring instance
-        /// are not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// are not known at compile time the non-generic <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> methods can be used.
         /// </summary>
         /// <typeparam name="TInstance">The type of the instance that declares the method.</typeparam>
         /// <typeparam name="T">The type of the parameter.</typeparam>
         /// <param name="instance">The instance that the method belongs to.</param>
         /// <param name="param">The value of the parameter.</param>
-        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters
-        /// or a method that has parameters passed by reference.</exception>
-        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         public void InvokeInstanceAction<TInstance, T>(in TInstance instance, T param) where TInstance : struct
         {
@@ -770,7 +864,7 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Invokes an instance action method with two parameters in a value type. If the type of the parameters or the declaring instance
-        /// are not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// are not known at compile time the non-generic <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> methods can be used.
         /// </summary>
         /// <typeparam name="TInstance">The type of the instance that declares the method.</typeparam>
         /// <typeparam name="T1">The type of the first parameter.</typeparam>
@@ -778,9 +872,8 @@ namespace KGySoft.Reflection
         /// <param name="instance">The instance that the method belongs to.</param>
         /// <param name="param1">The value of the first parameter.</param>
         /// <param name="param2">The value of the second parameter.</param>
-        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters
-        /// or a method that has parameters passed by reference.</exception>
-        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         public void InvokeInstanceAction<TInstance, T1, T2>(in TInstance instance, T1 param1, T2 param2) where TInstance : struct
         {
@@ -792,7 +885,7 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Invokes an instance action method with three parameters in a value type. If the type of the parameters or the declaring instance
-        /// are not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// are not known at compile time the non-generic <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> methods can be used.
         /// </summary>
         /// <typeparam name="TInstance">The type of the instance that declares the method.</typeparam>
         /// <typeparam name="T1">The type of the first parameter.</typeparam>
@@ -802,9 +895,8 @@ namespace KGySoft.Reflection
         /// <param name="param1">The value of the first parameter.</param>
         /// <param name="param2">The value of the second parameter.</param>
         /// <param name="param3">The value of the third parameter.</param>
-        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters
-        /// or a method that has parameters passed by reference.</exception>
-        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         public void InvokeInstanceAction<TInstance, T1, T2, T3>(in TInstance instance, T1 param1, T2 param2, T3 param3) where TInstance : struct
         {
@@ -816,7 +908,7 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Invokes an instance action method with four parameters in a value type. If the type of the parameters or the declaring instance
-        /// are not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// are not known at compile time the non-generic <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> methods can be used.
         /// </summary>
         /// <typeparam name="TInstance">The type of the instance that declares the method.</typeparam>
         /// <typeparam name="T1">The type of the first parameter.</typeparam>
@@ -828,9 +920,8 @@ namespace KGySoft.Reflection
         /// <param name="param2">The value of the second parameter.</param>
         /// <param name="param3">The value of the third parameter.</param>
         /// <param name="param4">The value of the fourth parameter.</param>
-        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters
-        /// or a method that has parameters passed by reference.</exception>
-        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         public void InvokeInstanceAction<TInstance, T1, T2, T3, T4>(in TInstance instance, T1 param1, T2 param2, T3 param3, T4 param4) where TInstance : struct
         {
@@ -842,22 +933,23 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Invokes a parameterless instance function method in a value type. If the type of the return value or the declaring instance
-        /// are not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// are not known at compile time the non-generic <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> methods can be used.
         /// </summary>
         /// <typeparam name="TInstance">The type of the instance that declares the method.</typeparam>
         /// <typeparam name="TResult">The return type of the method.</typeparam>
         /// <param name="instance">The instance that the method belongs to.</param>
         /// <returns>The return value of the method.</returns>
-        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters
-        /// or a method that has parameters passed by reference.</exception>
-        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
+        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="MethodAccessor"/>
+        /// represents a <see langword="ref"/>-returning method.</exception>
         public TResult InvokeInstanceFunction<TInstance, TResult>(in TInstance instance) where TInstance : struct
             => GenericInvoker is ValueTypeFunction<TInstance, TResult> func ? func.Invoke(instance) : ThrowInstance<TResult>();
 
         /// <summary>
         /// Invokes an instance function method with one parameter in a value type. If the type of the parameter, the return value
-        /// or the declaring instance are not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// or the declaring instance are not known at compile time the non-generic <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> methods can be used.
         /// </summary>
         /// <typeparam name="TInstance">The type of the instance that declares the method.</typeparam>
         /// <typeparam name="T">The type of the parameter.</typeparam>
@@ -865,16 +957,17 @@ namespace KGySoft.Reflection
         /// <param name="instance">The instance that the method belongs to.</param>
         /// <param name="param">The value of the parameter.</param>
         /// <returns>The return value of the method.</returns>
-        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters
-        /// or a method that has parameters passed by reference.</exception>
-        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
+        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="MethodAccessor"/>
+        /// represents a <see langword="ref"/>-returning method.</exception>
         public TResult InvokeInstanceFunction<TInstance, T, TResult>(in TInstance instance, T param) where TInstance : struct
             => GenericInvoker is ValueTypeFunction<TInstance, T, TResult> func ? func.Invoke(instance, param) : ThrowInstance<TResult>();
 
         /// <summary>
         /// Invokes an instance function method with two parameters in a value type. If the type of the parameters, the return value
-        /// or the declaring instance are not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// or the declaring instance are not known at compile time the non-generic <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> methods can be used.
         /// </summary>
         /// <typeparam name="TInstance">The type of the instance that declares the method.</typeparam>
         /// <typeparam name="T1">The type of the first parameter.</typeparam>
@@ -884,16 +977,17 @@ namespace KGySoft.Reflection
         /// <param name="param1">The value of the first parameter.</param>
         /// <param name="param2">The value of the second parameter.</param>
         /// <returns>The return value of the method.</returns>
-        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters
-        /// or a method that has parameters passed by reference.</exception>
-        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
+        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="MethodAccessor"/>
+        /// represents a <see langword="ref"/>-returning method.</exception>
         public TResult InvokeInstanceFunction<TInstance, T1, T2, TResult>(in TInstance instance, T1 param1, T2 param2) where TInstance : struct
             => GenericInvoker is ValueTypeFunction<TInstance, T1, T2, TResult> func ? func.Invoke(instance, param1, param2) : ThrowInstance<TResult>();
 
         /// <summary>
         /// Invokes an instance function method with three parameters in a value type. If the type of the parameters, the return value
-        /// or the declaring instance are not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// or the declaring instance are not known at compile time the non-generic <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> methods can be used.
         /// </summary>
         /// <typeparam name="TInstance">The type of the instance that declares the method.</typeparam>
         /// <typeparam name="T1">The type of the first parameter.</typeparam>
@@ -905,16 +999,17 @@ namespace KGySoft.Reflection
         /// <param name="param2">The value of the second parameter.</param>
         /// <param name="param3">The value of the third parameter.</param>
         /// <returns>The return value of the method.</returns>
-        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters
-        /// or a method that has parameters passed by reference.</exception>
-        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
+        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="MethodAccessor"/>
+        /// represents a <see langword="ref"/>-returning method.</exception>
         public TResult InvokeInstanceFunction<TInstance, T1, T2, T3, TResult>(in TInstance instance, T1 param1, T2 param2, T3 param3) where TInstance : struct
             => GenericInvoker is ValueTypeFunction<TInstance, T1, T2, T3, TResult> func ? func.Invoke(instance, param1, param2, param3) : ThrowInstance<TResult>();
 
         /// <summary>
         /// Invokes an instance function method with four parameters in a value type. If the type of the parameters, the return value
-        /// or the declaring instance are not known at compile time the non-generic <see cref="Invoke">Invoke</see> method can be used.
+        /// or the declaring instance are not known at compile time the non-generic <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> methods can be used.
         /// </summary>
         /// <typeparam name="TInstance">The type of the instance that declares the method.</typeparam>
         /// <typeparam name="T1">The type of the first parameter.</typeparam>
@@ -928,10 +1023,11 @@ namespace KGySoft.Reflection
         /// <param name="param3">The value of the third parameter.</param>
         /// <param name="param4">The value of the fourth parameter.</param>
         /// <returns>The return value of the method.</returns>
-        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters
-        /// or a method that has parameters passed by reference.</exception>
-        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
+        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="MethodAccessor"/>
+        /// represents a <see langword="ref"/>-returning method.</exception>
         public TResult InvokeInstanceFunction<TInstance, T1, T2, T3, T4, TResult>(in TInstance instance, T1 param1, T2 param2, T3 param3, T4 param4) where TInstance : struct
             => GenericInvoker is ValueTypeFunction<TInstance, T1, T2, T3, T4, TResult> func ? func.Invoke(instance, param1, param2, param3, param4) : ThrowInstance<TResult>();
 

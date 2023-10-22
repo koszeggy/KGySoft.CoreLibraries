@@ -1279,7 +1279,6 @@ namespace KGySoft.Collections
         /// the <see cref="Cache{TKey,TValue}"/> can be used similarly to a <see cref="Dictionary{TKey,TValue}"/>: before getting an element, its existence must be checked by <see cref="ContainsKey">ContainsKey</see>
         /// or <see cref="TryGetValue">TryGetValue</see> methods, though <see cref="Capacity"/> is still maintained based on the strategy specified in the <see cref="Behavior"/> property.</para>
         /// </remarks>
-        /// <overloads><see cref="Cache{TKey,TValue}"/> type has four different public constructors for initializing the item loader delegate, capacity and key comparer.</overloads>
         /// <seealso cref="Capacity"/>
         /// <seealso cref="EnsureCapacity"/>
         /// <seealso cref="Behavior"/>
@@ -1313,7 +1312,6 @@ namespace KGySoft.Collections
         /// or <see cref="TryGetValue">TryGetValue</see> methods, though <see cref="Capacity"/> is still maintained based on the strategy specified in the <see cref="Behavior"/> property.</para>
         /// </remarks>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="capacity"/> is less or equal to 0.</exception>
-        /// <overloads><see cref="Cache{TKey,TValue}"/> type has four different public constructors for initializing the item loader delegate, capacity and key comparer.</overloads>
         /// <seealso cref="Capacity"/>
         /// <seealso cref="EnsureCapacity"/>
         /// <seealso cref="Behavior"/>

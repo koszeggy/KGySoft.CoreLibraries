@@ -42,22 +42,21 @@ namespace KGySoft.Reflection
     /// </summary>
     /// <remarks>
     /// <para>You can obtain a <see cref="PropertyAccessor"/> instance by the static <see cref="GetAccessor">GetAccessor</see> method.</para>
-    /// <para>The <see cref="Get">Get</see> and <see cref="Set">Set</see> methods can be used to get or set the property, respectively.
+    /// <para>The <see cref="Get(object, object[])"/> and <see cref="Set(object, object, object[])"/> methods can be used to get or set the property in general cases.
     /// These methods can be used for any properties, including indexed ones.</para>
-    /// <para>If you know the property type at compile time, then you can use the generic <see cref="SetStaticValue{TProperty}">SetStaticValue</see>/<see cref="GetStaticValue{TProperty}">GetStaticValue</see>
+    /// <para>The other non-generic <see cref="O:KGySoft.Reflection.PropertyAccessor.Get">Get</see> and <see cref="O:KGySoft.Reflection.PropertyAccessor.Set">Set</see>
+    /// overloads can be used for simple properties or for indexers with one index parameter.</para>
+    /// <para>If you know the property type at compile time, then you can use the generic <see cref="GetStaticValue{TProperty}">GetStaticValue</see>/<see cref="SetStaticValue{TProperty}">SetStaticValue</see>
     /// methods for static properties. If you know also the instance type (and the index parameter for indexers), then
     /// the <see cref="O:KGySoft.Reflection.PropertyAccessor.GetInstanceValue">GetInstanceValue</see>/<see cref="O:KGySoft.Reflection.PropertyAccessor.SetInstanceValue">SetInstanceValue</see>
-    /// methods can be used for instance properties for better performance. These generic methods can be used for properties with no more than one index parameter.</para>
-    /// <para>The first call of these methods are slow because the delegates are generated on the first access, but further calls are much faster.</para>
+    /// methods can be used to access instance properties with better performance. These generic methods can be used for properties with no more than one index parameter.</para>
+    /// <para>The first call of these methods are slower because the delegates are generated on the first access, but further calls are much faster.</para>
     /// <para>The already obtained accessors are cached so subsequent <see cref="GetAccessor">GetAccessor</see> calls return the already created accessors unless
     /// they were dropped out from the cache, which can store about 8000 elements.</para>
     /// <note>If you want to access a property by name rather than by a <see cref="PropertyInfo"/>, then you can use the <see cref="O:KGySoft.Reflection.Reflector.SetProperty">SetProperty</see>
     /// and <see cref="O:KGySoft.Reflection.Reflector.SetProperty">GetProperty</see> methods in the <see cref="Reflector"/> class, which have some overloads with a <c>propertyName</c> parameter.</note>
-    /// <note type="warning">The .NET Standard 2.0 version of the <see cref="Set">Set</see> method throws a <see cref="PlatformNotSupportedException"/>
-    /// if the property is an instance member of a value type (<see langword="struct"/>).
-    /// <br/>If you reference the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly, then use the
-    /// <see cref="O:KGySoft.Reflection.PropertyAccessor.SetInstanceValue">SetInstanceValue</see> overloads (if you know the instance type and the property value at compile time),
-    /// or <see cref="O:KGySoft.Reflection.Reflector.SetProperty">Reflector.SetProperty</see> methods to set value type instance properties.</note>
+    /// <note type="caution">The getter/setter methods of this class in the .NET Standard 2.0 version throw a <see cref="PlatformNotSupportedException"/>
+    /// for <see langword="ref"/> properties. You need to reference the .NET Standard 2.1 build or any .NET Framework or .NET Core/.NET builds to support <see langword="ref"/> properties.</note>
     /// </remarks>
     /// <example>
     /// <code lang="C#"><![CDATA[
@@ -147,9 +146,9 @@ namespace KGySoft.Reflection
         public bool CanRead => Property.CanRead;
 
         /// <summary>
-        /// Gets whether the property can be written (has set accessor).
+        /// Gets whether the property can be written (has set accessor or is a <see langword="ref"/> property).
         /// </summary>
-        public bool CanWrite => Property.CanWrite;
+        public bool CanWrite => Property.CanWrite || Property.PropertyType.IsByRef;
 
         #endregion
 
@@ -180,7 +179,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="property">The property for which the accessor is to be created.</param>
         private protected PropertyAccessor(PropertyInfo property) :
-            // ReSharper disable once ConstantConditionalAccessQualifier - null check is in base so it is needed here
+            // ReSharper disable once ConditionalAccessQualifierIsNonNullableAccordingToAPIContract - null check is in base so it is needed here
             base(property, property?.GetIndexParameters().Select(p => p.ParameterType).ToArray())
         {
         }
@@ -239,25 +238,33 @@ namespace KGySoft.Reflection
         /// <remarks>
         /// <para>Setting the property for the first time is slower than the <see cref="PropertyInfo.SetValue(object,object,object[])">System.Reflection.PropertyInfo.SetValue</see>
         /// method but further calls are much faster.</para>
+        /// <para>The method can be use also for <see langword="ref"/> properties.</para>
         /// <note type="tip">If the property has no more than one index parameters and you know the type of the property at compile time
         /// (and also the declaring type for instance properties), then you can use the generic <see cref="SetStaticValue{TProperty}">SetStaticValue</see>
         /// or <see cref="O:KGySoft.Reflection.PropertyAccessor.SetInstanceValue">SetInstanceValue</see> methods for better performance.</note>
-        /// <note type="caller">Calling the .NET Standard 2.0 version of this method throws a <see cref="PlatformNotSupportedException"/>
-        /// if the property is an instance member of a value type (<see langword="struct"/>).
-        /// <br/>If you reference the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly and cannot use the generic setter methods,
-        /// then use the <see cref="O:KGySoft.Reflection.Reflector.SetProperty">Reflector.SetProperty</see> methods to set value type instance properties.</note>
+        /// <note type="caller">If the property is an instance property of a value type, then the .NET Standard 2.0 version of this method defaults to use regular reflection
+        /// to preserve mutations. To experience the best performance try to target .NET Standard 2.1 or any .NET Framework or .NET Core/.NET platforms instead.</note>
         /// </remarks>
         /// <exception cref="ArgumentNullException">This <see cref="PropertyAccessor"/> represents an instance property and <paramref name="instance"/> is <see langword="null"/>
         /// <br/>-or-
-        /// <br/>This <see cref="PropertyAccessor"/> represents a value type property and <paramref name="value"/> is <see langword="null"/>
+        /// <br/>This <see cref="PropertyAccessor"/> represents a value type property and <paramref name="value"/> is <see langword="null"/>.
         /// <br/>-or-
         /// <br/>This <see cref="PropertyAccessor"/> represents an indexed property and <paramref name="indexParameters"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">The type of <paramref name="instance"/>, <paramref name="value"/> or one of the <paramref name="indexParameters"/> is invalid.
         /// <br/>-or-
         /// <br/><paramref name="indexParameters"/> has too few elements.</exception>
-        /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a read-only property.</exception>
+        /// <exception cref="InvalidOperationException">The <see cref="PropertyAccessor"/> represents a property of an open generic type.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a read-only property.
+        /// <br/>-or-
+        /// <br/>On .NET Framework the code is executed in a partially trusted domain with insufficient permissions.</exception>
         /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="PropertyAccessor"/>
-        /// represents a read-only property or its declaring type is a value type.</exception>
+        /// represents a <see langword="ref"/> property.</exception>
+        /// <overloads>The <see cref="Set(object, object, object[])"/> overload can be used for any number of index parameters.
+        /// The other non-generic overloads can be used for simple properties or indexers with one parameter.
+        /// <note type="tip">If you know the property type at compile time, then you can use the generic <see cref="SetStaticValue{TProperty}">SetStaticValue</see>
+        /// overloads for static properties. If you know also the instance type (and the index parameter for indexers), then
+        /// the <see cref="O:KGySoft.Reflection.PropertyAccessor.SetInstanceValue">SetInstanceValue</see>
+        /// methods can be used to access instance properties with better performance.</note></overloads>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("Design", "CA1031:Do not catch general exception types",
             Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
@@ -269,11 +276,30 @@ namespace KGySoft.Reflection
             }
             catch (Exception e)
             {
-                // Post-validation if there was any exception
+                // Post-validation if there was any exception. We do this for better performance on the happy path.
                 PostValidate(instance, value, indexParameters, e, true, true);
             }
         }
 
+        /// <summary>
+        /// Sets the property with no index parameters.
+        /// For static properties the <paramref name="instance"/> parameter is omitted (can be <see langword="null"/>).
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="Set(object,object,object[])"/> overload for details.
+        /// </summary>
+        /// <param name="instance">The instance that the property belongs to. Can be <see langword="null"/> for static properties.</param>
+        /// <param name="value">The value to set.</param>
+        /// <exception cref="ArgumentNullException">This <see cref="PropertyAccessor"/> represents an instance property and <paramref name="instance"/> is <see langword="null"/>
+        /// <br/>-or-
+        /// <br/>This <see cref="PropertyAccessor"/> represents a value type property and <paramref name="value"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException">The type of <paramref name="instance"/> or <paramref name="value"/> is invalid.
+        /// <br/>-or-
+        /// <br/>The property expects index parameters.</exception>
+        /// <exception cref="InvalidOperationException">The <see cref="PropertyAccessor"/> represents a property of an open generic type.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a read-only property.
+        /// <br/>-or-
+        /// <br/>On .NET Framework the code is executed in a partially trusted domain with insufficient permissions.</exception>
+        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="PropertyAccessor"/>
+        /// represents a <see langword="ref"/> property.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("Design", "CA1031:Do not catch general exception types",
             Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
@@ -285,11 +311,31 @@ namespace KGySoft.Reflection
             }
             catch (Exception e)
             {
-                // Post-validation if there was any exception
+                // Post-validation if there was any exception. We do this for better performance on the happy path.
                 PostValidate(instance, value, Reflector.EmptyObjects, e, true, false);
             }
         }
 
+        /// <summary>
+        /// Sets the property with one index parameter.
+        /// For static properties the <paramref name="instance"/> parameter is omitted (can be <see langword="null"/>).
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="Set(object,object,object[])"/> overload for details.
+        /// </summary>
+        /// <param name="instance">The instance that the property belongs to. Can be <see langword="null"/> for static properties.</param>
+        /// <param name="value">The value to set.</param>
+        /// <param name="index">The value of the index.</param>
+        /// <exception cref="ArgumentNullException">This <see cref="PropertyAccessor"/> represents an instance property and <paramref name="instance"/> is <see langword="null"/>
+        /// <br/>-or-
+        /// <br/>This <see cref="PropertyAccessor"/> represents a value type property and <paramref name="value"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException">The type of <paramref name="instance"/>, <paramref name="value"/> or <paramref name="index"/> is invalid.
+        /// <br/>-or-
+        /// <br/>The property cannot be accessed with one index parameter.</exception>
+        /// <exception cref="InvalidOperationException">The <see cref="PropertyAccessor"/> represents a property of an open generic type.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a read-only property.
+        /// <br/>-or-
+        /// <br/>On .NET Framework the code is executed in a partially trusted domain with insufficient permissions.</exception>
+        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="PropertyAccessor"/>
+        /// represents a <see langword="ref"/> property.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("Design", "CA1031:Do not catch general exception types",
             Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
@@ -320,10 +366,8 @@ namespace KGySoft.Reflection
         /// <note type="tip">If the property has no more than one index parameters and you know the type of the property at compile time
         /// (and also the declaring type for instance properties), then you can use the generic <see cref="GetStaticValue{TProperty}">GetStaticValue</see>
         /// or <see cref="O:KGySoft.Reflection.PropertyAccessor.GetInstanceValue">GetInstanceValue</see> methods for better performance.</note>
-        /// <note type="caller">When using the .NET Standard 2.0 version of this method, and the getter of an instance property of a value type (<see langword="struct"/>) mutates the instance,
-        /// then the changes will not be applied to the <paramref name="instance"/> parameter.
-        /// <br/>If you reference the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly, then use the
-        /// <see cref="O:KGySoft.Reflection.Reflector.GetProperty">Reflector.GetProperty</see> methods to preserve changes the of mutated value type instances.</note>
+        /// <note type="caller">If the property is a a non-<see langword="readonly"/> instance property of a value type, then the .NET Standard 2.0 version of this method defaults to use regular reflection
+        /// to preserve possible mutations. To experience the best performance try to target .NET Standard 2.1 or any .NET Framework or .NET Core/.NET platforms instead.</note>
         /// </remarks>
         /// <exception cref="ArgumentNullException">This <see cref="PropertyAccessor"/> represents an instance property and <paramref name="instance"/> is <see langword="null"/>
         /// <br/>-or-
@@ -331,7 +375,18 @@ namespace KGySoft.Reflection
         /// <exception cref="ArgumentException">The type of <paramref name="instance"/> or one of the <paramref name="indexParameters"/> is invalid.
         /// <br/>-or-
         /// <br/><paramref name="indexParameters"/> has too few elements.</exception>
-        /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a write-only property.</exception>
+        /// <exception cref="InvalidOperationException">The <see cref="PropertyAccessor"/> represents a property of an open generic type.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a write-only property.
+        /// <br/>-or-
+        /// <br/>On .NET Framework the code is executed in a partially trusted domain with insufficient permissions.</exception>
+        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="PropertyAccessor"/>
+        /// represents a <see langword="ref"/> property.</exception>
+        /// <overloads>The <see cref="Get(object, object[])"/> overload can be used for any number of index parameters.
+        /// The other non-generic overloads can be used for simple properties or indexers with one parameter.
+        /// <note type="tip">If you know the property type at compile time, then you can use the generic <see cref="GetStaticValue{TProperty}">GetStaticValue</see>
+        /// overloads for static properties. If you know also the instance type (and the index parameter for indexers), then
+        /// the <see cref="O:KGySoft.Reflection.PropertyAccessor.GetInstanceValue">GetInstanceValue</see>
+        /// methods can be used to access instance properties with better performance.</note></overloads>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("Design", "CA1031:Do not catch general exception types",
             Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
@@ -343,12 +398,29 @@ namespace KGySoft.Reflection
             }
             catch (Exception e)
             {
-                // Post-validation if there was any exception
+                // Post-validation if there was any exception. We do this for better performance on the happy path.
                 PostValidate(instance, null, indexParameters, e, false, true);
                 return null; // actually never reached, just to satisfy the compiler
             }
         }
 
+        /// <summary>
+        /// Gets the value of the property with no index parameters.
+        /// For static properties the <paramref name="instance"/> parameter is omitted (can be <see langword="null"/>).
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="Get(object,object[])"/> overload for details.
+        /// </summary>
+        /// <param name="instance">The instance that the property belongs to. Can be <see langword="null"/> for static properties.</param>
+        /// <returns>The value of the property.</returns>
+        /// <exception cref="ArgumentNullException">This <see cref="PropertyAccessor"/> represents an instance property and <paramref name="instance"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException">The type of <paramref name="instance"/> is invalid.
+        /// <br/>-or-
+        /// <br/>The property expects index parameters.</exception>
+        /// <exception cref="InvalidOperationException">The <see cref="PropertyAccessor"/> represents a property of an open generic type.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a write-only property.
+        /// <br/>-or-
+        /// <br/>On .NET Framework the code is executed in a partially trusted domain with insufficient permissions.</exception>
+        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="PropertyAccessor"/>
+        /// represents a <see langword="ref"/> property.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("Design", "CA1031:Do not catch general exception types",
             Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
@@ -360,12 +432,30 @@ namespace KGySoft.Reflection
             }
             catch (Exception e)
             {
-                // Post-validation if there was any exception
+                // Post-validation if there was any exception. We do this for better performance on the happy path.
                 PostValidate(instance, null, Reflector.EmptyObjects, e, false, false);
                 return null; // actually never reached, just to satisfy the compiler
             }
         }
 
+        /// <summary>
+        /// Gets the value of the property with one index parameter.
+        /// For static properties the <paramref name="instance"/> parameter is omitted (can be <see langword="null"/>).
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="Get(object,object[])"/> overload for details.
+        /// </summary>
+        /// <param name="instance">The instance that the property belongs to. Can be <see langword="null"/> for static properties.</param>
+        /// <param name="index">The value of the index.</param>
+        /// <returns>The value of the property.</returns>
+        /// <exception cref="ArgumentNullException">This <see cref="PropertyAccessor"/> represents an instance property and <paramref name="instance"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException">The type of <paramref name="instance"/> or <paramref name="index"/> is invalid.
+        /// <br/>-or-
+        /// <br/>The property cannot be accessed with one index parameter.</exception>
+        /// <exception cref="InvalidOperationException">The <see cref="PropertyAccessor"/> represents a property of an open generic type.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a write-only property.
+        /// <br/>-or-
+        /// <br/>On .NET Framework the code is executed in a partially trusted domain with insufficient permissions.</exception>
+        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="PropertyAccessor"/>
+        /// represents a <see langword="ref"/> property.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("Design", "CA1031:Do not catch general exception types",
             Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
@@ -377,7 +467,7 @@ namespace KGySoft.Reflection
             }
             catch (Exception e)
             {
-                // Post-validation if there was any exception
+                // Post-validation if there was any exception. We do this for better performance on the happy path.
                 PostValidate(instance, null, new[] { index }, e, false, false);
                 return null; // actually never reached, just to satisfy the compiler
             }
@@ -385,14 +475,16 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Sets the strongly typed value of a static property. If the type of the property is not known at compile time
-        /// the non-generic <see cref="Set">Set</see> method can be used.
+        /// the non-generic <see cref="O:KGySoft.Reflection.PropertyAccessor.Set">Set</see> methods can be used.
         /// </summary>
         /// <typeparam name="TProperty">The type of the property.</typeparam>
         /// <param name="value">The value to set.</param>
-        /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents an instance property.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents an instance property or a property of an open generic type.</exception>
         /// <exception cref="ArgumentException"><typeparamref name="TProperty"/> is invalid.</exception>
         /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a read-only property
         /// or an indexed property with more than one parameters.</exception>
+        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="PropertyAccessor"/>
+        /// represents a <see langword="ref"/> property.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public void SetStaticValue<TProperty>(TProperty value)
         {
@@ -404,30 +496,34 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Gets the strongly typed value of a static property. If the type of the property is not known at compile time
-        /// the non-generic <see cref="Get">Get</see> method can be used.
+        /// the non-generic <see cref="O:KGySoft.Reflection.PropertyAccessor.Set">Set</see> methods can be used.
         /// </summary>
         /// <typeparam name="TProperty">The type of the property.</typeparam>
         /// <returns>The value of the property.</returns>
-        /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents an instance property.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents an instance property or a property of an open generic type.</exception>
         /// <exception cref="ArgumentException"><typeparamref name="TProperty"/> is invalid.</exception>
         /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a write-only property
         /// or an indexed property with more than one parameters.</exception>
+        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="PropertyAccessor"/>
+        /// represents a <see langword="ref"/> property.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public TProperty GetStaticValue<TProperty>() => GenericGetter is Func<TProperty> func ? func.Invoke() : ThrowStatic<TProperty>();
 
         /// <summary>
-        /// Sets the strongly typed value of a non-indexed instance property in a reference type.
-        /// If the type of the property or the declaring instance is not known at compile time the non-generic <see cref="Set">Set</see> method can be used.
+        /// Sets the strongly typed value of a non-indexed instance property in a reference type. If the type of the property or the declaring instance is not
+        /// known at compile time the non-generic <see cref="O:KGySoft.Reflection.PropertyAccessor.Set">Set</see> methods can be used.
         /// </summary>
         /// <typeparam name="TInstance">The type of the instance that declares the property.</typeparam>
         /// <typeparam name="TProperty">The type of the property.</typeparam>
         /// <param name="instance">The instance that the property belongs to.</param>
         /// <param name="value">The value to set.</param>
-        /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents a static property.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents a static property or a property of an open generic type.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a read-only property
         /// or an indexed property with more than one parameters.</exception>
+        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="PropertyAccessor"/>
+        /// represents a <see langword="ref"/> property.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public void SetInstanceValue<TInstance, TProperty>(TInstance instance, TProperty value) where TInstance : class
@@ -440,17 +536,19 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Gets the strongly typed value of a non-indexed instance property in a reference type.
-        /// If the type of the property or the declaring instance is not known at compile time the non-generic <see cref="Get">Get</see> method can be used.
+        /// If the type of the property or the declaring instance is not known at compile time the non-generic <see cref="O:KGySoft.Reflection.PropertyAccessor.Set">Set</see> methods can be used.
         /// </summary>
         /// <typeparam name="TInstance">The type of the instance that declares the property.</typeparam>
         /// <typeparam name="TProperty">The type of the property.</typeparam>
         /// <param name="instance">The instance that the property belongs to.</param>
         /// <returns>The value of the property.</returns>
-        /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents a static property.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents a static property or a property of an open generic type.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a write-only property
         /// or an indexed property with more than one parameters.</exception>
+        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="PropertyAccessor"/>
+        /// represents a <see langword="ref"/> property.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public TProperty GetInstanceValue<TInstance, TProperty>(TInstance instance) where TInstance : class
@@ -459,17 +557,19 @@ namespace KGySoft.Reflection
                 : ThrowInstance<TProperty>();
 
         /// <summary>
-        /// Sets the strongly typed value of a non-indexed instance property in a value type.
-        /// If the type of the property or the declaring instance is not known at compile time the non-generic <see cref="Set">Set</see> method can be used.
+        /// Sets the strongly typed value of a non-indexed instance property in a value type. If the type of the property or the declaring instance is not
+        /// known at compile time the non-generic <see cref="O:KGySoft.Reflection.PropertyAccessor.Set">Set</see> methods can be used.
         /// </summary>
         /// <typeparam name="TInstance">The type of the instance that declares the property.</typeparam>
         /// <typeparam name="TProperty">The type of the property.</typeparam>
         /// <param name="instance">The instance that the property belongs to.</param>
         /// <param name="value">The value to set.</param>
-        /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents a static property.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents a static property or a property of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a read-only property
         /// or an indexed property with more than one parameters.</exception>
+        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="PropertyAccessor"/>
+        /// represents a <see langword="ref"/> property.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public void SetInstanceValue<TInstance, TProperty>(in TInstance instance, TProperty value) where TInstance : struct
         {
@@ -481,24 +581,26 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Gets the strongly typed value of a non-indexed instance property in a value type.
-        /// If the type of the property or the declaring instance is not known at compile time the non-generic <see cref="Get">Get</see> method can be used.
+        /// If the type of the property or the declaring instance is not known at compile time the non-generic <see cref="O:KGySoft.Reflection.PropertyAccessor.Set">Set</see> methods can be used.
         /// </summary>
         /// <typeparam name="TInstance">The type of the instance that declares the property.</typeparam>
         /// <typeparam name="TProperty">The type of the property.</typeparam>
         /// <param name="instance">The instance that the property belongs to.</param>
         /// <returns>The value of the property.</returns>
-        /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents a static property.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents a static property or a property of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a write-only property
         /// or an indexed property with more than one parameters.</exception>
+        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="PropertyAccessor"/>
+        /// represents a <see langword="ref"/> property.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public TProperty GetInstanceValue<TInstance, TProperty>(in TInstance instance) where TInstance : struct
             => GenericGetter is ValueTypeFunction<TInstance, TProperty> func ? func.Invoke(instance) : ThrowInstance<TProperty>();
 
         /// <summary>
-        /// Sets the strongly typed value of a single-parameter indexed property in a reference type.
-        /// If the type of the property, the declaring instance or the index parameter is not known at compile time,
-        /// or the indexer has more than one parameters, then the non-generic <see cref="Set">Set</see> method can be used.
+        /// Sets the strongly typed value of a single-parameter indexed property in a reference type. If the type of the property, the declaring instance or the index parameter is not
+        /// known at compile time, or the indexer has more than one parameters, then the
+        /// non-generic <see cref="O:KGySoft.Reflection.PropertyAccessor.Set">Set</see> methods can be used.
         /// </summary>
         /// <typeparam name="TInstance">The type of the instance that declares the property.</typeparam>
         /// <typeparam name="TProperty">The type of the property.</typeparam>
@@ -506,11 +608,13 @@ namespace KGySoft.Reflection
         /// <param name="instance">The instance that the property belongs to.</param>
         /// <param name="value">The value to set.</param>
         /// <param name="index">The value of the index parameter.</param>
-        /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents a static property.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents a static property or a property of an open generic type.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a read-only property
         /// or an indexed property with more than one parameters.</exception>
+        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="PropertyAccessor"/>
+        /// represents a <see langword="ref"/> property.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public void SetInstanceValue<TInstance, TProperty, TIndex>(TInstance instance, TProperty value, TIndex index) where TInstance : class
@@ -524,7 +628,7 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Gets the strongly typed value of a single-parameter indexed property in a reference type.
         /// If the type of the property, the declaring instance or the index parameter is not known at compile time,
-        /// or the indexer has more than one parameters, then the non-generic <see cref="Get">Get</see> method can be used.
+        /// or the indexer has more than one parameters, then the non-generic <see cref="O:KGySoft.Reflection.PropertyAccessor.Set">Set</see> methods can be used.
         /// </summary>
         /// <typeparam name="TInstance">The type of the instance that declares the property.</typeparam>
         /// <typeparam name="TProperty">The type of the property.</typeparam>
@@ -532,11 +636,13 @@ namespace KGySoft.Reflection
         /// <param name="instance">The instance that the property belongs to.</param>
         /// <param name="index">The value of the index parameter.</param>
         /// <returns>The value of the property.</returns>
-        /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents a static property.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents a static property or a property of an open generic type.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a write-only property
         /// or an indexed property with more than one parameters.</exception>
+        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="PropertyAccessor"/>
+        /// represents a <see langword="ref"/> property.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public TProperty GetInstanceValue<TInstance, TProperty, TIndex>(TInstance instance, TIndex index) where TInstance : class
@@ -545,9 +651,9 @@ namespace KGySoft.Reflection
                 : ThrowInstance<TProperty>();
 
         /// <summary>
-        /// Sets the strongly typed value of a single-parameter indexed property in a value type.
-        /// If the type of the property, the declaring instance or the index parameter is not known at compile time,
-        /// or the indexer has more than one parameters, then the non-generic <see cref="Set">Set</see> method can be used.
+        /// Sets the strongly typed value of a single-parameter indexed property in a value type. If the type of the property,
+        /// the declaring instance or the index parameter is not known at compile time, or the indexer has more than one parameters, then the
+        /// non-generic <see cref="O:KGySoft.Reflection.PropertyAccessor.Set">Set</see> methods can be used.
         /// </summary>
         /// <typeparam name="TInstance">The type of the instance that declares the property.</typeparam>
         /// <typeparam name="TProperty">The type of the property.</typeparam>
@@ -555,10 +661,12 @@ namespace KGySoft.Reflection
         /// <param name="instance">The instance that the property belongs to.</param>
         /// <param name="value">The value to set.</param>
         /// <param name="index">The value of the index parameter.</param>
-        /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents a static property.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents a static property or a property of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a read-only property
         /// or an indexed property with more than one parameters.</exception>
+        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="PropertyAccessor"/>
+        /// represents a <see langword="ref"/> property.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public void SetInstanceValue<TInstance, TProperty, TIndex>(in TInstance instance, TProperty value, TIndex index) where TInstance : struct
         {
@@ -571,7 +679,7 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Gets the strongly typed value of a single-parameter indexed property in a value type.
         /// If the type of the property, the declaring instance or the index parameter is not known at compile time,
-        /// or the indexer has more than one parameters, then the non-generic <see cref="Get">Get</see> method can be used.
+        /// or the indexer has more than one parameters, then the non-generic <see cref="O:KGySoft.Reflection.PropertyAccessor.Set">Set</see> methods can be used.
         /// </summary>
         /// <typeparam name="TInstance">The type of the instance that declares the property.</typeparam>
         /// <typeparam name="TProperty">The type of the property.</typeparam>
@@ -579,10 +687,12 @@ namespace KGySoft.Reflection
         /// <param name="instance">The instance that the property belongs to.</param>
         /// <param name="index">The value of the index parameter.</param>
         /// <returns>The value of the property.</returns>
-        /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents a static property.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents a static property or a property of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a write-only property
         /// or an indexed property with more than one parameters.</exception>
+        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="PropertyAccessor"/>
+        /// represents a <see langword="ref"/> property.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public TProperty GetInstanceValue<TInstance, TProperty, TIndex>(in TInstance instance, TIndex index) where TInstance : struct
             => GenericGetter is ValueTypeFunction<TInstance, TIndex, TProperty> func ? func.Invoke(instance, index) : ThrowInstance<TProperty>();

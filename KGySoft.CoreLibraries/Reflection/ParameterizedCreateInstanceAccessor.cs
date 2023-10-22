@@ -95,6 +95,8 @@ namespace KGySoft.Reflection
                 Throw.InvalidOperationException(Res.ReflectionInstanceCtorExpected);
             if (ctor.DeclaringType is { IsAbstract: true } or { ContainsGenericParameters: true })
                 Throw.InvalidOperationException(Res.ReflectionCannotCreateInstanceOfType(ctor.DeclaringType!));
+            if (ParameterTypes.Length > 4)
+                Throw.NotSupportedException(); // will be handled in PostValidate
 
             Type delegateType = ParameterTypes.Length switch
             {

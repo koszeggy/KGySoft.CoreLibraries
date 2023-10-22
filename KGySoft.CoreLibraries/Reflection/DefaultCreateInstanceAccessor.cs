@@ -66,7 +66,7 @@ namespace KGySoft.Reflection
             if (type.IsAbstract || type.ContainsGenericParameters)
                 Throw.InvalidOperationException(Res.ReflectionCannotCreateInstanceOfType(type));
             if (!type.IsValueType && type.GetDefaultConstructor() == null)
-                Throw.InvalidOperationException(Res.ReflectionNoDefaultCtor(type));
+                Throw.InvalidOperationException(Res.ReflectionNoDefaultCtor(type)); // will be actually replaced in PostValidate
 
             NewExpression construct = Expression.New(type);
             var lambda = Expression.Lambda<Func<object>>(

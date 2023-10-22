@@ -17,11 +17,11 @@
 ==================================
 ! StringExtensions and SpanExtensions classes:
   ! Parse methods: When parsing a Type it is no longer allowed to load assemblies during the operation
-    if the value to parse contains assembly qualified names of unloaded assemblies. You still can use the
+    if the value to parse contains assembly qualified names of non-loaded assemblies. You still can use the
     Reflector.ResolveType method with the appropriate options to allow loading assemblies.
 ! TypeExtensions class:
   ! RegisterTypeConverter method:
-    + When this method was called repeatedly for the same type the 2nd and further calls had no effect. From now on
+    ! When this method was called repeatedly for the same type the 2nd and further calls had no effect. From now on
       the latest registration will be used and possible temporary registrations can be removed.
     - If this method was called after a TypeDescriptor.GetConverter call for the same type, then the further
       TypeDescriptor.GetConverter calls continued to return the original converter.
@@ -75,8 +75,29 @@
   + New constructor where the expected root type can be specified for the safe deserialization.
   + New Type property.
 
-* KGySoft.Reflection namespace:
+! KGySoft.Reflection namespace:
 ===============================
+! PropertyAccessor class:
+  ! CanWrite property: starting with this version this property returns true for ref properties indicating that Set
+    methods work for them, even though they are technically read-only properties.
+  + Original non-generic Set method:
+    + Supporting ref properties (even though they are technically read-only properties)
+    + The .NET Standard 2.0 build did not support setting instance fields in value types. Now this case uses regular
+      reflection as a fallback though with a negative impact on the performance.
+  + Original non-generic Get method: Supporting ref properties
+  + Generic GetStaticValue/GetInstanceValue methods: Supporting ref properties
+  + Generic SetStaticValue/SetInstanceValue methods: Supporting ref properties
+  + New non-generic Get/Set overloads specialized for up to 1 index parameter for better performance.
++ MethodAccessor class:
+  + New non-generic Invoke overloads specialized for up to 4 parameters for better performance.
+  + Invoke methods: Supporting ref return values
+  + Generic InvokeStaticAction/InvokeStaticFunction/InvokeInstanceAction/InvokeStaticAction methods: Supporting also
+    ref return values and parameters passed by reference, though only as input parameters.
+  + Invoke(object, object[]) overload: The .NET Standard 2.0 build did not support assigning back ref/out parameters
+    and preserving value type mutations. Now these cases use regular reflection as a fallback though with a negative
+    impact on the performance.
+  + GetAccessor method: Better support of generating invoker methods in .NET Framework in partially trusted domains
+    that can avoid the previously expected VerificationException (depending on the domain configuration).
 + CreateInstanceAccessor class:
   + New non-generic Invoke overloads specialized for up to 4 parameters for better performance.
   + Generic InvokeStaticAction/InvokeStaticFunction/InvokeInstanceAction/InvokeStaticAction methods: Supporting also
@@ -87,25 +108,6 @@
   + Set method: The .NET Standard 2.0 build did not support setting instance fields in value types and setting
     read-only fields. Now these cases use regular reflection as a fallback though with a negative impact on the
     performance.
-+ PropertyAccessor class:
-  + New non-generic Get/Set overloads for up to 1 index parameter.
-  + Get method: Supporting ref properties
-  + Set method:
-    + Supporting ref properties (even though they are technically read-only properties)
-    + The .NET Standard 2.0 build did not support setting instance fields in value types. Now this case uses regular
-      reflection as a fallback though with a negative impact on the performance.
-  + GetStaticValue/GetInstanceValue methods: Supporting ref properties
-  + SetStaticValue/SetInstanceValue methods: Supporting ref properties
-+ MethodAccessor class:
-  + New non-generic Invoke overloads for up to 4 parameters for better performance.
-  + Invoke methods: Supporting ref return values
-  + Generic InvokeStaticAction/InvokeStaticFunction/InvokeInstanceAction/InvokeStaticAction methods: Supporting also
-    ref return values and parameters passed by reference, though only as input parameters.
-  + Invoke(object, object[]) overload: The .NET Standard 2.0 build did not support assigning back ref/out parameters
-    and preserving value type mutations. Now these cases use regular reflection as a fallback though with a negative
-    impact on the performance.
-  + GetAccessor method: Better support of generating invoker methods in .NET Framework in partially trusted domains
-    that can avoid the previously expected VerificationException (depending on the domain configuration).
 - MemberAccessor class:
   - Fixing a possible Invalid owner error when generating an accessor for an interface member in some special cases.
 + Reflector class:
@@ -218,7 +220,7 @@
     + StringKeyedDictionary<TKey, TValue>
     + ConcurrentDictionary<TKey, TValue> (.NET Framework 4.0 and above)
     + HashSet<T>
-    + SortedSet<T>
+    + SortedSet<T> (.NET Framework 4.0 and above)
     + ThreadSafeHashSet<T>
     + Hashtable
     + SortedList

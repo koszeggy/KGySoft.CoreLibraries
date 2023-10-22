@@ -2091,7 +2091,7 @@ namespace KGySoft.CoreLibraries
             return initializerArray;
         }
 
-#if NETFRAMEWORK && !NET472_OR_GREATER
+#if NETFRAMEWORK && !NET471_OR_GREATER
         internal static IEnumerable<T> Append<T>(this IEnumerable<T> source, T item)
 #else
         // just to prevent MissingMethodException if the assembly for an older target is forcibly used for newer targets

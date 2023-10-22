@@ -41,20 +41,22 @@ namespace KGySoft.Reflection
     /// <para>You can obtain a <see cref="CreateInstanceAccessor"/> instance by the static <see cref="O:KGySoft.Reflection.CreateInstanceAccessor.GetAccessor">GetAccessor</see> methods.
     /// There are two overloads of them: <see cref="GetAccessor(Type)"/> can be used for types with parameterless constructors and for creating value types without a constructor,
     /// and the <see cref="GetAccessor(ConstructorInfo)"/> overload is for creating an instance by a specified constructor (with or without parameters).</para>
-    /// <para>The <see cref="CreateInstance">CreateInstance</see> method can be used to create an actual instance of an object. It can be used even for constructors with parameters passed by reference.
-    /// To obtain the result of possible <see langword="ref"/>/<see langword="out"/> parameters, pass a preallocated array to the <see cref="CreateInstance">CreateInstance</see> method.
+    /// <para>The <see cref="CreateInstance(object[])"/> method can be used to create an instance of an object in general cases.
+    /// It can be used even for constructors with parameters passed by reference. To obtain the result of possible <see langword="ref"/>/<see langword="out"/>
+    /// parameters, pass a preallocated array to the <see cref="CreateInstance(object[])"/> method.
     /// The parameters passed by reference will be assigned back to the corresponding array elements.</para>
-    /// <para>If you know the created instance type and the parameter types at compile time, then you can use the
-    /// generic <see cref="O:KGySoft.Reflection.CreateInstanceAccessor.CreateInstance">CreateInstance</see> methods for better performance. These strongly typed methods can be used as
-    /// long as the constructors to invoke have no more than four parameters and none of the parameters are passed by reference.</para>
-    /// <para>The first call of these methods is slow because the delegate is generated on the first access, but further calls are much faster.</para>
+    /// <para>The other non-generic <see cref="O:KGySoft.Reflection.CreateInstanceAccessor.CreateInstance">CreateInstance</see> overloads can be used
+    /// for constructors with no more than four parameters. They provide a better performance than the general <see cref="CreateInstance(object[])"/> method
+    /// but the result of parameters passed reference will not be assigned back.</para>
+    /// <para>If you know the type of the created instance and the parameter types at compile time, then you can use the
+    /// generic <see cref="O:KGySoft.Reflection.CreateInstanceAccessor.CreateInstance">CreateInstance</see> methods for even better performance.
+    /// These strongly typed methods can be used as long as the constructors to invoke have no more than four parameters. Parameters passed by reference
+    /// are also supported but only as input parameters as they are not assigned back to the caller.</para>
+    /// <para>The first call of these methods is slower because the delegate is generated on the first access, but further calls are much faster.</para>
     /// <para>The already obtained accessors are cached so subsequent <see cref="O:KGySoft.Reflection.CreateInstanceAccessor.GetAccessor">GetAccessor</see> calls return the already created accessors unless
     /// they were dropped out from the cache, which can store about 8000 elements.</para>
     /// <note>If you want to create an instance just by enlisting the constructor parameters of a <see cref="Type"/> rather than specifying a <see cref="ConstructorInfo"/>, then you can use the <see cref="O:KGySoft.Reflection.Reflector.CreateInstance">CreateInstance</see>
     /// methods in the <see cref="Reflector"/> class, which have some overloads for that purpose.</note>
-    /// <note type="warning">The .NET Standard 2.0 version of the <see cref="CreateInstance">CreateInstance</see> does not return the ref/out parameters.
-    /// <br/>If you reference the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly, then use the
-    /// <see cref="O:KGySoft.Reflection.Reflector.CreateInstance">Reflector.CreateInstance</see> methods to invoke constructors with ref/out parameters without losing the returned parameter values.</note>
     /// </remarks>
     /// <example><code lang="C#"><![CDATA[
     /// using System;
@@ -234,16 +236,25 @@ namespace KGySoft.Reflection
         /// <remarks>
         /// <para>Invoking the constructor for the first time is slower than the <see cref="MethodBase.Invoke(object,object[])">System.Reflection.MethodBase.Invoke</see>
         /// method but further calls are much faster.</para>
-        /// <note type="tip">If the constructor has no more than four parameters and none of them are passed by reference, then you can use the generic
-        /// <see cref="O:KGySoft.Reflection.CreateInstanceAccessor.CreateInstance">CreateInstance</see> methods for better performance if the types are known at compile time.</note>
-        /// <note type="caller">The .NET Standard 2.0 version of this method does not assign back the ref/out parameters in the <paramref name="parameters"/> argument.
-        /// <br/>If you reference the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly, then use the
-        /// <see cref="O:KGySoft.Reflection.Reflector.CreateInstance">Reflector.CreateInstance</see> methods to invoke constructors with ref/out parameters without losing the returned parameter values.</note>
+        /// <para>If the constructor has <see langword="ref"/>/<see langword="out"/> parameters pass a preallocated array to <paramref name="parameters"/>.
+        /// The parameters passed by reference will be assigned back to the corresponding array elements.</para>
+        /// <note type="tip">If the constructor has no more than four parameters, then you can use the generic
+        /// <see cref="O:KGySoft.Reflection.CreateInstanceAccessor.CreateInstance">CreateInstance</see> overloads for better performance if the types are known at compile time.</note>
+        /// <note type="caller">If the constructor has <see langword="ref"/>/<see langword="out"/> parameters, then the .NET Standard 2.0 version of this method defaults
+        /// to use regular reflection to be able to assign the parameter values back to the <paramref name="parameters"/> array.
+        /// To experience the best performance try to target .NET Standard 2.1 or any .NET Framework or .NET Core/.NET platforms instead.</note>
         /// </remarks>
         /// <exception cref="ArgumentNullException">This <see cref="CreateInstanceAccessor"/> represents a constructor with parameters and <paramref name="parameters"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">The type of one of the <paramref name="parameters"/> is invalid.
         /// <br/>-or-
         /// <br/><paramref name="parameters"/> has too few elements.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="CreateInstanceAccessor"/> represents a static constructor, a constructor of an abstract class,
+        /// or.a constructor of an open generic type.</exception>
+        /// <exception cref="NotSupportedException">On .NET Framework the code is executed in a partially trusted domain with insufficient permissions.</exception>
+        /// <overloads>The <see cref="CreateInstance(object[])"/> overload can be used for any number of parameters or for constructors
+        /// with <see langword="ref"/>/<see langword="out"/> parameters. The other non-generic overloads can be used for constructors with no more than four parameters.
+        /// And if you know the type of the created instance and the parameter types at compile time, then you can use the
+        /// generic overloads for the best performance.</overloads>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("Design", "CA1031:Do not catch general exception types",
             Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
@@ -255,12 +266,21 @@ namespace KGySoft.Reflection
             }
             catch (Exception e)
             {
-                // Post-validation if there was any exception
+                // Post-validation if there was any exception. We do this for better performance on the happy path.
                 PostValidate( parameters, e, true);
                 return null!; // actually never reached, just to satisfy the compiler
             }
         }
 
+        /// <summary>
+        /// Creates a new instance using the associated <see cref="Type"/> or parameterless constructor.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="CreateInstance(object[])"/> overload for details.
+        /// </summary>
+        /// <returns>The created instance.</returns>
+        /// <exception cref="ArgumentException">The constructor expects parameters.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="CreateInstanceAccessor"/> represents a static constructor, a constructor of an abstract class,
+        /// or.a constructor of an open generic type.</exception>
+        /// <exception cref="NotSupportedException">On .NET Framework the code is executed in a partially trusted domain with insufficient permissions.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("Design", "CA1031:Do not catch general exception types",
             Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
@@ -272,12 +292,24 @@ namespace KGySoft.Reflection
             }
             catch (Exception e)
             {
-                // Post-validation if there was any exception
+                // Post-validation if there was any exception. We do this for better performance on the happy path.
                 PostValidate(Reflector.EmptyObjects, e, false);
                 return null; // actually never reached, just to satisfy the compiler
             }
         }
 
+        /// <summary>
+        /// Creates a new instance using the associated constructor with one parameter.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="CreateInstance(object[])"/> overload for details.
+        /// </summary>
+        /// <param name="param">The value of the parameter.</param>
+        /// <returns>The created instance.</returns>
+        /// <exception cref="ArgumentException">The type of the specified parameter is invalid.
+        /// <br/>-or-
+        /// <br/>The constructor cannot be invoked with one parameter.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="CreateInstanceAccessor"/> represents a static constructor, a constructor of an abstract class,
+        /// or.a constructor of an open generic type.</exception>
+        /// <exception cref="NotSupportedException">On .NET Framework the code is executed in a partially trusted domain with insufficient permissions.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("Design", "CA1031:Do not catch general exception types",
             Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
@@ -289,12 +321,25 @@ namespace KGySoft.Reflection
             }
             catch (Exception e)
             {
-                // Post-validation if there was any exception
+                // Post-validation if there was any exception. We do this for better performance on the happy path.
                 PostValidate(new [] { param }, e, false);
                 return null; // actually never reached, just to satisfy the compiler
             }
         }
 
+        /// <summary>
+        /// Creates a new instance using the associated constructor with two parameters.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="CreateInstance(object[])"/> overload for details.
+        /// </summary>
+        /// <param name="param1">The value of the first parameter.</param>
+        /// <param name="param2">The value of the second parameter.</param>
+        /// <returns>The created instance.</returns>
+        /// <exception cref="ArgumentException">The type of a specified parameter is invalid.
+        /// <br/>-or-
+        /// <br/>The constructor cannot be invoked with two parameters.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="CreateInstanceAccessor"/> represents a static constructor, a constructor of an abstract class,
+        /// or.a constructor of an open generic type.</exception>
+        /// <exception cref="NotSupportedException">On .NET Framework the code is executed in a partially trusted domain with insufficient permissions.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("Design", "CA1031:Do not catch general exception types",
             Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
@@ -306,12 +351,26 @@ namespace KGySoft.Reflection
             }
             catch (Exception e)
             {
-                // Post-validation if there was any exception
+                // Post-validation if there was any exception. We do this for better performance on the happy path.
                 PostValidate(new [] { param1, param2 }, e, false);
                 return null; // actually never reached, just to satisfy the compiler
             }
         }
 
+        /// <summary>
+        /// Creates a new instance using the associated constructor with three parameters.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="CreateInstance(object[])"/> overload for details.
+        /// </summary>
+        /// <param name="param1">The value of the first parameter.</param>
+        /// <param name="param2">The value of the second parameter.</param>
+        /// <param name="param3">The value of the third parameter.</param>
+        /// <returns>The created instance.</returns>
+        /// <exception cref="ArgumentException">The type of a specified parameter is invalid.
+        /// <br/>-or-
+        /// <br/>The constructor cannot be invoked with three parameters.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="CreateInstanceAccessor"/> represents a static constructor, a constructor of an abstract class,
+        /// or.a constructor of an open generic type.</exception>
+        /// <exception cref="NotSupportedException">On .NET Framework the code is executed in a partially trusted domain with insufficient permissions.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("Design", "CA1031:Do not catch general exception types",
             Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
@@ -323,12 +382,27 @@ namespace KGySoft.Reflection
             }
             catch (Exception e)
             {
-                // Post-validation if there was any exception
+                // Post-validation if there was any exception. We do this for better performance on the happy path.
                 PostValidate(new [] { param1, param2, param3 }, e, false);
                 return null; // actually never reached, just to satisfy the compiler
             }
         }
 
+        /// <summary>
+        /// Creates a new instance using the associated constructor with four parameters.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="CreateInstance(object[])"/> overload for details.
+        /// </summary>
+        /// <param name="param1">The value of the first parameter.</param>
+        /// <param name="param2">The value of the second parameter.</param>
+        /// <param name="param3">The value of the third parameter.</param>
+        /// <param name="param4">The value of the fourth parameter.</param>
+        /// <returns>The created instance.</returns>
+        /// <exception cref="ArgumentException">The type of a specified parameter is invalid.
+        /// <br/>-or-
+        /// <br/>The constructor cannot be invoked with four parameters.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="CreateInstanceAccessor"/> represents a static constructor, a constructor of an abstract class,
+        /// or.a constructor of an open generic type.</exception>
+        /// <exception cref="NotSupportedException">On .NET Framework the code is executed in a partially trusted domain with insufficient permissions.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("Design", "CA1031:Do not catch general exception types",
             Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
@@ -340,7 +414,7 @@ namespace KGySoft.Reflection
             }
             catch (Exception e)
             {
-                // Post-validation if there was any exception
+                // Post-validation if there was any exception. We do this for better performance on the happy path.
                 PostValidate(new [] { param1, param2, param3, param4 }, e, false);
                 return null; // actually never reached, just to satisfy the compiler
             }
@@ -351,9 +425,10 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <typeparam name="TInstance">The type of the created instance.</typeparam>
         /// <returns>The created instance.</returns>
-        /// <exception cref="NotSupportedException">This <see cref="CreateInstanceAccessor"/> represents a constructor with more than four parameters
-        /// or a constructor that has parameters passed by reference.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="CreateInstanceAccessor"/> represents a constructor with more than four parameters.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="CreateInstanceAccessor"/> represents a static constructor, a constructor of an abstract class,
+        /// or.a constructor of an open generic type.</exception>
         public TInstance CreateInstance<TInstance>()
             => GenericInitializer is Func<TInstance> func ? func.Invoke() : ThrowGeneric<TInstance>();
 
@@ -364,9 +439,10 @@ namespace KGySoft.Reflection
         /// <typeparam name="T">The type of the parameter.</typeparam>
         /// <param name="param">The value of the parameter.</param>
         /// <returns>The created instance.</returns>
-        /// <exception cref="NotSupportedException">This <see cref="CreateInstanceAccessor"/> represents a constructor with more than four parameters
-        /// or a constructor that has parameters passed by reference.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="CreateInstanceAccessor"/> represents a constructor with more than four parameters.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="CreateInstanceAccessor"/> represents a static constructor, a constructor of an abstract class,
+        /// or.a constructor of an open generic type.</exception>
         public TInstance CreateInstance<TInstance, T>(T param)
             => GenericInitializer is Func<T, TInstance> func ? func.Invoke(param) : ThrowGeneric<TInstance>();
 
@@ -379,9 +455,10 @@ namespace KGySoft.Reflection
         /// <param name="param1">The value of the first parameter.</param>
         /// <param name="param2">The value of the second parameter.</param>
         /// <returns>The created instance.</returns>
-        /// <exception cref="NotSupportedException">This <see cref="CreateInstanceAccessor"/> represents a constructor with more than four parameters
-        /// or a constructor that has parameters passed by reference.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="CreateInstanceAccessor"/> represents a constructor with more than four parameters.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="CreateInstanceAccessor"/> represents a static constructor, a constructor of an abstract class,
+        /// or.a constructor of an open generic type.</exception>
         public TInstance CreateInstance<TInstance, T1, T2>(T1 param1, T2 param2)
             => GenericInitializer is Func<T1, T2, TInstance> func ? func.Invoke(param1, param2) : ThrowGeneric<TInstance>();
 
@@ -396,9 +473,10 @@ namespace KGySoft.Reflection
         /// <param name="param2">The value of the second parameter.</param>
         /// <param name="param3">The value of the third parameter.</param>
         /// <returns>The created instance.</returns>
-        /// <exception cref="NotSupportedException">This <see cref="CreateInstanceAccessor"/> represents a constructor with more than four parameters
-        /// or a constructor that has parameters passed by reference.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="CreateInstanceAccessor"/> represents a constructor with more than four parameters.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="CreateInstanceAccessor"/> represents a static constructor, a constructor of an abstract class,
+        /// or.a constructor of an open generic type.</exception>
         public TInstance CreateInstance<TInstance, T1, T2, T3>(T1 param1, T2 param2, T3 param3)
             => GenericInitializer is Func<T1, T2, T3, TInstance> func ? func.Invoke(param1, param2, param3) : ThrowGeneric<TInstance>();
 
@@ -415,9 +493,10 @@ namespace KGySoft.Reflection
         /// <param name="param3">The value of the third parameter.</param>
         /// <param name="param4">The value of the fourth parameter.</param>
         /// <returns>The created instance.</returns>
-        /// <exception cref="NotSupportedException">This <see cref="CreateInstanceAccessor"/> represents a constructor with more than four parameters
-        /// or a constructor that has parameters passed by reference.</exception>
+        /// <exception cref="NotSupportedException">This <see cref="CreateInstanceAccessor"/> represents a constructor with more than four parameters.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
+        /// <exception cref="InvalidOperationException">This <see cref="CreateInstanceAccessor"/> represents a static constructor, a constructor of an abstract class,
+        /// or.a constructor of an open generic type.</exception>
         public TInstance CreateInstance<TInstance, T1, T2, T3, T4>(T1 param1, T2 param2, T3 param3, T4 param4)
             => GenericInitializer is Func<T1, T2, T3, T4, TInstance> func ? func.Invoke(param1, param2, param3, param4) : ThrowGeneric<TInstance>();
 
@@ -480,7 +559,7 @@ namespace KGySoft.Reflection
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        private T ThrowGeneric<T>() => Throw.ArgumentException<T>(Res.ReflectionCannotCreateInstanceGeneric(MemberInfo is Type type ? type : MemberInfo.DeclaringType!));
+        private T ThrowGeneric<T>() => Throw.ArgumentException<T>(Res.ReflectionCannotCreateInstanceGeneric(MemberInfo as Type ?? MemberInfo.DeclaringType!));
 
         #endregion
 
