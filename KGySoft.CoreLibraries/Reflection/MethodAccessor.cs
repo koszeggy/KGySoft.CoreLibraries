@@ -65,6 +65,7 @@ namespace KGySoft.Reflection
     /// to support methods with <see langword="ref"/>-returns.</note>
     /// </remarks>
     /// <example>
+    /// The following example compares the <see cref="MethodAccessor"/> class with System.Reflection alternatives on .NET 8 and .NET Framework 4.8 platforms.
     /// <code lang="C#"><![CDATA[
     /// using System;
     /// using System.Reflection;

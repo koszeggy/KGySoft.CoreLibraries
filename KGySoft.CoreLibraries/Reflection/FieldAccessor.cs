@@ -59,10 +59,12 @@ namespace KGySoft.Reflection
     /// <note>If you want to access a field by name rather than by a <see cref="FieldInfo"/>, then you can use the <see cref="O:KGySoft.Reflection.Reflector.SetField">SetField</see>
     /// and <see cref="O:KGySoft.Reflection.Reflector.SetField">GetField</see> methods in the <see cref="Reflector"/> class, which have some overloads with a <c>fieldName</c> parameter.</note>
     /// <note type="caution">The generic setter methods of this class in the .NET Standard 2.0 version throw a <see cref="PlatformNotSupportedException"/>
-    /// for read-only fields. Use the non-generic <see cref="Set">Set</see>method or reference the .NET Standard 2.1 build or any .NET Framework or .NET Core/.NET builds
+    /// for read-only fields. Use the non-generic <see cref="Set">Set</see> method or reference the .NET Standard 2.1 build or any .NET Framework or .NET Core/.NET builds
     /// to setting support setting read-only fields by the generic setters.</note>
     /// </remarks>
-    /// <example><code lang="C#"><![CDATA[
+    /// <example>
+    /// The following example compares the <see cref="FieldAccessor"/> class with <see cref="FieldInfo"/> on .NET 8 and .NET Framework 4.8 platforms.
+    /// <code lang="C#"><![CDATA[
     /// using System;
     /// using System.Reflection;
     /// using System.Runtime.Versioning;

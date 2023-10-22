@@ -58,7 +58,9 @@ namespace KGySoft.Reflection
     /// <note>If you want to create an instance just by enlisting the constructor parameters of a <see cref="Type"/> rather than specifying a <see cref="ConstructorInfo"/>, then you can use the <see cref="O:KGySoft.Reflection.Reflector.CreateInstance">CreateInstance</see>
     /// methods in the <see cref="Reflector"/> class, which have some overloads for that purpose.</note>
     /// </remarks>
-    /// <example><code lang="C#"><![CDATA[
+    /// <example>
+    /// The following example compares the <see cref="CreateInstanceAccessor"/> class with System.Reflection alternatives on .NET 8 and .NET Framework 4.8 platforms.
+    /// <code lang="C#"><![CDATA[
     /// using System;
     /// using System.Reflection;
     /// using System.Runtime.Versioning;

@@ -59,6 +59,7 @@ namespace KGySoft.Reflection
     /// for <see langword="ref"/> properties. You need to reference the .NET Standard 2.1 build or any .NET Framework or .NET Core/.NET builds to support <see langword="ref"/> properties.</note>
     /// </remarks>
     /// <example>
+    /// The following example compares the <see cref="PropertyAccessor"/> class with <see cref="PropertyInfo"/> on .NET 8 and .NET Framework 4.8 platforms.
     /// <code lang="C#"><![CDATA[
     /// using System;
     /// using System.Reflection;
