@@ -21,7 +21,6 @@ using System.Runtime.CompilerServices;
 #endif
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
-using System.Runtime.Serialization.Formatters.Binary;
 
 #endregion
 
@@ -99,8 +98,8 @@ namespace KGySoft.Serialization.Binary
         /// to restore a type even if the version of the assembly has been modified since last serialization while makes serialized data more compact;
         /// however, it cannot be guaranteed that the correct type will be even found on deserialization without specifying the expected types.
         /// <note type="caution">If there are types with the same name in the same namespace in different assemblies, then by using this flag, these types cannot be distinguished.
-        /// In <see cref="SafeMode"/> the deserialization may fail if the specified expected types are not unique only by the full type name.</note>
-        /// <note>If you want to deserialize a type that was stored with strong assembly reference (without this flag) from a different version of an assembly,
+        /// If the expected types are not specified on deserialization, then any of the types with identical full names might be picked.</note>
+        /// <note>If you want to deserialize a type that was stored with strong assembly identity (without this flag) from a different version of an assembly,
         /// then use the <see cref="ForwardedTypesSerializationBinder"/> or <see cref="WeakAssemblySerializationBinder"/> classes instead (the latter cannot be used in <see cref="SafeMode"/>).</note></para>
         /// <para>This flag is considered on serialization.</para>
         /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
@@ -178,8 +177,9 @@ namespace KGySoft.Serialization.Binary
         /// different assembly identities from the loaded ones, then use <see cref="ForwardedTypesSerializationBinder"/>, and set
         /// its <see cref="ForwardedTypesSerializationBinder.SafeMode"/> property to <see langword="true"/>.</note>
         /// <note type="security">In safe mode it is not allowed to set the <see cref="BinarySerializationFormatter.SurrogateSelector"/>
-        /// or <see cref="BinarySerializationFormatter.Binder"/> properties (except for using the <see cref="ForwardedTypesSerializationBinder"/> in <see cref="ForwardedTypesSerializationBinder.SafeMode"/>)
-        /// because they could be used as a workaround for the security considerations described above.</note>
+        /// or <see cref="BinarySerializationFormatter.Binder"/> properties (except for using the <see cref="ForwardedTypesSerializationBinder"/> when
+        /// its <see cref="ForwardedTypesSerializationBinder.SafeMode"/> is set to <see langword="true"/>)
+        /// because they could be used to weaken the security actions described above.</note>
         /// <para>This flag is considered on deserialization.</para>
         /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Enabled</strong></para>
         /// </summary>

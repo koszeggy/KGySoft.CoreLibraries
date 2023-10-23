@@ -87,7 +87,8 @@ namespace KGySoft.Resources
     /// </para>
     /// <example>
     /// The following example shows how to retrieve <see cref="ResXDataNode"/> instances from the <see cref="IDictionaryEnumerator"/> returned by <see cref="ResXResourceReader.GetEnumerator">ResXResourceReader.GetEnumerator</see>
-    /// and <see cref="ResXResourceReader.GetMetadataEnumerator">ResXResourceReader.GetMetadataEnumerator</see> methods. For example, you can check the type information before deserialization if the .resx file is from an untrusted source.
+    /// and <see cref="ResXResourceReader.GetMetadataEnumerator">ResXResourceReader.GetMetadataEnumerator</see> methods. Before the actual deserialization
+    /// you can check the type information if the .resx file is from an untrusted source.
     /// <code lang="C#"><![CDATA[
     /// using System;
     /// using System.Collections;
@@ -166,9 +167,9 @@ namespace KGySoft.Resources
     ///                     var value = node.GetValue();
     ///                     Console.WriteLine($"  Real value (unsafe):  {value} ({value.GetType()})");
     ///                 }
-    ///                 catch (Exception)
+    ///                 catch (Exception ex)
     ///                 {
-    ///                     Console.WriteLine($"  Unsafe deserialization of the node threw an exception: {e.Message}");
+    ///                     Console.WriteLine($"  Unsafe deserialization of the node threw an exception: {ex.Message}");
     ///                 }
     ///             }
     ///             Console.WriteLine();
@@ -201,7 +202,7 @@ namespace KGySoft.Resources
     /// //   Comment:     When this entry is deserialized in an unsafe way, System.Drawing assembly will be loaded.
     /// //   Raw value:   Red
     /// //   Safe deserialization of the node threw an exception: Type "System.Drawing.Color, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" in the data at line 18, position 4 cannot be resolved.
-    /// // You may try to preload its assembly before deserialization or use the unsafe GetValue if the resource is from a trusted source.
+    /// // You may try to specify the expected type or use the unsafe GetValue if the resource is from a trusted source.
     /// //   Real value (unsafe):  Color[Red] (System.Drawing.Color)
     /// // 
     /// // Name: bytes
@@ -218,7 +219,7 @@ namespace KGySoft.Resources
     /// //   MIME type:   application/x-microsoft.net.object.binary.base64
     /// //   Comment:     BinaryFormatter will throw an exception for this invalid content.
     /// //   Raw value:   YmluYXJ5
-    /// //   Safe deserialization of the node threw an exception: End of Stream encountered before parsing was completed.
+    /// //   Safe deserialization of the node threw an exception: In safe mode it is not allowed to deserialize resource "dangerous" because it was serialized by BinaryFormatter. Line 27, position 4.
     /// //   Unsafe deserialization of the node threw an exception: End of Stream encountered before parsing was completed.
     /// // 
     /// // ____Metadata in .resx:____
@@ -272,9 +273,10 @@ namespace KGySoft.Resources
     /// <item><term>Raw content</term><description>You can use the <see cref="ValueData"/> property to read the original raw <see cref="string"/> content stored in the .resx file for this element.</description></item>
     /// <item><term>Advanced string representation</term><description>The <see cref="ToString">ToString</see> method displays the string representation (either of the deserialized object if already cached, or the raw content) so can be used easily in a format argument and provides more debugging information.</description></item>
     /// <item><term>Security</term>
-    /// <description>No deserialization, assembly loading and type resolving occurs until a deserialization is explicitly requested by calling the <see cref="GetValue">GetValue</see> or <see cref="O:KGySoft.Resources.ResXDataNode.GetValueSafe">GetValueSafe</see> methods.
-    /// If you use the <see cref="O:KGySoft.Resources.ResXDataNode.GetValueSafe">GetValueSafe</see> method, then it is guaranteed that no new assembly is loaded during the deserialization, even if the resource was serialized by <see cref="BinaryFormatter"/>.
-    /// Additionally, you can check the <see cref="TypeName"/>, <see cref="MimeType"/> and <see cref="AssemblyAliasValue"/> properties to get information
+    /// <description>No deserialization, assembly loading and type resolving occurs until a deserialization is explicitly requested by calling the <see cref="GetValue">GetValue</see> method.
+    /// Additionally, the <see cref="O:KGySoft.Resources.ResXDataNode.GetValueSafe">GetValueSafe</see> methods ensure that only the explicitly specified type or natively supported types are accepted
+    /// and no assemblies are loaded even if a type is specified by its assembly qualified name. In safe mode resources serialized by <see cref="BinaryFormatter"/> are completely disabled.
+    /// You can check the <see cref="TypeName"/>, <see cref="MimeType"/> and <see cref="AssemblyAliasValue"/> properties to get information
     /// about the type before obtaining the object. You can even check the raw string content by the <see cref="ValueData"/> property.
     /// </description></item>
     /// <item><term>Performance</term>
@@ -283,10 +285,11 @@ namespace KGySoft.Resources
     /// instances stored internally and deserialization occurs only when a resource is actually accessed.</description></item>
     /// <item><term>Support of non-serializable types</term>
     /// <description>When serializing an object, the <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxdatanode" target="_blank">System.Resources.ResXDataNode</a> type
-    /// throws an <see cref="InvalidOperationException"/> for non-serializable types. This implementation can serialize also such types (though their deserialization will not be allowed in safe mode).
-    /// If compatibility mode is used (see <see cref="ResXResourceWriter.CompatibleFormat">ResXResourceWriter.CompatibleFormat</see> property and
-    /// the <see cref="O:KGySoft.Resources.ResXResourceSet.Save">ResXResourceSet.Save</see> methods), this is achieved by using the <see cref="CustomSerializerSurrogateSelector"/> while serializing
-    /// by the obsolete <see cref="BinaryFormatter"/> (only up to .NET 7). Though the serialization stream will be compatible with .NET Framework the resource itself might
+    /// throws an <see cref="InvalidOperationException"/> for non-serializable types. This implementation can serialize also such types (though in safe mode they must be explicitly specified as expected types).
+    /// It is highly recommended to save such resources with compatible mode disabled (see <see cref="ResXResourceWriter.CompatibleFormat">ResXResourceWriter.CompatibleFormat</see> property and
+    /// the <see cref="O:KGySoft.Resources.ResXResourceSet.Save">ResXResourceSet.Save</see> methods) so the <see cref="BinarySerializationFormatter"/> class can be used for the serialization.
+    /// If the resource is saved in compatible format, then the legacy <see cref="BinaryFormatter"/> will used (not supported in .NET 8 and later and deserialization will be denied in safe mode)
+    /// with an <see cref="CustomSerializerSurrogateSelector"/> instance to allow the serialization. Though the serialization stream will be compatible with .NET Framework the resource itself might
     /// not be able to be deserialized by the <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a> class.
     /// In order to serialize any object in .NET 8 or later, compatible mode must be disabled so the much safer <see cref="BinarySerializationFormatter"/> class can be used.</description></item>
     /// <item><term>Support of generics</term>
@@ -987,7 +990,7 @@ namespace KGySoft.Resources
 
         /// <summary>
         /// Retrieves the object that is stored by this node, not allowing loading assemblies during the possible deserialization.
-        /// <br/>See the <strong>Remarks</strong> section of the <see cref="O:KGySoft.Resources.ResXDataNode.GetValueSafe"/> overloads for details.
+        /// <br/>See the <strong>Remarks</strong> section of the other <see cref="O:KGySoft.Resources.ResXDataNode.GetValueSafe">GetValueSafe</see> overloads for details.
         /// </summary>
         /// <returns>The object that corresponds to the stored value.</returns>
         /// <param name="typeResolver">Starting with version 8.0.0 this parameter must be <see langword="null"/>.</param>
@@ -1014,7 +1017,7 @@ namespace KGySoft.Resources
 
         /// <summary>
         /// Retrieves the object that is stored by this node, not allowing loading assemblies during the possible deserialization.
-        /// If the resource not a natively supported type, then you should use the other overloads.
+        /// If the resource is not a natively supported type, then you should use the other overloads.
         /// </summary>
         /// <returns>The object that corresponds to the stored value.</returns>
         /// <param name="cleanupRawData"><see langword="true"/> to free the underlying XML data once the value is deserialized; otherwise, <see langword="false"/>. This parameter is optional.

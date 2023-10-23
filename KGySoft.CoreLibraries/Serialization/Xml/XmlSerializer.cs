@@ -52,7 +52,7 @@ using KGySoft.Serialization.Binary;
 namespace KGySoft.Serialization.Xml
 {
     /// <summary>
-    /// <see cref="XmlSerializer"/> makes possible serializing and deserializing object instances into/from XML content. The class contains various overloads to support serializing directly into file or by
+    /// <see cref="XmlSerializer"/> makes possible serializing and deserializing objects into/from XML content. The class contains various overloads to support serializing directly into file or by
     /// <see cref="XElement"/>, <see cref="XmlWriter"/>, any <see cref="TextWriter"/> and any <see cref="Stream"/> implementations.
     /// </summary>
     /// <remarks>
@@ -99,12 +99,12 @@ namespace KGySoft.Serialization.Xml
     /// </para>
     /// <para>If <see cref="XmlSerializationOptions.BinarySerializationAsFallback"/> option is enabled, then types without a native support and appropriate <see cref="TypeConverter"/> will be serialized into a binary stream, which
     /// will be stored in the result XML. Though this provides the best compatibility of any type, it hides the whole inner structure of the serialized object. If a root level object without native support is serialized by the
-    /// <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.Serialize">Serialize</see> using the <see cref="XmlSerializationOptions.BinarySerializationAsFallback"/>, then the whole XML result will be a single node with the binary content.
-    /// The binary serialization is performed by the <see cref="BinarySerializationFormatter"/> class. In safe mode deserialization the specified expected types must include the types
-    /// present in the embedded binary stream(s) by name.
+    /// <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.Serialize">Serialize</see> methods using the <see cref="XmlSerializationOptions.BinarySerializationAsFallback"/>
+    /// option, then the whole XML result will be a single node with the binary content. The binary serialization is performed by
+    /// the <see cref="BinarySerializationFormatter"/> class. In safe mode deserialization the specified expected types must include the types present in the embedded binary stream(s) by name.
     /// <note>To use binary serialization only for some types or properties you can specify the <see cref="BinaryTypeConverter"/> by the <see cref="TypeConverterAttribute"/> for a property, field or type
     /// but please note that it will always perform a safe deserialization specifying only the type of the element as expected type so you cannot use it if the
-    /// corresponding type uses some type internally that is not supported by the <see cref="BinarySerializationFormatter"/> natively.
+    /// corresponding type uses nested custom types that are not supported by the <see cref="BinarySerializationFormatter"/> natively.
     /// You can use also the <see cref="KGySoft.CoreLibraries.TypeExtensions.RegisterTypeConverter{TConverter}">RegisterTypeConverter</see> extension method to specify a type converter for types.</note>
     /// </para>
     /// <para>See the <see cref="XmlSerializationOptions"/> enumeration for further options.</para>
@@ -135,7 +135,7 @@ namespace KGySoft.Serialization.Xml
     /// <item><see cref="DateTimeOffset"/></item>
     /// <item><see cref="IntPtr"/></item>
     /// <item><see cref="UIntPtr"/></item>
-    /// <item><see cref="Guid"/>, though the serialization/deserialization itself happens by its type converter</item>
+    /// <item><see cref="Guid"/>, though the serialization/deserialization itself is performed by its type converter</item>
     /// <item><see cref="Nullable{T}"/> types if type parameter is any of the supported types.</item>
     /// <item><see cref="KeyValuePair{TKey,TValue}"/> if <see cref="KeyValuePair{TKey,TValue}.Key"/> and <see cref="KeyValuePair{TKey,TValue}.Value"/> are any of the supported types.</item>
     /// <item><see cref="DictionaryEntry"/></item>
@@ -188,7 +188,7 @@ namespace KGySoft.Serialization.Xml
     /// <para><strong>New features and improvements</strong> compared to <a href="https://docs.microsoft.com/en-us/dotnet/api/system.xml.serialization.xmlserializer" target="_blank">System.Xml.Serialization.XmlSerializer</a>:
     /// <list type="bullet">
     /// <item><term>Strings</term><description>If a string contains only white spaces, then system <see cref="System.Xml.Serialization.XmlSerializer"/> cannot deserialize it properly. <see cref="string"/> instances containing
-    /// invalid UTF-16 code points are also cannot be serialized. This <see cref="XmlSerializer"/> implementation handles them correctly.</description></item>
+    /// invalid UTF-16 code points cannot be serialized either. This <see cref="XmlSerializer"/> implementation handles them correctly.</description></item>
     /// <item><term>Collections with base element type</term><description>If the element type of a collection is a base type or an interface, then the system serializer throws an exception for derived element types
     /// suggesting that <see cref="XmlIncludeAttribute"/> should be defined for all possible derived types. Unfortunately this attribute is applicable only for possible types of properties/fields
     /// but not for collection elements. And in many cases it simply cannot be predefined in advance what derived types will be used at run-time.</description></item>

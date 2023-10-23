@@ -143,10 +143,11 @@ namespace KGySoft.Serialization.Binary
     /// <seealso cref="BinarySerializationOptions"/>
     /// <seealso cref="IBinarySerializable"/>
     /// <remarks>
-    /// <note type="warning">The fundamental goal of binary serialization is to store the bitwise content of an object, hence in general case it relies on
-    /// field values (including private ones), which can change from version to version. Therefore, binary serialization is recommended only for in-process purposes,
-    /// such as deep cloning or undo/redo, etc. If it is known that a type will be deserialized in another environment and it can be completely restored by its public members,
-    /// then a text-based serialization (see also <see cref="XmlSerializer"/>) can be a better choice.</note>
+    /// <note type="warning">The fundamental goal of binary serialization is to store the bitwise content of an object, hence in general case (when custom types
+    /// are involved) it relies on field values, including private ones that can change from version to version. Therefore, binary serialization is recommended
+    /// only if your serialized objects purely consist of natively supported types (see them below). If you need to serialize custom types, then it is recommended
+    /// to do it for in-process purposes only, such as deep cloning or undo/redo, etc. If it is known that a type will be deserialized in another environment and
+    /// it can be completely restored by its public members, then a text-based serialization (see also <see cref="XmlSerializer"/>) can be a better choice.</note>
     /// <note type="security"><para>If the serialization stream may come from an untrusted source (eg. remote service, file or database) make sure you enable
     /// the <see cref="BinarySerializationOptions.SafeMode"/> option. It prevents loading assemblies during the deserialization, denies resolving unexpected natively not supported types by name,
     /// does not allow instantiating natively not supported types that are not serializable, and guards against some attacks that may cause <see cref="OutOfMemoryException"/>.
@@ -164,11 +165,11 @@ namespace KGySoft.Serialization.Binary
     /// The <see cref="BinarySerializationFormatter"/> wraps every other exception thrown by the constructor into a <see cref="SerializationException"/>.
     /// Not even the core .NET types have such validation, which is one reason why this library supports so many types natively. And for custom types
     /// see the example at the <a href="#example">Example: How to implement a custom serializable type</a> section.</para>
-    /// <para>Starting with version 8.0.0 the in safe mode the <see cref="Binder"/> property can only be <see langword="null"/> or a <see cref="ForwardedTypesSerializationBinder"/> instance if you set
+    /// <para>Starting with version 8.0.0 in safe mode the <see cref="Binder"/> property can only be <see langword="null"/> or a <see cref="ForwardedTypesSerializationBinder"/> instance if you set
     /// its <see cref="ForwardedTypesSerializationBinder.SafeMode"/> to <see langword="true"/>. Furthermore, in safe mode it is not allowed to set any surrogate selectors in the <see cref="SurrogateSelector"/> property.
-    /// Please note that this library also contains a sort of serialization binders and surrogates, many of them have their own <c>SafeMode</c> properties
+    /// Please note that this library also contains a sort of serialization binders and surrogates, most of them have their own <c>SafeMode</c> property
     /// (eg. <see cref="WeakAssemblySerializationBinder"/>, <see cref="CustomSerializerSurrogateSelector"/> or <see cref="NameInvariantSurrogateSelector"/>), still,
-    /// not even they are allowed to be used when the <see cref="BinarySerializationOptions.SafeMode"/> option is enabled. It's because their safe mode provide just some not too strict general protection,
+    /// not even they are allowed to be used when the <see cref="BinarySerializationOptions.SafeMode"/> option is enabled. It's because their safe mode just provide some not too strict general protection,
     /// instead of being able to filter a specific set of predefined types.</para>
     /// <para>If you must disable <see cref="BinarySerializationOptions.SafeMode"/> for some reason, then use binary serialization in-process only, or apply some cryptographically secure encryption
     /// to the serialization stream.</para></note>
