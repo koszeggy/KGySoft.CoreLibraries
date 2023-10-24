@@ -501,8 +501,6 @@ namespace KGySoft.Resources
         /// and <see cref="GetEnumerator">GetEnumerator</see>/<see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> methods return always a new copy of the stored values.
         /// <br/>Default value: <see langword="false" />.
         /// </summary>
-        /// <exception cref="NotImplementedException">
-        /// </exception>
         /// <remarks>
         /// <para>To be compatible with <a href="https://docs.microsoft.com/en-us/dotnet/api/System.Resources.ResXResourceSet" target="_blank">System.Resources.ResXResourceSet</a> this
         /// property is <see langword="false"/> by default. However, it can be a problem for mutable types if the returned value is changed by the consumer.</para>

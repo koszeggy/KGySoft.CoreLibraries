@@ -438,6 +438,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.AreSame(rs.GetObject(key), rs.GetObject(key));
 
             // if cloning values, references are different
+            // (note that raw data is already freed here so it's needed to be regenerated)
             rs.CloneValues = true;
             Assert.AreNotSame(rs.GetObject(key), rs.GetObject(key)); 
 
@@ -445,6 +446,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             key = "TestString";
             Assert.AreSame(rs.GetObject(key), rs.GetObject(key));
             Assert.AreSame(rs.GetString(key), rs.GetString(key));
+
+            // just like value types
+            key = "TestColorData";
+            Assert.AreSame(rs.GetObject(key), rs.GetObject(key));
         }
 
         #endregion

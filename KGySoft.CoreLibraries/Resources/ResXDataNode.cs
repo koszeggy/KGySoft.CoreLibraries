@@ -492,9 +492,11 @@ namespace KGySoft.Resources
         private bool aqnValid;
 
         /// <summary>
-        /// May contain a cached serialized value of <see cref="cachedValue"/> for cloning a bit faster. If null, can be restored.
+        /// For file references may contain an in-memory cached serialized value of <see cref="cachedValue"/>.
+        /// NOTE: This used to be a simple binary serialized byte[] field but after obsoleting the IFormatter infrastructure it wouldn't be too future proof even
+        /// when serializing by the safe BinarySerializationFormatter if ISerializable implementation will throw PlatformNotSupportedException in the future.
         /// </summary>
-        private byte[]? rawValue;
+        private DataNodeInfo? cloneData;
 
         #endregion
 
@@ -1161,7 +1163,7 @@ namespace KGySoft.Resources
         /// </summary>
         internal object? GetUnsafeValueInternal(ITypeResolutionService? typeResolver, bool isString, bool cloneValue, bool cleanup, string? basePath)
         {
-            if (cachedValue is string)
+            if (cachedValue is string or ValueType or Type)
                 return cachedValue;
             if (cachedValue == ResXNullRef.Value)
                 return null;
@@ -1505,7 +1507,7 @@ namespace KGySoft.Resources
             {
                 name ??= nodeInfo.Name;
                 comment ??= nodeInfo.Comment;
-                nodeInfo = null;
+                cloneData = nodeInfo = null;
             }
 
             // if AQN is already set, but not from the resulting type, resetting it with the real type of the value
@@ -1761,23 +1763,45 @@ namespace KGySoft.Resources
             return null;
         }
 
+        /// <summary>
+        /// Called from <see cref="GetUnsafeValueInternal"/> when cloning is requested.
+        /// </summary>
         private object? CloneValue(ITypeResolutionService? typeResolver, string? basePath)
         {
-            Debug.Assert(!(cachedValue is string || cachedValue is ResXNullRef), "String or null value should never be cloned.");
+            Debug.Assert(cachedValue is not (string or ResXNullRef or ValueType or Type), "String, ValueType, Type or null values should never be cloned.");
 
             // we have no value yet: deserializing from FileRef or .resx data
             if (cachedValue == null)
-                return GetValue(typeResolver, basePath); // not cleaning up if cloning
+            {
+                // Note: not cleaning up if when cloning
+                object? result = GetValue(typeResolver, basePath);
 
-            // special handling for memory stream: we avoid cloning the underlying array if possible
+                // fileRef of a type that has to be cloned: immediately creating an in-memory serialized cache so further clone requests will not access the file again
+                // Note: this will be a different DataNodeInfo without the file ref (that's why we create it from a new node)
+                if (fileRef != null && cachedValue is not (string or MemoryStream or ValueType or Type))
+                    cloneData ??= new ResXDataNode(Name, cachedValue).GetDataNodeInfo(null, null, false);
+
+                return result;
+            }
+
+            // Special handling for memory stream: we avoid cloning the underlying array if possible.
+            // But even when it's not, ToArray is still faster than deserializing the array again (we can do it because always a non-writable memory stream is returned)
             if (cachedValue is MemoryStream ms)
                 return new MemoryStream(ms.InternalGetBuffer() ?? ms.ToArray(), false);
 
-            var formatter = new BinarySerializationFormatter(BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.IgnoreTypeForwardedFromAttribute);
+            while (true)
+            {
+                // we still have the raw .resx data (cloneData: in-memory version of a fileRef): deserializing a new clone
+                if ((cloneData ?? nodeInfo) is DataNodeInfo info)
+                    return cachedValue = NodeInfoToObject(info, typeResolver, false, null);
 
-            // we have a cached value but it hasn't been cloned yet: creating a raw data of it
-            rawValue ??= formatter.Serialize(cachedValue);
-            return cachedValue = formatter.Deserialize(rawValue);
+                // Here we only have a cached result (maybe already returned once) so (re)creating the serialized value first
+                // Possible issue: the user might already have mutated or even disposed a previously returned instance.
+                if (fileRef == null)
+                    GetDataNodeInfo(null, null, false);
+                else
+                    cloneData = new ResXDataNode(Name, cachedValue).GetDataNodeInfo(null, null, false); 
+            }
         }
 
         #endregion
