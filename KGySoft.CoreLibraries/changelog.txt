@@ -75,6 +75,10 @@
   + New constructor where the expected root type can be specified for the safe deserialization.
   + New Type property.
 
+- KGySoft.Diagnostics:
+======================
+- PerformanceTestBase<,> class: Fixing the sorting of results when a test case throws an exception.
+
 ! KGySoft.Reflection namespace:
 ===============================
 ! PropertyAccessor class:

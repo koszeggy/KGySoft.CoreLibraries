@@ -109,7 +109,7 @@ namespace KGySoft.Diagnostics
 
             internal TimeSpan TotalTime => Repetitions.Aggregate(TimeSpan.Zero, (acc, curr) => acc + curr.ExecutionTime);
             internal TimeSpan AverageTime => Error != null ? TimeSpan.MaxValue : new TimeSpan(TotalTime.Ticks / Repetitions.Count);
-            internal double AverageIterations => Error != null ? Double.MaxValue : Repetitions.Average(r => r.AverageIterationsPerTestTime);
+            internal double AverageIterations => Error != null ? 0d : Repetitions.Average(r => r.AverageIterationsPerTestTime);
 
             #endregion
 
@@ -662,7 +662,7 @@ namespace KGySoft.Diagnostics
 
         private void SortResults(List<TestResult> testResults)
         {
-            Comparison<TestResult> comparison = SortBySize ? (x, y) => Comparer<int>.Default.Compare(GetLength(x.Result), GetLength(y.Result))
+            Comparison<TestResult> comparison = SortBySize ? (x, y) => Comparer<int>.Default.Compare(x.Error != null ? Int32.MaxValue : GetLength(x.Result), y.Error != null ? Int32.MaxValue : GetLength(y.Result))
                 : Iterations > 0 ? (x, y) => Comparer<TimeSpan>.Default.Compare(x.AverageTime, y.AverageTime)
                 : (x, y) => -Comparer<double>.Default.Compare(x.AverageIterations, y.AverageIterations);
             testResults.Sort(comparison);
