@@ -30,7 +30,7 @@ namespace KGySoft.CoreLibraries
 {
     public partial class ObjectExtensions
     {
-        private class ObjectCloner
+        private readonly ref struct ObjectCloner
         {
             #region Fields
 
