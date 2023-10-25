@@ -89,8 +89,10 @@ namespace KGySoft.CoreLibraries
         //   - Test: SpanExtensionsTest.ParseTest
         // - ResXDataNode.nonCompatibleModeNativeTypes (for compatible format)
         //   - Test: ResXResourceWriterTest
+        //   - Docs: ResXResourceWriter.CompatibleFormat
         // - XmlSerializerBase.GetStringValue (only special cases if needed, escapedNativelySupportedTypes)
         //   - Test: XmlSerializerTest.Tests
+        //   - Docs: XmlSerializer Natively supported types
         private static readonly HashSet<Type> nativelyParsedTypes =
             new HashSet<Type>
             {

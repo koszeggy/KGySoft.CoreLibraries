@@ -516,7 +516,8 @@ namespace KGySoft.Resources
         /// <item><description>Type of <see cref="ResXFileRef"/> file references.</description></item>
         /// <item><description>The placeholder type of <see langword="null"/> references.</description></item>
         /// <item><description>If <c>CompatibleFormat</c> is <see langword="false"/>, some additional types are supported natively (without a <c>mimetype</c> attribute):
-        /// <see cref="IntPtr"/>, <see cref="UIntPtr"/>, <see cref="Type"/>, <see cref="BigInteger"/> and <see cref="Rune"/>.</description></item>
+        /// <see cref="IntPtr"/>, <see cref="UIntPtr"/>, <see cref="Type"/>, <see cref="BigInteger"/> and <see cref="Rune"/>, <see cref="Half"/>,
+        /// <see cref="DateOnly"/>, <see cref="TimeOnly"/>, <see cref="Int128"/>, <see cref="UInt128"/>.</description></item>
         /// <item><description>If <c>CompatibleFormat</c> is <see langword="false"/>, unpaired surrogate <see cref="char"/> values are supported.</description></item>
         /// <item><description>The <c>mimetype</c> and content of binary serialized elements. If <c>CompatibleFormat</c> is <see langword="false"/>, these objects are
         /// serialized by <see cref="BinarySerializationFormatter"/>, which provides a much more compact result than the default <see cref="BinaryFormatter"/>.</description></item>

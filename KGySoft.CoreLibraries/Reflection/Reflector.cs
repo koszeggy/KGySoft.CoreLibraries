@@ -3613,6 +3613,10 @@ namespace KGySoft.Reflection
         /// the <see cref="ResolveTypeOptions.ThrowError"/> flag is not enabled in <paramref name="options"/> and
         /// <paramref name="typeName"/> could not be resolved with the provided <paramref name="options"/>.</returns>
         /// <remarks>
+        /// <note type="security">The default value of the <paramref name="options"/> parameter allows loading assemblies if <paramref name="typeName"/>
+        /// is an assembly qualified name. This behavior is compatible with the <see cref="Type.GetType(string)">Type.GetType</see> method but
+        /// can be a security risk if <paramref name="typeName"/> is from an untrusted source, eg. file, user input, remote service, database, etc.
+        /// In such cases do not enable the <see cref="ResolveTypeOptions.TryToLoadAssemblies"/> flag so the type can be resolved from the already loaded assemblies.</note>
         /// <para><paramref name="typeName"/> can be generic and may contain fully or partially defined assembly names.</para>
         /// <para><paramref name="typeName"/> can contain generic parameter types in the format as they are returned by
         /// the <see cref="CoreLibraries.TypeExtensions.GetName(System.Type,CoreLibraries.TypeNameKind)">TypeExtensions.GetName</see> extension method.</para>
@@ -3651,7 +3655,7 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Gets the <see cref="System.Type"/> with the specified <paramref name="typeName"/> using the specified <paramref name="typeResolver"/>.
-        /// <br/>See the <strong>Examples</strong> section of the <see cref="ResolveType(string,ResolveTypeOptions)"/> overload for some examples.
+        /// <br/>See the <strong>Examples</strong> section of the <see cref="ResolveType(string,ResolveTypeOptions)"/> overload for details and some examples.
         /// </summary>
         /// <param name="typeName">The type name as a string representation.</param>
         /// <param name="typeResolver">If not <see langword="null"/>, then will be called for every generic type definition and ultimate element types
