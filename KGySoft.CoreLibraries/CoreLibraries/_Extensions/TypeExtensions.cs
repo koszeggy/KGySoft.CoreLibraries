@@ -18,6 +18,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -136,8 +137,8 @@ namespace KGySoft.CoreLibraries
         private static LockFreeCache<(MethodInfo GenMethodDef, TypesKey TypeArgs), MethodInfo>? genericMethodsCache;
         private static LockFreeCache<Type, ConstructorInfo?>? defaultCtorCache;
         private static LockFreeCache<Type, bool>? isDefaultGetHashCodeCache;
-
         private static LockFreeCache<(Type, string), bool>? matchesNameCache;
+        private static LockFreeCache<Type, (bool? IsDictionary, ConstructorInfo? DefaultCtor, ConstructorInfo? CollectionCtor, Type? ElementType)>? isSupportedCollectionForReflectionCache;
 
         // Using TypeConverterAttribute in key instead of TypeConverter because its Equals is by value
         private volatile static LockingDictionary<(Type Type, TypeConverterAttribute Converter), (TypeDescriptionProvider Provider, int Count)>? registeredTypeConverters;
@@ -585,54 +586,19 @@ namespace KGySoft.CoreLibraries
         /// <returns><see langword="true"/> if <paramref name="type"/> is a supported collection to populate by reflection; otherwise, <see langword="false"/>.</returns>
         internal static bool IsSupportedCollectionForReflection(this Type type, out ConstructorInfo? defaultCtor, out ConstructorInfo? collectionCtor, [MaybeNullWhen(false)]out Type elementType, out bool isDictionary)
         {
-            defaultCtor = null;
-            collectionCtor = null;
-            elementType = null;
-            isDictionary = false;
-
-            // is IEnumerable
-            if (!Reflector.IEnumerableType.IsAssignableFrom(type) || type.IsAbstract)
-                return false;
-
-            elementType = type.GetCollectionElementType()!;
-
-            // Array
-            if (type.IsArray)
-                return true;
-
-            isDictionary = Reflector.IDictionaryType.IsAssignableFrom(type) || type.IsImplementationOfGenericType(Reflector.IDictionaryGenType);
-            bool isPopulatableCollection = type.IsCollection();
-            foreach (ConstructorInfo ctor in type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+            if (isSupportedCollectionForReflectionCache == null)
             {
-                ParameterInfo[] args = ctor.GetParameters();
-
-                // default constructor is ignored for non-populatable collections
-                if (args.Length == 0 && isPopulatableCollection)
-                {
-                    defaultCtor = ctor;
-                    if (collectionCtor != null)
-                        return true;
-                }
-                else if (args.Length == 1 && collectionCtor == null)
-                {
-                    Type paramType = args[0].ParameterType;
-
-                    // Excluding string as it is also IEnumerable<char>.
-                    if (paramType == Reflector.StringType)
-                        continue;
-
-                    // collectionCtor is OK if can accept array or list of element type or dictionary of object or specified key-value element type
-                    if (!isDictionary && (paramType.IsAssignableFrom(elementType.MakeArrayType()) || paramType.IsAssignableFrom(Reflector.ListGenType.GetGenericType(elementType)))
-                        || isDictionary && paramType.IsAssignableFrom(Reflector.DictionaryGenType.GetGenericType(elementType.IsGenericType ? elementType.GetGenericArguments() : new[] { Reflector.ObjectType, Reflector.ObjectType })))
-                    {
-                        collectionCtor = ctor;
-                        if (defaultCtor != null)
-                            return true;
-                    }
-                }
+                Interlocked.CompareExchange(ref isSupportedCollectionForReflectionCache,
+                    new LockFreeCache<Type, (bool?, ConstructorInfo?, ConstructorInfo?, Type?)>(GetIfSupportedCollectionForReflection, null, LockFreeCacheOptions.Profile128),
+                    null);
             }
 
-            return isPopulatableCollection && (defaultCtor != null || type.IsValueType) || collectionCtor != null;
+            var result = isSupportedCollectionForReflectionCache[type];
+            defaultCtor = result.DefaultCtor;
+            collectionCtor = result.CollectionCtor;
+            elementType = result.ElementType;
+            isDictionary = result.IsDictionary == true;
+            return result.IsDictionary != null;
         }
 
         /// <summary>
@@ -999,6 +965,65 @@ namespace KGySoft.CoreLibraries
         #endregion
 
         #region Private Methods
+
+        private static (bool? IsDictionary, ConstructorInfo? DefaultCtor, ConstructorInfo? CollectionCtor, Type? ElementType) GetIfSupportedCollectionForReflection(Type type)
+        {
+            // If IsDictionary is null, the result is not a supported collection, though element type and the constructors still can be retrieved.
+            (bool? IsDictionary, ConstructorInfo? DefaultCtor, ConstructorInfo? CollectionCtor, Type? ElementType) result = default;
+
+            // is IEnumerable
+            if (!Reflector.IEnumerableType.IsAssignableFrom(type) || type.IsAbstract)
+                return result;
+
+            result.ElementType = type.GetCollectionElementType()!;
+
+            // Array
+            if (type.IsArray)
+            {
+                result.IsDictionary = false;
+                return result;
+            }
+
+            result.IsDictionary = Reflector.IDictionaryType.IsAssignableFrom(type) || type.IsImplementationOfGenericType(Reflector.IDictionaryGenType);
+            bool isPopulatableCollection = type.IsCollection();
+            foreach (ConstructorInfo ctor in type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+            {
+                ParameterInfo[] args = ctor.GetParameters();
+
+                // default constructor is ignored for non-populatable collections
+                if (args.Length == 0 && isPopulatableCollection)
+                {
+                    result.DefaultCtor = ctor;
+                    if (result.CollectionCtor is not null)
+                        return result;
+                }
+                else if (args.Length == 1 && result.CollectionCtor is null)
+                {
+                    Type paramType = args[0].ParameterType;
+
+                    // Excluding string as it is also IEnumerable<char>.
+                    if (paramType == Reflector.StringType)
+                        continue;
+
+                    // collectionCtor is OK if can accept array or list of element type or dictionary of object or specified key-value element type
+                    if (!result.IsDictionary.Value && (paramType.IsAssignableFrom(result.ElementType.MakeArrayType())
+                            || paramType.IsAssignableFrom(Reflector.ListGenType.GetGenericType(result.ElementType)))
+                        || result.IsDictionary.Value && paramType.IsAssignableFrom(Reflector.DictionaryGenType.GetGenericType(result.ElementType.IsGenericType
+                            ? result.ElementType.GetGenericArguments()
+                            : new[] { Reflector.ObjectType, Reflector.ObjectType })))
+                    {
+                        result.CollectionCtor = ctor;
+                        if (result.DefaultCtor is not null)
+                            return result;
+                    }
+                }
+            }
+
+            // We did not find both constructors. The type can be treated as a supported collection if it is populatable and has default ctor or when it has a collection ctor.
+            if (!(isPopulatableCollection && (result.DefaultCtor is not null || type.IsValueType) || result.CollectionCtor is not null))
+                result.IsDictionary = null;
+            return result;
+        }
 
         private static bool IsNameMatch((Type, string) key)
         {

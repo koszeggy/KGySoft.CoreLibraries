@@ -91,7 +91,7 @@ namespace KGySoft.Collections
         #endregion
 
         #region Explicitly implemented interface indexers
-        
+
         TValue IThreadSafeCacheAccessor<TKey, TValue>.this[TKey key] => this[key];
 
         #endregion
@@ -154,9 +154,8 @@ namespace KGySoft.Collections
             int threshold = nextCapacity;
             int l1Count = l1Cache.Count;
             int l2Count = l2Cache.Count;
-            int max = thresholdCapacity;
             bool byCapacity = l2Count >= threshold;
-            bool byInterval = !byCapacity && mergeInterval >= 0L && l1Count < max && TimeHelper.GetTimeStamp() > Volatile.Read(ref nextMerge);
+            bool byInterval = !byCapacity && mergeInterval >= 0L && l1Count < thresholdCapacity && TimeHelper.GetTimeStamp() > Volatile.Read(ref nextMerge);
             if (!(byCapacity || byInterval))
                 return;
 
@@ -167,12 +166,12 @@ namespace KGySoft.Collections
 
             try
             {
-                if (byCapacity && threshold < max)
+                if (byCapacity && threshold < thresholdCapacity)
                     // Max(threshold, ...): guard against overflow
-                    nextCapacity = Math.Min(max, Math.Max(threshold, Math.Max(l1Count + l2Count, threshold << 1)));
+                    nextCapacity = Math.Min(thresholdCapacity, Math.Max(threshold, Math.Max(l1Count + l2Count, threshold << 1)));
 
                 growingStorage = null;
-                readOnlyStorage = new ReadOnlyDictionary(max, l2Cache, l1Cache);
+                readOnlyStorage = new ReadOnlyDictionary(thresholdCapacity, l2Cache, l1Cache);
             }
             finally
             {
@@ -190,7 +189,8 @@ namespace KGySoft.Collections
             if (!isMerging)
                 return true;
 
-            // a merge has been started, values from growingStorage storage might be started to copied: preventing current thread from consuming CPU until merge is finished
+            // a merge has been started, values from growingStorage storage might be started to copied:
+            // preventing the current thread from creating a new growing storage until the merge is finished
             var wait = new TimedSpinWait();
             while (isMerging)
                 wait.SpinOnce();
@@ -207,11 +207,8 @@ namespace KGySoft.Collections
                 IEqualityComparer<TKey>? comp = comparer;
                 return (uint)(comp == null ? key.GetHashCode() : comp.GetHashCode(key));
             }
-
-            return (uint)comparer!.GetHashCode(key);
-#else
-            return (uint)comparer!.GetHashCode(key);
 #endif
+            return (uint)comparer!.GetHashCode(key);
         }
 
         #endregion
