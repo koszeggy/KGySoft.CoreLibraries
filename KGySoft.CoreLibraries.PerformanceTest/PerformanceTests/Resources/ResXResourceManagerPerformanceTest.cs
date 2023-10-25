@@ -35,9 +35,11 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Resources
         [TestCase("TestString")]
         [TestCase("TestBytes")]
         [TestCase("TestPoint")]
-        [TestCase("TestImageEmbedded")]
         [TestCase("TestSoundEmbedded")]
+#if NETFRAMEWORK
+        [TestCase("TestImageEmbedded")]
         [TestCase("TestObjectEmbedded")]
+#endif
         public void GetObject(string name)
         {
             var inv = CultureInfo.InvariantCulture;
