@@ -38,9 +38,9 @@ namespace KGySoft.Collections
         internal static readonly LockFreeCacheOptions Profile4 = new LockFreeCacheOptions { InitialCapacity = 4, ThresholdCapacity = 4, HashingStrategy = HashingStrategy.And, MergeInterval = TimeSpan.FromMilliseconds(100) };
         internal static readonly LockFreeCacheOptions Profile16 = new LockFreeCacheOptions { InitialCapacity = 4, ThresholdCapacity = 16, HashingStrategy = HashingStrategy.And, MergeInterval = TimeSpan.FromMilliseconds(100) };
         internal static readonly LockFreeCacheOptions Profile128 = new LockFreeCacheOptions { ThresholdCapacity = 128, HashingStrategy = HashingStrategy.And, MergeInterval = TimeSpan.FromMilliseconds(100) };
-        internal static readonly LockFreeCacheOptions Profile256 = new LockFreeCacheOptions { ThresholdCapacity = 256, HashingStrategy = HashingStrategy.And, MergeInterval = TimeSpan.FromMilliseconds(100) };
-        internal static readonly LockFreeCacheOptions Profile1K = new LockFreeCacheOptions { ThresholdCapacity = 1024, HashingStrategy = HashingStrategy.And, MergeInterval = TimeSpan.FromMilliseconds(100) };
-        internal static readonly LockFreeCacheOptions Profile8K = new LockFreeCacheOptions { ThresholdCapacity = 8192, HashingStrategy = HashingStrategy.And, MergeInterval = TimeSpan.FromMilliseconds(100) };
+        internal static readonly LockFreeCacheOptions Profile256 = new LockFreeCacheOptions { ThresholdCapacity = 256, HashingStrategy = HashingStrategy.And, MergeInterval = TimeSpan.FromMilliseconds(250) };
+        internal static readonly LockFreeCacheOptions Profile1K = new LockFreeCacheOptions { ThresholdCapacity = 1024, HashingStrategy = HashingStrategy.And, MergeInterval = TimeSpan.FromMilliseconds(250) };
+        internal static readonly LockFreeCacheOptions Profile8K = new LockFreeCacheOptions { ThresholdCapacity = 8192, HashingStrategy = HashingStrategy.And, MergeInterval = TimeSpan.FromMilliseconds(250) };
 
         #endregion
 

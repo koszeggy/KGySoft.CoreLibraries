@@ -151,11 +151,8 @@ namespace KGySoft.Collections
                 return;
 
             Debug.Assert(l2Cache.Count > 0 || GetType() != typeof(LockFreeCache<TKey, TValue>), "Unless using a derived type, L2 cache is not expected to be empty here");
-            int threshold = nextCapacity;
-            int l1Count = l1Cache.Count;
-            int l2Count = l2Cache.Count;
-            bool byCapacity = l2Count >= threshold;
-            bool byInterval = !byCapacity && mergeInterval >= 0L && l1Count < thresholdCapacity && TimeHelper.GetTimeStamp() > Volatile.Read(ref nextMerge);
+            bool byCapacity = l2Cache.Count >= nextCapacity;
+            bool byInterval = !byCapacity && mergeInterval >= 0L && l1Cache.Count < thresholdCapacity && TimeHelper.GetTimeStamp() > Volatile.Read(ref nextMerge);
             if (!(byCapacity || byInterval))
                 return;
 
@@ -166,9 +163,10 @@ namespace KGySoft.Collections
 
             try
             {
+                int threshold = nextCapacity;
                 if (byCapacity && threshold < thresholdCapacity)
                     // Max(threshold, ...): guard against overflow
-                    nextCapacity = Math.Min(thresholdCapacity, Math.Max(threshold, Math.Max(l1Count + l2Count, threshold << 1)));
+                    nextCapacity = Math.Min(thresholdCapacity, Math.Max(threshold, Math.Max(l1Cache.Count + l2Cache.Count, threshold << 1)));
 
                 growingStorage = null;
                 readOnlyStorage = new ReadOnlyDictionary(thresholdCapacity, l2Cache, l1Cache);
