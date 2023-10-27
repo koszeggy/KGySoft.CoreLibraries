@@ -31,7 +31,7 @@ namespace KGySoft.CoreLibraries
     {
         /// <summary>
         /// <para>Represents the short name of a <see cref="Type"/> without namespaces, eg.:
-        /// <br/><c>SomeType[String,SomeType]</c></para>
+        /// <br/><c>SomeGenericType`2[String,SomeType]</c></para>
         /// <para>
         /// Differences from <see cref="MemberInfo.Name">Type.Name</see>:
         /// <list type="bullet">
@@ -43,7 +43,7 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// <para>Represents the long name of a <see cref="Type"/> along with namespaces, eg.:
-        /// <br/><c>SomeNamespace.SomeType[System.String,SomeNamespace.SomeType]</c></para>
+        /// <br/><c>SomeNamespace.SomeGenericType`2[System.String,SomeNamespace.SomeType]</c></para>
         /// <para>If this name is unique in the loaded assemblies, then the name can be successfully parsed by
         /// the <see cref="Reflector.ResolveType(string,ResolveTypeOptions)">Reflector.ResolveType</see> method.</para>
         /// <para>
@@ -59,7 +59,7 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// <para>Represents the full name of a <see cref="Type"/> with assembly qualified names for generic arguments of non-core types, eg.:
-        /// <br/><c>SomeNamespace.SomeType[System.String,[SomeNamespace.SomeType, SomeAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]</c></para>
+        /// <br/><c>SomeNamespace.SomeGenericType`2[System.String,[SomeNamespace.SomeType, SomeAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]</c></para>
         /// <para>If this name is unique in the loaded assemblies, then the name can be successfully parsed by
         /// the <see cref="Reflector.ResolveType(string,ResolveTypeOptions)">Reflector.ResolveType</see> method.</para>
         /// <para>
@@ -75,7 +75,7 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// <para>Represents the full name of a <see cref="Type"/> with assembly qualified names for all generic arguments, eg.:
-        /// <br/><c>SomeNamespace.SomeType[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[SomeNamespace.SomeType, SomeAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]</c></para>
+        /// <br/><c>SomeNamespace.SomeGenericType`2[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[SomeNamespace.SomeType, SomeAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]</c></para>
         /// <para>If this name is unique in the loaded assemblies, then the name can be successfully parsed by
         /// the <see cref="Reflector.ResolveType(string,ResolveTypeOptions)">Reflector.ResolveType</see> method.</para>
         /// <para>
@@ -90,7 +90,7 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// <para>Represents the assembly qualified name of a <see cref="Type"/> omitting assembly names for core types, eg.:
-        /// <br/><c>SomeNamespace.SomeType[System.String,[SomeNamespace.SomeType, SomeAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]], SomeAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null</c></para>
+        /// <br/><c>SomeNamespace.SomeGenericType`2[System.String,[SomeNamespace.SomeType, SomeAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]], SomeAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null</c></para>
         /// <para>If all needed assemblies are available, then the name can be successfully parsed by
         /// the <see cref="Reflector.ResolveType(string,ResolveTypeOptions)">Reflector.ResolveType</see> method.</para>
         /// <para>If the type does not contain generic parameter types, then the name can be parsed even by
@@ -109,7 +109,7 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// <para>Represents the assembly qualified name of a <see cref="Type"/> forcing assembly names for core types, eg.:
-        /// <br/><c>SomeNamespace.SomeType[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[SomeNamespace.SomeType, SomeAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]], SomeAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null</c></para>
+        /// <br/><c>SomeNamespace.SomeGenericType`2[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[SomeNamespace.SomeType, SomeAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]], SomeAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null</c></para>
         /// <para>If all needed assemblies are available, then the name can be successfully parsed by
         /// the <see cref="Reflector.ResolveType(string,ResolveTypeOptions)">Reflector.ResolveType</see> method.</para>
         /// <para>If the type does not contain generic parameter types, then the name can be parsed even by
