@@ -1145,7 +1145,7 @@ namespace KGySoft.ComponentModel
             if (isExplicitChanging)
                 return;
 
-            if (e.Action.In(NotifyCollectionChangedAction.Add, NotifyCollectionChangedAction.Remove, NotifyCollectionChangedAction.Reset))
+            if (e.Action is NotifyCollectionChangedAction.Add or NotifyCollectionChangedAction.Remove or NotifyCollectionChangedAction.Reset)
                 EndNew();
 
             // We can jump out early only if we don't need to maintain item subscriptions
@@ -1163,7 +1163,7 @@ namespace KGySoft.ComponentModel
 
             if (isAddingNew && e.ListChangedType == ListChangedType.ItemAdded)
                 addNewPos = e.NewIndex;
-            if (e.ListChangedType.In(ListChangedType.ItemAdded, ListChangedType.ItemDeleted, ListChangedType.Reset))
+            if (e.ListChangedType is ListChangedType.ItemAdded or ListChangedType.ItemDeleted or ListChangedType.Reset)
                 EndNew();
 
             if (!RaiseCollectionChangedEvents && !RaiseListChangedEvents)
