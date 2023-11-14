@@ -153,7 +153,7 @@ namespace KGySoft.Serialization.Binary
     /// does not allow instantiating natively not supported types that are not serializable, and guards against some attacks that may cause <see cref="OutOfMemoryException"/>.
     /// When using <see cref="BinarySerializationOptions.SafeMode"/> all of the natively not supported types, whose assembly qualified names are
     /// stored in the serialization stream must be explicitly declared as expected types in the deserialization methods, including apparently innocent types such as <see langword="enum"/>s.</para>
-    /// <para>Please also note that in safe mode even some system types are forbidden to use even if they are serializable and are specified as expected types.
+    /// <para>Please also note that in safe mode some system types are forbidden to use even if they are serializable and are specified as expected types.
     /// In the .NET Framework there are some serializable types in the fundamental core assemblies that can be exploited for several attacks (causing unresponsiveness,
     /// <see cref="StackOverflowException"/> or even files to be deleted). Starting with .NET Core these types are not serializable anymore and some of them have been moved to separate NuGet packages anyway,
     /// but the <see cref="BinaryFormatter"/> class in the .NET Framework is still vulnerable against such attacks. When using the <see cref="BinarySerializationOptions.SafeMode"/> flag,
@@ -200,7 +200,7 @@ namespace KGySoft.Serialization.Binary
     /// methods to use specific <see cref="BinaryWriter"/> and <see cref="BinaryReader"/> instances for serialization and deserialization, respectively.</para>
     /// <note type="warning">In .NET Framework almost every type was serializable by <see cref="BinaryFormatter"/>. In .NET Core this principle has been
     /// radically changed. Many types are just simply not marked by the <see cref="SerializableAttribute"/> anymore (eg. <see cref="MemoryStream"/>,
-    /// <see cref="CultureInfo"/>, <see cref="Encoding"/>), and also there are some others, which still implement <see cref="ISerializable"/> but their <see cref="ISerializable.GetObjectData">GetObjectData</see>
+    /// <see cref="CultureInfo"/>, <see cref="Encoding"/>), whereas some types, which still implement <see cref="ISerializable"/> but their <see cref="ISerializable.GetObjectData">GetObjectData</see>
     /// throw a <see cref="PlatformNotSupportedException"/> now. Binary serialization of these types is not recommended anymore. If you still must serialize or deserialize such types
     /// see the <strong>Remarks</strong> section of the <see cref="CustomSerializerSurrogateSelector"/> for more details.</note>
     /// <h2>Natively supported simple types</h2>

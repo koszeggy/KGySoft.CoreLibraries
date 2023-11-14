@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <!--<TargetFrameworks>net35;net40;net45;net47;net472;netcoreapp2.0;netcoreapp2.1;netcoreapp3.0;net5.0;net6.0;net7.0;net8.0</TargetFrameworks>-->
-    <TargetFrameworks>net48;net8.0</TargetFrameworks>
+    <TargetFrameworks>net8.0</TargetFrameworks>
 
     <!--For UnitTesting the .NET Standard versions-->
     <!--<TargetFrameworks>netcoreapp2.0;netcoreapp3.0</TargetFrameworks>-->
@@ -29,6 +29,7 @@
     </EmbeddedResource>
   </ItemGroup>
 
+  <!-- Common NuGet references -->
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.9.4" />
     <PackageReference Include="NUnit" Version="3.13.1" />

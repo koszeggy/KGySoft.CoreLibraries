@@ -1180,6 +1180,7 @@ namespace KGySoft.CoreLibraries
 #endif
         }
 
+#if !NETSTANDARD2_0
         [SecurityCritical]
 #if NETFRAMEWORK
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -1206,6 +1207,7 @@ namespace KGySoft.CoreLibraries
                 }
             }
         }
+#endif
 
         [SecurityCritical]
         private static int GetSizeFallback(Type type)

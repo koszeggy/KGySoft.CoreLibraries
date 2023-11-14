@@ -53,14 +53,18 @@ namespace KGySoft.Serialization.Binary
 
             #region Static Fields
 
+#if !NET35
             internal static readonly CollectionSerializationInfo Tuple = new() { Info = CollectionInfo.IsGeneric | CollectionInfo.IsTuple };
+#endif
 
+#if NETCOREAPP3_0_OR_GREATER
             internal static readonly CollectionSerializationInfo FixedSizeGenericStruct = new()
             {
                 Info = CollectionInfo.IsGeneric | CollectionInfo.BackingArrayHasKnownSize | CollectionInfo.CreateResultFromByteArray,
                 GetBackingArray = o => BinarySerializer.SerializeValueType((ValueType)o),
                 CreateArrayBackedCollectionInstanceFromArray = (_, t, a) => BinarySerializer.DeserializeValueType(t, (byte[])a)
             };
+#endif
 
             #endregion
 
