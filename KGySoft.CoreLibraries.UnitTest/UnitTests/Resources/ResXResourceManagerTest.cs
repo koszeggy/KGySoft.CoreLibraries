@@ -380,7 +380,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             // text file by reference
             Assert.AreEqual(refManager.GetString("TestTextFile"), manager.GetString("TestTextFile"));
 
-#if !(NETCOREAPP2_0 || NETCOREAPP2_1) // .NET Core 2.x: System.NotSupportedException : Cannot read resources that depend on serialization.
+#if !(NETCOREAPP2_0 || NETCOREAPP2_1) && WINDOWS // .NET Core 2.x: System.NotSupportedException : Cannot read resources that depend on serialization.
             // icon by reference
             reference = refManager.GetObject("TestIcon");
             check = manager.GetObject("TestIcon");
@@ -433,7 +433,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             AssertItemsEqual(((MemoryStream)reference).ToArray(), ((MemoryStream)check).ToArray());
 #endif
 
-#if !(NETCOREAPP2_0 || NETCOREAPP2_1)
+#if !(NETCOREAPP2_0 || NETCOREAPP2_1) && WINDOWS
             // point embedded by type converter
             reference = refManager.GetObject("TestPoint"); // .NET Core 2.x: System.NotSupportedException : Cannot read resources that depend on serialization.
             check = manager.GetObject("TestPoint");

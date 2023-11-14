@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <!--<TargetFrameworks>net35;net40;net45;net46;net47;net472;netcoreapp2.0;netcoreapp2.1;netcoreapp3.0;net5.0;net6.0;net7.0;net8.0</TargetFrameworks>-->
-    <TargetFrameworks>net8.0</TargetFrameworks>
+    <TargetFrameworks>net7.0</TargetFrameworks>
 
     <RunAnalyzersDuringLiveAnalysis>false</RunAnalyzersDuringLiveAnalysis>
     
@@ -43,7 +43,7 @@
 
   <!-- Common NuGet references -->
   <ItemGroup>
-    <PackageReference Include="KGySoft.Drawing" Version="7.0.0" />
+    <PackageReference Include="KGySoft.Drawing" Version="7.2.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.9.4" />
     <PackageReference Include="NUnit" Version="3.13.1" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.17.0">

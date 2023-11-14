@@ -711,7 +711,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 Cursors.Arrow, // a default cursor: by string
 #endif
 
-#if !(NETCOREAPP2_0 || NETCOREAPP2_1)
+#if !(NETCOREAPP2_0 || NETCOREAPP2_1) && WINDOWS
                 Icons.Information, // multi-resolution icon
                 Icons.Information.ToMultiResBitmap(), // multi-resolution bitmap-icon (built-in saves one page only)  
 #if WINDOWS

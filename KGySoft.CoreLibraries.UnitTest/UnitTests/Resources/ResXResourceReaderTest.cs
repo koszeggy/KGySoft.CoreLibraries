@@ -163,6 +163,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 {
                     Console.WriteLine($"!!!Key: {enumerator.Key} - Error: {e.Message}");
 
+#if !WINDOWS
+                    if (e is PlatformNotSupportedException || e.InnerException is PlatformNotSupportedException)
+                        continue;
+#endif
 #if !NETFRAMEWORK
                     if (e is SerializationException se && se.Message.Contains("System.Windows.Forms"))
                         continue;

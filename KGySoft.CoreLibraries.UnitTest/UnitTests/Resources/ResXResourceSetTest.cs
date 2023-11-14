@@ -80,7 +80,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         private static void RemoveUnsupportedItems(ResXResourceSet rs)
         {
             string[] unsupported =
-#if NETCOREAPP2_0 // .NET Core 2.0 Drawing and WinForms types are not supported
+#if NETCOREAPP2_0 || !WINDOWS // .NET Core 2.0 Drawing and WinForms types are not supported
         		{ "System.Drawing", "System.Windows.Forms" }; 
 #else // .NET Core 3.0 and above: Drawing and WinForms types are supported, only binary serialized types are removed
                 Reflector.EmptyArray<string>();
@@ -138,7 +138,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.IsInstanceOf<ImageListStreamer>(rs.GetObject("TestObjectEmbedded"));
 #endif
 
-#if !NETCOREAPP2_0
+#if !NETCOREAPP2_0 && WINDOWS
             // mime, converted from byte array by type converter
             Assert.IsInstanceOf<Bitmap>(rs.GetObject("TestImageEmbedded"));
 #endif
@@ -149,7 +149,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             // WinForms.FileRef/MemoryStream
             Assert.IsInstanceOf<MemoryStream>(rs.GetObject("TestSound"));
 
-#if !NETCOREAPP2_0
+#if !NETCOREAPP2_0 && WINDOWS
             // WinForms.FileRef/object created from stream
             Assert.IsInstanceOf<Bitmap>(rs.GetObject("TestImage")); 
 #endif
@@ -319,7 +319,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
             // by type converter
             rs.SetObject("TypeConverter/string", Point.Empty);
-#if !(NETCOREAPP2_0 || NETCOREAPP2_1)
+#if !(NETCOREAPP2_0 || NETCOREAPP2_1) && WINDOWS
             rs.SetObject("TypeConverter/byte[]", SystemIcons.Application.ToBitmap()); 
 #endif
 
