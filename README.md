@@ -367,11 +367,11 @@ bool invoked = Reflector.TryInvokeMethod(instance, "MethodMaybeExists", out resu
 
 - #### Binary Serialization
 
-> 🔒 _Security Note:_ You should not use binary serialization if the serialization stream may come from an untrusted source (eg. remote service, file or database). Its recommended use case is to save in-memory snapshots of objects (eg. for undo/redo functionality) or to create bitwise deep clones. If you still need to deserialize possibly harmful content make sure to use the [`SafeMode`](https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Serialization_Binary_BinarySerializationOptions.htm) option, which prevents loading assemblies during the deserialization as well as deserializing potentially harmful types. See the security notes at the **Remarks** section of the [`BinarySerializationFormatter`][bsf] class for more details.
+> 🔒 _Security Note:_ If the serialization stream may come from an untrusted source (eg. remote service, file or database), then make sure you enable the [`SafeMode`](https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Serialization_Binary_BinarySerializationOptions.htm) for the deserialization so that all custom types that are stored by assembly identity or by full name must be explicitly declared as expected types (this is not needed for natively supported types, which are not stored by name). Without using this option or some additional security for the serialization stream binary serialization is safe only if both the serialization and deserialization happens in the same process, such as creating in-memory snapshots of objects (eg. for undo/redo functionality) or to create bitwise deep clones. See the security notes at the **Remarks** section of the [`BinarySerializationFormatter`][bsf] class for more details.
 
-[`BinarySerializationFormatter`][bsf] serves the same purpose as `BinaryFormatter` but in most cases produces much compact serialized data with a better performance. It supports many core types natively, including many collections and newer basic types that are not marked serializable anymore (eg. `Half`, `Rune`, `DateOnly`, `TimeOnly`, etc.). It means that serialization of those types does not involve storing assembly and type names at all, which ensures very compact sizes as well as their safe deserialization on every possible platform. Apart from the natively supported types it works similarly to `BinaryFormatter`: uses recursive serialization of fields and supports the full binary serialization infrastructure including `ISerializable`, `IDeserializationCallback`, `IObjectReference`, serialization method attributes, binder and surrogates support.
+[`BinarySerializationFormatter`][bsf] serves the same purpose as `BinaryFormatter` but it fixes a lot of security concerns `BinaryFormatter` suffered from and in most cases produces much compact serialized data with a better performance. It supports many core types natively, including many collections and newer basic types that are not marked serializable anymore (eg. `Half`, `Rune`, `DateOnly`, `TimeOnly`, etc.). Native support means that serialization of those types does not involve storing assembly and type names at all, which ensures very compact sizes as well as their safe deserialization on every possible platform. Apart from the natively supported types it works similarly to `BinaryFormatter`: uses recursive serialization of fields and supports the full binary serialization infrastructure including `ISerializable`, `IDeserializationCallback`, `IObjectReference`, serialization method attributes, binder and surrogates support. Please note though the in safe mode no custom binders and surrogates are allowed to use.
 
-Even if used in a secure environment or on a cryptographically secured channel, binary serializer is not quite recommended for communicating between remote entities, because by default it relies on private implementation (ie. field names), except for natively supported and custom serialized types. Therefore it may be sensitive for version changes and refactoring. It is recommended to use message types that can be completely restored by public fields and properties so you can use a text-based serializer, eg. an [`XML serializer`](#xml-serialization).
+Even if used in a secure environment or on a cryptographically secured channel, binary serialization of custom types is not quite recommended when communicating between remote entities, because by default custom serialization relies on private implementation (ie. field names). In such cases use messages created exclusively from the natively supported types (see them at [`BinarySerializationFormatter`][bsf]) so it can be used like some `ProtoBuf` but with much more available predefined types. If you really need to use custom types between remote endpoints, then it is recommended to use message types that can be completely restored by public fields and properties so you can use a text-based serializer, eg. an [`XML serializer`](#xml-serialization).
 
 Binary serialization functions are available via the static [`BinarySerializer`](https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Serialization_Binary_BinarySerializer.htm) class and by the [`BinarySerializationFormatter`][bsf] type.
 
@@ -386,37 +386,17 @@ BinarySerializer.SerializeByWriter(writer, instance); // by BinaryWriter
 // or explicitly by a BinarySerializationFormatter instance:
 rawData = new BinarySerializationFormatter().Serialize(instance);
 
-// supports even non-serializable types (default options actually contain this flag):
-data = BinarySerializer.Serialize(instance, BinarySerializationOptions.RecursiveSerializationAsFallback);
-
 // Deserialization:
-obj = (MyClass)BinarySerializer.Deserialize(rawData); // from byte[]
-obj = (MyClass)BinarySerializer.DeserializeFromStream(stream); // from Stream
-obj = (MyClass)BinarySerializer.DeserializeByReader(reader); // by BinaryReader
+obj = BinarySerializer.Deserialize<MyClass>(rawData); // from byte[]
+obj = BinarySerializer.DeserializeFromStream<MyClass>(stream); // from Stream
+obj = BinarySerializer.DeserializeByReader<MyClass>(reader); // by BinaryReader
 ```
 
-The [`BinarySerializationFormatter`][bsf] supports many types and collections natively (see the link), which has two benefits: these types are serialized without any assembly information and the result is very compact as well. Additionally, you can use the `BinarySerializationOptions.OmitAssemblyQualifiedNames` flag to omit assembly information on serialization, which reduces the size of the output even more, and more importantly, it makes impossible to load assemblies during the deserialization even if the `BinarySerializationOptions.SafeMode` is not used during the deserialization.
-
-In fact, KGy SOFT Core Library contains also a [`WeakAssemblySerializationBinder`](https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Serialization_Binary_WeakAssemblySerializationBinder.htm) class, which can be used with any `IFormatter` serializers (even with `BinaryFormatter`). It can be useful when:
-
-* Version of the assembly has changed and you want to allow partial name match (hence the name 'weak')
-* You want to disallow loading assemblies during serialization if they are not already loaded (see its [`SafeMode`](https://docs.kgysoft.net/corelibraries/html/P_KGySoft_Serialization_Binary_WeakAssemblySerializationBinder_SafeMode.htm) property)
-* You want to completely omit the assembly names from the deserialization stream. In this case the binder has to be set both on serialization and deserialization (see the [OmitAssemblyNameOnSerialize](https://docs.kgysoft.net/corelibraries/html/P_KGySoft_Serialization_Binary_WeakAssemblySerializationBinder_OmitAssemblyNameOnSerialize.htm) property). You actually do not need it when serializing by [`BinarySerializationFormatter`][bsf] because you can use the `OmitAssemblyQualifiedNames` option.
-
-```cs
-IFormatter formatter = new BinaryFormatter(); // but you had better use the BinarySerializationFormatter
-formatter.Binder = new WeakAssemblySerializationBinder { SafeMode = true }; // works with any IFormatter!
-
-result = (MyClass)formatter.Deserialize(streamSerializedByAnOldAssemblyVersion);
-```
-
-> ℹ️ _Solving compatibility issues between different platforms:_ In .NET Core there are many types that used to be serializable in .NET Framework but the `[Serializable]` attribute is not applied to them in .NET Core/Standard. Though the binary serialization of such types is not recommended anymore, their support could be required for compatibility reasons. In this case the [`CustomSerializerSurrogateSelector`](https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Serialization_Binary_CustomSerializerSurrogateSelector.htm) can be a solution, which can be used both with `BinaryFormatter` and [`BinarySerializationFormatter`][bsf]. See the **Remarks** section of the [`CustomSerializerSurrogateSelector`](https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Serialization_Binary_CustomSerializerSurrogateSelector.htm) class for various use cases and their solutions.
-
-[bsf]: https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Serialization_Binary_BinarySerializationFormatter.htm
+The [`BinarySerializationFormatter`][bsf] supports many types and collections natively (see the link), which has more benefits: these types are serialized without any assembly information and the result is very compact as well. Additionally, you can use the `BinarySerializationOptions.OmitAssemblyQualifiedNames` flag to omit assembly information on serialization, which reduces the size of the output even more, and more importantly, it makes impossible to load assemblies during the deserialization even if the `BinarySerializationOptions.SafeMode` is not used during the deserialization.
 
 - #### XML Serialization
 
-> 🔒 _Security Note:_ KGy SOFT's [`XmlSerializer`][xml] is a polymorphic serializer. If the serialized content comes from an untrusted source make sure you use its [`DeserializeSafe`](https://docs.kgysoft.net/corelibraries/html/Overload_KGySoft_Serialization_Xml_XmlSerializer_DeserializeSafe.htm)/[`DeserializeContentSafe`](https://docs.kgysoft.net/corelibraries/html/Overload_KGySoft_Serialization_Xml_XmlSerializer_DeserializeContentSafe.htm) methods that disallow loading assemblies during the deserialization even if types are specified with their assembly qualified names. Of course, this can only protect you if your library (along with the other loaded assemblies) can't be exploited for security attacks. The [`XmlSerializer`][xml] can only create objects by using their default constructor and is able to set the public fields and properties. It can also create collections by special initializer constructors and can populate them by the standard interface implementations. See the security notes at the **Remarks** section of the [`XmlSerializer`][xml] class for more details.
+> 🔒 _Security Note:_ KGy SOFT's [`XmlSerializer`][xml] is a polymorphic serializer. If the serialized content comes from an untrusted source make sure you use its [`DeserializeSafe`](https://docs.kgysoft.net/corelibraries/html/Overload_KGySoft_Serialization_Xml_XmlSerializer_DeserializeSafe.htm)/[`DeserializeContentSafe`](https://docs.kgysoft.net/corelibraries/html/Overload_KGySoft_Serialization_Xml_XmlSerializer_DeserializeContentSafe.htm) methods that disallow loading assemblies during the deserialization even if types are specified with their assembly qualified names, and make it necessary to name every custom type that are expected in the serialization XML. See the security notes at the **Remarks** section of the [`XmlSerializer`][xml] class for more details.
 
 Unlike binary serialization, which is meant to save the bitwise content of an object, the [`XmlSerializer`][xml] can save and restore the public properties and fields. Meaning, it cannot guarantee that the original state of an object can be fully restored unless it is completely exposed by public members. The [`XmlSerializer`][xml] can be a good choice for saving configurations or components whose state can be edited in a property grid, for example.
 
@@ -450,12 +430,12 @@ var options = XmlSerializationOptions.RecursiveSerializationAsFallback;
 
 // serializing into XElement
 XElement element = XmlSerializer.Serialize(person, options);
-var clone = (Person)XmlSerializer.Deserialize(element);
+var clone = XmlSerializer.DeserializeSafe<Person>(element);
 
 // serializing into file/Stream/TextWriter/XmlWriter are also supported: An XmlWriter will be used
 var sb = new StringBuilder();
 XmlSerializer.Serialize(new StringWriter(sb), person, options);
-clone = (Person)XmlSerializer.Deserialize(new StringReader(sb.ToString()));
+clone = XmlSerializer.DeserializeSafe<Person>(new StringReader(sb.ToString()));
 
 Console.WriteLine(sb);
 ```
