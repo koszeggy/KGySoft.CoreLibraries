@@ -515,7 +515,7 @@ namespace KGySoft.Reflection
         /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents an instance property or a property of an open generic type.</exception>
         /// <exception cref="ArgumentException"><typeparamref name="TProperty"/> is invalid.</exception>
         /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a read-only property
-        /// or an indexed property with more than one parameters.</exception>
+        /// or an indexed property with more than one parameter.</exception>
         /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="PropertyAccessor"/>
         /// represents a <see langword="ref"/> property.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -536,7 +536,7 @@ namespace KGySoft.Reflection
         /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents an instance property or a property of an open generic type.</exception>
         /// <exception cref="ArgumentException"><typeparamref name="TProperty"/> is invalid.</exception>
         /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a write-only property
-        /// or an indexed property with more than one parameters.</exception>
+        /// or an indexed property with more than one parameter.</exception>
         /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="PropertyAccessor"/>
         /// represents a <see langword="ref"/> property.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -554,7 +554,7 @@ namespace KGySoft.Reflection
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a read-only property
-        /// or an indexed property with more than one parameters.</exception>
+        /// or an indexed property with more than one parameter.</exception>
         /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="PropertyAccessor"/>
         /// represents a <see langword="ref"/> property.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -579,7 +579,7 @@ namespace KGySoft.Reflection
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a write-only property
-        /// or an indexed property with more than one parameters.</exception>
+        /// or an indexed property with more than one parameter.</exception>
         /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="PropertyAccessor"/>
         /// represents a <see langword="ref"/> property.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -600,7 +600,7 @@ namespace KGySoft.Reflection
         /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents a static property or a property of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a read-only property
-        /// or an indexed property with more than one parameters.</exception>
+        /// or an indexed property with more than one parameter.</exception>
         /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="PropertyAccessor"/>
         /// represents a <see langword="ref"/> property.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -623,7 +623,7 @@ namespace KGySoft.Reflection
         /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents a static property or a property of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a write-only property
-        /// or an indexed property with more than one parameters.</exception>
+        /// or an indexed property with more than one parameter.</exception>
         /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="PropertyAccessor"/>
         /// represents a <see langword="ref"/> property.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -632,7 +632,7 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Sets the strongly typed value of a single-parameter indexed property in a reference type. If the type of the property, the declaring instance or the index parameter is not
-        /// known at compile time, or the indexer has more than one parameters, then the
+        /// known at compile time, or the indexer has more than one parameter, then the
         /// non-generic <see cref="O:KGySoft.Reflection.PropertyAccessor.Set">Set</see> methods can be used.
         /// </summary>
         /// <typeparam name="TInstance">The type of the instance that declares the property.</typeparam>
@@ -645,7 +645,7 @@ namespace KGySoft.Reflection
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a read-only property
-        /// or an indexed property with more than one parameters.</exception>
+        /// or an indexed property with more than one parameter.</exception>
         /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="PropertyAccessor"/>
         /// represents a <see langword="ref"/> property.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -661,7 +661,7 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Gets the strongly typed value of a single-parameter indexed property in a reference type.
         /// If the type of the property, the declaring instance or the index parameter is not known at compile time,
-        /// or the indexer has more than one parameters, then the non-generic <see cref="O:KGySoft.Reflection.PropertyAccessor.Set">Set</see> methods can be used.
+        /// or the indexer has more than one parameter, then the non-generic <see cref="O:KGySoft.Reflection.PropertyAccessor.Set">Set</see> methods can be used.
         /// </summary>
         /// <typeparam name="TInstance">The type of the instance that declares the property.</typeparam>
         /// <typeparam name="TProperty">The type of the property.</typeparam>
@@ -673,7 +673,7 @@ namespace KGySoft.Reflection
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a write-only property
-        /// or an indexed property with more than one parameters.</exception>
+        /// or an indexed property with more than one parameter.</exception>
         /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="PropertyAccessor"/>
         /// represents a <see langword="ref"/> property.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -685,7 +685,7 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Sets the strongly typed value of a single-parameter indexed property in a value type. If the type of the property,
-        /// the declaring instance or the index parameter is not known at compile time, or the indexer has more than one parameters, then the
+        /// the declaring instance or the index parameter is not known at compile time, or the indexer has more than one parameter, then the
         /// non-generic <see cref="O:KGySoft.Reflection.PropertyAccessor.Set">Set</see> methods can be used.
         /// </summary>
         /// <typeparam name="TInstance">The type of the instance that declares the property.</typeparam>
@@ -697,7 +697,7 @@ namespace KGySoft.Reflection
         /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents a static property or a property of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a read-only property
-        /// or an indexed property with more than one parameters.</exception>
+        /// or an indexed property with more than one parameter.</exception>
         /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="PropertyAccessor"/>
         /// represents a <see langword="ref"/> property.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -712,7 +712,7 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Gets the strongly typed value of a single-parameter indexed property in a value type.
         /// If the type of the property, the declaring instance or the index parameter is not known at compile time,
-        /// or the indexer has more than one parameters, then the non-generic <see cref="O:KGySoft.Reflection.PropertyAccessor.Set">Set</see> methods can be used.
+        /// or the indexer has more than one parameter, then the non-generic <see cref="O:KGySoft.Reflection.PropertyAccessor.Set">Set</see> methods can be used.
         /// </summary>
         /// <typeparam name="TInstance">The type of the instance that declares the property.</typeparam>
         /// <typeparam name="TProperty">The type of the property.</typeparam>
@@ -723,7 +723,7 @@ namespace KGySoft.Reflection
         /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents a static property or a property of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a write-only property
-        /// or an indexed property with more than one parameters.</exception>
+        /// or an indexed property with more than one parameter.</exception>
         /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="PropertyAccessor"/>
         /// represents a <see langword="ref"/> property.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]

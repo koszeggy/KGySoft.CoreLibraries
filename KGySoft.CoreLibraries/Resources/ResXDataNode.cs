@@ -1070,7 +1070,7 @@ namespace KGySoft.Resources
         /// Retrieves the object that is stored by this node, specifying the expected type of the result.
         /// </summary>
         /// <returns>An instance of <typeparamref name="T"/> that corresponds to the stored value.</returns>
-        /// <typeparam name="T">The expected tpe of the result. For types that are not supported natively it should not be an interface or an abstract type
+        /// <typeparam name="T">The expected type of the result. For types that are not supported natively it should not be an interface or an abstract type
         /// but the exact type of the resource. Otherwise, if there is no cached result stored in this <see cref="ResXDataNode"/> instance
         /// the deserialization will fail due to an unexpected type.</typeparam>
         /// <param name="cleanupRawData"><see langword="true"/> to free the underlying XML data once the value is deserialized; otherwise, <see langword="false"/>. This parameter is optional.
