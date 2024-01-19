@@ -536,7 +536,7 @@ namespace KGySoft.Serialization.Xml
             // Skip 3.) DefaultValue equals to member value
             bool hasDefaultValue = false;
             object? defaultValue = null;
-            if (IgnoreDefaultValueAttribute)
+            if (!IgnoreDefaultValueAttribute)
             {
                 attrs = Reflector.GetAttributes(member, typeof(DefaultValueAttribute), true);
                 hasDefaultValue = attrs.Length > 0;

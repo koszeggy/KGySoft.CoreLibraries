@@ -6,6 +6,15 @@
 ===============================================================================
 
 ~~~~~~~~~
+* v8.1.0:
+~~~~~~~~~
+
+- KGySoft.Serialization.Xml namespace:
+======================================
+- XmlSerializer class: DefaultValueAttribute was accidentally ignored in v8.0.0, now it's respected again.
+
+
+~~~~~~~~~
 ! v8.0.0:
 ~~~~~~~~~
 
