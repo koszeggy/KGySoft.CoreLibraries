@@ -200,8 +200,9 @@ namespace KGySoft.Serialization.Binary
     /// methods to use specific <see cref="BinaryWriter"/> and <see cref="BinaryReader"/> instances for serialization and deserialization, respectively.</para>
     /// <note type="warning">In .NET Framework almost every type was serializable by <see cref="BinaryFormatter"/>. In .NET Core this principle has been
     /// radically changed. Many types are just simply not marked by the <see cref="SerializableAttribute"/> anymore (eg. <see cref="MemoryStream"/>,
-    /// <see cref="CultureInfo"/>, <see cref="Encoding"/>), whereas some types, which still implement <see cref="ISerializable"/> but their <see cref="ISerializable.GetObjectData">GetObjectData</see>
-    /// throw a <see cref="PlatformNotSupportedException"/> now. Binary serialization of these types is not recommended anymore. If you still must serialize or deserialize such types
+    /// <see cref="CultureInfo"/>, <see cref="Encoding"/>), whereas some types, which still implement <see cref="ISerializable"/> now
+    /// throw a <see cref="PlatformNotSupportedException"/> from their <see cref="ISerializable.GetObjectData">GetObjectData</see>.
+    /// Binary serialization of these types is not recommended anymore. If you still must serialize or deserialize such types
     /// see the <strong>Remarks</strong> section of the <see cref="CustomSerializerSurrogateSelector"/> for more details.</note>
     /// <h2>Natively supported simple types</h2>
     /// <para>Following types are natively supported. When these types are serialized, no type name is stored and there is no recursive traversal of the fields:
