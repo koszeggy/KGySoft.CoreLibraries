@@ -1914,6 +1914,22 @@ namespace KGySoft.Serialization.Binary
 
         #region Static Methods
 
+        #region Internal Methods
+
+        internal static bool IsKnownType(Type type)
+        {
+            if (primitiveTypes.ContainsKey(type) || supportedNonPrimitiveElementTypes.ContainsKey(type))
+                return true;
+
+            if (type.IsConstructedGenericType())
+                type = type.GetGenericTypeDefinition();
+            return supportedCollections.ContainsKey(type);
+        }
+
+        #endregion
+
+        #region Private Methods
+
         private static DataTypes GetCollectionDataType(DataTypes dt) => dt & DataTypes.CollectionTypesAll;
         private static DataTypes GetUnderlyingCollectionDataType(DataTypes dt) => dt & (DataTypes.CollectionTypesAll & ~DataTypes.NullableExtendedCollection);
         private static DataTypes GetElementDataType(DataTypes dt) => dt & ~DataTypes.CollectionTypesAll;
@@ -2144,6 +2160,8 @@ namespace KGySoft.Serialization.Binary
 
             return result.ToString();
         }
+
+        #endregion
 
         #endregion
 

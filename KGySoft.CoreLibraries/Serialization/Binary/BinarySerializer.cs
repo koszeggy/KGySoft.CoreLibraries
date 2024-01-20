@@ -19,8 +19,10 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization;
 using System.Security;
 
 using KGySoft.CoreLibraries;
@@ -137,6 +139,9 @@ namespace KGySoft.Serialization.Binary
         /// natively not supported generic type definition and generic type arguments separately.
         /// If <paramref name="expectedCustomTypes"/> contains constructed generic types, then the generic type definition and
         /// the type arguments will be treated as expected types in any combination.</para>
+        /// <note type="tip">If <typeparamref name="T"/> is a custom type using default recursive serialization, and it contains further custom types
+        /// you can use the <see cref="O:KGySoft.Serialization.Binary.BinarySerializer.ExtractExpectedTypes">ExtractExpectedTypes</see> overloads
+        /// to auto-detect the expected types.</note>
         /// </remarks>
         public static T Deserialize<T>(byte[] rawData, int offset, BinarySerializationOptions options, params Type[]? expectedCustomTypes)
             => new BinarySerializationFormatter(options).Deserialize<T>(rawData, offset, expectedCustomTypes);
@@ -283,6 +288,9 @@ namespace KGySoft.Serialization.Binary
         /// natively not supported generic type definition and generic type arguments separately.
         /// If <paramref name="expectedCustomTypes"/> contains constructed generic types, then the generic type definition and
         /// the type arguments will be treated as expected types in any combination.</para>
+        /// <note type="tip">If <typeparamref name="T"/> is a custom type using default recursive serialization, and it contains further custom types
+        /// you can use the <see cref="O:KGySoft.Serialization.Binary.BinarySerializer.ExtractExpectedTypes">ExtractExpectedTypes</see> overloads
+        /// to auto-detect the expected types.</note>
         /// </remarks>
         public static T DeserializeFromStream<T>(Stream stream, BinarySerializationOptions options, params Type[]? expectedCustomTypes)
             => new BinarySerializationFormatter(options).DeserializeFromStream<T>(stream, expectedCustomTypes);
@@ -432,6 +440,9 @@ namespace KGySoft.Serialization.Binary
         /// natively not supported generic type definition and generic type arguments separately.
         /// If <paramref name="expectedCustomTypes"/> contains constructed generic types, then the generic type definition and
         /// the type arguments will be treated as expected types in any combination.</para>
+        /// <note type="tip">If <typeparamref name="T"/> is a custom type using default recursive serialization, and it contains further custom types
+        /// you can use the <see cref="O:KGySoft.Serialization.Binary.BinarySerializer.ExtractExpectedTypes">ExtractExpectedTypes</see> overloads
+        /// to auto-detect the expected types.</note>
         /// </remarks>
         public static T DeserializeByReader<T>(BinaryReader reader, BinarySerializationOptions options, params Type[]? expectedCustomTypes)
             => new BinarySerializationFormatter(options).DeserializeByReader<T>(reader, expectedCustomTypes);
@@ -594,7 +605,7 @@ namespace KGySoft.Serialization.Binary
         /// <note type="security">Do not use this method with <typeparamref name="T"/> types that have references.
         /// When using this library with a compiler that recognizes the <see langword="unmanaged"/> constraint,
         /// then this is enforced for direct calls; however, by using reflection <typeparamref name="T"/> can be any value type.
-        /// For performance reasons this method does not check if <typeparamref name="T"/> has references
+        /// For performance reasons this method does not check if <typeparamref name="T"/> has references,
         /// but you can call the <see cref="TrySerializeValueType{T}"/> method that performs the check.</note>
         /// </remarks>
         [SecurityCritical]
@@ -657,7 +668,7 @@ namespace KGySoft.Serialization.Binary
         /// <note type="security">Do not use this method with <typeparamref name="T"/> types that have references.
         /// When using this library with a compiler that recognizes the <see langword="unmanaged"/> constraint,
         /// then this is enforced for direct calls; however, by using reflection <typeparamref name="T"/> can be any value type.
-        /// For performance reasons this method does not check if <typeparamref name="T"/> has references
+        /// For performance reasons this method does not check if <typeparamref name="T"/> has references,
         /// but you can call the <see cref="TrySerializeValueArray{T}"/> method that performs the check.</note>
         /// </remarks>
         [SecurityCritical]
@@ -933,6 +944,143 @@ namespace KGySoft.Serialization.Binary
         /// <param name="options">Options for the created formatter. This parameter is optional.
         /// <br/>Default value: <see cref="BinarySerializationOptions.CompactSerializationOfStructures"/>.</param>
         public static BinarySerializationFormatter CreateFormatter(BinarySerializationOptions options = DefaultSerializationOptions) => new BinarySerializationFormatter(options);
+
+        /// <summary>
+        /// Extracts a flattened collection of expected types of <typeparamref name="T"/> for deserialization.
+        /// Can be useful for deserialization methods in safe mode when <typeparamref name="T"/> is a custom type
+        /// directly referencing other custom types using default serialization.
+        /// </summary>
+        /// <typeparam name="T">The root custom type that may reference further custom types.</typeparam>
+        /// <param name="forceAll"><see langword="true"/> to extract all types, even if may not necessary or helpful; otherwise, <see langword="false"/>. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
+        /// <returns>A collection of types extracted from <typeparamref name="T"/>.</returns>
+        /// <remarks>
+        /// <para>This method can be useful for <see cref="O:KGySoft.Serialization.Binary.BinarySerializer.Deserialize">Deserialize</see>,
+        /// <see cref="O:KGySoft.Serialization.Binary.BinarySerializer.DeserializeFromStream">DeserializeFromStream</see>
+        /// and <see cref="O:KGySoft.Serialization.Binary.BinarySerializer.DeserializeByReader">DeserializeByReader</see> methods
+        /// when <see cref="BinarySerializationOptions.SafeMode"/> is enabled and the root type to deserialize is not supported natively but
+        /// uses default serialization and wraps other custom types directly.</para>
+        /// <note><list type="bullet"><item>Please note that this method may not able to detect every type if the types of the serialized fields are interfaces or non-sealed classes
+        /// and the serialization stream contains implementations or derived types of them. In such cases you may need to append further types to the result before passing it to the deserialization methods.</item>
+        /// <item>Please also note that if <typeparamref name="T"/> or one of its nested types uses custom serialization (ie. implements <see cref="ISerializable"/> or <see cref="IBinarySerializable"/>),
+        /// then their fields are not checked recursively by default, because they are not serialized by fields, and it's impossible to tell what types should be included in the result.
+        /// You can force to extract their types by passing <see langword="true"/> to the <paramref name="forceAll"/> parameter</item></list></note>
+        /// <para>If <paramref name="forceAll"/> is <see langword="false"/>, then natively supported types, as well as fields of <see cref="ISerializable"/> and <see cref="IBinarySerializable"/>
+        /// implementations and non-serializable types will not be included in the result. Fields annotated by the <see cref="NonSerializedAttribute"/> will also be skipped.</para>
+        /// <para>Passing <see langword="true"/> to <paramref name="forceAll"/> can be helpful to include the fields of non-serializable types (when <see cref="BinarySerializationOptions.RecursiveSerializationAsFallback"/>
+        /// was enabled on serialization), the fields of <see cref="ISerializable"/> types (see <see cref="BinarySerializationOptions.IgnoreISerializable"/>),
+        /// the fields of <see cref="IBinarySerializable"/> types (see <see cref="BinarySerializationOptions.IgnoreIBinarySerializable"/>),
+        /// and also natively supported types (see <see cref="BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes"/>).</para>
+        /// <para>When <see cref="BinarySerializationOptions.CompactSerializationOfStructures"/> was enabled on serialization,
+        /// this method may unnecessarily return the referenced custom types of unmanaged structs.</para>
+        /// <note type="tip">The result of this method is not cached. If performance matters either do the caching explicitly or try to manually enlist the expected types instead.</note>
+        /// </remarks>
+        public static IEnumerable<Type> ExtractExpectedTypes<T>(bool forceAll = false) => ExtractExpectedTypes(typeof(T), forceAll);
+
+        /// <summary>
+        /// Extracts a flattened collection of expected types of <paramref name="type"/> for deserialization.
+        /// Can be useful for deserialization methods in safe mode when <paramref name="type"/> is a custom type
+        /// directly referencing other custom types using default serialization.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="ExtractExpectedTypes{T}"/> overload for details.
+        /// </summary>
+        /// <param name="type">The root custom type that may reference further custom types.</param>
+        /// <param name="forceAll"><see langword="true"/> to extract all types, even if may not necessary or helpful; otherwise, <see langword="false"/>. This parameter is optional.
+        /// <br/>Default value: <see langword="false"/>.</param>
+        /// <returns>A collection of types extracted from <paramref name="type"/>.</returns>
+        public static IEnumerable<Type> ExtractExpectedTypes(Type type, bool forceAll = false)
+        {
+            #region Local Methods
+
+            // not using GetRootType because we want to preserve generic arguments
+            static Type Strip(Type t)
+            {
+                while (t.HasElementType)
+                    t = t.GetElementType()!;
+                return Nullable.GetUnderlyingType(t) ?? t;
+            }
+
+            #endregion
+
+            if (type == null!)
+                Throw.ArgumentException(Argument.type, Res.ArgumentNull);
+
+            var result = new HashSet<Type>();
+            var processed = new HashSet<Type>();
+            var enqueued = new HashSet<Type>();
+            var toExtract = new Queue<Type>();
+
+            type = Strip(type);
+            toExtract.Enqueue(type);
+            enqueued.Add(type);
+
+            while (toExtract.Count > 0)
+            {
+                Type currentType = toExtract.Dequeue();
+                Debug.Assert(!type.HasElementType);
+
+                // skipping if already processed
+                if (!processed.Add(currentType))
+                    continue;
+
+                // checking optionally skip conditions
+                if (!forceAll)
+                {
+                    // Known type: adding the possible generic parameters only.
+                    // This is needed to resolve a known type with unknown parameters.
+                    if (BinarySerializationFormatter.IsKnownType(currentType))
+                    {
+                        if (currentType.IsConstructedGenericType())
+                        {
+                            foreach (Type arg in currentType.GetGenericArguments())
+                            {
+                                Type t = Strip(arg);
+
+                                // note that we don't check processed here because the arg type does not occur here as a field
+                                if (!BinarySerializationFormatter.IsKnownType(t))
+                                    result.Add(t);
+                            }
+                        }
+
+                        continue;
+                    }
+
+                    // Type is not serializable or implements I[Binary]Serializable: adding the type itself but not processing the fields
+                    if (!currentType.IsSerializable
+                        || typeof(IBinarySerializable).IsAssignableFrom(currentType)
+                        || typeof(ISerializable).IsAssignableFrom(currentType))
+                    {
+                        Debug.Assert(currentType.IsSerializable || currentType == type, "Non-serializable type is expected only at root level here.");
+                        result.Add(currentType);
+                        continue;
+                    }
+                }
+
+                result.Add(currentType);
+
+                // Skipping if no fields are expected
+                if (currentType.IsInterface || currentType.IsEnum)
+                    continue;
+
+                // non-skipped type: processing the instance fields recursively
+                // Note: checking object type only should normally be enough but in case of COM or remoting any magic can happen...
+                for (Type? t = currentType; t != Reflector.ObjectType && t != typeof(ValueType) && t != null; t = t.BaseType)
+                {
+                    FieldInfo[] fields = t.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+                    foreach (FieldInfo field in fields)
+                    {
+                        // skipping [NonSerialized] and non-serializable fields (except if interface type), unless forced
+                        if (!forceAll && (field.IsNotSerialized || field.FieldType is { IsInterface: false, IsSerializable: false }))
+                            continue;
+
+                        Type fieldType = Strip(field.FieldType);
+                        if (!processed.Contains(fieldType) && enqueued.Add(fieldType))
+                            toExtract.Enqueue(fieldType);
+                    }
+                }
+            }
+            
+            return result;
+        }
 
         #endregion
 

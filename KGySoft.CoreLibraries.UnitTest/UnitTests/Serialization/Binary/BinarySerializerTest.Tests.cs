@@ -3161,6 +3161,31 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             AssertDeepEquals(instance, clone);
         }
 
+        [Test]
+        public void ExtractExpectedTypesTest()
+        {
+            // primitive type: nothing, unless forced
+            Assert.AreEqual(0, BinarySerializer.ExtractExpectedTypes<int>().Count);
+            Assert.AreEqual(1, BinarySerializer.ExtractExpectedTypes<int>(forceAll: true).Count);
+
+            // natively supported type: the possible unknown generic parameters only, unless forced
+            Assert.AreEqual(0, BinarySerializer.ExtractExpectedTypes<Dictionary<int, string>>().Count);
+            Assert.AreEqual(1, BinarySerializer.ExtractExpectedTypes<Dictionary<int, ConsoleColor>>().Count);
+            Assert.Greater(BinarySerializer.ExtractExpectedTypes<Dictionary<int, string>>(forceAll: true).Count, 0);
+
+            // default [Serializable] unknown type: contained unknown fields recursively
+            ICollection<Type> types = BinarySerializer.ExtractExpectedTypes<SystemSerializableClass>();
+            Assert.AreEqual(2, types.Count);
+            Assert.IsTrue(types.Contains(typeof(SystemSerializableClass)));
+            Assert.IsTrue(types.Contains(typeof(ConsoleColor)));
+            Assert.Greater(BinarySerializer.ExtractExpectedTypes<SystemSerializableClass>(forceAll: true).Count, 2);
+
+            // non-serializable or I[Binary]Serializable type: the root only, unless forced
+            Assert.AreEqual(1, BinarySerializer.ExtractExpectedTypes<NonSerializableClass>().Count);
+            Assert.AreEqual(1, BinarySerializer.ExtractExpectedTypes<CustomSerializedClass>().Count);
+            Assert.AreEqual(1, BinarySerializer.ExtractExpectedTypes<BinarySerializableClass>().Count);
+        }
+
         #endregion
     }
 }

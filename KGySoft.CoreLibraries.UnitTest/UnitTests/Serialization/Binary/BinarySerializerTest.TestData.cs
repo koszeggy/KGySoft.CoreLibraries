@@ -302,6 +302,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             public bool? Bool { get; set; }
 
+            public ConsoleColor EnumProp { get; set; }
+
             #endregion
 
             #region Methods
