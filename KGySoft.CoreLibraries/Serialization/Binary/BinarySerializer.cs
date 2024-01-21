@@ -36,6 +36,10 @@ using KGySoft.Reflection;
 #pragma warning disable CS1574 // the documentation contains types that are not available in every target
 #endif
 
+#if NET8_0_OR_GREATER
+#pragma warning disable SYSLIB0050 // Type.IsSerializable/FieldInfo.IsNotSerialized is obsolete - required by BinarySerializationFormatter, which still supports the original infrastructure
+#endif
+
 #endregion
 
 namespace KGySoft.Serialization.Binary
@@ -987,6 +991,8 @@ namespace KGySoft.Serialization.Binary
         /// <param name="forceAll"><see langword="true"/> to extract all types, even if may not necessary or helpful; otherwise, <see langword="false"/>. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>A collection of types extracted from <paramref name="type"/>.</returns>
+        [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity",
+            Justification = "False alarm, the new analyzer includes the complexity of local methods. By extracting Strip it would be just fine.")]
         public static IEnumerable<Type> ExtractExpectedTypes(Type type, bool forceAll = false)
         {
             #region Local Methods

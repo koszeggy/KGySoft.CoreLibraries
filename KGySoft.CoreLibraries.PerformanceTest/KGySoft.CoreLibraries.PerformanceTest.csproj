@@ -19,12 +19,16 @@
     <OutputType>Exe</OutputType>
     <GenerateProgramFile>false</GenerateProgramFile>
 
-    <!--Suppression NETSDK1138: The target framework 'netcoreapp2.0'/'netcoreapp3.0' is out of support - this is not an application but a library so targeting the lowest possible versions is intended -->
-    <NoWarn>$(NoWarn);NETSDK1138</NoWarn>
+    <!--Suppressions
+      - MSB3825: Resources serialized by BinaryFormatter that will be removed in .NET 9 - intended, test data, and used when targeting .NET Framework
+      - NETSDK1138: The target framework 'netcoreapp2.0'/'netcoreapp2.1'/'netcoreapp3.0' is out of support - this is not an application but a library so targeting the lowest possible versions is intended
+      - NU1902, NU1903: netcoreapp2.1 has known vulnerabilities - it's a targeted platform and not a referenced package. A consumer of this library can also pick newer supported platforms.
+      -->
+    <NoWarn>$(NoWarn);MSB3825;NETSDK1138;NU1902;NU1903</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="..\KGySoft.CoreLibraries.UnitTest\Resources\TestResourceResX.resx" Link="Resources\TestResourceResX.resx">
+    <EmbeddedResource Update="Resources\TestResourceResX.resx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
@@ -33,7 +37,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.9.4" />
     <PackageReference Include="NUnit" Version="3.13.1" />
-    <PackageReference Include="NUnit3TestAdapter" Version="3.17.0" >
+    <PackageReference Include="NUnit3TestAdapter" Version="3.17.0">
       <NoWarn>NU1701</NoWarn>
     </PackageReference>
   </ItemGroup>
@@ -45,12 +49,12 @@
 
   <!-- .NET Core 3.0 only references -->
   <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.0'">
-    <PackageReference Include="System.Resources.Extensions" Version="5.0.0"/>
+    <PackageReference Include="System.Resources.Extensions" Version="5.0.0" />
   </ItemGroup>
 
   <!-- .NET only references -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net5.0' OR '$(TargetFramework)' == 'net6.0' OR '$(TargetFramework)' == 'net7.0' OR '$(TargetFramework)' == 'net8.0'">
-    <PackageReference Include="System.Resources.Extensions" Version="6.0.0"/>
+    <PackageReference Include="System.Resources.Extensions" Version="6.0.0" />
   </ItemGroup>
 
   <ItemGroup>
