@@ -518,7 +518,7 @@ namespace KGySoft
         /// all <see cref="DynamicResourceManager"/> instances in the current application domain, whose <see cref="DynamicResourceManager.UseLanguageSettings"/> is <see langword="true"/>.
         /// </summary>
         /// <param name="compatibleFormat">If set to <see langword="true"/>, the result .resx files can be read
-        /// by a <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a> instance
+        /// by a <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a> instance
         /// and the Visual Studio Resource Editor. If set to <see langword="false"/>, the result .resx files are often shorter, and the values can be deserialized with better
         /// accuracy (see the remarks at <see cref="ResXResourceWriter" />), but the result can be read only by the <see cref="ResXResourceReader" /> class. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>

@@ -54,7 +54,7 @@ namespace KGySoft.Resources
     /// Represents a resource or metadata element in an XML resource (.resx) file.
     /// </summary>
     /// <remarks>
-    /// <note>This class is similar to <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxdatanode" target="_blank">System.Resources.ResXDataNode</a>
+    /// <note>This class is similar to <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxdatanode" target="_blank">System.Resources.ResXDataNode</a>
     /// in <c>System.Windows.Forms.dll</c>. See the <a href="#comparison">Comparison with System.Resources.ResXDataNode</a> section for the differences.</note>
     /// <para>The <see cref="ResXDataNode"/> class supports the representation of rich data types within a resource file. It can support the storage of any object in a resource file.</para>
     /// <para>You can create a <see cref="ResXDataNode"/> object by calling one of its overloaded class constructors.
@@ -233,19 +233,19 @@ namespace KGySoft.Resources
     /// </example>
     /// <h2>Comparison with System.Resources.ResXDataNode<a name="comparison">&#160;</a></h2>
     /// <para>
-    /// If instantiated from a <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxdatanode" target="_blank">System.Resources.ResXDataNode</a> or <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxfileref" target="_blank">System.Resources.ResXFileRef</a>
+    /// If instantiated from a <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxdatanode" target="_blank">System.Resources.ResXDataNode</a> or <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxfileref" target="_blank">System.Resources.ResXFileRef</a>
     /// instance, an internal conversion into <see cref="ResXDataNode">KGySoft.Resources.ResXDataNode</see> and <see cref="ResXFileRef">KGySoft.Resources.ResXFileRef</see> automatically occurs.
-    /// <note>The compatibility with <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxdatanode" target="_blank">System.Resources.ResXDataNode</a> is provided without any reference to <c>System.Windows.Forms.dll</c>, where that type is located.</note>
+    /// <note>The compatibility with <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxdatanode" target="_blank">System.Resources.ResXDataNode</a> is provided without any reference to <c>System.Windows.Forms.dll</c>, where that type is located.</note>
     /// </para>
-    /// <para>Unlike <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxdatanode" target="_blank">System.Resources.ResXDataNode</a>, this <see cref="ResXDataNode"/> implementation
+    /// <para>Unlike <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxdatanode" target="_blank">System.Resources.ResXDataNode</a>, this <see cref="ResXDataNode"/> implementation
     /// really preserves the original information stored in the .resx file. No deserialization, assembly loading and type resolving occurs until a deserialization is explicitly
     /// requested by calling the <see cref="GetValue">GetValue</see> or <see cref="O:KGySoft.Resources.ResXDataNode.GetValueSafe">GetValueSafe</see> methods.</para>
     /// <note>When serialized in compatibility mode (see <see cref="ResXResourceWriter.CompatibleFormat">ResXResourceWriter.CompatibleFormat</see>, <see cref="O:KGySoft.Resources.ResXResourceSet.Save">ResXResourceSet.Save</see>, <see cref="ResXResourceManager.SaveResourceSet">ResXResourceManager.SaveResourceSet</see> and <see cref="ResXResourceManager.SaveAllResources">ResXResourceManager.SaveAllResources</see>),
-    /// the result will be able to be parsed by the <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxdatanode" target="_blank">System.Resources.ResXDataNode</a> type, too.</note>
-    /// <para><strong>Incompatibility</strong> with <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxdatanode" target="_blank">System.Resources.ResXDataNode</a>:
+    /// the result will be able to be parsed by the <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxdatanode" target="_blank">System.Resources.ResXDataNode</a> type, too.</note>
+    /// <para><strong>Incompatibility</strong> with <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxdatanode" target="_blank">System.Resources.ResXDataNode</a>:
     /// <list type="bullet">
     /// <item><see cref="Name"/> property is read-only. If you want to use a new name, instantiate a new <see cref="ResXDataNode"/> instance by the <see cref="ResXDataNode(string,object)">ResXDataNode(string, object)</see> constructor and pass the new name and the original <see cref="ResXDataNode"/> as parameters.</item>
-    /// <item>There are no <strong>GetValueTypeName</strong> methods. The problem with <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxdatanode.getvaluetypename" target="_blank">System.Resources.ResXDataNode.GetValueTypeName</a>
+    /// <item>There are no <strong>GetValueTypeName</strong> methods. The problem with <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxdatanode.getvaluetypename" target="_blank">System.Resources.ResXDataNode.GetValueTypeName</a>
     /// methods is that they are unsafe as they may deserialize the inner object, load assemblies and can throw various unexpected exceptions.
     /// Instead, you can read the original type information stored in the .resx file by <see cref="TypeName"/> and <see cref="AssemblyAliasValue"/> properties. Based on the
     /// retrieved information you can decide whether you really want to deserialize the object by the <see cref="GetValue">GetValue</see> method.
@@ -254,17 +254,17 @@ namespace KGySoft.Resources
     /// <see cref="Assembly.LoadWithPartialName(string)">Assembly.LoadWithPartialName</see> method. The weakly referenced assemblies however are handled automatically
     /// by using <see cref="Reflector.ResolveType(string,ResolveTypeOptions)">Reflector.ResolveType</see> method so this overload is actually not needed.</item>
     /// <item>The <see cref="GetValue">GetValue</see> method has three parameters instead of one. But all of them are optional so if called from a regular C# code, the method is compatible with
-    /// the <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxdatanode.getvalue" target="_blank">System.Resources.ResXDataNode.GetValue(ITypeResolutionService)</a> method.</item>
+    /// the <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxdatanode.getvalue" target="_blank">System.Resources.ResXDataNode.GetValue(ITypeResolutionService)</a> method.</item>
     /// <item>There are no public constructors with <see cref="Func{T,TResult}">Func&lt;Type, string&gt;</see> arguments. In the system version these <c>typeNameConverter</c> parameters are used exclusively by non-public methods, which are
     /// called by the <see cref="ResXResourceWriter"/> class. But you can pass such a custom <c>typeNameConverter</c> to the <see cref="ResXResourceWriter"/> constructors.</item>
-    /// <item>There is no <strong>GetNodePosition</strong> method because it returned a <a href="https://docs.microsoft.com/en-us/dotnet/api/system.drawing.point" target="_blank">Point</a> structure
+    /// <item>There is no <strong>GetNodePosition</strong> method because it returned a <a href="https://learn.microsoft.com/en-us/dotnet/api/system.drawing.point" target="_blank">Point</a> structure
     /// from the <c>System.Drawing</c> assembly, which is not referenced by this library. Use <see cref="GetNodeLinePosition">GetNodeLinePosition</see> and <see cref="GetNodeColumnPosition">GetNodeColumnPosition</see> methods instead.</item>
     /// <item>The <see cref="FileRef"/> property returns the same reference during the lifetime of the <see cref="ResXDataNode"/> instance. This is alright as <see cref="ResXFileRef"/> is immutable.
     /// Unlike the system version, the <see cref="FileRef"/> property in this <see cref="ResXDataNode"/> contains exactly the same type information as the original .resx file.</item>
-    /// <item>The <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxdatanode.getvalue" target="_blank">System.Resources.ResXDataNode.GetValue</a> method often throws <see cref="XmlException"/> if the node contains invalid data. In contrast,
+    /// <item>The <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxdatanode.getvalue" target="_blank">System.Resources.ResXDataNode.GetValue</a> method often throws <see cref="XmlException"/> if the node contains invalid data. In contrast,
     /// this <see cref="GetValue">GetValue</see> implementation may throw <see cref="XmlException"/>, <see cref="TypeLoadException"/>, <see cref="SerializationException"/> or <see cref="NotSupportedException"/> instead, depending on the actual issue.</item>
     /// </list></para>
-    /// <para><strong>New features and improvements</strong> compared to <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxdatanode" target="_blank">System.Resources.ResXDataNode</a>:
+    /// <para><strong>New features and improvements</strong> compared to <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxdatanode" target="_blank">System.Resources.ResXDataNode</a>:
     /// <list type="bullet">
     /// <item><term>Preserving original type information</term>
     /// <description>The originally stored type information, MIME type and the current assembly alias are preserved (see <see cref="TypeName"/>, <see cref="MimeType"/> and <see cref="AssemblyAliasValue"/> properties).
@@ -284,13 +284,13 @@ namespace KGySoft.Resources
     /// much faster. This is true even if <see cref="ResXResourceReader.SafeMode">ResXResourceReader.SafeMode</see> is <see langword="false"/>, because there are always <see cref="ResXDataNode"/>
     /// instances stored internally and deserialization occurs only when a resource is actually accessed.</description></item>
     /// <item><term>Support of non-serializable types</term>
-    /// <description>When serializing an object, the <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxdatanode" target="_blank">System.Resources.ResXDataNode</a> type
+    /// <description>When serializing an object, the <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxdatanode" target="_blank">System.Resources.ResXDataNode</a> type
     /// throws an <see cref="InvalidOperationException"/> for non-serializable types. This implementation can serialize also such types (though in safe mode they must be explicitly specified as expected types).
     /// It is highly recommended to save such resources with compatible mode disabled (see <see cref="ResXResourceWriter.CompatibleFormat">ResXResourceWriter.CompatibleFormat</see> property and
     /// the <see cref="O:KGySoft.Resources.ResXResourceSet.Save">ResXResourceSet.Save</see> methods) so the <see cref="BinarySerializationFormatter"/> class can be used for the serialization.
     /// If the resource is saved in compatible format, then the legacy <see cref="BinaryFormatter"/> will used (not supported in .NET 8 and later and deserialization will be denied in safe mode)
     /// with an <see cref="CustomSerializerSurrogateSelector"/> instance to allow the serialization. Though the serialization stream will be compatible with .NET Framework the resource itself might
-    /// not be able to be deserialized by the <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a> class.
+    /// not be able to be deserialized by the <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a> class.
     /// In order to serialize any object in .NET 8 or later, compatible mode must be disabled so the much safer <see cref="BinarySerializationFormatter"/> class can be used.</description></item>
     /// <item><term>Support of generics</term>
     /// <description>This <see cref="ResXDataNode"/> class uses a special <see cref="SerializationBinder"/> implementation, which supports generic types correctly.</description></item>
@@ -630,17 +630,17 @@ namespace KGySoft.Resources
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="name"/> is a string of zero length.</exception>
         /// <remarks>
-        /// <para>Unlike <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxdatanode" target="_blank">System.Resources.ResXDataNode</a>,
+        /// <para>Unlike <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxdatanode" target="_blank">System.Resources.ResXDataNode</a>,
         /// <see cref="ResXDataNode">KGySoft.Resources.ResXDataNode</see> supports non-serializable types, too. See the details in the <strong>Remarks</strong>
         /// section of the <see cref="ResXDataNode"/>.</para>
         /// <para>If <paramref name="value"/> is another <see cref="ResXDataNode"/> instance the new <see cref="ResXDataNode"/> instance will be a copy of it with a possibly new name specified in the <paramref name="name"/> parameter.
-        /// A <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxdatanode" target="_blank">System.Resources.ResXDataNode</a> instance is also recognized.
-        /// <note>The compatibility with <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxdatanode" target="_blank">System.Resources.ResXDataNode</a> is provided without any reference to <c>System.Windows.Forms.dll</c>, where that type is located.</note>
+        /// A <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxdatanode" target="_blank">System.Resources.ResXDataNode</a> instance is also recognized.
+        /// <note>The compatibility with <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxdatanode" target="_blank">System.Resources.ResXDataNode</a> is provided without any reference to <c>System.Windows.Forms.dll</c>, where that type is located.</note>
         /// </para>
         /// <para>If <paramref name="value"/> is a <see cref="ResXFileRef"/> instance, the new <see cref="ResXDataNode"/> will refer to a file reference.
-        /// A <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxfileref" target="_blank">System.Resources.ResXFileRef</a> instance is also recognized.
+        /// A <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxfileref" target="_blank">System.Resources.ResXFileRef</a> instance is also recognized.
         /// For <see cref="ResXFileRef"/> a <paramref name="value"/> with relative path you might want to use the <see cref="ResXDataNode(string,ResXFileRef,string)">ResXDataNode(string, ResXFileRef, string)</see> constructor where you can specify a base path.
-        /// <note>The compatibility with <a href="https://docs.microsoft.com/en-us/dotnet/api/system.resources.resxfileref" target="_blank">System.Resources.ResXFileRef</a> is provided without any reference to <c>System.Windows.Forms.dll</c>, where that type is located.</note>
+        /// <note>The compatibility with <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxfileref" target="_blank">System.Resources.ResXFileRef</a> is provided without any reference to <c>System.Windows.Forms.dll</c>, where that type is located.</note>
         /// </para>
         /// </remarks>
         public ResXDataNode(string name, object? value)

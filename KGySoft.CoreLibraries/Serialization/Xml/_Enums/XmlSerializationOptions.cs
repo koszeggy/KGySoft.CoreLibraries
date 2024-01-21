@@ -175,7 +175,7 @@ namespace KGySoft.Serialization.Xml
         OmitCrcAttribute = 1 << 10,
 
         /// <summary>
-        /// <para>By default <see cref="Xml.XmlSerializer"/> includes public fields in serialization, similarly to <a href="https://docs.microsoft.com/en-us/dotnet/api/system.xml.serialization.xmlserializer" target="_blank">System.Xml.Serialization.XmlSerializer</a>.
+        /// <para>By default <see cref="Xml.XmlSerializer"/> includes public fields in serialization, similarly to <a href="https://learn.microsoft.com/en-us/dotnet/api/system.xml.serialization.xmlserializer" target="_blank">System.Xml.Serialization.XmlSerializer</a>.
         /// By enabling this option, only public properties will be serialized.</para>
         /// <para>Default state at serialization methods: <strong>Disabled</strong></para>
         /// </summary>

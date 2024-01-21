@@ -72,7 +72,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="value">A <see cref="DateTime"/> value to get the Unix time from.</param>
         /// <returns>The number of milliseconds that have elapsed since 1970-01-01T00:00Z.</returns>
         /// <remarks>
-        /// <para>This method is similar to <a href="https://docs.microsoft.com/en-us/dotnet/api/system.datetimeoffset.tounixtimemilliseconds" target="_blank">DateTimeOffset.ToUnixTimeMilliseconds</a>
+        /// <para>This method is similar to <a href="https://learn.microsoft.com/en-us/dotnet/api/system.datetimeoffset.tounixtimemilliseconds" target="_blank">DateTimeOffset.ToUnixTimeMilliseconds</a>
         /// but is available even below .NET Framework 4.6.</para>
         /// <para>If <paramref name="value"/> is a <see cref="DateTimeKind.Local"/> time, then its <see cref="DateTime.Kind"/> is converted to UTC first.</para>
         /// <para>This method returns a negative value for times before 1970-01-01T00:00Z.</para>
@@ -85,7 +85,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="value">A <see cref="DateTime"/> value to get the Unix time from.</param>
         /// <returns>The number of seconds that have elapsed since 1970-01-01T00:00Z.</returns>
         /// <remarks>
-        /// <para>This method is similar to <a href="https://docs.microsoft.com/en-us/dotnet/api/system.datetimeoffset.tounixtimeseconds" target="_blank">DateTimeOffset.ToUnixTimeSeconds</a>
+        /// <para>This method is similar to <a href="https://learn.microsoft.com/en-us/dotnet/api/system.datetimeoffset.tounixtimeseconds" target="_blank">DateTimeOffset.ToUnixTimeSeconds</a>
         /// but is available even below .NET Framework 4.6.</para>
         /// <para>If <paramref name="value"/> is a <see cref="DateTimeKind.Local"/> time, then its <see cref="DateTime.Kind"/> is converted to UTC first.</para>
         /// <para>This method returns a negative value for times before 1970-01-01T00:00Z.</para>

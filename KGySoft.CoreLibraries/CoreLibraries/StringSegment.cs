@@ -536,7 +536,7 @@ namespace KGySoft.CoreLibraries
         /// this instance was created from a <see langword="null"/>&#160;<see cref="string">string</see>.
         /// </returns>
         /// <returns>
-        /// <note>As opposed to the usual <a href="https://docs.microsoft.com/en-us/dotnet/api/system.object.tostring#notes-to-inheritors" target="_blank">ToString guidelines</a>
+        /// <note>As opposed to the usual <a href="https://learn.microsoft.com/en-us/dotnet/api/system.object.tostring#notes-to-inheritors" target="_blank">ToString guidelines</a>
         /// this method can return <see cref="String.Empty">String.Empty</see> or even <see langword="null"/>.</note>
         /// </returns>
         public override string? ToString()

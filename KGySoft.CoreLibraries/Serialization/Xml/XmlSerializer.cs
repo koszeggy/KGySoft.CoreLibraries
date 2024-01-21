@@ -61,12 +61,12 @@ namespace KGySoft.Serialization.Xml
     /// the <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.DeserializeSafe">DeserializeSafe</see> or <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.DeserializeContentSafe">DeserializeContentSafe</see>
     /// methods to prevent resolving any type names during the deserialization. They require to specify every natively not supported type that can occur in the serialized data whose names then will be mapped to the specified expected types.</note>
     /// <para><see cref="XmlSerializer"/> supports serialization of any simple types and complex objects with their public properties and fields as well as several collection types.
-    /// <note>Unlike the <a href="https://docs.microsoft.com/en-us/dotnet/api/system.xml.serialization.xmlserializer" target="_blank">System.Xml.Serialization.XmlSerializer</a> class,
+    /// <note>Unlike the <a href="https://learn.microsoft.com/en-us/dotnet/api/system.xml.serialization.xmlserializer" target="_blank">System.Xml.Serialization.XmlSerializer</a> class,
     /// this <see cref="XmlSerializer"/> is not designed for customizing output format (though <see cref="IXmlSerializable"/> implementations are considered). Not even <c>Xml...Attribute</c>s
     /// are supported (except <see cref="XmlRootAttribute"/> for the root element of <see cref="IXmlSerializable"/> implementations). Instead, this class is
     /// designed to support XML serialization of any type as long as they have a default constructor and their state can be fully restored by their public fields and properties.</note>
     /// </para>
-    /// <para>Several <a href="https://docs.microsoft.com/en-us/dotnet/api/system.componentmodel" target="_blank">System.ComponentModel</a> techniques are supported,
+    /// <para>Several <a href="https://learn.microsoft.com/en-us/dotnet/api/system.componentmodel" target="_blank">System.ComponentModel</a> techniques are supported,
     /// which also makes possible to use the <see cref="XmlSerializer"/> for types that can be edited in a property grid, such as components, configurations or any types in a custom designer.
     /// The supported component model attributes and techniques:
     /// <list type="bullet">
@@ -185,7 +185,7 @@ namespace KGySoft.Serialization.Xml
     /// but for safe mode deserialization it may be needed to specify also the comparer as an expected custom type.</note>
     /// </para>
     /// <h2>Comparison with System.Xml.Serialization.XmlSerializer</h2>
-    /// <para><strong>New features and improvements</strong> compared to <a href="https://docs.microsoft.com/en-us/dotnet/api/system.xml.serialization.xmlserializer" target="_blank">System.Xml.Serialization.XmlSerializer</a>:
+    /// <para><strong>New features and improvements</strong> compared to <a href="https://learn.microsoft.com/en-us/dotnet/api/system.xml.serialization.xmlserializer" target="_blank">System.Xml.Serialization.XmlSerializer</a>:
     /// <list type="bullet">
     /// <item><term>Strings</term><description>If a string contains only white spaces, then system <see cref="System.Xml.Serialization.XmlSerializer"/> cannot deserialize it properly. <see cref="string"/> instances containing
     /// invalid UTF-16 code points cannot be serialized either. This <see cref="XmlSerializer"/> implementation handles them correctly.</description></item>
