@@ -9,6 +9,13 @@
 * v8.1.0:
 ~~~~~~~~~
 
++ KGySoft.ComponentModel namespace:
+===================================
++ ObservableObjectBase class:
+  + New AllowReadingDisposedObject property: when returns true in a derived class, the Get<T> methods (and the
+    observable properties using the Get<T> methods) do not throw an ObjectDisposedException even if the object is
+    already disposed. Instead, they return the default value of T.
+
 + KGySoft.Serialization.Binary namespace:
 =========================================
 + BinarySerializer class:

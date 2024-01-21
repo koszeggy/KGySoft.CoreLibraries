@@ -72,7 +72,7 @@ namespace KGySoft.ComponentModel
         IDictionary<string, object?> IPersistableObject.GetProperties()
         {
             var result = new StringKeyedDictionary<object?>(Count);
-            foreach (KeyValuePair<string, object?> item in Properties)
+            foreach (KeyValuePair<string, object?> item in PropertiesOrNull ?? [])
             {
                 if (!CanGetProperty(item.Key))
                     Throw.InvalidOperationException(Res.ComponentModelCannotGetProperty(item.Key));

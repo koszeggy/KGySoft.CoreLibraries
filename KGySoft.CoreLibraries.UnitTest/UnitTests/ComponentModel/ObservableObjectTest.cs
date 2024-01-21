@@ -37,7 +37,7 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
         {
             #region Properties
 
-            [SuppressMessage("CodeQuality", "IDE0052:Remove unread private members", Justification = "<Pending>")]
+            [SuppressMessage("CodeQuality", "IDE0052:Remove unread private members", Justification = "Intended, test")]
             private bool PrivateProperty { get => Get<bool>(); set => Set(value); }
 
             #endregion
@@ -68,6 +68,28 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
 
             internal Derived(bool value) : base(value)
             {
+            }
+
+            #endregion
+        }
+
+        #endregion
+
+        #region AdjustableDisposeHandling class
+
+        private class AdjustableDisposeHandling : Derived
+        {
+            #region Properties
+
+            protected override bool AllowReadingDisposedObject { get; }
+
+            #endregion
+
+            #region Constructors
+
+            internal AdjustableDisposeHandling(bool allowReadingDisposedObject) : base(default)
+            {
+                AllowReadingDisposedObject = allowReadingDisposedObject;
             }
 
             #endregion
@@ -117,6 +139,15 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
             var test = new Derived(true);
             var clone = test.DeepClone();
             Assert.AreEqual(test.PublicProperty, clone.PublicProperty);
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void AllowReadingDisposedObjectTest(bool allowReadingDisposedObject)
+        {
+            var test = new AdjustableDisposeHandling(allowReadingDisposedObject) { PublicProperty = true };
+            test.Dispose();
+            Assert.That(() => test.PublicProperty, allowReadingDisposedObject ? Is.False : Throws.Exception.InstanceOf<ObjectDisposedException>());
         }
 
         #endregion

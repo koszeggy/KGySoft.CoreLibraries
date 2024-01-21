@@ -187,7 +187,8 @@ namespace KGySoft.ComponentModel
         /// </summary>
         /// <remarks>
         /// <para>Properties accessed by the <see cref="Get{T}(T, string)"><![CDATA[Get<T>]]></see> and <see cref="Set">Set</see> methods
-        /// throw an <see cref="ObjectDisposedException"/> when this property returns <see langword="true"/>.</para>
+        /// throw an <see cref="ObjectDisposedException"/> when this property returns <see langword="true"/>
+        /// (but see also the <see cref="AllowReadingDisposedObject"/> property).</para>
         /// <para>If the <see cref="Dispose(bool)"/> method is overridden and you need to dispose properties accessed by
         /// the <see cref="Get{T}(T, string)"><![CDATA[Get<T>]]></see> and <see cref="Set">Set</see> methods
         /// check this property first to prevent the <see cref="ObjectDisposedException"/>.</para>
@@ -195,6 +196,15 @@ namespace KGySoft.ComponentModel
         /// all subscribers of the <see cref="PropertyChanged"/> event are removed.</note>
         /// </remarks>
         protected bool IsDisposed => isDisposed;
+
+        /// <summary>
+        /// Gets whether the <see cref="Get{T}(T, string)"><![CDATA[Get<T>]]></see> method (and the observable properties using them)
+        /// throw an <see cref="ObjectDisposedException"/> when the <see cref="IsDisposed"/> property returns <see langword="true"/>.
+        /// In a derived class this property can be overridden to return <see langword="true"/>, in which case
+        /// the <see cref="Get{T}(T, string)"><![CDATA[Get<T>]]></see> method returns the default value of <c>T</c> after the object is disposed.
+        /// <br/>The base implementation returns <see langword="false"/>.
+        /// </summary>
+        protected virtual bool AllowReadingDisposedObject => false;
 
         #endregion
 
@@ -211,7 +221,19 @@ namespace KGySoft.ComponentModel
             }
         }
 
-        private protected int Count => Properties.Count;
+        private protected ThreadSafeDictionary<string, object?>? PropertiesOrNull
+        {
+            get
+            {
+                // Same as Properties but allows returning null if AllowReadingDisposedObject is true
+                ThreadSafeDictionary<string, object?>? result = properties;
+                if ((result == null || isDisposed) && !AllowReadingDisposedObject)
+                    Throw.ObjectDisposedException();
+                return result;
+            }
+        }
+
+        private protected int Count => PropertiesOrNull?.Count ?? 0;
 
         #endregion
 
@@ -392,7 +414,8 @@ namespace KGySoft.ComponentModel
         /// <br/>-or-
         /// <br/><see cref="CanGetProperty">CanGetProperty</see> is not overridden and <paramref name="propertyName"/> is not an actual instance property in this instance.
         /// </exception>
-        protected T Get<T>(Func<T> createInitialValue, [CallerMemberName] string propertyName = null!)
+        /// <exception cref="ObjectDisposedException"><see cref="IsDisposed"/> returns <see langword="true"/> whereas <see cref="AllowReadingDisposedObject"/> returns <see langword="false"/>.</exception>
+        protected T Get<T>(Func<T> createInitialValue, [CallerMemberName]string propertyName = null!)
         {
             if (TryGetPropertyValue(propertyName, true, out object? value))
             {
@@ -403,6 +426,10 @@ namespace KGySoft.ComponentModel
 
             if (createInitialValue == null!)
                 Throw.InvalidOperationException(Res.ComponentModelPropertyValueNotExist(propertyName));
+
+            if (isDisposed && AllowReadingDisposedObject)
+                return default!;
+
             T result = createInitialValue.Invoke();
             Set(result, false, propertyName);
             return result;
@@ -425,6 +452,7 @@ namespace KGySoft.ComponentModel
         /// <br/>-or-
         /// <br/><see cref="CanGetProperty">CanGetProperty</see> is not overridden and <paramref name="propertyName"/> is not an actual instance property in this instance.
         /// </exception>
+        /// <exception cref="ObjectDisposedException"><see cref="IsDisposed"/> returns <see langword="true"/> whereas <see cref="AllowReadingDisposedObject"/> returns <see langword="false"/>.</exception>
         protected T Get<T>(T defaultValue = default!, [CallerMemberName]string propertyName = null!)
             => TryGetPropertyValue(propertyName, true, out object? value) && typeof(T).CanAcceptValue(value) ? (T)value! : defaultValue;
 
@@ -442,9 +470,10 @@ namespace KGySoft.ComponentModel
         /// <br/>-or-
         /// <br/><see cref="CanSetProperty">CanSetProperty</see> is not overridden and <paramref name="propertyName"/> is not an actual instance property in this instance, or <paramref name="value"/> is not compatible with the property type.
         /// </exception>
+        /// <exception cref="ObjectDisposedException"><see cref="IsDisposed"/> returns <see langword="true"/>.</exception>
         /// <remarks>
         /// <para>If a property is redefined in a derived class with a different type, or a type has multiple indexers with different types,
-        /// the this method may throw an <see cref="InvalidOperationException"/>. Overriding the <see cref="CanSetProperty">CanSetProperty</see> method can solve this issue
+        /// then this method may throw an <see cref="InvalidOperationException"/>. Overriding the <see cref="CanSetProperty">CanSetProperty</see> method can solve this issue,
         /// but it may lead to further errors if multiple properties use the same key in the inner storage.</para>
         /// </remarks>
         protected bool Set(object? value, bool invokeChangedEvent = true, [CallerMemberName] string propertyName = null!)
@@ -581,11 +610,12 @@ namespace KGySoft.ComponentModel
             {
                 if (errorIfCannotGetProperty)
                     Throw.InvalidOperationException(Res.ComponentModelCannotGetProperty(propertyName));
-                value = null;
-                return false;
             }
+            else if (PropertiesOrNull?.TryGetValue(propertyName, out value) == true)
+                return true;
 
-            return Properties.TryGetValue(propertyName, out value);
+            value = null;
+            return false;
         }
 
         #endregion
