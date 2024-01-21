@@ -9,6 +9,13 @@
 * v8.1.0:
 ~~~~~~~~~
 
++ KGySoft.Serialization.Binary namespace:
+=========================================
++ BinarySerializer class:
+  + New ExtractExpectedTypes methods: to help populating the value of the expectedCustomTypes parameter of the
+    deserialization methods in safe mode. In polymorphic cases or when non-default serialization is used the
+    result may not be complete.
+
 - KGySoft.Serialization.Xml namespace:
 ======================================
 - XmlSerializer class: DefaultValueAttribute was accidentally ignored in v8.0.0, now it's respected again.
