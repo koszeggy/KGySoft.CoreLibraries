@@ -3540,7 +3540,7 @@ namespace KGySoft.Reflection
         /// <exception cref="ArgumentNullException"><paramref name="assemblyName"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="assemblyName"/> is empty
         /// <br/>-or-
-        /// <bir/><see cref="ResolveAssemblyOptions.ThrowError"/> is enabled in <paramref name="options"/>
+        /// <br/><see cref="ResolveAssemblyOptions.ThrowError"/> is enabled in <paramref name="options"/>
         /// and <paramref name="assemblyName"/> does not contain a valid assembly name.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="options"/> has an invalid value.</exception>
         /// <exception cref="ReflectionException"><see cref="ResolveAssemblyOptions.ThrowError"/> is enabled in <paramref name="options"/> and the assembly cannot be resolved or loaded.

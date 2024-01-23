@@ -968,7 +968,7 @@ namespace KGySoft.Serialization.Binary
         /// and the serialization stream contains implementations or derived types of them. In such cases you may need to append further types to the result before passing it to the deserialization methods.</item>
         /// <item>Please also note that if <typeparamref name="T"/> or one of its nested types uses custom serialization (ie. implements <see cref="ISerializable"/> or <see cref="IBinarySerializable"/>),
         /// then their fields are not checked recursively by default, because they are not serialized by fields, and it's impossible to tell what types should be included in the result.
-        /// You can force to extract their types by passing <see langword="true"/> to the <paramref name="forceAll"/> parameter</item></list></note>
+        /// You can force to extract their types by passing <see langword="true"/> to the <paramref name="forceAll"/> parameter though.</item></list></note>
         /// <para>If <paramref name="forceAll"/> is <see langword="false"/>, then natively supported types, as well as fields of <see cref="ISerializable"/> and <see cref="IBinarySerializable"/>
         /// implementations and non-serializable types will not be included in the result. Fields annotated by the <see cref="NonSerializedAttribute"/> will also be skipped.</para>
         /// <para>Passing <see langword="true"/> to <paramref name="forceAll"/> can be helpful to include the fields of non-serializable types (when <see cref="BinarySerializationOptions.RecursiveSerializationAsFallback"/>
