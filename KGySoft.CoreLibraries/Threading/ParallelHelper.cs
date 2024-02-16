@@ -422,7 +422,7 @@ namespace KGySoft.Threading
                     Interlocked.Increment(ref busyCount);
 
                     int value = i;
-                    ThreadPool.QueueUserWorkItem(_ =>
+                    ThreadPool.UnsafeQueueUserWorkItem(_ =>
                     {
                         try
                         {
@@ -439,7 +439,7 @@ namespace KGySoft.Threading
                             // ReSharper disable once AccessToModifiedClosure - intended, both outside and inside changes matter
                             Interlocked.Decrement(ref busyCount);
                         }
-                    });
+                    }, null);
                 }
             }
             // we merge some iterations to be processed by the same core
