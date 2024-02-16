@@ -117,7 +117,7 @@ namespace KGySoft.ComponentModel
 
         private static Func<object, object?> customClone =
             o => o is string || o is Delegate ? o
-                : o is ICloneable cloneable ? cloneable.Clone()
+                : o is not Array && o is ICloneable cloneable ? cloneable.Clone()
                 : null;
 
         #endregion
@@ -307,7 +307,9 @@ namespace KGySoft.ComponentModel
 
         /// <summary>
         /// Creates a new object that is a copy of the current instance.
-        /// <br/>The base implementation clones the internal property storage, the <see cref="IsModified" /> property and if <paramref name="clonePropertyChanged"/> is <see langword="true"/>, then also the subscribers of the <see cref="PropertyChanged"/> event.
+        /// <br/>The base implementation clones the internal property storage, the <see cref="IsModified" /> property and if <paramref name="clonePropertyChanged"/>
+        /// is <see langword="true"/>, then also the subscribers of the <see cref="PropertyChanged"/> event. It respects the <see name="ICloneable"/>
+        /// implementations with some special handling for arrays so arrays can be deep-cloned as well.
         /// </summary>
         /// <param name="clonePropertyChanged"><see langword="true"/> to clone also the subscribers of the <see cref="PropertyChanged"/> event; otherwise, <see langword="false"/>. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
