@@ -814,7 +814,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <remarks>
         /// <para>If <see cref="PreserveMergedKeys"/> is <see langword="true"/>, or when the amount of removed items does not exceed a limit, then
-        /// This method is an O(n) operation where n is the number of elements present in the inner lock-free storage. Otherwise,
+        /// this method is an O(n) operation where n is the number of elements present in the inner lock-free storage. Otherwise,
         /// this method calls the <see cref="Reset">Reset</see> method, which frees up all the allocated entries.</para>
         /// <note>Note that if <see cref="PreserveMergedKeys"/> is <see langword="true"/>, then though this method removes all values from
         /// the <see cref="ThreadSafeDictionary{TKey,TValue}"/>, it never removes the keys that are already merged into the faster lock-free storage.
