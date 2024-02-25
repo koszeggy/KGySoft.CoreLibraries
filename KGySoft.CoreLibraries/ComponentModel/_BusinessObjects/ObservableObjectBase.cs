@@ -198,7 +198,7 @@ namespace KGySoft.ComponentModel
         protected bool IsDisposed => isDisposed;
 
         /// <summary>
-        /// Gets whether the <see cref="Get{T}(T, string)"><![CDATA[Get<T>]]></see> method (and the observable properties using them)
+        /// Gets whether the <see cref="Get{T}(T, string)"><![CDATA[Get<T>]]></see> method (and the observable properties using it)
         /// throw an <see cref="ObjectDisposedException"/> when the <see cref="IsDisposed"/> property returns <see langword="true"/>.
         /// In a derived class this property can be overridden to return <see langword="true"/>, in which case
         /// the <see cref="Get{T}(T, string)"><![CDATA[Get<T>]]></see> method returns the default value of <c>T</c> after the object is disposed.

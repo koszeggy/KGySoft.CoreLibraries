@@ -950,7 +950,7 @@ namespace KGySoft.Serialization.Binary
         public static BinarySerializationFormatter CreateFormatter(BinarySerializationOptions options = DefaultSerializationOptions) => new BinarySerializationFormatter(options);
 
         /// <summary>
-        /// Extracts a flattened collection of expected types of <typeparamref name="T"/> for deserialization.
+        /// Extracts a flattened collection of expected types from <typeparamref name="T"/> for deserialization.
         /// Can be useful for deserialization methods in safe mode when <typeparamref name="T"/> is a custom type
         /// directly referencing other custom types using default serialization.
         /// </summary>
@@ -966,7 +966,7 @@ namespace KGySoft.Serialization.Binary
         /// uses default serialization and wraps other custom types directly.</para>
         /// <note><list type="bullet"><item>Please note that this method may not able to detect every type if the types of the serialized fields are interfaces or non-sealed classes
         /// and the serialization stream contains implementations or derived types of them. In such cases you may need to append further types to the result before passing it to the deserialization methods.</item>
-        /// <item>Please also note that if <typeparamref name="T"/> or one of its nested types uses custom serialization (ie. implements <see cref="ISerializable"/> or <see cref="IBinarySerializable"/>),
+        /// <item>Please also note that if <typeparamref name="T"/> or some of its nested types use custom serialization (ie. implement <see cref="ISerializable"/> or <see cref="IBinarySerializable"/>),
         /// then their fields are not checked recursively by default, because they are not serialized by fields, and it's impossible to tell what types should be included in the result.
         /// You can force to extract their types by passing <see langword="true"/> to the <paramref name="forceAll"/> parameter though.</item></list></note>
         /// <para>If <paramref name="forceAll"/> is <see langword="false"/>, then natively supported types, as well as fields of <see cref="ISerializable"/> and <see cref="IBinarySerializable"/>
@@ -975,14 +975,14 @@ namespace KGySoft.Serialization.Binary
         /// was enabled on serialization), the fields of <see cref="ISerializable"/> types (see <see cref="BinarySerializationOptions.IgnoreISerializable"/>),
         /// the fields of <see cref="IBinarySerializable"/> types (see <see cref="BinarySerializationOptions.IgnoreIBinarySerializable"/>),
         /// and also natively supported types (see <see cref="BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes"/>).</para>
-        /// <para>When <see cref="BinarySerializationOptions.CompactSerializationOfStructures"/> was enabled on serialization,
+        /// <para>When <see cref="BinarySerializationOptions.CompactSerializationOfStructures"/> is enabled on serialization,
         /// this method may unnecessarily return the referenced custom types of unmanaged structs.</para>
         /// <note type="tip">The result of this method is not cached. If performance matters either do the caching explicitly or try to manually enlist the expected types instead.</note>
         /// </remarks>
         public static IEnumerable<Type> ExtractExpectedTypes<T>(bool forceAll = false) => ExtractExpectedTypes(typeof(T), forceAll);
 
         /// <summary>
-        /// Extracts a flattened collection of expected types of <paramref name="type"/> for deserialization.
+        /// Extracts a flattened collection of expected types from <paramref name="type"/> for deserialization.
         /// Can be useful for deserialization methods in safe mode when <paramref name="type"/> is a custom type
         /// directly referencing other custom types using default serialization.
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="ExtractExpectedTypes{T}"/> overload for details.

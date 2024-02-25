@@ -512,7 +512,7 @@ namespace KGySoft.Resources
         /// <br/>Default value: <see langword="true"/>.
         /// </summary>
         /// <remarks>
-        /// <para>To be compatible with <a href="https://learn.microsoft.com/en-us/dotnet/api/System.Resources.ResourceManager" target="_blank">System.Resources.ResourceManager</a> this
+        /// <para>To be compatible with <see cref="ResourceManager">System.Resources.ResourceManager</see> this
         /// property is <see langword="true"/> by default. If this <see cref="ResXResourceManager"/> contains no mutable values or it is known that modifying values is not
         /// an issue, then this property can be set to <see langword="false"/> for better performance.</para>
         /// <para>Strings, value types and <see cref="Type"/> instances are not cloned.</para>
