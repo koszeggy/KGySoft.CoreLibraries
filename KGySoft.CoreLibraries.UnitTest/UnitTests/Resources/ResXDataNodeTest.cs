@@ -33,7 +33,7 @@ using NUnit.Framework;
 #region Suppressions
 
 #if NET
-#if NET5_0 || NET6_0 || NET7_0 || NET8_0
+#if NET5_0 || NET6_0 || NET7_0 || NET8_0 || NET9_0
 #pragma warning disable SYSLIB0011 // Type or member is obsolete - this class uses BinaryFormatter for security tests
 #pragma warning disable CS0618 // Use of obsolete symbol - as above  
 #else

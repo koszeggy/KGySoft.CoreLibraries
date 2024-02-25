@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net35;net40;net45;net46;net47;net472;netcoreapp2.0;netcoreapp2.1;netcoreapp3.0;net5.0;net6.0;net7.0;net8.0</TargetFrameworks>
-    <!--<TargetFrameworks>net8.0</TargetFrameworks>-->
+    <!--<TargetFrameworks>net35;net40;net45;net46;net47;net472;netcoreapp2.0;netcoreapp2.1;netcoreapp3.0;net5.0;net6.0;net7.0;net8.0</TargetFrameworks>-->
+    <TargetFrameworks>net9.0</TargetFrameworks>
 
     <RunAnalyzersDuringLiveAnalysis>false</RunAnalyzersDuringLiveAnalysis>
     
@@ -70,7 +70,7 @@
   </ItemGroup>
 
   <!-- .NET only references -->
-  <ItemGroup Condition="'$(TargetFramework)' == 'net5.0' OR '$(TargetFramework)' == 'net6.0' OR '$(TargetFramework)' == 'net7.0' OR '$(TargetFramework)' == 'net8.0'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net5.0' OR '$(TargetFramework)' == 'net6.0' OR '$(TargetFramework)' == 'net7.0' OR '$(TargetFramework)' == 'net8.0' OR '$(TargetFramework)' == 'net9.0'">
 	  <!--For non-string resources-->
     <PackageReference Include="System.Resources.Extensions" Version="6.0.0" />
   </ItemGroup>

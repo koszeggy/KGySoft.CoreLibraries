@@ -2260,7 +2260,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             Console.Write("System Reflection...");
 #if NET9_0_OR_GREATER // ArgumentException : Property set method not found.
-            pi.SetValue(test, value, parameters);
+            pi.SetValue(test, value, indexParameters);
 #else
             test[index] = value;
 #endif
@@ -2841,7 +2841,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             Console.Write("System Reflection...");
 #if NET9_0_OR_GREATER // ArgumentException : Property set method not found.
-            pi.SetValue(test, value, parameters);
+            pi.SetValue(test, value, indexParameters);
 #else
             ((TestStruct)test)[index] = value;
 #endif

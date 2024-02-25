@@ -1784,7 +1784,7 @@ namespace KGySoft.Serialization.Binary
 #else
                 ComparerType.CultureSpecific => StringComparer.Create(CultureInfo.GetCultureInfo(ReadStringValue(br, addToCache)), (CompareOptions)Read7BitInt(br) == CompareOptions.IgnoreCase),
 #endif
-#if NET9_0_OR_GREATER
+#if NET10_0_OR_GREATER
 #error check if already available - https://github.com/dotnet/runtime/issues/77679
                 ComparerType.OrdinalNonRandomized => StringComparer.OrdinalNonRandomized,
                 ComparerType.OrdinalIgnoreCaseNonRandomized => StringComparer.OrdinalIgnoreCaseNonRandomized,

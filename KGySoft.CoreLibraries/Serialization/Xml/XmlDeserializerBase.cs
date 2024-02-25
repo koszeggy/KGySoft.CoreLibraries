@@ -699,7 +699,7 @@ namespace KGySoft.Serialization.Xml
             ComparerType.OrdinalIgnoreCase => StringComparer.OrdinalIgnoreCase,
             ComparerType.Invariant => StringComparer.InvariantCulture,
             ComparerType.InvariantIgnoreCase => StringComparer.InvariantCultureIgnoreCase,
-#if NET9_0_OR_GREATER // TODO - https://github.com/dotnet/runtime/issues/77679
+#if NET10_0_OR_GREATER // TODO - https://github.com/dotnet/runtime/issues/77679
 #error check if already available
             ComparerType.OrdinalNonRandomized => StringComparer.OrdinalNonRandomized,
             ComparerType.OrdinalIgnoreCaseNonRandomized => StringComparer.OrdinalIgnoreCaseNonRandomized,
