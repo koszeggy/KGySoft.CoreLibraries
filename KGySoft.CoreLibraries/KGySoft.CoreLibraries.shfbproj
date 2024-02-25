@@ -32,7 +32,7 @@
     <SaveComponentCacheCapacity>100</SaveComponentCacheCapacity>
     <WarnOnMissingSourceContext>False</WarnOnMissingSourceContext>
     <HelpTitle>KGy SOFT Core Libraries Help</HelpTitle>
-    <HelpFileVersion>8.0.0</HelpFileVersion>
+    <HelpFileVersion>8.1.0</HelpFileVersion>
     <NamingMethod>MemberName</NamingMethod>
     <ContentPlacement>AboveNamespaces</ContentPlacement>
     <RootNamespaceContainer>False</RootNamespaceContainer>
@@ -72,6 +72,8 @@
       <Argument Key="BaseSourceCodeUrl" Value="" />
       <Argument Key="RequestExampleUrl" Value="" />
     </TransformComponentArguments>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <!-- There are no properties for these groups.  AnyCPU needs to appear in order for Visual Studio to perform
 			 the build.  The others are optional common platform types that may appear. -->
