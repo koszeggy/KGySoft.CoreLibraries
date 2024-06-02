@@ -106,6 +106,16 @@ namespace KGySoft.Reflection
 
         #endregion
 
+        #region Iterator<T>
+#if NET9_0_OR_GREATER
+
+        private static LockFreeCache<Type, MethodAccessor?>? methodsIterator_GetCount;
+        private static bool? hasIterator;
+        private static Type? typeIterator;
+
+#endif
+        #endregion
+
         #endregion
 
         #region Any Member
@@ -315,6 +325,44 @@ namespace KGySoft.Reflection
             return methodsIIListProvider_GetCount[genericArgument];
         }
 
+        #endregion
+
+        #region Iterator<T>
+#if NET9_0_OR_GREATER
+
+        private static Type? IteratorType
+        {
+            get
+            {
+                if (!hasIterator.HasValue)
+                {
+                    typeIterator = Reflector.ResolveType(typeof(Enumerable).Assembly, "System.Linq.Enumerable+Iterator`1");
+                    hasIterator = typeIterator != null;
+                }
+
+                return typeIterator;
+            }
+        }
+
+        private static MethodAccessor? Iterator_GetCount(Type genericArgument)
+        {
+            static MethodAccessor? GetGetCountMethod(Type arg)
+            {
+                Type? iteratorType = IteratorType;
+                if (iteratorType == null)
+                    return null;
+                Type genericType = iteratorType.GetGenericType(arg);
+                MethodInfo? getCountMethod = genericType.GetMethod("GetCount");
+                return getCountMethod == null ? null : MethodAccessor.GetAccessor(getCountMethod);
+            }
+
+            if (methodsIterator_GetCount == null)
+                Interlocked.CompareExchange(ref methodsIterator_GetCount, new LockFreeCache<Type, MethodAccessor?>(GetGetCountMethod, null, LockFreeCacheOptions.Profile128), null);
+
+            return methodsIterator_GetCount[genericArgument];
+        }
+
+#endif
         #endregion
 
         #endregion
@@ -749,6 +797,26 @@ namespace KGySoft.Reflection
             return accessor.Invoke(collection, true) as int?;
         }
 
+        #endregion
+
+        #region Iterator<T>
+#if NET9_0_OR_GREATER
+
+        internal static int? GetIteratorCount([NoEnumeration] this IEnumerable collection)
+        {
+            Type? iteratorType = IteratorType;
+            if (iteratorType == null || !collection.GetType().IsImplementationOfGenericType(iteratorType, out Type? genericType))
+                return null;
+
+            MethodAccessor? accessor = Iterator_GetCount(genericType.GetGenericArguments()[0]);
+            if (accessor == null)
+                return null;
+            Debug.Assert(accessor.MemberInfo.DeclaringType!.IsInstanceOfType(collection));
+            return accessor.Invoke(collection, true) as int?;
+
+        }
+
+#endif
         #endregion
 
         #endregion

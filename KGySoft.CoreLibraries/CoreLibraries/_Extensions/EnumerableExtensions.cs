@@ -1742,8 +1742,15 @@ namespace KGySoft.CoreLibraries
                         return true;
                     }
 
+#if NET9_0_OR_GREATER
+                    // Iterator<T>.GetCount()
+                    int? result = source.GetIteratorCount();
+#endif
+
                     // IIListProvider<T>
-                    int? result = source.GetListProviderCount();
+                    if (result == null)
+                        result = source.GetListProviderCount();
+
                     count = result >= 0 ? result.Value : default;
                     return result >= 0;
             }
