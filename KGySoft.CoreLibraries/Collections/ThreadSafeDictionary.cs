@@ -654,8 +654,8 @@ namespace KGySoft.Collections
 
                 lock (syncRoot)
                 {
-                    // lost race: we need to check the fixed storage again
-                    if (!IsUpToDateInLock(lockFreeValues))
+                    // lost race
+                    if (!IsUpToDateInLock(lockFreeValues) || expandableStorage == null)
                         continue;
 
                     found = expandableStorage.ContainsValue(value);
@@ -699,11 +699,10 @@ namespace KGySoft.Collections
                 lock (syncRoot)
                 {
                     // lost race
-                    if (!IsUpToDateInLock(lockFreeValues))
+                    if (!IsUpToDateInLock(lockFreeValues) || expandableStorage == null)
                         continue;
 
-                    Debug.Assert(expandableStorage != null, "If we are up-to-date the null check before the lock must be still valid");
-                    bool result = expandableStorage!.TryRemoveInternal(key, hashCode);
+                    bool result = expandableStorage.TryRemoveInternal(key, hashCode);
                     MergeIfExpired();
                     return result;
                 }
@@ -754,7 +753,7 @@ namespace KGySoft.Collections
                 lock (syncRoot)
                 {
                     // lost race
-                    if (!IsUpToDateInLock(lockFreeValues))
+                    if (!IsUpToDateInLock(lockFreeValues) || expandableStorage == null)
                         continue;
 
                     bool result = expandableStorage.TryRemoveInternal(key, hashCode, out value);
@@ -799,7 +798,7 @@ namespace KGySoft.Collections
                 lock (syncRoot)
                 {
                     // lost race
-                    if (!IsUpToDateInLock(lockFreeValues))
+                    if (!IsUpToDateInLock(lockFreeValues) || expandableStorage == null)
                         continue;
 
                     bool result = expandableStorage.TryRemoveInternal(key, value, hashCode);
@@ -1317,12 +1316,11 @@ namespace KGySoft.Collections
 
                 lock (syncRoot)
                 {
-                    // lost race: we need to check the fixed storage again
-                    if (!IsUpToDateInLock(lockFreeValues))
+                    // lost race
+                    if (!IsUpToDateInLock(lockFreeValues) || expandableStorage == null)
                         continue;
 
-                    Debug.Assert(expandableStorage != null, "If we are up-to-date the null check before the lock must be still valid");
-                    bool result = expandableStorage!.TryGetValueInternal(key, hashCode, out value);
+                    bool result = expandableStorage.TryGetValueInternal(key, hashCode, out value);
                     MergeIfExpired();
                     return result;
                 }
@@ -1381,8 +1379,8 @@ namespace KGySoft.Collections
 
                 lock (syncRoot)
                 {
-                    // lost race: we need to check the fixed storage again
-                    if (!IsUpToDateInLock(lockFreeValues))
+                    // lost race
+                    if (!IsUpToDateInLock(lockFreeValues) || expandableStorage == null)
                         continue;
 
                     bool result = expandableStorage.TryReplaceInternal(key, newValue, originalValue, hashCode);
@@ -1475,7 +1473,7 @@ namespace KGySoft.Collections
         }
 
         /// <summary>
-        /// Checks if the lock free storage is still up-to-date. Should be used inside of a lock.
+        /// Checks if the lock free storage is still up-to-date. Should be used inside a lock.
         /// If returns false, the lock block must be left immediately and the <see cref="fixedSizeStorage"/> field must be re-checked.
         /// </summary>
         [MethodImpl(MethodImpl.AggressiveInlining)]

@@ -22,6 +22,7 @@ using System.Threading;
 
 using KGySoft.Collections;
 using KGySoft.Reflection;
+using KGySoft.Threading;
 
 using NUnit.Framework;
 
@@ -283,6 +284,24 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             set.TrimExcess();
             Assert.AreEqual(0, ((ThreadSafeHashSet<int>.FixedSizeStorage)Reflector.GetField(set, "fixedSizeStorage"))!.DeletedCount);
             Assert.AreEqual(count / 2, set.Count);
+        }
+
+        [Test]
+        public void RaceConditionTest()
+        {
+            const int key = 1;
+
+            // Initializing without passing a collection to the constructor and then adding one element: it will be in the temp locking storage
+            var set = new ThreadSafeHashSet<int> { key };
+
+            // Waiting for the merge timeout
+            Thread.Sleep(set.MergeInterval);
+
+            bool[] results = new bool[100];
+            ParallelHelper.For(0, results.Length,
+                y => results[y] = set.TryRemove(key));
+
+            Assert.AreEqual(1, results.Count(r => r));
         }
 
         #endregion

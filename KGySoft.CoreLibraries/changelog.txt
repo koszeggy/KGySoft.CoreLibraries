@@ -6,6 +6,19 @@
 ===============================================================================
 
 ~~~~~~~~~
+* v8.1.1:
+~~~~~~~~~
+
+* KGySoft.Collections namespace:
+================================
+
+- ThreadSafeDictionary<TKey, TValue> class:
+  - Ensuring that [Try]Remove returns true only once in special race conditions.
+- ThreadSafeHashSet<T> class:
+  - Ensuring that [Try]Remove returns true only once in special race conditions.
+
+
+~~~~~~~~~
 * v8.1.0:
 ~~~~~~~~~
 

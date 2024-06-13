@@ -545,6 +545,24 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             CollectionAssert.DoesNotContain(results, true);
         }
 
+        [Test]
+        public void RemoveRaceConditionTest()
+        {
+            const string key = "Key";
+
+            // Initializing without passing a collection to the constructor and then adding one element: it will be in the temp locking storage
+            var dict = new ThreadSafeDictionary<string, object> { [key] = true };
+
+            // Waiting for the merge timeout
+            Thread.Sleep(dict.MergeInterval);
+
+            bool[] results = new bool[100];
+            ParallelHelper.For(0, results.Length,
+                y => results[y] = dict.TryRemove(key));
+
+            Assert.AreEqual(1, results.Count(r => r));
+        }
+
         #endregion
     }
 }
