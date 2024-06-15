@@ -13,6 +13,8 @@
 ==================================
 + Enum<TEnum> class:
   + New GetUnderlyingValues method.
++ FastRandom class:
+  + New constructor overloads to initialize from UInt128 (.NET 7 or newer) or a couple of ulong seeds.
 
 - KGySoft.Collections namespace:
 ================================

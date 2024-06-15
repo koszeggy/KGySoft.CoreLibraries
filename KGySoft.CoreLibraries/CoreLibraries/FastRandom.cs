@@ -116,6 +116,33 @@ namespace KGySoft.CoreLibraries
             state = *(State*)&seed;
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ThreadSafeRandom"/> class using the specified seed values.
+        /// </summary>
+        /// <param name="seedA">The first half of the seed that is used to calculate a starting value for the pseudo-random number sequence.</param>
+        /// <param name="seedB">The second half of the seed that is used to calculate a starting value for the pseudo-random number sequence.</param>
+        /// <exception cref="ArgumentException">Both <paramref name="seedA"/> and <paramref name="seedB"/> are zero.</exception>
+        public FastRandom(ulong seedA, ulong seedB)
+        {
+            if (seedA == 0UL && seedB == 0UL)
+                Throw.ArgumentException(Res.FastRandomZeroSeeds);
+            state = new State { A = seedA, B = seedB };
+        }
+
+#if NET7_0_OR_GREATER
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ThreadSafeRandom"/> class using the specified <paramref name="seed"/> value.
+        /// </summary>
+        /// <param name="seed">A number used to calculate a starting value for the pseudo-random number sequence.</param>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="seed"/> must not be zero.</exception>
+        public FastRandom(UInt128 seed)
+        {
+            if (seed == default)
+                Throw.ArgumentOutOfRangeException(Argument.seed, Res.PropertyMustBeGreaterThan(nameof(seed), default(UInt128)));
+            state = Unsafe.As<UInt128, State>(ref seed);
+        }
+#endif
+
         #endregion
 
         #region Methods

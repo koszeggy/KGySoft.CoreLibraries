@@ -271,6 +271,13 @@ namespace KGySoft
 
         #endregion
 
+        #region FastRandom
+
+        /// <summary>At least one of the seeds must be nonzero.</summary>
+        internal static string FastRandomZeroSeeds => Get("FastRandom_ZeroSeeds");
+
+        #endregion
+
         #region PerformanceTest
 
         /// <summary>No test cases are added.</summary>
