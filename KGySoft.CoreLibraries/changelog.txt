@@ -16,8 +16,9 @@
 + FastRandom class:
   + New constructor overloads to initialize from UInt128 (.NET 7 or newer) or a couple of ulong seeds.
 
-- KGySoft.Collections namespace:
+* KGySoft.Collections namespace:
 ================================
++ New AllowNullDictionary<TKey, TValue> class: it has been made public
 - ThreadSafeDictionary<TKey, TValue> class:
   - Ensuring that [Try]Remove returns true only once in special race conditions.
 - ThreadSafeHashSet<T> class:
