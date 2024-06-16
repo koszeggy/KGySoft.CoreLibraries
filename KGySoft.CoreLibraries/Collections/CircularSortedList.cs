@@ -942,7 +942,7 @@ namespace KGySoft.Collections
         /// <remarks>
         /// <para>Every key in a <see cref="CircularSortedList{TKey,TValue}"/> must be unique according to the specified comparer.</para>
         /// </remarks>
-        public CircularSortedList(IComparer<TKey> comparer)
+        public CircularSortedList(IComparer<TKey>? comparer)
             : this(0, comparer)
         {
         }
@@ -962,7 +962,7 @@ namespace KGySoft.Collections
         /// also be unique according to the specified <paramref name="comparer"/>.</para>
         /// <para>The capacity of the new <see cref="CircularSortedList{TKey,TValue}"/> is set to the number of elements in <paramref name="dictionary"/>, so no resizing takes place while the list is being populated.</para>
         /// <para>If the data in <paramref name="dictionary"/> are sorted, this constructor is an O(n) operation, where n is the number of elements in <paramref name="dictionary"/>.
-        /// Otherwise it is an O(n*n) operation.</para>
+        /// Otherwise, it is an O(n*n) operation.</para>
         /// </remarks>
         [SuppressMessage("ReSharper", "ConditionalAccessQualifierIsNonNullableAccordingToAPIContract", Justification = "False alarm, dictionary CAN be null, it is just not ALLOWED (exception is thrown from the overload)")]
         public CircularSortedList(IDictionary<TKey, TValue> dictionary, IComparer<TKey>? comparer = null)
