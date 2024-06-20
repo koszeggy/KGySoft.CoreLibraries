@@ -49,9 +49,180 @@ namespace KGySoft.Collections
     /// <seealso cref="IDictionary{TKey, TValue}" />
     [Serializable]
     [DebuggerTypeProxy(typeof(DictionaryDebugView<,>))]
+    [DebuggerDisplay("Count = {" + nameof(Count) + "}; TKey = {typeof(" + nameof(TKey) + ").Name}; TValue = {typeof(" + nameof(TValue) + ").Name}")]
     [SuppressMessage("ReSharper", "UseNullableReferenceTypesAnnotationSyntax", Justification = "False alarm, only [NotNull] prevents AssignNullToNotNullAttribute warnings")]
     public class AllowNullDictionary<TKey, TValue> : IDictionary<TKey, TValue>
     {
+        #region Nested Types
+
+        #region Nested Classes
+
+        #region KeysCollection class
+
+        [DebuggerTypeProxy(typeof(DictionaryKeyCollectionDebugView<,>))]
+        [DebuggerDisplay("Count = {" + nameof(Count) + "}")]
+        private sealed class KeysCollection : ICollection<TKey>// TODO , ICollection
+        {
+            #region Fields
+
+            private readonly AllowNullDictionary<TKey, TValue> owner;
+
+            #endregion
+
+            #region Properties
+
+            #region Public Properties
+
+            public int Count => owner.Count;
+
+            public bool IsReadOnly => true;
+
+            #endregion
+
+            #endregion
+
+            #region Constructors
+
+            internal KeysCollection(AllowNullDictionary<TKey, TValue> owner) => this.owner = owner;
+
+            #endregion
+
+            #region Methods
+
+            #region Public Methods
+
+            public bool Contains(TKey item) => owner.ContainsKey(item);
+
+            public void CopyTo(TKey?[] array, int arrayIndex)
+            {
+                if (array == null!)
+                    Throw.ArgumentNullException(Argument.array);
+                if (arrayIndex < 0 || arrayIndex > array.Length)
+                    Throw.ArgumentOutOfRangeException(Argument.arrayIndex);
+                if (array.Length - arrayIndex < Count)
+                    Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
+
+                if (owner.hasNullKey)
+                {
+                    array[arrayIndex] = default;
+                    arrayIndex += 1;
+                }
+
+                owner.dict.Keys.CopyTo(array!, arrayIndex);
+            }
+
+            public IEnumerator<TKey> GetEnumerator()
+            {
+                if (owner.hasNullKey)
+                    yield return default!;
+                foreach (TKey key in owner.Keys)
+                    yield return key;
+            }
+
+            #endregion
+
+            #region Explicitly Implemented Interface Methods
+
+            void ICollection<TKey>.Add(TKey item) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+
+            void ICollection<TKey>.Clear() => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+
+            bool ICollection<TKey>.Remove(TKey item) => Throw.NotSupportedException<bool>(Res.ICollectionReadOnlyModifyNotSupported);
+
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+            #endregion
+
+            #endregion
+        }
+
+        #endregion
+
+        #region ValuesCollection class
+
+        [DebuggerTypeProxy(typeof(DictionaryValueCollectionDebugView<,>))]
+        [DebuggerDisplay("Count = {" + nameof(Count) + "}")]
+        private sealed class ValuesCollection : ICollection<TValue> // TODO, ICollection
+        {
+            #region Fields
+
+            private readonly AllowNullDictionary<TKey, TValue> owner;
+
+            #endregion
+
+            #region Properties
+
+            #region Public Properties
+
+            public int Count => owner.Count;
+
+            public bool IsReadOnly => true;
+
+            #endregion
+
+            #endregion
+
+            #region Constructors
+
+            internal ValuesCollection(AllowNullDictionary<TKey, TValue> owner) => this.owner = owner;
+
+            #endregion
+
+            #region Methods
+
+            #region Public Methods
+
+            public bool Contains(TValue item) => owner.ContainsValue(item);
+
+            public void CopyTo(TValue[] array, int arrayIndex)
+            {
+                if (array == null!)
+                    Throw.ArgumentNullException(Argument.array);
+                if (arrayIndex < 0 || arrayIndex > array.Length)
+                    Throw.ArgumentOutOfRangeException(Argument.arrayIndex);
+                if (array.Length - arrayIndex < Count)
+                    Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
+
+                if (owner.hasNullKey)
+                {
+                    array[arrayIndex] = owner.nullValue;
+                    arrayIndex += 1;
+                }
+
+                owner.dict.Values.CopyTo(array, arrayIndex);
+            }
+
+            public IEnumerator<TValue> GetEnumerator()
+            {
+                if (owner.hasNullKey)
+                    yield return owner.nullValue;
+                foreach (TValue value in owner.Values)
+                    yield return value;
+            }
+
+            #endregion
+
+            #region Explicitly Implemented Interface Methods
+
+            void ICollection<TValue>.Add(TValue item) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+
+            void ICollection<TValue>.Clear() => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+
+            bool ICollection<TValue>.Remove(TValue item) => Throw.NotSupportedException<bool>(Res.ICollectionReadOnlyModifyNotSupported);
+
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+            #endregion
+
+            #endregion
+        }
+
+        #endregion
+
+        #endregion
+
+        #endregion
+
         #region Constants
 
         private const int defaultCapacity = 4;
@@ -65,12 +236,15 @@ namespace KGySoft.Collections
         private bool hasNullKey;
         [AllowNull]private TValue nullValue;
 
+        [NonSerialized]private KeysCollection? keysCollection;
+        [NonSerialized]private ValuesCollection? valuesCollection;
+
         #endregion
 
         #region Properties and Indexers
 
         #region Properties
-        
+
         #region Public Properties
 
         /// <summary>
@@ -82,20 +256,7 @@ namespace KGySoft.Collections
         /// <para>Retrieving the value of this property is an O(1) operation.</para>
         /// <note>The enumerator of the returned collection does not support the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
-        public ICollection<TKey> Keys
-        {
-            get
-            {
-                // TOTO: not a snapshot
-                if (!hasNullKey)
-                    return dict.Keys;
-
-                var keys = new TKey[Count];
-                keys[0] = default(TKey)!;
-                dict.Keys.CopyTo(keys, 1);
-                return keys;
-            }
-        }
+        public ICollection<TKey> Keys => keysCollection ??= new KeysCollection(this);
 
         /// <summary>
         /// Gets the values stored in the dictionary.
@@ -106,20 +267,7 @@ namespace KGySoft.Collections
         /// <para>Retrieving the value of this property is an O(1) operation.</para>
         /// <note>The enumerator of the returned collection does not support the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
-        public ICollection<TValue> Values
-        {
-            get
-            {
-                // TOTO: not a snapshot
-                if (!hasNullKey)
-                    return dict.Values;
-
-                var values = new TValue[Count];
-                values[0] = nullValue;
-                dict.Values.CopyTo(values, 1);
-                return values;
-            }
-        }
+        public ICollection<TValue> Values => valuesCollection ??= new ValuesCollection(this);
 
         /// <summary>
         /// Gets number of elements currently stored in this <see cref="AllowNullDictionary{TKey,TValue}"/> instance.
@@ -273,6 +421,19 @@ namespace KGySoft.Collections
         /// <remarks><para>This method approaches an O(1) operation.</para></remarks>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public bool ContainsKey([CanBeNull]TKey key) => key == null ? hasNullKey : dict.ContainsKey(key);
+
+        /// <summary>
+        /// Determines whether the <see cref="AllowNullDictionary{TKey,TValue}"/> contains a specific value.
+        /// </summary>
+        /// <param name="value">The value to locate in the <see cref="AllowNullDictionary{TKey,TValue}"/>.</param>
+        /// <returns><see langword="true"/> if the <see cref="AllowNullDictionary{TKey,TValue}"/> contains an element with the specified <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
+        /// <remarks>
+        /// <para>This method determines equality using the <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> comparer.</para>
+        /// <para>This method performs a linear search; therefore, this method is an O(n) operation.</para>
+        /// </remarks>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public bool ContainsValue(TValue value)
+            => hasNullKey && EqualityComparer<TValue>.Default.Equals(value, nullValue) || dict.ContainsValue(value);
 
         /// <summary>
         /// Removes the value with the specified <paramref name="key"/> from the <see cref="AllowNullDictionary{TKey,TValue}"/>.
