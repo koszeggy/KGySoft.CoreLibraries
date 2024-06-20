@@ -55,7 +55,132 @@ namespace KGySoft.Collections
     {
         #region Nested Types
 
+        #region Enumerations
+
+        private enum EnumerationStatus : byte
+        {
+            BeforeFirst,
+            BeforeDictionary,
+            Dictionary,
+            AfterLast
+        }
+
+        #endregion
+
         #region Nested Classes
+
+        #region ReferenceEnumerator class
+
+        private class ReferenceEnumerator : IEnumerator<KeyValuePair<TKey, TValue>>
+        {
+            #region Fields
+
+            private readonly AllowNullDictionary<TKey, TValue> owner;
+
+            private Dictionary<TKey, TValue>.Enumerator wrappedEnumerator;
+            private KeyValuePair<TKey, TValue> current;
+            private EnumerationStatus status;
+
+            #endregion
+
+            #region Properties
+
+            #region Public Properties
+
+            public KeyValuePair<TKey, TValue> Current => current;
+
+            #endregion
+
+            #region Explicitly Implemented Interface Properties
+
+            object IEnumerator.Current
+            {
+                get
+                {
+                    if (status is EnumerationStatus.BeforeFirst or EnumerationStatus.AfterLast)
+                        Throw.InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
+                    return current;
+                }
+            }
+
+            #endregion
+
+            #endregion
+
+            #region Constructors
+
+            internal ReferenceEnumerator(AllowNullDictionary<TKey, TValue> owner)
+            {
+                this.owner = owner;
+                wrappedEnumerator = owner.dict.GetEnumerator();
+                current = default;
+                status = EnumerationStatus.BeforeFirst;
+            }
+
+            #endregion
+
+            #region Methods
+
+            /// <summary>
+            /// Releases the enumerator
+            /// </summary>
+            public void Dispose()
+            {
+            }
+
+            /// <summary>
+            /// Advances the enumerator to the next element of the collection.
+            /// </summary>
+            /// <returns>
+            /// <see langword="true"/> if the enumerator was successfully advanced to the next element; <see langword="false"/> if the enumerator has passed the end of the collection.
+            /// </returns>
+            /// <exception cref="InvalidOperationException">The collection was modified after the enumerator was created.</exception>
+            public bool MoveNext()
+            {
+                // Known limitation: modifications are not detected for the null key
+                switch (status)
+                {
+                    case EnumerationStatus.Dictionary:
+                        bool result = wrappedEnumerator.MoveNext();
+                        current = wrappedEnumerator.Current;
+                        if (!result)
+                            status = EnumerationStatus.AfterLast;
+                        return result;
+
+                    case EnumerationStatus.BeforeFirst:
+                        if (!owner.hasNullKey)
+                            goto case EnumerationStatus.BeforeDictionary;
+
+                        current = new KeyValuePair<TKey, TValue>(default!, owner.nullValue);
+                        status = EnumerationStatus.BeforeDictionary;
+                        return true;
+
+                    case EnumerationStatus.BeforeDictionary:
+                        status = EnumerationStatus.Dictionary;
+                        goto case EnumerationStatus.Dictionary;
+
+                    case EnumerationStatus.AfterLast:
+                        return false;
+
+                    default:
+                        return Throw.InvalidOperationException<bool>(Res.InternalError($"Unexpected status: {status}"));
+                }
+            }
+
+            /// <summary>
+            /// Sets the enumerator to its initial position, which is before the first element in the collection.
+            /// </summary>
+            /// <exception cref="InvalidOperationException">The collection was modified after the enumerator was created.</exception>
+            public void Reset()
+            {
+                ((IEnumerator)wrappedEnumerator).Reset();
+                status = EnumerationStatus.BeforeFirst;
+            }
+
+            #endregion
+        }
+
+        #endregion
 
         #region KeysCollection class
 
@@ -213,6 +338,129 @@ namespace KGySoft.Collections
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
             #endregion
+
+            #endregion
+        }
+
+        #endregion
+
+        #endregion
+
+        #region Nested structs
+
+        #region Enumerator struct
+
+        /// <summary>
+        /// Enumerates the elements of a <see cref="AllowNullDictionary{TKey,TValue}"/>.
+        /// </summary>
+        public struct Enumerator : IEnumerator<KeyValuePair<TKey, TValue>>
+        {
+            #region Fields
+
+            private readonly AllowNullDictionary<TKey, TValue> owner;
+
+            private Dictionary<TKey, TValue>.Enumerator wrappedEnumerator;
+            private KeyValuePair<TKey, TValue> current;
+            private EnumerationStatus status;
+
+            #endregion
+
+            #region Properties
+
+            #region Public Properties
+
+            /// <summary>
+            /// Gets the element at the current position of the enumerator.
+            /// </summary>
+            public readonly KeyValuePair<TKey, TValue> Current => current;
+
+            #endregion
+
+            #region Explicitly Implemented Interface Properties
+
+            object IEnumerator.Current
+            {
+                get
+                {
+                    if (status is EnumerationStatus.BeforeFirst or EnumerationStatus.AfterLast)
+                        Throw.InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
+                    return current;
+                }
+            }
+
+            #endregion
+
+            #endregion
+
+            #region Constructors
+
+            internal Enumerator(AllowNullDictionary<TKey, TValue> owner)
+            {
+                this.owner = owner;
+                wrappedEnumerator = owner.dict.GetEnumerator();
+                current = default;
+                status = EnumerationStatus.BeforeFirst;
+            }
+
+            #endregion
+
+            #region Methods
+
+            /// <summary>
+            /// Releases the enumerator
+            /// </summary>
+            public void Dispose()
+            {
+            }
+
+            /// <summary>
+            /// Advances the enumerator to the next element of the collection.
+            /// </summary>
+            /// <returns>
+            /// <see langword="true"/> if the enumerator was successfully advanced to the next element; <see langword="false"/> if the enumerator has passed the end of the collection.
+            /// </returns>
+            /// <exception cref="InvalidOperationException">The collection was modified after the enumerator was created.</exception>
+            public bool MoveNext()
+            {
+                // Known limitation: modifications are not detected for the null key
+                switch (status)
+                {
+                    case EnumerationStatus.Dictionary:
+                        bool result = wrappedEnumerator.MoveNext();
+                        current = wrappedEnumerator.Current;
+                        if (!result)
+                            status = EnumerationStatus.AfterLast;
+                        return result;
+
+                    case EnumerationStatus.BeforeFirst:
+                        if (!owner.hasNullKey)
+                            goto case EnumerationStatus.BeforeDictionary;
+
+                        current = new KeyValuePair<TKey, TValue>(default!, owner.nullValue);
+                        status = EnumerationStatus.BeforeDictionary;
+                        return true;
+
+                    case EnumerationStatus.BeforeDictionary:
+                        status = EnumerationStatus.Dictionary;
+                        goto case EnumerationStatus.Dictionary;
+
+                    case EnumerationStatus.AfterLast:
+                        return false;
+
+                    default:
+                        return Throw.InvalidOperationException<bool>(Res.InternalError($"Unexpected status: {status}"));
+                }
+            }
+
+            /// <summary>
+            /// Sets the enumerator to its initial position, which is before the first element in the collection.
+            /// </summary>
+            /// <exception cref="InvalidOperationException">The collection was modified after the enumerator was created.</exception>
+            public void Reset()
+            {
+                ((IEnumerator)wrappedEnumerator).Reset();
+                status = EnumerationStatus.BeforeFirst;
+            }
 
             #endregion
         }
@@ -503,9 +751,7 @@ namespace KGySoft.Collections
         /// <remarks>
         /// <note>The returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
-        public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
-            // TODO: value type enumerator
-            => !hasNullKey ? dict.GetEnumerator() : GetEnumeratorWithNull();
+        public Enumerator GetEnumerator() => new Enumerator(this);
 
         #endregion
 
@@ -546,7 +792,10 @@ namespace KGySoft.Collections
             ((ICollection<KeyValuePair<TKey, TValue>>)dict).CopyTo(array, arrayIndex + (hasNullKey ? 1 : 0));
         }
 
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        IEnumerator<KeyValuePair<TKey, TValue>> IEnumerable<KeyValuePair<TKey, TValue>>.GetEnumerator()
+            => new ReferenceEnumerator(this);
+
+        IEnumerator IEnumerable.GetEnumerator() => new ReferenceEnumerator(this);
 
         #endregion
 
