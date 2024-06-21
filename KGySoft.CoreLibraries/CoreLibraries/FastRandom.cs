@@ -122,6 +122,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="seedA">The first half of the seed that is used to calculate a starting value for the pseudo-random number sequence.</param>
         /// <param name="seedB">The second half of the seed that is used to calculate a starting value for the pseudo-random number sequence.</param>
         /// <exception cref="ArgumentException">Both <paramref name="seedA"/> and <paramref name="seedB"/> are zero.</exception>
+        [CLSCompliant(false)]
         public FastRandom(ulong seedA, ulong seedB)
         {
             if (seedA == 0UL && seedB == 0UL)
@@ -135,6 +136,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="seed">A number used to calculate a starting value for the pseudo-random number sequence.</param>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="seed"/> must not be zero.</exception>
+        [CLSCompliant(false)]
         public FastRandom(UInt128 seed)
         {
             if (seed == default)
