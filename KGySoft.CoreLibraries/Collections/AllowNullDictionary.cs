@@ -282,7 +282,7 @@ namespace KGySoft.Collections
             {
                 if (owner.hasNullKey)
                     yield return default!;
-                foreach (TKey key in owner.Keys)
+                foreach (TKey key in owner.dict.Keys)
                     yield return key;
             }
 
@@ -322,7 +322,7 @@ namespace KGySoft.Collections
                         index += 1;
                     }
 
-                    ((ICollection)owner.Keys).CopyTo(array, index);
+                    ((ICollection)owner.dict.Keys).CopyTo(array, index);
                     return;
                 }
 
@@ -400,7 +400,7 @@ namespace KGySoft.Collections
             {
                 if (owner.hasNullKey)
                     yield return owner.nullValue;
-                foreach (TValue value in owner.Values)
+                foreach (TValue value in owner.dict.Values)
                     yield return value;
             }
 
@@ -440,7 +440,7 @@ namespace KGySoft.Collections
                         index += 1;
                     }
 
-                    ((ICollection)owner.Values).CopyTo(array, index);
+                    ((ICollection)owner.dict.Values).CopyTo(array, index);
                     return;
                 }
 
@@ -458,8 +458,6 @@ namespace KGySoft.Collections
 
         #region Nested structs
 
-        #region Enumerator struct
-
         /// <summary>
         /// Enumerates the elements of a <see cref="AllowNullDictionary{TKey,TValue}"/>.
         /// </summary>
@@ -471,7 +469,7 @@ namespace KGySoft.Collections
 
             private Dictionary<TKey, TValue>.Enumerator wrappedEnumerator;
             private KeyValuePair<TKey, TValue> current;
-            private EnumerationState status;
+            private EnumerationState state;
 
             #endregion
 
@@ -492,7 +490,7 @@ namespace KGySoft.Collections
             {
                 get
                 {
-                    if (status is EnumerationState.NotStarted or EnumerationState.Finished)
+                    if (state is EnumerationState.NotStarted or EnumerationState.Finished)
                         Throw.InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
                     return current;
                 }
@@ -509,7 +507,7 @@ namespace KGySoft.Collections
                 this.owner = owner;
                 wrappedEnumerator = owner.dict.GetEnumerator();
                 current = default;
-                status = EnumerationState.NotStarted;
+                state = EnumerationState.NotStarted;
             }
 
             #endregion
@@ -533,32 +531,35 @@ namespace KGySoft.Collections
             public bool MoveNext()
             {
                 // Known limitation: modifications are not detected for the null key
-                switch (status)
+                switch (state)
                 {
+                    case EnumerationState.NotStarted:
+                        if (!owner.hasNullKey)
+                        {
+                            state = EnumerationState.EnumeratingDictionary;
+                            goto case EnumerationState.EnumeratingDictionary;
+                        }
+
+                        current = new KeyValuePair<TKey, TValue>(default!, owner.nullValue);
+                        state = EnumerationState.EnumeratingNull;
+                        return true;
+
+                    case EnumerationState.EnumeratingNull:
+                        state = EnumerationState.EnumeratingDictionary;
+                        goto case EnumerationState.EnumeratingDictionary;
+
                     case EnumerationState.EnumeratingDictionary:
                         bool result = wrappedEnumerator.MoveNext();
                         current = wrappedEnumerator.Current;
                         if (!result)
-                            status = EnumerationState.Finished;
+                            state = EnumerationState.Finished;
                         return result;
-
-                    case EnumerationState.NotStarted:
-                        if (!owner.hasNullKey)
-                            goto case EnumerationState.EnumeratingNull;
-
-                        current = new KeyValuePair<TKey, TValue>(default!, owner.nullValue);
-                        status = EnumerationState.EnumeratingNull;
-                        return true;
-
-                    case EnumerationState.EnumeratingNull:
-                        status = EnumerationState.EnumeratingDictionary;
-                        goto case EnumerationState.EnumeratingDictionary;
 
                     case EnumerationState.Finished:
                         return false;
 
                     default:
-                        return Throw.InvalidOperationException<bool>(Res.InternalError($"Unexpected status: {status}"));
+                        return Throw.InvalidOperationException<bool>(Res.InternalError($"Unexpected status: {state}"));
                 }
             }
 
@@ -569,13 +570,11 @@ namespace KGySoft.Collections
             public void Reset()
             {
                 ((IEnumerator)wrappedEnumerator).Reset();
-                status = EnumerationState.NotStarted;
+                state = EnumerationState.NotStarted;
             }
 
             #endregion
         }
-
-        #endregion
 
         #endregion
 
