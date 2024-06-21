@@ -36,6 +36,7 @@ using KGySoft.Reflection;
 #pragma warning disable CS8767 // Nullability of reference types in type of parameter doesn't match implicitly implemented member (possibly because of nullability attributes). - That's the point
 #endif
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable. - False alarm, it is decorated by [AllowNull]. Declaring as nullable would just raise more false alarm warnings.
+#pragma warning disable CS8768 // Nullability of reference types in return type doesn't match implemented member (possibly because of nullability attributes). - That's the point
 
 #endregion
 
@@ -51,18 +52,18 @@ namespace KGySoft.Collections
     [DebuggerTypeProxy(typeof(DictionaryDebugView<,>))]
     [DebuggerDisplay("Count = {" + nameof(Count) + "}; TKey = {typeof(" + nameof(TKey) + ").Name}; TValue = {typeof(" + nameof(TValue) + ").Name}")]
     [SuppressMessage("ReSharper", "UseNullableReferenceTypesAnnotationSyntax", Justification = "False alarm, only [NotNull] prevents AssignNullToNotNullAttribute warnings")]
-    public class AllowNullDictionary<TKey, TValue> : IDictionary<TKey, TValue>
+    public class AllowNullDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IDictionary
     {
         #region Nested Types
 
         #region Enumerations
 
-        private enum EnumerationStatus : byte
+        private enum EnumerationState : byte
         {
-            BeforeFirst,
-            BeforeDictionary,
-            Dictionary,
-            AfterLast
+            NotStarted,
+            EnumeratingNull,
+            EnumeratingDictionary,
+            Finished
         }
 
         #endregion
@@ -71,15 +72,16 @@ namespace KGySoft.Collections
 
         #region ReferenceEnumerator class
 
-        private class ReferenceEnumerator : IEnumerator<KeyValuePair<TKey, TValue>>
+        private class ReferenceEnumerator : IEnumerator<KeyValuePair<TKey, TValue>>, IDictionaryEnumerator
         {
             #region Fields
 
             private readonly AllowNullDictionary<TKey, TValue> owner;
+            private readonly bool isGeneric;
 
             private Dictionary<TKey, TValue>.Enumerator wrappedEnumerator;
             private KeyValuePair<TKey, TValue> current;
-            private EnumerationStatus status;
+            private EnumerationState state;
 
             #endregion
 
@@ -97,9 +99,39 @@ namespace KGySoft.Collections
             {
                 get
                 {
-                    if (status is EnumerationStatus.BeforeFirst or EnumerationStatus.AfterLast)
+                    if (state is EnumerationState.NotStarted or EnumerationState.Finished)
                         Throw.InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
-                    return current;
+                    return isGeneric ? current : new DictionaryEntry(current.Key!, current.Value);
+                }
+            }
+
+            DictionaryEntry IDictionaryEnumerator.Entry
+            {
+                get
+                {
+                    if (state is not (EnumerationState.EnumeratingNull or EnumerationState.EnumeratingDictionary))
+                        Throw.InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
+                    return new DictionaryEntry(current.Key!, current.Value);
+                }
+            }
+
+            object? IDictionaryEnumerator.Key
+            {
+                get
+                {
+                    if (state is not (EnumerationState.EnumeratingNull or EnumerationState.EnumeratingDictionary))
+                        Throw.InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
+                    return current.Key;
+                }
+            }
+
+            object? IDictionaryEnumerator.Value
+            {
+                get
+                {
+                    if (state is not (EnumerationState.EnumeratingNull or EnumerationState.EnumeratingDictionary))
+                        Throw.InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
+                    return current.Value;
                 }
             }
 
@@ -109,12 +141,13 @@ namespace KGySoft.Collections
 
             #region Constructors
 
-            internal ReferenceEnumerator(AllowNullDictionary<TKey, TValue> owner)
+            internal ReferenceEnumerator(AllowNullDictionary<TKey, TValue> owner, bool isGeneric)
             {
                 this.owner = owner;
                 wrappedEnumerator = owner.dict.GetEnumerator();
                 current = default;
-                status = EnumerationStatus.BeforeFirst;
+                state = EnumerationState.NotStarted;
+                this.isGeneric = isGeneric;
             }
 
             #endregion
@@ -138,32 +171,35 @@ namespace KGySoft.Collections
             public bool MoveNext()
             {
                 // Known limitation: modifications are not detected for the null key
-                switch (status)
+                switch (state)
                 {
-                    case EnumerationStatus.Dictionary:
+                    case EnumerationState.NotStarted:
+                        if (!owner.hasNullKey)
+                        {
+                            state = EnumerationState.EnumeratingDictionary;
+                            goto case EnumerationState.EnumeratingDictionary;
+                        }
+
+                        state = EnumerationState.EnumeratingNull;
+                        current = new KeyValuePair<TKey, TValue>(default!, owner.nullValue);
+                        return true;
+
+                    case EnumerationState.EnumeratingNull:
+                        state = EnumerationState.EnumeratingDictionary;
+                        goto case EnumerationState.EnumeratingDictionary;
+
+                    case EnumerationState.EnumeratingDictionary:
                         bool result = wrappedEnumerator.MoveNext();
                         current = wrappedEnumerator.Current;
                         if (!result)
-                            status = EnumerationStatus.AfterLast;
+                            state = EnumerationState.Finished;
                         return result;
 
-                    case EnumerationStatus.BeforeFirst:
-                        if (!owner.hasNullKey)
-                            goto case EnumerationStatus.BeforeDictionary;
-
-                        current = new KeyValuePair<TKey, TValue>(default!, owner.nullValue);
-                        status = EnumerationStatus.BeforeDictionary;
-                        return true;
-
-                    case EnumerationStatus.BeforeDictionary:
-                        status = EnumerationStatus.Dictionary;
-                        goto case EnumerationStatus.Dictionary;
-
-                    case EnumerationStatus.AfterLast:
+                    case EnumerationState.Finished:
                         return false;
 
                     default:
-                        return Throw.InvalidOperationException<bool>(Res.InternalError($"Unexpected status: {status}"));
+                        return Throw.InvalidOperationException<bool>(Res.InternalError($"Unexpected status: {state}"));
                 }
             }
 
@@ -174,7 +210,7 @@ namespace KGySoft.Collections
             public void Reset()
             {
                 ((IEnumerator)wrappedEnumerator).Reset();
-                status = EnumerationStatus.BeforeFirst;
+                state = EnumerationState.NotStarted;
             }
 
             #endregion
@@ -186,7 +222,7 @@ namespace KGySoft.Collections
 
         [DebuggerTypeProxy(typeof(DictionaryKeyCollectionDebugView<,>))]
         [DebuggerDisplay("Count = {" + nameof(Count) + "}")]
-        private sealed class KeysCollection : ICollection<TKey>// TODO , ICollection
+        private sealed class KeysCollection : ICollection<TKey>, ICollection
         {
             #region Fields
 
@@ -199,8 +235,14 @@ namespace KGySoft.Collections
             #region Public Properties
 
             public int Count => owner.Count;
-
             public bool IsReadOnly => true;
+
+            #endregion
+
+            #region Explicitly Implemented Interface Properties
+
+            bool ICollection.IsSynchronized => false;
+            object ICollection.SyncRoot => ((ICollection)owner.Keys).SyncRoot;
 
             #endregion
 
@@ -249,12 +291,43 @@ namespace KGySoft.Collections
             #region Explicitly Implemented Interface Methods
 
             void ICollection<TKey>.Add(TKey item) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
-
             void ICollection<TKey>.Clear() => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
-
             bool ICollection<TKey>.Remove(TKey item) => Throw.NotSupportedException<bool>(Res.ICollectionReadOnlyModifyNotSupported);
-
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+            void ICollection.CopyTo(Array array, int index)
+            {
+                if (array == null!)
+                    Throw.ArgumentNullException(Argument.array);
+
+                if (array is TKey[] keys)
+                {
+                    CopyTo(keys, index);
+                    return;
+                }
+
+                if (index < 0 || index > array.Length)
+                    Throw.ArgumentOutOfRangeException(Argument.index);
+                int length = array.Length;
+                if (length - index < Count)
+                    Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
+                if (array.Rank != 1)
+                    Throw.ArgumentException(Argument.array, Res.ICollectionCopyToSingleDimArrayOnly);
+
+                if (array is object?[] objectArray)
+                {
+                    if (owner.hasNullKey)
+                    {
+                        objectArray[index] = default;
+                        index += 1;
+                    }
+
+                    ((ICollection)owner.Keys).CopyTo(array, index);
+                    return;
+                }
+
+                Throw.ArgumentException(Argument.array, Res.ICollectionArrayTypeInvalid);
+            }
 
             #endregion
 
@@ -267,7 +340,7 @@ namespace KGySoft.Collections
 
         [DebuggerTypeProxy(typeof(DictionaryValueCollectionDebugView<,>))]
         [DebuggerDisplay("Count = {" + nameof(Count) + "}")]
-        private sealed class ValuesCollection : ICollection<TValue> // TODO, ICollection
+        private sealed class ValuesCollection : ICollection<TValue>, ICollection
         {
             #region Fields
 
@@ -280,8 +353,14 @@ namespace KGySoft.Collections
             #region Public Properties
 
             public int Count => owner.Count;
-
             public bool IsReadOnly => true;
+
+            #endregion
+
+            #region Explicitly Implemented Interface Properties
+
+            bool ICollection.IsSynchronized => false;
+            object ICollection.SyncRoot => ((ICollection)owner.Values).SyncRoot;
 
             #endregion
 
@@ -330,12 +409,43 @@ namespace KGySoft.Collections
             #region Explicitly Implemented Interface Methods
 
             void ICollection<TValue>.Add(TValue item) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
-
             void ICollection<TValue>.Clear() => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
-
             bool ICollection<TValue>.Remove(TValue item) => Throw.NotSupportedException<bool>(Res.ICollectionReadOnlyModifyNotSupported);
-
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+            void ICollection.CopyTo(Array array, int index)
+            {
+                if (array == null!)
+                    Throw.ArgumentNullException(Argument.array);
+
+                if (array is TValue[] values)
+                {
+                    CopyTo(values, index);
+                    return;
+                }
+
+                if (index < 0 || index > array.Length)
+                    Throw.ArgumentOutOfRangeException(Argument.index);
+                int length = array.Length;
+                if (length - index < Count)
+                    Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
+                if (array.Rank != 1)
+                    Throw.ArgumentException(Argument.array, Res.ICollectionCopyToSingleDimArrayOnly);
+
+                if (array is object?[] objectArray)
+                {
+                    if (owner.hasNullKey)
+                    {
+                        objectArray[index] = owner.nullValue;
+                        index += 1;
+                    }
+
+                    ((ICollection)owner.Values).CopyTo(array, index);
+                    return;
+                }
+
+                Throw.ArgumentException(Argument.array, Res.ICollectionArrayTypeInvalid);
+            }
 
             #endregion
 
@@ -361,7 +471,7 @@ namespace KGySoft.Collections
 
             private Dictionary<TKey, TValue>.Enumerator wrappedEnumerator;
             private KeyValuePair<TKey, TValue> current;
-            private EnumerationStatus status;
+            private EnumerationState status;
 
             #endregion
 
@@ -382,7 +492,7 @@ namespace KGySoft.Collections
             {
                 get
                 {
-                    if (status is EnumerationStatus.BeforeFirst or EnumerationStatus.AfterLast)
+                    if (status is EnumerationState.NotStarted or EnumerationState.Finished)
                         Throw.InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
                     return current;
                 }
@@ -399,7 +509,7 @@ namespace KGySoft.Collections
                 this.owner = owner;
                 wrappedEnumerator = owner.dict.GetEnumerator();
                 current = default;
-                status = EnumerationStatus.BeforeFirst;
+                status = EnumerationState.NotStarted;
             }
 
             #endregion
@@ -425,26 +535,26 @@ namespace KGySoft.Collections
                 // Known limitation: modifications are not detected for the null key
                 switch (status)
                 {
-                    case EnumerationStatus.Dictionary:
+                    case EnumerationState.EnumeratingDictionary:
                         bool result = wrappedEnumerator.MoveNext();
                         current = wrappedEnumerator.Current;
                         if (!result)
-                            status = EnumerationStatus.AfterLast;
+                            status = EnumerationState.Finished;
                         return result;
 
-                    case EnumerationStatus.BeforeFirst:
+                    case EnumerationState.NotStarted:
                         if (!owner.hasNullKey)
-                            goto case EnumerationStatus.BeforeDictionary;
+                            goto case EnumerationState.EnumeratingNull;
 
                         current = new KeyValuePair<TKey, TValue>(default!, owner.nullValue);
-                        status = EnumerationStatus.BeforeDictionary;
+                        status = EnumerationState.EnumeratingNull;
                         return true;
 
-                    case EnumerationStatus.BeforeDictionary:
-                        status = EnumerationStatus.Dictionary;
-                        goto case EnumerationStatus.Dictionary;
+                    case EnumerationState.EnumeratingNull:
+                        status = EnumerationState.EnumeratingDictionary;
+                        goto case EnumerationState.EnumeratingDictionary;
 
-                    case EnumerationStatus.AfterLast:
+                    case EnumerationState.Finished:
                         return false;
 
                     default:
@@ -459,7 +569,7 @@ namespace KGySoft.Collections
             public void Reset()
             {
                 ((IEnumerator)wrappedEnumerator).Reset();
-                status = EnumerationStatus.BeforeFirst;
+                status = EnumerationState.NotStarted;
             }
 
             #endregion
@@ -528,11 +638,20 @@ namespace KGySoft.Collections
 
         bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly => false;
 
+        bool IDictionary.IsFixedSize => false;
+        bool IDictionary.IsReadOnly => false;
+        ICollection IDictionary.Keys => (ICollection)Keys;
+        ICollection IDictionary.Values => (ICollection)Values;
+        bool ICollection.IsSynchronized => false;
+        object ICollection.SyncRoot => ((ICollection)dict).SyncRoot;
+
         #endregion
 
         #endregion
 
         #region Indexers
+        
+        #region Public Indexers
 
         /// <summary>
         /// Gets or sets the value associated with the specified <paramref name="key"/>.
@@ -574,6 +693,44 @@ namespace KGySoft.Collections
                     dict[key] = value;
             }
         }
+
+        #endregion
+
+        #region Explicitly Implemented Interface Indexers
+
+        object? IDictionary.this[object? key]
+        {
+            get => key switch
+            {
+                TKey k => dict.TryGetValue(k, out TValue? result) ? result : null,
+                null => hasNullKey ? nullValue : null,
+                _ => null
+            };
+            set
+            {
+                Throw.ThrowIfNullIsInvalid<TKey>(key, Argument.key);
+                Throw.ThrowIfNullIsInvalid<TValue>(value);
+
+                try
+                {
+                    TKey typedKey = (TKey)key!;
+                    try
+                    {
+                        this[typedKey] = (TValue)value!;
+                    }
+                    catch (InvalidCastException)
+                    {
+                        Throw.ArgumentException(Argument.value, Res.ICollectionNonGenericValueTypeInvalid(value, typeof(TValue)));
+                    }
+                }
+                catch (InvalidCastException)
+                {
+                    Throw.ArgumentException(Argument.key, Res.IDictionaryNonGenericKeyTypeInvalid(key!, typeof(TKey)));
+                }
+            }
+        }
+
+        #endregion
 
         #endregion
 
@@ -788,14 +945,112 @@ namespace KGySoft.Collections
                 Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
 
             if (hasNullKey)
+            {
                 array[arrayIndex] = new KeyValuePair<TKey, TValue>(default!, nullValue);
-            ((ICollection<KeyValuePair<TKey, TValue>>)dict).CopyTo(array, arrayIndex + (hasNullKey ? 1 : 0));
+                arrayIndex += 1;
+            }
+
+            ((ICollection<KeyValuePair<TKey, TValue>>)dict).CopyTo(array, arrayIndex);
         }
 
         IEnumerator<KeyValuePair<TKey, TValue>> IEnumerable<KeyValuePair<TKey, TValue>>.GetEnumerator()
-            => new ReferenceEnumerator(this);
+            => new ReferenceEnumerator(this, true);
 
-        IEnumerator IEnumerable.GetEnumerator() => new ReferenceEnumerator(this);
+        IEnumerator IEnumerable.GetEnumerator() => new ReferenceEnumerator(this, true);
+
+        IDictionaryEnumerator IDictionary.GetEnumerator() => new ReferenceEnumerator(this, false);
+
+        void IDictionary.Add(object? key, object? value)
+        {
+            Throw.ThrowIfNullIsInvalid<TKey>(key, Argument.key);
+            Throw.ThrowIfNullIsInvalid<TValue>(value);
+
+            try
+            {
+                TKey typedKey = (TKey)key!;
+                try
+                {
+                    Add(typedKey, (TValue)value!);
+                }
+                catch (InvalidCastException)
+                {
+                    Throw.ArgumentException(Argument.value, Res.ICollectionNonGenericValueTypeInvalid(value, typeof(TValue)));
+                }
+            }
+            catch (InvalidCastException)
+            {
+                Throw.ArgumentException(Argument.key, Res.IDictionaryNonGenericKeyTypeInvalid(key!, typeof(TKey)));
+            }
+        }
+
+        bool IDictionary.Contains(object? key)
+            => key switch
+            {
+                TKey k => ContainsKey(k),
+                null => hasNullKey,
+                _ => false
+            };
+
+        void IDictionary.Remove(object? key)
+        {
+            if (key == null)
+            {
+                if (!hasNullKey)
+                    return;
+
+                hasNullKey = false;
+                if (Reflector<TValue>.IsManaged)
+                    nullValue = default;
+                return;
+            }
+
+            if (key is TKey k)
+                Remove(k);
+        }
+
+        void ICollection.CopyTo(Array array, int index)
+        {
+            if (array == null!)
+                Throw.ArgumentNullException(Argument.array);
+            if (index < 0 || index > array.Length)
+                Throw.ArgumentOutOfRangeException(Argument.index);
+            int length = array.Length;
+            if (length - index < Count)
+                Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
+            if (array.Rank != 1)
+                Throw.ArgumentException(Argument.array, Res.ICollectionCopyToSingleDimArrayOnly);
+
+            switch (array)
+            {
+                case KeyValuePair<TKey, TValue>[] keyValuePairs:
+                    ((ICollection<KeyValuePair<TKey, TValue>>)this).CopyTo(keyValuePairs, index);
+                    return;
+
+                case DictionaryEntry[] dictionaryEntries:
+                    if (hasNullKey)
+                    {
+                        dictionaryEntries[index] = new DictionaryEntry(null!, nullValue);
+                        index += 1;
+                    }
+
+                    ((ICollection)dict).CopyTo(array, index);
+                    return;
+
+                case object[] objectArray:
+                    if (hasNullKey)
+                    {
+                        objectArray[index] = new KeyValuePair<TKey, TValue>(default!, nullValue);
+                        index += 1;
+                    }
+
+                    ((ICollection)dict).CopyTo(array, index);
+                    return;
+
+                default:
+                    Throw.ArgumentException(Argument.array, Res.ICollectionArrayTypeInvalid);
+                    return;
+            }
+        }
 
         #endregion
 
