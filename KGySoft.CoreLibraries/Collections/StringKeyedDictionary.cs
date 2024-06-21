@@ -439,7 +439,7 @@ namespace KGySoft.Collections
 
         #endregion
 
-        #region KeysCollection class
+        #region ValuesCollection class
 
         [DebuggerTypeProxy(typeof(CollectionDebugView<>))]
         [DebuggerDisplay("Count = {" + nameof(Count) + "}; TValue = {typeof(" + nameof(TValue) + ").Name}")]
