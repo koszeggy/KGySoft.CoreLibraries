@@ -661,7 +661,7 @@ namespace KGySoft.Collections
         /// <param name="key">The key of the value to get or set. In this dictionary it can be even <see langword="null"/>.</param>
         /// <exception cref="KeyNotFoundException">The property is retrieved and <paramref name="key"/> is not found.</exception>
         /// <remarks>
-        /// <para>In this dictionary both the <paramref name="key"/> and the <paramref name="value"/>can be <see langword="null"/>.</para>
+        /// <para>In this dictionary both the <paramref name="key"/> and the <paramref name="value"/> can be <see langword="null"/>.</para>
         /// <para>If the <paramref name="key"/> is not found when a value is being retrieved, <see cref="KeyNotFoundException"/> is thrown.
         /// If the key is not found when a value is being set, the key and value are added.</para>
         /// <para>You can also use this property to add new elements by setting the value of a key that does not exist in the <see cref="AllowNullDictionary{TKey,TValue}"/>, for example:
@@ -794,7 +794,7 @@ namespace KGySoft.Collections
         /// <param name="value">The value of the element to add.</param>
         /// <exception cref="ArgumentException">An element with the same key already exists in the <see cref="AllowNullDictionary{TKey,TValue}"/>.</exception>
         /// <remarks>
-        /// <para>In this dictionary both the <paramref name="key"/> and the <paramref name="value"/>can be <see langword="null"/>.</para>
+        /// <para>In this dictionary both the <paramref name="key"/> and the <paramref name="value"/> can be <see langword="null"/>.</para>
         /// <para>You can also use the <see cref="this[TKey]">indexer</see> to add new elements by setting the value of a
         /// key that does not exist in the <see cref="AllowNullDictionary{TKey,TValue}"/>. for example:
         /// <code lang="C#"><![CDATA[myCollection[myNonexistentKey] = myValue;]]></code>
