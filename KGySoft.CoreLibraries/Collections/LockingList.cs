@@ -31,7 +31,7 @@ namespace KGySoft.Collections
     /// </summary>
     /// <typeparam name="T">The type of the elements in the list.</typeparam>
     /// <remarks>
-    /// <para>Type safety means that all members of the underlying collection are accessed in a lock, which only provides that the collection remains consistent as long as it is accessed only by the members of this class.
+    /// <para>Thread safety means that all members of the underlying collection are accessed in a lock, which only provides that the collection remains consistent as long as it is accessed only by the members of this class.
     /// This does not solve every issue of multi-threading automatically. Consider the following example:
     /// <code lang="C#"><![CDATA[
     /// var asThreadSafe = new LockingList<MyClass>(myList);
