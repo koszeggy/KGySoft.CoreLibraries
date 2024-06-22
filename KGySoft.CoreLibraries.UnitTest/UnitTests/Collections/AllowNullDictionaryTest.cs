@@ -27,6 +27,16 @@ using NUnit.Framework;
 
 #endregion
 
+#region Suppressions
+
+#pragma warning disable CS8604 // Possible null reference argument.
+#if NETCOREAPP3_0
+#pragma warning disable CS8714 // The type cannot be used as type parameter in the generic type or method. Nullability of type argument doesn't match 'notnull' constraint.
+#endif
+
+
+#endregion
+
 #nullable enable
 
 namespace KGySoft.CoreLibraries.UnitTests.Collections
@@ -115,14 +125,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             IDictionary dictNonGen = dict;
             ICollection keysNonGen = dictNonGen.Keys;
             ICollection valuesNonGen = dictNonGen.Values;
-            var objArray = new object?[dict.Count];
+            var objArray = new object[dict.Count];
 
             Assert.AreEqual(3, dictNonGen.Count);
             Assert.AreEqual(3, dictNonGen.GetEnumerator().RestToList().Count);
             Assert.AreEqual(3, keysNonGen.Count);
             Assert.AreEqual(3, valuesNonGen.Count);
 
-            Assert.AreEqual(value, dictNonGen[key!]);
+            Assert.AreEqual(value, dictNonGen[key]);
             Assert.IsTrue(dictNonGen.Contains(key));
             Assert.IsTrue(dictNonGen.GetEnumerator().ToEnumerable().Any(i => Equals(i.Key, key)));
             Assert.IsTrue(keysNonGen.Cast<TKey>().Any(k => Equals(k, key)));
@@ -154,8 +164,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Assert.That(() => Array.IndexOf(keysArray, key), key == null! ? Is.GreaterThanOrEqualTo(0) : Is.EqualTo(-1));
             Assert.DoesNotThrow(() => valuesNonGen.CopyTo(objArray, 0));
             Assert.AreEqual(-1, Array.IndexOf(valuesArray, value));
-            Assert.DoesNotThrow(() => dictNonGen.Remove(key!));
-            Assert.DoesNotThrow(() => dictNonGen.Add(key!, value));
+            Assert.DoesNotThrow(() => dictNonGen.Remove(key));
+            Assert.DoesNotThrow(() => dictNonGen.Add(key, value));
         }
 
         #endregion
