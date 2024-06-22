@@ -6,7 +6,7 @@
 ===============================================================================
 
 ~~~~~~~~~
-* v8.1.1:
+* v8.2.0:
 ~~~~~~~~~
 
 + KGySoft.CoreLibraries namespace:
@@ -14,11 +14,11 @@
 + Enum<TEnum> class:
   + New GetUnderlyingValues method.
 + FastRandom class:
-  + New constructor overloads to initialize from UInt128 (.NET 7 or newer) or a couple of ulong seeds.
+  + New constructor overloads to initialize from UInt128 (.NET 7 or newer) or from a couple of ulong seeds.
 
 * KGySoft.Collections namespace:
 ================================
-+ New AllowNullDictionary<TKey, TValue> class: it has been made public
++ New AllowNullDictionary<TKey, TValue> class: a former internal class, which has been made public
 - ThreadSafeDictionary<TKey, TValue> class:
   - Ensuring that [Try]Remove returns true only once in special race conditions.
 - ThreadSafeHashSet<T> class:

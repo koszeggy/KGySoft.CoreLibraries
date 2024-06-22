@@ -18,10 +18,10 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 using KGySoft.Collections;
-using KGySoft.Reflection;
 
 using NUnit.Framework;
 
@@ -36,6 +36,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
     {
         #region Methods
 
+        [SuppressMessage("ReSharper", "GenericEnumeratorNotDisposed", Justification = "Its Dispose doesn't do anything")]
         [TestCase("key1", "value1")]
         [TestCase(42, "alpha")]
 #if NETCOREAPP3_0_OR_GREATER
@@ -85,9 +86,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Assert.DoesNotThrow(() => dict[key] = value);
             Assert.IsTrue(dict.Remove(key));
 
-            Array.Clear(array);
-            Array.Clear(keysArray);
-            Array.Clear(valuesArray);
+            Array.Clear(array, 0, array.Length);
+            Array.Clear(keysArray, 0, keysArray.Length);
+            Array.Clear(valuesArray, 0, valuesArray.Length);
             Assert.AreEqual(2, dict.Count);
             Assert.AreEqual(2, dict.GetEnumerator().RestToList().Count);
             Assert.AreEqual(2, keys.Count);
@@ -121,7 +122,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Assert.AreEqual(3, keysNonGen.Count);
             Assert.AreEqual(3, valuesNonGen.Count);
 
-            Assert.AreEqual(value, dictNonGen[key]);
+            Assert.AreEqual(value, dictNonGen[key!]);
             Assert.IsTrue(dictNonGen.Contains(key));
             Assert.IsTrue(dictNonGen.GetEnumerator().ToEnumerable().Any(i => Equals(i.Key, key)));
             Assert.IsTrue(keysNonGen.Cast<TKey>().Any(k => Equals(k, key)));
@@ -136,7 +137,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Assert.DoesNotThrow(() => dictNonGen[key] = value);
             Assert.DoesNotThrow(() => dictNonGen.Remove(key));
 
-            Array.Clear(objArray);
+            Array.Clear(objArray, 0, objArray.Length);
             Assert.AreEqual(2, dictNonGen.Count);
             Assert.AreEqual(2, dictNonGen.GetEnumerator().RestToList().Count);
             Assert.AreEqual(2, keysNonGen.Count);
