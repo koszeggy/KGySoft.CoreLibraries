@@ -5,6 +5,18 @@
 + New feature
 ===============================================================================
 
+
+~~~~~~~~~
+- v8.2.1:
+~~~~~~~~~
+
+- KGySoft.ComponentModel namespace:
+===================================
+- Command class: Fixing property binding if the target is an IPersistableObject: trying to set the target property as
+  a regular property in the first place, and using IPersistableObject.SetProperty as a fallback only. Matters if the
+  set accessor of the property has some additional code rather than just calling the Set method.
+
+
 ~~~~~~~~~
 * v8.2.0:
 ~~~~~~~~~

@@ -496,8 +496,8 @@ namespace KGySoft.ComponentModel
                 switch (target)
                 {
                     case IPersistableObject persistableTarget:
-                        // setting by interface only if there is such a property in the storage so simple properties are still set by reflection
-                        if (persistableTarget.TryGetPropertyValue(targetPropertyName, out var _))
+                        // if there is no such actual settable property, then setting by interface
+                        if (!Reflector.TrySetProperty(target, targetPropertyName, propertyValue))
                             persistableTarget.SetProperty(targetPropertyName, propertyValue);
                         else
                             Reflector.SetProperty(target, targetPropertyName, propertyValue);
