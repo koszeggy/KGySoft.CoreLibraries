@@ -28,9 +28,7 @@ namespace KGySoft.Threading
 
         #region Public Properties
 
-        /// <summary>
-        /// Gets the maximum degree of parallelism. If zero or less, then it is adjusted automatically.
-        /// </summary>
+        /// <inheritdoc />
         public int MaxDegreeOfParallelism { get; }
 
         #endregion
@@ -49,7 +47,7 @@ namespace KGySoft.Threading
         #region Constructors
 
         /// <summary>
-        /// Creates a new instance of the <see cref="SimpleContext"/> class with the specified maximum degree of parallelism.
+        /// Initializes a new instance of the <see cref="SimpleContext"/> class with the specified maximum degree of parallelism.
         /// </summary>
         /// <param name="maxDegreeOfParallelism">Specifies the maximum degree of parallelism. If zero or less, then it will be adjusted automatically.</param>
         public SimpleContext(int maxDegreeOfParallelism) => MaxDegreeOfParallelism = maxDegreeOfParallelism;

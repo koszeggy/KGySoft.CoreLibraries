@@ -22,6 +22,7 @@
 + AsyncHelper class:
   + New SingleThreadContext property.
 + New SimpleContext class.
++ New AsyncContextWrapper class.
 
 
 ~~~~~~~~~
