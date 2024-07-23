@@ -134,6 +134,7 @@ namespace KGySoft.Collections
         private readonly int offset;
         private readonly int length;
 #if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
+        [NonSerialized]
         private readonly bool poolArray;
 #endif
 
@@ -337,8 +338,8 @@ namespace KGySoft.Collections
         /// by the <see cref="Release">Release</see> method if it is not used anymore.
         /// </summary>
         /// <param name="length">The length of the <see cref="ArraySection{T}"/> to be created.</param>
-        /// <param name="assureClean"><see langword="true"/> to make sure the allocated array is zero-initialized;
-        /// otherwise, <see langword="false"/>. Affects larger arrays only, if current platform supports using <see cref="ArrayPool{T}"/>. This parameter is optional.
+        /// <param name="assureClean"><see langword="true"/> to make sure the allocated underlying array is zero-initialized;
+        /// otherwise, <see langword="false"/>. May not have an effect on older targeted platforms. This parameter is optional.
         /// <br/>Default value: <see langword="true"/>.</param>
 #if NETFRAMEWORK || NETSTANDARD2_0
         [SuppressMessage("ReSharper", "UnusedParameter.Local", Justification = "Used in .NET Core 2.1/Standard 2.1 and above")]
@@ -361,7 +362,21 @@ namespace KGySoft.Collections
             }
 #endif
 
-            array = length == 0 ? Reflector.EmptyArray<T>() : new T[length];
+            if (length == 0)
+            {
+                array = Reflector.EmptyArray<T>();
+                return;
+            }
+
+#if NET5_0_OR_GREATER
+            if (!assureClean)
+            {
+                array = GC.AllocateUninitializedArray<T>(length);
+                return;
+            }
+#endif
+
+            array = new T[length];
         }
 
         /// <summary>
@@ -500,7 +515,7 @@ namespace KGySoft.Collections
         public readonly T[]? ToArray()
         {
             if (length == 0)
-                return array; // it can be even null
+                return IsNull ? null : Reflector.EmptyArray<T>();
             T[] result = new T[length];
             array!.CopyElements(offset, result, 0, length);
             return result;
