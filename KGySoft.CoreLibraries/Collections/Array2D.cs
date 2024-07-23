@@ -280,6 +280,21 @@ namespace KGySoft.Collections
         /// <param name="height">The height of the array to be created.</param>
         /// <param name="width">The width of the array to be created.</param>
         public Array2D(int height, int width)
+            : this(height, width, true)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Array2D{T}"/> struct using the specified <paramref name="height"/> and <paramref name="width"/>.
+        /// Parameter order is the same as in case of instantiating a regular two-dimensional array.
+        /// <br/>If the created <see cref="Array2D{T}"/> is not used anymore the <see cref="Dispose">Dispose</see> method should be called to
+        /// return the possibly <see cref="ArrayPool{T}"/>-allocated underlying buffer to the pool.
+        /// </summary>
+        /// <param name="height">The height of the array to be created.</param>
+        /// <param name="width">The width of the array to be created.</param>
+        /// <param name="assureClean"><see langword="true"/> to make sure the allocated underlying array is zero-initialized;
+        /// otherwise, <see langword="false"/>. May not have an effect on older targeted platforms.</param>
+        public Array2D(int height, int width, bool assureClean)
         {
             if (height < 0)
                 Throw.ArgumentOutOfRangeException(Argument.height);
@@ -287,7 +302,7 @@ namespace KGySoft.Collections
                 Throw.ArgumentOutOfRangeException(Argument.width);
             this.height = height;
             this.width = width;
-            buffer = new ArraySection<T>(height * width);
+            buffer = new ArraySection<T>(height * width, assureClean);
         }
 
         /// <summary>

@@ -10,6 +10,16 @@
 * v8.2.1:
 ~~~~~~~~~
 
+* KGySoft.Collections namespace:
+================================
+- ArraySection<T> struct:
+  - After deserialization the restored instance never tries to return the backing array to the array pool.
+  - If Length was 0, the debugger proxy showed the whole underlying array.
++ Array2D<T> struct:
+  + New self-allocating constructor to allow using a backing array that is not zero-initialized.
++ Array3D<T> struct:
+  + New self-allocating constructor to allow using a backing array that is not zero-initialized.
+
 - KGySoft.ComponentModel namespace:
 ===================================
 - Command class:

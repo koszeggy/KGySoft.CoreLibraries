@@ -291,6 +291,22 @@ namespace KGySoft.Collections
         /// <param name="height">The height of the array to be created.</param>
         /// <param name="width">The width of the array to be created.</param>
         public Array3D(int depth, int height, int width)
+            : this(depth, height, width, true)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Array3D{T}"/> struct using the specified <paramref name="depth"/>, <paramref name="height"/> and <paramref name="width"/>.
+        /// Parameter order is the same as in case of instantiating a regular three-dimensional array.
+        /// <br/>If the created <see cref="Array3D{T}"/> is not used anymore the <see cref="Dispose">Dispose</see> method should be called to
+        /// return the possibly <see cref="ArrayPool{T}"/>-allocated underlying buffer to the pool.
+        /// </summary>
+        /// <param name="depth">The depth of the array to be created.</param>
+        /// <param name="height">The height of the array to be created.</param>
+        /// <param name="width">The width of the array to be created.</param>
+        /// <param name="assureClean"><see langword="true"/> to make sure the allocated underlying array is zero-initialized;
+        /// otherwise, <see langword="false"/>. May not have an effect on older targeted platforms.</param>
+        public Array3D(int depth, int height, int width, bool assureClean)
         {
             if (depth < 0)
                 Throw.ArgumentOutOfRangeException(Argument.depth);
@@ -302,7 +318,7 @@ namespace KGySoft.Collections
             this.height = height;
             this.width = width;
             planeSize = height * width;
-            buffer = new ArraySection<T>(depth * planeSize);
+            buffer = new ArraySection<T>(depth * planeSize, assureClean);
         }
 
         /// <summary>
