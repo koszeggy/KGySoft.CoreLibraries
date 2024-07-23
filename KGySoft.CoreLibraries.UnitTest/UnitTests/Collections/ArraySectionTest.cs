@@ -82,6 +82,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Assert.AreEqual(span.Slice(1, 2).ToArray(), subsection);
             Assert.AreEqual(span[1..^1].ToArray(), section[1..^1]);
 #endif
+
+            subsection = section.Slice(1, 0);
+            Assert.AreEqual(0, subsection.Length);
+            Assert.AreEqual(0, subsection.ToArray()!.Length);
         }
 
 #if !NETFRAMEWORK
