@@ -59,8 +59,11 @@ namespace KGySoft.Threading
         /// Initializes a new instance of the <see cref="AsyncContextWrapper"/> class with the provided parameters.
         /// </summary>
         /// <param name="wrappedContext">The original <see cref="IAsyncContext"/> instance to wrap.</param>
-        /// <param name="maxDegreeOfParallelism"></param>
-        /// <param name="forwardProgress"></param>
+        /// <param name="maxDegreeOfParallelism">The new desired value of the <see cref="IAsyncContext.MaxDegreeOfParallelism"/> property. Though it's allowed,
+        /// it is not recommended to report a higher value than the original, including reporting zero or negative when the original value was greater than zero.</param>
+        /// <param name="forwardProgress"><see keyword="true"/> to expose the original <see cref="IAsyncContext.Progress"/> property;
+        /// <see keyword="false"/> suppress it. This parameter is optional
+        /// <br/>Default value: <see keyword="true"/>.</param>
         public AsyncContextWrapper(IAsyncContext wrappedContext, int maxDegreeOfParallelism, bool forwardProgress = true)
         {
             if (wrappedContext == null!)

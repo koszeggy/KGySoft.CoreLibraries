@@ -710,7 +710,7 @@ namespace KGySoft.Threading
         /// <summary>
         /// Gets a predefined context for non-async operations that forces to run a possibly parallel algorithm on a single thread, does not support reporting progress, and is not cancellable.
         /// It actually returns a <see cref="SimpleContext"/> instance.
-        /// <br/>See the <strong>Examples</strong> section of the <see cref="AsyncHelper"/> class for details.
+        /// <br/>See the <strong>Examples</strong> section of the <see cref="AsyncHelper"/> class for details about using <see cref="IAsyncContext"/>.
         /// </summary>
         public static IAsyncContext SingleThreadContext => singleThreadContext ??= new SimpleContext(1);
 

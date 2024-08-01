@@ -16,10 +16,10 @@
 namespace KGySoft.Threading
 {
     /// <summary>
-    /// Represent a predefined simple context for non-async, possibly parallel operations where the maximum degree of parallelism can be specified,
-    /// but cancellation and reporting progress is not supported. Can be used for methods with an <see cref="IAsyncContext"/> parameter where we want
-    /// to force the degree of parallelism. To force a single threaded execution you can use the
-    /// predefined <see cref="AsyncHelper.SingleThreadContext">AsyncHelper.SingleThreadContext</see> property.
+    /// Represents a predefined simple context for non-async, possibly parallel operations where the maximum degree of parallelism can be specified,
+    /// but cancellation and reporting progress is not supported. Can be used for methods with an <see cref="IAsyncContext"/> parameter where we
+    /// do not have an existing <see cref="IAsyncContext"/> instance from a higher level operation, and we want to force the degree of parallelism.
+    /// To force a single threaded execution you can use the predefined <see cref="AsyncHelper.SingleThreadContext">AsyncHelper.SingleThreadContext</see> property.
     /// <br/>See the <strong>Examples</strong> section of the <see cref="AsyncHelper"/> class for details about <see cref="IAsyncContext"/>.
     /// </summary>
     public sealed class SimpleContext : IAsyncContext
