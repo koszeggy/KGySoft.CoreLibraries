@@ -695,16 +695,24 @@ namespace KGySoft.Threading
         #region Fields
 
         private static IAsyncContext? emptyContext;
+        private static IAsyncContext? singleThreadContext;
 
         #endregion
 
         #region Properties
 
         /// <summary>
-        /// Gets a default context for non-async operations.
+        /// Gets a default context for non-async operations that allows to set the number of threads automatically, does not support reporting progress, and is not cancellable.
         /// <br/>See the <strong>Examples</strong> section of the <see cref="AsyncHelper"/> class for details.
         /// </summary>
         public static IAsyncContext DefaultContext => emptyContext ??= new EmptyContext();
+
+        /// <summary>
+        /// Gets a predefined context for non-async operations that forces to run a possibly parallel algorithm on a single thread, does not support reporting progress, and is not cancellable.
+        /// It actually returns a <see cref="SimpleContext"/> instance.
+        /// <br/>See the <strong>Examples</strong> section of the <see cref="AsyncHelper"/> class for details about using <see cref="IAsyncContext"/>.
+        /// </summary>
+        public static IAsyncContext SingleThreadContext => singleThreadContext ??= new SimpleContext(1);
 
         #endregion
 

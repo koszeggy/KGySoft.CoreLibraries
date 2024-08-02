@@ -55,6 +55,7 @@ namespace KGySoft.CoreLibraries
 
 #if NETFRAMEWORK || NETSTANDARD2_0
         [SuppressMessage("Style", "IDE0044:Add readonly modifier", Justification = "Must not be readonly because it may cause a VerificationException from a partially trusted domain")]
+        [SuppressMessage("ReSharper", "FieldCanBeMadeReadOnly.Local", Justification = "Must not be readonly because it may cause a VerificationException from a partially trusted domain")]
         private static RangeInfo underlyingInfo = RangeInfo.GetRangeInfo(Enum.GetUnderlyingType(typeof(TEnum)));
 #else
         private static readonly RangeInfo underlyingInfo = RangeInfo.GetRangeInfo(Enum.GetUnderlyingType(typeof(TEnum)));
@@ -63,6 +64,7 @@ namespace KGySoft.CoreLibraries
         // These members can vary per TEnum and are initialized only on demand
         private static TEnum[]? values;
         private static string[]? names;
+        private static Array? underlyingValues;
         private static Dictionary<TEnum, string>? valueNamePairs;
         private static StringKeyedDictionary<TEnum>? nameValuePairs;
         private static (ulong[]? RawValues, string[]? Names) rawValueNamePairs;
@@ -76,6 +78,7 @@ namespace KGySoft.CoreLibraries
 
         private static string[] Names => names ?? InitNames();
         private static TEnum[] Values => values ?? InitValues();
+        private static Array UnderlyingValues => values ?? InitUnderlyingValues();
         private static Dictionary<TEnum, string> ValueNamePairs => valueNamePairs ?? InitValueNamePairs();
         private static StringKeyedDictionary<TEnum> NameValuePairs => nameValuePairs ?? InitNameValuePairs();
         private static StringKeyedDictionary<ulong> NameRawValuePairs => nameRawValuePairs ?? InitNameRawValuePairs();
@@ -114,6 +117,15 @@ namespace KGySoft.CoreLibraries
             Array.Copy(values!, result, values!.Length);
             return result;
         }
+
+        /// <summary>
+        /// Retrieves the array of the values of the constants in enumeration <typeparamref name="TEnum"/>
+        /// where the element type of the result array is the underlying type of <typeparamref name="TEnum"/>.
+        /// </summary>
+        /// <returns>An array of the values of the constants in <typeparamref name="TEnum"/>
+        /// where the element type of the result array is the underlying type of <typeparamref name="TEnum"/>.
+        /// The elements of the array are sorted by the binary values of the enumeration constants.</returns>
+        public static Array GetUnderlyingValues() => (Array)UnderlyingValues.Clone();
 
         /// <summary>
         /// Retrieves the array of the values of the constants in enumeration <typeparamref name="TEnum"/>.
@@ -671,6 +683,100 @@ namespace KGySoft.CoreLibraries
         {
             lock (syncRoot)
                 return values = (TEnum[])Enum.GetValues(typeof(TEnum));
+        }
+
+        private static Array InitUnderlyingValues()
+        {
+            lock (syncRoot)
+            {
+#if NET7_0_OR_GREATER
+                return underlyingValues = Enum.GetValuesAsUnderlyingType(typeof(TEnum));
+#else
+                EnsureRawValueNamePairs();
+                ulong[] rawValues = rawValueNamePairs.RawValues!;
+                switch (underlyingInfo.TypeCode)
+                {
+                    case TypeCode.SByte:
+                        {
+                            var result = new sbyte[rawValues.Length];
+                            for (int i = 0; i < result.Length; i++)
+                                result[i] = (sbyte)rawValues[i];
+                            return underlyingValues = result;
+                        }
+
+                    case TypeCode.Byte:
+                        {
+                            var result = new byte[rawValues.Length];
+                            for (int i = 0; i < result.Length; i++)
+                                result[i] = (byte)rawValues[i];
+                            return underlyingValues = result;
+                        }
+
+                    case TypeCode.Int16:
+                        {
+                            var result = new short[rawValues.Length];
+                            for (int i = 0; i < result.Length; i++)
+                                result[i] = (short)rawValues[i];
+                            return underlyingValues = result;
+                        }
+
+                    case TypeCode.UInt16:
+                        {
+                            var result = new ushort[rawValues.Length];
+                            for (int i = 0; i < result.Length; i++)
+                                result[i] = (ushort)rawValues[i];
+                            return underlyingValues = result;
+                        }
+
+                    case TypeCode.Int32:
+                        {
+                            var result = new int[rawValues.Length];
+                            for (int i = 0; i < result.Length; i++)
+                                result[i] = (int)rawValues[i];
+                            return underlyingValues = result;
+                        }
+
+                    case TypeCode.UInt32:
+                        {
+                            var result = new uint[rawValues.Length];
+                            for (int i = 0; i < result.Length; i++)
+                                result[i] = (uint)rawValues[i];
+                            return underlyingValues = result;
+                        }
+
+                    case TypeCode.Int64:
+                        {
+                            var result = new long[rawValues.Length];
+                            for (int i = 0; i < result.Length; i++)
+                                result[i] = (long)rawValues[i];
+                            return underlyingValues = result;
+                        }
+
+                    case TypeCode.UInt64:
+                        return underlyingValues = rawValues;
+
+                    case TypeCode.Boolean:
+                        {
+                            var result = new bool[rawValues.Length];
+                            for (int i = 0; i < result.Length; i++)
+                                result[i] = rawValues[i] == 1UL;
+                            return underlyingValues = result;
+                        }
+
+                    case TypeCode.Char:
+                        {
+                            var result = new char[rawValues.Length];
+                            for (int i = 0; i < result.Length; i++)
+                                result[i] = (char)rawValues[i];
+                            return underlyingValues = result;
+                        }
+
+                    default:
+                        return Throw.InternalError<Array>($"Not an enum type: {typeof(TEnum)}");
+                }
+
+#endif
+            }
         }
 
         private static StringKeyedDictionary<TEnum> InitNameValuePairs()

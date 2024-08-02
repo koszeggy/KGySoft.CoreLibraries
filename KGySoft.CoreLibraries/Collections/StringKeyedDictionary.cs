@@ -439,7 +439,7 @@ namespace KGySoft.Collections
 
         #endregion
 
-        #region KeysCollection class
+        #region ValuesCollection class
 
         [DebuggerTypeProxy(typeof(CollectionDebugView<>))]
         [DebuggerDisplay("Count = {" + nameof(Count) + "}; TValue = {typeof(" + nameof(TValue) + ").Name}")]
@@ -1127,7 +1127,7 @@ namespace KGySoft.Collections
         }
 
         /// <summary>
-        /// Tries to gets the value associated with the specified <paramref name="key"/>.
+        /// Tries to get the value associated with the specified <paramref name="key"/>.
         /// </summary>
         /// <returns>
         /// <see langword="true"/>, if this dictionary contains an element with the specified key; otherwise, <see langword="false"/>.

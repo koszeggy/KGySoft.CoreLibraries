@@ -36,7 +36,7 @@ namespace KGySoft.Collections
     /// <remarks>
     /// <note>Use this class only if you want to wrap a generic <see cref="ICollection{T}"/> instance to make it thread-safe.
     /// If you want to use a thread-safe hash set optimized for concurrent operations consider to use the <see cref="ThreadSafeHashSet{T}"/> class instead.</note>
-    /// <para>Type safety means that all members of the underlying collection are accessed in a lock, which only provides that the collection remains consistent as long as it is accessed only by the members of this class.
+    /// <para>Thread safety means that all members of the underlying collection are accessed in a lock, which only provides that the collection remains consistent as long as it is accessed only by the members of this class.
     /// This does not solve every issue of multi-threading automatically. Consider the following example:
     /// <code lang="C#"><![CDATA[
     /// var asThreadSafe = new LockingCollection<MyClass>(myCollection);

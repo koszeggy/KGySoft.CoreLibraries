@@ -5,6 +5,56 @@
 + New feature
 ===============================================================================
 
+
+~~~~~~~~~
+* v8.3.0:
+~~~~~~~~~
+
+* KGySoft.Collections namespace:
+================================
+- ArraySection<T> struct:
+  - After deserialization the restored instance never tries to return the backing array to the array pool.
+  - If Length was 0, the debugger proxy showed the whole underlying array.
++ Array2D<T> struct:
+  + New self-allocating constructor to allow using a backing array that is not zero-initialized.
++ Array3D<T> struct:
+  + New self-allocating constructor to allow using a backing array that is not zero-initialized.
+
+- KGySoft.ComponentModel namespace:
+===================================
+- Command class:
+  - Fixing property binding if the target is an IPersistableObject: trying to set the target property as a
+    regular property in the first place, and using IPersistableObject.SetProperty as a fallback only. Matters
+    if the set accessor of the property has some additional code rather than just calling the Set method.
+
++ KGySoft.Threading namespace:
+==============================
++ AsyncHelper class:
+  + New SingleThreadContext property.
++ New SimpleContext class.
++ New AsyncContextWrapper class.
+
+
+~~~~~~~~~
+* v8.2.0:
+~~~~~~~~~
+
++ KGySoft.CoreLibraries namespace:
+==================================
++ Enum<TEnum> class:
+  + New GetUnderlyingValues method.
++ FastRandom class:
+  + New constructor overloads to initialize from UInt128 (.NET 7 or newer) or from a couple of ulong seeds.
+
+* KGySoft.Collections namespace:
+================================
++ New AllowNullDictionary<TKey, TValue> class: a former internal class, which has been made public
+- ThreadSafeDictionary<TKey, TValue> class:
+  - Ensuring that [Try]Remove returns true only once in special race conditions.
+- ThreadSafeHashSet<T> class:
+  - Ensuring that [Try]Remove returns true only once in special race conditions.
+
+
 ~~~~~~~~~
 * v8.1.0:
 ~~~~~~~~~

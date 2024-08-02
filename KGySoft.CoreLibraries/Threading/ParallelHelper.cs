@@ -292,7 +292,7 @@ namespace KGySoft.Threading
 #endif
 
         /// <summary>
-        /// Executes an indexed loop inside of an already created, possibly asynchronous <paramref name="context"/>.
+        /// Executes an indexed loop using a <paramref name="context"/> that may belong to a higher level, possibly asynchronous operation.
         /// </summary>
         /// <typeparam name="T">The type of the <paramref name="operation"/> parameter.</typeparam>
         /// <param name="context">An <see cref="IAsyncContext"/> instance that contains information for asynchronous processing about the current operation.</param>
@@ -305,7 +305,8 @@ namespace KGySoft.Threading
         /// <br/><see langword="false"/>, if the operation has been canceled.</returns>
         /// <remarks>
         /// <para>This method blocks the caller thread but if <paramref name="context"/> belongs to an async top level method, then the execution may already run
-        /// on a pool thread. Degree of parallelism, the ability of cancellation and reporting progress depend on how these were configured at the top level method.</para>
+        /// on a pool thread. Degree of parallelism, the ability of cancellation and reporting progress depend on how these were configured at the top level method.
+        /// To reconfigure the degree of parallelism of an existing context, you can use the <see cref="AsyncContextWrapper"/> class.</para>
         /// <note type="tip">See the <strong>Examples</strong> section of the <see cref="AsyncHelper"/>
         /// class for details about how to create a context for possibly async top level methods.</note>
         /// <note>See the <see cref="For{T}(T, int, int, ParallelConfig?, Action{int})"/> overload for more details about the other parameters.</note>

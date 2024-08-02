@@ -454,8 +454,7 @@ namespace KGySoft.Collections
         /// and uses the specified <paramref name="comparer"/> and hashing <paramref name="strategy"/>.
         /// </summary>
         /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing keys. If <see langword="null"/>, <see cref="EnumComparer{TEnum}.Comparer">EnumComparer&lt;TEnum&gt;.Comparer</see>
-        /// will be used for <see langword="enum"/> key types when targeting the .NET Framework, and <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> in other cases. This parameter is optional.
-        /// <br/>Default value: <see langword="null"/>.</param>
+        /// will be used for <see langword="enum"/> key types when targeting the .NET Framework, and <see cref="EqualityComparer{T}.Default">EqualityComparer&lt;T&gt;.Default</see> in other cases.</param>
         /// <param name="strategy">The hashing strategy to be used in the created <see cref="ThreadSafeDictionary{TKey, TValue}"/>. This parameter is optional.
         /// <br/>Default value: <see cref="HashingStrategy.Auto"/>.</param>
         /// <remarks>
@@ -565,14 +564,14 @@ namespace KGySoft.Collections
         /// <param name="key">The key of the element to add.</param>
         /// <param name="value">The value of the element to add. The value can be <see langword="null"/> for reference types.</param>
         /// <remarks>
-        /// <para>If the <paramref name="key"/> of element already exists in the cache, this method throws an exception.
+        /// <para>If the <paramref name="key"/> of element already exists in the dictionary, this method throws an exception.
         /// In contrast, using the setter of the <see cref="this">indexer</see> property replaces the old value with the new one.</para>
         /// <para>If multiple values are added to this <see cref="ThreadSafeDictionary{TKey,TValue}"/> concurrently, then you should use
         /// the <see cref="TryAdd">TryAdd</see> method instead, which simply returns <see langword="false"/> if the <paramref name="key"/>
         /// to add already exists in the dictionary.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
-        /// <exception cref="ArgumentException"><paramref name="key"/> already exists in the cache.</exception>
+        /// <exception cref="ArgumentException"><paramref name="key"/> already exists in the dictionary.</exception>
         /// <seealso cref="this"/>
         /// <seealso cref="TryAdd"/>
         public void Add(TKey key, TValue value)
@@ -654,8 +653,8 @@ namespace KGySoft.Collections
 
                 lock (syncRoot)
                 {
-                    // lost race: we need to check the fixed storage again
-                    if (!IsUpToDateInLock(lockFreeValues))
+                    // lost race
+                    if (!IsUpToDateInLock(lockFreeValues) || expandableStorage == null)
                         continue;
 
                     found = expandableStorage.ContainsValue(value);
@@ -699,11 +698,10 @@ namespace KGySoft.Collections
                 lock (syncRoot)
                 {
                     // lost race
-                    if (!IsUpToDateInLock(lockFreeValues))
+                    if (!IsUpToDateInLock(lockFreeValues) || expandableStorage == null)
                         continue;
 
-                    Debug.Assert(expandableStorage != null, "If we are up-to-date the null check before the lock must be still valid");
-                    bool result = expandableStorage!.TryRemoveInternal(key, hashCode);
+                    bool result = expandableStorage.TryRemoveInternal(key, hashCode);
                     MergeIfExpired();
                     return result;
                 }
@@ -754,7 +752,7 @@ namespace KGySoft.Collections
                 lock (syncRoot)
                 {
                     // lost race
-                    if (!IsUpToDateInLock(lockFreeValues))
+                    if (!IsUpToDateInLock(lockFreeValues) || expandableStorage == null)
                         continue;
 
                     bool result = expandableStorage.TryRemoveInternal(key, hashCode, out value);
@@ -799,7 +797,7 @@ namespace KGySoft.Collections
                 lock (syncRoot)
                 {
                     // lost race
-                    if (!IsUpToDateInLock(lockFreeValues))
+                    if (!IsUpToDateInLock(lockFreeValues) || expandableStorage == null)
                         continue;
 
                     bool result = expandableStorage.TryRemoveInternal(key, value, hashCode);
@@ -1317,12 +1315,11 @@ namespace KGySoft.Collections
 
                 lock (syncRoot)
                 {
-                    // lost race: we need to check the fixed storage again
-                    if (!IsUpToDateInLock(lockFreeValues))
+                    // lost race
+                    if (!IsUpToDateInLock(lockFreeValues) || expandableStorage == null)
                         continue;
 
-                    Debug.Assert(expandableStorage != null, "If we are up-to-date the null check before the lock must be still valid");
-                    bool result = expandableStorage!.TryGetValueInternal(key, hashCode, out value);
+                    bool result = expandableStorage.TryGetValueInternal(key, hashCode, out value);
                     MergeIfExpired();
                     return result;
                 }
@@ -1381,8 +1378,8 @@ namespace KGySoft.Collections
 
                 lock (syncRoot)
                 {
-                    // lost race: we need to check the fixed storage again
-                    if (!IsUpToDateInLock(lockFreeValues))
+                    // lost race
+                    if (!IsUpToDateInLock(lockFreeValues) || expandableStorage == null)
                         continue;
 
                     bool result = expandableStorage.TryReplaceInternal(key, newValue, originalValue, hashCode);
@@ -1475,7 +1472,7 @@ namespace KGySoft.Collections
         }
 
         /// <summary>
-        /// Checks if the lock free storage is still up-to-date. Should be used inside of a lock.
+        /// Checks if the lock free storage is still up-to-date. Should be used inside a lock.
         /// If returns false, the lock block must be left immediately and the <see cref="fixedSizeStorage"/> field must be re-checked.
         /// </summary>
         [MethodImpl(MethodImpl.AggressiveInlining)]

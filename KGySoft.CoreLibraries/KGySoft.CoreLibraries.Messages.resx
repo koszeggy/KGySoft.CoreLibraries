@@ -186,6 +186,9 @@
   <data name="General_Millisecond" xml:space="preserve">
     <value>ms</value>
   </data>
+  <data name="FastRandom_ZeroSeeds" xml:space="preserve">
+    <value>At least one of the seeds must be nonzero.</value>
+  </data>
   <data name="PerformanceTest_NoTestCases" xml:space="preserve">
     <value>No test cases are added.</value>
   </data>

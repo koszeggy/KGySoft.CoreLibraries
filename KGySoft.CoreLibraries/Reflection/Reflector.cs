@@ -2912,7 +2912,7 @@ namespace KGySoft.Reflection
         /// except when the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly is referenced and the field is read-only or is an instance member of a value type (<see langword="struct"/>),
         /// in which case the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
-        /// <note>To set the property explicitly by dynamically created delegates use the <see cref="PropertyAccessor"/> class.</note>
+        /// <note>To set the field explicitly by dynamically created delegates use the <see cref="FieldAccessor"/> class.</note>
         /// </remarks>
         public static void SetField(object? instance, FieldInfo field, object? value, ReflectionWays way = ReflectionWays.Auto)
         {

@@ -24,5 +24,14 @@ namespace KGySoft.CoreLibraries
 
         #endregion
     }
+
+    public class TestCaseAttribute<T1, T2> : TestCaseGenericAttribute
+    {
+        #region Constructors
+
+        public TestCaseAttribute(params object[] arguments) : base(arguments) => TypeArguments = new[] { typeof(T1), typeof(T2) };
+
+        #endregion
+    }
 }
 #endif

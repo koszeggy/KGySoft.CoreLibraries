@@ -589,12 +589,11 @@ namespace KGySoft.Collections
 
                 lock (syncRoot)
                 {
-                    // lost race: we need to check the fixed storage again
-                    if (!IsUpToDateInLock(lockFreeValues))
+                    // lost race
+                    if (!IsUpToDateInLock(lockFreeValues) || expandableStorage == null)
                         continue;
 
-                    Debug.Assert(expandableStorage != null, "If we are up-to-date the null check before the lock must be still valid");
-                    bool result = expandableStorage!.TryGetValueInternal(equalValue, hashCode, out actualValue);
+                    bool result = expandableStorage.TryGetValueInternal(equalValue, hashCode, out actualValue);
                     MergeIfExpired();
                     return result;
                 }
@@ -629,12 +628,11 @@ namespace KGySoft.Collections
 
                 lock (syncRoot)
                 {
-                    // lost race: we need to check the fixed storage again
-                    if (!IsUpToDateInLock(lockFreeValues))
+                    // lost race
+                    if (!IsUpToDateInLock(lockFreeValues) || expandableStorage == null)
                         continue;
 
-                    Debug.Assert(expandableStorage != null, "If we are up-to-date the null check before the lock must be still valid");
-                    bool result = expandableStorage!.ContainsInternal(item, hashCode);
+                    bool result = expandableStorage.ContainsInternal(item, hashCode);
                     MergeIfExpired();
                     return result;
                 }
@@ -675,11 +673,10 @@ namespace KGySoft.Collections
                 lock (syncRoot)
                 {
                     // lost race
-                    if (!IsUpToDateInLock(lockFreeValues))
+                    if (!IsUpToDateInLock(lockFreeValues) || expandableStorage == null)
                         continue;
 
-                    Debug.Assert(expandableStorage != null, "If we are up-to-date the null check before the lock must be still valid");
-                    bool result = expandableStorage!.TryRemoveInternal(item, hashCode);
+                    bool result = expandableStorage.TryRemoveInternal(item, hashCode);
                     MergeIfExpired();
                     return result;
                 }
@@ -949,7 +946,7 @@ namespace KGySoft.Collections
         }
 
         /// <summary>
-        /// Checks if the lock free storage is still up-to-date. Should be used inside of a lock.
+        /// Checks if the lock free storage is still up-to-date. Should be used inside a lock.
         /// If returns false, the lock block must be left immediately and the <see cref="fixedSizeStorage"/> field must be re-checked.
         /// </summary>
         [MethodImpl(MethodImpl.AggressiveInlining)]

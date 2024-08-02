@@ -110,6 +110,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             Type enumType = typeof(TestLongEnum);
             Assert.IsTrue(Enum.GetNames(enumType).SequenceEqual(Enum<TestLongEnum>.GetNames()));
             Assert.IsTrue(Enum.GetValues(enumType).Cast<TestLongEnum>().SequenceEqual(Enum<TestLongEnum>.GetValues()));
+            Assert.IsTrue(Enum.GetValues(enumType).Cast<long>().SequenceEqual(Enum<TestLongEnum>.GetUnderlyingValues().Cast<long>()));
 
             Assert.AreEqual(Enum.GetName(enumType, TestLongEnum.Alpha), Enum<TestLongEnum>.GetName(TestLongEnum.Alpha));
             Assert.AreEqual(Enum.GetName(enumType, TestLongEnum.AlphaRedefined), Enum<TestLongEnum>.GetName(TestLongEnum.AlphaRedefined));
