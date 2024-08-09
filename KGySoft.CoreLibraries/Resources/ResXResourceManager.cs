@@ -129,13 +129,13 @@ namespace KGySoft.Resources
     /// <code lang="C#">var manager = new ResXResourceManager("MyResources", typeof(Example).Assembly);</code></item>
     /// <item><see cref="ResXResourceManager(Type)">ResXResourceManager(Type resourceSource)</see> will use the name of the provided <see cref="Type"/> as base name, and its <see cref="Assembly"/> to detect the default culture.
     /// <code lang="C#">var manager = new ResXResourceManager(typeof(Example));</code></item></list></para>
-    /// <para><note>If a <see cref="ResXResourceManager"/> instance is created with a <c>baseName</c> without corresponding .resx file for the default culture, then accessing a non-existing
-    /// resource will throw a <see cref="MissingManifestResourceException"/> unless <see cref="ThrowException"/> property is <see langword="false"/>, in which case only a <see langword="null"/> value will be
-    /// returned in such case. The exception can be avoided, if a resource set is created for the default culture either by adding a new resource (see next section) or by creating the resource set
+    /// <para><note>If a <see cref="ResXResourceManager"/> instance is created with a <c>baseName</c> without a corresponding .resx file for the default culture, then accessing a non-existing
+    /// resource will throw a <see cref="MissingManifestResourceException"/>, unless <see cref="ThrowException"/> property is <see langword="false"/>, in which case only a <see langword="null"/> value will be
+    /// returned. The exception can be avoided, if a resource set is created for the default culture either by adding a new resource (see next section) or by creating the resource set
     /// explicitly by calling the <see cref="GetExpandoResourceSet">GetExpandoResourceSet</see> method with <see cref="ResourceSetRetrieval.CreateIfNotExists"/> behavior.</note></para>
     /// <h2>Example: Adding and saving new resources at runtime</h2>
     /// <para>As <see cref="ResXResourceManager"/> maintains <see cref="ResXResourceSet"/> instances for each culture, it also supports adding new resources at runtime.
-    /// By <see cref="SetObject">SetObject</see> method you can add a resource to a specific culture. You can add metadata as well by <see cref="SetMetaObject">SetMetaObject</see> method.
+    /// By the <see cref="SetObject">SetObject</see> method you can add a resource to a specific culture. You can add metadata as well by the <see cref="SetMetaObject">SetMetaObject</see> method.
     /// The resources and metadata can be removed, too (see <see cref="RemoveObject">RemoveObject</see> and <see cref="RemoveMetaObject">RemoveMetaObject</see> methods).</para>
     /// <para>The changes in the resource sets can be saved by calling the <see cref="SaveAllResources">SaveAllResources</see> method. A single resource set can be saved
     /// by calling the <see cref="SaveResourceSet">SaveResourceSet</see> method.
