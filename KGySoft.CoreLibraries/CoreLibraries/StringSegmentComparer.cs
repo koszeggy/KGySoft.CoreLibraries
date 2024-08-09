@@ -20,6 +20,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Runtime.CompilerServices;
+
+using KGySoft.Collections;
 #if NET35 || NET40 || NET45 || NETSTANDARD2_1 || NETCOREAPP2_1 || NETCOREAPP3_0
 using System.Runtime.Serialization;
 #endif
@@ -45,9 +47,23 @@ namespace KGySoft.CoreLibraries
     /// allowing comparing strings by <see cref="string">string</see>, <see cref="StringSegment"/> and <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> instances.
     /// <br/>See the static properties for more details.
     /// </summary>
+    /// <remarks>
+    /// <para>This class exists to support lookup operations by <see cref="StringSegment"/> and <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> instances
+    /// for <see cref="IStringKeyedDictionary{TValue}"/> and <see cref="IStringKeyedReadOnlyDictionary{TValue}"/> implementations, such as the <see cref="StringKeyedDictionary{TValue}"/> class.</para>
+    /// <para>Actually you can use this comparer anywhere where you would just use a <see cref="StringComparer"/>.
+    /// Some members may provide bette performance or improved functionality than the regular <see cref="StringComparer"/> members, especially on older platforms.</para>
+    /// <note type="tip">Starting with .NET 9.0 this class implements the <see cref="IAlternateEqualityComparer{TAlternate,T}"/> interface, supporting both <see cref="StringSegment"/>
+    /// and <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> types. This makes possible to use a regular <see cref="Dictionary{TKey,TValue}"/> class
+    /// with <see cref="StringSegment"/> lookup if you initialize it with a <see cref="StringSegmentComparer"/> instance (see the static members) and use
+    /// the <see cref="System.Collections.Generic.CollectionExtensions.GetAlternateLookup{TKey,TValue,TAlternateKey}">GetAlternateLookup</see> extension,
+    /// specifying <see cref="StringSegment"/> for the <c>TAlternateKey</c> generic argument. Such an extension exists for the <see cref="HashSet{T}"/> class, too.</note>
+    /// </remarks>
     [Serializable]
     public abstract class StringSegmentComparer : IEqualityComparer<StringSegment>, IComparer<StringSegment>,
         IEqualityComparer<string>, IComparer<string>,
+#if NET9_0_OR_GREATER
+        IAlternateEqualityComparer<StringSegment, string?>, IAlternateEqualityComparer<ReadOnlySpan<char>, string?>,
+#endif
         IEqualityComparer, IComparer
     {
         #region Nested classes
@@ -1283,6 +1299,18 @@ namespace KGySoft.CoreLibraries
         internal abstract int GetHashCode(StringSegmentInternal obj);
 
         #endregion
+
+        #endregion
+
+        #region Explicitly Implemented Interface Methods
+
+#if NET9_0_OR_GREATER
+        bool IAlternateEqualityComparer<StringSegment, string?>.Equals(StringSegment x, string? y) => Equals(x, y);
+        string? IAlternateEqualityComparer<StringSegment, string?>.Create(StringSegment x) => x.ToString();
+
+        bool IAlternateEqualityComparer<ReadOnlySpan<char>, string?>.Equals(ReadOnlySpan<char> x, string? y) => Equals(x, y);
+        string? IAlternateEqualityComparer<ReadOnlySpan<char>, string?>.Create(ReadOnlySpan<char> x) => x.ToString();
+#endif
 
         #endregion
 
