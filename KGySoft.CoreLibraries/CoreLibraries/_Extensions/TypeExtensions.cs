@@ -18,16 +18,17 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
-#if !NETSTANDARD2_0
+#if !NETSTANDARD2_0 && !NET9_0_OR_GREATER
 using System.Reflection.Emit;
 #endif
 using System.Runtime.CompilerServices;
+#if !NET9_0_OR_GREATER
 using System.Runtime.InteropServices;
+#endif
 using System.Security;
 #if NETCOREAPP3_0_OR_GREATER
 using System.Text;
@@ -57,7 +58,7 @@ namespace KGySoft.CoreLibraries
         #region Nested Types
 
         #region SizeOfHelper struct
-#if !NETSTANDARD2_0
+#if !NETSTANDARD2_0 && !NET9_0_OR_GREATER
 
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
         private struct SizeOfHelper<T> // where T : struct // ISSUE: this prevents nullable structs
@@ -131,7 +132,9 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         private static ThreadSafeDictionary<Type, ThreadSafeDictionary<Type, List<Delegate>>>? registeredConversions;
 
+#if !NET9_0_OR_GREATER
         private static LockFreeCache<Type, int>? sizeOfCache;
+#endif
         private static LockFreeCache<Type, bool>? hasReferenceCache;
         private static LockFreeCache<(Type GenTypeDef, TypesKey TypeArgs), Type>? genericTypeCache;
         private static LockFreeCache<(MethodInfo GenMethodDef, TypesKey TypeArgs), MethodInfo>? genericMethodsCache;
@@ -686,10 +689,14 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static int SizeOf(this Type type)
         {
+#if NET9_0_OR_GREATER
+            return RuntimeHelpers.SizeOf(type.TypeHandle);
+#else
             if (sizeOfCache == null)
                 Interlocked.CompareExchange(ref sizeOfCache, new LockFreeCache<Type, int>(GetSize, null, LockFreeCacheOptions.Profile128), null);
 
             return sizeOfCache[type];
+#endif
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -1158,6 +1165,7 @@ namespace KGySoft.CoreLibraries
         }
 
 
+#if !NET9_0_OR_GREATER
         [SecuritySafeCritical]
         private static int GetSize(Type type)
         {
@@ -1237,6 +1245,7 @@ namespace KGySoft.CoreLibraries
             return (int)method.Invoke();
 #endif
         }
+#endif
 
         private static bool HasReference(Type type)
         {
