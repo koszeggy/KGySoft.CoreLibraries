@@ -153,15 +153,19 @@ namespace KGySoft.Collections
         #region Indexers
 
         /// <summary>
-        /// Gets or sets the element at the specified coordinates. Parameter order is the same as in case of a regular two-dimensional array.
-        /// <br/>To return a reference to an element use the <see cref="GetElementReference">GetElementReference</see> method instead.
+        /// Gets or sets the element at the specified indices. Parameter order is the same as in case of a regular two-dimensional array.
         /// </summary>
-        /// <param name="y">The Y-coordinate (row index) of the item to get or set. Please note that for the best performance no separate range check is performed on the coordinates.</param>
-        /// <param name="x">The X-coordinate (column index) of the item to get or set. Please note that for the best performance no separate range check is performed on the coordinates.</param>
+        /// <param name="y">The Y-coordinate (row index) of the item to get or set.</param>
+        /// <param name="x">The X-coordinate (column index) of the item to get or set.</param>
         /// <returns>The element at the specified indices.</returns>
+        /// <remarks>
+        /// <para>Though this member does not validate the coordinates separately, it does not allow indexing beyond the <see cref="Length"/> of the underlying <see cref="Buffer"/>.
+        /// To omit also the length check, allowing to get/set any element in the whole <see cref="ArraySection{T}.UnderlyingArray"/>,
+        /// use the <see cref="GetElementUnchecked">GetElementUnchecked</see>/<see cref="SetElementUnchecked">SetElementUnchecked</see> methods instead.</para>
+        /// <para>To return a reference to an element use the <see cref="GetElementReference">GetElementReference</see> method instead.</para>
+        /// </remarks>
         public readonly T this[int y, int x]
         {
-            // Note: for better performance we propagate the ArgumentOutOfRangeException to the buffer (allowing even negative values on some dimensions)
             [MethodImpl(MethodImpl.AggressiveInlining)]
             get => buffer[y * width + x];
             [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -359,15 +363,50 @@ namespace KGySoft.Collections
         /// <summary>
         /// Gets the reference to the element at the specified indices. Parameter order is the same as in case of a regular two-dimensional array.
         /// </summary>
-        /// <param name="y">The Y-coordinate (row index) of the item to get or set. Please note that for the best performance no separate range check is performed on the coordinates.</param>
-        /// <param name="x">The X-coordinate (column index) of the item to get or set. Please note that for the best performance no separate range check is performed on the coordinates.</param>
-        /// <returns>The reference to the element at the specified index.</returns>
+        /// <param name="y">The Y-coordinate (row index) of the item to get the reference for.</param>
+        /// <param name="x">The X-coordinate (column index) of the item to get the reference for.</param>
+        /// <returns>The reference to the element at the specified coordinates.</returns>
+        /// <remarks>
+        /// <para>Though this method does not validate the coordinates separately, it does not allow indexing beyond the <see cref="Length"/> of the underlying <see cref="Buffer"/>.
+        /// To omit also the length check, allowing to get the reference to any element in the whole <see cref="ArraySection{T}.UnderlyingArray"/>,
+        /// use the <see cref="GetElementReferenceUnchecked">GetElementReferenceUnchecked</see> method instead.</para>
+        /// </remarks>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public readonly ref T GetElementReference(int y, int x)
-        {
-            // Note: for better performance we propagate the ArgumentOutOfRangeException to the buffer (allowing even negative values on some dimensions)
-            return ref buffer.GetElementReference(y * width + x);
-        }
+        public readonly ref T GetElementReference(int y, int x) => ref buffer.GetElementReference(y * width + x);
+
+        /// <summary>
+        /// Gets the element at the specified indices, allowing them to point to any element in the <see cref="ArraySection{T}.UnderlyingArray"/>
+        /// of the <see cref="Buffer"/> property. To validate the coordinates against <see cref="Length"/> use the appropriate <see cref="this[int,int]">indexer</see> instead.
+        /// Parameter order is the same as in case of a regular two-dimensional array.
+        /// </summary>
+        /// <param name="y">The Y-coordinate (row index) of the item to get.</param>
+        /// <param name="x">The X-coordinate (column index) of the item to get.</param>
+        /// <returns>The element at the specified indices.</returns>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public readonly T GetElementUnchecked(int y, int x) => buffer.GetElementUnchecked(y * width + x);
+
+        /// <summary>
+        /// Sets the element at the specified indices, allowing them to point to any element in the <see cref="ArraySection{T}.UnderlyingArray"/>
+        /// of the <see cref="Buffer"/> property. To validate the coordinates against <see cref="Length"/> use the appropriate <see cref="this[int,int]">indexer</see> instead.
+        /// Parameter order is the same as in case of a regular two-dimensional array.
+        /// </summary>
+        /// <param name="y">The Y-coordinate (row index) of the item to set.</param>
+        /// <param name="x">The X-coordinate (column index) of the item to set.</param>
+        /// <param name="value">The value to set.</param>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public readonly void SetElementUnchecked(int y, int x, T value) => buffer.SetElementUnchecked(y * width + x, value);
+
+        /// <summary>
+        /// Gets the reference to the element at the specified coordinates, allowing them to point to any element in the <see cref="ArraySection{T}.UnderlyingArray"/>
+        /// of the <see cref="Buffer"/> property. To validate the coordinates against <see cref="Length"/> use
+        /// the <see cref="GetElementReference">GetElementReference</see> method instead.
+        /// Parameter order is the same as in case of a regular two-dimensional array.
+        /// </summary>
+        /// <param name="y">The Y-coordinate (row index) of the item to get the reference for.</param>
+        /// <param name="x">The X-coordinate (column index) of the item to get the reference for.</param>
+        /// <returns>The reference to the element at the specified coordinates.</returns>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public readonly ref T GetElementReferenceUnchecked(int y, int x) => ref buffer.GetElementReferenceUnchecked(y * width + x);
 
         /// <summary>
         /// Returns an enumerator that iterates through the items of this <see cref="Array2D{T}"/>.
@@ -433,7 +472,7 @@ namespace KGySoft.Collections
         public readonly T[]? ToArray() => buffer.ToArray();
 
         /// <summary>
-        /// Copies the elements of this <see cref="Array2D{T}"/> to a new two dimensional array.
+        /// Copies the elements of this <see cref="Array2D{T}"/> to a new two-dimensional array.
         /// </summary>
         /// <returns>An array containing copies of the elements of this <see cref="Array2D{T}"/>,
         /// or <see langword="null"/> if <see cref="IsNull"/> is <see langword="true"/>.</returns>
