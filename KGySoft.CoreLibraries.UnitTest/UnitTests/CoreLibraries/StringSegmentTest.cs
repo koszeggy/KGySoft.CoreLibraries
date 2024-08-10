@@ -497,6 +497,43 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
 #endif
         }
 
+#if NET9_0_OR_GREATER
+        [Test]
+        public void AlternateComparerTest()
+        {
+            var dictDefault = new Dictionary<string, string>(StringComparer.Ordinal);
+            dictDefault[""] = "Empty";
+            dictDefault["1"] = "One";
+
+            var dictCustom = new Dictionary<string, string>(dictDefault, StringSegmentComparer.Ordinal);
+
+            var dictDefaultSpan = dictDefault.GetAlternateLookup<string, string, ReadOnlySpan<char>>();
+            var dictCustomSpan = dictCustom.GetAlternateLookup<string, string, ReadOnlySpan<char>>();
+
+            // Span: empty string and null are considered equal
+            Assert.AreEqual("Empty", dictDefaultSpan[""]);
+            Assert.AreEqual("Empty", dictDefaultSpan[default]);
+            Assert.AreEqual("Empty", dictCustomSpan[""]);
+            Assert.AreEqual("Empty", dictCustomSpan[default]);
+
+            // StringSegment: they can be considered different because there are exposed publicly in different ways
+            var dictCustomSegment = dictCustom.GetAlternateLookup<string, string, StringSegment>();
+            Assert.AreEqual("Empty", dictCustomSegment[StringSegment.Empty]);
+            Assert.IsFalse(dictCustomSegment.ContainsKey(StringSegment.Null));
+
+            // HashSet: allows null
+            var set = new HashSet<string>(StringSegmentComparer.Ordinal);
+            var setAsSegment = set.GetAlternateLookup<string, StringSegment>();
+            Assert.IsTrue(setAsSegment.Add(StringSegment.Null));
+            Assert.IsTrue(setAsSegment.Add(StringSegment.Empty));
+            Assert.AreEqual(2, set.Count);
+            Assert.IsTrue(setAsSegment.Contains(StringSegment.Null));
+            Assert.IsTrue(setAsSegment.Contains(StringSegment.Empty));
+            Assert.IsTrue(set.Contains(null));
+            Assert.IsTrue(set.Contains(""));
+        }
+#endif
+
         #endregion
     }
 }
