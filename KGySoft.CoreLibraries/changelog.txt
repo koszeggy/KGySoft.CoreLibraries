@@ -6,7 +6,7 @@
 ===============================================================================
 
 ~~~~~~~~~
-+ v9.0.0:
+* v9.0.0:
 ~~~~~~~~~
 
 + KGySoft.CoreLibraries namespace:
@@ -14,6 +14,12 @@
 + StringSegmentComparer class:
   + Implements the IAlternateEqualityComparer<StringSegment, string?> and
     the IAlternateEqualityComparer<ReadOnlySpan<char>, string?> interfaces (.NET 9.0 and above)
+
+* KGySoft.Collections namespace:
+================================
++ ArraySection<T> struct:
+  + New GetElementUnchecked/SetElementUnchecked/GetElementReferenceUnchecked methods: To omit length check, allowing
+    to reference any element in the underlying array.
 
 
 ~~~~~~~~~

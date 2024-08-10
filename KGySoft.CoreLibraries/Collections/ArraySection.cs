@@ -24,6 +24,7 @@ using System.Runtime.CompilerServices;
 #if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
 using System.Buffers;
 #endif
+using System.Runtime.Serialization;
 
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
@@ -64,6 +65,8 @@ namespace KGySoft.Collections
     /// which is needed for the <see cref="Release">Release</see> method to work properly. As <see cref="ArraySection{T}"/> is a
     /// non-<c>readonly</c>&#160;<see langword="struct"/> it is not recommended to use it as a <c>readonly</c> field; otherwise,
     /// accessing its members would make the pre-C# 8.0 compilers to create defensive copies, which leads to a slight performance degradation.</para>
+    /// <note type="tip">You can always easily reinterpret an <see cref="ArraySection{T}"/> instance as a two or three-dimensional array by the <see cref="AsArray2D">AsArray2D</see>
+    /// and <see cref="AsArray3D">AsArray3D</see> methods without any allocation on the heap.</note>
     /// </remarks>
     [Serializable]
     [DebuggerTypeProxy(typeof(ArraySection<>.ArraySectionDebugView))]
@@ -100,6 +103,13 @@ namespace KGySoft.Collections
 
         #endregion
 
+        #region Constants
+
+        private const int poolArrayMask = 1 << 31;
+        private const int lengthMask = Int32.MaxValue;
+
+        #endregion
+
         #region Fields
 
         #region Static Fields
@@ -133,10 +143,6 @@ namespace KGySoft.Collections
         private readonly T[]? array;
         private readonly int offset;
         private readonly int length;
-#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
-        [NonSerialized]
-        private readonly bool poolArray;
-#endif
 
         #endregion
 
@@ -162,7 +168,11 @@ namespace KGySoft.Collections
         /// <summary>
         /// Gets the number of elements in this <see cref="ArraySection{T}"/>.
         /// </summary>
+#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
+        public readonly int Length => length & lengthMask;
+#else
         public readonly int Length => length;
+#endif
 
         /// <summary>
         /// Gets whether this <see cref="ArraySection{T}"/> instance represents a <see langword="null"/> array.
@@ -173,44 +183,44 @@ namespace KGySoft.Collections
         /// <summary>
         /// Gets whether this <see cref="ArraySection{T}"/> instance represents an empty array section or a <see langword="null"/> array.
         /// </summary>
-        public readonly bool IsNullOrEmpty => length == 0;
+        public readonly bool IsNullOrEmpty => length == 0; // empty sections are never pooled so we can use the field here
 
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Returns the current <see cref="ArraySection{T}"/> instance as a <see cref="Memory{T}"/> instance.
         /// </summary>
         /// <remarks><note>This member is available in .NET Core 2.1/.NET Standard 2.1 and above.</note></remarks>
-        public readonly Memory<T> AsMemory => new Memory<T>(array, offset, length);
+        public readonly Memory<T> AsMemory => new Memory<T>(array, offset, Length);
 
         /// <summary>
         /// Returns the current <see cref="ArraySection{T}"/> instance as a <see cref="Span{T}"/> instance.
         /// </summary>
         /// <remarks><note>This member is available in .NET Core 2.1/.NET Standard 2.1 and above.</note></remarks>
-        public readonly Span<T> AsSpan => new Span<T>(array, offset, length);
+        public readonly Span<T> AsSpan => new Span<T>(array, offset, Length);
 #endif
 
         /// <summary>
         /// Returns the current <see cref="ArraySection{T}"/> instance as an <see cref="ArraySegment{T}"/>.
         /// </summary>
-        public readonly ArraySegment<T> AsArraySegment => array == null ? default : new ArraySegment<T>(array, offset, length);
+        public readonly ArraySegment<T> AsArraySegment => array == null ? default : new ArraySegment<T>(array, offset, Length);
 
         #endregion
 
         #region Explicitly Implemented Interface Properties
 
         readonly bool ICollection<T>.IsReadOnly => true;
-        readonly int ICollection<T>.Count => length;
+        readonly int ICollection<T>.Count => Length;
 
         // It actually should use a private field but as we never lock on this we could never cause a deadlock even if someone uses it.
         readonly object ICollection.SyncRoot => array?.SyncRoot ?? Throw.InvalidOperationException<object>(Res.ArraySectionNull);
         readonly bool ICollection.IsSynchronized => false;
 
-        readonly int ICollection.Count => length;
+        readonly int ICollection.Count => Length;
         readonly bool IList.IsReadOnly => false;
         readonly bool IList.IsFixedSize => true;
 
 #if !(NET35 || NET40)
-        readonly int IReadOnlyCollection<T>.Count => length;
+        readonly int IReadOnlyCollection<T>.Count => Length;
 #endif
 
         #endregion
@@ -223,23 +233,28 @@ namespace KGySoft.Collections
 
         /// <summary>
         /// Gets or sets the element at the specified <paramref name="index"/>.
-        /// <br/>To return a reference to an element use the <see cref="GetElementReference">GetElementReference</see> method instead.
         /// </summary>
         /// <param name="index">The zero-based index of the element to get or set.</param>
         /// <returns>The element at the specified index.</returns>
+        /// <remarks>
+        /// <para>This member validates <paramref name="index"/> against <see cref="Length"/>. To allow getting/setting any element in the <see cref="UnderlyingArray"/> use
+        /// the <see cref="GetElementUnchecked">GetElementUnchecked</see>/<see cref="SetElementUnchecked">SetElementUnchecked</see> methods instead.</para>
+        /// <para>To return a reference to an element use the <see cref="GetElementReference">GetElementReference</see> method instead.</para>
+        /// </remarks>
+        /// <exception cref="IndexOutOfRangeException"><paramref name="index"/> is less than zero or greater or equal to <see cref="Length"/>.</exception>
         public readonly T this[int index]
         {
             [MethodImpl(MethodImpl.AggressiveInlining)]
             get
             {
-                if ((uint)index >= (uint)length)
+                if ((uint)index >= (uint)Length)
                     Throw.IndexOutOfRangeException();
                 return GetItemInternal(index);
             }
             [MethodImpl(MethodImpl.AggressiveInlining)]
             set
             {
-                if ((uint)index >= (uint)length)
+                if ((uint)index >= (uint)Length)
                     Throw.IndexOutOfRangeException();
                 array![offset + index] = value;
             }
@@ -352,9 +367,9 @@ namespace KGySoft.Collections
             this.length = length;
 
 #if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
-            poolArray = length >= poolingThreshold;
-            if (poolArray)
+            if (length >= poolingThreshold)
             {
+                length |= poolArrayMask;
                 array = ArrayPool<T>.Shared.Rent(length);
                 if (assureClean)
                     Clear();
@@ -408,9 +423,6 @@ namespace KGySoft.Collections
             this.array = array;
             this.offset = offset;
             this.length = length;
-#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
-            poolArray = false;
-#endif
         }
 
         /// <summary>
@@ -462,9 +474,9 @@ namespace KGySoft.Collections
         /// </summary>
         public readonly void Clear()
         {
-            if (length == 0)
+            if (length == 0) // zero length sections never have pooled arrays so using the field is alright here
                 return;
-            Array.Clear(array!, offset, length);
+            Array.Clear(array!, offset, Length);
         }
 
         /// <summary>
@@ -472,7 +484,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="startIndex">The offset that points to the first item of the returned section.</param>
         /// <returns>The subsection of the current <see cref="ArraySection{T}"/> instance with the specified <paramref name="startIndex"/>.</returns>
-        public readonly ArraySection<T> Slice(int startIndex) => new ArraySection<T>(array!, offset + startIndex, length - startIndex);
+        public readonly ArraySection<T> Slice(int startIndex) => Slice(startIndex, Length - startIndex);
 
         /// <summary>
         /// Gets a new <see cref="ArraySection{T}"/> instance, which represents a subsection of the current instance with the specified <paramref name="startIndex"/> and <paramref name="length"/>.
@@ -481,7 +493,18 @@ namespace KGySoft.Collections
         /// <param name="length">The desired length of the returned section.</param>
         /// <returns>The subsection of the current <see cref="ArraySection{T}"/> instance with the specified <paramref name="startIndex"/> and <paramref name="length"/>.</returns>
         [SuppressMessage("ReSharper", "ParameterHidesMember", Justification = "Intended because it will be the new length of the returned instance")]
-        public readonly ArraySection<T> Slice(int startIndex, int length) => new ArraySection<T>(array!, offset + startIndex, length);
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public readonly ArraySection<T> Slice(int startIndex, int length)
+        {
+            if (!IsNull)
+                return new ArraySection<T>(array!, offset + startIndex, length);
+
+            if (startIndex != 0)
+                Throw.ArgumentOutOfRangeException(Argument.offset); // to be compatible with the non-null case above
+            if (length != 0)
+                Throw.ArgumentOutOfRangeException(Argument.length);
+            return Null;
+        }
 
         /// <summary>
         /// Returns a reference to the first element in this <see cref="ArraySection{T}"/>.
@@ -494,7 +517,7 @@ namespace KGySoft.Collections
             {
 #if NET5_0_OR_GREATER
                 return ref Unsafe.NullRef<T>();
-#elif NETCOREAPP3_0
+#elif NETCOREAPP3_0_OR_GREATER
                 unsafe
                 {
                     return ref Unsafe.AsRef<T>(null);
@@ -514,10 +537,10 @@ namespace KGySoft.Collections
         /// or <see langword="null"/> if <see cref="IsNull"/> is <see langword="true"/>.</returns>
         public readonly T[]? ToArray()
         {
-            if (length == 0)
+            if (length == 0) // it's alright, pooled arrays never have ero length
                 return IsNull ? null : Reflector.EmptyArray<T>();
-            T[] result = new T[length];
-            array!.CopyElements(offset, result, 0, length);
+            T[] result = new T[Length];
+            array!.CopyElements(offset, result, 0,  result.Length);
             return result;
         }
 
@@ -547,10 +570,62 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="index">The index of the element to get the reference for.</param>
         /// <returns>The reference to the element at the specified index.</returns>
+        /// <remarks>
+        /// This method validates <paramref name="index"/> against <see cref="Length"/>.
+        /// To allow returning a reference to any element from the <see cref="UnderlyingArray"/>
+        /// (allowing even a negative <paramref name="index"/> if <see cref="Offset"/> is nonzero),
+        /// then use the <see cref="GetElementReferenceUnchecked">GetElementReferenceUnchecked</see> method instead.
+        /// </remarks>
+        /// <exception cref="IndexOutOfRangeException"><paramref name="index"/> is less than zero or greater or equal to <see cref="Length"/>.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public readonly ref T GetElementReference(int index)
         {
-            if ((uint)index >= (uint)length)
+            if ((uint)index >= (uint)Length)
+                Throw.IndexOutOfRangeException();
+            return ref GetElementReferenceInternal(index);
+        }
+
+        /// <summary>
+        /// Gets the element at the specified <paramref name="index"/>, allowing it to point to any element in the <see cref="UnderlyingArray"/>.
+        /// To validate <paramref name="index"/> against <see cref="Length"/> use the <see cref="this">indexer</see> instead.
+        /// </summary>
+        /// <param name="index">The index of the element to get.</param>
+        /// <returns>The element at the specified index.</returns>
+        /// <exception cref="IndexOutOfRangeException"><paramref name="index"/> plus <see cref="Offset"/> is less than zero or greater or equal to the length of the <see cref="UnderlyingArray"/>.</exception>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public readonly T GetElementUnchecked(int index)
+        {
+            if (IsNull)
+                Throw.IndexOutOfRangeException();
+            return GetItemInternal(index);
+        }
+
+        /// <summary>
+        /// Sets the element at the specified <paramref name="index"/>, allowing it to point to any element in the <see cref="UnderlyingArray"/>.
+        /// To validate <paramref name="index"/> against <see cref="Length"/> use the <see cref="this">indexer</see> instead.
+        /// </summary>
+        /// <param name="index">The index of the element to set.</param>
+        /// <param name="value">The value to set.</param>
+        /// <exception cref="IndexOutOfRangeException"><paramref name="index"/> plus <see cref="Offset"/> is less than zero or greater or equal to the length of the <see cref="UnderlyingArray"/>.</exception>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public readonly void SetElementUnchecked(int index, T value)
+        {
+            if (IsNull)
+                Throw.IndexOutOfRangeException();
+            SetItemInternal(index, value);
+        }
+
+        /// <summary>
+        /// Gets the reference to the element at the specified <paramref name="index"/>, it to point to any element in the <see cref="UnderlyingArray"/>.
+        /// To validate <paramref name="index"/> against <see cref="Length"/> use the <see cref="GetElementReference">GetElementReference</see> method instead.
+        /// </summary>
+        /// <param name="index">The index of the element to get the reference for.</param>
+        /// <returns>The reference to the element at the specified index.</returns>
+        /// <exception cref="IndexOutOfRangeException"><paramref name="index"/> plus <see cref="Offset"/> is less than zero or greater or equal to the length of the <see cref="UnderlyingArray"/>.</exception>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public readonly ref T GetElementReferenceUnchecked(int index)
+        {
+            if (IsNull)
                 Throw.IndexOutOfRangeException();
             return ref GetElementReferenceInternal(index);
         }
@@ -564,9 +639,9 @@ namespace KGySoft.Collections
         /// </returns>
         public readonly int IndexOf(T item)
         {
-            if (length == 0)
+            if (length == 0) // it's alright, pooled arrays never have zero length
                 return -1;
-            int result = Array.IndexOf(array!, item, offset, length);
+            int result = Array.IndexOf(array!, item, offset, Length);
             return result < 0 ? result : result - offset;
         }
 
@@ -591,9 +666,11 @@ namespace KGySoft.Collections
                 Throw.ArgumentNullException(Argument.target);
             if (targetIndex < 0 || targetIndex > target.Length)
                 Throw.ArgumentOutOfRangeException(Argument.targetIndex);
-            if (target.Length - targetIndex < length)
+
+            int len = Length;
+            if (target.Length - targetIndex < len)
                 Throw.ArgumentException(Argument.target, Res.ICollectionCopyToDestArrayShort);
-            array?.CopyElements(offset, target, targetIndex, length);
+            array?.CopyElements(offset, target, targetIndex, len);
         }
 
         /// <summary>
@@ -607,9 +684,11 @@ namespace KGySoft.Collections
                 Throw.ArgumentNullException(Argument.target);
             if (targetIndex < 0 || targetIndex > target.Length)
                 Throw.ArgumentOutOfRangeException(Argument.targetIndex);
-            if (target.length - targetIndex < length)
+
+            int len = Length;
+            if (target.length - targetIndex < len)
                 Throw.ArgumentException(Argument.target, Res.ICollectionCopyToDestArrayShort);
-            array?.CopyElements(offset, target.array!, target.offset + targetIndex, length);
+            array?.CopyElements(offset, target.array!, target.offset + targetIndex, len);
         }
 
         /// <summary>
@@ -619,7 +698,7 @@ namespace KGySoft.Collections
         /// <remarks>
         /// <note>The returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
-        public readonly ArraySectionEnumerator<T> GetEnumerator() => new ArraySectionEnumerator<T>(array, offset, length);
+        public readonly ArraySectionEnumerator<T> GetEnumerator() => new ArraySectionEnumerator<T>(array, offset, Length);
 
         /// <summary>
         /// Releases the underlying array. If this <see cref="ArraySection{T}"/> instance was instantiated by the <see cref="ArraySection{T}(int,bool)">self allocating constructor</see>,
@@ -629,10 +708,10 @@ namespace KGySoft.Collections
         public void Release()
         {
 #if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
-            if (array != null && poolArray)
+            if (array != null && (length & poolArrayMask) != 0)
             {
                 if (Reflector<T>.IsManaged)
-                    Array.Clear(array, offset, length);
+                    Array.Clear(array, offset, Length);
                 ArrayPool<T>.Shared.Return(array);
             }
 #endif
@@ -642,11 +721,12 @@ namespace KGySoft.Collections
 
         /// <summary>
         /// Indicates whether the current <see cref="ArraySection{T}"/> instance is equal to another one specified in the <paramref name="other"/> parameter.
+        /// That is, when they both reference the same section of the same <see cref="UnderlyingArray"/> instance.
         /// </summary>
         /// <param name="other">An <see cref="ArraySection{T}"/> instance to compare with this instance.</param>
         /// <returns><see langword="true"/> if the current object is equal to the <paramref name="other"/> parameter; otherwise, <see langword="false"/>.</returns>
         public readonly bool Equals(ArraySection<T> other)
-            => array == other.array && offset == other.offset && length == other.length;
+            => array == other.array && offset == other.offset && Length == other.Length; // Ignoring the pool array bit is intended.
 
         /// <summary>
         /// Determines whether the specified <see cref="object">object</see> is equal to this instance.
@@ -664,7 +744,7 @@ namespace KGySoft.Collections
         /// <returns>
         /// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.
         /// </returns>
-        public readonly override int GetHashCode() => array == null ? 0 : (array, offset, length).GetHashCode();
+        public readonly override int GetHashCode() => array == null ? 0 : (array, offset, Length).GetHashCode();
 
         #endregion
 
@@ -678,6 +758,19 @@ namespace KGySoft.Collections
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal readonly ref T GetElementReferenceInternal(int index) => ref array![offset + index];
+
+        #endregion
+
+        #region Private Methods
+
+        [OnDeserialized]
+        [SuppressMessage("ReSharper", "UnusedParameter.Local", Justification = "False alarm, the [OnDeserialized] method must have this signature.")]
+        private void OnDeserialized(StreamingContext ctx)
+        {
+            // This method is just to clear the poolArray flag from length after deserialization. Applying also on older frameworks because the serialized instance
+            // may come from any platform. length &= lengthMask would be more obvious but that would require to make length non-readonly.
+            this = Slice(0, Length);
+        }
 
         #endregion
 
@@ -706,7 +799,8 @@ namespace KGySoft.Collections
                 return;
             }
 
-            if (index < 0 || index > targetArray.Length)
+            int len = Length;
+            if (index < 0 || index > len)
                 Throw.ArgumentOutOfRangeException(Argument.index);
             if (targetArray.Length - index < length)
                 Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
@@ -715,7 +809,7 @@ namespace KGySoft.Collections
 
             if (targetArray is object?[] objectArray)
             {
-                for (int i = 0; i < length; i++)
+                for (int i = 0; i < len; i++)
                 {
                     objectArray[index] = GetItemInternal(i);
                     index += 1;

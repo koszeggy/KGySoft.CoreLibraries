@@ -76,6 +76,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
 
             Assert.AreEqual(1, subsection[0]);
             Assert.AreEqual(2, subsection.Length);
+            Assert.Throws<IndexOutOfRangeException>(() => { var _ = subsection[-1]; });
+            Assert.AreEqual(0, subsection.GetElementUnchecked(-1));
+            Assert.Throws<IndexOutOfRangeException>(() => subsection.GetElementUnchecked(-2));
 
 #if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             Span<int> span = section.AsSpan;
@@ -86,6 +89,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             subsection = section.Slice(1, 0);
             Assert.AreEqual(0, subsection.Length);
             Assert.AreEqual(0, subsection.ToArray()!.Length);
+
+            Assert.AreEqual(ArraySection<int>.Empty, ArraySection<int>.Empty.Slice(0));
+            Assert.AreEqual(ArraySection<int>.Null, ArraySection<int>.Null.Slice(0));
         }
 
 #if !NETFRAMEWORK
