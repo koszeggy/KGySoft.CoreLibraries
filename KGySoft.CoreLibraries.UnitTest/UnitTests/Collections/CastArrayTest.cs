@@ -15,6 +15,9 @@
 
 #region Usings
 
+using System;
+using System.Diagnostics.CodeAnalysis;
+
 using NUnit.Framework;
 using NUnit.Framework.Constraints;
 
@@ -38,6 +41,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             boolAsByte[0] = 1;
             Assert.AreEqual((byte)1, boolAsByte[0]);
             Assert.IsTrue(boolAsByte.Buffer[0]);
+            var boolAsSbyte = boolAsByte.Cast<sbyte>();
+            Assert.AreEqual(2, boolAsSbyte.Length);
+            Assert.AreEqual((sbyte)1, boolAsSbyte[0]);
+            Assert.IsTrue(boolAsSbyte.Buffer[0]);
 
             // byte-size source
             var byteAsInt = new byte[5].Cast<byte, int>();
@@ -83,9 +90,22 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             // TTo cannot be divided by TFrom: works only if startIndex is aligned with TFrom
             var wordAsByte = new ushort[10].Cast<ushort, byte>();
             for (int i = 0; i < wordAsByte.Length; i++)
+                wordAsByte[i] = (byte)i;
+
+            for (int i = 0; i < wordAsByte.Length; i++)
             {
-                ActualValueDelegate<int> func = () => wordAsByte.Slice(i, wordAsByte.Length - i).Length;
-                Assert.That(func, i % 2 == 0 ? Is.EqualTo(wordAsByte.Length - i) : Throws.ArgumentException);
+                [SuppressMessage("ReSharper", "AccessToModifiedClosure", Justification = "Not accessed after returning from the call")]
+                int Func() => wordAsByte.Slice(i, wordAsByte.Length - i).Length;
+                Assert.That((ActualValueDelegate<int>)Func, i % 2 == 0 ? Is.EqualTo(wordAsByte.Length - i) : Throws.ArgumentException);
+
+                // but Span/Memory always works
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+                var mem = wordAsByte.AsMemory;
+                var span = wordAsByte.AsSpan;
+                var sliceMem = mem.Slice(i, mem.Length - i);
+                var sliceSpan = span.Slice(i, span.Length - i);
+                Assert.IsTrue(sliceSpan.SequenceEqual(sliceMem.Span));
+#endif
             }
         }
 

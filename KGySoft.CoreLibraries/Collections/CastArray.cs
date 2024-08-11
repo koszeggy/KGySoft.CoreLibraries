@@ -18,7 +18,9 @@
 using System;
 using System.Buffers;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Security;
+using System.Threading;
 
 using KGySoft.CoreLibraries;
 
@@ -44,11 +46,94 @@ namespace KGySoft.Collections
         where TFrom : unmanaged
         where TTo : unmanaged
     {
-        // TODO: Span/Memory
         // TODO: Cast
         // TODO: Operators
         // TODO: Collection interfaces
         // TODO: ToArray
+        // TODO: Debugger info
+
+        #region Nested Types
+
+        #region CastArrayMemoryManager class
+
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+        private sealed class CastArrayMemoryManager : MemoryManager<TTo>
+        {
+            #region Fields
+
+            private readonly CastArray<TFrom, TTo> castArray;
+
+            private GCHandle pinnedHandle;
+            private int pinCount;
+
+            #endregion
+
+            #region Constructors
+
+            internal CastArrayMemoryManager(CastArray<TFrom, TTo> castArray) => this.castArray = castArray;
+
+            #endregion
+
+            #region Methods
+
+            #region Public Methods
+
+            public override Span<TTo> GetSpan() => castArray.AsSpan;
+
+            public override unsafe MemoryHandle Pin(int elementIndex = 0)
+            {
+                // This must be before mutating anything because the index validation can throw an exception.
+                ref TTo refResult = ref castArray[elementIndex];
+
+                // It's alright to lock on this, this instance is not exposed publicly.
+                lock (this)
+                {
+                    if (!pinnedHandle.IsAllocated)
+                        pinnedHandle = GCHandle.Alloc(castArray.buffer.UnderlyingArray, GCHandleType.Pinned);
+                }
+
+                Interlocked.Increment(ref pinCount);
+
+                // Not returning the GCHandle in the result because if there are concurrent pinners, they could unpin the memory too early.
+                // Passing only this instance so Unpin will be called that handles everything correctly.
+#if NETCOREAPP3_0_OR_GREATER
+                return new MemoryHandle(Unsafe.AsPointer(ref refResult), default, this);
+#else
+                // Actually fixed is not needed to pin the reference here, but the cast does not without it...
+                fixed (void* ptr = &refResult)
+                    return new MemoryHandle(ptr, default, this);
+#endif
+            }
+
+            public override void Unpin()
+            {
+                // Can occur if a MemoryHandle of Pin was copied and more than one copies were disposed.
+                if (!pinnedHandle.IsAllocated)
+                    return;
+
+                if (Interlocked.Decrement(ref pinCount) == 0)
+                    pinnedHandle.Free();
+            }
+
+            #endregion
+
+            #region Protected Methods
+
+            protected override void Dispose(bool disposing)
+            {
+                if (pinnedHandle.IsAllocated)
+                    pinnedHandle.Free();
+            }
+
+            #endregion
+
+            #endregion
+        }
+#endif
+
+        #endregion
+
+        #endregion
 
         #region Fields
 
@@ -68,6 +153,21 @@ namespace KGySoft.Collections
         public bool IsNull => buffer.IsNull;
 
         public bool IsNullOrEmpty => buffer.IsNullOrEmpty;
+
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+        /// <summary>
+        /// Returns this <see cref="CastArray{TFrom,TTo}"/> as a <see cref="Memory{T}"/> instance.
+        /// Please note that getting this property allocates a custom <see cref="MemoryManager{T}"/> instance internally.
+        /// </summary>
+        /// <remarks><note>This member is available in .NET Core 2.1/.NET Standard 2.1 and above.</note></remarks>
+        public Memory<TTo> AsMemory => IsNull ? default : new CastArrayMemoryManager(this).Memory;
+
+        /// <summary>
+        /// Returns this <see cref="CastArray{TFrom,TTo}"/> as a <see cref="Span{T}"/> instance.
+        /// </summary>
+        /// <remarks><note>This member is available in .NET Core 2.1/.NET Standard 2.1 and above.</note></remarks>
+        public Span<TTo> AsSpan => MemoryMarshal.Cast<TFrom, TTo>(buffer.AsSpan);
+#endif
 
         #endregion
 
@@ -215,6 +315,35 @@ namespace KGySoft.Collections
         /// <returns>A <see cref="CastArray2D{TFrom,TTo}"/> instance using this <see cref="CastArray{TFrom,TTo}"/> as its underlying buffer that has the specified dimensions.</returns>
         public CastArray2D<TFrom, TTo> As2D(int height, int width) => new CastArray2D<TFrom, TTo>(this, height, width);
 
+        /// <summary>
+        /// Gets this <see cref="CastArray{TFrom,TTo}"/> as an <see cref="CastArray2D{TFrom,TTo}"/> instance
+        /// using the specified <paramref name="height"/> and <paramref name="width"/>.
+        /// The <see cref="CastArray2D{TFrom,TTo}"/> must have enough capacity for the specified dimensions.
+        /// </summary>
+        /// <param name="depth">The depth of the array to be returned.</param>
+        /// <param name="height">The height of the array to be returned.</param>
+        /// <param name="width">The width of the array to be returned.</param>
+        /// <returns>A <see cref="CastArray2D{TFrom,TTo}"/> instance using this <see cref="CastArray{TFrom,TTo}"/> as its underlying buffer that has the specified dimensions.</returns>
+        public CastArray3D<TFrom, TTo> As3D(int depth, int height, int width) => new CastArray3D<TFrom, TTo>(this, depth, height, width);
+
+        public CastArray<TFrom, T> Cast<T>()
+            where T : unmanaged
+        {
+            return buffer.Cast<TFrom, T>();
+        }
+
+        public CastArray2D<TFrom, T> Cast2D<T>(int height, int width)
+            where T : unmanaged
+        {
+            return buffer.Cast2D<TFrom, T>(height, width);
+        }
+
+        public CastArray3D<TFrom, T> Cast3D<T>(int depth, int height, int width)
+            where T : unmanaged
+        {
+            return buffer.Cast3D<TFrom, T>(depth, height, width);
+        }
+
         public bool Equals(CastArray<TFrom, TTo> other) => buffer == other.buffer && length == other.length;
 
         public override bool Equals(object? obj) => obj is CastArray<TFrom, TTo> other && Equals(other);
@@ -234,7 +363,7 @@ namespace KGySoft.Collections
         [MethodImpl(MethodImpl.AggressiveInlining)]
         private ref TTo UnsafeGetRef(int index)
         {
-#if !NETCOREAPP3_0_OR_GREATER
+#if NETCOREAPP3_0_OR_GREATER
             return ref Unsafe.Add(ref Unsafe.As<TFrom, TTo>(ref buffer.GetElementReferenceInternal(0)), index);
 #else
             unsafe
