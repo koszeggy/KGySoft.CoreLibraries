@@ -737,6 +737,19 @@ namespace KGySoft
 
         #endregion
 
+        #region CastArray<TFrom, TTo>
+
+        /// <summary>Type '{0}' cannot be used as a type argument for CastArray&lt;TFrom, TTo&gt; because it contains references.</summary>
+        internal static string CastArrayNotAnUnmanagedType(Type type) => Get("CastArray_NotAnUnmanagedTypeFormat", type.GetName(TypeNameKind.LongName));
+
+        /// <summary>Length of buffer is too big to reinterpret it as type '{0}'.</summary>
+        internal static string CastArrayBufferTooBigForCastLength(Type type) => Get("CastArray_BufferTooBigForCastLengthFormat", type.GetName(TypeNameKind.LongName));
+
+        /// <summary>'{0}' cannot be used as a start index here because it cannot be aligned with an element in the underlying array. You can try to use the Span property and the MemoryMarshal.Cast method if spans and misaligned memory access are supported on the current platform.</summary>
+        internal static string CastArraySliceWrongStartIndex(int length) => Get("CastArray_SliceWrongStartIndexFormat", length);
+
+        #endregion
+
         #region CircularSortedList<T>
 
         /// <summary>Type of value should be either {0} or DictionaryEntry.</summary>

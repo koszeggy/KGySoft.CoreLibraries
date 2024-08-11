@@ -325,6 +325,15 @@ Number of cache hits: {6}
 Number of deletes: {7}
 Hit rate: {8:P2}</value>
   </data>
+  <data name="CastArray_NotAnUnmanagedTypeFormat" xml:space="preserve">
+    <value>Type '{0}' cannot be used as a type argument for CastArray&lt;TFrom, TTo&gt; because it contains references.</value>
+  </data>
+  <data name="CastArray_BufferTooBigForCastLengthFormat" xml:space="preserve">
+    <value>Length of buffer is too big to reinterpret it as type '{0}'.</value>
+  </data>
+  <data name="CastArray_SliceWrongStartIndexFormat" xml:space="preserve">
+    <value>'{0}' cannot be used as a start index here because it cannot be aligned with an element in the underlying array. You can try to use the Span property and the MemoryMarshal.Cast method if spans and misaligned memory access are supported on the current platform.</value>
+  </data>
   <data name="Reflection_PropertyNotFoundTypeDescriptorFormat" xml:space="preserve">
     <value>Property "{0}" not found and cannot be set via TypeDescriptor on type "{1}".</value>
   </data>

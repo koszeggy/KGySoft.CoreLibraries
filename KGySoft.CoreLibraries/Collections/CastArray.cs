@@ -34,9 +34,10 @@ namespace KGySoft.Collections
     /// <typeparam name="TFrom">The actual element type of the underlying array.</typeparam>
     /// <typeparam name="TTo">The reinterpreted element type of the underlying array.</typeparam>
     /// <remarks>
+    /// TODO: Pooling example. Returning to the pool must be done by the caller. You can use a self-allocating ArraySection, which can be released in the end.
     /// TODO: Slice may throw ArgumentException
     /// </remarks>
-    public struct CastArray<TFrom, TTo> : IDisposable, /*IList<TTo>, IList,*/ IEquatable<CastArray<TFrom, TTo>> // TODO
+    public readonly struct CastArray<TFrom, TTo> : /*IList<TTo>, IList,*/ IEquatable<CastArray<TFrom, TTo>> // TODO
 #if !(NET35 || NET40)
         //, IReadOnlyList<TTo>
 #endif
@@ -66,7 +67,7 @@ namespace KGySoft.Collections
         #region Instance Fields
 
         private readonly int length;
-        private ArraySection<TFrom> buffer;
+        private readonly ArraySection<TFrom> buffer;
 
         #endregion
 
@@ -76,19 +77,19 @@ namespace KGySoft.Collections
 
         #region Properties
 
-        public readonly ArraySection<TFrom> Buffer => buffer;
+        public ArraySection<TFrom> Buffer => buffer;
 
-        public readonly int Length => length;
+        public int Length => length;
 
-        public readonly bool IsNull => buffer.IsNull;
+        public bool IsNull => buffer.IsNull;
 
-        public readonly bool IsNullOrEmpty => buffer.IsNullOrEmpty;
+        public bool IsNullOrEmpty => buffer.IsNullOrEmpty;
 
         #endregion
 
         #region Indexers
 
-        public readonly ref TTo this[int index]
+        public ref TTo this[int index]
         {
             [SecuritySafeCritical]
             [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -123,34 +124,10 @@ namespace KGySoft.Collections
 
         #region Public Constructors
 
-        public CastArray(int length, bool assureClean = true)
-        {
-            int bufLen;
-            if (sizeFrom == sizeTo)
-                bufLen = sizeFrom;
-            else if (sizeTo == 1)
-                bufLen = length / ((sizeFrom + (sizeFrom - 1)) / sizeFrom);
-            else
-            {
-                try
-                {
-                    bufLen = checked((int)((long)sizeTo * length / ((sizeFrom + (sizeFrom - 1)) / sizeFrom)));
-                }
-                catch (OverflowException e)
-                {
-                    Throw.ArgumentException(Res.CastArrayLengthTooBigForBufferLength(length, typeof(TFrom), typeof(TTo)), e);
-                    return;
-                }
-            }
-
-            buffer = new ArraySection<TFrom>(bufLen, assureClean);
-            this.length = length;
-        }
-
         public CastArray(ArraySection<TFrom> buffer)
         {
             int lenFrom = buffer.Length;
-            this.buffer = buffer.Slice(0, buffer.Length);
+            this.buffer = buffer;
 
             if (sizeFrom == sizeTo)
             {
@@ -197,15 +174,9 @@ namespace KGySoft.Collections
 
         #region Public Methods
 
-        public void Dispose()
-        {
-            buffer.Release();
-            this = default;
-        }
-
         [SecuritySafeCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public readonly ref TTo GetPinnableReference()
+        public ref TTo GetPinnableReference()
         {
             if (buffer.IsNullOrEmpty)
                 Throw.InvalidOperationException(Res.ArraySectionEmpty);
@@ -221,9 +192,9 @@ namespace KGySoft.Collections
 #endif
         }
 
-        public readonly CastArray<TFrom, TTo> Slice(int startIndex) => Slice(startIndex, length - startIndex);
+        public CastArray<TFrom, TTo> Slice(int startIndex) => Slice(startIndex, length - startIndex);
 
-        public readonly CastArray<TFrom, TTo> Slice(int startIndex, int length)
+        public CastArray<TFrom, TTo> Slice(int startIndex, int length)
         {
             // After this validation there is no need for overflow check like in the constructor because the new length can only be smaller than the original one.
             if ((uint)startIndex > (uint)this.length)
@@ -246,11 +217,11 @@ namespace KGySoft.Collections
             return new CastArray<TFrom, TTo>(buffer.Slice((int)(byteOffset / sizeFrom), (int)(buffer.Length - ((long)length * sizeTo / sizeFrom))), length);
         }
 
-        public readonly bool Equals(CastArray<TFrom, TTo> other) => buffer == other.buffer && length == other.length;
+        public bool Equals(CastArray<TFrom, TTo> other) => buffer == other.buffer && length == other.length;
 
-        public readonly override bool Equals(object? obj) => obj is CastArray<TFrom, TTo> other && Equals(other);
+        public override bool Equals(object? obj) => obj is CastArray<TFrom, TTo> other && Equals(other);
 
-        public readonly override int GetHashCode()
+        public override int GetHashCode()
         {
             if (buffer.IsNull)
                 return 0;
@@ -263,7 +234,7 @@ namespace KGySoft.Collections
 
         [SecurityCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        private readonly ref TTo UnsafeGetRef(int index)
+        private ref TTo UnsafeGetRef(int index)
         {
 #if !NETCOREAPP3_0_OR_GREATER
             return ref Unsafe.Add(ref Unsafe.As<TFrom, TTo>(ref buffer.GetElementReferenceInternal(0)), index);
