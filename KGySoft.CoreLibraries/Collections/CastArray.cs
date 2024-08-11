@@ -48,28 +48,12 @@ namespace KGySoft.Collections
         // TODO: Cast
         // TODO: Operators
         // TODO: Collection interfaces
-        // TODO: ArraySection.Cast
-        // TODO: AsArray2D/3D
         // TODO: ToArray
-        // TODO: Extensions (array[section] conversions, sort)
 
         #region Fields
 
-        #region Static Fields
-
-        [SecuritySafeCritical]
-        private unsafe static readonly int sizeFrom = sizeof(TFrom);
-        [SecuritySafeCritical]
-        private unsafe static readonly int sizeTo = sizeof(TTo);
-
-        #endregion
-
-        #region Instance Fields
-
-        private readonly int length;
         private readonly ArraySection<TFrom> buffer;
-
-        #endregion
+        private readonly int length;
 
         #endregion
 
@@ -124,21 +108,23 @@ namespace KGySoft.Collections
 
         #region Public Constructors
 
-        public CastArray(ArraySection<TFrom> buffer)
+        [SecuritySafeCritical]
+        public unsafe CastArray(ArraySection<TFrom> buffer)
         {
-            int lenFrom = buffer.Length;
             this.buffer = buffer;
 
-            if (sizeFrom == sizeTo)
+            // Not "caching" the sizes into variables (or static fields) so in Release build the JIT compiler can eliminate the false branches.
+            // Same size: the simplest case
+            if (sizeof(TFrom) == sizeof(TTo))
             {
-                length = lenFrom;
+                length = buffer.Length;
                 return;
             }
 
-            // TFrom is 1 byte wide
-            if (sizeFrom == 1)
+            // byte-sized source
+            if (sizeof(TFrom) == 1)
             {
-                length = lenFrom / sizeTo;
+                length = buffer.Length / sizeof(TTo);
                 return;
             }
 
@@ -146,7 +132,7 @@ namespace KGySoft.Collections
             // Though we could still support it by a long length and via the direct indexer only, Memory/Span conversions could not work so not allowing it.
             try
             {
-                length = checked((int)((long)lenFrom * sizeFrom / sizeTo));
+                length = checked((int)((long)buffer.Length * sizeof(TFrom) / sizeof(TTo)));
             }
             catch (OverflowException e)
             {
@@ -194,7 +180,8 @@ namespace KGySoft.Collections
 
         public CastArray<TFrom, TTo> Slice(int startIndex) => Slice(startIndex, length - startIndex);
 
-        public CastArray<TFrom, TTo> Slice(int startIndex, int length)
+        [SecuritySafeCritical]
+        public unsafe CastArray<TFrom, TTo> Slice(int startIndex, int length)
         {
             // After this validation there is no need for overflow check like in the constructor because the new length can only be smaller than the original one.
             if ((uint)startIndex > (uint)this.length)
@@ -202,20 +189,31 @@ namespace KGySoft.Collections
             if ((uint)length > (uint)(this.length - startIndex))
                 Throw.ArgumentOutOfRangeException(Argument.length);
 
-            // same size: simplest case
-            if (sizeFrom == sizeTo)
+            // Not "caching" the sizes into variables (or static fields) so in Release build the JIT compiler can eliminate the false branches.
+            // Same size: the simplest case
+            if (sizeof(TFrom) == sizeof(TTo))
                 return new CastArray<TFrom, TTo>(buffer.Slice(startIndex, length), length);
 
             // 1 byte from size: any offset will work
-            if (sizeFrom == 1)
-                return new CastArray<TFrom, TTo>(buffer.Slice(startIndex * sizeTo, buffer.Length - length * sizeTo), length);
+            if (sizeof(TFrom) == 1)
+                return new CastArray<TFrom, TTo>(buffer.Slice(startIndex * sizeof(TTo), buffer.Length - length * sizeof(TTo)), length);
 
-            // here we need to validate the alignment
-            long byteOffset = sizeTo * startIndex;
-            if (byteOffset % sizeFrom != 0)
+            // Here we need to validate the alignment
+            long byteOffset = sizeof(TTo) * startIndex;
+            if (byteOffset % sizeof(TFrom) != 0)
                 Throw.ArgumentException(Argument.startIndex, Res.CastArraySliceWrongStartIndex(startIndex));
-            return new CastArray<TFrom, TTo>(buffer.Slice((int)(byteOffset / sizeFrom), (int)(buffer.Length - ((long)length * sizeTo / sizeFrom))), length);
+            return new CastArray<TFrom, TTo>(buffer.Slice((int)(byteOffset / sizeof(TFrom)), (int)((long)length * sizeof(TTo) / sizeof(TFrom))), length);
         }
+
+        /// <summary>
+        /// Gets this <see cref="CastArray{TFrom,TTo}"/> as an <see cref="CastArray2D{TFrom,TTo}"/> instance
+        /// using the specified <paramref name="height"/> and <paramref name="width"/>.
+        /// The <see cref="CastArray2D{TFrom,TTo}"/> must have enough capacity for the specified dimensions.
+        /// </summary>
+        /// <param name="height">The height of the array to be returned.</param>
+        /// <param name="width">The width of the array to be returned.</param>
+        /// <returns>A <see cref="CastArray2D{TFrom,TTo}"/> instance using this <see cref="CastArray{TFrom,TTo}"/> as its underlying buffer that has the specified dimensions.</returns>
+        public CastArray2D<TFrom, TTo> As2D(int height, int width) => new CastArray2D<TFrom, TTo>(this, height, width);
 
         public bool Equals(CastArray<TFrom, TTo> other) => buffer == other.buffer && length == other.length;
 

@@ -49,6 +49,8 @@ namespace KGySoft.CoreLibraries
 
         #region Public Methods
 
+        #region ArraySection/Array2D/Array3D
+        
         /// <summary>
         /// Gets an <see cref="ArraySection{T}"/> instance, which represents a section of the specified <paramref name="array"/>.
         /// No heap allocation occurs when using this method.
@@ -141,6 +143,118 @@ namespace KGySoft.CoreLibraries
         /// <param name="width">The width of the array to be returned.</param>
         /// <returns>An <see cref="Array3D{T}"/> instance using the specified <paramref name="arraySegment"/> as its underlying buffer that has the specified dimensions.</returns>
         public static Array3D<T> AsArray3D<T>(this ArraySegment<T> arraySegment, int depth, int height, int width) => new Array3D<T>(arraySegment.AsSection(), depth, height, width);
+
+        #endregion
+
+        #region CastArray/CastArray2D/CastArray3D
+
+        /// <summary>
+        /// Reinterprets the specified <paramref name="array"/> by returning a <see cref="CastArray{TFrom,TTo}"/> struct,
+        /// so its element type is cast from <typeparamref name="TFrom"/> to <typeparamref name="TTo"/>.
+        /// No heap allocation occurs when using this method.
+        /// </summary>
+        /// <typeparam name="TFrom">The actual element type of the specified <paramref name="array"/>.</typeparam>
+        /// <typeparam name="TTo">The reinterpreted element type after casting.</typeparam>
+        /// <param name="array">The array to create the <see cref="CastArray{TFrom,TTo}"/> from.</param>
+        /// <returns>A <see cref="CastArray{TFrom,TTo}"/> instance for the specified <paramref name="array"/>.</returns>
+        /// <remarks>
+        /// <para>If the size of <typeparamref name="TTo"/> cannot be divided by the size of <typeparamref name="TFrom"/>,
+        /// then the cast result may not cover the whole original <paramref name="array"/> to prevent exceeding beyond the available buffer.</para>
+        /// </remarks>
+        public static CastArray<TFrom, TTo> Cast<TFrom, TTo>(this TFrom[]? array)
+            where TFrom : unmanaged
+            where TTo : unmanaged
+            => new CastArray<TFrom, TTo>(array);
+
+        /// <summary>
+        /// Reinterprets the specified <paramref name="arraySegment"/> by returning a <see cref="CastArray{TFrom,TTo}"/> struct,
+        /// so its element type is cast from <typeparamref name="TFrom"/> to <typeparamref name="TTo"/>.
+        /// No heap allocation occurs when using this method.
+        /// </summary>
+        /// <typeparam name="TFrom">The actual element type of the specified <paramref name="arraySegment"/>.</typeparam>
+        /// <typeparam name="TTo">The reinterpreted element type after casting.</typeparam>
+        /// <param name="arraySegment">The array to create the <see cref="CastArray{TFrom,TTo}"/> from.</param>
+        /// <returns>A <see cref="CastArray{TFrom,TTo}"/> instance for the specified <paramref name="arraySegment"/>.</returns>
+        /// <remarks>
+        /// <para>If the size of <typeparamref name="TTo"/> cannot be divided by the size of <typeparamref name="TFrom"/>,
+        /// then the cast result may not cover the whole original <paramref name="arraySegment"/> to prevent exceeding beyond the available buffer.</para>
+        /// </remarks>
+        public static CastArray<TFrom, TTo> Cast<TFrom, TTo>(this ArraySegment<TFrom> arraySegment)
+            where TFrom : unmanaged
+            where TTo : unmanaged
+            => new CastArray<TFrom, TTo>(arraySegment);
+
+        /// <summary>
+        /// Reinterprets the specified <paramref name="array"/> as a two-dimensional <see cref="CastArray2D{TFrom,TTo}"/> struct,
+        /// while its element type is cast from <typeparamref name="TFrom"/> to <typeparamref name="TTo"/>.
+        /// No heap allocation occurs when using this method.
+        /// </summary>
+        /// <typeparam name="TFrom">The actual element type of the specified <paramref name="array"/>.</typeparam>
+        /// <typeparam name="TTo">The reinterpreted element type after casting.</typeparam>
+        /// <param name="array">The desired underlying buffer for the <see cref="CastArray2D{TFrom,TTo}"/> instance to be created.
+        /// It must have sufficient capacity for the specified dimensions.</param>
+        /// <param name="height">The height of the array to be returned.</param>
+        /// <param name="width">The width of the array to be returned.</param>
+        /// <returns>A <see cref="CastArray2D{TFrom,TTo}"/> instance using the specified <paramref name="array"/> as its underlying buffer that has the specified dimensions.</returns>
+        public static CastArray2D<TFrom, TTo> Cast2D<TFrom, TTo>(this TFrom[] array, int height, int width)
+            where TFrom : unmanaged
+            where TTo : unmanaged
+            => new CastArray2D<TFrom, TTo>(array, height, width);
+
+        /// <summary>
+        /// Reinterprets the specified <paramref name="arraySegment"/> as a two-dimensional <see cref="CastArray2D{TFrom,TTo}"/> struct,
+        /// while its element type is cast from <typeparamref name="TFrom"/> to <typeparamref name="TTo"/>.
+        /// No heap allocation occurs when using this method.
+        /// </summary>
+        /// <typeparam name="TFrom">The actual element type of the specified <paramref name="arraySegment"/>.</typeparam>
+        /// <typeparam name="TTo">The reinterpreted element type after casting.</typeparam>
+        /// <param name="arraySegment">The desired underlying buffer for the <see cref="CastArray2D{TFrom,TTo}"/> instance to be created.
+        /// It must have sufficient capacity for the specified dimensions.</param>
+        /// <param name="height">The height of the array to be returned.</param>
+        /// <param name="width">The width of the array to be returned.</param>
+        /// <returns>A <see cref="CastArray2D{TFrom,TTo}"/> instance using the specified <paramref name="arraySegment"/> as its underlying buffer that has the specified dimensions.</returns>
+        public static CastArray2D<TFrom, TTo> Cast2D<TFrom, TTo>(this ArraySegment<TFrom> arraySegment, int height, int width)
+            where TFrom : unmanaged
+            where TTo : unmanaged
+            => new CastArray2D<TFrom, TTo>(arraySegment, height, width);
+
+        /// <summary>
+        /// Reinterprets the specified <paramref name="array"/> as a three-dimensional <see cref="CastArray3D{TFrom,TTo}"/> struct,
+        /// while its element type is cast from <typeparamref name="TFrom"/> to <typeparamref name="TTo"/>.
+        /// No heap allocation occurs when using this method.
+        /// </summary>
+        /// <typeparam name="TFrom">The actual element type of the specified <paramref name="array"/>.</typeparam>
+        /// <typeparam name="TTo">The reinterpreted element type after casting.</typeparam>
+        /// <param name="array">The desired underlying buffer for the <see cref="CastArray3D{TFrom,TTo}"/> instance to be created.
+        /// It must have sufficient capacity for the specified dimensions.</param>
+        /// <param name="depth">The depth of the array to be returned.</param>
+        /// <param name="height">The height of the array to be returned.</param>
+        /// <param name="width">The width of the array to be returned.</param>
+        /// <returns>A <see cref="CastArray3D{TFrom,TTo}"/> instance using the specified <paramref name="array"/> as its underlying buffer that has the specified dimensions.</returns>
+        public static CastArray3D<TFrom, TTo> Cast3D<TFrom, TTo>(this TFrom[] array, int depth, int height, int width)
+            where TFrom : unmanaged
+            where TTo : unmanaged
+            => new CastArray3D<TFrom, TTo>(array, depth, height, width);
+
+        /// <summary>
+        /// Reinterprets the specified <paramref name="arraySegment"/> as a three-dimensional <see cref="CastArray3D{TFrom,TTo}"/> struct,
+        /// while its element type is cast from <typeparamref name="TFrom"/> to <typeparamref name="TTo"/>.
+        /// No heap allocation occurs when using this method.
+        /// </summary>
+        /// <typeparam name="TFrom">The actual element type of the specified <paramref name="arraySegment"/>.</typeparam>
+        /// <typeparam name="TTo">The reinterpreted element type after casting.</typeparam>
+        /// <param name="arraySegment">The desired underlying buffer for the <see cref="CastArray3D{TFrom,TTo}"/> instance to be created.
+        /// It must have sufficient capacity for the specified dimensions.</param>
+        /// <param name="depth">The depth of the array to be returned.</param>
+        /// <param name="height">The height of the array to be returned.</param>
+        /// <param name="width">The width of the array to be returned.</param>
+        /// <returns>A <see cref="CastArray3D{TFrom,TTo}"/> instance using the specified <paramref name="arraySegment"/> as its underlying buffer that has the specified dimensions.</returns>
+        public static CastArray3D<TFrom, TTo> Cast3D<TFrom, TTo>(this ArraySegment<TFrom> arraySegment, int depth, int height, int width)
+            where TFrom : unmanaged
+            where TTo : unmanaged
+            => new CastArray3D<TFrom, TTo>(arraySegment, depth, height, width);
+
+        #endregion
 
         #endregion
 

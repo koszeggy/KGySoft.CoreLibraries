@@ -187,13 +187,13 @@ namespace KGySoft.Collections
 
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
-        /// Returns the current <see cref="ArraySection{T}"/> instance as a <see cref="Memory{T}"/> instance.
+        /// Returns this <see cref="ArraySection{T}"/> as a <see cref="Memory{T}"/> instance.
         /// </summary>
         /// <remarks><note>This member is available in .NET Core 2.1/.NET Standard 2.1 and above.</note></remarks>
         public readonly Memory<T> AsMemory => new Memory<T>(array, offset, Length);
 
         /// <summary>
-        /// Returns the current <see cref="ArraySection{T}"/> instance as a <see cref="Span{T}"/> instance.
+        /// Returns this <see cref="ArraySection{T}"/> as a <see cref="Span{T}"/> instance.
         /// </summary>
         /// <remarks><note>This member is available in .NET Core 2.1/.NET Standard 2.1 and above.</note></remarks>
         public readonly Span<T> AsSpan => new Span<T>(array, offset, Length);
@@ -553,6 +553,72 @@ namespace KGySoft.Collections
         /// <param name="width">The width of the array to be returned.</param>
         /// <returns>An <see cref="Array3D{T}"/> instance using this <see cref="ArraySection{T}"/> as its underlying buffer that has the specified dimensions.</returns>
         public readonly Array3D<T> AsArray3D(int depth, int height, int width) => new Array3D<T>(this, depth, height, width);
+
+        /// <summary>
+        /// Reinterprets this <see cref="ArraySection{T}"/> by returning a <see cref="CastArray{TFrom,TTo}"/> struct,
+        /// so its element type is cast from <typeparamref name="TFrom"/> to <typeparamref name="TTo"/>.
+        /// This method can be used only when <typeparamref name="T"/> in this <see cref="ArraySection{T}"/> is a value type that contains no references.
+        /// </summary>
+        /// <typeparam name="TFrom">The actual element type of this <see cref="ArraySection{T}"/>. Must be the same as <typeparamref name="T"/>.</typeparam>
+        /// <typeparam name="TTo">The reinterpreted element type after casting.</typeparam>
+        /// <returns>A <see cref="CastArray{TFrom,TTo}"/> instance for this <see cref="ArraySection{T}"/>.</returns>
+        /// <remarks>
+        /// <para>If the size of <typeparamref name="TTo"/> cannot be divided by the size of <typeparamref name="TFrom"/>,
+        /// then the cast result may not cover the whole original <see cref="ArraySection{T}"/> to prevent exceeding beyond the available buffer.</para>
+        /// </remarks>
+        public readonly CastArray<TFrom, TTo> Cast<TFrom, TTo>()
+            where TFrom : unmanaged, T
+            where TTo : unmanaged
+        {
+#if NETCOREAPP3_0_OR_GREATER
+            return new CastArray<TFrom, TTo>(Unsafe.As<ArraySection<T>, ArraySection<TFrom>>(ref Unsafe.AsRef(in this)));
+#else
+            return new CastArray<TFrom, TTo>((ArraySection<TFrom>)(object)this);
+#endif
+        }
+
+        /// <summary>
+        /// Reinterprets this <see cref="ArraySection{T}"/> as a two-dimensional <see cref="CastArray2D{TFrom,TTo}"/> struct,
+        /// while its element type is cast from <typeparamref name="TFrom"/> to <typeparamref name="TTo"/>.
+        /// This method can be used only when <typeparamref name="T"/> in this <see cref="ArraySection{T}"/> is a value type that contains no references.
+        /// </summary>
+        /// <typeparam name="TFrom">The actual element type of this <see cref="ArraySection{T}"/>. Must be the same as <typeparamref name="T"/>.</typeparam>
+        /// <typeparam name="TTo">The reinterpreted element type after casting.</typeparam>
+        /// <param name="height">The height of the array to be returned.</param>
+        /// <param name="width">The width of the array to be returned.</param>
+        /// <returns>A <see cref="CastArray2D{TFrom,TTo}"/> instance for this <see cref="ArraySection{T}"/>.</returns>
+        public readonly CastArray2D<TFrom, TTo> Cast2D<TFrom, TTo>(int height, int width)
+            where TFrom : unmanaged
+            where TTo : unmanaged
+        {
+#if NETCOREAPP3_0_OR_GREATER
+            return new CastArray2D<TFrom, TTo>(Unsafe.As<ArraySection<T>, ArraySection<TFrom>>(ref Unsafe.AsRef(in this)), height, width);
+#else
+            return new CastArray2D<TFrom, TTo>((ArraySection<TFrom>)(object)this, height, width);
+#endif
+        }
+
+        /// <summary>
+        /// Reinterprets this <see cref="ArraySection{T}"/> as a three-dimensional <see cref="CastArray2D{TFrom,TTo}"/> struct,
+        /// while its element type is cast from <typeparamref name="TFrom"/> to <typeparamref name="TTo"/>.
+        /// This method can be used only when <typeparamref name="T"/> in this <see cref="ArraySection{T}"/> is a value type that contains no references.
+        /// </summary>
+        /// <typeparam name="TFrom">The actual element type of this <see cref="ArraySection{T}"/>. Must be the same as <typeparamref name="T"/>.</typeparam>
+        /// <typeparam name="TTo">The reinterpreted element type after casting.</typeparam>
+        /// <param name="depth">The depth of the array to be returned.</param>
+        /// <param name="height">The height of the array to be returned.</param>
+        /// <param name="width">The width of the array to be returned.</param>
+        /// <returns>A <see cref="CastArray2D{TFrom,TTo}"/> instance for this <see cref="ArraySection{T}"/>.</returns>
+        public readonly CastArray3D<TFrom, TTo> Cast3D<TFrom, TTo>(int depth, int height, int width)
+            where TFrom : unmanaged
+            where TTo : unmanaged
+        {
+#if NETCOREAPP3_0_OR_GREATER
+            return new CastArray3D<TFrom, TTo>(Unsafe.As<ArraySection<T>, ArraySection<TFrom>>(ref Unsafe.AsRef(in this)), depth, height, width);
+#else
+            return new CastArray3D<TFrom, TTo>((ArraySection<TFrom>)(object)this, depth, height, width);
+#endif
+        }
 
         /// <summary>
         /// Gets the reference to the element at the specified <paramref name="index"/>.

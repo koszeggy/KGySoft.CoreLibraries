@@ -133,13 +133,13 @@ namespace KGySoft.Collections
 
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
-        /// Returns the current <see cref="Array3D{T}"/> instance as a <see cref="Memory{T}"/> instance.
+        /// Returns this <see cref="Array3D{T}"/> as a <see cref="Memory{T}"/> instance.
         /// </summary>
         /// <remarks><note>This member is available in .NET Core 2.1/.NET Standard 2.1 and above.</note></remarks>
         public readonly Memory<T> AsMemory => buffer.AsMemory;
 
         /// <summary>
-        /// Returns the current <see cref="Array3D{T}"/> instance as a <see cref="Span{T}"/> instance.
+        /// Returns this <see cref="Array3D{T}"/> as a <see cref="Span{T}"/> instance.
         /// </summary>
         /// <remarks><note>This member is available in .NET Core 2.1/.NET Standard 2.1 and above.</note></remarks>
         public readonly Span<T> AsSpan => buffer.AsSpan;
