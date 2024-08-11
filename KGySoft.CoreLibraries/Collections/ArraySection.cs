@@ -511,22 +511,11 @@ namespace KGySoft.Collections
         /// This makes possible to use the <see cref="ArraySection{T}"/> in a <see langword="fixed"/> statement.
         /// </summary>
         /// <returns>A reference to the first element in this <see cref="ArraySection{T}"/>, or <see langword="null"/> if <see cref="IsNullOrEmpty"/> is <see langword="true"/>.</returns>
+        /// <exception cref="InvalidOperationException"><see cref="IsNullOrEmpty"/> is <see langword="true"/>.</exception>
         public readonly ref T GetPinnableReference()
         {
             if (IsNullOrEmpty)
-            {
-#if NET5_0_OR_GREATER
-                return ref Unsafe.NullRef<T>();
-#elif NETCOREAPP3_0_OR_GREATER
-                unsafe
-                {
-                    return ref Unsafe.AsRef<T>(null);
-                }
-#else
                 Throw.InvalidOperationException(Res.ArraySectionEmpty);
-#endif
-            }
-
             return ref GetElementReferenceInternal(0);
         }
 

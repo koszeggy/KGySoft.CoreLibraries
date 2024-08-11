@@ -6,7 +6,7 @@
 ===============================================================================
 
 ~~~~~~~~~
-* v9.0.0:
+! v9.0.0:
 ~~~~~~~~~
 
 + KGySoft.CoreLibraries namespace:
@@ -15,9 +15,11 @@
   + Implements the IAlternateEqualityComparer<StringSegment, string?> and
     the IAlternateEqualityComparer<ReadOnlySpan<char>, string?> interfaces (.NET 9.0 and above)
 
-* KGySoft.Collections namespace:
+! KGySoft.Collections namespace:
 ================================
-+ ArraySection<T> struct:
+! ArraySection<T> struct:
+  ! GetPinnableReference returned a null ref for empty sections on platforms where it was supported, and threw an
+    InvalidOperationException otherwise. Now it always throws an InvalidOperationException for empty sections.
   + New GetElementUnchecked/SetElementUnchecked/GetElementReferenceUnchecked methods: To omit length check, allowing
     to reference any element in the underlying array.
 + Array2D<T> struct:
