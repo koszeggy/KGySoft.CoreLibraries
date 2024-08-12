@@ -46,8 +46,6 @@ namespace KGySoft.Collections
         where TFrom : unmanaged
         where TTo : unmanaged
     {
-        // TODO: Cast
-        // TODO: Operators
         // TODO: Collection interfaces
         // TODO: ToArray
         // TODO: Debugger info
@@ -186,6 +184,64 @@ namespace KGySoft.Collections
         }
 
         #endregion
+
+        #endregion
+
+        #region Operators
+
+        /// <summary>
+        /// Performs an implicit conversion from array of <typeparamref name="TFrom"/> to <see cref="CastArray{TFrom,TTo}"/>.
+        /// </summary>
+        /// <param name="array">The array to be converted to a <see cref="CastArray{TFrom,TTo}"/>.</param>
+        /// <returns>
+        /// A <see cref="CastArray{TFrom,TTo}"/> instance that represents the original array cast to an array of <typeparamref name="TTo"/>.
+        /// </returns>
+        public static implicit operator CastArray<TFrom, TTo>(TFrom[]? array) => new CastArray<TFrom, TTo>(array.AsSection());
+
+        /// <summary>
+        /// Performs an implicit conversion from <see cref="ArraySegment{T}"/> to <see cref="CastArray{TFrom,TTo}"/>.
+        /// </summary>
+        /// <param name="arraySegment">The <see cref="ArraySegment{T}"/> to be converted to a <see cref="CastArray{TFrom,TTo}"/>.</param>
+        /// <returns>
+        /// A <see cref="CastArray{TFrom,TTo}"/> instance that represents the original <see cref="ArraySegment{T}"/> cast to an array of <typeparamref name="TTo"/>.
+        /// </returns>
+        public static implicit operator CastArray<TFrom, TTo>(ArraySegment<TFrom> arraySegment) => new CastArray<TFrom, TTo>(arraySegment.AsSection());
+
+        /// <summary>
+        /// Performs an implicit conversion from <see cref="ArraySection{T}"/> to <see cref="CastArray{TFrom,TTo}"/>.
+        /// </summary>
+        /// <param name="arraySection">The <see cref="ArraySection{T}"/> to be converted to a <see cref="CastArray{TFrom,TTo}"/>.</param>
+        /// <returns>
+        /// A <see cref="CastArray{TFrom,TTo}"/> instance that represents the original <see cref="ArraySection{T}"/> cast to an array of <typeparamref name="TTo"/>.
+        /// </returns>
+        public static implicit operator CastArray<TFrom, TTo>(ArraySection<TFrom> arraySection) => new CastArray<TFrom, TTo>(arraySection);
+
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+        /// <summary>
+        /// Performs an implicit conversion from <see cref="CastArray{TFrom,TTo}"/> to <see cref="Span{T}"/>.
+        /// </summary>
+        /// <param name="castArray">The <see cref="CastArray{TFrom,TTo}"/> to be converted to a <see cref="Span{T}"/>.</param>
+        /// <returns>
+        /// A <see cref="Span{T}"/> instance that represents the specified <see cref="CastArray{TFrom,TTo}"/>.
+        /// </returns>
+        public static implicit operator Span<TTo>(CastArray<TFrom, TTo> castArray) => castArray.AsSpan;
+#endif
+
+        /// <summary>
+        /// Determines whether two specified <see cref="CastArray{TFrom,TTo}"/> instances have the same value.
+        /// </summary>
+        /// <param name="a">The left argument of the equality check.</param>
+        /// <param name="b">The right argument of the equality check.</param>
+        /// <returns>The result of the equality check.</returns>
+        public static bool operator ==(CastArray<TFrom, TTo> a, CastArray<TFrom, TTo> b) => a.Equals(b);
+
+        /// <summary>
+        /// Determines whether two specified <see cref="CastArray{TFrom,TTo}"/> instances have different values.
+        /// </summary>
+        /// <param name="a">The left argument of the equality check.</param>
+        /// <param name="b">The right argument of the equality check.</param>
+        /// <returns>The result of the inequality check.</returns>
+        public static bool operator !=(CastArray<TFrom, TTo> a, CastArray<TFrom, TTo> b) => !(a == b);
 
         #endregion
 

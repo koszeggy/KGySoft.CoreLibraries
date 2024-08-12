@@ -18,6 +18,8 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 
+using KGySoft.Collections;
+
 using NUnit.Framework;
 using NUnit.Framework.Constraints;
 
@@ -64,7 +66,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
         public void SliceTest()
         {
             // same size: always works
-            var charAsWord = new char[5].Cast<char, ushort>();
+            CastArray<char, ushort> charAsWord = new char[5];
             for (int i = 0; i < charAsWord.Length; i++)
             {
                 var slice = charAsWord.Slice(i, charAsWord.Length - i);
@@ -72,7 +74,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             }
 
             // byte-size source: always works
-            var byteAsDword = new byte[10].Cast<byte, uint>();
+            CastArray<byte, uint> byteAsDword = new byte[10];
             for (int i = 0; i < byteAsDword.Length; i++)
             {
                 var slice = byteAsDword.Slice(i, byteAsDword.Length - i);
@@ -80,7 +82,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             }
 
             // TTo can be divided by TFrom: always works
-            var wordAsDword = new ushort[10].Cast<ushort, uint>();
+            CastArray<ushort, uint> wordAsDword = new ushort[10];
             for (int i = 0; i < wordAsDword.Length; i++)
             {
                 var slice = wordAsDword.Slice(i, wordAsDword.Length - i);
@@ -88,7 +90,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             }
 
             // TTo cannot be divided by TFrom: works only if startIndex is aligned with TFrom
-            var wordAsByte = new ushort[10].Cast<ushort, byte>();
+            CastArray<ushort, byte> wordAsByte = new ushort[10];
             for (int i = 0; i < wordAsByte.Length; i++)
                 wordAsByte[i] = (byte)i;
 

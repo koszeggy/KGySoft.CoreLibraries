@@ -164,7 +164,7 @@ namespace KGySoft.CoreLibraries
         public static CastArray<TFrom, TTo> Cast<TFrom, TTo>(this TFrom[]? array)
             where TFrom : unmanaged
             where TTo : unmanaged
-            => new CastArray<TFrom, TTo>(array);
+            => new CastArray<TFrom, TTo>(array.AsSection());
 
         /// <summary>
         /// Reinterprets the specified <paramref name="arraySegment"/> by returning a <see cref="CastArray{TFrom,TTo}"/> struct,
