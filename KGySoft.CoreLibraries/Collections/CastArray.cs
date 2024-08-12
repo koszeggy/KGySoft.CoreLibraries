@@ -29,8 +29,8 @@ using KGySoft.CoreLibraries;
 namespace KGySoft.Collections
 {
     /// <summary>
-    /// Represents a one dimensional array (or a section of it) of element type <typeparamref name="TFrom"/> cast to another array of element type <typeparamref name="TTo"/>.
-    /// Can be helpful on targets where <see cref="Span{T}"/> is not available or wherever you must use arrays that you want to reinterpret. For example, you want to retrieve
+    /// Represents a one dimensional array (or a section of it) where the original element type of <typeparamref name="TFrom"/> is cast to another element type of <typeparamref name="TTo"/>.
+    /// Can be helpful on platforms where <see cref="Span{T}"/> is not available or wherever you must use arrays that you want to reinterpret. For example, you want to retrieve
     /// only byte arrays from the <see cref="ArrayPool{T}"/> but you want to reinterpret them as other array types.
     /// </summary>
     /// <typeparam name="TFrom">The actual element type of the underlying array.</typeparam>
@@ -135,8 +135,26 @@ namespace KGySoft.Collections
 
         #region Fields
 
+        #region Static Fields
+
+        /// <summary>
+        /// Represents the <see langword="null"/>&#160;<see cref="CastArray{TFrom,TTo}"/>. This field is read-only.
+        /// </summary>
+        public static readonly CastArray<TFrom, TTo> Null = default;
+
+        /// <summary>
+        /// Represents the empty <see cref="CastArray{TFrom,TTo}"/>. This field is read-only.
+        /// </summary>
+        public static readonly CastArray<TFrom, TTo> Empty = new CastArray<TFrom, TTo>(ArraySection<TFrom>.Empty);
+
+        #endregion
+
+        #region Instance Fields
+
         private readonly ArraySection<TFrom> buffer;
         private readonly int length;
+
+        #endregion
 
         #endregion
 
@@ -144,8 +162,15 @@ namespace KGySoft.Collections
 
         #region Properties
 
+        /// <summary>
+        /// Gets the underlying buffer of this <see cref="CastArray{TFrom,TTo}"/> as an <see cref="ArraySection{T}"/> instance.
+        /// </summary>
         public ArraySection<TFrom> Buffer => buffer;
 
+        /// <summary>
+        /// Gets the number of <typeparamref name="TTo"/> elements in this <see cref="CastArray{TFrom,TTo}"/>.
+        /// To get the number of <typeparamref name="TFrom"/> elements use the <see cref="Buffer"/> property.
+        /// </summary>
         public int Length => length;
 
         public bool IsNull => buffer.IsNull;
@@ -316,24 +341,6 @@ namespace KGySoft.Collections
 
         #region Public Methods
 
-        [SecuritySafeCritical]
-        [MethodImpl(MethodImpl.AggressiveInlining)]
-        public ref TTo GetPinnableReference()
-        {
-            if (buffer.IsNullOrEmpty)
-                Throw.InvalidOperationException(Res.ArraySectionEmpty);
-
-#if NETCOREAPP3_0_OR_GREATER
-            return ref Unsafe.As<TFrom, TTo>(ref buffer.GetElementReferenceInternal(0));
-#else
-            unsafe
-            {
-                fixed (TFrom* pBuf = &buffer.GetElementReferenceInternal(0))
-                    return ref *((TTo*)pBuf);
-            }
-#endif
-        }
-
         public CastArray<TFrom, TTo> Slice(int startIndex) => Slice(startIndex, length - startIndex);
 
         [SecuritySafeCritical]
@@ -357,7 +364,7 @@ namespace KGySoft.Collections
             // Here we need to validate the alignment
             long byteOffset = sizeof(TTo) * startIndex;
             if (byteOffset % sizeof(TFrom) != 0)
-                Throw.ArgumentException(Argument.startIndex, Res.CastArraySliceWrongStartIndex(startIndex));
+                Throw.ArgumentException(Argument.startIndex, Res.CastArraySliceWrongStartIndex(startIndex), typeof(TFrom), typeof(TTo));
             return new CastArray<TFrom, TTo>(buffer.Slice((int)(byteOffset / sizeof(TFrom)), (int)((long)length * sizeof(TTo) / sizeof(TFrom))), length);
         }
 
@@ -400,6 +407,39 @@ namespace KGySoft.Collections
             return buffer.Cast3D<TFrom, T>(depth, height, width);
         }
 
+        [SecurityCritical]
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public ref TTo UnsafeGetRef(int index)
+        {
+#if NETCOREAPP3_0_OR_GREATER
+            return ref Unsafe.Add(ref Unsafe.As<TFrom, TTo>(ref buffer.GetElementReferenceInternal(0)), index);
+#else
+            unsafe
+            {
+                fixed (TFrom* pBuf = &buffer.GetElementReferenceInternal(0))
+                    return ref ((TTo*)pBuf)[index];
+            }
+#endif
+        }
+
+        [SecuritySafeCritical]
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public ref TTo GetPinnableReference()
+        {
+            if (buffer.IsNullOrEmpty)
+                Throw.InvalidOperationException(Res.ArraySectionEmpty);
+
+#if NETCOREAPP3_0_OR_GREATER
+            return ref Unsafe.As<TFrom, TTo>(ref buffer.GetElementReferenceInternal(0));
+#else
+            unsafe
+            {
+                fixed (TFrom* pBuf = &buffer.GetElementReferenceInternal(0))
+                    return ref *((TTo*)pBuf);
+            }
+#endif
+        }
+
         public bool Equals(CastArray<TFrom, TTo> other) => buffer == other.buffer && length == other.length;
 
         public override bool Equals(object? obj) => obj is CastArray<TFrom, TTo> other && Equals(other);
@@ -414,22 +454,6 @@ namespace KGySoft.Collections
         #endregion
 
         #region Private Methods
-
-        [SecurityCritical]
-        [MethodImpl(MethodImpl.AggressiveInlining)]
-        private ref TTo UnsafeGetRef(int index)
-        {
-#if NETCOREAPP3_0_OR_GREATER
-            return ref Unsafe.Add(ref Unsafe.As<TFrom, TTo>(ref buffer.GetElementReferenceInternal(0)), index);
-#else
-            unsafe
-            {
-                fixed (TFrom* pBuf = &buffer.GetElementReferenceInternal(0))
-                    return ref ((TTo*)pBuf)[index];
-            }
-#endif
-
-        }
 
         #endregion
 

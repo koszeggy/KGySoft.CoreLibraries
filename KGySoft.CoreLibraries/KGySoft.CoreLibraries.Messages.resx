@@ -332,7 +332,7 @@ Hit rate: {8:P2}</value>
     <value>Length of buffer is too big to reinterpret it as type '{0}'.</value>
   </data>
   <data name="CastArray_SliceWrongStartIndexFormat" xml:space="preserve">
-    <value>'{0}' cannot be used as a start index here because it cannot be aligned with an element in the underlying array. You can try to use the Span property and the MemoryMarshal.Cast method if spans and misaligned memory access are supported on the current platform.</value>
+    <value>When the underlying type is '{1}' and the cast type is '{2}', '{0}' cannot be used as a start index for slicing because it cannot be aligned with an element in the underlying array. You can try to use the AsSpan property and the MemoryMarshal.Cast method if spans and misaligned memory access are supported on the current platform.</value>
   </data>
   <data name="Reflection_PropertyNotFoundTypeDescriptorFormat" xml:space="preserve">
     <value>Property "{0}" not found and cannot be set via TypeDescriptor on type "{1}".</value>
