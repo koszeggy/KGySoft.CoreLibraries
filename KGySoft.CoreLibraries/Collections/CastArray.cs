@@ -23,6 +23,7 @@ using System.Security;
 using System.Threading;
 
 using KGySoft.CoreLibraries;
+using KGySoft.Reflection;
 
 #endregion
 
@@ -364,7 +365,7 @@ namespace KGySoft.Collections
             // Here we need to validate the alignment
             long byteOffset = sizeof(TTo) * startIndex;
             if (byteOffset % sizeof(TFrom) != 0)
-                Throw.ArgumentException(Argument.startIndex, Res.CastArraySliceWrongStartIndex(startIndex), typeof(TFrom), typeof(TTo));
+                Throw.ArgumentException(Argument.startIndex, Res.CastArraySliceWrongStartIndex(startIndex, typeof(TFrom), typeof(TTo)));
             return new CastArray<TFrom, TTo>(buffer.Slice((int)(byteOffset / sizeof(TFrom)), (int)((long)length * sizeof(TTo) / sizeof(TFrom))), length);
         }
 
@@ -437,6 +438,27 @@ namespace KGySoft.Collections
                 fixed (TFrom* pBuf = &buffer.GetElementReferenceInternal(0))
                     return ref *((TTo*)pBuf);
             }
+#endif
+        }
+
+        [SecuritySafeCritical]
+        public TTo[]? ToArray()
+        {
+            if (length == 0)
+                return IsNull ? null : Reflector.EmptyArray<TTo>();
+
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            return AsSpan.ToArray();
+#else
+            TTo[] result = new TTo[length];
+            unsafe
+            {
+                fixed (void* pSrc = this)
+                fixed (void* pDst = result)
+                    MemoryHelper.CopyMemory(pSrc, pDst, (long)length * sizeof(TTo));
+            }
+
+            return result;
 #endif
         }
 

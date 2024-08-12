@@ -526,7 +526,7 @@ namespace KGySoft.Collections
         /// or <see langword="null"/> if <see cref="IsNull"/> is <see langword="true"/>.</returns>
         public readonly T[]? ToArray()
         {
-            if (length == 0) // it's alright, pooled arrays never have ero length
+            if (length == 0) // it's alright, pooled arrays never have zero length
                 return IsNull ? null : Reflector.EmptyArray<T>();
             T[] result = new T[Length];
             array!.CopyElements(offset, result, 0,  result.Length);
