@@ -17,6 +17,8 @@
 
 using System;
 using System.Buffers;
+using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -44,9 +46,9 @@ namespace KGySoft.Collections
     [Serializable]
     [DebuggerTypeProxy(typeof(CastArray<,>.CastArrayDebugView))]
     [DebuggerDisplay("{typeof(" + nameof(TTo) + ")." + nameof(Type.Name) + ",nq}[{" + nameof(Length) + "}]")]
-    public readonly struct CastArray<TFrom, TTo> : /*IList<TTo>, IList,*/ IEquatable<CastArray<TFrom, TTo>> // TODO
+    public readonly struct CastArray<TFrom, TTo> : IList<TTo>, IList, IEquatable<CastArray<TFrom, TTo>> // TODO
 #if !(NET35 || NET40)
-        //, IReadOnlyList<TTo>
+        , IReadOnlyList<TTo>
 #endif
         where TFrom : unmanaged
         where TTo : unmanaged
@@ -138,6 +140,8 @@ namespace KGySoft.Collections
 
         #region Nested Structs
 
+        #region CastArrayDebugView struct
+
         private struct CastArrayDebugView // Maybe would work if it was class but see ArraySectionDebugView
         {
             #region Fields
@@ -159,6 +163,8 @@ namespace KGySoft.Collections
 
             #endregion
         }
+
+        #endregion
 
         #endregion
 
@@ -192,6 +198,8 @@ namespace KGySoft.Collections
         #region Properties and Indexers
 
         #region Properties
+        
+        #region Public Properties
 
         /// <summary>
         /// Gets the underlying buffer of this <see cref="CastArray{TFrom,TTo}"/> as an <see cref="ArraySection{T}"/> instance.
@@ -225,7 +233,30 @@ namespace KGySoft.Collections
 
         #endregion
 
+        #region Explicitly Implemented Interface Properties
+
+        bool ICollection<TTo>.IsReadOnly => true;
+        int ICollection<TTo>.Count => length;
+
+        // It actually should use a private field but as we never lock on this we could never cause a deadlock even if someone uses it.
+        object ICollection.SyncRoot => Buffer.UnderlyingArray?.SyncRoot ?? Throw.InvalidOperationException<object>(Res.ArraySectionNull);
+        bool ICollection.IsSynchronized => false;
+
+        int ICollection.Count => length;
+        bool IList.IsReadOnly => false;
+        bool IList.IsFixedSize => true;
+
+#if !(NET35 || NET40)
+        int IReadOnlyCollection<TTo>.Count => length;
+#endif
+
+        #endregion
+
+        #endregion
+
         #region Indexers
+        
+        #region Public Indexers
 
         public ref TTo this[int index]
         {
@@ -238,6 +269,40 @@ namespace KGySoft.Collections
                 return ref UnsafeGetRef(index);
             }
         }
+
+        #endregion
+
+        #region Explicitly Implemented Interface Indexers
+
+        TTo IList<TTo>.this[int index]
+        {
+            get => this[index];
+            set => this[index] = value;
+        }
+
+#if !(NET35 || NET40)
+        TTo IReadOnlyList<TTo>.this[int index] => this[index];
+#endif
+
+        object? IList.this[int index]
+        {
+            get => this[index];
+            set
+            {
+                if (value == null)
+                    Throw.ArgumentNullException(Argument.value);
+                try
+                {
+                    this[index] = (TTo)value!;
+                }
+                catch (InvalidCastException)
+                {
+                    Throw.ArgumentException(Argument.value, Res.ICollectionNonGenericValueTypeInvalid(value, typeof(TTo)));
+                }
+            }
+        }
+
+        #endregion
 
         #endregion
 
@@ -492,6 +557,154 @@ namespace KGySoft.Collections
 #endif
         }
 
+        /// <summary>
+        /// Clears the items in this <see cref="CastArray{TFrom,TTo}"/> instance so all elements will have the default value of type <typeparamref name="TTo"/>.
+        /// </summary>
+        public void Clear() => buffer.Clear();
+
+        /// <summary>
+        /// Determines the index of a specific item in this <see cref="CastArray{TFrom,TTo}"/>.
+        /// </summary>
+        /// <param name="item">The object to locate in the <see cref="CastArray{TFrom,TTo}"/>.</param>
+        /// <returns>
+        /// The index of <paramref name="item"/> if found in the list; otherwise, -1.
+        /// </returns>
+        [SecuritySafeCritical]
+        public int IndexOf(TTo item)
+        {
+            // TODO: AsSpan.IndexOf, when TTo is IEquatable will be available: https://github.com/dotnet/csharplang/discussions/6308#discussioncomment-3212915
+
+            // Needed explicitly if we use GetPinnableReference or GetElementReferenceInternal
+            if (IsNullOrEmpty)
+                return -1;
+
+#if NET5_0_OR_GREATER
+            // Using the EqualityComparer<T>.Default intrinsic directly, which gets devirtualized
+            // See https://github.com/dotnet/runtime/issues/10050
+            ref TTo current = ref Unsafe.As<TFrom, TTo>(ref buffer.GetElementReferenceInternal(0));
+            for (int i = 0; i < length; i++)
+            {
+                if (EqualityComparer<TTo>.Default.Equals(Unsafe.Add(ref current, i), item))
+                    return i;
+            }
+#elif NETCOREAPP3_0_OR_GREATER
+            var comparer = ComparerHelper<TTo>.EqualityComparer;
+            ref TTo current = ref Unsafe.As<TFrom, TTo>(ref buffer.GetElementReferenceInternal(0));
+            for (int i = 0; i < length; i++)
+            {
+                if (comparer.Equals(Unsafe.Add(ref current, i), item))
+                    return i;
+            }
+#else
+            var comparer = ComparerHelper<TTo>.EqualityComparer;
+
+#if NETFRAMEWORK || NETSTANDARD2_0
+            if (EnvironmentHelper.IsPartiallyTrustedDomain)
+            {
+                // TODO: Simple case if TFrom is dividable by TTo. Otherwise, maybe the same handling as in SerializeValueArray
+#error TODO (see every other unsafe code, too)
+            }
+#endif
+
+            unsafe
+            {
+                fixed (TFrom* ptr = &buffer.GetElementReferenceInternal(0))
+                {
+                    TTo* pTo = (TTo*)ptr;
+                    for (int i = 0; i < length; i++)
+                    {
+                        if (comparer.Equals(pTo[i], item))
+                            return i;
+                    }
+                }
+            }
+#endif
+            return -1;
+        }
+
+        /// <summary>
+        /// Determines whether this <see cref="CastArray{TFrom,TTo}"/> contains the specific <paramref name="item"/>.
+        /// </summary>
+        /// <returns>
+        /// <see langword="true"/> if <paramref name="item"/> is found in this <see cref="CastArray{TFrom,TTo}"/>; otherwise, <see langword="false"/>.
+        /// </returns>
+        /// <param name="item">The object to locate in this <see cref="CastArray{TFrom,TTo}"/>.</param>
+        public bool Contains(TTo item) => IndexOf(item) >= 0;
+
+        /// <summary>
+        /// Copies the items of this <see cref="CastArray{TFrom,TTo}"/> to a compatible one-dimensional array, starting at a particular index.
+        /// </summary>
+        /// <param name="target">The one-dimensional <see cref="Array"/> that is the destination of the elements copied from this <see cref="CastArray{TFrom,TTo}"/>.</param>
+        /// <param name="targetIndex">The zero-based index in <paramref name="target"/> at which copying begins. This parameter is optional.
+        /// <br/>Default value: 0.</param>
+        [SecuritySafeCritical]
+        public void CopyTo(TTo[] target, int targetIndex = 0)
+        {
+            if (target == null!)
+                Throw.ArgumentNullException(Argument.target);
+            if (targetIndex < 0 || targetIndex > target.Length)
+                Throw.ArgumentOutOfRangeException(Argument.targetIndex);
+
+            if (target.Length - targetIndex < length)
+                Throw.ArgumentException(Argument.target, Res.ICollectionCopyToDestArrayShort);
+
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            AsSpan.CopyTo(target.AsSpan(targetIndex));
+#else
+
+            unsafe
+            {
+                fixed (TTo* pSrc = this)
+                fixed (TTo* pDst = target)
+                    MemoryHelper.CopyMemory(pSrc, pDst + targetIndex, (long)length * sizeof(TTo));
+            }
+#endif
+        }
+
+        /// <summary>
+        /// Copies the items of this <see cref="CastArray{TFrom,TTo}"/> to a compatible <see cref="ArraySection{T}"/>, starting at a particular index.
+        /// </summary>
+        /// <param name="target">The <see cref="ArraySection{T}"/> that is the destination of the elements copied from this <see cref="CastArray{TFrom,TTo}"/>.</param>
+        /// <param name="targetIndex">The zero-based index in <paramref name="target"/> at which copying begins. This parameter is optional.
+        /// <br/>Default value: 0.</param>
+        public void CopyTo(ArraySection<TTo> target, int targetIndex = 0) => CopyTo(target.UnderlyingArray!, targetIndex + target.Offset);
+
+        /// <summary>
+        /// Copies the items of this <see cref="CastArray{TFrom,TTo}"/> to a compatible instance, starting at a particular index.
+        /// </summary>
+        /// <param name="target">The <see cref="CastArray{TFrom,TTo}"/> that is the destination of the elements copied from this instance.</param>
+        /// <param name="targetIndex">The zero-based index in <paramref name="target"/> at which copying begins. This parameter is optional.
+        /// <br/>Default value: 0.</param>
+        [SecuritySafeCritical]
+        public void CopyTo(CastArray<TFrom, TTo> target, int targetIndex = 0)
+        {
+            if (targetIndex < 0 || targetIndex > target.length)
+                Throw.ArgumentOutOfRangeException(Argument.targetIndex);
+
+            if (target.Length - targetIndex < length)
+                Throw.ArgumentException(Argument.target, Res.ICollectionCopyToDestArrayShort);
+
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            AsSpan.CopyTo(target.AsSpan.Slice(targetIndex));
+#else
+            unsafe
+            {
+                fixed (TTo* pSrc = this)
+                fixed (TTo* pDst = target)
+                    MemoryHelper.CopyMemory(pSrc, pDst + targetIndex, (long)length * sizeof(TTo));
+            }
+#endif
+        }
+
+        /// <summary>
+        /// Returns an enumerator that iterates through the items of this <see cref="CastArray{TFrom,TTo}"/>.
+        /// </summary>
+        /// <returns>A <see cref="CastArrayEnumerator{TFrom,TTo}"/> instance that can be used to iterate though the elements of this <see cref="CastArray{TFrom,TTo}"/>.</returns>
+        /// <remarks>
+        /// <note>The returned enumerator supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
+        /// </remarks>
+        public CastArrayEnumerator<TFrom, TTo> GetEnumerator() => new CastArrayEnumerator<TFrom, TTo>(this);
+
         public bool Equals(CastArray<TFrom, TTo> other) => buffer == other.buffer && length == other.length;
 
         public override bool Equals(object? obj) => obj is CastArray<TFrom, TTo> other && Equals(other);
@@ -505,7 +718,67 @@ namespace KGySoft.Collections
 
         #endregion
 
-        #region Private Methods
+        #region Explicitly Implemented Interface Methods
+
+        void IList<TTo>.Insert(int index, TTo item) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+        void IList<TTo>.RemoveAt(int index) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+
+        void ICollection<TTo>.Add(TTo item) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+        bool ICollection<TTo>.Remove(TTo item) => Throw.NotSupportedException<bool>(Res.ICollectionReadOnlyModifyNotSupported);
+
+        IEnumerator<TTo> IEnumerable<TTo>.GetEnumerator() => GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+        int IList.IndexOf(object? value)
+        {
+            if (value == null)
+                Throw.ArgumentNullException(Argument.value);
+            return IndexOf((TTo)value);
+        }
+
+        bool IList.Contains(object? value)
+        {
+            if (value == null)
+                Throw.ArgumentNullException(Argument.value);
+            return Contains((TTo)value);
+        }
+
+        void ICollection.CopyTo(Array targetArray, int index)
+        {
+            if (targetArray == null!)
+                Throw.ArgumentNullException(Argument.array);
+
+            if (targetArray is TTo[] typedArray)
+            {
+                CopyTo(typedArray, index);
+                return;
+            }
+
+            if (index < 0 || index > length)
+                Throw.ArgumentOutOfRangeException(Argument.index);
+            if (targetArray.Length - index < length)
+                Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
+            if (targetArray.Rank != 1)
+                Throw.ArgumentException(Argument.array, Res.ICollectionCopyToSingleDimArrayOnly);
+
+            if (targetArray is object?[] objectArray)
+            {
+                for (int i = 0; i < length; i++)
+                {
+                    objectArray[index] = UnsafeGetRef(i);
+                    index += 1;
+                }
+
+                return;
+            }
+
+            Throw.ArgumentException(Argument.array, Res.ICollectionArrayTypeInvalid);
+        }
+
+        int IList.Add(object? item) => Throw.NotSupportedException<int>(Res.ICollectionReadOnlyModifyNotSupported);
+        void IList.Insert(int index, object? item) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+        void IList.Remove(object? item) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+        void IList.RemoveAt(int index) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
 
         #endregion
 

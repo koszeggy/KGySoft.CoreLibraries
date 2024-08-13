@@ -857,7 +857,7 @@ namespace KGySoft.Collections
             int len = Length;
             if (index < 0 || index > len)
                 Throw.ArgumentOutOfRangeException(Argument.index);
-            if (targetArray.Length - index < length)
+            if (targetArray.Length - index < len)
                 Throw.ArgumentException(Argument.array, Res.ICollectionCopyToDestArrayShort);
             if (targetArray.Rank != 1)
                 Throw.ArgumentException(Argument.array, Res.ICollectionCopyToSingleDimArrayOnly);
