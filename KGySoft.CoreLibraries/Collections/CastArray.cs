@@ -17,6 +17,7 @@
 
 using System;
 using System.Buffers;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security;
@@ -40,6 +41,9 @@ namespace KGySoft.Collections
     /// TODO: Pooling example. Returning to the pool must be done by the caller. You can use a self-allocating ArraySection, which can be released in the end.
     /// TODO: Slice may throw ArgumentException
     /// </remarks>
+    [Serializable]
+    [DebuggerTypeProxy(typeof(CastArray<,>.CastArrayDebugView))]
+    [DebuggerDisplay("{typeof(" + nameof(TTo) + ")." + nameof(Type.Name) + ",nq}[{" + nameof(Length) + "}]")]
     public readonly struct CastArray<TFrom, TTo> : /*IList<TTo>, IList,*/ IEquatable<CastArray<TFrom, TTo>> // TODO
 #if !(NET35 || NET40)
         //, IReadOnlyList<TTo>
@@ -47,11 +51,9 @@ namespace KGySoft.Collections
         where TFrom : unmanaged
         where TTo : unmanaged
     {
-        // TODO: Collection interfaces
-        // TODO: ToArray
-        // TODO: Debugger info
-
         #region Nested Types
+
+        #region Nested Classes
 
         #region CastArrayMemoryManager class
 
@@ -129,6 +131,34 @@ namespace KGySoft.Collections
             #endregion
         }
 #endif
+
+        #endregion
+
+        #endregion
+
+        #region Nested Structs
+
+        private struct CastArrayDebugView // Maybe would work if it was class but see ArraySectionDebugView
+        {
+            #region Fields
+
+            private readonly CastArray<TFrom, TTo> array;
+
+            #endregion
+
+            #region Properties
+
+            [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+            readonly public TTo[]? Items => array.ToArray();
+
+            #endregion
+
+            #region Constructors
+
+            internal CastArrayDebugView(CastArray<TFrom, TTo> array) => this.array = array;
+
+            #endregion
+        }
 
         #endregion
 
