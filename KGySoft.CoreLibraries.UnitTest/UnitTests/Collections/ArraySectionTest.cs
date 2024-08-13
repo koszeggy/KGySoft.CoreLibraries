@@ -35,7 +35,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
         public void ConversionsNullAndEmptyTest()
         {
             ArraySection<int> section = null;
-            Assert.IsTrue(section == null, "Compare with null works due to implicit operator and string comparison");
+            Assert.IsTrue(section == null, "Compare with null works due to implicit operator");
             Assert.IsNotNull(section, "ArraySection is actually a value type");
             Assert.IsTrue(section.IsNull);
             Assert.IsNull(section.ToArray());

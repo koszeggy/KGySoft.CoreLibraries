@@ -746,7 +746,7 @@ namespace KGySoft
         internal static string CastArrayBufferTooBigForCastLength(Type type) => Get("CastArray_BufferTooBigForCastLengthFormat", type.GetName(TypeNameKind.LongName));
 
         /// <summary>When the underlying type is '{1}' and the cast type is '{2}', '{0}' cannot be used as a start index for slicing because it cannot be aligned with an element in the underlying array. You can try to use the AsSpan property and the MemoryMarshal.Cast method if spans and misaligned memory access are supported on the current platform.</summary>
-        internal static string CastArraySliceWrongStartIndex(int length, Type from, Type to) => Get("CastArray_SliceWrongStartIndexFormat", length, from.GetName(TypeNameKind.LongName), to.GetName(TypeNameKind.LongName));
+        internal static string CastArraySliceWrongStartIndex(int index, Type from, Type to) => Get("CastArray_SliceWrongStartIndexFormat", index, from.GetName(TypeNameKind.LongName), to.GetName(TypeNameKind.LongName));
 
         #endregion
 

@@ -17,8 +17,12 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
+using System.Security.Permissions;
+using System.Security;
 
 using KGySoft.Collections;
+using KGySoft.Reflection;
 
 using NUnit.Framework;
 using NUnit.Framework.Constraints;
@@ -28,8 +32,28 @@ using NUnit.Framework.Constraints;
 namespace KGySoft.CoreLibraries.UnitTests.Collections
 {
     [TestFixture]
-    public class CastArrayTest
+    public class CastArrayTest : TestBase
     {
+        #region Nested classes
+
+#if NETFRAMEWORK
+        private class Sandbox : MarshalByRefObject
+        {
+            internal void DoTest()
+            {
+                Assert.IsTrue(EnvironmentHelper.IsPartiallyTrustedDomain);
+                var test = new CastArrayTest();
+                test.CastTest();
+                test.NullAndEmptyTest();
+                test.SliceTest();
+                test.IndexOfTest();
+                test.CopyToTest();
+            }
+        }
+#endif
+
+        #endregion
+
         #region Methods
 
         [Test]
@@ -63,30 +87,62 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
         }
 
         [Test]
+        public void NullAndEmptyTest()
+        {
+            CastArray<int, byte> array = null;
+            Assert.IsTrue(array == null, "Compare with null works due to implicit operator");
+            Assert.IsNotNull(array, "CastArray is actually a value type");
+            Assert.IsTrue(array.IsNull);
+            Assert.IsNull(array.ToArray());
+
+            array = Reflector.EmptyArray<int>();
+            Assert.AreEqual(CastArray<int, byte>.Empty, array);
+            Assert.IsTrue(array == CastArray<int, byte>.Empty);
+            Assert.IsFalse(array.IsNull);
+            Assert.IsTrue(array.IsNullOrEmpty);
+            Assert.IsTrue(array.Length == 0);
+
+            Assert.AreNotEqual(CastArray<int, byte>.Null, CastArray<int, byte>.Empty);
+            CollectionAssert.AreEqual(CastArray<int, byte>.Null, CastArray<int, byte>.Empty);
+        }
+
+        [Test]
         public void SliceTest()
         {
             // same size: always works
             CastArray<char, ushort> charAsWord = new char[5];
             for (int i = 0; i < charAsWord.Length; i++)
+                charAsWord[i] = (ushort)i;
+
+            for (int i = 0; i < charAsWord.Length; i++)
             {
                 var slice = charAsWord.Slice(i, charAsWord.Length - i);
                 Assert.AreEqual(charAsWord.Length - i, slice.Length);
+                CollectionAssert.AreEqual(slice, slice.ToArray());
             }
 
             // byte-size source: always works
             CastArray<byte, uint> byteAsDword = new byte[10];
             for (int i = 0; i < byteAsDword.Length; i++)
+                byteAsDword[i] = (uint)i;
+
+            for (int i = 0; i < byteAsDword.Length; i++)
             {
                 var slice = byteAsDword.Slice(i, byteAsDword.Length - i);
                 Assert.AreEqual(byteAsDword.Length - i, slice.Length);
+                CollectionAssert.AreEqual(slice, slice.ToArray());
             }
 
             // TTo can be divided by TFrom: always works
             CastArray<ushort, uint> wordAsDword = new ushort[10];
             for (int i = 0; i < wordAsDword.Length; i++)
+                wordAsDword[i] = (uint)i;
+
+            for (int i = 0; i < wordAsDword.Length; i++)
             {
                 var slice = wordAsDword.Slice(i, wordAsDword.Length - i);
                 Assert.AreEqual(wordAsDword.Length - i, slice.Length);
+                CollectionAssert.AreEqual(slice, slice.ToArray());
             }
 
             // TTo cannot be divided by TFrom: works only if startIndex is aligned with TFrom
@@ -98,7 +154,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             {
                 [SuppressMessage("ReSharper", "AccessToModifiedClosure", Justification = "Not accessed after returning from the call")]
                 int Func() => wordAsByte.Slice(i, wordAsByte.Length - i).Length;
-                Assert.That((ActualValueDelegate<int>)Func, i % 2 == 0 ? Is.EqualTo(wordAsByte.Length - i) : Throws.ArgumentException);
+                Assert.That((ActualValueDelegate<int>)Func, i % 2 == 0 ? Is.EqualTo(wordAsByte.Length - i) : NUnit.Framework.Throws.ArgumentException);
 
                 // but Span/Memory always works
 #if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
@@ -110,6 +166,52 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
 #endif
             }
         }
+
+        [Test]
+        public void IndexOfTest()
+        {
+            var intAsBytes = new[] { 0x12345678 }.Cast<int, byte>();
+            Assert.AreEqual(BitConverter.IsLittleEndian ? 3 : 0, intAsBytes.IndexOf(0x12));
+            Assert.IsFalse(intAsBytes.Contains(0));
+        }
+
+        [Test]
+        public void CopyToTest()
+        {
+            CastArray<ushort, byte> wordAsByte = new ushort[10];
+            for (int i = 0; i < wordAsByte.Length; i++)
+                wordAsByte[i] = (byte)i;
+
+            var buf = new byte[wordAsByte.Length * 2];
+            for (int i = 0; i < wordAsByte.Length; i++)
+            {
+                wordAsByte.CopyTo(buf, i);
+                CollectionAssert.AreEqual(wordAsByte, buf.AsSection(i, wordAsByte.Length));
+            }
+        }
+
+#if NETFRAMEWORK
+        [Test]
+        [SecuritySafeCritical]
+        public void CastArray_PartiallyTrusted()
+        {
+            // These permissions are just for a possible attached VisualStudio when the test fails. The code does not require any special permissions.
+            var domain = CreateSandboxDomain(
+                new SecurityPermission(SecurityPermissionFlag.UnmanagedCode),
+                new FileIOPermission(PermissionState.Unrestricted));
+            var handle = Activator.CreateInstance(domain, Assembly.GetExecutingAssembly().FullName, typeof(Sandbox).FullName!);
+            var sandbox = (Sandbox)handle.Unwrap();
+            try
+            {
+                sandbox.DoTest();
+            }
+            catch (SecurityException e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+        }
+#endif
 
         #endregion
     }

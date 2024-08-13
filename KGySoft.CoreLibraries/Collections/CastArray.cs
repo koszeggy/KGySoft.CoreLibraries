@@ -16,14 +16,20 @@
 #region Usings
 
 using System;
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
 using System.Buffers;
+#endif
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
 using System.Runtime.InteropServices;
+#endif
 using System.Security;
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
 using System.Threading;
+#endif
 
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
@@ -214,7 +220,7 @@ namespace KGySoft.Collections
 
         public bool IsNull => buffer.IsNull;
 
-        public bool IsNullOrEmpty => buffer.IsNullOrEmpty;
+        public bool IsNullOrEmpty => length == 0; // not buffer.IsNullOrEmpty because cast length can be truncated
 
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
@@ -455,7 +461,7 @@ namespace KGySoft.Collections
 
             // 1 byte from size: any offset will work
             if (sizeof(TFrom) == 1)
-                return new CastArray<TFrom, TTo>(buffer.Slice(startIndex * sizeof(TTo), buffer.Length - length * sizeof(TTo)), length);
+                return new CastArray<TFrom, TTo>(buffer.Slice(startIndex * sizeof(TTo), length * sizeof(TTo)), length);
 
             // Here we need to validate the alignment
             long byteOffset = sizeof(TTo) * startIndex;
@@ -522,8 +528,8 @@ namespace KGySoft.Collections
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public ref TTo GetPinnableReference()
         {
-            if (buffer.IsNullOrEmpty)
-                Throw.InvalidOperationException(Res.ArraySectionEmpty);
+            if (IsNullOrEmpty)
+                Throw.InvalidOperationException(Res.CollectionEmpty);
 
 #if NETCOREAPP3_0_OR_GREATER
             return ref Unsafe.As<TFrom, TTo>(ref buffer.GetElementReferenceInternal(0));
@@ -539,7 +545,7 @@ namespace KGySoft.Collections
         [SecuritySafeCritical]
         public TTo[]? ToArray()
         {
-            if (length == 0)
+            if (IsNullOrEmpty)
                 return IsNull ? null : Reflector.EmptyArray<TTo>();
 
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
@@ -548,7 +554,7 @@ namespace KGySoft.Collections
             TTo[] result = new TTo[length];
             unsafe
             {
-                fixed (void* pSrc = this)
+                fixed (void* pSrc = &buffer.GetElementReferenceUnchecked(0))
                 fixed (void* pDst = result)
                     MemoryHelper.CopyMemory(pSrc, pDst, (long)length * sizeof(TTo));
             }
@@ -602,7 +608,7 @@ namespace KGySoft.Collections
             if (EnvironmentHelper.IsPartiallyTrustedDomain)
             {
                 // TODO: Simple case if TFrom is dividable by TTo. Otherwise, maybe the same handling as in SerializeValueArray
-#error TODO (see every other unsafe code, too)
+//#error TODO (see every other unsafe code, too)
             }
 #endif
 
@@ -651,10 +657,12 @@ namespace KGySoft.Collections
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             AsSpan.CopyTo(target.AsSpan(targetIndex));
 #else
+            if (IsNullOrEmpty)
+                return;
 
             unsafe
             {
-                fixed (TTo* pSrc = this)
+                fixed (void* pSrc = &buffer.GetElementReferenceUnchecked(0))
                 fixed (TTo* pDst = target)
                     MemoryHelper.CopyMemory(pSrc, pDst + targetIndex, (long)length * sizeof(TTo));
             }
@@ -687,9 +695,12 @@ namespace KGySoft.Collections
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             AsSpan.CopyTo(target.AsSpan.Slice(targetIndex));
 #else
+            if (IsNullOrEmpty)
+                return;
+
             unsafe
             {
-                fixed (TTo* pSrc = this)
+                fixed (void* pSrc = &buffer.GetElementReferenceUnchecked(0))
                 fixed (TTo* pDst = target)
                     MemoryHelper.CopyMemory(pSrc, pDst + targetIndex, (long)length * sizeof(TTo));
             }
