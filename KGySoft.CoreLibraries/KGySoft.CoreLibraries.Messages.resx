@@ -325,9 +325,6 @@ Number of cache hits: {6}
 Number of deletes: {7}
 Hit rate: {8:P2}</value>
   </data>
-  <data name="CastArray_NotAnUnmanagedTypeFormat" xml:space="preserve">
-    <value>Type '{0}' cannot be used as a type argument for CastArray&lt;TFrom, TTo&gt; because it contains references.</value>
-  </data>
   <data name="CastArray_BufferTooBigForCastLengthFormat" xml:space="preserve">
     <value>Length of buffer is too big to reinterpret it as type '{0}'.</value>
   </data>
@@ -523,6 +520,12 @@ Hit rate: {8:P2}</value>
   </data>
   <data name="General_InternalErrorFormat" xml:space="preserve">
     <value>Internal Error: {0}</value>
+  </data>
+  <data name="General_UnmanagedTypeArgumentExpectedFormat" xml:space="preserve">
+    <value>Type '{0}' cannot be used as a type argument of generic type '{1}', because it contains references.</value>
+  </data>
+  <data name="General_UnmanagedMethodTypeArgumentExpectedFormat" xml:space="preserve">
+    <value>Type '{0}' cannot be the type argument of this method because it contains references.</value>
   </data>
   <data name="Reflection_CannotCreateGenericMethod" xml:space="preserve">
     <value>Could not create generic method. For details see inner exception.</value>
@@ -732,9 +735,6 @@ Either try to use the ForceRecursiveSerializationOfSupportedTypes option on seri
   <data name="BinarySerialization_CollectionPlatformNotSupportedFormat" xml:space="preserve">
     <value>The stream contains a collection of type '{0}', which is not supported on this platform.</value>
   </data>
-  <data name="BinarySerialization_ValueTypeContainsReferencesFormat" xml:space="preserve">
-    <value>Type '{0}' cannot be the type argument of this method because it contains references.</value>
-  </data>
   <data name="BinarySerialization_ValueTypeContainsReferenceSafeFormat" xml:space="preserve">
     <value>Value type '{0}' cannot be deserialized from raw data in safe mode because it contains references. If the serialization stream is from a trusted source you may try to disable safe mode to attempt the deserialization with marshaling.</value>
   </data>
@@ -747,7 +747,7 @@ Either try to use the ForceRecursiveSerializationOfSupportedTypes option on seri
   <data name="BinarySerialization_BinderNotAllowedInSafeMode" xml:space="preserve">
     <value>The specified serialization binder cannot be used in safe mode. Only ForwardedTypesSerializationBinder is allowed if its SafeMode property is set to true.</value>
   </data>
-  <data name="BinarySerialization_SecuritySettingsConflict" xml:space="preserve">
+  <data name="Unsafe_SecuritySettingsConflict" xml:space="preserve">
     <value>This operation is not supported in a partially trusted domain with the current security settings. You can try the following options:
 - Grant SecurityPermission with the SecurityPermissionFlag.SkipVerification flag when creating the restricted AppDomain.
 - Create the AppDomain with unrestricted permission set.</value>

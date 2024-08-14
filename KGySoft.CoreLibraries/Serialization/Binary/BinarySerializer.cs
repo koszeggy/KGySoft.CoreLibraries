@@ -40,6 +40,10 @@ using KGySoft.Reflection;
 #pragma warning disable SYSLIB0050 // Type.IsSerializable/FieldInfo.IsNotSerialized is obsolete - required by BinarySerializationFormatter, which still supports the original infrastructure
 #endif
 
+#if NETFRAMEWORK
+#pragma warning disable CS8500 // This takes the address of, gets the size of, or declares a pointer to a managed type - unmanaged constraint is still asserted at runtime where needed
+#endif
+
 #endregion
 
 namespace KGySoft.Serialization.Binary
@@ -558,7 +562,7 @@ namespace KGySoft.Serialization.Binary
 #if NETFRAMEWORK || NETSTANDARD2_0
             catch (VerificationException e) when (EnvironmentHelper.IsPartiallyTrustedDomain)
             {
-                return Throw.NotSupportedException<byte[]>(Res.BinarySerializationSecuritySettingsConflict, e);
+                return Throw.NotSupportedException<byte[]>(Res.UnsafeSecuritySettingsConflict, e);
             }
 #endif
         }
@@ -592,7 +596,7 @@ namespace KGySoft.Serialization.Binary
 #if NETFRAMEWORK || NETSTANDARD2_0
             catch (VerificationException e) when (EnvironmentHelper.IsPartiallyTrustedDomain)
             {
-                Throw.NotSupportedException(Res.BinarySerializationSecuritySettingsConflict, e);
+                Throw.NotSupportedException(Res.UnsafeSecuritySettingsConflict, e);
             }
 #endif
 
@@ -614,7 +618,12 @@ namespace KGySoft.Serialization.Binary
         /// </remarks>
         [SecurityCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public static unsafe byte[] SerializeValueType<T>(in T value) where T : unmanaged
+        public static unsafe byte[] SerializeValueType<T>(in T value)
+#if NETFRAMEWORK
+            where T : struct // so older compilers don't say that this member is not supported by the language
+#else
+            where T : unmanaged
+#endif
         {
             byte[] result = new byte[sizeof(T)];
 #if NET5_0_OR_GREATER
@@ -631,7 +640,7 @@ namespace KGySoft.Serialization.Binary
 #if NETFRAMEWORK || NETSTANDARD2_0
             catch (VerificationException e) when (EnvironmentHelper.IsPartiallyTrustedDomain)
             {
-                Throw.NotSupportedException(Res.BinarySerializationSecuritySettingsConflict, e);
+                Throw.NotSupportedException(Res.UnsafeSecuritySettingsConflict, e);
             }
 #endif
 #endif
@@ -649,9 +658,14 @@ namespace KGySoft.Serialization.Binary
         /// <param name="result">When this method returns, the byte array representation of the specified <paramref name="value"/>. This parameter is passed uninitialized.</param>
         /// <returns><see langword="true"/>, if <typeparamref name="T"/> contains no references and could be serialized; otherwise, <see langword="false"/>.</returns>
         [SecuritySafeCritical]
-        public static bool TrySerializeValueType<T>(in T value, [MaybeNullWhen(false)]out byte[] result) where T : unmanaged
+        public static bool TrySerializeValueType<T>(in T value, [MaybeNullWhen(false)]out byte[] result)
+#if NETFRAMEWORK
+            where T : struct // so older compilers don't say that this member is not supported by the language
+#else
+            where T : unmanaged
+#endif
         {
-            // The unmanaged constraint guards this but if used from an older compiler or by reflection, then this check matters
+            // The unmanaged constraint guards this but if called by reflection, then this check matters
             if (Reflector<T>.IsManaged)
             {
                 result = null;
@@ -676,7 +690,12 @@ namespace KGySoft.Serialization.Binary
         /// but you can call the <see cref="TrySerializeValueArray{T}"/> method that performs the check.</note>
         /// </remarks>
         [SecurityCritical]
-        public static unsafe byte[] SerializeValueArray<T>(T[] array) where T : unmanaged
+        public static unsafe byte[] SerializeValueArray<T>(T[] array)
+#if NETFRAMEWORK
+            where T : struct // so older compilers don't say that this member is not supported by the language
+#else
+            where T : unmanaged
+#endif
         {
             if (array == null!)
                 Throw.ArgumentNullException(Argument.array);
@@ -699,7 +718,7 @@ namespace KGySoft.Serialization.Binary
 #if NETFRAMEWORK || NETSTANDARD2_0
             catch (VerificationException e) when (EnvironmentHelper.IsPartiallyTrustedDomain)
             {
-                return Throw.NotSupportedException<byte[]>(Res.BinarySerializationSecuritySettingsConflict, e);
+                return Throw.NotSupportedException<byte[]>(Res.UnsafeSecuritySettingsConflict, e);
             }
 #endif
 #endif
@@ -716,12 +735,17 @@ namespace KGySoft.Serialization.Binary
         /// <param name="result">When this method returns, the byte array representation of the specified <paramref name="array"/>. This parameter is passed uninitialized.</param>
         /// <returns><see langword="true"/>, if <typeparamref name="T"/> contains no references and could be serialized; otherwise, <see langword="false"/>.</returns>
         [SecuritySafeCritical]
-        public static bool TrySerializeValueArray<T>(T[] array, [MaybeNullWhen(false)]out byte[] result) where T : unmanaged
+        public static bool TrySerializeValueArray<T>(T[] array, [MaybeNullWhen(false)]out byte[] result)
+#if NETFRAMEWORK
+            where T : struct // so older compilers don't say that this member is not supported by the language
+#else
+            where T : unmanaged
+#endif
         {
             if (array == null!)
                 Throw.ArgumentNullException(Argument.array);
 
-            // The unmanaged constraint guards this but if used from an older compiler or by reflection, then this check matters
+            // The unmanaged constraint guards this but if called by reflection, then this check matters
             if (Reflector<T>.IsManaged)
             {
                 result = null;
@@ -790,7 +814,7 @@ namespace KGySoft.Serialization.Binary
 #if NETFRAMEWORK || NETSTANDARD2_0
             catch (VerificationException e) when (EnvironmentHelper.IsPartiallyTrustedDomain)
             {
-                return Throw.NotSupportedException<byte[]>(Res.BinarySerializationSecuritySettingsConflict, e);
+                return Throw.NotSupportedException<byte[]>(Res.UnsafeSecuritySettingsConflict, e);
             }
 #endif
         }
@@ -807,11 +831,16 @@ namespace KGySoft.Serialization.Binary
         /// <exception cref="ArgumentException">The length of <paramref name="data"/> is too small.</exception>
         [SecuritySafeCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public static unsafe T DeserializeValueType<T>(byte[] data) where T : unmanaged
+        public static unsafe T DeserializeValueType<T>(byte[] data)
+#if NETFRAMEWORK
+            where T : struct // so older compilers don't say that this member is not supported by the language
+#else
+            where T : unmanaged
+#endif
         {
-            // The unmanaged constraint is not enforced in CLR so we must check it
+            // The unmanaged constraint is not enforced in CLR, so we must check it
             if (Reflector<T>.IsManaged)
-                Throw.InvalidOperationException(Res.BinarySerializationValueTypeContainsReferences<T>());
+                Throw.InvalidOperationException(Res.UnmanagedMethodTypeArgumentExpected<T>());
             if (data == null!)
                 Throw.ArgumentNullException(Argument.data);
 
@@ -833,7 +862,7 @@ namespace KGySoft.Serialization.Binary
 #if NETFRAMEWORK || NETSTANDARD2_0
             catch (VerificationException e) when (EnvironmentHelper.IsPartiallyTrustedDomain)
             {
-                return Throw.NotSupportedException<T>(Res.BinarySerializationSecuritySettingsConflict, e);
+                return Throw.NotSupportedException<T>(Res.UnsafeSecuritySettingsConflict, e);
             }
 #endif
 #endif
@@ -853,11 +882,16 @@ namespace KGySoft.Serialization.Binary
         /// <exception cref="ArgumentException">The length of <paramref name="data"/> is too small.</exception>
         [SecuritySafeCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public static unsafe T DeserializeValueType<T>(byte[] data, int offset) where T : unmanaged
+        public static unsafe T DeserializeValueType<T>(byte[] data, int offset)
+#if NETFRAMEWORK
+            where T : struct // so older compilers don't say that this member is not supported by the language
+#else
+            where T : unmanaged
+#endif
         {
-            // The unmanaged constraint is not enforced in CLR so we must check it
+            // The unmanaged constraint is not enforced in CLR, so we must check it
             if (Reflector<T>.IsManaged)
-                Throw.InvalidOperationException(Res.BinarySerializationValueTypeContainsReferences<T>());
+                Throw.InvalidOperationException(Res.UnmanagedMethodTypeArgumentExpected<T>());
             if (data == null!)
                 Throw.ArgumentNullException(Argument.data);
             if ((uint)offset > (uint)data.Length)
@@ -880,7 +914,7 @@ namespace KGySoft.Serialization.Binary
 #if NETFRAMEWORK || NETSTANDARD2_0
             catch (VerificationException e) when (EnvironmentHelper.IsPartiallyTrustedDomain)
             {
-                return Throw.NotSupportedException<T>(Res.BinarySerializationSecuritySettingsConflict, e);
+                return Throw.NotSupportedException<T>(Res.UnsafeSecuritySettingsConflict, e);
             }
 #endif
 #endif
@@ -897,11 +931,15 @@ namespace KGySoft.Serialization.Binary
         /// <returns>The deserialized <see cref="ValueType"/> object.</returns>
         [SecuritySafeCritical]
         public static unsafe T[] DeserializeValueArray<T>(byte[] data, int offset, int count)
+#if NETFRAMEWORK
+            where T : struct // so older compilers don't say that this member is not supported by the language
+#else
             where T : unmanaged
+#endif
         {
-            // The unmanaged constraint is not enforced in CLR so we must check it
+            // The unmanaged constraint is not enforced in CLR, so we must check it
             if (Reflector<T>.IsManaged)
-                Throw.InvalidOperationException(Res.BinarySerializationValueTypeContainsReferences<T>());
+                Throw.InvalidOperationException(Res.UnmanagedMethodTypeArgumentExpected<T>());
             if (data == null!)
                 Throw.ArgumentNullException(Argument.data);
             if (count < 0)
@@ -933,7 +971,7 @@ namespace KGySoft.Serialization.Binary
 #if NETFRAMEWORK || NETSTANDARD2_0
             catch (VerificationException e) when (EnvironmentHelper.IsPartiallyTrustedDomain)
             {
-                return Throw.NotSupportedException<T[]>(Res.BinarySerializationSecuritySettingsConflict, e);
+                return Throw.NotSupportedException<T[]>(Res.UnsafeSecuritySettingsConflict, e);
             }
 #endif
 #endif
@@ -1094,28 +1132,48 @@ namespace KGySoft.Serialization.Binary
 
 #if !NETCOREAPP3_0_OR_GREATER
         [SecurityCritical]
-        private static unsafe void DoSerializeValueType<T>(T value, byte[] result) where T : unmanaged
+        private static unsafe void DoSerializeValueType<T>(T value, byte[] result)
+#if NETFRAMEWORK
+            where T : struct
+#else
+            where T : unmanaged
+#endif
         {
             fixed (byte* dst = result)
                 *(T*)dst = value;
         }
 
         [SecuritySafeCritical]
-        private static unsafe T DoDeserializeValueType<T>(byte[] data, int offset) where T : unmanaged
+        private static unsafe T DoDeserializeValueType<T>(byte[] data, int offset)
+#if NETFRAMEWORK
+            where T : struct
+#else
+            where T : unmanaged
+#endif
         {
             fixed (byte* src = &data[offset])
                 return *(T*)src;
         }
 
         [SecurityCritical]
-        private static unsafe void DoSerializeValueArray<T>(T[] array, byte[] result, int len) where T : unmanaged
+        private static unsafe void DoSerializeValueArray<T>(T[] array, byte[] result, int len)
+#if NETFRAMEWORK
+            where T : struct
+#else
+            where T : unmanaged
+#endif
         {
             fixed (void* src = array)
                 Marshal.Copy(new IntPtr(src), result, 0, len);
         }
 
         [SecurityCritical]
-        private static unsafe void DoDeserializeValueArray<T>(byte[] data, int offset, T[] result, int len) where T : unmanaged
+        private static unsafe void DoDeserializeValueArray<T>(byte[] data, int offset, T[] result, int len)
+#if NETFRAMEWORK
+            where T : struct
+#else
+            where T : unmanaged
+#endif
         {
             fixed (void* dst = result)
                 Marshal.Copy(data, offset, new IntPtr(dst), len);

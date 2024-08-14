@@ -567,8 +567,13 @@ namespace KGySoft.Collections
         /// then the cast result may not cover the whole original <see cref="ArraySection{T}"/> to prevent exceeding beyond the available buffer.</para>
         /// </remarks>
         public readonly CastArray<TFrom, TTo> Cast<TFrom, TTo>()
+#if NETFRAMEWORK // To make the method compatible with older compilers
+            where TFrom : struct, T
+            where TTo : struct
+#else
             where TFrom : unmanaged, T
             where TTo : unmanaged
+#endif
         {
 #if NETCOREAPP3_0_OR_GREATER
             return new CastArray<TFrom, TTo>(Unsafe.As<ArraySection<T>, ArraySection<TFrom>>(ref Unsafe.AsRef(in this)));
@@ -588,8 +593,13 @@ namespace KGySoft.Collections
         /// <param name="width">The width of the array to be returned.</param>
         /// <returns>A <see cref="CastArray2D{TFrom,TTo}"/> instance for this <see cref="ArraySection{T}"/>.</returns>
         public readonly CastArray2D<TFrom, TTo> Cast2D<TFrom, TTo>(int height, int width)
-            where TFrom : unmanaged
+#if NETFRAMEWORK // To make the method compatible with older compilers
+            where TFrom : struct, T
+            where TTo : struct
+#else
+            where TFrom : unmanaged, T
             where TTo : unmanaged
+#endif
         {
 #if NETCOREAPP3_0_OR_GREATER
             return new CastArray2D<TFrom, TTo>(Unsafe.As<ArraySection<T>, ArraySection<TFrom>>(ref Unsafe.AsRef(in this)), height, width);
@@ -610,8 +620,13 @@ namespace KGySoft.Collections
         /// <param name="width">The width of the array to be returned.</param>
         /// <returns>A <see cref="CastArray2D{TFrom,TTo}"/> instance for this <see cref="ArraySection{T}"/>.</returns>
         public readonly CastArray3D<TFrom, TTo> Cast3D<TFrom, TTo>(int depth, int height, int width)
-            where TFrom : unmanaged
+#if NETFRAMEWORK // To make the method compatible with older compilers
+            where TFrom : struct, T
+            where TTo : struct
+#else
+            where TFrom : unmanaged, T
             where TTo : unmanaged
+#endif
         {
 #if NETCOREAPP3_0_OR_GREATER
             return new CastArray3D<TFrom, TTo>(Unsafe.As<ArraySection<T>, ArraySection<TFrom>>(ref Unsafe.AsRef(in this)), depth, height, width);

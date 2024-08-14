@@ -162,8 +162,13 @@ namespace KGySoft.CoreLibraries
         /// then the cast result may not cover the whole original <paramref name="array"/> to prevent exceeding beyond the available buffer.</para>
         /// </remarks>
         public static CastArray<TFrom, TTo> Cast<TFrom, TTo>(this TFrom[]? array)
+#if NETFRAMEWORK
+            where TFrom : struct
+            where TTo : struct
+#else
             where TFrom : unmanaged
             where TTo : unmanaged
+#endif
             => new CastArray<TFrom, TTo>(array.AsSection());
 
         /// <summary>
@@ -180,8 +185,13 @@ namespace KGySoft.CoreLibraries
         /// then the cast result may not cover the whole original <paramref name="arraySegment"/> to prevent exceeding beyond the available buffer.</para>
         /// </remarks>
         public static CastArray<TFrom, TTo> Cast<TFrom, TTo>(this ArraySegment<TFrom> arraySegment)
+#if NETFRAMEWORK
+            where TFrom : struct
+            where TTo : struct
+#else
             where TFrom : unmanaged
             where TTo : unmanaged
+#endif
             => new CastArray<TFrom, TTo>(arraySegment);
 
         /// <summary>
@@ -197,8 +207,13 @@ namespace KGySoft.CoreLibraries
         /// <param name="width">The width of the array to be returned.</param>
         /// <returns>A <see cref="CastArray2D{TFrom,TTo}"/> instance using the specified <paramref name="array"/> as its underlying buffer that has the specified dimensions.</returns>
         public static CastArray2D<TFrom, TTo> Cast2D<TFrom, TTo>(this TFrom[] array, int height, int width)
+#if NETFRAMEWORK
+            where TFrom : struct
+            where TTo : struct
+#else
             where TFrom : unmanaged
             where TTo : unmanaged
+#endif
             => new CastArray2D<TFrom, TTo>(array, height, width);
 
         /// <summary>
@@ -214,8 +229,13 @@ namespace KGySoft.CoreLibraries
         /// <param name="width">The width of the array to be returned.</param>
         /// <returns>A <see cref="CastArray2D{TFrom,TTo}"/> instance using the specified <paramref name="arraySegment"/> as its underlying buffer that has the specified dimensions.</returns>
         public static CastArray2D<TFrom, TTo> Cast2D<TFrom, TTo>(this ArraySegment<TFrom> arraySegment, int height, int width)
+#if NETFRAMEWORK
+            where TFrom : struct
+            where TTo : struct
+#else
             where TFrom : unmanaged
             where TTo : unmanaged
+#endif
             => new CastArray2D<TFrom, TTo>(arraySegment, height, width);
 
         /// <summary>
@@ -232,8 +252,13 @@ namespace KGySoft.CoreLibraries
         /// <param name="width">The width of the array to be returned.</param>
         /// <returns>A <see cref="CastArray3D{TFrom,TTo}"/> instance using the specified <paramref name="array"/> as its underlying buffer that has the specified dimensions.</returns>
         public static CastArray3D<TFrom, TTo> Cast3D<TFrom, TTo>(this TFrom[] array, int depth, int height, int width)
+#if NETFRAMEWORK
+            where TFrom : struct
+            where TTo : struct
+#else
             where TFrom : unmanaged
             where TTo : unmanaged
+#endif
             => new CastArray3D<TFrom, TTo>(array, depth, height, width);
 
         /// <summary>
@@ -250,8 +275,13 @@ namespace KGySoft.CoreLibraries
         /// <param name="width">The width of the array to be returned.</param>
         /// <returns>A <see cref="CastArray3D{TFrom,TTo}"/> instance using the specified <paramref name="arraySegment"/> as its underlying buffer that has the specified dimensions.</returns>
         public static CastArray3D<TFrom, TTo> Cast3D<TFrom, TTo>(this ArraySegment<TFrom> arraySegment, int depth, int height, int width)
+#if NETFRAMEWORK
+            where TFrom : struct
+            where TTo : struct
+#else
             where TFrom : unmanaged
             where TTo : unmanaged
+#endif
             => new CastArray3D<TFrom, TTo>(arraySegment, depth, height, width);
 
         #endregion

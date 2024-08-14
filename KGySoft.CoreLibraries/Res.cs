@@ -150,6 +150,15 @@ namespace KGySoft
 
         #endregion
 
+        #region General Internal
+
+        /// <summary>This operation is not supported in a partially trusted domain with the current security settings. You can try the following options:
+        /// - Grant SecurityPermission with the SecurityPermissionFlag.SkipVerification flag when creating the restricted AppDomain.
+        /// - Create the AppDomain with unrestricted permission set.</summary>
+        internal static string UnsafeSecuritySettingsConflict => Get("Unsafe_SecuritySettingsConflict");
+
+        #endregion
+
         #region ArraySection
 
         /// <summary>The underlying array is null.</summary>
@@ -185,11 +194,6 @@ namespace KGySoft
 
         /// <summary>The specified serialization binder cannot be used in safe mode. Only ForwardedTypesSerializationBinder is allowed if its SafeMode property is set to true.</summary>
         internal static string BinarySerializationBinderNotAllowedInSafeMode => Get("BinarySerialization_BinderNotAllowedInSafeMode");
-
-        /// <summary>This operation is not supported in a partially trusted domain with the current security settings. You can try the following options:
-        /// - Grant SecurityPermission with the SecurityPermissionFlag.SkipVerification flag when creating the restricted AppDomain.
-        /// - Create the AppDomain with unrestricted permission set.</summary>
-        internal static string BinarySerializationSecuritySettingsConflict => Get("BinarySerialization_SecuritySettingsConflict");
 
         #endregion
 
@@ -602,6 +606,12 @@ namespace KGySoft
         /// <remarks>Use this method to avoid CA1303 for using string literals in internal errors that never supposed to occur.</remarks>
         internal static string InternalError(string msg) => Get("General_InternalErrorFormat", msg);
 
+        /// <summary>Type '{0}' cannot be used as a type argument of generic type '{1}', because it contains references.</summary>
+        internal static string UnmanagedTypeArgumentExpected<T>(Type genType) => Get("General_UnmanagedTypeArgumentExpectedFormat", typeof(T).GetName(TypeNameKind.LongName), genType.GetName(TypeNameKind.LongName));
+
+        /// <summary>Type '{0}' cannot be the type argument of this method because it contains references.</summary>
+        internal static string UnmanagedMethodTypeArgumentExpected<T>() => Get("General_UnmanagedMethodTypeArgumentExpectedFormat", typeof(T).GetName(TypeNameKind.LongName));
+
         #endregion
 
         #region BinarySerialization
@@ -714,10 +724,7 @@ namespace KGySoft
 
         /// <summary>The stream contains a collection of type '{0}', which is not supported on this platform.</summary>
         internal static string BinarySerializationCollectionPlatformNotSupported(string dataType) => Get("BinarySerialization_CollectionPlatformNotSupportedFormat", dataType);
-
-        /// <summary>Type '{0}' cannot be the type argument of this method because it contains references.</summary>
-        internal static string BinarySerializationValueTypeContainsReferences<T>() => Get("BinarySerialization_ValueTypeContainsReferencesFormat", typeof(T));
-
+        
         /// <summary>Value type '{0}' cannot be deserialized from raw data in safe mode because it contains references. If the serialization stream is from a trusted source you may try to disable safe mode to attempt the deserialization with marshaling.</summary>
         internal static string BinarySerializationValueTypeContainsReferenceSafe(Type type) => Get("BinarySerialization_ValueTypeContainsReferenceSafeFormat", type.GetName(TypeNameKind.LongName));
 
@@ -738,9 +745,6 @@ namespace KGySoft
         #endregion
 
         #region CastArray<TFrom, TTo>
-
-        /// <summary>Type '{0}' cannot be used as a type argument for CastArray&lt;TFrom, TTo&gt; because it contains references.</summary>
-        internal static string CastArrayNotAnUnmanagedType(Type type) => Get("CastArray_NotAnUnmanagedTypeFormat", type.GetName(TypeNameKind.LongName));
 
         /// <summary>Length of buffer is too big to reinterpret it as type '{0}'.</summary>
         internal static string CastArrayBufferTooBigForCastLength(Type type) => Get("CastArray_BufferTooBigForCastLengthFormat", type.GetName(TypeNameKind.LongName));

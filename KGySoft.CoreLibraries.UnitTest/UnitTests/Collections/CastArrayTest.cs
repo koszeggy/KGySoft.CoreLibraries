@@ -16,6 +16,7 @@
 #region Usings
 
 using System;
+using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Security.Permissions;
@@ -25,7 +26,6 @@ using KGySoft.Collections;
 using KGySoft.Reflection;
 
 using NUnit.Framework;
-using NUnit.Framework.Constraints;
 
 #endregion
 
@@ -153,8 +153,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             for (int i = 0; i < wordAsByte.Length; i++)
             {
                 [SuppressMessage("ReSharper", "AccessToModifiedClosure", Justification = "Not accessed after returning from the call")]
-                int Func() => wordAsByte.Slice(i, wordAsByte.Length - i).Length;
-                Assert.That((ActualValueDelegate<int>)Func, i % 2 == 0 ? Is.EqualTo(wordAsByte.Length - i) : NUnit.Framework.Throws.ArgumentException);
+                int SliceAndGetLength() => wordAsByte.Slice(i, wordAsByte.Length - i).Length;
+
+                // ISSUE: Assert.That throws SecurityException from partially trusted domain when asserts ArgumentException
+                //Assert.That((ActualValueDelegate<int>)SliceAndGetLength, i % 2 == 0 ? Is.EqualTo(wordAsByte.Length - i) : NUnit.Framework.Throws.ArgumentException);
+
+                if (i % 2 == 0)
+                    Assert.AreEqual(wordAsByte.Length - i, SliceAndGetLength());
+                else
+                    Throws<ArgumentException>(() => SliceAndGetLength(), Res.CastArraySliceWrongStartIndex(i, typeof(ushort), typeof(byte)));
 
                 // but Span/Memory always works
 #if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
@@ -190,15 +197,27 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             }
         }
 
+        [Test]
+        public void ConstraintTest()
+        {
+            Throws<TypeInitializationException>(() => Reflector.CreateInstance(typeof(CastArray<,>), [typeof(int), typeof(DictionaryEntry)], new int[1].AsSection()));
+        }
+
+        [Test]
+        public void SerializationTest()
+        {
+            throw new NotImplementedException();
+        }
+
 #if NETFRAMEWORK
         [Test]
         [SecuritySafeCritical]
         public void CastArray_PartiallyTrusted()
         {
-            // These permissions are just for a possible attached VisualStudio when the test fails. The code does not require any special permissions.
             var domain = CreateSandboxDomain(
-                new SecurityPermission(SecurityPermissionFlag.UnmanagedCode),
-                new FileIOPermission(PermissionState.Unrestricted));
+                new SecurityPermission(SecurityPermissionFlag.UnmanagedCode | SecurityPermissionFlag.SerializationFormatter),
+                new FileIOPermission(PermissionState.Unrestricted),
+                new ReflectionPermission(ReflectionPermissionFlag.MemberAccess));
             var handle = Activator.CreateInstance(domain, Assembly.GetExecutingAssembly().FullName, typeof(Sandbox).FullName!);
             var sandbox = (Sandbox)handle.Unwrap();
             try

@@ -22,8 +22,13 @@ using System;
 namespace KGySoft.Collections
 {
     public readonly struct CastArray3D<TFrom, TTo>
+#if NETFRAMEWORK // To make the type compatible with older compilers. Unmanaged is asserted in the wrapped CastArray<TFrom, TTo>.
+        where TFrom : struct
+        where TTo : struct
+#else
         where TFrom : unmanaged
         where TTo : unmanaged
+#endif
     {
         #region Fields
 

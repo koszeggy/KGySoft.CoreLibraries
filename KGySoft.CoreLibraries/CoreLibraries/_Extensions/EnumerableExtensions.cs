@@ -1745,11 +1745,14 @@ namespace KGySoft.CoreLibraries
 #if NET9_0_OR_GREATER
                     // Iterator<T>.GetCount()
                     int? result = source.GetIteratorCount();
-#endif
 
                     // IIListProvider<T>
                     if (result == null)
                         result = source.GetListProviderCount();
+#else
+                    // IIListProvider<T>
+                    int? result = source.GetListProviderCount();
+#endif
 
                     count = result >= 0 ? result.Value : default;
                     return result >= 0;

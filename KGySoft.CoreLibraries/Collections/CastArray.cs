@@ -36,6 +36,14 @@ using KGySoft.Reflection;
 
 #endregion
 
+#region Suppressions
+
+#if !(NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER)
+#pragma warning disable CS1574 // the documentation contains types that are not available in every target
+#endif
+
+#endregion
+
 namespace KGySoft.Collections
 {
     /// <summary>
@@ -47,7 +55,8 @@ namespace KGySoft.Collections
     /// <typeparam name="TTo">The reinterpreted element type of the underlying array.</typeparam>
     /// <remarks>
     /// TODO: Pooling example. Returning to the pool must be done by the caller. You can use a self-allocating ArraySection, which can be released in the end.
-    /// TODO: Slice may throw ArgumentException
+    /// TODO: Slice may throw ArgumentException.
+    /// TODO: .NET Framework 4.x only: in a partially trusted AppDomain may throw NotSupportedException, grant SecurityPermission with the SecurityPermissionFlag.SkipVerification flag
     /// </remarks>
     [Serializable]
     [DebuggerTypeProxy(typeof(CastArray<,>.CastArrayDebugView))]
@@ -56,8 +65,13 @@ namespace KGySoft.Collections
 #if !(NET35 || NET40)
         , IReadOnlyList<TTo>
 #endif
+#if NETFRAMEWORK // To make the type compatible with older compilers
+        where TFrom : struct
+        where TTo : struct
+#else
         where TFrom : unmanaged
         where TTo : unmanaged
+#endif
     {
         #region Nested Types
 
@@ -272,7 +286,19 @@ namespace KGySoft.Collections
             {
                 if ((uint)index >= (uint)length)
                     Throw.IndexOutOfRangeException();
+#if NETFRAMEWORK || NETSTANDARD2_0
+                try
+                {
+                    return ref UnsafeGetRef(index);
+                }
+                catch (VerificationException e) when (EnvironmentHelper.IsPartiallyTrustedDomain)
+                {
+                    Throw.NotSupportedException(Res.UnsafeSecuritySettingsConflict, e);
+                    throw null; //return ref this[default]; // Never reached. Just cannot do return default, and throw should be avoided because it prevents inlining.
+                }
+#else
                 return ref UnsafeGetRef(index);
+#endif
             }
         }
 
@@ -378,11 +404,12 @@ namespace KGySoft.Collections
 
         static CastArray()
         {
-            // The unmanaged constraint is just a C# thing for new compilers but the CLR still allows any struct.
-            if (typeof(TFrom).IsManaged())
-                Throw.InvalidOperationException(Res.CastArrayNotAnUnmanagedType(typeof(TFrom)));
-            else if (typeof(TTo).IsManaged())
-                Throw.InvalidOperationException(Res.CastArrayNotAnUnmanagedType(typeof(TTo)));
+            // It's not just for the .NET Framework:
+            // The unmanaged constraint is just a C# thing for newer compilers but the CLR still allows using any struct (e.g. by reflection).
+            if (Reflector<TFrom>.IsManaged)
+                Throw.InvalidOperationException(Res.UnmanagedTypeArgumentExpected<TFrom>(typeof(CastArray<,>)));
+            else if (Reflector<TTo>.IsManaged)
+                Throw.InvalidOperationException(Res.UnmanagedTypeArgumentExpected<TTo>(typeof(CastArray<,>)));
         }
 
         #endregion
@@ -492,19 +519,31 @@ namespace KGySoft.Collections
         public CastArray3D<TFrom, TTo> As3D(int depth, int height, int width) => new CastArray3D<TFrom, TTo>(this, depth, height, width);
 
         public CastArray<TFrom, T> Cast<T>()
-            where T : unmanaged
+#if NETFRAMEWORK
+            where T : struct
+#else
+            where T: unmanaged
+#endif
         {
             return buffer.Cast<TFrom, T>();
         }
 
         public CastArray2D<TFrom, T> Cast2D<T>(int height, int width)
+#if NETFRAMEWORK
+            where T : struct
+#else
             where T : unmanaged
+#endif
         {
             return buffer.Cast2D<TFrom, T>(height, width);
         }
 
         public CastArray3D<TFrom, T> Cast3D<T>(int depth, int height, int width)
+#if NETFRAMEWORK
+            where T : struct
+#else
             where T : unmanaged
+#endif
         {
             return buffer.Cast3D<TFrom, T>(depth, height, width);
         }
@@ -515,12 +554,18 @@ namespace KGySoft.Collections
         {
 #if NETCOREAPP3_0_OR_GREATER
             return ref Unsafe.Add(ref Unsafe.As<TFrom, TTo>(ref buffer.GetElementReferenceInternal(0)), index);
-#else
-            unsafe
+#elif NETFRAMEWORK || NETSTANDARD2_0
+            try
             {
-                fixed (TFrom* pBuf = &buffer.GetElementReferenceInternal(0))
-                    return ref ((TTo*)pBuf)[index];
+                return ref DoUnsafeGetRef(index);
             }
+            catch (VerificationException e) when (EnvironmentHelper.IsPartiallyTrustedDomain)
+            {
+                Throw.NotSupportedException(Res.UnsafeSecuritySettingsConflict, e);
+                return ref this[default]; // Never reached. Just cannot do return default, and throw should be avoided because it prevents inlining.
+            }
+#else
+            return ref DoUnsafeGetRef(index);
 #endif
         }
 
@@ -533,12 +578,18 @@ namespace KGySoft.Collections
 
 #if NETCOREAPP3_0_OR_GREATER
             return ref Unsafe.As<TFrom, TTo>(ref buffer.GetElementReferenceInternal(0));
-#else
-            unsafe
+#elif NETFRAMEWORK || NETSTANDARD2_0
+            try
             {
-                fixed (TFrom* pBuf = &buffer.GetElementReferenceInternal(0))
-                    return ref *((TTo*)pBuf);
+                return ref DoUnsafeGetRef(0);
             }
+            catch (VerificationException e) when (EnvironmentHelper.IsPartiallyTrustedDomain)
+            {
+                Throw.NotSupportedException(Res.UnsafeSecuritySettingsConflict, e);
+                return ref this[default]; // Never reached. Just cannot do return default, and throw should be avoided because it prevents inlining.
+            }
+#else
+            return ref DoUnsafeGetRef(0);
 #endif
         }
 
@@ -550,15 +601,20 @@ namespace KGySoft.Collections
 
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             return AsSpan.ToArray();
+#elif NETFRAMEWORK || NETSTANDARD2_0
+            try
+            {
+                TTo[] result = new TTo[length];
+                DoCopyToUnsafe(ref result[0]);
+                return result;
+            }
+            catch (VerificationException e) when (EnvironmentHelper.IsPartiallyTrustedDomain)
+            {
+                return Throw.NotSupportedException<TTo[]?>(Res.UnsafeSecuritySettingsConflict, e);
+            }
 #else
             TTo[] result = new TTo[length];
-            unsafe
-            {
-                fixed (void* pSrc = &buffer.GetElementReferenceUnchecked(0))
-                fixed (void* pDst = result)
-                    MemoryHelper.CopyMemory(pSrc, pDst, (long)length * sizeof(TTo));
-            }
-
+            DoCopyToUnsafe(ref result[0]);
             return result;
 #endif
         }
@@ -579,6 +635,8 @@ namespace KGySoft.Collections
         public int IndexOf(TTo item)
         {
             // TODO: AsSpan.IndexOf, when TTo is IEquatable will be available: https://github.com/dotnet/csharplang/discussions/6308#discussioncomment-3212915
+            //if (TTo is IComparable TComparable)
+            //    return AsSpan.IndexOf<TComparable>(item);
 
             // Needed explicitly if we use GetPinnableReference or GetElementReferenceInternal
             if (IsNullOrEmpty)
@@ -593,6 +651,8 @@ namespace KGySoft.Collections
                 if (EqualityComparer<TTo>.Default.Equals(Unsafe.Add(ref current, i), item))
                     return i;
             }
+
+            return -1;
 #elif NETCOREAPP3_0_OR_GREATER
             var comparer = ComparerHelper<TTo>.EqualityComparer;
             ref TTo current = ref Unsafe.As<TFrom, TTo>(ref buffer.GetElementReferenceInternal(0));
@@ -601,31 +661,20 @@ namespace KGySoft.Collections
                 if (comparer.Equals(Unsafe.Add(ref current, i), item))
                     return i;
             }
-#else
-            var comparer = ComparerHelper<TTo>.EqualityComparer;
 
-#if NETFRAMEWORK || NETSTANDARD2_0
-            if (EnvironmentHelper.IsPartiallyTrustedDomain)
-            {
-                // TODO: Simple case if TFrom is dividable by TTo. Otherwise, maybe the same handling as in SerializeValueArray
-//#error TODO (see every other unsafe code, too)
-            }
-#endif
-
-            unsafe
-            {
-                fixed (TFrom* ptr = &buffer.GetElementReferenceInternal(0))
-                {
-                    TTo* pTo = (TTo*)ptr;
-                    for (int i = 0; i < length; i++)
-                    {
-                        if (comparer.Equals(pTo[i], item))
-                            return i;
-                    }
-                }
-            }
-#endif
             return -1;
+#elif NETFRAMEWORK || NETSTANDARD2_0
+            try
+            {
+                return DoIndexOfUnsafe(item);
+            }
+            catch (VerificationException e) when (EnvironmentHelper.IsPartiallyTrustedDomain)
+            {
+                return Throw.NotSupportedException<int>(Res.UnsafeSecuritySettingsConflict, e);
+            }
+#else
+            return DoIndexOfUnsafe(item);
+#endif
         }
 
         /// <summary>
@@ -656,16 +705,23 @@ namespace KGySoft.Collections
 
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             AsSpan.CopyTo(target.AsSpan(targetIndex));
+#elif NETFRAMEWORK || NETSTANDARD2_0
+            if (IsNullOrEmpty)
+                return;
+
+            try
+            {
+                DoCopyToUnsafe(ref target[targetIndex]);
+            }
+            catch (VerificationException e) when (EnvironmentHelper.IsPartiallyTrustedDomain)
+            {
+                Throw.NotSupportedException(Res.UnsafeSecuritySettingsConflict, e);
+            }
 #else
             if (IsNullOrEmpty)
                 return;
 
-            unsafe
-            {
-                fixed (void* pSrc = &buffer.GetElementReferenceUnchecked(0))
-                fixed (TTo* pDst = target)
-                    MemoryHelper.CopyMemory(pSrc, pDst + targetIndex, (long)length * sizeof(TTo));
-            }
+            DoCopyToUnsafe(ref target[targetIndex]);
 #endif
         }
 
@@ -694,16 +750,23 @@ namespace KGySoft.Collections
 
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             AsSpan.CopyTo(target.AsSpan.Slice(targetIndex));
+#elif NETFRAMEWORK || NETSTANDARD2_0
+            if (IsNullOrEmpty)
+                return;
+
+            try
+            {
+                DoCopyToUnsafe(ref target.UnsafeGetRef(targetIndex));
+            }
+            catch (VerificationException e) when (EnvironmentHelper.IsPartiallyTrustedDomain)
+            {
+                Throw.NotSupportedException(Res.UnsafeSecuritySettingsConflict, e);
+            }
 #else
             if (IsNullOrEmpty)
                 return;
 
-            unsafe
-            {
-                fixed (void* pSrc = &buffer.GetElementReferenceUnchecked(0))
-                fixed (TTo* pDst = target)
-                    MemoryHelper.CopyMemory(pSrc, pDst + targetIndex, (long)length * sizeof(TTo));
-            }
+            DoCopyToUnsafe(ref target.UnsafeGetRef(targetIndex));
 #endif
         }
 
@@ -790,6 +853,48 @@ namespace KGySoft.Collections
         void IList.Insert(int index, object? item) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
         void IList.Remove(object? item) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
         void IList.RemoveAt(int index) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
+
+        #endregion
+
+        #region Private Methods
+
+#if !(NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER)
+        [SecurityCritical]
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        private unsafe ref TTo DoUnsafeGetRef(int index)
+        {
+            fixed (TFrom* pBuf = &buffer.GetElementReferenceInternal(0))
+                return ref ((TTo*)pBuf)[index];
+        }
+
+        [SecurityCritical]
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        private unsafe void DoCopyToUnsafe(ref TTo target)
+        {
+            fixed (void* pSrc = &buffer.GetElementReferenceInternal(0))
+            fixed (TTo* pDst = &target)
+                MemoryHelper.CopyMemory(pSrc, pDst, (long)length * sizeof(TTo));
+        }
+
+        [SecuritySafeCritical]
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        private unsafe int DoIndexOfUnsafe(TTo item)
+        {
+            var comparer = ComparerHelper<TTo>.EqualityComparer;
+            fixed (TFrom* ptr = &buffer.GetElementReferenceInternal(0))
+            {
+                TTo* pTo = (TTo*)ptr;
+                for (int i = 0; i < length; i++)
+                {
+                    if (comparer.Equals(pTo[i], item))
+                        return i;
+                }
+            }
+
+            return -1;
+        }
+
+#endif
 
         #endregion
 

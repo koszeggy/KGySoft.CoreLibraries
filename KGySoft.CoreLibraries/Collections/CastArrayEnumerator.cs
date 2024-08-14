@@ -31,8 +31,13 @@ namespace KGySoft.Collections
     /// <typeparam name="TFrom">The element type of the actual underlying buffer.</typeparam>
     /// <typeparam name="TTo">The type of the enumerated elements.</typeparam>
     public struct CastArrayEnumerator<TFrom, TTo> : IEnumerator<TTo>
+#if NETFRAMEWORK // To make the type compatible with older compilers. Unmanaged is asserted in the wrapped CastArray<TFrom, TTo>.
+        where TFrom : struct
+        where TTo : struct
+#else
         where TFrom : unmanaged
         where TTo : unmanaged
+#endif
     {
         #region Fields
 
