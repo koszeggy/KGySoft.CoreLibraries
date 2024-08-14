@@ -42,6 +42,10 @@ using KGySoft.Reflection;
 #pragma warning disable CS1574 // the documentation contains types that are not available in every target
 #endif
 
+#if NETFRAMEWORK
+#pragma warning disable CS8500 // This takes the address of, gets the size of, or declares a pointer to a managed type - false alarm, the static constructor constrains unmanaged type arguments
+#endif
+
 #endregion
 
 namespace KGySoft.Collections
@@ -106,7 +110,7 @@ namespace KGySoft.Collections
             public override unsafe MemoryHandle Pin(int elementIndex = 0)
             {
                 // This must be before mutating anything because the index validation can throw an exception.
-                ref TTo refResult = ref castArray[elementIndex];
+                ref TTo refResult = ref castArray.GetElementReference(elementIndex);
 
                 // It's alright to lock on this, this instance is not exposed publicly.
                 lock (this)
@@ -278,26 +282,42 @@ namespace KGySoft.Collections
         
         #region Public Indexers
 
-        public ref TTo this[int index]
+        public TTo this[int index]
         {
-            [SecuritySafeCritical]
+            // NOTE: We could simply use just ref returning indexer and implement IList<TTo>.this[int] explicitly,
+            // but that may cause a "not supported by the language" error when this library is used by older compilers that try to access the indexer.
             [MethodImpl(MethodImpl.AggressiveInlining)]
             get
             {
-                if ((uint)index >= (uint)length)
-                    Throw.IndexOutOfRangeException();
 #if NETFRAMEWORK || NETSTANDARD2_0
                 try
                 {
-                    return ref UnsafeGetRef(index);
+                    return GetElementReference(index);
                 }
                 catch (VerificationException e) when (EnvironmentHelper.IsPartiallyTrustedDomain)
                 {
                     Throw.NotSupportedException(Res.UnsafeSecuritySettingsConflict, e);
-                    throw null; //return ref this[default]; // Never reached. Just cannot do return default, and throw should be avoided because it prevents inlining.
+                    return GetElementReference(index); // Never reached. Just cannot do return default, and throw should be avoided because it prevents inlining.
                 }
 #else
-                return ref UnsafeGetRef(index);
+                return GetElementReference(index);
+#endif
+            }
+
+            [MethodImpl(MethodImpl.AggressiveInlining)]
+            set
+            {
+#if NETFRAMEWORK || NETSTANDARD2_0
+                try
+                {
+                    GetElementReference(index) = value;
+                }
+                catch (VerificationException e) when (EnvironmentHelper.IsPartiallyTrustedDomain)
+                {
+                    Throw.NotSupportedException(Res.UnsafeSecuritySettingsConflict, e);
+                }
+#else
+                GetElementReference(index) = value;
 #endif
             }
         }
@@ -305,16 +325,6 @@ namespace KGySoft.Collections
         #endregion
 
         #region Explicitly Implemented Interface Indexers
-
-        TTo IList<TTo>.this[int index]
-        {
-            get => this[index];
-            set => this[index] = value;
-        }
-
-#if !(NET35 || NET40)
-        TTo IReadOnlyList<TTo>.this[int index] => this[index];
-#endif
 
         object? IList.this[int index]
         {
@@ -548,24 +558,26 @@ namespace KGySoft.Collections
             return buffer.Cast3D<TFrom, T>(depth, height, width);
         }
 
+        [SecuritySafeCritical]
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public ref TTo GetElementReference(int index)
+        {
+            if ((uint) index >= (uint) length)
+                Throw.IndexOutOfRangeException();
+
+            // There is no point in putting the try...catch (VerificationException) here. When it's thrown, it's already for this method as it has a ref return.
+            return ref GetElementReferenceUnsafe(index);
+        }
+
         [SecurityCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public ref TTo UnsafeGetRef(int index)
+        public ref TTo GetElementReferenceUnsafe(int index)
         {
 #if NETCOREAPP3_0_OR_GREATER
             return ref Unsafe.Add(ref Unsafe.As<TFrom, TTo>(ref buffer.GetElementReferenceInternal(0)), index);
-#elif NETFRAMEWORK || NETSTANDARD2_0
-            try
-            {
-                return ref DoUnsafeGetRef(index);
-            }
-            catch (VerificationException e) when (EnvironmentHelper.IsPartiallyTrustedDomain)
-            {
-                Throw.NotSupportedException(Res.UnsafeSecuritySettingsConflict, e);
-                return ref this[default]; // Never reached. Just cannot do return default, and throw should be avoided because it prevents inlining.
-            }
 #else
-            return ref DoUnsafeGetRef(index);
+            // There is no point in putting the try...catch (VerificationException) here. When it's thrown, it's already for this method as it has a ref return.
+            return ref DoGetElementReferenceUnsafe(index);
 #endif
         }
 
@@ -581,12 +593,12 @@ namespace KGySoft.Collections
 #elif NETFRAMEWORK || NETSTANDARD2_0
             try
             {
-                return ref DoUnsafeGetRef(0);
+                return ref DoGetElementReferenceUnsafe(0);
             }
             catch (VerificationException e) when (EnvironmentHelper.IsPartiallyTrustedDomain)
             {
                 Throw.NotSupportedException(Res.UnsafeSecuritySettingsConflict, e);
-                return ref this[default]; // Never reached. Just cannot do return default, and throw should be avoided because it prevents inlining.
+                return ref GetPinnableReference(); // Never reached. Just cannot do return default, and throw should be avoided because it prevents inlining.
             }
 #else
             return ref DoUnsafeGetRef(0);
@@ -756,7 +768,7 @@ namespace KGySoft.Collections
 
             try
             {
-                DoCopyToUnsafe(ref target.UnsafeGetRef(targetIndex));
+                DoCopyToUnsafe(ref target.GetElementReferenceUnsafe(targetIndex));
             }
             catch (VerificationException e) when (EnvironmentHelper.IsPartiallyTrustedDomain)
             {
@@ -839,7 +851,7 @@ namespace KGySoft.Collections
             {
                 for (int i = 0; i < length; i++)
                 {
-                    objectArray[index] = UnsafeGetRef(i);
+                    objectArray[index] = GetElementReferenceUnsafe(i);
                     index += 1;
                 }
 
@@ -861,7 +873,7 @@ namespace KGySoft.Collections
 #if !(NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER)
         [SecurityCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        private unsafe ref TTo DoUnsafeGetRef(int index)
+        private unsafe ref TTo DoGetElementReferenceUnsafe(int index)
         {
             fixed (TFrom* pBuf = &buffer.GetElementReferenceInternal(0))
                 return ref ((TTo*)pBuf)[index];

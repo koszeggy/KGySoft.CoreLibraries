@@ -18,6 +18,7 @@
 using System;
 using System.Collections;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Reflection;
 using System.Security.Permissions;
 using System.Security;
@@ -203,10 +204,17 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Throws<TypeInitializationException>(() => Reflector.CreateInstance(typeof(CastArray<,>), [typeof(int), typeof(DictionaryEntry)], new int[1].AsSection()));
         }
 
+#if !NETFRAMEWORK
+        [Obsolete]
+#endif
         [Test]
         public void SerializationTest()
         {
-            throw new NotImplementedException();
+            var castArray = CastArray<int, byte>.Null;
+            Assert.AreEqual(castArray, castArray.DeepClone());
+
+            castArray = new[] { 1, 2, 3, 4, 5 }.Cast<int, byte>();
+            Assert.IsTrue(castArray.SequenceEqual(castArray.DeepClone()));
         }
 
 #if NETFRAMEWORK
@@ -223,6 +231,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             try
             {
                 sandbox.DoTest();
+            }
+            catch (NotSupportedException e) when (e.Message == Res.UnsafeSecuritySettingsConflict)
+            {
+                Assert.Inconclusive($"Not supported: {e}");
             }
             catch (SecurityException e)
             {

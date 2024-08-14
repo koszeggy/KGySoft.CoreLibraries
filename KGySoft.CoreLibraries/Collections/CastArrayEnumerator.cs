@@ -58,7 +58,7 @@ namespace KGySoft.Collections
         public readonly TTo Current
         {
             [MethodImpl(MethodImpl.AggressiveInlining)]
-            get => index >= 0 && index < castArray.Length ? castArray.UnsafeGetRef(index) : default;
+            get => index >= 0 && index < castArray.Length ? castArray.GetElementReferenceUnsafe(index) : default;
         }
 
         #endregion
