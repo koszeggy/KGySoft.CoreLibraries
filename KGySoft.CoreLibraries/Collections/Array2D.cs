@@ -17,7 +17,7 @@
 
 using System;
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
-using System.Buffers; 
+using System.Buffers;
 #endif
 using System.Collections;
 using System.Collections.Generic;

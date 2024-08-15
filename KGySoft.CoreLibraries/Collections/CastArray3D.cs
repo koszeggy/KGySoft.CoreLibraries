@@ -44,8 +44,7 @@ namespace KGySoft.Collections
 
         #region Properties
 
-        public CastArray<TFrom, TTo> As1D => buffer;
-        public ArraySection<TFrom> Buffer => buffer.Buffer;
+        public CastArray<TFrom, TTo> Buffer => buffer;
         // TODO: Span, Memory
         // TODO: Indexer
 
@@ -66,8 +65,8 @@ namespace KGySoft.Collections
             if (buffer.Length < size)
                 Throw.ArgumentException(Argument.buffer, Res.ArraySectionInsufficientCapacity);
 
-            // Slicing when capacity was bigger than needed. This must always work because starting at 0.
-            this.buffer = size == buffer.Length ? buffer : buffer.Slice(0, size);
+            // Slicing when capacity was bigger than needed. This must always work because it already starts at TFrom boundary so using the faster constructor.
+            this.buffer = size == buffer.Length ? buffer : new CastArray<TFrom, TTo>(buffer.Buffer, size);
             this.depth = depth;
             this.height = height;
             this.width = width;
