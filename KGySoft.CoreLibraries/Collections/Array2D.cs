@@ -24,6 +24,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Security;
 
 #endregion
 
@@ -158,11 +159,12 @@ namespace KGySoft.Collections
         /// <param name="y">The Y-coordinate (row index) of the item to get or set.</param>
         /// <param name="x">The X-coordinate (column index) of the item to get or set.</param>
         /// <returns>The element at the specified indices.</returns>
+        /// <exception cref="IndexOutOfRangeException">The specified indices refer to an item outside the bounds of the underlying <see cref="Buffer"/>.</exception>
         /// <remarks>
         /// <para>Though this member does not validate the coordinates separately, it does not allow indexing beyond the <see cref="Length"/> of the underlying <see cref="Buffer"/>.
         /// To omit also the length check, allowing to get/set any element in the whole <see cref="ArraySection{T}.UnderlyingArray"/>,
         /// use the <see cref="GetElementUnchecked">GetElementUnchecked</see>/<see cref="SetElementUnchecked">SetElementUnchecked</see> methods instead.</para>
-        /// <para>To return a reference to an element use the <see cref="GetElementReference">GetElementReference</see> method instead.</para>
+        /// <para>If the compiler you use supports members that return a value by reference, you can also use the <see cref="GetElementReference">GetElementReference</see> method.</para>
         /// </remarks>
         public readonly T this[int y, int x]
         {
@@ -177,6 +179,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="y">The index of the row to obtain.</param>
         /// <returns>An <see cref="ArraySection{T}"/> instance that represents a row of this <see cref="Array2D{T}"/> instance.</returns>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="y"/> is out of range.</exception>
         public readonly ArraySection<T> this[int y]
         {
             [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -195,6 +198,7 @@ namespace KGySoft.Collections
         /// <param name="y">The index of the row to obtain.</param>
         /// <returns>An <see cref="ArraySection{T}"/> instance that represents a row of this <see cref="Array2D{T}"/> instance.</returns>
         /// <remarks><note>This member is available in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="y"/> is out of range.</exception>
         public readonly ArraySection<T> this[Index y]
         {
             // Note: must be implemented explicitly because the auto generated indexer would misinterpret Length
@@ -208,6 +212,7 @@ namespace KGySoft.Collections
         /// <param name="range">The range of rows to get.</param>
         /// <returns>The subrange of rows of the current <see cref="Array2D{T}"/> instance indicated by the specified <paramref name="range"/>.</returns>
         /// <remarks><note>This member is available in .NET Core 3.0/.NET Standard 2.1 and above.</note></remarks>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="range"/> is out of range.</exception>
         public readonly Array2D<T> this[Range range]
         {
             // Note: must be implemented explicitly because the auto generated indexer would misinterpret Length
@@ -350,6 +355,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="startRowIndex">The offset that points to the first row of the returned <see cref="Array2D{T}"/>.</param>
         /// <returns>The subrange of rows of the current <see cref="Array2D{T}"/> instance starting with the specified <paramref name="startRowIndex"/>.</returns>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="startRowIndex"/> is out of range.</exception>
         public readonly Array2D<T> Slice(int startRowIndex) => new Array2D<T>(buffer.Slice(startRowIndex * width), height - startRowIndex, width);
 
         /// <summary>
@@ -358,6 +364,7 @@ namespace KGySoft.Collections
         /// <param name="startRowIndex">The offset that points to the first row of the returned <see cref="Array2D{T}"/>.</param>
         /// <param name="rowCount">The desired number of rows of the returned <see cref="Array2D{T}"/>.</param>
         /// <returns>The subrange of rows of the current <see cref="Array2D{T}"/> instance indicated by the specified <paramref name="startRowIndex"/> and <paramref name="rowCount"/>.</returns>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="startRowIndex"/> or <paramref name="rowCount"/> is out of range.</exception>
         public readonly Array2D<T> Slice(int startRowIndex, int rowCount) => new Array2D<T>(buffer.Slice(startRowIndex * width, rowCount * width), rowCount, width);
 
         /// <summary>
@@ -370,7 +377,11 @@ namespace KGySoft.Collections
         /// <para>Though this method does not validate the coordinates separately, it does not allow indexing beyond the <see cref="Length"/> of the underlying <see cref="Buffer"/>.
         /// To omit also the length check, allowing to get the reference to any element in the whole <see cref="ArraySection{T}.UnderlyingArray"/>,
         /// use the <see cref="GetElementReferenceUnchecked">GetElementReferenceUnchecked</see> method instead.</para>
+        /// <note>This method returns a value by reference. If this library is used by an older compiler that does not support such members,
+        /// use the <see cref="this[int,int]">indexer</see> instead.</note>
         /// </remarks>
+        /// <exception cref="IndexOutOfRangeException">The specified indices refer to an item outside the bounds of the underlying <see cref="Buffer"/>.</exception>
+        /// <exception cref="VerificationException">.NET Framework only: you execute this method in a partially trusted <see cref="AppDomain"/> that does not allow executing unverifiable code.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public readonly ref T GetElementReference(int y, int x) => ref buffer.GetElementReference(y * width + x);
 
@@ -382,6 +393,11 @@ namespace KGySoft.Collections
         /// <param name="y">The Y-coordinate (row index) of the item to get.</param>
         /// <param name="x">The X-coordinate (column index) of the item to get.</param>
         /// <returns>The element at the specified indices.</returns>
+        /// <remarks>
+        /// <para>If the compiler you use supports members that return a value by reference, you can also use
+        /// the <see cref="GetElementReferenceUnchecked">GetElementReferenceUnchecked</see> method.</para>
+        /// </remarks>
+        /// <exception cref="IndexOutOfRangeException">The specified indices refer to an invalid index in the actual underlying array.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public readonly T GetElementUnchecked(int y, int x) => buffer.GetElementUnchecked(y * width + x);
 
@@ -393,6 +409,11 @@ namespace KGySoft.Collections
         /// <param name="y">The Y-coordinate (row index) of the item to set.</param>
         /// <param name="x">The X-coordinate (column index) of the item to set.</param>
         /// <param name="value">The value to set.</param>
+        /// <remarks>
+        /// <para>If the compiler you use supports members that return a value by reference, you can also use
+        /// the <see cref="GetElementReferenceUnchecked">GetElementReferenceUnchecked</see> method.</para>
+        /// </remarks>
+        /// <exception cref="IndexOutOfRangeException">The specified indices refer to an invalid index in the actual underlying array.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public readonly void SetElementUnchecked(int y, int x, T value) => buffer.SetElementUnchecked(y * width + x, value);
 
@@ -405,6 +426,12 @@ namespace KGySoft.Collections
         /// <param name="y">The Y-coordinate (row index) of the item to get the reference for.</param>
         /// <param name="x">The X-coordinate (column index) of the item to get the reference for.</param>
         /// <returns>The reference to the element at the specified coordinates.</returns>
+        /// <remarks>
+        /// <note>This method returns a value by reference. If this library is used by an older compiler that does not support such members,
+        /// use the <see cref="GetElementUnchecked">GetElementUnchecked</see>/<see cref="SetElementUnchecked">SetElementUnchecked</see> methods instead.</note>
+        /// </remarks>
+        /// <exception cref="IndexOutOfRangeException">The specified indices refer to an invalid index in the actual underlying array.</exception>
+        /// <exception cref="VerificationException">.NET Framework only: you execute this method in a partially trusted <see cref="AppDomain"/> that does not allow executing unverifiable code.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public readonly ref T GetElementReferenceUnchecked(int y, int x) => ref buffer.GetElementReferenceUnchecked(y * width + x);
 
@@ -432,7 +459,9 @@ namespace KGySoft.Collections
         /// Returns a reference to the first element in this <see cref="Array2D{T}"/>.
         /// This makes possible to use the <see cref="Array2D{T}"/> in a <see langword="fixed"/> statement.
         /// </summary>
-        /// <returns>A reference to the first element in this <see cref="Array2D{T}"/>, or <see langword="null"/> if <see cref="Length"/> is zero.</returns>
+        /// <returns>A reference to the first element in this <see cref="Array2D{T}"/>.</returns>
+        /// <exception cref="InvalidOperationException"><see cref="IsNullOrEmpty"/> is <see langword="true"/>.</exception>
+        /// <exception cref="VerificationException">.NET Framework only: you execute this method in a partially trusted <see cref="AppDomain"/> that does not allow executing unverifiable code.</exception>
         public readonly ref T GetPinnableReference() => ref buffer.GetPinnableReference();
 
         /// <summary>
@@ -486,7 +515,7 @@ namespace KGySoft.Collections
             {
                 for (int x = 0; x < width; x++)
                 {
-                    result[y, x] = buffer.GetItemInternal(i);
+                    result[y, x] = buffer.GetItemInternal(i); // not GetElementReferenceInternal so it always works even in partially trusted domains
                     i += 1;
                 }
             }
@@ -511,7 +540,7 @@ namespace KGySoft.Collections
                 result[y] = row;
                 for (int x = 0; x < width; x++)
                 {
-                    row[x] = buffer.GetItemInternal(i);
+                    row[x] = buffer.GetItemInternal(i); // not GetElementReferenceInternal so it always works even in partially trusted domains
                     i += 1;
                 }
             }
