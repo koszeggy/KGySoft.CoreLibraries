@@ -25,6 +25,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
+using System.Security;
 
 #endregion
 
@@ -168,11 +169,12 @@ namespace KGySoft.Collections
         /// <param name="y">The Y-coordinate (row index) of the item to get or set.</param>
         /// <param name="x">The X-coordinate (column index) of the item to get or set.</param>
         /// <returns>The element at the specified indices.</returns>
+        /// <exception cref="IndexOutOfRangeException">The specified indices refer to an item outside the bounds of the underlying <see cref="Buffer"/>.</exception>
         /// <remarks>
         /// <para>Though this member does not validate the coordinates separately, it does not allow indexing beyond the <see cref="Length"/> of the underlying <see cref="Buffer"/>.
         /// To omit also the length check, allowing to get/set any element in the whole <see cref="ArraySection{T}.UnderlyingArray"/>,
         /// use the <see cref="GetElementUnchecked">GetElementUnchecked</see>/<see cref="SetElementUnchecked">SetElementUnchecked</see> methods instead.</para>
-        /// <para>To return a reference to an element use the <see cref="GetElementReference">GetElementReference</see> method instead.</para>
+        /// <para>If the compiler you use supports members that return a value by reference, you can also use the <see cref="GetElementReference">GetElementReference</see> method.</para>
         /// </remarks>
         public readonly T this[int z, int y, int x]
         {
@@ -390,7 +392,11 @@ namespace KGySoft.Collections
         /// <para>Though this method does not validate the coordinates separately, it does not allow indexing beyond the <see cref="Length"/> of the underlying <see cref="Buffer"/>.
         /// To omit also the length check, allowing to get the reference to any element in the whole <see cref="ArraySection{T}.UnderlyingArray"/>,
         /// use the <see cref="GetElementReferenceUnchecked">GetElementReferenceUnchecked</see> method instead.</para>
+        /// <note>This method returns a value by reference. If this library is used by an older compiler that does not support such members,
+        /// use the <see cref="this[int,int,int]">indexer</see> instead.</note>
         /// </remarks>
+        /// <exception cref="IndexOutOfRangeException">The specified indices refer to an item outside the bounds of the underlying <see cref="Buffer"/>.</exception>
+        /// <exception cref="VerificationException">.NET Framework only: you execute this method in a partially trusted <see cref="AppDomain"/> that does not allow executing unverifiable code.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public readonly ref T GetElementReference(int z, int y, int x) => ref buffer.GetElementReference(z * planeSize + y * width + x);
 
@@ -403,6 +409,11 @@ namespace KGySoft.Collections
         /// <param name="y">The Y-coordinate (row index) of the item to get.</param>
         /// <param name="x">The X-coordinate (column index) of the item to get.</param>
         /// <returns>The element at the specified indices.</returns>
+        /// <remarks>
+        /// <para>If the compiler you use supports members that return a value by reference, you can also use
+        /// the <see cref="GetElementReferenceUnchecked">GetElementReferenceUnchecked</see> method.</para>
+        /// </remarks>
+        /// <exception cref="IndexOutOfRangeException">The specified indices refer to an invalid index in the actual underlying array.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public readonly T GetElementUnchecked(int z, int y, int x) => buffer.GetElementUnchecked(z * planeSize + y * width + x);
 
@@ -415,6 +426,11 @@ namespace KGySoft.Collections
         /// <param name="y">The Y-coordinate (row index) of the item to set.</param>
         /// <param name="x">The X-coordinate (column index) of the item to set.</param>
         /// <param name="value">The value to set.</param>
+        /// <remarks>
+        /// <para>If the compiler you use supports members that return a value by reference, you can also use
+        /// the <see cref="GetElementReferenceUnchecked">GetElementReferenceUnchecked</see> method.</para>
+        /// </remarks>
+        /// <exception cref="IndexOutOfRangeException">The specified indices refer to an invalid index in the actual underlying array.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public readonly void SetElementUnchecked(int z, int y, int x, T value) => buffer.SetElementUnchecked(z * planeSize + y * width + x, value);
 
@@ -428,6 +444,12 @@ namespace KGySoft.Collections
         /// <param name="y">The Y-coordinate (row index) of the item to get the reference for.</param>
         /// <param name="x">The X-coordinate (column index) of the item to get the reference for.</param>
         /// <returns>The reference to the element at the specified coordinates.</returns>
+        /// <remarks>
+        /// <note>This method returns a value by reference. If this library is used by an older compiler that does not support such members,
+        /// use the <see cref="GetElementUnchecked">GetElementUnchecked</see>/<see cref="SetElementUnchecked">SetElementUnchecked</see> methods instead.</note>
+        /// </remarks>
+        /// <exception cref="IndexOutOfRangeException">The specified indices refer to an invalid index in the actual underlying array.</exception>
+        /// <exception cref="VerificationException">.NET Framework only: you execute this method in a partially trusted <see cref="AppDomain"/> that does not allow executing unverifiable code.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public readonly ref T GetElementReferenceUnchecked(int z, int y, int x) => ref buffer.GetElementReferenceUnchecked(z * planeSize + y * width + x);
 
@@ -456,6 +478,7 @@ namespace KGySoft.Collections
         /// This makes possible to use the <see cref="Array3D{T}"/> in a <see langword="fixed"/> statement.
         /// </summary>
         /// <returns>A reference to the first element in this <see cref="Array3D{T}"/>, or <see langword="null"/> if <see cref="Length"/> is zero.</returns>
+        /// <exception cref="VerificationException">.NET Framework only: you execute this method in a partially trusted <see cref="AppDomain"/> that does not allow executing unverifiable code.</exception>
         public readonly ref T GetPinnableReference() => ref buffer.GetPinnableReference();
 
         /// <summary>

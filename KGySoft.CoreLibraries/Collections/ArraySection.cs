@@ -25,6 +25,7 @@ using System.Runtime.CompilerServices;
 using System.Buffers;
 #endif
 using System.Runtime.Serialization;
+using System.Security;
 
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
@@ -239,11 +240,13 @@ namespace KGySoft.Collections
         /// <remarks>
         /// <para>This member validates <paramref name="index"/> against <see cref="Length"/>. To allow getting/setting any element in the <see cref="UnderlyingArray"/> use
         /// the <see cref="GetElementUnchecked">GetElementUnchecked</see>/<see cref="SetElementUnchecked">SetElementUnchecked</see> methods instead.</para>
-        /// <para>To return a reference to an element use the <see cref="GetElementReference">GetElementReference</see> method instead.</para>
+        /// <para>If the compiler you use supports members that return a value by reference, you can also use the <see cref="GetElementReference">GetElementReference</see> method.</para>
         /// </remarks>
         /// <exception cref="IndexOutOfRangeException"><paramref name="index"/> is less than zero or greater or equal to <see cref="Length"/>.</exception>
         public readonly T this[int index]
         {
+            // NOTE: We could simply use just a ref returning indexer and implement IList<TTo>.this[int] explicitly,
+            // but that may cause a "not supported by the language" error when this library is used by older compilers that try to access the indexer.
             [MethodImpl(MethodImpl.AggressiveInlining)]
             get
             {
@@ -512,6 +515,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <returns>A reference to the first element in this <see cref="ArraySection{T}"/>, or <see langword="null"/> if <see cref="IsNullOrEmpty"/> is <see langword="true"/>.</returns>
         /// <exception cref="InvalidOperationException"><see cref="IsNullOrEmpty"/> is <see langword="true"/>.</exception>
+        /// <exception cref="VerificationException">.NET Framework only: you execute this method in a partially trusted <see cref="AppDomain"/> that does not allow executing unverifiable code.</exception>
         public readonly ref T GetPinnableReference()
         {
             if (IsNullOrEmpty)
@@ -641,12 +645,15 @@ namespace KGySoft.Collections
         /// <param name="index">The index of the element to get the reference for.</param>
         /// <returns>The reference to the element at the specified index.</returns>
         /// <remarks>
-        /// This method validates <paramref name="index"/> against <see cref="Length"/>.
+        /// <para>This method validates <paramref name="index"/> against <see cref="Length"/>.
         /// To allow returning a reference to any element from the <see cref="UnderlyingArray"/>
         /// (allowing even a negative <paramref name="index"/> if <see cref="Offset"/> is nonzero),
-        /// then use the <see cref="GetElementReferenceUnchecked">GetElementReferenceUnchecked</see> method instead.
+        /// then use the <see cref="GetElementReferenceUnchecked">GetElementReferenceUnchecked</see> method instead.</para>
+        /// <note>This method returns a value by reference. If this library is used by an older compiler that does not support such members,
+        /// use the <see cref="this">indexer</see> instead.</note>
         /// </remarks>
         /// <exception cref="IndexOutOfRangeException"><paramref name="index"/> is less than zero or greater or equal to <see cref="Length"/>.</exception>
+        /// <exception cref="VerificationException">.NET Framework only: you execute this method in a partially trusted <see cref="AppDomain"/> that does not allow executing unverifiable code.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public readonly ref T GetElementReference(int index)
         {
@@ -662,6 +669,10 @@ namespace KGySoft.Collections
         /// <param name="index">The index of the element to get.</param>
         /// <returns>The element at the specified index.</returns>
         /// <exception cref="IndexOutOfRangeException"><paramref name="index"/> plus <see cref="Offset"/> is less than zero or greater or equal to the length of the <see cref="UnderlyingArray"/>.</exception>
+        /// <remarks>
+        /// <para>If the compiler you use supports members that return a value by reference, you can also use
+        /// the <see cref="GetElementReferenceUnchecked">GetElementReferenceUnchecked</see> method.</para>
+        /// </remarks>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public readonly T GetElementUnchecked(int index)
         {
@@ -677,6 +688,10 @@ namespace KGySoft.Collections
         /// <param name="index">The index of the element to set.</param>
         /// <param name="value">The value to set.</param>
         /// <exception cref="IndexOutOfRangeException"><paramref name="index"/> plus <see cref="Offset"/> is less than zero or greater or equal to the length of the <see cref="UnderlyingArray"/>.</exception>
+        /// <remarks>
+        /// <para>If the compiler you use supports members that return a value by reference, you can also use
+        /// the <see cref="GetElementReferenceUnchecked">GetElementReferenceUnchecked</see> method.</para>
+        /// </remarks>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public readonly void SetElementUnchecked(int index, T value)
         {
@@ -692,6 +707,11 @@ namespace KGySoft.Collections
         /// <param name="index">The index of the element to get the reference for.</param>
         /// <returns>The reference to the element at the specified index.</returns>
         /// <exception cref="IndexOutOfRangeException"><paramref name="index"/> plus <see cref="Offset"/> is less than zero or greater or equal to the length of the <see cref="UnderlyingArray"/>.</exception>
+        /// <exception cref="VerificationException">.NET Framework only: you execute this method in a partially trusted <see cref="AppDomain"/> that does not allow executing unverifiable code.</exception>
+        /// <remarks>
+        /// <note>This method returns a value by reference. If this library is used by an older compiler that does not support such members,
+        /// use the <see cref="GetElementUnchecked">GetElementUnchecked</see>/<see cref="SetElementUnchecked">SetElementUnchecked</see> methods instead.</note>
+        /// </remarks>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public readonly ref T GetElementReferenceUnchecked(int index)
         {

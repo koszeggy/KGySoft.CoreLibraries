@@ -22,6 +22,7 @@ using System.Buffers;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
 using System.Runtime.InteropServices;
@@ -166,7 +167,7 @@ namespace KGySoft.Collections
 
         #region CastArrayDebugView struct
 
-        private struct CastArrayDebugView // Maybe would work if it was class but see ArraySectionDebugView
+        private struct CastArrayDebugView // Maybe would work also if it was a class but see ArraySectionDebugView
         {
             #region Fields
 
@@ -177,6 +178,7 @@ namespace KGySoft.Collections
             #region Properties
 
             [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+            [SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "Used by the debugger")]
             readonly public TTo[]? Items => array.ToArray();
 
             #endregion
@@ -232,12 +234,19 @@ namespace KGySoft.Collections
 
         /// <summary>
         /// Gets the number of <typeparamref name="TTo"/> elements in this <see cref="CastArray{TFrom,TTo}"/>.
-        /// To get the number of <typeparamref name="TFrom"/> elements use the <see cref="Buffer"/> property.
+        /// To get the number of <typeparamref name="TFrom"/> elements check the <see cref="Buffer"/> property.
         /// </summary>
         public int Length => length;
 
+        /// <summary>
+        /// Gets whether this <see cref="CastArray{TFrom,TTo}"/> instance represents a <see langword="null"/> array.
+        /// <br/>Please note that the <see cref="ToArray">ToArray</see> method returns <see langword="null"/> when this property returns <see langword="true"/>.
+        /// </summary>
         public bool IsNull => buffer.IsNull;
 
+        /// <summary>
+        /// Gets whether this <see cref="CastArray{TFrom,TTo}"/> instance represents an empty array section or a <see langword="null"/> array.
+        /// </summary>
         public bool IsNullOrEmpty => length == 0; // not buffer.IsNullOrEmpty because cast length can be truncated
 
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
@@ -282,9 +291,21 @@ namespace KGySoft.Collections
 
         #region Public Indexers
 
+        /// <summary>
+        /// Gets or sets the element at the specified <paramref name="index"/>.
+        /// </summary>
+        /// <param name="index">The zero-based index of the element to get or set.</param>
+        /// <returns>The element at the specified index.</returns>
+        /// <remarks>
+        /// <para>This member validates <paramref name="index"/> against <see cref="Length"/>. To allow getting/setting any reference from the actual underlying array use
+        /// the <see cref="GetElementUnsafe">GetElementUnsafe</see>/<see cref="SetElementUnsafe">SetElementUnsafe</see> methods instead.</para>
+        /// <para>If the compiler you use supports members that return a value by reference, you can also use the <see cref="GetElementReference">GetElementReference</see> method.</para>
+        /// </remarks>
+        /// <exception cref="IndexOutOfRangeException"><paramref name="index"/> is less than zero or greater or equal to <see cref="Length"/>.</exception>
+        /// <exception cref="NotSupportedException">.NET Framework only: you access this member in a partially trusted <see cref="AppDomain"/> that does not allow executing unverifiable code.</exception>
         public TTo this[int index]
         {
-            // NOTE: We could simply use just ref returning indexer and implement IList<TTo>.this[int] explicitly,
+            // NOTE: We could simply use just a ref returning indexer and implement IList<TTo>.this[int] explicitly,
             // but that may cause a "not supported by the language" error when this library is used by older compilers that try to access the indexer.
             [MethodImpl(MethodImpl.AggressiveInlining)]
             get
@@ -296,8 +317,7 @@ namespace KGySoft.Collections
                 }
                 catch (VerificationException e) when (EnvironmentHelper.IsPartiallyTrustedDomain)
                 {
-                    Throw.NotSupportedException(Res.UnsafeSecuritySettingsConflict, e);
-                    return GetElementReference(index); // Never reached. Just cannot do return default, and throw should be avoided because it prevents inlining.
+                    return Throw.NotSupportedException<TTo>(Res.UnsafeSecuritySettingsConflict, e);
                 }
 #else
                 return GetElementReference(index);
@@ -335,7 +355,7 @@ namespace KGySoft.Collections
                     Throw.ArgumentNullException(Argument.value);
                 try
                 {
-                    this[index] = (TTo)value!;
+                    this[index] = (TTo)value;
                 }
                 catch (InvalidCastException)
                 {
@@ -428,6 +448,12 @@ namespace KGySoft.Collections
 
         #region Public Constructors
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="CastArray{TFrom,TTo}" /> struct from the specified <see cref="ArraySection{T}"/>.
+        /// No heap allocation occurs when using this constructor.
+        /// </summary>
+        /// <param name="buffer">The <see cref="ArraySection{T}"/> to initialize the new <see cref="CastArray{TFrom,TTo}"/> from.</param>
+        /// <exception cref="ArgumentException"><see cref="ArraySection{T}.Length"/> of <paramref name="buffer"/> is too big to express it as the length in <typeparamref name="TTo"/> elements.</exception>
         [SecuritySafeCritical]
         public unsafe CastArray(ArraySection<TFrom> buffer)
         {
@@ -462,9 +488,9 @@ namespace KGySoft.Collections
 
         #endregion
 
-        #region Private Constructors
+        #region Internal Constructors
 
-        private CastArray(ArraySection<TFrom> buffer, int length)
+        internal CastArray(ArraySection<TFrom> buffer, int length)
         {
             this.buffer = buffer;
             this.length = length;
@@ -480,9 +506,38 @@ namespace KGySoft.Collections
 
         #region Public Methods
 
+        /// <summary>
+        /// Gets a new <see cref="CastArray{TFrom,TTo}"/> instance, which represents a subsection of the current instance with the specified <paramref name="startIndex"/>.
+        /// Please note that the size of <typeparamref name="TTo"/> multiplied by <paramref name="startIndex"/> must be divisible by the size of <typeparamref name="TFrom"/>.
+        /// </summary>
+        /// <param name="startIndex">The offset that points to the first item of the returned section.</param>
+        /// <returns>The subsection of the current <see cref="CastArray{TFrom,TTo}"/> instance with the specified <paramref name="startIndex"/>.</returns>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="startIndex"/> is out of range.</exception>
+        /// <exception cref="ArgumentException">The size of <typeparamref name="TTo"/> multiplied by <paramref name="startIndex"/> is not divisible by the size of <typeparamref name="TFrom"/>.</exception>
+        /// <remarks>
+        /// <note>If the size of <typeparamref name="TTo"/> multiplied by <paramref name="startIndex"/> is not divisible by the size of <typeparamref name="TFrom"/>,
+        /// then this method throws an <see cref="ArgumentException"/>. If the targeted platform supports the <see cref="Span{T}"/> type and misaligned memory access,
+        /// then you can try to use the <see cref="AsSpan"/> property and the <see cref="MemoryMarshal.Cast{TFrom,TTo}(Span{TFrom})">MemoryMarshal.Cast</see> method.</note>
+        /// </remarks>
         public CastArray<TFrom, TTo> Slice(int startIndex) => Slice(startIndex, length - startIndex);
 
+        /// <summary>
+        /// Gets a new <see cref="CastArray{TFrom,TTo}"/> instance, which represents a subsection of the current instance with the specified <paramref name="startIndex"/> and <paramref name="length"/>.
+        /// Please note that the size of <typeparamref name="TTo"/> multiplied by <paramref name="startIndex"/> must be divisible by the size of <typeparamref name="TFrom"/>.
+        /// </summary>
+        /// <param name="startIndex">The offset that points to the first item of the returned section.</param>
+        /// <param name="length">The desired length of the returned section.</param>
+        /// <returns>The subsection of the current <see cref="ArraySection{T}"/> instance with the specified <paramref name="startIndex"/> and <paramref name="length"/>.</returns>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="startIndex"/> or <paramref name="length"/> is out of range.</exception>
+        /// <exception cref="ArgumentException">The size of <typeparamref name="TTo"/> multiplied by <paramref name="startIndex"/> is not divisible by the size of <typeparamref name="TFrom"/>.</exception>
+        /// <remarks>
+        /// <note>If the size of <typeparamref name="TTo"/> multiplied by <paramref name="startIndex"/> is not divisible by the size of <typeparamref name="TFrom"/>,
+        /// then this method throws an <see cref="ArgumentException"/>. If the targeted platform supports the <see cref="Span{T}"/> type and misaligned memory access,
+        /// then you can try to use the <see cref="AsSpan"/> property and the <see cref="MemoryMarshal.Cast{TFrom,TTo}(Span{TFrom})">MemoryMarshal.Cast</see> method.</note>
+        /// </remarks>
         [SecuritySafeCritical]
+        [SuppressMessage("ReSharper", "ParameterHidesMember", Justification = "Intended because it will be the new length of the returned instance")]
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         public unsafe CastArray<TFrom, TTo> Slice(int startIndex, int length)
         {
             // After this validation there is no need for overflow check like in the constructor because the new length can only be smaller than the original one.
@@ -528,6 +583,15 @@ namespace KGySoft.Collections
         /// <returns>A <see cref="CastArray2D{TFrom,TTo}"/> instance using this <see cref="CastArray{TFrom,TTo}"/> as its underlying buffer that has the specified dimensions.</returns>
         public CastArray3D<TFrom, TTo> As3D(int depth, int height, int width) => new CastArray3D<TFrom, TTo>(this, depth, height, width);
 
+        /// <summary>
+        /// Reinterprets the <typeparamref name="TTo"/> type of this <see cref="CastArray{TFrom,TTo}"/> to type <typeparamref name="T"/>.
+        /// </summary>
+        /// <typeparam name="T">The new desired type instead of the original <typeparamref name="TTo"/>.</typeparam>
+        /// <returns>A <see cref="CastArray{TFrom,TTo}"/> instance where original <typeparamref name="TTo"/> type is replaced to <typeparamref name="T"/>.</returns>
+        /// <remarks>
+        /// <para>If the size of <typeparamref name="T"/> cannot be divided by the size of <typeparamref name="TFrom"/>,
+        /// then the cast result may not cover the whole original <see cref="Buffer"/> to prevent exceeding beyond the original bounds.</para>
+        /// </remarks>
         public CastArray<TFrom, T> Cast<T>()
 #if NETFRAMEWORK
             where T : struct
@@ -538,6 +602,14 @@ namespace KGySoft.Collections
             return buffer.Cast<TFrom, T>();
         }
 
+        /// <summary>
+        /// Reinterprets this <see cref="CastArray{TFrom,TTo}"/> as a two-dimensional <see cref="CastArray2D{TFrom,TTo}"/> struct,
+        /// casting the <typeparamref name="TTo"/> type of this <see cref="CastArray{TFrom,TTo}"/> to type <typeparamref name="T"/>.
+        /// </summary>
+        /// <typeparam name="T">The new desired type instead of the original <typeparamref name="TTo"/>.</typeparam>
+        /// <param name="height">The height of the array to be returned.</param>
+        /// <param name="width">The width of the array to be returned.</param>
+        /// <returns>A <see cref="CastArray2D{TFrom,TTo}"/> instance where original <typeparamref name="TTo"/> type is replaced to <typeparamref name="T"/>.</returns>
         public CastArray2D<TFrom, T> Cast2D<T>(int height, int width)
 #if NETFRAMEWORK
             where T : struct
@@ -548,6 +620,15 @@ namespace KGySoft.Collections
             return buffer.Cast2D<TFrom, T>(height, width);
         }
 
+        /// <summary>
+        /// Reinterprets this <see cref="CastArray{TFrom,TTo}"/> as a three-dimensional <see cref="CastArray3D{TFrom,TTo}"/> struct,
+        /// casting the <typeparamref name="TTo"/> type of this <see cref="CastArray{TFrom,TTo}"/> to type <typeparamref name="T"/>.
+        /// </summary>
+        /// <typeparam name="T">The new desired type instead of the original <typeparamref name="TTo"/>.</typeparam>
+        /// <param name="depth">The depth of the array to be returned.</param>
+        /// <param name="height">The height of the array to be returned.</param>
+        /// <param name="width">The width of the array to be returned.</param>
+        /// <returns>A <see cref="CastArray3D{TFrom,TTo}"/> instance where original <typeparamref name="TTo"/> type is replaced to <typeparamref name="T"/>.</returns>
         public CastArray3D<TFrom, T> Cast3D<T>(int depth, int height, int width)
 #if NETFRAMEWORK
             where T : struct
@@ -558,6 +639,109 @@ namespace KGySoft.Collections
             return buffer.Cast3D<TFrom, T>(depth, height, width);
         }
 
+        /// <summary>
+        /// Gets the reference to the element at the specified <paramref name="index"/>.
+        /// </summary>
+        /// <param name="index">The index of the element to get the reference for.</param>
+        /// <returns>The reference to the element at the specified index.</returns>
+        /// <remarks>
+        /// <para>This method validates <paramref name="index"/> against <see cref="Length"/>.
+        /// To allow getting/setting any reference from the actual underlying array use
+        /// then use the <see cref="GetElementReferenceUnsafe">GetElementReferenceUnsafe</see> method instead.</para>
+        /// <note>This method returns a value by reference. If this library is used by an older compiler that does not support such members,
+        /// use the <see cref="this">indexer</see> instead.</note>
+        /// </remarks>
+        /// <exception cref="IndexOutOfRangeException"><paramref name="index"/> is less than zero or greater or equal to <see cref="Length"/>.</exception>
+        /// <exception cref="VerificationException">.NET Framework only: you execute this method in a partially trusted <see cref="AppDomain"/> that does not allow executing unverifiable code.</exception>
+        [SecuritySafeCritical]
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public ref TTo GetElementReference(int index)
+        {
+            if ((uint)index >= (uint)length)
+                Throw.IndexOutOfRangeException();
+
+            // There is no point in putting the try...catch (VerificationException) here. When it's thrown, it's already for this method as it has a ref return.
+            return ref GetElementReferenceInternal(index);
+        }
+
+        /// <summary>
+        /// Gets the element at the specified <paramref name="index"/> without any range check.
+        /// To validate <paramref name="index"/> against <see cref="Length"/> use the <see cref="this">indexer</see> instead.
+        /// </summary>
+        /// <param name="index">The index of the element to get.</param>
+        /// <returns>The element at the specified index.</returns>
+        /// <exception cref="InvalidOperationException"><see cref="IsNullOrEmpty"/> returns <see langword="true"/>.</exception>
+        /// <exception cref="NotSupportedException">.NET Framework only: you execute this Method in a partially trusted <see cref="AppDomain"/> that does not allow executing unverifiable code.</exception>
+        /// <remarks>
+        /// <note type="caution">You must ensure that <paramref name="index"/> falls within <see cref="Length"/>, or at least in the bounds
+        /// of the actual underlying array. Attempting to access protected memory may crash the runtime.</note>
+        /// <para>If the compiler you use supports members that return a value by reference, you can also use
+        /// the <see cref="GetElementReferenceUnsafe">GetElementReferenceUnsafe</see> method.</para>
+        /// </remarks>
+        [SecurityCritical]
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public TTo GetElementUnsafe(int index)
+        {
+#if NETFRAMEWORK || NETSTANDARD2_0
+            try
+            {
+                return GetElementReferenceUnsafe(index);
+            }
+            catch (VerificationException e) when (EnvironmentHelper.IsPartiallyTrustedDomain)
+            {
+                return Throw.NotSupportedException<TTo>(Res.UnsafeSecuritySettingsConflict, e);
+            }
+#else
+            return GetElementReferenceUnsafe(index);
+#endif
+        }
+
+        /// <summary>
+        /// Sets the element at the specified <paramref name="index"/> without any range check.
+        /// To validate <paramref name="index"/> against <see cref="Length"/> use the <see cref="this">indexer</see> instead.
+        /// </summary>
+        /// <param name="index">The index of the element to set.</param>
+        /// <param name="value">The value to set.</param>
+        /// <exception cref="InvalidOperationException"><see cref="IsNullOrEmpty"/> returns <see langword="true"/>.</exception>
+        /// <exception cref="NotSupportedException">.NET Framework only: you execute this method in a partially trusted <see cref="AppDomain"/> that does not allow executing unverifiable code.</exception>
+        /// <remarks>
+        /// <note type="caution">You must ensure that <paramref name="index"/> falls within <see cref="Length"/>, or at least in the bounds
+        /// of the actual underlying array. Attempting to access protected memory may crash the runtime.</note>
+        /// <para>If the compiler you use supports members that return a value by reference, you can also use
+        /// the <see cref="GetElementReferenceUnsafe">GetElementReferenceUnsafe</see> method.</para>
+        /// </remarks>
+        [SecurityCritical]
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public void SetElementUnsafe(int index, TTo value)
+        {
+#if NETFRAMEWORK || NETSTANDARD2_0
+            try
+            {
+                GetElementReferenceUnsafe(index) = value;
+            }
+            catch (VerificationException e) when (EnvironmentHelper.IsPartiallyTrustedDomain)
+            {
+                Throw.NotSupportedException(Res.UnsafeSecuritySettingsConflict, e);
+            }
+#else
+            GetElementReferenceUnsafe(index) = value;
+#endif
+        }
+
+        /// <summary>
+        /// Gets the reference to the element at the specified <paramref name="index"/> without any range check.
+        /// To validate <paramref name="index"/> against <see cref="Length"/> use the <see cref="GetElementReference">GetElementReference</see> method instead.
+        /// </summary>
+        /// <param name="index">The index of the element to get the reference for.</param>
+        /// <returns>The reference to the element at the specified index.</returns>
+        /// <exception cref="InvalidOperationException"><see cref="IsNullOrEmpty"/> returns <see langword="true"/>.</exception>
+        /// <exception cref="VerificationException">.NET Framework only: you execute this method in a partially trusted <see cref="AppDomain"/> that does not allow executing unverifiable code.</exception>
+        /// <remarks>
+        /// <note type="caution">You must ensure that <paramref name="index"/> falls within <see cref="Length"/>, or at least in the bounds
+        /// of the actual underlying array. Attempting to access protected memory may crash the runtime.</note>
+        /// <note>This method returns a value by reference. If this library is used by an older compiler that does not support such members,
+        /// use the <see cref="GetElementUnsafe">GetElementUnsafe</see>/<see cref="SetElementUnsafe">SetElementUnsafe</see> methods instead.</note>
+        /// </remarks>
         [SecurityCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public ref TTo GetElementReferenceUnsafe(int index)
@@ -574,45 +758,12 @@ namespace KGySoft.Collections
         }
 
         /// <summary>
-        /// Gets the element at the specified <paramref name="index"/>, without any range check.
-        /// To validate <paramref name="index"/> against <see cref="Length"/> use the <see cref="this">indexer</see> instead.
+        /// Returns a reference to the first element in this <see cref="CastArray{TFrom,TTo}"/>.
+        /// This makes possible to use the <see cref="CastArray{TFrom,TTo}"/> in a <see langword="fixed"/> statement.
         /// </summary>
-        /// <param name="index">The index of the element to get.</param>
-        /// <returns>The element at the specified index.</returns>
-        /// <exception cref="InvalidOperationException"><see cref="IsNullOrEmpty"/> returns <see langword="true"/>.</exception>
-        /// <remarks>
-        /// <note type="caution">You must ensure that <paramref name="index"/> falls within <see cref="Length"/>, or at least in the bounds
-        /// of the actual underlying array. Attempting to access protected memory may crash the runtime.</note>
-        /// </remarks>
-        [SecurityCritical]
-        [MethodImpl(MethodImpl.AggressiveInlining)]
-        public TTo GetElementUnsafe(int index) => GetElementReferenceUnsafe(index);
-
-        /// <summary>
-        /// Sets the element at the specified <paramref name="index"/>, without any range check.
-        /// To validate <paramref name="index"/> against <see cref="Length"/> use the <see cref="this">indexer</see> instead.
-        /// </summary>
-        /// <param name="index">The index of the element to set.</param>
-        /// <param name="value">The value to set.</param>
-        /// <exception cref="InvalidOperationException"><see cref="IsNullOrEmpty"/> returns <see langword="true"/>.</exception>
-        /// <remarks>
-        /// <note type="caution">You must ensure that <paramref name="index"/> falls within <see cref="Length"/>, or at least in the bounds
-        /// of the actual underlying array. Attempting to access protected memory may crash the runtime.</note>
-        /// </remarks>
-        [MethodImpl(MethodImpl.AggressiveInlining)]
-        public void SetElementUnsafe(int index, TTo value) => GetElementReferenceUnsafe(index) = value;
-
-        [SecuritySafeCritical]
-        [MethodImpl(MethodImpl.AggressiveInlining)]
-        public ref TTo GetElementReference(int index)
-        {
-            if ((uint)index >= (uint)length)
-                Throw.IndexOutOfRangeException();
-
-            // There is no point in putting the try...catch (VerificationException) here. When it's thrown, it's already for this method as it has a ref return.
-            return ref GetElementReferenceInternal(index);
-        }
-
+        /// <returns>A reference to the first element in this <see cref="ArraySection{T}"/>, or <see langword="null"/> if <see cref="IsNullOrEmpty"/> is <see langword="true"/>.</returns>
+        /// <exception cref="InvalidOperationException"><see cref="IsNullOrEmpty"/> is <see langword="true"/>.</exception>
+        /// <exception cref="VerificationException">.NET Framework only: you execute this method in a partially trusted <see cref="AppDomain"/> that does not allow executing unverifiable code.</exception>
         [SecuritySafeCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public ref TTo GetPinnableReference()
@@ -622,21 +773,18 @@ namespace KGySoft.Collections
 
 #if NETCOREAPP3_0_OR_GREATER
             return ref Unsafe.As<TFrom, TTo>(ref buffer.GetElementReferenceInternal(0));
-#elif NETFRAMEWORK || NETSTANDARD2_0
-            try
-            {
-                return ref GetElementReferenceInternal(0);
-            }
-            catch (VerificationException e) when (EnvironmentHelper.IsPartiallyTrustedDomain)
-            {
-                Throw.NotSupportedException(Res.UnsafeSecuritySettingsConflict, e);
-                return ref GetPinnableReference(); // Never reached. Just cannot do return default, and throw should be avoided because it prevents inlining.
-            }
 #else
-            return ref DoUnsafeGetRef(0);
+            // There is no point in putting the try...catch (VerificationException) here. When it's thrown, it's already for this method as it has a ref return.
+            // Besides, this method is to use this instance in a fixed statement, which cannot be used in such a partially trusted domain anyway.
+            return ref GetElementReferenceInternal(0);
 #endif
         }
 
+        /// <summary>
+        /// Copies the elements of this <see cref="CastArray{TFrom,TTo}"/> to a new array of element type <typeparamref name="TTo"/>.
+        /// </summary>
+        /// <returns>An array of element type <typeparamref name="TTo"/> containing copies of the elements of this <see cref="CastArray{TFrom,TTo}"/>,
+        /// or <see langword="null"/> if <see cref="IsNull"/> is <see langword="true"/>.</returns>
         [SecuritySafeCritical]
         public TTo[]? ToArray()
         {
@@ -823,10 +971,25 @@ namespace KGySoft.Collections
         /// </remarks>
         public CastArrayEnumerator<TFrom, TTo> GetEnumerator() => new CastArrayEnumerator<TFrom, TTo>(this);
 
-        public bool Equals(CastArray<TFrom, TTo> other) => buffer == other.buffer && length == other.length;
+        /// <summary>
+        /// Indicates whether the current <see cref="CastArray{TFrom,TTo}"/> instance is equal to another one specified in the <paramref name="other"/> parameter.
+        /// That is, when they have the same <see cref="Length"/>, and they both reference the same section of the same underlying array.
+        /// </summary>
+        /// <param name="other">An <see cref="ArraySection{T}"/> instance to compare with this instance.</param>
+        /// <returns><see langword="true"/> if the current object is equal to the <paramref name="other"/> parameter; otherwise, <see langword="false"/>.</returns>
+        public bool Equals(CastArray<TFrom, TTo> other) => length == other.length && buffer == other.buffer;
 
+        /// <summary>
+        /// Determines whether the specified <see cref="object">object</see> is equal to this instance.
+        /// </summary>
+        /// <param name="obj">The object to compare with this instance.</param>
+        /// <returns><see langword="true"/> if the specified object is equal to this instance; otherwise, <see langword="false"/>.</returns>
         public override bool Equals(object? obj) => obj is CastArray<TFrom, TTo> other && Equals(other);
 
+        /// <summary>
+        /// Returns a hash code for this <see cref="CastArray{TFrom,TTo}"/> instance.
+        /// </summary>
+        /// <returns>A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.</returns>
         public override int GetHashCode()
         {
             if (buffer.IsNull)
