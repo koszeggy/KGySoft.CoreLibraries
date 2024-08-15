@@ -11,6 +11,8 @@
 
 + KGySoft.CoreLibraries namespace:
 ==================================
++ ArrayExtensions class:
+  + New Cast/Cast2D/Cast3D methods to reinterpret the element type of arrays and ArraySegment<T> instances.
 + StringSegmentComparer class:
   + Implements the IAlternateEqualityComparer<StringSegment, string?> and
     the IAlternateEqualityComparer<ReadOnlySpan<char>, string?> interfaces (.NET 9.0 and above)
@@ -22,13 +24,14 @@
     InvalidOperationException otherwise. Now it always throws an InvalidOperationException for empty sections.
   + New GetElementUnchecked/SetElementUnchecked/GetElementReferenceUnchecked methods: To omit length check, allowing
     to reference any element in the underlying array.
+  + New Cast/Cast2D/Cast3D methods to reinterpret the element type.
 + Array2D<T> struct:
   + New GetElementUnchecked/SetElementUnchecked/GetElementReferenceUnchecked methods: To omit length check, allowing
     to reference any element in the underlying array.
 + Array3D<T> struct:
   + New GetElementUnchecked/SetElementUnchecked/GetElementReferenceUnchecked methods: To omit length check, allowing
     to reference any element in the underlying array.
-+ New CastArray<TFrom, TTo> struct to allow reinterpreting arrays of unmanaged element type.
++ New CastArray<TFrom, TTo> struct to allow reinterpreting arrays of unmanaged element type on any platform target.
 
 
 ~~~~~~~~~

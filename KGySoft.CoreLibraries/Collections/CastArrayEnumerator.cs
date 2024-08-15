@@ -58,7 +58,7 @@ namespace KGySoft.Collections
         public readonly TTo Current
         {
             [MethodImpl(MethodImpl.AggressiveInlining)]
-            get => index >= 0 && index < castArray.Length ? castArray.GetElementReferenceUnsafe(index) : default;
+            get => (uint)index >= castArray.Length ? default : castArray.GetElementReferenceInternal(index);
         }
 
         #endregion
@@ -69,7 +69,7 @@ namespace KGySoft.Collections
         {
             get
             {
-                if (index < 0 || index >= castArray.Length)
+                if ((uint)index >= castArray.Length)
                     Throw.InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
                 return Current;
             }

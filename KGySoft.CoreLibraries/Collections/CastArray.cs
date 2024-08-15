@@ -60,7 +60,7 @@ namespace KGySoft.Collections
     /// <remarks>
     /// TODO: Pooling example. Returning to the pool must be done by the caller. You can use a self-allocating ArraySection, which can be released in the end.
     /// TODO: Slice may throw ArgumentException.
-    /// TODO: .NET Framework 4.x only: in a partially trusted AppDomain may throw NotSupportedException, grant SecurityPermission with the SecurityPermissionFlag.SkipVerification flag
+    /// TODO: .NET Framework 4.x only: in a partially trusted AppDomain the indexer and some methods may throw NotSupportedException, grant SecurityPermission with the SecurityPermissionFlag.SkipVerification flag.
     /// </remarks>
     [Serializable]
     [DebuggerTypeProxy(typeof(CastArray<,>.CastArrayDebugView))]
@@ -222,7 +222,7 @@ namespace KGySoft.Collections
         #region Properties and Indexers
 
         #region Properties
-        
+
         #region Public Properties
 
         /// <summary>
@@ -279,7 +279,7 @@ namespace KGySoft.Collections
         #endregion
 
         #region Indexers
-        
+
         #region Public Indexers
 
         public TTo this[int index]
@@ -532,7 +532,7 @@ namespace KGySoft.Collections
 #if NETFRAMEWORK
             where T : struct
 #else
-            where T: unmanaged
+            where T : unmanaged
 #endif
         {
             return buffer.Cast<TFrom, T>();
@@ -558,27 +558,59 @@ namespace KGySoft.Collections
             return buffer.Cast3D<TFrom, T>(depth, height, width);
         }
 
-        [SecuritySafeCritical]
-        [MethodImpl(MethodImpl.AggressiveInlining)]
-        public ref TTo GetElementReference(int index)
-        {
-            if ((uint) index >= (uint) length)
-                Throw.IndexOutOfRangeException();
-
-            // There is no point in putting the try...catch (VerificationException) here. When it's thrown, it's already for this method as it has a ref return.
-            return ref GetElementReferenceUnsafe(index);
-        }
-
         [SecurityCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public ref TTo GetElementReferenceUnsafe(int index)
         {
+            if (IsNullOrEmpty)
+                Throw.InvalidOperationException(Res.CollectionEmpty);
+
 #if NETCOREAPP3_0_OR_GREATER
             return ref Unsafe.Add(ref Unsafe.As<TFrom, TTo>(ref buffer.GetElementReferenceInternal(0)), index);
 #else
             // There is no point in putting the try...catch (VerificationException) here. When it's thrown, it's already for this method as it has a ref return.
-            return ref DoGetElementReferenceUnsafe(index);
+            return ref GetElementReferenceInternal(index);
 #endif
+        }
+
+        /// <summary>
+        /// Gets the element at the specified <paramref name="index"/>, without any range check.
+        /// To validate <paramref name="index"/> against <see cref="Length"/> use the <see cref="this">indexer</see> instead.
+        /// </summary>
+        /// <param name="index">The index of the element to get.</param>
+        /// <returns>The element at the specified index.</returns>
+        /// <exception cref="InvalidOperationException"><see cref="IsNullOrEmpty"/> returns <see langword="true"/>.</exception>
+        /// <remarks>
+        /// <note type="caution">You must ensure that <paramref name="index"/> falls within <see cref="Length"/>, or at least in the bounds
+        /// of the actual underlying array. Attempting to access protected memory may crash the runtime.</note>
+        /// </remarks>
+        [SecurityCritical]
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public TTo GetElementUnsafe(int index) => GetElementReferenceUnsafe(index);
+
+        /// <summary>
+        /// Sets the element at the specified <paramref name="index"/>, without any range check.
+        /// To validate <paramref name="index"/> against <see cref="Length"/> use the <see cref="this">indexer</see> instead.
+        /// </summary>
+        /// <param name="index">The index of the element to set.</param>
+        /// <param name="value">The value to set.</param>
+        /// <exception cref="InvalidOperationException"><see cref="IsNullOrEmpty"/> returns <see langword="true"/>.</exception>
+        /// <remarks>
+        /// <note type="caution">You must ensure that <paramref name="index"/> falls within <see cref="Length"/>, or at least in the bounds
+        /// of the actual underlying array. Attempting to access protected memory may crash the runtime.</note>
+        /// </remarks>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public void SetElementUnsafe(int index, TTo value) => GetElementReferenceUnsafe(index) = value;
+
+        [SecuritySafeCritical]
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public ref TTo GetElementReference(int index)
+        {
+            if ((uint)index >= (uint)length)
+                Throw.IndexOutOfRangeException();
+
+            // There is no point in putting the try...catch (VerificationException) here. When it's thrown, it's already for this method as it has a ref return.
+            return ref GetElementReferenceInternal(index);
         }
 
         [SecuritySafeCritical]
@@ -593,7 +625,7 @@ namespace KGySoft.Collections
 #elif NETFRAMEWORK || NETSTANDARD2_0
             try
             {
-                return ref DoGetElementReferenceUnsafe(0);
+                return ref GetElementReferenceInternal(0);
             }
             catch (VerificationException e) when (EnvironmentHelper.IsPartiallyTrustedDomain)
             {
@@ -768,7 +800,7 @@ namespace KGySoft.Collections
 
             try
             {
-                DoCopyToUnsafe(ref target.GetElementReferenceUnsafe(targetIndex));
+                DoCopyToUnsafe(ref target.GetElementReferenceInternal(targetIndex));
             }
             catch (VerificationException e) when (EnvironmentHelper.IsPartiallyTrustedDomain)
             {
@@ -801,6 +833,60 @@ namespace KGySoft.Collections
                 return 0;
             return (buffer, length).GetHashCode();
         }
+
+        #endregion
+
+        #region Internal Methods
+
+        [SecurityCritical]
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        internal ref TTo GetElementReferenceInternal(int index)
+        {
+#if NETCOREAPP3_0_OR_GREATER
+            return ref Unsafe.Add(ref Unsafe.As<TFrom, TTo>(ref buffer.GetElementReferenceInternal(0)), index);
+#else
+            unsafe
+            {
+                fixed (TFrom* pBuf = &buffer.GetElementReferenceInternal(0))
+                    return ref ((TTo*)pBuf)[index];
+            }
+#endif
+        }
+
+        #endregion
+
+        #region Private Methods
+
+#if !(NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER)
+
+        [SecurityCritical]
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        private unsafe void DoCopyToUnsafe(ref TTo target)
+        {
+            fixed (void* pSrc = &buffer.GetElementReferenceInternal(0))
+            fixed (TTo* pDst = &target)
+                MemoryHelper.CopyMemory(pSrc, pDst, (long)length * sizeof(TTo));
+        }
+
+        [SecuritySafeCritical]
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        private unsafe int DoIndexOfUnsafe(TTo item)
+        {
+            var comparer = ComparerHelper<TTo>.EqualityComparer;
+            fixed (TFrom* ptr = &buffer.GetElementReferenceInternal(0))
+            {
+                TTo* pTo = (TTo*)ptr;
+                for (int i = 0; i < length; i++)
+                {
+                    if (comparer.Equals(pTo[i], item))
+                        return i;
+                }
+            }
+
+            return -1;
+        }
+
+#endif
 
         #endregion
 
@@ -851,7 +937,7 @@ namespace KGySoft.Collections
             {
                 for (int i = 0; i < length; i++)
                 {
-                    objectArray[index] = GetElementReferenceUnsafe(i);
+                    objectArray[index] = GetElementReferenceInternal(i);
                     index += 1;
                 }
 
@@ -865,48 +951,6 @@ namespace KGySoft.Collections
         void IList.Insert(int index, object? item) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
         void IList.Remove(object? item) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
         void IList.RemoveAt(int index) => Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
-
-        #endregion
-
-        #region Private Methods
-
-#if !(NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER)
-        [SecurityCritical]
-        [MethodImpl(MethodImpl.AggressiveInlining)]
-        private unsafe ref TTo DoGetElementReferenceUnsafe(int index)
-        {
-            fixed (TFrom* pBuf = &buffer.GetElementReferenceInternal(0))
-                return ref ((TTo*)pBuf)[index];
-        }
-
-        [SecurityCritical]
-        [MethodImpl(MethodImpl.AggressiveInlining)]
-        private unsafe void DoCopyToUnsafe(ref TTo target)
-        {
-            fixed (void* pSrc = &buffer.GetElementReferenceInternal(0))
-            fixed (TTo* pDst = &target)
-                MemoryHelper.CopyMemory(pSrc, pDst, (long)length * sizeof(TTo));
-        }
-
-        [SecuritySafeCritical]
-        [MethodImpl(MethodImpl.AggressiveInlining)]
-        private unsafe int DoIndexOfUnsafe(TTo item)
-        {
-            var comparer = ComparerHelper<TTo>.EqualityComparer;
-            fixed (TFrom* ptr = &buffer.GetElementReferenceInternal(0))
-            {
-                TTo* pTo = (TTo*)ptr;
-                for (int i = 0; i < length; i++)
-                {
-                    if (comparer.Equals(pTo[i], item))
-                        return i;
-                }
-            }
-
-            return -1;
-        }
-
-#endif
 
         #endregion
 
