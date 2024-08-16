@@ -47,6 +47,10 @@ using KGySoft.Reflection;
 #pragma warning disable CS8500 // This takes the address of, gets the size of, or declares a pointer to a managed type - false alarm, the static constructor constrains unmanaged type arguments
 #endif
 
+#if !NET5_0_OR_GREATER
+// ReSharper disable UnusedMember.Local - CastArrayDebugView.Items
+#endif
+
 #endregion
 
 namespace KGySoft.Collections
@@ -172,7 +176,6 @@ namespace KGySoft.Collections
             #region Properties
 
             [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-            [SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "Used by the debugger")]
             readonly public TTo[]? Items => array.ToArray();
 
             #endregion

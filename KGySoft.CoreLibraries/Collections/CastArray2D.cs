@@ -30,6 +30,17 @@ using System.Security;
 
 #endregion
 
+#region Suppressions
+
+#if NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0
+#pragma warning disable CS1574 // the documentation contains types that are not available in every target
+#endif
+#if !NET5_0_OR_GREATER
+// ReSharper disable UnusedMember.Local - CastArray2DDebugView.Items
+#endif
+
+#endregion
+
 namespace KGySoft.Collections
 {
     [Serializable]
@@ -330,8 +341,8 @@ namespace KGySoft.Collections
         /// </summary>
         /// <param name="startRowIndex">The offset that points to the first row of the returned <see cref="CastArray2D{TFrom,TTo}"/>.</param>
         /// <param name="rowCount">The desired number of rows of the returned <see cref="Array2D{T}"/>.</param>
-        /// <returns>The subrange of rows of the current <see cref="CastArray2D{TFrom,TTo}"/> instance starting with the specified <paramref name="startRowIndex"/>.</returns>
-        /// <exception cref="ArgumentOutOfRangeException"><paramref name="startRowIndex"/> is out of range.</exception>
+        /// <returns>The subrange of rows of the current <see cref="CastArray2D{TFrom,TTo}"/> instance indicated by the specified <paramref name="startRowIndex"/> and <paramref name="rowCount"/>.</returns>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="startRowIndex"/> or <paramref name="rowCount"/> is out of range.</exception>
         /// <exception cref="ArgumentException">The size of <typeparamref name="TTo"/> multiplied by <see cref="Width"/> is not divisible by the size of <typeparamref name="TFrom"/>.</exception>
         public CastArray2D<TFrom, TTo> Slice(int startRowIndex, int rowCount) => new CastArray2D<TFrom, TTo>(buffer.Slice(startRowIndex * width, rowCount * width), rowCount, width);
 
@@ -369,6 +380,7 @@ namespace KGySoft.Collections
         /// </remarks>
         /// <exception cref="InvalidOperationException"><see cref="IsNullOrEmpty"/> returns <see langword="true"/>.</exception>
         /// <exception cref="NotSupportedException">.NET Framework only: you execute this method in a partially trusted <see cref="AppDomain"/> that does not allow executing unverifiable code.</exception>
+        [SecurityCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public TTo GetElementUnsafe(int y, int x) => buffer.GetElementUnsafe(y * width + x);
 
@@ -388,12 +400,13 @@ namespace KGySoft.Collections
         /// </remarks>
         /// <exception cref="InvalidOperationException"><see cref="IsNullOrEmpty"/> returns <see langword="true"/>.</exception>
         /// <exception cref="NotSupportedException">.NET Framework only: you execute this method in a partially trusted <see cref="AppDomain"/> that does not allow executing unverifiable code.</exception>
+        [SecurityCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public void SetElementUnsafe(int y, int x, TTo value) => buffer.SetElementUnsafe(y * width + x, value);
 
         /// <summary>
         /// Gets the reference to the element at the specified coordinates without any range check.
-        /// of the <see cref="Buffer"/> property. To validate the coordinates against <see cref="Length"/> use
+        /// To validate the coordinates against <see cref="Length"/> use
         /// the <see cref="GetElementReference">GetElementReference</see> method instead.
         /// Parameter order is the same as in case of a regular two-dimensional array.
         /// </summary>
@@ -408,6 +421,7 @@ namespace KGySoft.Collections
         /// </remarks>
         /// <exception cref="InvalidOperationException"><see cref="IsNullOrEmpty"/> returns <see langword="true"/>.</exception>
         /// <exception cref="VerificationException">.NET Framework only: you execute this method in a partially trusted <see cref="AppDomain"/> that does not allow executing unverifiable code.</exception>
+        [SecurityCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public ref TTo GetElementReferenceUnsafe(int y, int x) => ref buffer.GetElementReferenceUnsafe(y * width + x);
 
