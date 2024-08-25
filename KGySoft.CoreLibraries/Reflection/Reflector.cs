@@ -3730,14 +3730,59 @@ namespace KGySoft.Reflection
             => TypeResolver.ResolveType(assembly, typeName, options);
 
 #if NET9_0_OR_GREATER
+        /// <summary>
+        /// Gets the <see cref="System.Type"/> with the specified <paramref name="typeName"/>.
+        /// When no assembly is defined in <paramref name="typeName"/>, the type can be defined in any loaded assembly.
+        /// </summary>
+        /// <param name="typeName">A pre-parsed <see cref="TypeName"/> instance with or without assembly name.</param>
+        /// <param name="options">The options for resolving the type. This parameter is optional.
+        /// <br/>Default value: <see cref="ResolveTypeOptions.TryToLoadAssemblies"/>, <see cref="ResolveTypeOptions.AllowPartialAssemblyMatch"/>.</param>
+        /// <returns>The resolved <see cref="System.Type"/>, or <see langword="null"/> if
+        /// the <see cref="ResolveTypeOptions.ThrowError"/> flag is not enabled in <paramref name="options"/> and
+        /// <paramref name="typeName"/> could not be resolved with the provided <paramref name="options"/>.</returns>
+        /// <remarks>
+        /// <note type="security">The default value of the <paramref name="options"/> parameter allows loading assemblies if <paramref name="typeName"/>
+        /// is an assembly qualified name. This behavior is compatible with the <see cref="Type.GetType(string)">Type.GetType</see> method but
+        /// can be a security risk if <paramref name="typeName"/> is from an untrusted source, eg. file, user input, remote service, database, etc.
+        /// In such cases do not enable the <see cref="ResolveTypeOptions.TryToLoadAssemblies"/> flag so the type can be resolved from the already loaded assemblies.</note>
+        /// <para><paramref name="typeName"/> can be generic and may contain fully or partially defined assembly names.</para>
+        /// </remarks>
+        /// <seealso cref="ResolveTypeOptions"/>
         [CLSCompliant(false)]
         public static Type? ResolveType(TypeName typeName, ResolveTypeOptions options = ResolveTypeOptions.TryToLoadAssemblies | ResolveTypeOptions.AllowPartialAssemblyMatch)
             => TypeResolver.ResolveType(typeName, null, options);
 
+        /// <summary>
+        /// Gets the <see cref="System.Type"/> with the specified <paramref name="typeName"/> using the specified <paramref name="typeResolver"/>.
+        /// </summary>
+        /// <param name="typeName">A pre-parsed <see cref="TypeName"/> instance with or without assembly name.</param>
+        /// <param name="typeResolver">If not <see langword="null"/>, then will be called for every generic type definition and ultimate element types
+        /// occur in <paramref name="typeName"/>. The <see cref="TypeName.AssemblyName"/> property in the <see cref="TypeName"/> argument can be <see langword="null"/> if no assembly is
+        /// specified for the type to resolve. Can return <see langword="null"/> to let the default resolve logic take over based on <paramref name="options"/>.</param>
+        /// <param name="options">The options for resolving the type. This parameter is optional.
+        /// <br/>Default value: <see cref="ResolveTypeOptions.TryToLoadAssemblies"/>, <see cref="ResolveTypeOptions.AllowPartialAssemblyMatch"/>.</param>
+        /// <returns>The resolved <see cref="System.Type"/>, or <see langword="null"/> if
+        /// the <see cref="ResolveTypeOptions.ThrowError"/> flag is not enabled in <paramref name="options"/> and
+        /// <paramref name="typeName"/> could not be resolved with the provided <paramref name="options"/>.</returns>
+        /// <remarks>
+        /// <para><paramref name="typeName"/> can be generic and may contain fully or partially defined assembly names.</para>
+        /// </remarks>
+        /// <seealso cref="ResolveTypeOptions"/>
         [CLSCompliant(false)]
         public static Type? ResolveType(TypeName typeName, Func<TypeName, Type?>? typeResolver, ResolveTypeOptions options = ResolveTypeOptions.TryToLoadAssemblies | ResolveTypeOptions.AllowPartialAssemblyMatch)
             => TypeResolver.ResolveType(typeName, typeResolver, options);
 
+        /// <summary>
+        /// Gets the <see cref="System.Type"/> with the specified <paramref name="typeName"/> from the specified <paramref name="assembly"/>.
+        /// </summary>
+        /// <param name="assembly">The assembly that contains the type to retrieve.</param>
+        /// <param name="typeName">A pre-parsed <see cref="TypeName"/> instance without an assembly name (the <see cref="TypeName.AssemblyName"/> property expected to be <see langword="null"/>).</param>
+        /// <param name="options">The options for resolving the type. This parameter is optional.
+        /// <br/>Default value: <see cref="ResolveTypeOptions.TryToLoadAssemblies"/>, <see cref="ResolveTypeOptions.AllowPartialAssemblyMatch"/>.</param>
+        /// <returns>The resolved <see cref="System.Type"/>, or <see langword="null"/> if
+        /// the <see cref="ResolveTypeOptions.ThrowError"/> flag is not enabled in <paramref name="options"/> and
+        /// <paramref name="typeName"/> could not be resolved with the provided <paramref name="options"/>.</returns>
+        /// <seealso cref="ResolveTypeOptions"/>
         [CLSCompliant(false)]
         public static Type? ResolveType(Assembly assembly, TypeName typeName, ResolveTypeOptions options = ResolveTypeOptions.TryToLoadAssemblies | ResolveTypeOptions.AllowPartialAssemblyMatch)
             => TypeResolver.ResolveType(assembly, typeName, options);
