@@ -211,7 +211,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
         [Test]
         public void InitFromCollectionTest()
         {
-            string[] array = { "alpha", "beta", "gamma" };
+            string[] array = { "alpha", "beta", "gamma", null };
 
             // initializing as collection
             Assert.IsTrue(array.SequenceEqual(new ThreadSafeHashSet<string>(array)));
@@ -223,7 +223,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
         [Test]
         public void CopyToTest()
         {
-            var set = new ThreadSafeHashSet<string> { "alpha", "beta", "gamma" };
+            var set = new ThreadSafeHashSet<string> { "alpha", "beta", "gamma", null };
 
             var arr = new string[set.Count];
             ((ICollection<string>)set).CopyTo(arr, 0);
@@ -233,15 +233,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
         [Test]
         public void ToArrayTest()
         {
-            var set = new ThreadSafeHashSet<string> { "alpha", "beta", "gamma" };
+            var set = new ThreadSafeHashSet<string> { "alpha", "beta", "gamma", null };
             var tSet = new ThreadSafeHashSet<string>(set);
 
             Assert.IsTrue(set.SequenceEqual(tSet));
             Assert.IsTrue(set.ToArray().SequenceEqual(tSet.ToArray()));
 
             tSet.Remove("alpha");
-            Assert.AreEqual(2, tSet.Count);
-            Assert.AreEqual(2, tSet.ToArray().Length);
+            Assert.AreEqual(3, tSet.Count);
+            Assert.AreEqual(3, tSet.ToArray().Length);
         }
 
 #if !NETFRAMEWORK
@@ -250,7 +250,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
         [Test]
         public void SerializationTest()
         {
-            var set = new ThreadSafeHashSet<string> { "alpha", "beta", "gamma" };
+            var set = new ThreadSafeHashSet<string> { "alpha", "beta", "gamma", null };
 
             ThreadSafeHashSet<string> clone = set.DeepClone();
             Assert.IsTrue(set.SequenceEqual(clone));

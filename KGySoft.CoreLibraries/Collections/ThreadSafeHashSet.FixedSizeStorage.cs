@@ -653,8 +653,17 @@ namespace KGySoft.Collections
             {
                 if (item == null)
                     return 0U;
-                IEqualityComparer<T>? comp = comparer;
-                return (uint)(comp == null ? item.GetHashCode() : comp.GetHashCode(item));
+#if NET5_0_OR_GREATER
+                if (typeof(T).IsValueType)
+                {
+                    IEqualityComparer<T>? comp = comparer;
+                    return (uint)(comp == null ? item.GetHashCode() : comp.GetHashCode(item));
+                }
+
+                return (uint)comparer!.GetHashCode(item);
+#else
+                return (uint)comparer!.GetHashCode(item);
+#endif
             }
 
             private uint GetBucketSize(int capacity)
