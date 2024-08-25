@@ -17,6 +17,9 @@
 
 using System;
 using System.Collections.Generic;
+#if NET9_0_OR_GREATER
+using System.Reflection.Metadata;
+#endif
 
 using KGySoft.Reflection;
 
@@ -27,16 +30,16 @@ using NUnit.Framework;
 namespace KGySoft.CoreLibraries.UnitTests.Reflection
 {
     /// <summary>
-    /// Tests for <see cref="Reflector.ResolveType(string,bool,bool)"/> method.
+    /// Tests for <see cref="Reflector.ResolveType(string,ResolveTypeOptions)"/> method.
     /// Use non-mscorlib types, otherwise <see cref="Type.GetType(string)"/> resolves the string as well.
     /// </summary>
     [TestFixture]
     public class TypeResolverTest
     {
         #region Fields
-        
+
         private static readonly Type[] sourceDumpAndResolveTypesContainingGenericArguments =
-{
+        {
             typeof(List<>).GetGenericArguments()[0], // T of List<>
             typeof(Dictionary<,>).MakeGenericType(typeof(string), typeof(Dictionary<,>).GetGenericArguments()[1]), // Dictionary<string, TValue>
             typeof(Dictionary<,>).MakeGenericType(typeof(Dictionary<,>).GetGenericArguments()[0], typeof(string)), // Dictionary<TKey, string>
@@ -50,9 +53,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             //typeof(List<>).MakeGenericType(typeof(List<>).GetGenericArguments()[0].MakeByRefType()), // List<T&>
             //typeof(List<>).MakeGenericType(typeof(List<>).GetGenericArguments()[0].MakePointerType()), // List<T*>
             typeof(List<>).MakeGenericType(typeof(Dictionary<,>).GetGenericArguments()[0]).MakeArrayType(), // List<TKey>[]
-            typeof(Array).GetMethod("Resize").GetGenericArguments()[0], // T of Array.Resize<T>
-            typeof(Array).GetMethod("Resize").GetGenericArguments()[0].MakeArrayType(), // T[] of Array.Resize<T>
-            typeof(List<>).MakeGenericType(typeof(Array).GetMethod("Resize").GetGenericArguments()[0]), // List<T>
+            typeof(Array).GetMethod("Resize")!.GetGenericArguments()[0], // T of Array.Resize<T>
+            typeof(Array).GetMethod("Resize")!.GetGenericArguments()[0].MakeArrayType(), // T[] of Array.Resize<T>
+            typeof(List<>).MakeGenericType(typeof(Array).GetMethod("Resize")!.GetGenericArguments()[0]), // List<T> of Array.Resize<T>
         };
 
         #endregion
@@ -84,7 +87,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         [TestCase("System.Int32[ ] ")] // int[]
         [TestCase("System.Int32[*]")] // int[*]
         [TestCase("System.Int32[,]")] // int[,]
-        [TestCase("System.Int32[*,*]")] // int[,]
+        [TestCase("System.Int32[*,*]")] // fail
         [TestCase("System.Int32[*,**]")] // fail
         [TestCase("System.Int32[]*")] // int[]*
         [TestCase("System.Int32[]**&")] // int[]**&
@@ -122,6 +125,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Type type = Reflector.ResolveType(typeName);
             Console.WriteLine($"Resolved to: {type?.GetName(TypeNameKind.LongName) ?? "<null>"}");
 
+#if NET9_0_OR_GREATER
+            if (TypeName.TryParse(typeName, out TypeName name))
+            {
+                Type typeByTypeName = Reflector.ResolveType(name, _ => null);
+                Assert.AreEqual(type, typeByTypeName);
+            }
+            else
+                Assert.IsNull(type);
+#endif
+
             if (type == null)
                 Assert.Catch<Exception>(() => Type.GetType(typeName, true));
             else
@@ -131,6 +144,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         [TestCaseSource(nameof(sourceDumpAndResolveTypesContainingGenericArguments))]
         public void DumpAndResolveTypesContainingGenericArguments(Type type)
         {
+            // NOTE: Cannot test .NET9+'s TypeName here because it cannot dump a name, and it also doesn't support type arguments
             string fullName = type.GetName(TypeNameKind.LongName);
             string aqn = type.GetName(TypeNameKind.ForcedAssemblyQualifiedName);
             Console.WriteLine($"Name: {type.GetName(TypeNameKind.ShortName)}");

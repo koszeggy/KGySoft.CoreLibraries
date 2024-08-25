@@ -16,10 +16,14 @@
 #region Usings
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+#if NET9_0_OR_GREATER
+using System.Reflection.Metadata;
+#endif
 #if !NET35
 using System.Runtime.CompilerServices;
 #endif
@@ -33,6 +37,16 @@ using KGySoft.Reflection.WinApi;
 #endif
 
 #endregion
+
+#region Suppressions
+
+#if NETFRAMEWORK
+// ReSharper disable RedundantSuppressNullableWarningExpression - Assembly.FullName
+#endif
+
+
+#endregion
+
 
 namespace KGySoft.Reflection
 {
@@ -132,14 +146,17 @@ namespace KGySoft.Reflection
             return AssemblyCache[(assemblyName, (int)options)];
         }
 
+        [SuppressMessage("ReSharper", "ConditionalAccessQualifierIsNonNullableAccordingToAPIContract", Justification = "It actually can be null, validation is in the string overload")]
         internal static Assembly? ResolveAssembly(AssemblyName assemblyName, ResolveAssemblyOptions options)
-        {
-            if (assemblyName == null!)
-                Throw.ArgumentNullException(Argument.assemblyName);
-            if (!options.AllFlagsDefined())
-                Throw.FlagsEnumArgumentOutOfRange(Argument.options, options);
-            return AssemblyCache[(assemblyName.FullName, (int)options)];
-        }
+            // If not in the cache yet it will create another AssemblyName internally, but it happens only once, so it's alright
+            => ResolveAssembly(assemblyName?.FullName!, options);
+
+#if NET9_0_OR_GREATER
+        [SuppressMessage("ReSharper", "ConditionalAccessQualifierIsNonNullableAccordingToAPIContract", Justification = "It actually can be null, validation is in the string overload")]
+        internal static Assembly? ResolveAssembly(AssemblyNameInfo assemblyName, ResolveAssemblyOptions options)
+            // If not in the cache yet it will create an AssemblyName internally, but it happens only once, so it's alright
+            => ResolveAssembly(assemblyName?.FullName!, options);
+#endif
 
         internal static bool IdentityMatches(AssemblyName refName, AssemblyName? toCheck, bool allowPartialMatch)
         {
@@ -212,7 +229,8 @@ namespace KGySoft.Reflection
         private static Assembly? TryResolveAssembly((string AssemblyName, int Options) key, out bool storeValue)
         {
             // Note: even if the original source was an AssemblyName we resolve it from string because AssemblyName has no proper GetHashCode/Equals
-            // It is not a problem as this is the item loader method of the cache so it will not be recreated most of the time.
+            // It is not a problem as this is the item loader method of the cache, so it will not be recreated most of the time.
+            // Note 2: Must use an AssemblyName instead of AssemblyNameInfo even in .NET 9+ because of Assembly.Load and Assembly.GetName()
             AssemblyName asmName;
             try
             {

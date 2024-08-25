@@ -35,6 +35,12 @@
 + New CastArray2D<TFrom, TTo> struct: Like Array2D<T> but allows reinterpreting the original unmanaged element type.
 + New CastArray3D<TFrom, TTo> struct: Like Array3D<T> but allows reinterpreting the original unmanaged element type.
 
++ KGySoft.Reflection namespace:
+===============================
++ Reflector class:
+  + New ResolveAssembly overload with AssemblyNameInfo parameter (.NET 9.0 and above)
+  + New ResolveType overloads with TypeName parameter (.NET 9.0 and above)
+
 
 ~~~~~~~~~
 * v8.3.0:

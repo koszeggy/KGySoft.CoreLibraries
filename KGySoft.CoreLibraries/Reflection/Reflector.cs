@@ -28,14 +28,14 @@ using System.Linq.Expressions;
 using System.Numerics;
 #endif
 using System.Reflection;
-#if !(NETSTANDARD2_0 || NETCOREAPP3_0_OR_GREATER)
+#if !(NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_0)
 using System.Reflection.Emit;
+#endif
+#if NET9_0_OR_GREATER
+using System.Reflection.Metadata;
 #endif
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
-#if NETFRAMEWORK || NETSTANDARD2_0
-using System.Runtime.Serialization;
-#endif
 using System.Security;
 #if NETCOREAPP3_0_OR_GREATER
 using System.Text;
@@ -44,6 +44,15 @@ using System.Threading;
 
 using KGySoft.Collections;
 using KGySoft.CoreLibraries;
+
+#endregion
+
+#region Suppressions
+
+#if !NET6_0_OR_GREATER
+// ReSharper disable AssignNullToNotNullAttribute - TypeDescriptor.CreateInstance parameters
+// ReSharper disable RedundantSuppressNullableWarningExpression - TypeDescriptor.CreateInstance return value
+#endif
 
 #endregion
 
@@ -2860,7 +2869,7 @@ namespace KGySoft.Reflection
                 {
                     if (way == ReflectionWays.TypeDescriptor)
                     {
-                        result = TypeDescriptor.CreateInstance(null, type, ctorParams?.Select(p => p.ParameterType).ToArray(), parameters!)!;
+                        result = TypeDescriptor.CreateInstance(null, type, ctorParams?.Select(p => p.ParameterType).ToArray(), parameters)!;
                         return true;
                     }
 
@@ -3566,6 +3575,26 @@ namespace KGySoft.Reflection
         public static Assembly? ResolveAssembly(AssemblyName assemblyName, ResolveAssemblyOptions options = ResolveAssemblyOptions.TryToLoadAssembly | ResolveAssemblyOptions.AllowPartialMatch)
             => AssemblyResolver.ResolveAssembly(assemblyName, options);
 
+#if NET9_0_OR_GREATER
+        /// <summary>
+        /// Gets the <see cref="Assembly"/> with the specified <paramref name="assemblyName"/>.
+        /// </summary>
+        /// <param name="assemblyName">Name of the <see cref="Assembly"/> to retrieve. May contain a fully or partially defined assembly name.</param>
+        /// <param name="options">The options for resolving the assembly. This parameter is optional.
+        /// <br/>Default value: <see cref="ResolveAssemblyOptions.TryToLoadAssembly"/>, <see cref="ResolveAssemblyOptions.AllowPartialMatch"/>.</param>
+        /// <returns>An <see cref="Assembly"/> instance with the loaded assembly, or <see langword="null"/> if
+        /// the <see cref="ResolveAssemblyOptions.ThrowError"/> flag is not enabled in <paramref name="options"/> and
+        /// <paramref name="assemblyName"/> could not be resolved with the provided <paramref name="options"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="assemblyName"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="options"/> has an invalid value.</exception>
+        /// <exception cref="ReflectionException"><see cref="ResolveAssemblyOptions.ThrowError"/> is enabled in <paramref name="options"/> and the assembly cannot be resolved or loaded.
+        /// In case of a load error the <see cref="Exception.InnerException"/> property is set.</exception>
+        /// <seealso cref="ResolveAssemblyOptions"/>
+        [CLSCompliant(false)]
+        public static Assembly? ResolveAssembly(AssemblyNameInfo assemblyName, ResolveAssemblyOptions options = ResolveAssemblyOptions.TryToLoadAssembly | ResolveAssemblyOptions.AllowPartialMatch)
+            => AssemblyResolver.ResolveAssembly(assemblyName, options);
+#endif
+
         /// <summary>
         /// Gets the already loaded assemblies in a transparent way of any frameworks.
         /// </summary>
@@ -3699,6 +3728,20 @@ namespace KGySoft.Reflection
         /// <seealso cref="CoreLibraries.TypeExtensions.GetName(System.Type,CoreLibraries.TypeNameKind)">TypeExtensions.GetName</seealso>
         public static Type? ResolveType(Assembly assembly, string typeName, ResolveTypeOptions options = ResolveTypeOptions.TryToLoadAssemblies | ResolveTypeOptions.AllowPartialAssemblyMatch)
             => TypeResolver.ResolveType(assembly, typeName, options);
+
+#if NET9_0_OR_GREATER
+        [CLSCompliant(false)]
+        public static Type? ResolveType(TypeName typeName, ResolveTypeOptions options = ResolveTypeOptions.TryToLoadAssemblies | ResolveTypeOptions.AllowPartialAssemblyMatch)
+            => TypeResolver.ResolveType(typeName, null, options);
+
+        [CLSCompliant(false)]
+        public static Type? ResolveType(TypeName typeName, Func<TypeName, Type?>? typeResolver, ResolveTypeOptions options = ResolveTypeOptions.TryToLoadAssemblies | ResolveTypeOptions.AllowPartialAssemblyMatch)
+            => TypeResolver.ResolveType(typeName, typeResolver, options);
+
+        [CLSCompliant(false)]
+        public static Type? ResolveType(Assembly assembly, TypeName typeName, ResolveTypeOptions options = ResolveTypeOptions.TryToLoadAssemblies | ResolveTypeOptions.AllowPartialAssemblyMatch)
+            => TypeResolver.ResolveType(assembly, typeName, options);
+#endif
 
 #if NET35 || NET40 || NET45
 #pragma warning disable CS1574 // the documentation contains types that are not available in every target

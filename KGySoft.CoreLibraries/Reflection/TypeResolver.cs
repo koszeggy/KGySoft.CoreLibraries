@@ -21,6 +21,9 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+#if NET9_0_OR_GREATER
+using System.Reflection.Metadata;
+#endif
 using System.Text;
 using System.Threading;
 
@@ -34,7 +37,7 @@ namespace KGySoft.Reflection
     /// <summary>
     /// Represents a class that is able to convert/parse every runtime type to/from string.
     /// </summary>
-    internal sealed class TypeResolver
+    internal sealed partial class TypeResolver
     {
         #region Nested types
 
@@ -298,6 +301,8 @@ namespace KGySoft.Reflection
 
         #region Constructors
 
+        #region For Parsing
+
         private TypeResolver(ResolveTypeOptions options) => this.options = options;
 
         private TypeResolver(string typeName, ResolveTypeOptions options) : this(options)
@@ -317,6 +322,10 @@ namespace KGySoft.Reflection
             assemblyName = assembly.FullName;
             Initialize(typeName);
         }
+
+        #endregion
+
+        #region For Building Name
 
         private TypeResolver(Type type, TypeNameKind kind, Func<Type, AssemblyName?>? assemblyNameResolver, Func<Type, string?>? typeNameResolver)
         {
@@ -354,7 +363,7 @@ namespace KGySoft.Reflection
             if (!isGenericParam)
             {
                 assembly = type.Assembly;
-                if (kind.In(TypeNameKind.AssemblyQualifiedName, TypeNameKind.ForcedAssemblyQualifiedName))
+                if (kind is TypeNameKind.AssemblyQualifiedName or TypeNameKind.ForcedAssemblyQualifiedName)
                     assemblyName = assemblyNameResolver?.Invoke(type)?.FullName ?? assembly.FullName;
                 return;
             }
@@ -363,6 +372,8 @@ namespace KGySoft.Reflection
             declaringType = new TypeResolver(type.DeclaringType!, kind, assemblyNameResolver, typeNameResolver);
             declaringMethod = type.DeclaringMethod?.ToString();
         }
+
+        #endregion
 
         #endregion
 
@@ -424,6 +435,51 @@ namespace KGySoft.Reflection
             // the item loader can throw an exception and only non-null values will be stored in the cache
             return TypeCacheByAssembly[(assembly, typeName, (int)options)];
         }
+
+#if NET9_0_OR_GREATER
+        [SuppressMessage("ReSharper", "ConditionalAccessQualifierIsNonNullableAccordingToAPIContract", Justification = "Forwarding the validation to the other overload.")]
+        internal static Type? ResolveType(TypeName typeName, Func<TypeName, Type?>? typeResolver, ResolveTypeOptions options)
+        {
+            // Using the caching version. We have to use our own parser because TypeName has no overridden Equals/GetHashCode, so we must use a string as key.
+            // Unfortunately this may allocate again and again for different TypeName instances resulting the same AQN.
+            if (typeResolver == null)
+                return ResolveType(typeName?.AssemblyQualifiedName!, null, options);
+
+            if (typeName == null!)
+                Throw.ArgumentNullException(Argument.typeName);
+            if (!options.AllFlagsDefined())
+                Throw.FlagsEnumArgumentOutOfRange(Argument.options, options);
+
+            Type? result;
+
+            // going on with the resolver delegate, whose result is not cached
+            try
+            {
+                result = new TypeNameResolver(typeName, options).Resolve(typeResolver);
+            }
+            catch (Exception e) when (!e.IsCriticalOr(e is ReflectionException))
+            {
+                if ((options & ResolveTypeOptions.ThrowError) != ResolveTypeOptions.None)
+                    Throw.ReflectionException(Res.ReflectionNotAType(typeName.AssemblyQualifiedName), e);
+                return null;
+            }
+
+            if (result == null && (options & ResolveTypeOptions.ThrowError) != ResolveTypeOptions.None)
+                Throw.ReflectionException(Res.ReflectionNotAType(typeName.AssemblyQualifiedName));
+
+            return result;
+        }
+
+        [SuppressMessage("ReSharper", "ConditionalAccessQualifierIsNonNullableAccordingToAPIContract", Justification = "Forwarding the validation to the other overload.")]
+        internal static Type? ResolveType(Assembly assembly, TypeName typeName, ResolveTypeOptions options)
+        {
+            // Using the caching version. We have to use our own parser because TypeName has no overridden Equals/GetHashCode, so we must use a string as key.
+            // Unfortunately this may allocate again and again for different TypeName instances resulting the same AQN.
+            // NOTE: Passing the AssemblyQualifiedName instead of FullName is intended, so it can throw if it also contains an assembly name.
+            return ResolveType(assembly, typeName?.AssemblyQualifiedName!, options);
+        }
+
+#endif
 
         internal static string GetName(Type type, TypeNameKind kind, Func<Type, AssemblyName?>? assemblyNameResolver, Func<Type, string?>? typeNameResolver)
         {
@@ -612,7 +668,7 @@ namespace KGySoft.Reflection
                     return;
                 }
 
-                if (ctx.Char.In('*', '&'))
+                if (ctx.Char is '*' or '&')
                 {
                     rootName = ctx.GetBuf();
                     modifiers.Add(ctx.Char == '*' ? pointer : byRef);
@@ -727,7 +783,7 @@ namespace KGySoft.Reflection
                 if (ctx.Char == ':') // generic parameter identifier
                 {
                     ctx.Pop();
-                    Debug.Assert(ctx.State.In(State.GenericParameterName, State.GenericMethodParameterName));
+                    Debug.Assert(ctx.State is State.GenericParameterName or State.GenericMethodParameterName);
                     switch (ctx.State)
                     {
                         case State.GenericParameterName:
@@ -783,7 +839,7 @@ namespace KGySoft.Reflection
 
             void ParseBeforeArgument(ref ParseContext ctx)
             {
-                if (ctx.Char.In(']', ',', '*'))
+                if (ctx.Char is ']' or ',' or '*')
                 {
                     ctx.State = State.Invalid;
                     return;
@@ -817,7 +873,7 @@ namespace KGySoft.Reflection
                     ctx.AppendChar();
 
                 arg.Parse(ref ctx);
-                if (!ctx.State.In(State.Modifiers, State.BeforeArgument))
+                if (ctx.State is not (State.Modifiers or State.BeforeArgument))
                 {
                     ctx.State = State.Invalid;
                     return;
@@ -893,7 +949,7 @@ namespace KGySoft.Reflection
                     return;
                 }
 
-                if (ctx.Char.In('*', '&')) // pointer/ByRef
+                if (ctx.Char is '*' or '&') // pointer/ByRef
                 {
                     rootName = ctx.GetBuf();
                     modifiers.Add(ctx.Char == '*' ? pointer : byRef);
@@ -907,10 +963,10 @@ namespace KGySoft.Reflection
             void ParseDeclaringType(ref ParseContext ctx)
             {
                 ctx.Pop();
-                Debug.Assert(ctx.State.In(State.FullNameOrAqn, State.TypeName));
+                Debug.Assert(ctx.State is State.FullNameOrAqn or State.TypeName);
                 var def = new TypeResolver(options);
                 def.Parse(ref ctx);
-                if (!ctx.State.In(State.None, State.AfterArgument, State.BeforeArgument, State.Modifiers))
+                if (ctx.State is not (State.None or State.AfterArgument or State.BeforeArgument or State.Modifiers))
                 {
                     ctx.State = State.Invalid;
                     return;
@@ -1073,7 +1129,7 @@ namespace KGySoft.Reflection
                         sb.Append(',');
                     TypeResolver arg = genericArgs[i];
                     bool aqn = kind == TypeNameKind.ForcedAssemblyQualifiedName
-                        || kind.In(TypeNameKind.AssemblyQualifiedName, removeAssemblyVersions)
+                        || kind is TypeNameKind.AssemblyQualifiedName or removeAssemblyVersions
                             && !AssemblyResolver.IsCoreLibAssemblyName(arg.assemblyName ?? arg.declaringType?.assemblyName!);
                     if (aqn)
                         sb.Append('[');
@@ -1130,7 +1186,7 @@ namespace KGySoft.Reflection
             {
                 if (assemblyName == null
                     || !(kind == TypeNameKind.ForcedAssemblyQualifiedName
-                        || kind.In(TypeNameKind.AssemblyQualifiedName, removeAssemblyVersions)
+                        || kind is TypeNameKind.AssemblyQualifiedName or removeAssemblyVersions
                         && !AssemblyResolver.IsCoreLibAssemblyName(assemblyName)))
                 {
                     return;
