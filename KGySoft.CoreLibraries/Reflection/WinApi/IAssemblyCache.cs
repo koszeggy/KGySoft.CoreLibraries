@@ -28,7 +28,7 @@ namespace KGySoft.Reflection.WinApi
     [ComImport, InterfaceType(ComInterfaceType.InterfaceIsIUnknown), Guid("e707dcde-d1cd-11d2-bab9-00c04f8eceae")]
     internal interface IAssemblyCache
     {
-#region Methods
+        #region Methods
 
         /// <summary>
         /// Placeholder for the UninstallAssembly method, which is the first one in this COM interface
@@ -46,7 +46,7 @@ namespace KGySoft.Reflection.WinApi
         [PreserveSig]
         int QueryAssemblyInfo(int flags, [MarshalAs(UnmanagedType.LPWStr)]string assemblyName, ref ASSEMBLY_INFO assemblyInfo);
 
-#endregion
+        #endregion
     }
 }
 #endif

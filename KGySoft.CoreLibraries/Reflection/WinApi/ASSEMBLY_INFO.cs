@@ -35,7 +35,7 @@ namespace KGySoft.Reflection.WinApi
     /// </summary>
     internal struct ASSEMBLY_INFO
     {
-#region Fields
+        #region Fields
 
         /// <summary>
         /// The size, in bytes, of the structure. This field is reserved for future extensibility.
@@ -57,15 +57,14 @@ namespace KGySoft.Reflection.WinApi
         /// <summary>
         /// A pointer to a string buffer that holds the current path to the manifest file. The path must end with a null character.
         /// </summary>
-        [MarshalAs(UnmanagedType.LPWStr)]
-        public string currentAssemblyPath;
+        [MarshalAs(UnmanagedType.LPWStr)]public string currentAssemblyPath;
 
         /// <summary>
         /// The number of wide characters, including the null terminator, that pszCurrentAssemblyPathBuf contains.
         /// </summary>
         public int cchBuf;
 
-#endregion
+        #endregion
     }
 }
 #endif
