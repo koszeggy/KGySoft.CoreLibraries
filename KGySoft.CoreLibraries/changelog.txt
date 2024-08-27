@@ -41,6 +41,15 @@
   + New ResolveAssembly overload with AssemblyNameInfo parameter (.NET 9.0 and above)
   + New ResolveType overloads with TypeName parameter (.NET 9.0 and above)
 
+! KGySoft.Threading namespace:
+==============================
+! ParallelHelper class (.NET 5.0 and below):
+  ! All methods with parallelConfig/asyncConfig parameter: when AsyncConfigBase.MaxDegreeOfParallelism is zero or
+    less, then the maximum degree of parallelism was determined by Environment.ProcessorCount, which doesn't respect
+    the CPU affinity for the current process if the targeted platform is below .NET 6.0. From now on the CPU
+    affinity is respected on all platform targets.
+    See also: https://learn.microsoft.com/en-us/dotnet/core/compatibility/core-libraries/6.0/environment-processorcount-on-windows
+
 
 ~~~~~~~~~
 * v8.3.0:

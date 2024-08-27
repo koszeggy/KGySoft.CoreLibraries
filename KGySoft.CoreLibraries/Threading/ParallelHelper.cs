@@ -18,12 +18,20 @@
 using System;
 #if NET35
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.ExceptionServices;
 using System.Threading;
 #else
 using System.Collections.Concurrent;
+#if !NET6_0_OR_GREATER
+using System.Diagnostics;
+#endif
 using System.Threading.Tasks;
+#endif
+
+#if !NET6_0_OR_GREATER
+using KGySoft.CoreLibraries;
 #endif
 
 #endregion
@@ -46,8 +54,6 @@ namespace KGySoft.Threading
     {
         #region Fields
 
-        private static int? coreCount;
-
 #if !NET35
         private static readonly ParallelOptions defaultParallelOptions = new ParallelOptions();
 #endif
@@ -56,7 +62,7 @@ namespace KGySoft.Threading
 
         #region Properties
 
-        internal static int CoreCount => coreCount ??= Environment.ProcessorCount;
+        internal static int CoreCount { get; } = GetCoreCount();
         internal static bool IsSingleCoreCpu => CoreCount == 1;
 
         #endregion
@@ -562,6 +568,37 @@ namespace KGySoft.Threading
                 }
 
                 yield return (i, Math.Min(toExclusive, i + rangeSize));
+            }
+        }
+#endif
+
+#if NET6_0_OR_GREATER
+        private static int GetCoreCount() => Environment.ProcessorCount;
+#else
+        private static int GetCoreCount()
+        {
+            if (!EnvironmentHelper.IsWindows)
+                return Environment.ProcessorCount;
+
+            // Here we are on Windows, targeting .NET 5 or earlier, where Environment.ProcessorCount doesn't respect affinity or CPU limit:
+            // https://learn.microsoft.com/en-us/dotnet/core/compatibility/core-libraries/6.0/environment-processorcount-on-windows
+
+            try
+            {
+                // We check if DOTNET_PROCESSOR_COUNT is set because it has a priority over any other settings
+                string? var = Environment.GetEnvironmentVariable("DOTNET_PROCESSOR_COUNT");
+                if (var is not null && Int32.TryParse(var, out int result))
+                    return result;
+
+                // Using CPU affinity
+                // NOTE: Unlike the latest Environment.ProcessorCount implementations, not checking if multiple CPU groups are available
+                // because it's supported on Windows 11+ only, which was released after .NET 5 anyway.
+                nint affinity = Process.GetCurrentProcess().ProcessorAffinity;
+                return affinity == 0 ? Environment.ProcessorCount : ((ulong)affinity).GetFlagsCount();
+            }
+            catch (Exception e) when (!e.IsCritical())
+            {
+                return Environment.ProcessorCount;
             }
         }
 #endif
