@@ -33,7 +33,7 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Returns a <see cref="LockingList{T}"/>, which provides a thread-safe wrapper for the specified <paramref name="list"/>.
-        /// This only means that if the members are accessed through the returned <see cref="LockingList{T}"/>, then the inner state of the wrapped list remains always consistent and not that all of the multi-threading concerns can be ignored.
+        /// This only means that if the members are accessed through the returned <see cref="LockingList{T}"/>, then the inner state of the wrapped list remains always consistent and not that all the multi-threading concerns can be ignored.
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="LockingList{T}"/> class for details and some examples.
         /// </summary>
         /// <typeparam name="T">The type of the elements in the list.</typeparam>

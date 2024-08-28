@@ -38,7 +38,7 @@ namespace KGySoft.Collections
 {
     /// <summary>
     /// Provides a simple wrapper for an <see cref="IDictionary{TKey,TValue}"/> where all members are thread-safe.
-    /// This only means that the inner state of the wrapped dictionary remains always consistent and not that all of the multi-threading concerns can be ignored.
+    /// This only means that the inner state of the wrapped dictionary remains always consistent and not that all the multi-threading concerns can be ignored.
     /// </summary>
     /// <typeparam name="TKey">The type of the keys in the dictionary.</typeparam>
     /// <typeparam name="TValue">The type of the values in the dictionary.</typeparam>

@@ -518,7 +518,7 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Returns a <see cref="LockingDictionary{TKey,TValue}"/>, which provides a thread-safe wrapper for the specified <paramref name="dictionary"/>.
-        /// This only means that if the members are accessed through the returned <see cref="LockingDictionary{TKey,TValue}"/>, then the inner state of the wrapped dictionary remains always consistent and not that all of the multi-threading concerns can be ignored.
+        /// This only means that if the members are accessed through the returned <see cref="LockingDictionary{TKey,TValue}"/>, then the inner state of the wrapped dictionary remains always consistent and not that all the multi-threading concerns can be ignored.
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="LockingDictionary{TKey,TValue}"/> class for details and some examples.
         /// </summary>
         /// <typeparam name="TKey">The type of the keys in the <paramref name="dictionary"/>.</typeparam>

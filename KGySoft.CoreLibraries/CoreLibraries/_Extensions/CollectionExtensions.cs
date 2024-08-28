@@ -33,7 +33,7 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Returns a <see cref="LockingCollection{T}"/>, which provides a thread-safe wrapper for the specified <paramref name="collection"/>.
-        /// This only means that if the members are accessed through the returned <see cref="LockingCollection{T}"/>, then the inner state of the wrapped collection remains always consistent and not that all of the multi-threading concerns can be ignored.
+        /// This only means that if the members are accessed through the returned <see cref="LockingCollection{T}"/>, then the inner state of the wrapped collection remains always consistent and not that all the multi-threading concerns can be ignored.
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="LockingCollection{T}"/> class for details and some examples.
         /// </summary>
         /// <typeparam name="T">The type of the elements in the collection.</typeparam>
