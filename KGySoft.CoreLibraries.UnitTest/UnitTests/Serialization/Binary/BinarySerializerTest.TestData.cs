@@ -1032,6 +1032,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             private readonly ImmutableList<T> valueImmutableList;
             private readonly ImmutableList<T>.Builder valueImmutableListBuilder;
 #endif
+#if NET9_0_OR_GREATER
+            private readonly OrderedDictionary<T, T> keyValueUsageOrderedDictionary;
+            private readonly OrderedDictionary<T, string> keyUsageOrderedDictionary;
+            private readonly OrderedDictionary<string, T> valueUsageOrderedDictionary;
+#endif
 
             #endregion
 
@@ -1069,41 +1074,55 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 valueImmutableListBuilder = ImmutableList.CreateBuilder<T>();
                 valueImmutableListBuilder.Add(value);
 #endif
+#if NET9_0_OR_GREATER
+                keyValueUsageOrderedDictionary = new OrderedDictionary<T, T>(1) { { value, value } };
+                keyUsageOrderedDictionary = new OrderedDictionary<T, string>(1) { { value, value.ToString() } };
+                valueUsageOrderedDictionary = new OrderedDictionary<string, T>(3) { { "First", default }, { value.ToString(), value }, { "Last", default } };
+#endif
             }
 
             #endregion
 
             #region Methods
 
-            public override bool Equals(object obj) =>
-                obj is Box<T> other
-                && Equals(Value, other.Value)
-                && Equals(valueArray[0], other.valueArray[0])
-                && Equals(valueList[0], other.valueList[0])
-                && Equals(valueArraySegment.Array![0], other.valueArraySegment.Array![0])
-                && Equals(keyValueUsageDictionary[Value], other.keyValueUsageDictionary[Value])
-                && Equals(keyUsageDictionary[Value], other.keyUsageDictionary[Value])
-                && Equals(valueUsageDictionary[Value.ToString()], other.valueUsageDictionary[Value.ToString()])
-                && Equals(((KeyValuePair<T, string>)valueKeyValuePair).Key, ((KeyValuePair<T, string>)other.valueKeyValuePair).Key)
-                && Equals(((DictionaryEntry)valueDictionaryEntry).Value, ((DictionaryEntry)other.valueDictionaryEntry).Value)
-                && Equals(valueLinkedList.First.Value, other.valueLinkedList.First.Value)
-                && Equals(valueHashSet.First(), other.valueHashSet.First())
-                && Equals(valueOrderedDictionary[Value], other.valueOrderedDictionary[Value])
-                && Equals(valueStrongBox.Value, other.valueStrongBox.Value)
-                && Equals(valueArraySection[0], other.valueArraySection[0])
+            public override bool Equals(object obj)
+            {
+                if (obj is not Box<T> other)
+                    return false;
+
+                return Equals(Value, other.Value)
+                    && Equals(valueArray[0], other.valueArray[0])
+                    && Equals(valueList[0], other.valueList[0])
+                    && Equals(valueArraySegment.Array![0], other.valueArraySegment.Array![0])
+                    && Equals(keyValueUsageDictionary[Value], other.keyValueUsageDictionary[other.Value])
+                    && Equals(keyUsageDictionary[Value], other.keyUsageDictionary[other.Value])
+                    && Equals(valueUsageDictionary[Value.ToString()], other.valueUsageDictionary[other.Value.ToString()])
+                    && Equals(((KeyValuePair<T, string>)valueKeyValuePair).Key, ((KeyValuePair<T, string>)other.valueKeyValuePair).Key)
+                    && Equals(((DictionaryEntry)valueDictionaryEntry).Value, ((DictionaryEntry)other.valueDictionaryEntry).Value)
+                    && Equals(valueLinkedList.First.Value, other.valueLinkedList.First.Value)
+                    && Equals(valueHashSet.First(), other.valueHashSet.First())
+                    && Equals(valueOrderedDictionary[Value], other.valueOrderedDictionary[other.Value])
+                    && Equals(valueStrongBox.Value, other.valueStrongBox.Value)
+                    && Equals(valueArraySection[0], other.valueArraySection[0])
 #if !NET35
-                && Equals(tuple, other.tuple)
+                    && Equals(tuple, other.tuple)
 #endif
 #if NET47_OR_GREATER || !NETFRAMEWORK
-                && Equals(valueTuple, other.valueTuple)
+                    && Equals(valueTuple, other.valueTuple)
 #endif
 #if NETCOREAPP && !NETSTANDARD_TEST
-                && Equals(valueImmutableArray[0], other.valueImmutableArray[0])
-                && Equals(valueImmutableArrayBuilder[0], other.valueImmutableArrayBuilder[0])
-                && Equals(valueImmutableList[0], other.valueImmutableList[0])
-                && Equals(valueImmutableListBuilder[0], other.valueImmutableListBuilder[0])
+                    && Equals(valueImmutableArray[0], other.valueImmutableArray[0])
+                    && Equals(valueImmutableArrayBuilder[0], other.valueImmutableArrayBuilder[0])
+                    && Equals(valueImmutableList[0], other.valueImmutableList[0])
+                    && Equals(valueImmutableListBuilder[0], other.valueImmutableListBuilder[0])
 #endif
-            ;
+#if NET9_0_OR_GREATER
+                    && Equals(keyValueUsageOrderedDictionary[Value], other.keyValueUsageOrderedDictionary[other.Value])
+                    && Equals(keyUsageOrderedDictionary[Value], other.keyUsageOrderedDictionary[other.Value])
+                    && valueUsageOrderedDictionary.SequenceEqual(other.valueUsageOrderedDictionary)
+#endif
+                    ;
+            }
 
             public override int GetHashCode() => Value?.GetHashCode() ?? 0;
 
@@ -1122,6 +1141,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             #region Fields
 
             private readonly Box<SelfReferencerDirect> selfBox;
+
+            private bool isCheckingEquals;
 
             #endregion
 
@@ -1174,8 +1195,20 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 if (obj == null || obj.GetType() != typeof(SelfReferencerDirect))
                     return false;
 
-                var other = (SelfReferencerDirect)obj;
-                return other.Name == this.Name && ReferenceEquals(other, other.Self) && ReferenceEquals(this, this.Self);
+                if (isCheckingEquals)
+                    return true;
+
+                isCheckingEquals = true;
+                try
+                {
+                    var other = (SelfReferencerDirect)obj;
+                    return other.Name == this.Name && ReferenceEquals(other, other.Self) && ReferenceEquals(this, this.Self)
+                        && Equals(selfBox, other.selfBox);
+                }
+                finally
+                {
+                    isCheckingEquals = false;
+                }
             }
 
             #endregion
@@ -1212,7 +1245,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 public object GetRealObject(StreamingContext context)
                 {
                     return UseValidWay
-                        ? new SelfReferencerIndirect(Name)
+                        ? new SelfReferencerIndirect(Name, SelfRef)
                         {
                             UseCustomDeserializer = UseCustomDeserializer,
                             UseValidWay = UseValidWay
@@ -1257,7 +1290,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 public object GetRealObject(StreamingContext context)
                 {
                     return useValidWay
-                        ? new SelfReferencerIndirect(name)
+                        ? new SelfReferencerIndirect(name, selfRef)
                         {
                             UseCustomDeserializer = useCustomDeserializer,
                             UseValidWay = useValidWay
@@ -1278,6 +1311,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             #endregion
 
+            #region Fields
+
+            private bool isCheckingEquals;
+
+            #endregion
+
             #region Properties
 
             public string Name { get; }
@@ -1289,10 +1328,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             #region Constructors
 
-            public SelfReferencerIndirect(string name)
+            public SelfReferencerIndirect(string name, Box<SelfReferencerIndirect> box = null)
             {
                 Name = name;
-                SelfRef = new Box<SelfReferencerIndirect>(this);
+                SelfRef = box ?? new Box<SelfReferencerIndirect>(this);
             }
 
             #endregion
@@ -1314,8 +1353,20 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 if (obj == null || obj.GetType() != typeof(SelfReferencerIndirect))
                     return false;
 
-                var other = (SelfReferencerIndirect)obj;
-                return other.Name == this.Name && ReferenceEquals(other, other.SelfRef.Value) && ReferenceEquals(this, this.SelfRef.Value);
+                if (isCheckingEquals)
+                    return true;
+
+                isCheckingEquals = true;
+                try
+                {
+                    var other = (SelfReferencerIndirect)obj;
+                    return other.Name == this.Name && ReferenceEquals(other, other.SelfRef.Value) && ReferenceEquals(this, this.SelfRef.Value)
+                        && Equals(this.SelfRef, other.SelfRef);
+                }
+                finally
+                {
+                    isCheckingEquals = false;
+                }
             }
 
             #endregion

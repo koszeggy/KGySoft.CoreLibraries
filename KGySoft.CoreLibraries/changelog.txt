@@ -41,6 +41,12 @@
   + New ResolveAssembly overload with AssemblyNameInfo parameter (.NET 9.0 and above)
   + New ResolveType overloads with TypeName parameter (.NET 9.0 and above)
 
++ KGySoft.Serialization.Binary namespace:
+=========================================
++ BinarySerializationFormatter class:
+  + Supporting the AllowNullDictionary<TKey, TValue> class natively
+  + Supporting the OrderedDictionary<TKey, TValue> class natively (.NET 9.0 and above)
+
 ! KGySoft.Threading namespace:
 ==============================
 ! ParallelHelper class (.NET 5.0 and below):

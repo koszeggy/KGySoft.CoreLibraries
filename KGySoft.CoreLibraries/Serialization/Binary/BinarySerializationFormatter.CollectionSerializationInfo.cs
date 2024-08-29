@@ -95,6 +95,7 @@ namespace KGySoft.Serialization.Binary
             /// <summary>
             /// Should be specified only when target collection is not <see cref="IList"/>, <see cref="IDictionary"/> or <see cref="ICollection{T}"/> implementation,
             /// or when defining it results faster access than resolving the generic Add method for each access.
+            /// It can also be used for special cases, such as inserting the final resolved items into an ordered dictionary whereas in normal case the <see cref="IDictionary"/> members are used.
             /// </summary>
             internal Func<Type, MethodAccessor>? GetSpecificAddMethod { get; set; }
 
@@ -145,6 +146,7 @@ namespace KGySoft.Serialization.Binary
             internal bool IsGenericCollection => IsGeneric && (Info & CollectionInfo.IsDictionary) == CollectionInfo.None;
             internal bool IsGenericDictionary => IsGeneric && (Info & CollectionInfo.IsDictionary) == CollectionInfo.IsDictionary;
             internal bool IsDictionary => (Info & CollectionInfo.IsDictionary) == CollectionInfo.IsDictionary;
+            internal bool IsOrdered => (Info & CollectionInfo.IsOrdered) == CollectionInfo.IsOrdered;
             internal bool IsSingleElement => (Info & CollectionInfo.IsSingleElement) == CollectionInfo.IsSingleElement;
             internal bool ReverseElements => (Info & CollectionInfo.ReverseElements) == CollectionInfo.ReverseElements;
             internal bool HasNullableBackingArray => (Info & CollectionInfo.BackingArrayCanBeNull) == CollectionInfo.BackingArrayCanBeNull;

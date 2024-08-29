@@ -1581,6 +1581,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new Dictionary<int, ImmutableDictionary<int, int>> { { 1, new Dictionary<int, int> { { 1, 2 } }.ToImmutableDictionary() }, { 2, null } }, // ImmutableDictionary 
                 new Dictionary<int, ImmutableSortedDictionary<int, int>> { { 1, new Dictionary<int, int> { { 1, 2 } }.ToImmutableSortedDictionary() }, { 2, null } }, // ImmutableSortedDictionary 
 #endif
+                new Dictionary<int, AllowNullDictionary<int?, int>> { { 1, new AllowNullDictionary<int?, int> { { null, 0 }, { 1, 1 } } } },
+#if NET9_0_OR_GREATER
+                new Dictionary<int, OrderedDictionary<int, int>> { { 1, new OrderedDictionary<int, int> { { 0, 0 }, { 1, 1 } } } },
+#endif
 
                 // other generic dictionary types as outer objects
 #if !NET35
@@ -1589,6 +1593,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #if NETCOREAPP && !NETSTANDARD_TEST
                 new Dictionary<int, int[]> { { 1, new[] { 1, 2 } }, { 2, null } }.ToImmutableDictionary(), // ImmutableDictionary
                 new Dictionary<int, int[]> { { 1, new[] { 1, 2 } }, { 2, null } }.ToImmutableSortedDictionary(), // ImmutableSortedDictionary
+#endif
+                new AllowNullDictionary<string, int> { { null, 0 }, { "1", 1 } },
+#if NET9_0_OR_GREATER
+                new OrderedDictionary<int, int> { { 0, 0 }, { 1, 1 } },
 #endif
             };
 
@@ -2397,6 +2405,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.RecursiveSerializationAsFallback, safeCompare: true);
 
             // Direct self-references
+            // NOTE: These don't actually test usage references because neither an IObjectReference, nor a surrogate selector is involved
+            // But putting the case in SerializeCircularReferencesBySurrogateSelector also doesn't make much sense because a non-replacing selector will not cause tracking, whereas a replacing selector is not supported.
+            // To test usage tracking 
             referenceObjects = new object[]
             {
                 false, // tuple
@@ -2412,6 +2423,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 false, // ImmutableDictionary.Builder/Key
                 false, // ImmutableDictionary.Builder/Value
                 false, // ImmutableDictionary.Builder/Key+Value
+                false, // OrderedDictionary<,>/Key
+                false, // OrderedDictionary<,>/Value
+                false, // OrderedDictionary<,>/Key+Value
             };
 #if !NET35
             // tuple
@@ -2485,6 +2499,21 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             immutableDictionaryBuilder = ImmutableDictionary.CreateBuilder<object, object>();
             immutableDictionaryBuilder.Add(immutableDictionaryBuilder, immutableDictionaryBuilder); // key+value
             referenceObjects[12] = immutableDictionaryBuilder;
+#endif
+
+#if NET9_0_OR_GREATER
+            // OrderedDictionary<,>
+            var orderedDict = new OrderedDictionary<object, object> { { 0, 0 }, { 1, 1 } };
+            orderedDict.Insert(1, orderedDict, null);
+            referenceObjects[13] = orderedDict;
+
+            orderedDict = new OrderedDictionary<object, object> { { 0, 0 }, { 1, 1 } };
+            orderedDict.Insert(1, new object(), orderedDict);
+            referenceObjects[14] = orderedDict;
+
+            orderedDict = new OrderedDictionary<object, object> { { 0, 0 }, { 1, 1 } };
+            orderedDict.Insert(1, orderedDict, orderedDict);
+            referenceObjects[15] = orderedDict;
 #endif
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None, safeCompare: true);

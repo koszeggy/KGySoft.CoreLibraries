@@ -55,7 +55,7 @@ using ReferenceEqualityComparer = KGySoft.CoreLibraries.ReferenceEqualityCompare
 #region Suppressions
 
 #if NET8_0_OR_GREATER
-#pragma warning disable SYSLIB0050 // ISurrogateSelector/ISerializationSurrogate is obsolete - needed by IFormatter implementation, which is maintained for compatibility reasons
+#pragma warning disable SYSLIB0050 // Formatter-based serialization is obsolete - needed for the safe IFormatter implementation
 #endif
 
 #endregion
@@ -331,17 +331,21 @@ namespace KGySoft.Serialization.Binary
             {
                 #region Fields
 
-                private readonly IOrderedDictionary target;
+                private readonly IDictionary target;
                 private readonly int index;
+                private readonly MethodAccessor? insertMethod;
+                private readonly object? value;
 
                 #endregion
 
                 #region Constructors
 
-                internal OrderedDictionaryKeyUsage(IOrderedDictionary target, int index)
+                internal OrderedDictionaryKeyUsage(IDictionary target, int index, MethodAccessor? insertMethod, object? value)
                 {
                     this.target = target;
                     this.index = index;
+                    this.insertMethod = insertMethod;
+                    this.value = value;
                 }
 
                 #endregion
@@ -350,9 +354,14 @@ namespace KGySoft.Serialization.Binary
 
                 internal override void SetValue(object key)
                 {
-                    object? value = target[index];
-                    target.RemoveAt(index);
-                    target.Insert(index, key, value);
+                    if (insertMethod != null)
+                    {
+                        insertMethod.Invoke(target, index, key, value);
+                        return;
+                    }
+
+                    Debug.Assert(target is IOrderedDictionary);
+                    ((IOrderedDictionary)target).Insert(index, key, value);
                 }
 
                 #endregion
@@ -366,24 +375,39 @@ namespace KGySoft.Serialization.Binary
             {
                 #region Fields
 
-                private readonly IOrderedDictionary target;
+                private readonly IDictionary target;
                 private readonly int index;
+                private readonly MethodAccessor? insertMethod;
+                private readonly object? key;
 
                 #endregion
 
                 #region Constructors
 
-                internal OrderedDictionaryValueUsage(IOrderedDictionary target, int index)
+                internal OrderedDictionaryValueUsage(IDictionary target, int index, MethodAccessor? insertMethod, object? key)
                 {
+                    // null key means it will be the same as the replaced value
+                    this.key = key;
                     this.target = target;
                     this.index = index;
+                    this.insertMethod = insertMethod;
                 }
 
                 #endregion
 
                 #region Methods
 
-                internal override void SetValue(object value) => target[index] = value;
+                internal override void SetValue(object value)
+                {
+                    if (insertMethod != null)
+                    {
+                        insertMethod.Invoke(target, index, key ?? value, value);
+                        return;
+                    }
+
+                    Debug.Assert(target is IOrderedDictionary);
+                    ((IOrderedDictionary)target).Insert(index, key ?? value, value);
+                }
 
                 #endregion
             }
@@ -1306,7 +1330,7 @@ namespace KGySoft.Serialization.Binary
             {
                 Type type = descriptor.GetTypeToCreate();
                 if (!(descriptor.IsSingleElement || descriptor.IsComparer) && !Reflector.IEnumerableType.IsAssignableFrom(type))
-                    Throw.SerializationException(Res.BinarySerializationIEnumerableExpected(type!));
+                    Throw.SerializationException(Res.BinarySerializationIEnumerableExpected(type));
 
                 DataTypes dataType = descriptor.CollectionDataType;
                 CollectionSerializationInfo serInfo = serializationInfo[dataType];
@@ -1343,33 +1367,51 @@ namespace KGySoft.Serialization.Binary
                 MethodAccessor? addMethod = serInfo.GetSpecificAddMethod?.Invoke(result.GetType()); // result.GetType because of possible proxy builder
                 if (descriptor.IsDictionary)
                 {
-                    for (int i = 0; i < count; i++)
+                    if (descriptor.IsOrdered)
                     {
-
-                        object? key = ReadElement(br, descriptor.GetKeyDescriptor());
-                        object? value = ReadElement(br, descriptor.GetValueDescriptor());
-
-                        if (addMethod != null)
+                        IDictionary dict = (IDictionary)collection;
+                        for (int i = 0; i < count; i++)
                         {
+                            object? key = ReadElement(br, descriptor.GetKeyDescriptor());
+                            object? value = ReadElement(br, descriptor.GetValueDescriptor());
+                            AddOrderedDictionaryElement(dict, addMethod, key, value, i);
+                        }
+                    }
+                    else if (addMethod != null)
+                    {
+                        for (int i = 0; i < count; i++)
+                        {
+                            object? key = ReadElement(br, descriptor.GetKeyDescriptor());
+                            object? value = ReadElement(br, descriptor.GetValueDescriptor());
                             AddDictionaryElement(collection, addMethod, key, value);
-                            continue;
                         }
-
-#if NET35
-                        if (value != null || !descriptor.IsGenericDictionary)
-#endif
+                    }
+                    else
+                    {
+                        IDictionary dict = (IDictionary)collection;
+                        for (int i = 0; i < count; i++)
                         {
-                            AddDictionaryElement((IDictionary)collection, key, value);
-                            continue;
-                        }
+                            object? key = ReadElement(br, descriptor.GetKeyDescriptor());
+                            object? value = ReadElement(br, descriptor.GetValueDescriptor());
+
+    #if NET35
+                            if (value != null || !descriptor.IsGenericDictionary)
+    #endif
+                            {
+                                AddDictionaryElement(dict, key, value);
+                                
+                                // ReSharper disable once RedundantJumpStatement - redundancy is target platform dependent
+                                continue;
+                            }
 #if NET35
-                        // generic dictionary with null value: calling generic Add because non-generic one may fail in .NET Runtime 2.x
-                        addMethod = MethodAccessor.GetAccessor(Reflector.IDictionaryGenType
-                            .GetGenericType(descriptor.GetKeyDescriptor().Type!, descriptor.GetValueDescriptor().Type!)
-                            .GetMethod(nameof(IDictionary<_,_>.Add))!);
-                        AddDictionaryElement(collection, addMethod, key, null);
-                        continue;
+                            // generic dictionary with null value: calling generic Add because non-generic one may fail in .NET Runtime 2.x
+                            addMethod = MethodAccessor.GetAccessor(Reflector.IDictionaryGenType
+                                .GetGenericType(descriptor.GetKeyDescriptor().Type!, descriptor.GetValueDescriptor().Type!)
+                                .GetMethod(nameof(IDictionary<_,_>.Add))!);
+                            AddDictionaryElement(collection, addMethod, key, null);
+                            continue;
 #endif
+                        }
                     }
                 }
                 else
@@ -1401,7 +1443,7 @@ namespace KGySoft.Serialization.Binary
 #endif
                         }
 
-                        Debug.Fail($"Define an Add method for type {descriptor.Type} for better performance");
+                        Debug.Fail($"Define an Add method for type {descriptor.Type} for better performance and to handle indirect circular references");
                         collection.TryAdd(element, false);
                     }
                 }
@@ -1411,7 +1453,7 @@ namespace KGySoft.Serialization.Binary
                 //       to the final array because the array is wrapped by the actual result in that case.
                 result = serInfo.GetFinalCollection(result, descriptor);
 
-                // check if we have non-allowed circular reference it ourselves (only if we use a proxy for creating the result)
+                // check if we have non-allowed circular reference to ourselves (only if we use a proxy for creating the result)
                 if (trackUsages)
                 {
                     if (usages!.Count > 0)
@@ -1784,10 +1826,9 @@ namespace KGySoft.Serialization.Binary
 #else
                 ComparerType.CultureSpecific => StringComparer.Create(CultureInfo.GetCultureInfo(ReadStringValue(br, addToCache)), (CompareOptions)Read7BitInt(br) == CompareOptions.IgnoreCase),
 #endif
-#if NET9_0_OR_GREATER
-#warning TODO: a new NonRandomizedStringEqualityComparer class is already pushed but not released yet
-                //ComparerType.OrdinalNonRandomized => NonRandomizedStringEqualityComparer.Ordinal,
-                //ComparerType.OrdinalIgnoreCaseNonRandomized => NonRandomizedStringEqualityComparer.OrdinalIgnoreCase,
+#if NET10_0_OR_GREATER
+                ComparerType.OrdinalNonRandomized => NonRandomizedStringEqualityComparer.Ordinal,
+                ComparerType.OrdinalIgnoreCaseNonRandomized => NonRandomizedStringEqualityComparer.OrdinalIgnoreCase,
 #else
                 ComparerType.OrdinalNonRandomized => Throw.PlatformNotSupportedException<StringComparer>(Res.BinarySerializationTypePlatformNotSupported($"{nameof(StringComparer)}.{nameof(ComparerType.OrdinalNonRandomized)}")),
                 ComparerType.OrdinalIgnoreCaseNonRandomized => Throw.PlatformNotSupportedException<StringComparer>(Res.BinarySerializationTypePlatformNotSupported($"{nameof(StringComparer)}.{nameof(ComparerType.OrdinalIgnoreCaseNonRandomized)}")),
@@ -2280,22 +2321,9 @@ namespace KGySoft.Serialization.Binary
                     return;
                 }
 
-                // OrderedDictionary: we need to add a placeholder item to maintain the correct order
-                if (dict is IOrderedDictionary orderedDictionary)
-                {
-                    int index = dict.Count;
+                Debug.Assert(dict is not IOrderedDictionary, "AddOrderedDictionaryElement should be used. IsOrdered is not set in serializationInfo?");
 
-                    // we exploit that the supported ordered dictionary is not generic
-                    object placeholderKey = keyUsages == null ? key! : new object();
-                    object? placeholderValue = valueUsages == null ? value : null;
-                    dict.Add(placeholderKey, placeholderValue);
-
-                    keyUsages?.Add(new OrderedDictionaryKeyUsage(orderedDictionary, index));
-                    valueUsages?.Add(new OrderedDictionaryValueUsage(orderedDictionary, index));
-                    return;
-                }
-               
-                // Unordered dictionaries: if both key and value are being deserialized, than that is an issue unless they are not replaced.
+                // If both key and value are being deserialized, then that can be an issue, unless they are not replaced.
                 if (keyUsages != null && valueUsages != null)
                 {
                     // the same values: null key indicates that it will be same as the resolved value
@@ -2321,7 +2349,7 @@ namespace KGySoft.Serialization.Binary
                     return;
                 }
 
-                // Adding the possible usages. Both key and value can be replaced at the same time for ordered dictionaries only.
+                // Adding the possible usages
                 keyUsages?.Add(new DictionaryKeyUsage(dict, value!));
                 valueUsages?.Add(new DictionaryValueUsage(dict, key));
             }
@@ -2337,6 +2365,49 @@ namespace KGySoft.Serialization.Binary
                 }
 
                 addMethod.Invoke(dictionary, key, value);
+            }
+
+            private void AddOrderedDictionaryElement(IDictionary dict, MethodAccessor? insertMethod, object? key, object? value, int index)
+            {
+                UsageReferences? keyUsages = key == null ? null : objectsBeingDeserialized?.GetValueOrDefault(key);
+                UsageReferences? valueUsages = value == null ? null : objectsBeingDeserialized?.GetValueOrDefault(value);
+                if (objectsBeingDeserialized == null || keyUsages == null && valueUsages == null)
+                {
+                    // Note that here we add the elements via the IDictionary interface. This preserves the order but leaves the tracked elements out for now.
+                    dict.Add(key!, value);
+                    return;
+                }
+
+                // If both key and value are being deserialized, then that can be an issue, unless they are not replaced.
+                if (keyUsages != null && valueUsages != null)
+                {
+                    // the same values: null key indicates that it will be same as the resolved value
+                    if (key == value)
+                    {
+                        valueUsages.Add(new OrderedDictionaryValueUsage(dict, index, insertMethod, null));
+                        return;
+                    }
+
+                    // They are different: we don't support their replacement. This could be solved if we put every resolved object in a cache first and then
+                    // do the replacements but this edge-case scenario isn't worth the effort. And this can be avoided by forcing recursive serialization.
+                    keyUsages.CanBeReplaced = false;
+                    valueUsages.CanBeReplaced = false;
+                    Type type = dict.GetType();
+                    Type[] elementTypes = type.GetCollectionElementType()!.GetGenericArguments();
+                    object keyToAdd = elementTypes.Length == 0 || elementTypes[0].CanAcceptValue(key)
+                        ? key!
+                        : Throw.SerializationException<object>(Res.BinarySerializationCircularIObjectReferenceCollection(type));
+                    object valueToAdd = elementTypes.Length == 0 || elementTypes[1].CanAcceptValue(value)
+                        ? value!
+                        : Throw.SerializationException<object>(Res.BinarySerializationCircularIObjectReferenceCollection(type));
+                    dict.Add(keyToAdd, valueToAdd);
+                    return;
+                }
+
+                // Here we have a tracked key or value. We don't add a placeholder item because we can exploit that
+                // at the moment when this usage will be resolved every item before the index will be at the correct position.
+                keyUsages?.Add(new OrderedDictionaryKeyUsage(dict, index, insertMethod, value));
+                valueUsages?.Add(new OrderedDictionaryValueUsage(dict, index, insertMethod, key));
             }
 
             private void SetKeyValue(object obj, object? key, object? value)

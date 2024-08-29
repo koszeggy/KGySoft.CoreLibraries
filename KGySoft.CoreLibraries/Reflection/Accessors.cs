@@ -877,7 +877,7 @@ namespace KGySoft.Reflection
 
         internal static int Capacity([NoEnumeration]this IEnumerable collection)
         {
-            PropertyAccessor? property = GetProperty(collection.GetType(), "Capacity"); // List<T>, CircularList<T>, SortedList<TKey, TValue>, SortedList, CircularSortedList<TKey, TValue>, ArrayList
+            PropertyAccessor? property = GetProperty(collection.GetType(), "Capacity"); // List<T>, CircularList<T>, SortedList<TKey, TValue>, SortedList, CircularSortedList<TKey, TValue>, ArrayList, OrderedDictionary<TKey, TValue>
             if (property == null)
                 Throw.InvalidOperationException(Res.ReflectionInstancePropertyDoesNotExist("Capacity", collection.GetType()));
             return (int)property.Get(collection)!;

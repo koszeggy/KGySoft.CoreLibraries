@@ -374,7 +374,7 @@ namespace KGySoft.CoreLibraries
                 }
 #endif
 
-                if (!(reference is string or StringSegment) && reference is IEnumerable enumerable)
+                if (reference is not (string or StringSegment) && reference is IEnumerable enumerable)
                     return forceEqualityByMembers
                         ? CheckMembersAndItemsEqual(enumerable, (IEnumerable)check, true, errors, checkedObjects)
                         : CheckItemsEqual(enumerable, (IEnumerable)check, false, errors, checkedObjects);

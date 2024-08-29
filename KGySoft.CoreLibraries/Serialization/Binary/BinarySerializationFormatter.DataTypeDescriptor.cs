@@ -76,6 +76,7 @@ namespace KGySoft.Serialization.Binary
             internal bool IsCollection => IsCollectionType(dataType);
             internal bool IsArray => CollectionDataType == DataTypes.Array;
             internal bool IsDictionary => CollectionDataType != DataTypes.Null && CollectionSerializationInfo.IsDictionary;
+            internal bool IsOrdered => CollectionSerializationInfo.IsOrdered;
 #if NET35
             internal bool IsGenericDictionary => CollectionDataType != DataTypes.Null && CollectionSerializationInfo.IsGenericDictionary;
             internal bool IsGenericCollection => CollectionDataType != DataTypes.Null && CollectionSerializationInfo.IsGeneric;
@@ -648,11 +649,20 @@ namespace KGySoft.Serialization.Binary
                         return typeof(SortedDictionary<,>);
                     case DataTypes.CircularSortedList:
                         return typeof(CircularSortedList<,>);
-                    case DataTypes.ThreadSafeDictionary:
-                        return typeof(ThreadSafeDictionary<,>);
 #if !NET35
                     case DataTypes.ConcurrentDictionary:
                         return typeof(ConcurrentDictionary<,>);
+#endif
+                    case DataTypes.ThreadSafeDictionary:
+                        return typeof(ThreadSafeDictionary<,>);
+                    case DataTypes.AllowNullDictionary:
+                        return typeof(AllowNullDictionary<,>);
+#if NET9_0_OR_GREATER
+                    case DataTypes.OrderedDictionaryGeneric:
+                        return typeof(OrderedDictionary<,>);
+#else
+                    case DataTypes.OrderedDictionaryGeneric:
+                        return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationCollectionPlatformNotSupported(DataTypeToString(collectionDataType)));
 #endif
 
                     case DataTypes.SortedListNonGeneric:

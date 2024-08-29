@@ -53,7 +53,7 @@ using KGySoft.Serialization.Xml;
 
 #region Suppressions
 
-#if !NET8_0_OR_GREATER
+#if !NET9_0_OR_GREATER
 #pragma warning disable CS1574 // the documentation contains types that are not available in every target
 #endif
 #if NET5_0_OR_GREATER
@@ -96,6 +96,7 @@ using KGySoft.Serialization.Xml;
  *    - SerializeNullableArrays (value types)
  *    - SerializationSurrogateTest
  * 7. Add type to description - Natively supported simple types
+ *    - Adjust the #if for pragma warning for CS1574 if it is introduced in a new .NET version
  *
  * II. Adding a collection type
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -106,13 +107,13 @@ using KGySoft.Serialization.Xml;
  * When to add with special care and only if really justified
  * - If type is abstract, non-sealed or internal (eg. frozen collections)
  * - If may contain a dependency that can be extracted legally (eg. underlying array/string/manager of Memory<T> can be extracted by MemoryMarshal)
- * 1. Add type to DataTypes 8-13 bits (adjust free places in comments) or to bits 24..30 (Extended)
+ * 1. Add type to DataTypes 8..13 bits (adjust free places in comments) or to bits 24..30 (Extended)
  *    - 1..15 << 8: Generic collections
  *    - 16..31 << 8: Non-generic collections or special collections
  *    - 32..47 << 8: Generic/specialized dictionaries
  *    - 48..63 << 8: Non-generic dictionaries
- *    - 1..63 << 24: Extended collections. If value type, must be here to use NullableExtendedCollection.
- *    - 64..127 << 24: Extended dictionaries. If value type, must be here to use NullableExtendedCollection.
+ *    - 1..63 << 24: Extended collections. If value type, must be here to support NullableExtendedCollection.
+ *    - 64..127 << 24: Extended dictionaries. If value type, must be here to support NullableExtendedCollection.
  * 2. Update serializationInfo initializer - mind the groups of 1.
  *    - If new CollectionInfo flag has to be defined, a property in CollectionSerializationInfo might be also needed
  * 3. If type is not abstract add it to supportedCollections
@@ -131,6 +132,7 @@ using KGySoft.Serialization.Xml;
  *   [- SerializationSurrogateTest]
  *   [- SerializeCircularReferences - if new usage reference is added in 6. add it to TestData.Box<T>, too]
  * 8. Add type to description - Collections
+ *    - Adjust the #if for pragma warning for CS1574 if it is introduced in a new .NET version
  *
  * To debug the serialized stream of the test cases set BinarySerializerTest.dumpDetails and see the console output.
  */
@@ -304,6 +306,7 @@ namespace KGySoft.Serialization.Binary
     /// <item><see cref="SortedList{TKey,TValue}"/></item>
     /// <item><see cref="SortedDictionary{TKey,TValue}"/></item>
     /// <item><see cref="CircularSortedList{TKey,TValue}"/></item>
+    /// <item><see cref="AllowNullDictionary{TKey,TValue}"/></item>
     /// <item><see cref="ConcurrentDictionary{TKey,TValue}"/> (in .NET Framework 4.0 and above)</item>
     /// <item><see cref="ImmutableArray{T}"/> (in .NET Core 2.0 and above)</item>
     /// <item><see cref="ImmutableArray{T}.Builder"/> (in .NET Core 2.0 and above)</item>
@@ -323,6 +326,7 @@ namespace KGySoft.Serialization.Binary
     /// <item><see cref="Vector128{T}"/> (in .NET Core 3.0 and above)</item>
     /// <item><see cref="Vector256{T}"/> (in .NET Core 3.0 and above)</item>
     /// <item><see cref="Vector512{T}"/> (in .NET 8.0 and above)</item>
+    /// <item><see cref="OrderedDictionary{TKey,TValue}"/> (in .NET 9.0 and above)</item>
     /// </list>
     /// <note>
     /// <list type="bullet">
@@ -601,7 +605,7 @@ namespace KGySoft.Serialization.Binary
             BitVector32 = 28, // Non-serializable
             BitVector32Section = 29, // Non-serializable
 
-            RuntimeType = 30, // Non-serializable in .NET Core. Not meant to be combined but it can happen if collection element type is RuntimeType.
+            RuntimeType = 30, // Non-serializable in .NET Core. Not meant to be combined, but it can happen if collection element type is RuntimeType.
 
             StringSegment = 31,
 
@@ -645,7 +649,7 @@ namespace KGySoft.Serialization.Binary
 
             // ----- flags: -----
             Store7BitEncoded = 1 << 6, // Applicable for every >1 byte fix-length data type
-            Extended = 1 << 7, // On serialization it indicates that byte 1. also is used.
+            Extended = 1 << 7, // On serialization, it indicates that byte 1. also is used.
 
             // ===== BYTE 1. =====
 
@@ -679,7 +683,7 @@ namespace KGySoft.Serialization.Binary
 
             StrongBox = 20 << 8, // Defined as a collection type so can be encoded the same way as other collections
 
-            // tuples: - note: ValueTuples are on byte 3 because they can be nullable
+            // tuples: - note: ValueTuples are on byte 3, so they can be combined with NullableExtendedCollection
             Tuple1 = 21 << 8,
             Tuple2 = 22 << 8,
             Tuple3 = 23 << 8,
@@ -700,10 +704,11 @@ namespace KGySoft.Serialization.Binary
             CircularSortedList = 35 << 8,
             ConcurrentDictionary = 36 << 8, // .NET Framework 4.0 and above
             ThreadSafeDictionary = 37 << 8,
+            AllowNullDictionary = 38 << 8,
+            OrderedDictionaryGeneric = 39 << 8, // .NET 9 and above
             
-            // 38-45 << 8 : 8 reserved generic dictionaries
-            // TODO Candidates:
-            // AllowNullDictionary, TwoWayDictionary - if will be public
+            // 40-45 << 8 : 6 reserved generic dictionaries
+            // TODO: candidate: TwoWayDictionary if it will be implemented
 
             KeyValuePair = 46 << 8, // Defined as a collection type so can be encoded the same way as dictionaries
             KeyValuePairNullable = 47 << 8, // The Nullable flag would be used for the key so this is the nullable version of KeyValuePair.
@@ -715,7 +720,7 @@ namespace KGySoft.Serialization.Binary
             HybridDictionary = 51 << 8,
             OrderedDictionary = 52 << 8,
             StringDictionary = 53 << 8,
-            StringKeyedDictionary = 54 << 8,
+            StringKeyedDictionary = 54 << 8, // actually generic but has only a TValue argument
 
             // 55-60 << 8 : 6 reserved non-generic dictionaries
 
@@ -866,13 +871,13 @@ namespace KGySoft.Serialization.Binary
             HasCaseInsensitivity = 1 << 6,
 
             /// <summary>
-            /// For types that can be both read-only and read-write (now in OrderedDictionary)
+            /// For types that can be both read-only and read-write (only in non-generic OrderedDictionary)
             /// </summary>
             HasReadOnly = 1 << 7,
 
             /// <summary>
             /// Indicates that the "collection" is a single element
-            /// (now for StrongBox, DictionaryEntry, KeyValuePair: special "collections" with exactly one (pair of) elements, whose type are easy to encode along with collection types)
+            /// (now for StrongBox, DictionaryEntry, KeyValuePair: special "collections" with exactly one (pair of) elements, whose type arguments are easy to encode along with collection types)
             /// </summary>
             IsSingleElement = 1 << 8,
 
@@ -927,9 +932,14 @@ namespace KGySoft.Serialization.Binary
             HasValueComparer = 1 << 18,
 
             /// <summary>
-            /// Indicates that thr generic type is a known comparer rather than an actual collection, thus it has no actual elements, it's just it can be encoded like a collection.
+            /// Indicates that the generic type is a known comparer rather than an actual collection, thus it has no actual elements, it's just it can be encoded like a collection.
             /// </summary>
             IsComparer = 1 << 19,
+
+            /// <summary>
+            /// Indicates that the collection is ordered. As lists are naturally ordered, this is needed for ordered dictionaries only.
+            /// </summary>
+            IsOrdered = 1 << 20,
         }
 
         /// <summary>
@@ -1230,7 +1240,7 @@ namespace KGySoft.Serialization.Binary
             {
                 DataTypes.Dictionary, new CollectionSerializationInfo
                 {
-                    Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer,
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer, // NOTE: HasCapacity could be added in .NET 9+ but that would break compatibility
                     CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer }
                 }
             },
@@ -1257,6 +1267,19 @@ namespace KGySoft.Serialization.Binary
                     CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer }
                 }
             },
+#if !NET35
+            {
+                DataTypes.ConcurrentDictionary, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer
+#if NETFRAMEWORK || NETSTANDARD
+                        | CollectionInfo.NonNullDefaultComparer
+#endif
+                    ,
+                    CtorArguments = new[] { CollectionCtorArguments.Comparer }
+                }
+            },
+#endif
             {
                 DataTypes.ThreadSafeDictionary, new CollectionSerializationInfo
                 {
@@ -1274,16 +1297,20 @@ namespace KGySoft.Serialization.Binary
                     }
                 }
             },
-#if !NET35
             {
-                DataTypes.ConcurrentDictionary, new CollectionSerializationInfo
+                DataTypes.AllowNullDictionary, new CollectionSerializationInfo
                 {
-                    Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer
-#if NETFRAMEWORK || NETSTANDARD
-                        | CollectionInfo.NonNullDefaultComparer
-#endif
-                    ,
-                    CtorArguments = new[] { CollectionCtorArguments.Comparer }
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer,
+                    CtorArguments = [CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer]
+                }
+            },
+#if NET9_0_OR_GREATER
+            {
+                DataTypes.OrderedDictionaryGeneric, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.IsOrdered | CollectionInfo.HasEqualityComparer | CollectionInfo.HasCapacity,
+                    CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer },
+                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(OrderedDictionary<_,_>.Insert))!),
                 }
             },
 #endif
@@ -1323,7 +1350,7 @@ namespace KGySoft.Serialization.Binary
             {
                 DataTypes.OrderedDictionary, new CollectionSerializationInfo
                 {
-                    Info = CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer | CollectionInfo.HasReadOnly,
+                    Info = CollectionInfo.IsDictionary | CollectionInfo.IsOrdered | CollectionInfo.HasEqualityComparer | CollectionInfo.HasReadOnly,
                     CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer }
                 }
             },
@@ -1755,9 +1782,13 @@ namespace KGySoft.Serialization.Binary
             { typeof(SortedList<,>), DataTypes.SortedList },
             { typeof(SortedDictionary<,>), DataTypes.SortedDictionary },
             { typeof(CircularSortedList<,>), DataTypes.CircularSortedList },
-            { typeof(ThreadSafeDictionary<,>), DataTypes.ThreadSafeDictionary },
 #if !NET35
             { typeof(ConcurrentDictionary<,>), DataTypes.ConcurrentDictionary },
+#endif
+            { typeof(ThreadSafeDictionary<,>), DataTypes.ThreadSafeDictionary },
+            { typeof(AllowNullDictionary<,>), DataTypes.AllowNullDictionary },
+#if NET9_0_OR_GREATER
+            { typeof(OrderedDictionary<,>), DataTypes.OrderedDictionaryGeneric },
 #endif
 
             { typeof(Hashtable), DataTypes.Hashtable },
