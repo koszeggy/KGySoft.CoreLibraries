@@ -50,6 +50,13 @@
   + Supporting the CastArray2D<TFrom, TTo> struct natively
   + Supporting the CastArray3D<TFrom, TTo> struct natively
 
++ KGySoft.Serialization.Xml namespace:
+======================================
++ XmlSerializer class:
+  + Serialize* methods: Supporting more collections without fallback options (if they use a supported comparer):
+    + AllowNullDictionary<TKey, TValue>
+    + OrderedDictionary<TKey, TValue> (.NET 9.0 and above)
+
 ! KGySoft.Threading namespace:
 ==============================
 ! ParallelHelper class (breaking change only on .NET 5.0 and below, only on Windows):

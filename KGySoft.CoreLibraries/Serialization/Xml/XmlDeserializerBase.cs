@@ -236,9 +236,13 @@ namespace KGySoft.Serialization.Xml
             { typeof(CircularSortedList<,>), CreateCollectionWithGenericComparer },
             { typeof(ThreadSafeDictionary<,>), CreateCollectionWithGenericEqualityComparerAndHashingStrategy },
             { typeof(StringKeyedDictionary<>), (t, c) => typeof(StringKeyedDictionary<>).GetGenericType(t.GetGenericArguments()[0]).CreateInstance(typeof(StringSegmentComparer), ToComparer(c)) },
+            { typeof(AllowNullDictionary<,>), CreateCollectionWithGenericEqualityComparer },
 #if !NET35
             { typeof(SortedSet<>), CreateCollectionWithGenericComparer },
             { typeof(ConcurrentDictionary<,>), CreateCollectionWithGenericEqualityComparer },
+#endif
+#if NET9_0_OR_GREATER
+            { typeof(OrderedDictionary<,>), CreateCollectionWithGenericEqualityComparer }, 
 #endif
             { typeof(Hashtable), (_, c) => new Hashtable((IEqualityComparer?)ToComparer(c)) },
             { typeof(SortedList), (_, c) => new SortedList((IComparer?)ToComparer(c)) },

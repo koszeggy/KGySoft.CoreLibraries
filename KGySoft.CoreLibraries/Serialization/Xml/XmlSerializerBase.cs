@@ -144,6 +144,7 @@ namespace KGySoft.Serialization.Xml
             { typeof(CircularSortedList<,>), ComparerType.Default },
             { typeof(ThreadSafeDictionary<,>), ComparerType.Default },
             { typeof(StringKeyedDictionary<>), ComparerType.StringSegmentOrdinal },
+            { typeof(AllowNullDictionary<,>), ComparerType.Default },
 #if !NET35
             { typeof(SortedSet<>), ComparerType.Default },
             { typeof(ConcurrentDictionary<,>), ComparerType.Default },
@@ -153,6 +154,9 @@ namespace KGySoft.Serialization.Xml
             { typeof(ListDictionary), ComparerType.None },
             { typeof(HybridDictionary), ComparerType.None },
             { typeof(OrderedDictionary), ComparerType.None }, // ISSUE: can be read-only
+#if NET9_0_OR_GREATER
+            { typeof(OrderedDictionary<,>), ComparerType.Default },
+#endif
         };
 
         private static readonly Type[] escapedNativelySupportedTypes = 

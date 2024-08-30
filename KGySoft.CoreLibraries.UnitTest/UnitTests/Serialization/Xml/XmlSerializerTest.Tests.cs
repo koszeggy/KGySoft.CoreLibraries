@@ -968,9 +968,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 
                 new StringKeyedDictionary<int> { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 } },
 
+                new AllowNullDictionary<int?, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" }, { null, "null" } },
+
 #if !NET35
                 new SortedSet<int> { 1, 2, 3 },
                 new ConcurrentDictionary<int, string>(new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } }),
+#endif
+#if NET9_0_OR_GREATER
+                new OrderedDictionary<int, int> { { 0, 0 }, { 1, 1 } },
 #endif
             };
 
