@@ -281,16 +281,16 @@ namespace KGySoft.Serialization.Binary
             /// Creates collection and reads all serialized specific properties that were written by <see cref="WriteSpecificProperties"/>.
             /// </summary>
             [SecurityCritical]
-            internal object InitializeCollection(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor, DeserializationManager manager, bool safeMode, out int count)
+            internal object InitializeCollection(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor, DeserializationManager manager, bool safeMode, out int count, out int id)
             {
                 object result;
-
+                id = 0;
                 if (IsComparer)
                 {
                     Debug.Assert(CreateInstanceCallback != null, $"{nameof(CreateInstanceCallback)} must be specified for comparers");
                     result = CreateInstanceCallback!.Invoke(descriptor.GetTypeToCreate(), Reflector.EmptyObjects);
                     if (addToCache)
-                        manager.AddObjectToCache(result);
+                        manager.AddObjectToCache(result, out id);
 
                     count = 0;
                     return result;
@@ -315,7 +315,7 @@ namespace KGySoft.Serialization.Binary
                         result = Activator.CreateInstance(descriptor.GetTypeToCreate())!;
                     }
                     if (addToCache)
-                        manager.AddObjectToCache(result);
+                        manager.AddObjectToCache(result, out id);
 
                     count = 1;
                     return result;
@@ -352,7 +352,6 @@ namespace KGySoft.Serialization.Binary
 
                 // In the ID cache the collection comes first and then the comparer so we add a placeholder to the cache.
                 // Unlike for KeyValuePairs this works here because we can assume that a comparer does not reference the collection.
-                int id = 0;
                 if (addToCache)
                     manager.AddObjectToCache(null, out id);
 
@@ -371,7 +370,7 @@ namespace KGySoft.Serialization.Binary
                 // creating the result instance
                 result = CreateCollection(descriptor, capacity, caseInsensitive, isAndHash, comparer, valueComparer);
                 if (id != 0)
-                    manager.ReplaceObjectInCache(id, result);
+                    manager.ReplaceObjectInCache(id, result); // it still can be replaced later if result is just a proxy builder
 
                 // 7.) Restoring possible custom properties
                 RestoreSpecificPropertiesCallback?.Invoke(br, result);

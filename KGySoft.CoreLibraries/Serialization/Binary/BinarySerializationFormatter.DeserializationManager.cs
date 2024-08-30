@@ -1334,7 +1334,7 @@ namespace KGySoft.Serialization.Binary
 
                 DataTypes dataType = descriptor.CollectionDataType;
                 CollectionSerializationInfo serInfo = serializationInfo[dataType];
-                object result = serInfo.InitializeCollection(br, addToCache, descriptor, this, SafeMode, out int count); // TODO: out int id if a proxy will be legally replaceable once
+                object result = serInfo.InitializeCollection(br, addToCache, descriptor, this, SafeMode, out int count, out int id);
 
                 if (serInfo.IsComparer)
                     return result;
@@ -1451,18 +1451,21 @@ namespace KGySoft.Serialization.Binary
                 // NOTE: As the possible proxy builder is never part of the final result, we do not allow circular references if the result was built by a proxy
                 //       so tracking usages is just to detect this situation here. As a contrast, in CreateArrayBackedCollection we can replace the builder
                 //       to the final array because the array is wrapped by the actual result in that case.
-                result = serInfo.GetFinalCollection(result, descriptor);
+                object actualResult = serInfo.GetFinalCollection(result, descriptor);
 
                 // check if we have non-allowed circular reference to ourselves (only if we use a proxy for creating the result)
                 if (trackUsages)
                 {
+                    if (result != actualResult && addToCache)
+                        ReplaceObjectInCache(id, actualResult);
+
                     if (usages!.Count > 0)
                         Throw.SerializationException(Res.BinarySerializationCircularBuilderReferenceCollection(type));
 
                     ObjectsBeingDeserialized.Remove(resultProxy);
                 }
 
-                return result;
+                return actualResult;
             }
 
             [SecurityCritical]
@@ -2248,6 +2251,19 @@ namespace KGySoft.Serialization.Binary
                 if (trackedUsages == null)
                 {
                     field.Set(obj, value);
+                    return;
+                }
+
+                // If value is tracked but the current field is in a value type, then it can be a problem if obj is also a field in another type because
+                // the field value is now boxed into obj so even if obj is updated later it is not set in the actual field again.
+                // So allowing this only if the value can be set, and it will not be replaced.
+                // NOTE: This is supported by BinaryFormatter. To support it we need to track the parent fields up to the first reference type and set that field again.
+                if (field.DeclaringType?.IsValueType == true)
+                {
+                    if (!field.FieldType.CanAcceptValue(value))
+                        Throw.SerializationException(Res.BinarySerializationCircularIObjectReference);
+                    field.Set(obj, value);
+                    trackedUsages.CanBeReplaced = false;
                     return;
                 }
 

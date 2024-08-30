@@ -1206,7 +1206,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
                 EqualityComparer<int>.Default,
                 EqualityComparer<byte>.Default,
+#if !NET9_0_OR_GREATER // .NET 9+ changes StringEqualityComparer to GenericEqualityComparer<string>, which is intended: https://github.com/dotnet/runtime/blob/c87cbf63954f179785bb038c23352e60d3c0a933/src/libraries/System.Private.CoreLib/src/System/Collections/Generic/EqualityComparer.cs#L295
                 EqualityComparer<string>.Default,
+#endif
                 EqualityComparer<object>.Default,
                 Comparer<int>.Default,
                 Comparer<byte>.Default,
@@ -2405,9 +2407,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.RecursiveSerializationAsFallback, safeCompare: true);
 
             // Direct self-references
-            // NOTE: These don't actually test usage references because neither an IObjectReference, nor a surrogate selector is involved
-            // But putting the case in SerializeCircularReferencesBySurrogateSelector also doesn't make much sense because a non-replacing selector will not cause tracking, whereas a replacing selector is not supported.
-            // To test usage tracking 
+            // NOTE: These don't actually test ApplyPendingUsages because neither an IObjectReference, nor a surrogate selector is involved
+            //       To test updating tracked replaced object see Box<T> in SelfReferencerIndirect.
             referenceObjects = new object[]
             {
                 false, // tuple
@@ -2566,9 +2567,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             //SystemSerializeObjects(referenceObjects, title, surrogateSelector: selector); - SelfReferencerDirect: SerializationException: The object with ID 3 was referenced in a fixup but does not exist.
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, title, surrogateSelector: selector);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes
-                | BinarySerializationOptions.IgnoreSerializationMethods, // OrderedDictionary.OnDeserialization
-                title, surrogateSelector: selector);
+            //KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, title, surrogateSelector: selector); // OrderedDictionary.OnDeserialization, Box<T>.Equals: other.xxxDictionary[other.Value] (because the surrogate creates clones where it's not needed)
 
             title = "Valid cases using a replacing selector";
             selector = new TestCloningSurrogateSelector();
