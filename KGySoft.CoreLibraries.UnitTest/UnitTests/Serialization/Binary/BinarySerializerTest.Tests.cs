@@ -1025,6 +1025,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new Array3D<int>?[] { new Array3D<int>(new[] { 1, 2, 3, 4, 5, 6 }, 1, 2, 3), new Array3D<int>(), null },
                 new Array3D<int?>?[] { new Array3D<int?>(new int?[] { 1, 2, 3, 4, 5, null }, 1, 2, 3), new Array3D<int?>(), null },
 
+                new CastArray<int, byte>?[] {new[] { 1, 2, 3 }.AsSection(1, 2), null },
+                new CastArray2D<int, byte>?[] { new CastArray2D<int, byte>(new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }.AsSection(1), 1, 2), null },
+                new CastArray3D<int, byte>?[] { new CastArray3D<int, byte>(new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }.AsSection(1), 1, 2, 3), null },
+
                 new BinarySerializableStruct?[] { new BinarySerializableStruct { IntProp = 1, StringProp = "alpha" }, null },
                 new SystemSerializableStruct?[] { new SystemSerializableStruct { IntProp = 1, StringProp = "alpha" }, null },
 
@@ -1160,6 +1164,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
                 new Array3D<int>(new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }.AsSection(1), 1, 2, 3),
                 new Array3D<int>(),
+
+                new CastArray<int, byte>(new[] { 1, 2, 3 }.AsSection(1, 2)),
+                new CastArray<int, byte>(),
+
+                new CastArray2D<int, byte>(new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }.AsSection(1), 1, 2),
+                new CastArray2D<int, byte>(),
+
+                new CastArray3D<int, byte>(new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }.AsSection(1), 1, 2, 3),
+                new CastArray3D<int, byte>(),
 
 #if !NET35
                 new SortedSet<int>(new[] { 1, 2, 3 }),
@@ -1482,6 +1495,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new Dictionary<int, Array2D<int?>?> { { 1, new Array2D<int?>(new int?[] { 1, 2, 3, null }, 1, 2) }, { 2, new Array2D<int?>() }, { 3, null } }, // Array2D?
                 new Dictionary<int, Array3D<int>> { { 1, new Array3D<int>(new[] { 1, 2, 3 }, 1, 1, 2) }, { 2, new Array3D<int>() } }, // Array3D
                 new Dictionary<int, Array3D<int?>?> { { 1, new Array3D<int?>(new int?[] { 1, 2, 3, null }, 1, 1, 2) }, { 2, new Array3D<int?>() }, { 3, null } }, // Array3D?
+                new Dictionary<int, CastArray<int, byte>> { { 1, new CastArray<int, byte>(new[] { 1, 2, 3 }.AsSection(1, 2)) }, { 2, new CastArray<int, byte>() } }, // CastArray
+                new Dictionary<int, CastArray<int, byte>?> { { 1, new CastArray<int, byte>(new[] { 1, 2, 3 }.AsSection(1, 2)) }, { 2, new CastArray<int, byte>() }, { 3, null } }, // CastArray?
+                new Dictionary<int, CastArray2D<int, byte>> { { 1, new CastArray2D<int, byte>(new[] { 1, 2, 3 }, 1, 2) }, { 2, new CastArray2D<int, byte>() } }, // CastArray2D
+                new Dictionary<int, CastArray2D<int, byte>?> { { 1, new CastArray2D<int, byte>(new[] { 1, 2, 3 }, 1, 2) }, { 2, new CastArray2D<int, byte>() }, { 3, null } }, // CastArray2D?
+                new Dictionary<int, CastArray3D<int, byte>> { { 1, new CastArray3D<int, byte>(new[] { 1, 2, 3 }, 1, 1, 2) }, { 2, new CastArray3D<int, byte>() } }, // CastArray3D
+                new Dictionary<int, CastArray3D<int, byte>?> { { 1, new CastArray3D<int, byte>(new[] { 1, 2, 3 }, 1, 1, 2) }, { 2, new CastArray3D<int, byte>() }, { 3, null } }, // CastArray3D?
 #if !NET35
                 new Dictionary<int, SortedSet<int>> { { 1, new SortedSet<int> { 1, 2 } }, { 2, null } }, // SortedSet
 #endif
@@ -1629,6 +1648,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new List<ArraySection<int?>?> { new ArraySection<int?>(new int?[] { 1, 2, 3, null }, 1, 2), new ArraySection<int?>(), null },
                 new List<Array2D<int>?> { new Array2D<int>(new[] { 1, 2, 3 }, 1, 2), new Array2D<int>(), null },
                 new List<Array2D<int?>?> { new Array2D<int?>(new int?[] { 1, 2, 3, null }, 1, 2), new Array2D<int?>(), null },
+
+                new CastArray<ConsoleColor, ValueTuple<byte, byte, byte, byte>>(new[] { ConsoleColor.Red, ConsoleColor.Green, ConsoleColor.Blue }.AsSection(1, 2)),
+                new CastArray<(byte A, byte R, byte G, byte B), KeyValuePair<ushort, ushort>>(new (byte, byte, byte, byte)[3].AsSection(1, 2)),
+                new CastArray<KeyValuePair<ushort, ushort>, (byte A, byte R, byte G, byte B)>(new KeyValuePair<ushort, ushort>[3].AsSection(1, 2)),
 
                 // a single key-value pair with a dictionary somewhere in value
                 new KeyValuePair<int[], KeyValuePair<string, Dictionary<string, string>>>(new int[1], new KeyValuePair<string, Dictionary<string, string>>("gamma", new Dictionary<string, string> { { "alpha", "beta" } })),

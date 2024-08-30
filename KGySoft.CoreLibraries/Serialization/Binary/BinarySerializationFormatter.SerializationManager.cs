@@ -1158,7 +1158,6 @@ namespace KGySoft.Serialization.Binary
                     // recursion for generic arguments
                     if (type.IsGenericType)
                     {
-                        bool isStringKeyedDictionary = enumerator.CurrentSeparated == DataTypes.StringKeyedDictionary;
                         enumerator.MoveNextExtracted();
                         foreach (Type genericArgument in type.GetGenericArguments())
                             WriteTypeNamesAndRanks(bw, genericArgument, enumerator.ReadToNextSegment(false), allowOpenTypes);

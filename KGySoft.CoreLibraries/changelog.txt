@@ -46,10 +46,13 @@
 + BinarySerializationFormatter class:
   + Supporting the AllowNullDictionary<TKey, TValue> class natively
   + Supporting the OrderedDictionary<TKey, TValue> class natively (.NET 9.0 and above)
+  + Supporting the CastArray<TFrom, TTo> struct natively
+  + Supporting the CastArray2D<TFrom, TTo> struct natively
+  + Supporting the CastArray3D<TFrom, TTo> struct natively
 
 ! KGySoft.Threading namespace:
 ==============================
-! ParallelHelper class (.NET 5.0 and below):
+! ParallelHelper class (breaking change only on .NET 5.0 and below, only on Windows):
   ! All methods with parallelConfig/asyncConfig parameter: when AsyncConfigBase.MaxDegreeOfParallelism is zero or
     less, then the maximum degree of parallelism was determined by Environment.ProcessorCount, which doesn't respect
     the CPU affinity for the current process if the targeted platform is below .NET 6.0. From now on the CPU

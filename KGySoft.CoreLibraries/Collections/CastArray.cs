@@ -70,7 +70,7 @@ namespace KGySoft.Collections
     [Serializable]
     [DebuggerTypeProxy(typeof(CastArray<,>.CastArrayDebugView))]
     [DebuggerDisplay("{typeof(" + nameof(TTo) + ")." + nameof(Type.Name) + ",nq}[{" + nameof(Length) + "}]")]
-    public readonly struct CastArray<TFrom, TTo> : IList<TTo>, IList, IEquatable<CastArray<TFrom, TTo>> // TODO
+    public readonly struct CastArray<TFrom, TTo> : IList<TTo>, IList, IEquatable<CastArray<TFrom, TTo>>
 #if !(NET35 || NET40)
         , IReadOnlyList<TTo>
 #endif

@@ -41,7 +41,7 @@ namespace KGySoft.CoreLibraries
 
         #region Constructors
 
-        public TypesKey(Type[] types) => Types = types;
+        internal TypesKey(Type[] types) => Types = types;
 
         #endregion
 

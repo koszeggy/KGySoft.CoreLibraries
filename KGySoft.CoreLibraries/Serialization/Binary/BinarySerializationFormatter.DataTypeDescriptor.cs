@@ -156,7 +156,7 @@ namespace KGySoft.Serialization.Binary
                 ParentDescriptor = parentDescriptor;
                 this.dataType = dataType;
 
-                int elements = GetNumberOfElementTypes(dataType);
+                int elements = GetNumberOfElementDataTypes(dataType);
                 if (elements == 0 || ElementDataType == DataTypes.GenericTypeDefinition)
                     return;
 
@@ -695,6 +695,12 @@ namespace KGySoft.Serialization.Binary
                         return typeof(Array2D<>);
                     case DataTypes.Array3D:
                         return typeof(Array3D<>);
+                    case DataTypes.CastArray:
+                        return typeof(CastArray<,>);
+                    case DataTypes.CastArray2D:
+                        return typeof(CastArray2D<,>);
+                    case DataTypes.CastArray3D:
+                        return typeof(CastArray3D<,>);
 
 #if NET35
                     case DataTypes.ConcurrentDictionary:

@@ -298,6 +298,9 @@ namespace KGySoft.Serialization.Binary
     /// <item><see cref="ArraySection{T}"/></item>
     /// <item><see cref="Array2D{T}"/></item>
     /// <item><see cref="Array3D{T}"/></item>
+    /// <item><see cref="CastArray{TFrom,TTo}"/></item>
+    /// <item><see cref="CastArray2D{TFrom,TTo}"/></item>
+    /// <item><see cref="CastArray3D{TFrom,TTo}"/></item>
     /// <item><see cref="SortedSet{T}"/> (in .NET Framework 4.0 and above)</item>
     /// <item><see cref="ConcurrentBag{T}"/> (in .NET Framework 4.0 and above)</item>
     /// <item><see cref="ConcurrentQueue{T}"/> (in .NET Framework 4.0 and above)</item>
@@ -759,7 +762,7 @@ namespace KGySoft.Serialization.Binary
 
             // TODO candidates:
             //Quad = // float128: to extended types - https://github.com/dotnet/csharplang/issues/1252
-            //BigNumber, // https://source.dot.net/#System.Runtime.Numerics/System/Numerics/BigNumber.cs,969928e529663ace
+            //BigNumber/BigRational, // https://source.dot.net/#System.Runtime.Numerics/System/Numerics/BigNumber.cs,969928e529663ace / https://github.com/dotnet/runtime/issues/71791
             //BigDecimal, // https://github.com/dotnet/runtime/issues/20681
 
             // ..... impure types (they are ambiguous without a type name): - only if needed in the future .....
@@ -795,7 +798,7 @@ namespace KGySoft.Serialization.Binary
             Vector256 = 15 << 24, // .NET Core 3.0 and above
             Vector512 = 16 << 24, // .NET 8.0 and above
 
-            // 17-20: Reserved
+            // 17-20: Reserved for bigger vectors
 
             // ..... Immutable collections: .....
             ImmutableArray = 21 << 24,
@@ -808,6 +811,12 @@ namespace KGySoft.Serialization.Binary
             ImmutableSortedSetBuilder = 28 << 24,
             ImmutableQueue = 29 << 24,
             ImmutableStack = 30 << 24,
+            // 31-32: Reserved
+
+            // ..... more array backed collections (with reinterpreted element type): .....
+            CastArray = 33 << 24,
+            CastArray2D = 34 << 24,
+            CastArray3D = 35 << 24,
 
             // TODO Candidates:
             // FrozenSet* // NOTE: special case(s) because FrozenSet is abstract with no available ctor so its internal sealed derived types could be handled just like RuntimeType
@@ -1602,6 +1611,64 @@ namespace KGySoft.Serialization.Binary
                 }
             },
 #endif
+            {
+                DataTypes.CastArray, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.BackingArrayCanBeNull,
+                    GetBackingArray = o => (Array?)Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(CastArray<_,_>.Buffer))!, nameof(ArraySection<_>.UnderlyingArray)),
+                    WriteSpecificPropertiesCallback = (bw, o) =>
+                    {
+                        var buffer = Accessors.GetPropertyValue(o, nameof(CastArray<_,_>.Buffer))!;
+                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(buffer, nameof(ArraySection<_>.Offset))!);
+                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(buffer, nameof(ArraySection<_>.Length))!);
+                    },
+                    CreateArrayBackedCollectionInstanceFromArray = (br, t, a) =>
+                    {
+                        Type arrayType = a.GetType();
+                        var buffer = typeof(ArraySection<>).GetGenericType(arrayType.GetElementType()!).CreateInstance([arrayType, Reflector.IntType, Reflector.IntType], a, Read7BitInt(br), Read7BitInt(br));
+                        return t.CreateInstance(buffer);
+                    },
+                }
+            },
+            {
+                DataTypes.CastArray2D, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.BackingArrayCanBeNull,
+                    GetBackingArray = o => (Array?)Accessors.GetPropertyValue(Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(CastArray2D<_,_>.Buffer))!, nameof(CastArray<_,_>.Buffer))!, nameof(ArraySection<_>.UnderlyingArray)),
+                    WriteSpecificPropertiesCallback = (bw, o) =>
+                    {
+                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(CastArray2D<_,_>.Buffer))!, nameof(CastArray<_,_>.Buffer))!, nameof(ArraySection<_>.Offset))!);
+                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(CastArray2D<_,_>.Height))!);
+                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(CastArray2D<_,_>.Width))!);
+                    },
+                    CreateArrayBackedCollectionInstanceFromArray = (br, t, a) =>
+                    {
+                        Type arrayType = a.GetType();
+                        var buffer = typeof(ArraySection<>).GetGenericType(arrayType.GetElementType()!).CreateInstance([arrayType, Reflector.IntType], a, Read7BitInt(br));
+                        return t.CreateInstance([buffer.GetType(), Reflector.IntType, Reflector.IntType], buffer, Read7BitInt(br), Read7BitInt(br));
+                    }
+                }
+            },
+            {
+                DataTypes.CastArray3D, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.BackingArrayCanBeNull,
+                    GetBackingArray = o => (Array?)Accessors.GetPropertyValue(Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(CastArray3D<_,_>.Buffer))!, nameof(CastArray<_,_>.Buffer))!, nameof(ArraySection<_>.UnderlyingArray)),
+                    WriteSpecificPropertiesCallback = (bw, o) =>
+                    {
+                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(CastArray3D<_,_>.Buffer))!, nameof(CastArray<_,_>.Buffer))!, nameof(ArraySection<_>.Offset))!);
+                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(CastArray3D<_,_>.Depth))!);
+                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(CastArray3D<_,_>.Height))!);
+                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(CastArray3D<_,_>.Width))!);
+                    },
+                    CreateArrayBackedCollectionInstanceFromArray = (br, t, a) =>
+                    {
+                        Type arrayType = a.GetType();
+                        var buffer = typeof(ArraySection<>).GetGenericType(arrayType.GetElementType()!).CreateInstance([arrayType, Reflector.IntType], a, Read7BitInt(br));
+                        return t.CreateInstance([buffer.GetType(), Reflector.IntType, Reflector.IntType, Reflector.IntType], buffer, Read7BitInt(br), Read7BitInt(br), Read7BitInt(br));
+                    }
+                }
+            },
 
             #endregion
 
@@ -1804,6 +1871,9 @@ namespace KGySoft.Serialization.Binary
             { typeof(ArraySection<>), DataTypes.ArraySection },
             { typeof(Array2D<>), DataTypes.Array2D },
             { typeof(Array3D<>), DataTypes.Array3D },
+            { typeof(CastArray<,>), DataTypes.CastArray },
+            { typeof(CastArray2D<,>), DataTypes.CastArray2D },
+            { typeof(CastArray3D<,>), DataTypes.CastArray3D },
 
             // Tuple-like types. Added to collections for practical reasons such as handling generics or encoding type of items
             { Reflector.KeyValuePairType, DataTypes.KeyValuePair },
@@ -1980,7 +2050,8 @@ namespace KGySoft.Serialization.Binary
         private static bool IsImpureType(DataTypes dt) => IsEnum(dt) || IsImpureTypeButEnum(dt);
         private static bool IsExtended(DataTypes dt) => (dt & DataTypes.Extended) != DataTypes.Null;
         private static bool IsTuple(DataTypes dt) => GetUnderlyingCollectionDataType(dt) is >= DataTypes.Tuple1 and <= DataTypes.Tuple8 or >= DataTypes.ValueTuple1 and <= DataTypes.ValueTuple8;
-        
+        private static bool IsReinterpretedCollection(DataTypes dt) => GetUnderlyingCollectionDataType(dt) is >= DataTypes.CastArray and <= DataTypes.CastArray3D;
+
         private static bool IsNullable(DataTypes dt) => IsCollectionType(dt)
             ? (dt & DataTypes.NullableExtendedCollection) != DataTypes.Null || GetCollectionDataType(dt) is DataTypes.DictionaryEntryNullable or DataTypes.KeyValuePairNullable
             : (dt & DataTypes.Nullable) != DataTypes.Null;
@@ -2002,9 +2073,9 @@ namespace KGySoft.Serialization.Binary
             _ => 0,
         };
 
-        private static int GetNumberOfElementTypes(DataTypes dt) => IsDictionary(dt) ? HasNonGenericItemOrKey(dt) ? 1 : 2
+        private static int GetNumberOfElementDataTypes(DataTypes dt) => IsDictionary(dt) ? HasNonGenericItemOrKey(dt) ? 1 : 2
             : IsTuple(dt) ? GetNumberOfTupleElements(dt)
-            : IsCollectionType(dt) ? 1
+            : IsCollectionType(dt) ? IsReinterpretedCollection(dt) ? 2 : 1
             : dt is DataTypes.Pointer or DataTypes.ByRef ? 1
             : 0;
 

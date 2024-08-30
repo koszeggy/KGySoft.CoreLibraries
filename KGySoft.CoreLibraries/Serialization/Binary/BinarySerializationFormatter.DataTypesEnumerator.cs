@@ -132,7 +132,7 @@ namespace KGySoft.Serialization.Binary
                 {
                     result.Add(current);
                     skip += IsCollectionType(current)
-                        ? GetNumberOfElementTypes(current) - (GetElementDataType(current) is DataTypes.Null or DataTypes.Pointer or DataTypes.ByRef ? 1 : 2)
+                        ? GetNumberOfElementDataTypes(current) - (GetElementDataType(current) is DataTypes.Null or DataTypes.Pointer or DataTypes.ByRef ? 1 : 2)
                         : -1;
                 } while (MoveNext() && skip > 0);
 
