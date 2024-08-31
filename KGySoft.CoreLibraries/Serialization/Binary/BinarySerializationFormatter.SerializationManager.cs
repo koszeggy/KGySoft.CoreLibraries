@@ -15,6 +15,8 @@
 
 #region Usings
 
+using System.Buffers;
+
 using CompareInfo = System.Globalization.CompareInfo;
 
 #region Used Namespaces
@@ -376,7 +378,7 @@ namespace KGySoft.Serialization.Binary
             /// <summary>
             /// Writing a child object. Here the type is encoded by index.
             /// <paramref name="knownElementType"/> is the possible element type of a parent collection.
-            /// We don't do the same for parent fields because we don't write the fields types at all.
+            /// We don't do the same for parent fields because we don't write the field types at all.
             /// </summary>>
             [SecurityCritical]
             internal void WriteNonRoot(BinaryWriter bw, object? obj, (DataTypesEnumerator? DataTypes, Type? Type) knownElementType = default)
@@ -509,7 +511,7 @@ namespace KGySoft.Serialization.Binary
                         return true;
                     }
 
-                    // supported collection (including some some special types such as KeyValuePair or tuples)
+                    // supported collection (including some special types such as KeyValuePair or tuples)
                     Type checkedType = t.IsGenericType ? t.GetGenericTypeDefinition()
                         : t.IsGenericParameter && t.DeclaringMethod == null ? t.DeclaringType!
                         : t;
@@ -1318,13 +1320,23 @@ namespace KGySoft.Serialization.Binary
                     if (array == null)
                         return;
 
+                    // TODO: WriteId if array is really part of the hierarchy
                     WriteArray(bw, array, collectionDataTypes, !serInfo.HasKnownSizedBackingArray);
                     serInfo.WriteSpecificPropertiesCallback?.Invoke(bw, obj);
 
                     return;
                 }
 
-                // IV. Other collection
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+                // IV. Memory
+                if (serInfo.IsMemory)
+                {
+                    WriteMemory(bw, obj, collectionDataTypes);
+                    return;
+                }
+#endif
+
+                // V. Other collection
                 // 1. Obtaining the elements to write. Handles special cases such as DictionaryEntry, KeyValuePair, ArraySegment, etc.
                 IEnumerable collection = serInfo.GetCollectionToSerialize(obj);
 
@@ -1484,6 +1496,44 @@ namespace KGySoft.Serialization.Binary
                 for (int i = 0; i < fields.Length; i++)
                     WriteElement(bw, fields[i].Get(tuple), itemDataTypes.ReadToNextSegment(), itemTypes[i]);
             }
+
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            [SecurityCritical]
+            private void WriteMemory(BinaryWriter bw, object memory, DataTypesEnumerator collectionDataTypes)
+            {
+                // Normally we should use the MemoryMarshal.TryGet... methods but those are generic and convert Memory to ReadOnlyMemory implicitly.
+                // Instead of doing the same conversion just to call the 3 possible methods by reflection, it's much simpler if we get the non-generic content of Memory.
+                ref MemoryData data = ref GetMemoryData(memory);
+                switch (data.Object)
+                {
+                    case null:
+                        bw.Write((byte)MemoryType.Null);
+                        return;
+
+                    case Array array:
+                        bw.Write((byte)MemoryType.Array);
+                        if (!WriteId(bw, array))
+                            WriteArray(bw, array, collectionDataTypes, true);
+                        break;
+
+                    case string str:
+                        bw.Write((byte)MemoryType.String);
+                        WriteStringValue(bw, str, false);
+                        break;
+
+                    default:
+                        // The memory here is provided by a manager. It's not too likely that it's serializable, but if it is, this will work.
+                        Debug.Assert(data.Object.GetType().IsImplementationOfGenericType(typeof(MemoryManager<>)));
+                        bw.Write((byte)MemoryType.Manager);
+                        WriteNonRoot(bw, data.Object);
+                        break;
+                }
+
+                // A negative index means a pinned object. We always clear the pinned bit because the deserialized instance is never pinned.
+                Write7BitInt(bw, data.Index & Int32.MaxValue);
+                Write7BitInt(bw, data.Length);
+            }
+#endif
 
             [SecurityCritical]
             private void WriteCollectionElements(BinaryWriter bw, IEnumerable collection, DataTypesEnumerator elementCollectionDataTypes, Type collectionElementType)

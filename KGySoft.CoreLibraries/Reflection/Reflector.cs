@@ -4049,7 +4049,7 @@ namespace KGySoft.Reflection
 #if NETCOREAPP3_0_OR_GREATER
             return ref Unsafe.As<StrongBox<byte>>(obj).Value;
 #else
-            return ref (reinterpretAsBoxedByte ??= GenerateReinterpretCast()).Invoke(obj).Value;
+            return ref (reinterpretAsBoxedByte ??= GenerateReinterpretCast<byte>()).Invoke(obj).Value;
 #endif
         }
 
@@ -4074,6 +4074,18 @@ namespace KGySoft.Reflection
             return (byte*)((IntPtr*)&typedRef)[typedReferenceValueIndex];
 #pragma warning restore CS8500 // This takes the address of, gets the size of, or declares a pointer to a managed type
         }
+
+#if !NETCOREAPP3_0_OR_GREATER
+        [SecurityCritical]
+        internal static Func<object, StrongBox<T>> GenerateReinterpretCast<T>()
+        {
+            var dm = new DynamicMethod("ReinterpretCast", typeof(StrongBox<T>), [ObjectType], typeof(Reflector), true);
+            ILGenerator il = dm.GetILGenerator();
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ret);
+            return (Func<object, StrongBox<T>>)dm.CreateDelegate(typeof(Func<object, StrongBox<T>>));
+        }
+#endif
 
         [SecurityCritical]
         private unsafe static bool InitTypedReferenceUsage()
@@ -4106,17 +4118,6 @@ namespace KGySoft.Reflection
             isTypedReferenceSupported = false;
             return false;
         }
-
-#if !NETCOREAPP3_0_OR_GREATER
-        private static Func<object, StrongBox<byte>> GenerateReinterpretCast()
-        {
-            var dm = new DynamicMethod(nameof(reinterpretAsBoxedByte), typeof(StrongBox<byte>), new[] { ObjectType }, typeof(Reflector), true);
-            ILGenerator il = dm.GetILGenerator();
-            il.Emit(OpCodes.Ldarg_0);
-            il.Emit(OpCodes.Ret);
-            return (Func<object, StrongBox<byte>>)dm.CreateDelegate(typeof(Func<object, StrongBox<byte>>));
-        }
-#endif
 
 #endif
         #endregion

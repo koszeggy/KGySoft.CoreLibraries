@@ -363,9 +363,9 @@ namespace KGySoft.CoreLibraries
 #endif
 
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
-                if (typeRef.IsGenericTypeOf(typeof(Memory<>)))
+                if (typeRef.IsGenericTypeOf(typeof(Memory<>)) || typeRef.IsGenericTypeOf(typeof(ReadOnlyMemory<>)))
                 {
-                    // Length
+                    // Length, IsEmpty
                     if (!CheckMembersEqual(reference, check, forceEqualityByMembers, errors, checkedObjects))
                         return false;
 
@@ -540,7 +540,7 @@ namespace KGySoft.CoreLibraries
             foreach (PropertyInfo property in reference.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public).Where(p => p.GetIndexParameters().Length == 0))
             {
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
-                if (property.PropertyType.IsGenericTypeOf(typeof(Span<>)))
+                if (property.PropertyType.IsGenericTypeOf(typeof(Span<>)) || property.PropertyType.IsGenericTypeOf(typeof(ReadOnlySpan<>)))
                     continue;
 #endif
                 result &= CheckMemberDeepEquals($"{typeRef.GetName(TypeNameKind.ShortName)}.{property.Name}", property.Get(reference), property.Get(check), forceNestedEqualityByMembers, errors, checkedObjects);

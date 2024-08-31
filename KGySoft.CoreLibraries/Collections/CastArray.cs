@@ -1025,7 +1025,9 @@ namespace KGySoft.Collections
             fixed (TTo* pDst = &target)
                 MemoryHelper.CopyMemory(pSrc, pDst, (long)length * sizeof(TTo));
         }
+#endif
 
+#if !NETCOREAPP3_0_OR_GREATER
         [SecuritySafeCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
         private unsafe int DoIndexOfUnsafe(TTo item)
@@ -1043,8 +1045,8 @@ namespace KGySoft.Collections
 
             return -1;
         }
-
 #endif
+
 
         #endregion
 

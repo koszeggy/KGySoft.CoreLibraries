@@ -41,6 +41,7 @@ using System.Numerics;
 using System.Reflection;
 #endif
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 #if NETCOREAPP3_0_OR_GREATER
 using System.Runtime.Intrinsics;
 #endif
@@ -628,6 +629,43 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, safeCompare: true);
 #endif
         }
+
+#if NETCOREAPP2_1_OR_GREATER
+        [Test]
+        public void SerializeMemory()
+        {
+            object[] referenceObjects =
+            {
+                new Memory<byte>(), // empty
+                new Memory<byte>(new byte[10], 1, 2), // array
+                MemoryMarshal.AsMemory("alpha".AsMemory(1, 2)), // string
+
+                new ReadOnlyMemory<byte>(), // empty
+                new ReadOnlyMemory<byte>(new byte[10], 1, 2), // array
+                "beta".AsMemory(1, 2) // string
+            };
+
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
+
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode);
+
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.RecursiveSerializationAsFallback);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.RecursiveSerializationAsFallback);
+
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.SafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.SafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes);
+
+            referenceObjects = new object[]
+            {
+                new byte[10].Cast<byte, int>().AsMemory, // manager
+            };
+
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback); // CastArrayMemoryManager
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback);
+        }
+#endif
 
         [Test]
         public void SerializeComplexTypes()

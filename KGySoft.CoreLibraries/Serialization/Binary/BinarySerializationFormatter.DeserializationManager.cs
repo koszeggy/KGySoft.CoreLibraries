@@ -950,7 +950,13 @@ namespace KGySoft.Serialization.Binary
                 if (descriptor.HasBackingArray)
                     return CreateArrayBackedCollection(br, addToCache, descriptor);
 
-                // 3/d.) other collection or key-value
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+                // 3/d.) array-backed collection
+                if (descriptor.IsMemory)
+                    return CreateMemory(br, addToCache, descriptor);
+#endif
+
+                // 3/e.) other collection or key-value
                 return CreateCollection(br, addToCache, descriptor);
             }
 
@@ -1164,7 +1170,13 @@ namespace KGySoft.Serialization.Binary
                 if (descriptor.HasBackingArray)
                     return CreateArrayBackedCollection(br, addToCache, descriptor);
 
-                // 3/d.) other collection or key-value
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+                // 3/d.) array-backed collection
+                if (descriptor.IsMemory)
+                    return CreateMemory(br, addToCache, descriptor);
+#endif
+
+                // 3/e.) other collection or key-value
                 return CreateCollection(br, addToCache, descriptor);
             }
 
@@ -1321,6 +1333,45 @@ namespace KGySoft.Serialization.Binary
 
                 return result;
             }
+
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            [SecurityCritical]
+            private object CreateMemory(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor)
+            {
+                Debug.Assert(descriptor.IsMemory);
+                Type type = descriptor.GetTypeToCreate();
+                int id = 0;
+
+                object result = CreateKnownEmptyObject(type);
+                if (addToCache)
+                    AddObjectToCache(result);
+
+                ref MemoryData data = ref GetMemoryData(result);
+                switch ((MemoryType)br.ReadByte())
+                {
+                    case MemoryType.Null:
+                        return result;
+
+                    case MemoryType.Array:
+                        if (!TryGetCachedObject(br, out object? array))
+                            array = CreateArray(br, true, descriptor);
+                        data.Object = array;
+                        break;
+
+                    case MemoryType.String:
+                        data.Object = ReadStringValue(br, true);
+                        break;
+
+                    default:
+                        data.Object = ReadWithType(br);
+                        break;
+                }
+
+                data.Index = Read7BitInt(br);
+                data.Length = Read7BitInt(br);
+                return result;
+            }
+#endif
 
             /// <summary>
             /// Creates and populates a collection

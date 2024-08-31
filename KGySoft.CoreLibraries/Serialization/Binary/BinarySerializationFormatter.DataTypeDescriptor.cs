@@ -90,6 +90,9 @@ namespace KGySoft.Serialization.Binary
             internal bool HasNullableBackingArray => CollectionSerializationInfo.HasNullableBackingArray;
             internal bool IsTuple => UnderlyingCollectionDataType is >= DataTypes.Tuple1 and <= DataTypes.Tuple8 or >= DataTypes.ValueTuple1 and <= DataTypes.ValueTuple8;
             internal bool CreateResultFromByteArray => CollectionSerializationInfo.CreateResultFromByteArray;
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            internal bool IsMemory => UnderlyingCollectionDataType is DataTypes.Memory or DataTypes.ReadOnlyMemory;
+#endif
 
             internal int FixedItemsSize
             {
@@ -813,6 +816,17 @@ namespace KGySoft.Serialization.Binary
                     case DataTypes.ImmutableDictionaryBuilder:
                     case DataTypes.ImmutableSortedDictionary:
                     case DataTypes.ImmutableSortedDictionaryBuilder:
+                        return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationCollectionPlatformNotSupported(DataTypeToString(collectionDataType)));
+#endif
+
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+                    case DataTypes.Memory:
+                        return typeof(Memory<>);
+                    case DataTypes.ReadOnlyMemory:
+                        return typeof(ReadOnlyMemory<>);
+#else
+                    case DataTypes.Memory:
+                    case DataTypes.ReadOnlyMemory:
                         return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationCollectionPlatformNotSupported(DataTypeToString(collectionDataType)));
 #endif
 

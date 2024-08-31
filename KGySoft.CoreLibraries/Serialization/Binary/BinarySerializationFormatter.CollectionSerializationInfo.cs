@@ -66,6 +66,10 @@ namespace KGySoft.Serialization.Binary
             };
 #endif
 
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            internal static readonly CollectionSerializationInfo Memory = new() { Info = CollectionInfo.IsGeneric | CollectionInfo.IsMemory };
+#endif
+
             #endregion
 
             #region Instance Fields
@@ -100,9 +104,9 @@ namespace KGySoft.Serialization.Binary
             internal Func<Type, MethodAccessor>? GetSpecificAddMethod { get; set; }
 
             /// <summary>
-            /// Should be specified if the collection is a value type and it has a publicly exposed backing array that can have more elements than the wrapper type (eg. ArraySegment),
-            /// or, if it does not expose or wrap any array but it can be represented as a (fixed size) array (eg. Vector128).
-            /// If the the collection does not actually wrap the array, then it must not contain any direct circular reference to the object itself because it makes proper deserialization impossible (eg. object element type must not be supported by the collection)
+            /// Should be specified if the collection is a value type, and it has a publicly exposed backing array that can have more elements than the wrapper type (eg. ArraySegment),
+            /// or, if it does not expose or wrap any array, but it can be represented as a (fixed size) array (eg. Vector128).
+            /// If the collection does not actually wrap the array, then it must not contain any direct circular reference to the object itself because it makes proper deserialization impossible (eg. object element type must not be supported by the collection)
             /// </summary>
             internal Func<object, Array?>? GetBackingArray { get; set; }
 
@@ -155,6 +159,7 @@ namespace KGySoft.Serialization.Binary
             internal bool HasStringItemsOrKeys => (Info & CollectionInfo.HasStringItemsOrKeys) == CollectionInfo.HasStringItemsOrKeys;
             internal bool CreateResultFromByteArray => (Info & CollectionInfo.CreateResultFromByteArray) == CollectionInfo.CreateResultFromByteArray;
             internal bool IsComparer => (Info & CollectionInfo.IsComparer) == CollectionInfo.IsComparer;
+            internal bool IsMemory => (Info & CollectionInfo.IsMemory) == CollectionInfo.IsMemory;
 
             #endregion
 

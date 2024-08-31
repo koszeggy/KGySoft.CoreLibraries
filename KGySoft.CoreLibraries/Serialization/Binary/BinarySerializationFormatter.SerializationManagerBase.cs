@@ -18,6 +18,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Security;
 
@@ -47,6 +48,8 @@ namespace KGySoft.Serialization.Binary
 
             #endregion
 
+            #region Nested Types
+
             #region Enumerations
 
             private protected enum GenericTypeSpecifier
@@ -56,14 +59,45 @@ namespace KGySoft.Serialization.Binary
                 GenericParameter,
             }
 
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            private protected enum MemoryType
+            {
+                Null,
+                Array,
+                String,
+                Manager
+            }
+#endif
+
+            #region Nested Structs
+
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            private protected struct MemoryData
+            {
+                #region Fields
+
+                internal object? Object;
+                internal int Index;
+                internal int Length;
+
+                #endregion
+            }
+#endif
+
+            #endregion
+
+            #endregion
+
             #endregion
 
             #region Fields
 
             #region Static Fields
 
+            #region Private Protected Fields
+
             private protected static readonly Assembly[] KnownAssemblies =
-            {
+    {
                 // Do not add more assemblies. We must stay consistent on different platforms.
                 AssemblyResolver.CoreLibrariesAssembly, // and for compatibility, mscorlib maps also here on every platform
                 AssemblyResolver.KGySoftCoreLibrariesAssembly
@@ -114,6 +148,16 @@ namespace KGySoft.Serialization.Binary
             /// </summary>
             private protected static readonly LockFreeCache<Type, DataTypes> SpecialSupportCache
                 = new(DetermineSpecialSupport, null, LockFreeCacheOptions.Profile256);
+
+            #endregion
+
+            #region Private Fields
+
+#if NETCOREAPP2_1 || NETSTANDARD2_1_OR_GREATER
+        private static Func<object, StrongBox<MemoryData>>? reinterpretAsMemoryData;
+#endif
+
+            #endregion
 
             #endregion
 
@@ -179,6 +223,26 @@ namespace KGySoft.Serialization.Binary
             #region Methods
 
             #region Static Methods
+
+            #region Private Protected Methods
+
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            [MethodImpl(MethodImpl.AggressiveInlining)]
+            [SecurityCritical]
+            private protected static ref MemoryData GetMemoryData(object obj)
+            {
+                Debug.Assert(obj.GetType().IsGenericTypeOf(typeof(Memory<>)) || obj.GetType().IsGenericTypeOf(typeof(ReadOnlyMemory<>)));
+#if NETCOREAPP3_0_OR_GREATER
+                return ref Unsafe.As<StrongBox<MemoryData>>(obj).Value;
+#else
+                return ref (reinterpretAsMemoryData ??= Reflector.GenerateReinterpretCast<MemoryData>()).Invoke(obj).Value;
+#endif
+            }
+#endif
+
+            #endregion
+
+            #region Private Methods
 
             private static IEnumerable<MethodInfo>? GetMethodsWithAttribute(Type attribute, Type type)
             {
@@ -257,6 +321,8 @@ namespace KGySoft.Serialization.Binary
 
                 return DataTypes.Null;
             }
+
+            #endregion
 
             #endregion
 

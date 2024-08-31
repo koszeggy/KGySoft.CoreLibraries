@@ -325,6 +325,8 @@ namespace KGySoft.Serialization.Binary
     /// <item><see cref="ImmutableDictionary{TKey,TValue}.Builder"/> (in .NET Core 2.0 and above)</item>
     /// <item><see cref="ImmutableSortedDictionary{TKey,TValue}"/> (in .NET Core 2.0 and above)</item>
     /// <item><see cref="ImmutableSortedDictionary{TKey,TValue}.Builder"/> (in .NET Core 2.0 and above)</item>
+    /// <item><see cref="Memory{T}"/> (in .NET Core 2.1 and above)</item>
+    /// <item><see cref="ReadOnlyMemory{T}"/> (in .NET Core 2.1 and above)</item>
     /// <item><see cref="Vector64{T}"/> (in .NET Core 3.0 and above)</item>
     /// <item><see cref="Vector128{T}"/> (in .NET Core 3.0 and above)</item>
     /// <item><see cref="Vector256{T}"/> (in .NET Core 3.0 and above)</item>
@@ -818,6 +820,10 @@ namespace KGySoft.Serialization.Binary
             CastArray2D = 34 << 24,
             CastArray3D = 35 << 24,
 
+            // ..... memory (backed by array/string/manager/none): ..... - NOTE: the backing object has to be perfectly serialized (unlike in XML/Json serialization)
+            Memory = 36 << 24,
+            ReadOnlyMemory = 37 << 24,
+
             // TODO Candidates:
             // FrozenSet* // NOTE: special case(s) because FrozenSet is abstract with no available ctor so its internal sealed derived types could be handled just like RuntimeType
 
@@ -949,6 +955,11 @@ namespace KGySoft.Serialization.Binary
             /// Indicates that the collection is ordered. As lists are naturally ordered, this is needed for ordered dictionaries only.
             /// </summary>
             IsOrdered = 1 << 20,
+
+            /// <summary>
+            /// Indicates that the collection is a [ReadOnly]Memory struct.
+            /// </summary>
+            IsMemory = 1 << 21,
         }
 
         /// <summary>
@@ -1669,6 +1680,8 @@ namespace KGySoft.Serialization.Binary
                     }
                 }
             },
+            { DataTypes.Memory, CollectionSerializationInfo.Memory },
+            { DataTypes.ReadOnlyMemory, CollectionSerializationInfo.Memory },
 
             #endregion
 
@@ -1926,6 +1939,12 @@ namespace KGySoft.Serialization.Binary
             { typeof(ImmutableDictionary<,>.Builder), DataTypes.ImmutableDictionaryBuilder },
             { typeof(ImmutableSortedDictionary<,>), DataTypes.ImmutableSortedDictionary },
             { typeof(ImmutableSortedDictionary<,>.Builder), DataTypes.ImmutableSortedDictionaryBuilder },
+#endif
+
+            // Memory
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            { typeof(Memory<>), DataTypes.Memory },
+            { typeof(ReadOnlyMemory<>), DataTypes.ReadOnlyMemory },
 #endif
         };
 
