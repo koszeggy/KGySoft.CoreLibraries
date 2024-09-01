@@ -153,7 +153,7 @@ namespace KGySoft.Serialization.Binary
             internal bool IsOrdered => (Info & CollectionInfo.IsOrdered) == CollectionInfo.IsOrdered;
             internal bool IsSingleElement => (Info & CollectionInfo.IsSingleElement) == CollectionInfo.IsSingleElement;
             internal bool ReverseElements => (Info & CollectionInfo.ReverseElements) == CollectionInfo.ReverseElements;
-            internal bool HasNullableBackingArray => (Info & CollectionInfo.BackingArrayCanBeNull) == CollectionInfo.BackingArrayCanBeNull;
+            internal bool IsBackingArrayActuallyStored => (Info & CollectionInfo.IsBackingArrayActuallyStored) == CollectionInfo.IsBackingArrayActuallyStored;
             internal bool HasKnownSizedBackingArray => (Info & CollectionInfo.BackingArrayHasKnownSize) == CollectionInfo.BackingArrayHasKnownSize;
             internal bool IsTuple => (Info & CollectionInfo.IsTuple) == CollectionInfo.IsTuple;
             internal bool HasStringItemsOrKeys => (Info & CollectionInfo.HasStringItemsOrKeys) == CollectionInfo.HasStringItemsOrKeys;

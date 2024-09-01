@@ -87,7 +87,7 @@ namespace KGySoft.Serialization.Binary
             internal bool IsStrongBox => CollectionDataType is DataTypes.StrongBox;
             internal bool IsNullable { get; private set; }
             internal bool HasBackingArray => CollectionSerializationInfo.CreateArrayBackedCollectionInstanceFromArray != null;
-            internal bool HasNullableBackingArray => CollectionSerializationInfo.HasNullableBackingArray;
+            internal bool IsBackingArrayActuallyStored => CollectionSerializationInfo.IsBackingArrayActuallyStored;
             internal bool IsTuple => UnderlyingCollectionDataType is >= DataTypes.Tuple1 and <= DataTypes.Tuple8 or >= DataTypes.ValueTuple1 and <= DataTypes.ValueTuple8;
             internal bool CreateResultFromByteArray => CollectionSerializationInfo.CreateResultFromByteArray;
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER

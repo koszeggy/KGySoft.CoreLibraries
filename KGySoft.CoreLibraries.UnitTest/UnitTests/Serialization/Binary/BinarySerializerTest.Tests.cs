@@ -657,13 +657,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.SafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.SafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes);
 
+            // this tries to serialize a non-serializable object (CastArrayMemoryManager)
             referenceObjects = new object[]
             {
                 new byte[10].Cast<byte, int>().AsMemory, // manager
             };
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback); // CastArrayMemoryManager
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback);
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback); 
         }
 #endif
 
@@ -1134,6 +1135,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #if NETCOREAPP && !NETSTANDARD_TEST
                 new ImmutableArray<int>?[] { ImmutableArray.Create(1, 2, 3, 4), ImmutableArray<int>.Empty, new ImmutableArray<int>(), null },
                 new ImmutableArray<int?>?[] { ImmutableArray.Create<int?>(1, 2, 3, 4, null), ImmutableArray<int?>.Empty, new ImmutableArray<int?>(), null },
+#endif
+#if NETCOREAPP2_1_OR_GREATER
+                new Memory<byte>?[] { new byte[10].AsMemory(1, 2), null },
+                new Memory<byte?>?[] { new byte?[10].AsMemory(1, 2), null },
 #endif
             };
 
@@ -2368,6 +2373,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             string s2 = String.Format("{0}{1}", "al", "pha");
             SystemSerializableClass tc = new SystemSerializableClass { IntProp = 10, StringProp = "s1" };
             object ts = new SystemSerializableStruct { IntProp = 10, StringProp = "s1" };
+            byte[] array = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
             object[] referenceObjects =
             {
                 // *: Id is generated on system serialization
@@ -2384,15 +2390,36 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new SystemSerializableStruct[] { (SystemSerializableStruct)ts, (SystemSerializableStruct)ts, (SystemSerializableStruct)ts, (SystemSerializableStruct)ts }, // custom struct, multiple unboxed instances
                 new object[] { ts }, // custom struct, single boxed instance
                 new object[] { ts, ts, ts, ts }, // custom struct, multiple boxed instances
+                new object[] // same array instance embedded in multiple wrappers
+                {
+                    array,
+                    new Collection<byte>(array),
+                    new ReadOnlyCollection<byte>(array),
+                    new ArraySegment<byte>(array),
+                    array.AsSection(),
+                    array.AsArray2D(2, 3),
+                    array.AsArray3D(1, 2, 3),
+                    array.Cast<byte, int>(),
+                    array.Cast2D<byte, short>(2, 3),
+                    array.Cast3D<byte, short>(1, 2, 3),
+#if NETCOREAPP2_1_OR_GREATER
+                    array.AsMemory(),
+#endif
+#if NETCOREAPP && !NETSTANDARD_TEST
+                    typeof(ImmutableArray<byte>).CreateInstance(array)
+#endif
+                },
             };
 
+#if NETFRAMEWORK // Memory, ImmutableArray
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
+#endif
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
-            var expectedTypes = new[] { typeof(SystemSerializableClass), typeof(SystemSerializableStruct) };
+            var expectedTypes = new[] { typeof(SystemSerializableClass), typeof(SystemSerializableStruct), typeof(Collection<>), typeof(ReadOnlyCollection<>) };
             KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: expectedTypes);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: expectedTypes);
         }
@@ -2581,8 +2608,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None, safeCompare: true);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, safeCompare: true);
 
+#if DEBUG
+            // In Debug build the safe mode array allocation threshold is intentionally very small and the array builder proxy points to itself before the final array is created
+            Throws<SerializationException>(() => KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, safeCompare: true), Res.BinarySerializationCircularIObjectReference);
+
+            // But it's alright if referenceObjects is not the outermost object, because when finding it inside first, its creation can be completed
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, safeCompare: true);
+#else
             KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, safeCompare: true);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, safeCompare: true);
+#endif
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.RecursiveSerializationAsFallback, safeCompare: true);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.RecursiveSerializationAsFallback, safeCompare: true);
@@ -2601,8 +2636,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             //    SystemSerializeObject(referenceObject);
 
             foreach (object referenceObject in referenceObjects)
-                Throws<SerializationException>(() => KGySerializeObject(referenceObject, BinarySerializationOptions.None),
-                    "Deserialization of an IObjectReference instance has an unresolvable circular reference to itself.");
+                Throws<SerializationException>(() => KGySerializeObject(referenceObject, BinarySerializationOptions.None), Res.BinarySerializationCircularIObjectReference);
         }
 
         [Test]

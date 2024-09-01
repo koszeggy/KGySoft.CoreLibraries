@@ -907,12 +907,12 @@ namespace KGySoft.Serialization.Binary
             NonNullDefaultComparer = 1 << 10,
 
             /// <summary>
-            /// Indicates that backing array can be null (eg. ArraySegment)
+            /// Indicates that the backing array is an actually wrapped reference, so it is stored in the id cache and can be even null (eg. ArraySegment).
             /// </summary>
-            BackingArrayCanBeNull = 1 << 11,
+            IsBackingArrayActuallyStored = 1 << 11,
 
             /// <summary>
-            /// Indicates that backing array has a known size (eg. Vector*)
+            /// Indicates that the backing array has a known size (eg. Vector*)
             /// </summary>
             BackingArrayHasKnownSize = 1 << 12,
 
@@ -1408,7 +1408,7 @@ namespace KGySoft.Serialization.Binary
             {
                 DataTypes.ArraySegment, new CollectionSerializationInfo
                 {
-                    Info = CollectionInfo.IsGeneric | CollectionInfo.BackingArrayCanBeNull,
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.IsBackingArrayActuallyStored,
                     GetBackingArray = o => (Array?)Accessors.GetPropertyValue(o, nameof(ArraySegment<_>.Array)),
                     WriteSpecificPropertiesCallback = (bw, o) =>
                     {
@@ -1426,7 +1426,7 @@ namespace KGySoft.Serialization.Binary
             {
                 DataTypes.ArraySection, new CollectionSerializationInfo
                 {
-                    Info = CollectionInfo.IsGeneric | CollectionInfo.BackingArrayCanBeNull,
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.IsBackingArrayActuallyStored,
                     GetBackingArray = o => (Array?)Accessors.GetPropertyValue(o, nameof(ArraySection<_>.UnderlyingArray)),
                     WriteSpecificPropertiesCallback = (bw, o) =>
                     {
@@ -1440,7 +1440,7 @@ namespace KGySoft.Serialization.Binary
             {
                 DataTypes.Array2D, new CollectionSerializationInfo
                 {
-                    Info = CollectionInfo.IsGeneric | CollectionInfo.BackingArrayCanBeNull,
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.IsBackingArrayActuallyStored,
                     GetBackingArray = o => (Array?)Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(Array2D<_>.Buffer))!, nameof(ArraySection<_>.UnderlyingArray)),
                     WriteSpecificPropertiesCallback = (bw, o) =>
                     {
@@ -1459,7 +1459,7 @@ namespace KGySoft.Serialization.Binary
             {
                 DataTypes.Array3D, new CollectionSerializationInfo
                 {
-                    Info = CollectionInfo.IsGeneric | CollectionInfo.BackingArrayCanBeNull,
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.IsBackingArrayActuallyStored,
                     GetBackingArray = o => (Array?)Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(Array3D<_>.Buffer))!, nameof(ArraySection<_>.UnderlyingArray)),
                     WriteSpecificPropertiesCallback = (bw, o) =>
                     {
@@ -1488,11 +1488,11 @@ namespace KGySoft.Serialization.Binary
 
 #if NETCOREAPP
             {
-                // Trick: Normally we should use a builder for ImmutableArray but as there is an internal constructor that can wrap a pre-created array we can use the BackingArray approach.
+                // Trick: Normally we should use a builder for ImmutableArray but as there is an internal constructor that can wrap a pre-created array so we can use the BackingArray approach.
                 //        This makes also possible to have circular references in an ImmutableArray, which is not possible by a builder that replaces the reference on every update.
                 DataTypes.ImmutableArray, new CollectionSerializationInfo
                 {
-                    Info = CollectionInfo.IsGeneric | CollectionInfo.BackingArrayCanBeNull,
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.IsBackingArrayActuallyStored,
                     GetBackingArray = o => (bool)Accessors.GetPropertyValue(o, nameof(ImmutableArray<_>.IsDefault))! ? null : (Array)typeof(Enumerable).InvokeMethod(nameof(Enumerable.ToArray), o.GetType().GetGenericArguments()[0], o)!,
                     CreateArrayBackedCollectionInstanceFromArray = (_, t, a) => t.CreateInstance(a),
                 }
@@ -1625,7 +1625,7 @@ namespace KGySoft.Serialization.Binary
             {
                 DataTypes.CastArray, new CollectionSerializationInfo
                 {
-                    Info = CollectionInfo.IsGeneric | CollectionInfo.BackingArrayCanBeNull,
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.IsBackingArrayActuallyStored,
                     GetBackingArray = o => (Array?)Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(CastArray<_,_>.Buffer))!, nameof(ArraySection<_>.UnderlyingArray)),
                     WriteSpecificPropertiesCallback = (bw, o) =>
                     {
@@ -1644,7 +1644,7 @@ namespace KGySoft.Serialization.Binary
             {
                 DataTypes.CastArray2D, new CollectionSerializationInfo
                 {
-                    Info = CollectionInfo.IsGeneric | CollectionInfo.BackingArrayCanBeNull,
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.IsBackingArrayActuallyStored,
                     GetBackingArray = o => (Array?)Accessors.GetPropertyValue(Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(CastArray2D<_,_>.Buffer))!, nameof(CastArray<_,_>.Buffer))!, nameof(ArraySection<_>.UnderlyingArray)),
                     WriteSpecificPropertiesCallback = (bw, o) =>
                     {
@@ -1663,7 +1663,7 @@ namespace KGySoft.Serialization.Binary
             {
                 DataTypes.CastArray3D, new CollectionSerializationInfo
                 {
-                    Info = CollectionInfo.IsGeneric | CollectionInfo.BackingArrayCanBeNull,
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.IsBackingArrayActuallyStored,
                     GetBackingArray = o => (Array?)Accessors.GetPropertyValue(Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(CastArray3D<_,_>.Buffer))!, nameof(CastArray<_,_>.Buffer))!, nameof(ArraySection<_>.UnderlyingArray)),
                     WriteSpecificPropertiesCallback = (bw, o) =>
                     {

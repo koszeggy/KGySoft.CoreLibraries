@@ -1312,18 +1312,9 @@ namespace KGySoft.Serialization.Binary
                 }
 
                 // III. Array backed type
-                if (serInfo.GetBackingArray is Func<object, Array?> getBackingArray)
+                if (serInfo.GetBackingArray != null)
                 {
-                    Array? array = getBackingArray.Invoke(obj);
-                    if (serInfo.HasNullableBackingArray)
-                        bw.Write(array != null);
-                    if (array == null)
-                        return;
-
-                    // TODO: WriteId if array is really part of the hierarchy
-                    WriteArray(bw, array, collectionDataTypes, !serInfo.HasKnownSizedBackingArray);
-                    serInfo.WriteSpecificPropertiesCallback?.Invoke(bw, obj);
-
+                    WriteArrayBackedCollection(bw, obj, serInfo, collectionDataTypes);
                     return;
                 }
 
@@ -1497,6 +1488,22 @@ namespace KGySoft.Serialization.Binary
                     WriteElement(bw, fields[i].Get(tuple), itemDataTypes.ReadToNextSegment(), itemTypes[i]);
             }
 
+            [SecurityCritical]
+            private void  WriteArrayBackedCollection(BinaryWriter bw, object obj, CollectionSerializationInfo serInfo, DataTypesEnumerator collectionDataTypes)
+            {
+                Array? array = serInfo.GetBackingArray!.Invoke(obj);
+                bool knownArray = false;
+
+                if (serInfo.IsBackingArrayActuallyStored)
+                    knownArray = WriteId(bw, array);
+                if (array == null)
+                    return;
+                if (!knownArray)
+                    WriteArray(bw, array, collectionDataTypes, !serInfo.HasKnownSizedBackingArray);
+
+                serInfo.WriteSpecificPropertiesCallback?.Invoke(bw, obj);
+            }
+
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             [SecurityCritical]
             private void WriteMemory(BinaryWriter bw, object memory, DataTypesEnumerator collectionDataTypes)
@@ -1512,7 +1519,7 @@ namespace KGySoft.Serialization.Binary
 
                     case Array array:
                         bw.Write((byte)MemoryType.Array);
-                        if (!WriteId(bw, array))
+                        if (!WriteId(bw, array)) // as we don't know whether we are at root level we write the id even if the array itself cannot have recursion
                             WriteArray(bw, array, collectionDataTypes, true);
                         break;
 

@@ -515,7 +515,17 @@ namespace KGySoft.Serialization.Binary
                 internal bool TryReadPrimitive()
                 {
                     if (Array == null || !descriptor.GetElementDescriptor().Type!.IsPrimitive)
-                        return false;
+                    {
+                        if (!descriptor.CreateResultFromByteArray)
+                            return false;
+
+                        // The result is created from a byte array but the actual element type is not primitive, or we use a proxy builder:
+                        // reading the bytes individually. Handled here because the CreateArray would add the elements as actual element types instead of bytes.
+                        for (int i = 0; i < TotalLength; i++)
+                            Add(reader.ReadByte());
+                        return true;
+                    }
+
                     int byteLength = Buffer.ByteLength(Array);
 #if NET6_0_OR_GREATER
                     // reinterpreting the primitive array as Span<byte>
@@ -542,6 +552,13 @@ namespace KGySoft.Serialization.Binary
                         return Array;
 
                     Debug.Assert(builder!.Count == TotalLength);
+                    if (descriptor.CreateResultFromByteArray)
+                    {
+                        Array = new byte[TotalLength];
+                        builder.CopyTo(Array, 0);
+                        return Array;
+                    }
+
                     Array = Array.CreateInstance(descriptor.GetElementDescriptor().Type!, lengths, lowerBounds);
 
                     // 1D array
@@ -1219,33 +1236,36 @@ namespace KGySoft.Serialization.Binary
                 if (addToCache)
                     AddObjectToCache(arrayProxy, out id);
 
-                // primitive array and the builder allocated the final capacity
+                Array result;
+
                 if (builder.TryReadPrimitive())
                 {
-                    Debug.Assert(!trackUsages && arrayProxy == builder.Array);
-                    return builder.ToArray();
+                    // primitive array or the builder allocated the final capacity
+                    Debug.Assert(!trackUsages);
+                    result = builder.ToArray();
                 }
-
-                // non-primitive array or cannot read at once in safe mode
-                DataTypeDescriptor elementDescriptor = descriptor.GetElementDescriptor();
-                for (int i = 0; i < builder.TotalLength; i++)
+                else
                 {
-                    object? value = ReadElement(br, elementDescriptor);
-                    builder.Add(value);
+                    // non-primitive array or cannot read at once in safe mode
+                    DataTypeDescriptor elementDescriptor = descriptor.GetElementDescriptor();
+                    for (int i = 0; i < builder.TotalLength; i++)
+                    {
+                        object? value = ReadElement(br, elementDescriptor);
+                        builder.Add(value);
+                    }
+
+                    result = builder.ToArray();
+
+                    // some post administration if the array was built by a proxy
+                    if (trackUsages)
+                    {
+                        ApplyPendingUsages(usages!, arrayProxy, result);
+                        ObjectsBeingDeserialized.Remove(arrayProxy);
+                    }
                 }
 
-                Array result = builder.ToArray();
-
-                // some post administration if the array was built by a proxy
-                if (trackUsages)
-                {
-                    ApplyPendingUsages(usages!, arrayProxy, result);
-
-                    if (result != arrayProxy && addToCache)
-                        ReplaceObjectInCache(id, result);
-
-                    ObjectsBeingDeserialized.Remove(arrayProxy);
-                }
+                if (result != arrayProxy && addToCache)
+                    ReplaceObjectInCache(id, result);
 
                 return result;
             }
@@ -1272,65 +1292,61 @@ namespace KGySoft.Serialization.Binary
             {
                 Type type = descriptor.GetTypeToCreate();
                 object result;
+                Array backingArray;
 
-                // special case: backing array is null so creating a default instance
-                if (descriptor.HasNullableBackingArray && !br.ReadBoolean())
+                // NOTE: addToCache refers to the actual collection, whereas the wrapped array is cached if IsBackingArrayActuallyStored is true.
+                //       If addToCache is true, the (proxy of) actual result object should be added to the cache first because that's the outer object.
+                bool addArrayToCache = descriptor.IsBackingArrayActuallyStored;
+                Func<BinaryReader, Type, Array, object> createFinalResultCallback = serializationInfo[descriptor.UnderlyingCollectionDataType].CreateArrayBackedCollectionInstanceFromArray!;
+
+                object? resultProxy = null;
+                int id = 0;
+                if (addToCache)
                 {
-                    result = Activator.CreateInstance(type)!;
-                    if (addToCache)
-                        AddObjectToCache(result);
-                    return result;
+                    resultProxy = new object();
+                    AddObjectToCache(resultProxy, out id);
                 }
 
-                var builder = new ArrayBuilder(br, descriptor, SafeMode);
+                // trying to obtain the backing array from the cache
+                if (addArrayToCache && TryGetCachedObject(br, out var array))
+                {
+                    // special case: backing array is null so creating a default instance
+                    if (array == null)
+                        result = CreateKnownEmptyObject(type);
+                    else
+                    {
+                        // Checking only if the cached object is actually an array. If it is but with the wrong element type, the same exception is thrown after catching the issue at a higher level.
+                        backingArray = array as Array ?? Throw.SerializationException<Array>(Res.BinarySerializationInvalidStreamData);
+                        result = createFinalResultCallback.Invoke(br, type, backingArray);
+                    }
+
+                    if (addToCache)
+                        ReplaceObjectInCache(id, result);
+                    return result;
+                }
 
                 // Unlike in CreateArray we always use a new object as a proxy here because the array is not the final object
                 // and if the builder returns a real array its reference could mean both the final object and its backing array.
                 // CanHaveRecursion is expected to return false if the backing array is just used to create the final object but does it not wrap the array (ie if can be an object[] it must be an actual backing array in the result)
                 bool trackUsages = addToCache && descriptor.CanHaveRecursion;
-                object? resultProxy = null;
                 UsageReferences? usages = null;
                 if (trackUsages)
-                    ObjectsBeingDeserialized.Add(resultProxy = new object(), usages = new UsageReferences());
-                builder.ObjectsBeingDeserialized = objectsBeingDeserialized; // using the field here is intended so no unnecessary instance is created
-
-                int id = 0;
-                if (addToCache)
-                    AddObjectToCache(resultProxy, out id);
-
-                Array backingArray;
-
-                // primitive array and the builder allocated the final capacity
-                if (builder.TryReadPrimitive())
-                    backingArray = builder.ToArray();
-                else
-                {
-                    // non-primitive array or cannot read at once in safe mode
-                    DataTypeDescriptor elementDescriptor = descriptor.GetElementDescriptor();
-                    for (int i = 0; i < builder.TotalLength; i++)
-                    {
-                        object? value = ReadElement(br, elementDescriptor);
-                        builder.Add(value);
-                    }
-
-                    backingArray = builder.ToArray();
-                }
+                    ObjectsBeingDeserialized.Add(resultProxy!, usages = new UsageReferences());
+                
+                backingArray = CreateArray(br, addArrayToCache, descriptor);
 
                 // creating the actual result
-                Func<BinaryReader, Type, Array, object> callback = serializationInfo[descriptor.UnderlyingCollectionDataType].CreateArrayBackedCollectionInstanceFromArray!;
-                result = callback.Invoke(br, type, backingArray);
+                result = createFinalResultCallback.Invoke(br, type, backingArray);
 
                 // some post administration if the result can recursively contain itself
                 if (trackUsages)
                 {
                     ApplyPendingUsages(usages!, resultProxy!, result);
-
-                    if (addToCache)
-                        ReplaceObjectInCache(id, result);
-
                     ObjectsBeingDeserialized.Remove(resultProxy!);
                 }
 
+                if (addToCache)
+                    ReplaceObjectInCache(id, result);
                 return result;
             }
 

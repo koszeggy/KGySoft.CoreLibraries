@@ -44,7 +44,11 @@ namespace KGySoft.Serialization.Binary
         {
             #region Constants
 
+#if DEBUG
+            protected const int ArrayAllocationThreshold = 8;
+#else
             protected const int ArrayAllocationThreshold = 1 << 13;
+#endif
 
             #endregion
 
