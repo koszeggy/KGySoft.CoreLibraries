@@ -20,6 +20,9 @@ using System.Collections;
 #if !NET35
 using System.Collections.Concurrent;
 #endif
+#if NET8_0_OR_GREATER
+using System.Collections.Frozen;
+#endif
 using System.Collections.Generic;
 #if NETCOREAPP
 using System.Collections.Immutable;
@@ -117,8 +120,8 @@ using KGySoft.Serialization.Xml;
  * 2. Update serializationInfo initializer - mind the groups of 1.
  *    - If new CollectionInfo flag has to be defined, a property in CollectionSerializationInfo might be also needed
  * 3. If type is not abstract add it to supportedCollections
- *    If the added data type is abstract and there is a special logic to determine if the type is supported, add the logic to DetermineSpecialSupport.
- * 4. Add type to DataTypeDescriptor.GetCollectionType - mind groups
+ *    If the added data type is abstract add the needed logic to DetermineSpecialSupport.
+ * 4. Add type to DataTypeDescriptor.GetCollectionType (even abstract types) - mind groups
  *    - If collection has a known fixed size and is deserialized by a backing array then DataTypeDescriptor.FixedItemsSize might be needed to adjusted, too.
  * 5. If needed, update CollectionSerializationInfo.WriteSpecificProperties and InitializeCollection (e.g. new flag in 2.)
  *    - If new CtorArguments were added to 2., then check also GetInitializer and CreateCollection
@@ -331,6 +334,8 @@ namespace KGySoft.Serialization.Binary
     /// <item><see cref="Vector128{T}"/> (in .NET Core 3.0 and above)</item>
     /// <item><see cref="Vector256{T}"/> (in .NET Core 3.0 and above)</item>
     /// <item><see cref="Vector512{T}"/> (in .NET 8.0 and above)</item>
+    /// <item><see cref="FrozenSet{T}"/> (in .NET 8.0 and above)</item>
+    /// <item><see cref="FrozenDictionary{TKey,TValue}"/> (in .NET 8.0 and above)</item>
     /// <item><see cref="OrderedDictionary{TKey,TValue}"/> (in .NET 9.0 and above)</item>
     /// </list>
     /// <note>
@@ -676,8 +681,8 @@ namespace KGySoft.Serialization.Binary
             ThreadSafeHashSet = 12 << 8,
 
             // ...... generic comparers (element type is encoded similarly to collections): ......
-            DefaultEqualityComparer = 13 << 8,
-            DefaultComparer = 14 << 8,
+            GenericEqualityComparerDefault = 13 << 8,
+            GenericComparerDefault = 14 << 8,
             EnumComparer = 15 << 8,
 
             // ...... non-generic or special collections: ......
@@ -813,7 +818,8 @@ namespace KGySoft.Serialization.Binary
             ImmutableSortedSetBuilder = 28 << 24,
             ImmutableQueue = 29 << 24,
             ImmutableStack = 30 << 24,
-            // 31-32: Reserved
+            FrozenSet = 31 << 24, // Special one because the actual deserialized type may depend on the current runtime
+            // 32: Reserved
 
             // ..... more array backed collections (with reinterpreted element type): .....
             CastArray = 33 << 24,
@@ -824,18 +830,13 @@ namespace KGySoft.Serialization.Binary
             Memory = 36 << 24,
             ReadOnlyMemory = 37 << 24,
 
-            // TODO Candidates:
-            // FrozenSet* // NOTE: special case(s) because FrozenSet is abstract with no available ctor so its internal sealed derived types could be handled just like RuntimeType
-
             // ...... generic dictionaries:
             ExtendedDictionary = 0b01000000 << 24, // serves only as a flag
             ImmutableDictionary = 65 << 24,
             ImmutableDictionaryBuilder = 66 << 24,
             ImmutableSortedDictionary = 67 << 24,
             ImmutableSortedDictionaryBuilder = 68 << 24,
-
-            // TODO Candidates:
-            // FrozenDictionary* // NOTE: special case(s) because FrozenDictionary is abstract with no available ctor so its internal sealed derived types could be handled just like RuntimeType
+            FrozenDictionary = 69 << 24, // Special one because the actual deserialized type may depend on the current runtime
 
             // ----- flags: -----
             NullableExtendedCollection = 1u << 31, // Only for extended collections. For non-extended ones (KeyValuePair, DictionaryEntry) nullable types are separate items due to compatibility reasons
@@ -1192,16 +1193,18 @@ namespace KGySoft.Serialization.Binary
             },
 #endif
             {
-                DataTypes.DefaultEqualityComparer, new CollectionSerializationInfo
+                DataTypes.GenericEqualityComparerDefault, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsComparer,
+                    ReferenceAbstractGenericType = typeof(EqualityComparer<>),
                     CreateInstanceCallback = (t, _) => t.GetPropertyValue(nameof(EqualityComparer<_>.Default))!
                 }
             },
             {
-                DataTypes.DefaultComparer, new CollectionSerializationInfo
+                DataTypes.GenericComparerDefault, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsComparer,
+                    ReferenceAbstractGenericType = typeof(Comparer<>),
                     CreateInstanceCallback = (t, _) => t.GetPropertyValue(nameof(Comparer<_>.Default))!
                 }
             },
@@ -1209,6 +1212,7 @@ namespace KGySoft.Serialization.Binary
                 DataTypes.EnumComparer, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsComparer,
+                    ReferenceAbstractGenericType = typeof(EnumComparer<>),
                     CreateInstanceCallback = (t, _) => t.GetPropertyValue(nameof(EnumComparer<_>.Comparer))!
                 }
             },
@@ -1622,6 +1626,39 @@ namespace KGySoft.Serialization.Binary
                 }
             },
 #endif
+#if NET8_0_OR_GREATER
+            {
+                DataTypes.FrozenSet, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.HasEqualityComparer,
+                    ReferenceAbstractGenericType = typeof(FrozenSet<>),
+#if NET35 || NET40 || NET45 || NETSTANDARD2_0
+                    CtorArguments = [CollectionCtorArguments.Comparer],
+#else
+                    CtorArguments = [CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer],
+#endif
+                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(HashSet<_>.Add))!),
+                    CreateInstanceCallback = (t, args) =>
+                    {
+                        // Using a HashSet<T> as a builder with the actual comparer
+                        Type genericArg = t.GetGenericArguments()[0];
+#if NET35 || NET40 || NET45 || NETSTANDARD2_0
+                        return typeof(HashSet<>).GetGenericType(genericArg).CreateInstance(new[] { typeof(IEqualityComparer<>).GetGenericType(genericArg) }, args);
+#else
+                        return typeof(HashSet<>).GetGenericType(genericArg).CreateInstance(new[] { Reflector.IntType, typeof(IEqualityComparer<>).GetGenericType(genericArg) }, args);
+#endif
+                    },
+                    CreateFinalCollectionCallback = o =>
+                    {
+                        Type genericArg = o.GetType().GetGenericArguments()[0];
+                        return typeof(FrozenSet).InvokeMethod(nameof(FrozenSet.ToFrozenSet),
+                            [genericArg],
+                            [Reflector.IEnumerableGenType.GetGenericType(genericArg), typeof(IEqualityComparer<>).GetGenericType(genericArg)],
+                            o, ((IEnumerable)o).GetComparer())!;
+                    },
+                }
+            },
+#endif
             {
                 DataTypes.CastArray, new CollectionSerializationInfo
                 {
@@ -1739,6 +1776,30 @@ namespace KGySoft.Serialization.Binary
                         Type[] genericArgs = t.GetGenericArguments();
                         return typeof(ImmutableSortedDictionary).InvokeMethod(nameof(ImmutableSortedDictionary.CreateBuilder), genericArgs,
                             new[] { typeof(IComparer<>).GetGenericType(genericArgs[0]), typeof(IEqualityComparer<>).GetGenericType(genericArgs[1]) }, args)!;
+                    },
+                }
+            },
+#endif
+#if NET8_0_OR_GREATER
+            {
+                DataTypes.FrozenDictionary, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer,
+                    ReferenceAbstractGenericType = typeof(FrozenDictionary<,>),
+                    CtorArguments = [CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer],
+                    CreateInstanceCallback = (t, args) =>
+                    {
+                        // Using a Dictionary<TKey, TValue> as a builder with the actual comparer
+                        Type[] genericArgs = t.GetGenericArguments();
+                        return typeof(Dictionary<,>).GetGenericType(genericArgs).CreateInstance([Reflector.IntType, typeof(IEqualityComparer<>).GetGenericType(genericArgs[0])], args);
+                    },
+                    CreateFinalCollectionCallback = o =>
+                    {
+                        Type[] genericArgs = o.GetType().GetGenericArguments();
+                        return typeof(FrozenDictionary).InvokeMethod(nameof(FrozenDictionary.ToFrozenDictionary),
+                            genericArgs,
+                            [Reflector.IEnumerableGenType.GetGenericType(Reflector.KeyValuePairType.GetGenericType(genericArgs)), typeof(IEqualityComparer<>).GetGenericType(genericArgs[0])],
+                            o, ((IDictionary)o).GetComparer())!;
                     },
                 }
             },
@@ -1939,6 +2000,7 @@ namespace KGySoft.Serialization.Binary
             { typeof(ImmutableDictionary<,>.Builder), DataTypes.ImmutableDictionaryBuilder },
             { typeof(ImmutableSortedDictionary<,>), DataTypes.ImmutableSortedDictionary },
             { typeof(ImmutableSortedDictionary<,>.Builder), DataTypes.ImmutableSortedDictionaryBuilder },
+            // FrozenSet and FrozenDictionary are not here because they are abstract types
 #endif
 
             // Memory

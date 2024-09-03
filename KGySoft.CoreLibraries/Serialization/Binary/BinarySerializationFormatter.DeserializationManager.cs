@@ -1356,8 +1356,6 @@ namespace KGySoft.Serialization.Binary
             {
                 Debug.Assert(descriptor.IsMemory);
                 Type type = descriptor.GetTypeToCreate();
-                int id = 0;
-
                 object result = CreateKnownEmptyObject(type);
                 if (addToCache)
                     AddObjectToCache(result);
@@ -1441,7 +1439,7 @@ namespace KGySoft.Serialization.Binary
                         {
                             object? key = ReadElement(br, descriptor.GetKeyDescriptor());
                             object? value = ReadElement(br, descriptor.GetValueDescriptor());
-                            AddOrderedDictionaryElement(dict, addMethod, key, value, i);
+                            AddOrderedDictionaryElement(dict, addMethod, key, value, i, trackUsages);
                         }
                     }
                     else if (addMethod != null)
@@ -1450,7 +1448,7 @@ namespace KGySoft.Serialization.Binary
                         {
                             object? key = ReadElement(br, descriptor.GetKeyDescriptor());
                             object? value = ReadElement(br, descriptor.GetValueDescriptor());
-                            AddDictionaryElement(collection, addMethod, key, value);
+                            AddDictionaryElement(collection, addMethod, key, value, descriptor, trackUsages);
                         }
                     }
                     else
@@ -1465,7 +1463,7 @@ namespace KGySoft.Serialization.Binary
                             if (value != null || !descriptor.IsGenericDictionary)
     #endif
                             {
-                                AddDictionaryElement(dict, key, value);
+                                AddDictionaryElement(dict, key, value, descriptor, trackUsages);
                                 
                                 // ReSharper disable once RedundantJumpStatement - redundancy is target platform dependent
                                 continue;
@@ -1475,7 +1473,7 @@ namespace KGySoft.Serialization.Binary
                             addMethod = MethodAccessor.GetAccessor(Reflector.IDictionaryGenType
                                 .GetGenericType(descriptor.GetKeyDescriptor().Type!, descriptor.GetValueDescriptor().Type!)
                                 .GetMethod(nameof(IDictionary<_,_>.Add))!);
-                            AddDictionaryElement(collection, addMethod, key, null);
+                            AddDictionaryElement(collection, addMethod, key, null, descriptor, trackUsages);
                             continue;
 #endif
                         }
@@ -1488,7 +1486,7 @@ namespace KGySoft.Serialization.Binary
                         object? element = ReadElement(br, descriptor.GetElementDescriptor());
                         if (addMethod != null)
                         {
-                            AddCollectionElement(collection, descriptor.UnderlyingCollectionDataType, addMethod, element);
+                            AddCollectionElement(collection, descriptor, addMethod, element, trackUsages);
                             continue;
                         }
 
@@ -1498,14 +1496,14 @@ namespace KGySoft.Serialization.Binary
                             if (element != null || !descriptor.IsGenericCollection)
 #endif
                             {
-                                AddListElement(list, element);
+                                AddListElement(list, element, descriptor, trackUsages);
                                 continue;
                             }
 
 #if NET35
                             // generic collection with null value: calling generic Add because non-generic one may fail in .NET Runtime 2.x
                             addMethod = MethodAccessor.GetAccessor(Reflector.ICollectionGenType.GetGenericType(descriptor.GetElementDescriptor().Type!).GetMethod(nameof(ICollection<_>.Add))!);
-                            AddCollectionElement(collection, descriptor.UnderlyingCollectionDataType, addMethod, null);
+                            AddCollectionElement(collection, descriptor, addMethod, null, trackUsages);
                             continue;
 #endif
                         }
@@ -2337,7 +2335,7 @@ namespace KGySoft.Serialization.Binary
                 trackedUsages.Add(new FieldUsage(obj, field));
             }
 
-            private void AddListElement(IList list, object? value)
+            private void AddListElement(IList list, object? value, DataTypeDescriptor listDescriptor, bool isTrackedProxyCollection)
             {
                 UsageReferences? trackedUsages = value == null ? null : objectsBeingDeserialized?.GetValueOrDefault(value);
                 if (trackedUsages == null)
@@ -2347,12 +2345,23 @@ namespace KGySoft.Serialization.Binary
                 }
 
                 // though we can't add the final item now we add a placeholder so the index will be valid
-                int index = list.Count;
-                list.Add(GetPlaceholderValue(value, list));
-                trackedUsages.Add(new ListUsage(list, index));
+                if (!isTrackedProxyCollection)
+                {
+                    int index = list.Count;
+                    list.Add(GetPlaceholderValue(value, list));
+                    trackedUsages.Add(new ListUsage(list, index));
+                    return;
+                }
+
+                // List is a proxy: adding if item is compatible, its reference cannot be replaced anymore
+                if (!listDescriptor.GetElementDescriptor().Type!.CanAcceptValue(value))
+                    Throw.SerializationException(Res.BinarySerializationCircularIObjectReferenceCollection(listDescriptor.GetTypeToCreate()));
+
+                trackedUsages.CanBeReplaced = false;
+                list.Add(value);
             }
 
-            private void AddCollectionElement([NoEnumeration]IEnumerable collection, DataTypes collectionDataType, MethodAccessor addMethod, object? value)
+            private void AddCollectionElement([NoEnumeration]IEnumerable collection, DataTypeDescriptor collectionDescriptor, MethodAccessor addMethod, object? value, bool isTrackedProxyCollection)
             {
                 UsageReferences? trackedUsages = value == null ? null : objectsBeingDeserialized?.GetValueOrDefault(value);
                 if (trackedUsages == null)
@@ -2362,10 +2371,12 @@ namespace KGySoft.Serialization.Binary
                 }
 
                 Type type = collection.GetType();
+                var collectionDataType = collectionDescriptor.UnderlyingCollectionDataType;
 
                 // LinkedList: adding a placeholder node that can be replaced later
                 if (collectionDataType == DataTypes.LinkedList)
                 {
+                    Debug.Assert(!isTrackedProxyCollection);
                     Type genericArg = type.GetGenericArguments()[0];
                     Type nodeType = typeof(LinkedListNode<>).GetGenericType(genericArg);
                     object node = nodeType.CreateInstance(genericArg, GetPlaceholderValue(value, collection));
@@ -2374,8 +2385,8 @@ namespace KGySoft.Serialization.Binary
                     return;
                 }
 
-                // Any other generic ICollection: supposing that collection is unordered
-                if (type.IsImplementationOfGenericType(Reflector.ICollectionGenType)
+                // Any other generic (non-proxy) ICollection: supposing that collection is unordered.
+                if (!isTrackedProxyCollection && type.IsImplementationOfGenericType(Reflector.ICollectionGenType)
 #if !NET35
                     || collectionDataType == DataTypes.ConcurrentBag
 #endif
@@ -2385,15 +2396,15 @@ namespace KGySoft.Serialization.Binary
                     return;
                 }
 
-                // Neither ICollection nor has specific Add method: adding if item is compatible, its reference cannot be replaced anymore
+                // Neither ICollection nor has specific Add method, or collection is a proxy: adding if item is compatible, its reference cannot be replaced anymore
                 if (!addMethod.ParameterTypes[0].CanAcceptValue(value))
-                    Throw.SerializationException(Res.BinarySerializationCircularIObjectReferenceCollection(type));
+                    Throw.SerializationException(Res.BinarySerializationCircularIObjectReferenceCollection(collectionDescriptor.GetTypeToCreate()));
 
                 trackedUsages.CanBeReplaced = false;
                 addMethod.Invoke(collection, value);
             }
 
-            private void AddDictionaryElement(IDictionary dict, object? key, object? value)
+            private void AddDictionaryElement(IDictionary dict, object? key, object? value, DataTypeDescriptor dictionaryDescriptor, bool isTrackedProxyCollection)
             {
                 UsageReferences? keyUsages = key == null ? null : objectsBeingDeserialized?.GetValueOrDefault(key);
                 UsageReferences? valueUsages = value == null ? null : objectsBeingDeserialized?.GetValueOrDefault(value);
@@ -2405,6 +2416,20 @@ namespace KGySoft.Serialization.Binary
                 }
 
                 Debug.Assert(dict is not IOrderedDictionary, "AddOrderedDictionaryElement should be used. IsOrdered is not set in serializationInfo?");
+
+                // Collection is a proxy: adding if key/value are compatible, their reference cannot be replaced anymore
+                if (isTrackedProxyCollection)
+                {
+                    if (!dictionaryDescriptor.GetKeyDescriptor().Type!.CanAcceptValue(key) || !dictionaryDescriptor.GetValueDescriptor().Type!.CanAcceptValue(value))
+                        Throw.SerializationException(Res.BinarySerializationCircularIObjectReferenceCollection(dictionaryDescriptor.GetTypeToCreate()));
+
+                    if (keyUsages != null)
+                        keyUsages.CanBeReplaced = false;
+                    if (valueUsages != null)
+                        valueUsages.CanBeReplaced = false;
+                    dict.Add(key!, value);
+                    return;
+                }
 
                 // If both key and value are being deserialized, then that can be an issue, unless they are not replaced.
                 if (keyUsages != null && valueUsages != null)
@@ -2420,15 +2445,9 @@ namespace KGySoft.Serialization.Binary
                     // do the replacements but this edge-case scenario isn't worth the effort. And this can be avoided by forcing recursive serialization.
                     keyUsages.CanBeReplaced = false;
                     valueUsages.CanBeReplaced = false;
-                    Type type = dict.GetType();
-                    Type[] elementTypes = type.GetCollectionElementType()!.GetGenericArguments();
-                    object keyToAdd = elementTypes.Length == 0 || elementTypes[0].CanAcceptValue(key)
-                        ? key!
-                        : Throw.SerializationException<object>(Res.BinarySerializationCircularIObjectReferenceCollection(type));
-                    object valueToAdd = elementTypes.Length == 0 || elementTypes[1].CanAcceptValue(value)
-                        ? value!
-                        : Throw.SerializationException<object>(Res.BinarySerializationCircularIObjectReferenceCollection(type));
-                    dict.Add(keyToAdd, valueToAdd);
+                    if (!dictionaryDescriptor.GetKeyDescriptor().Type!.CanAcceptValue(key) || !dictionaryDescriptor.GetValueDescriptor().Type!.CanAcceptValue(value))
+                        Throw.SerializationException(Res.BinarySerializationCircularIObjectReferenceCollection(dictionaryDescriptor.GetTypeToCreate()));
+                    dict.Add(key!, value);
                     return;
                 }
 
@@ -2437,21 +2456,22 @@ namespace KGySoft.Serialization.Binary
                 valueUsages?.Add(new DictionaryValueUsage(dict, key));
             }
 
-            private void AddDictionaryElement(object dictionary, MethodAccessor addMethod, object? key, object? value)
+            private void AddDictionaryElement(object dictionary, MethodAccessor addMethod, object? key, object? value, DataTypeDescriptor dictionaryDescriptor, bool isTrackedProxyCollection)
             {
                 UsageReferences? keyUsages = key == null ? null : objectsBeingDeserialized?.GetValueOrDefault(key);
                 UsageReferences? valueUsages = value == null ? null : objectsBeingDeserialized?.GetValueOrDefault(value);
                 if (keyUsages != null || valueUsages != null)
                 {
-                    AddDictionaryElement((IDictionary)dictionary, key, value);
+                    AddDictionaryElement((IDictionary)dictionary, key, value, dictionaryDescriptor, isTrackedProxyCollection);
                     return;
                 }
 
                 addMethod.Invoke(dictionary, key, value);
             }
 
-            private void AddOrderedDictionaryElement(IDictionary dict, MethodAccessor? insertMethod, object? key, object? value, int index)
+            private void AddOrderedDictionaryElement(IDictionary dict, MethodAccessor? insertMethod, object? key, object? value, int index, bool isTrackedProxyCollection)
             {
+                Debug.Assert(!isTrackedProxyCollection, "So far no ordered dictionary with a proxy collection (eg. FrozenOrderedDictionary) was implemented. Add the required implementation.");
                 UsageReferences? keyUsages = key == null ? null : objectsBeingDeserialized?.GetValueOrDefault(key);
                 UsageReferences? valueUsages = value == null ? null : objectsBeingDeserialized?.GetValueOrDefault(value);
                 if (objectsBeingDeserialized == null || keyUsages == null && valueUsages == null)

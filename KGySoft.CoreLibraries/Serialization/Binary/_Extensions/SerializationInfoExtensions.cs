@@ -33,7 +33,7 @@ using KGySoft.Reflection;
 #region Suppressions
 
 #if NET8_0_OR_GREATER
-#pragma warning disable SYSLIB0050 // SerializationInfo(Type, IFormatterConverter) is obsolete - NOT removing serilizability because older frameworks are still supported and the replacement BinarySerializationFormatter still supports the original infrastructure
+#pragma warning disable SYSLIB0050 // SerializationInfo(Type, IFormatterConverter) is obsolete - NOT removing serializability because older frameworks are still supported and the replacement BinarySerializationFormatter still supports the original infrastructure
 #endif
 
 #endregion
@@ -240,7 +240,7 @@ namespace KGySoft.Serialization.Binary
         /// <param name="type">The type of the value to be added. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <returns><see langword="true"/> if an entry with the specified old name existed in the <see cref="SerializationInfo"/>
-        /// and the replace has been performed; otherwise, <see langword="false"/>.</returns>
+        /// and the replacement has been performed; otherwise, <see langword="false"/>.</returns>
         public static bool ReplaceValue(this SerializationInfo info, string oldName, string newName, object? value, Type? type = null)
         {
             if (info == null!)

@@ -20,6 +20,9 @@ using System.Collections;
 #if !NET35
 using System.Collections.Concurrent;
 #endif
+#if NET8_0_OR_GREATER
+using System.Collections.Frozen;
+#endif
 using System.Collections.Generic;
 #if NETCOREAPP
 using System.Collections.Immutable;
@@ -594,9 +597,9 @@ namespace KGySoft.Serialization.Binary
                         return typeof(CircularList<>);
                     case DataTypes.ThreadSafeHashSet:
                         return typeof(ThreadSafeHashSet<>);
-                    case DataTypes.DefaultEqualityComparer:
+                    case DataTypes.GenericEqualityComparerDefault:
                         return typeof(EqualityComparer<>);
-                    case DataTypes.DefaultComparer:
+                    case DataTypes.GenericComparerDefault:
                         return typeof(Comparer<>);
                     case DataTypes.EnumComparer:
                         return typeof(EnumComparer<>);
@@ -827,6 +830,17 @@ namespace KGySoft.Serialization.Binary
 #else
                     case DataTypes.Memory:
                     case DataTypes.ReadOnlyMemory:
+                        return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationCollectionPlatformNotSupported(DataTypeToString(collectionDataType)));
+#endif
+
+#if NET8_0_OR_GREATER
+                    case DataTypes.FrozenSet:
+                        return typeof(FrozenSet<>);
+                    case DataTypes.FrozenDictionary:
+                        return typeof(FrozenDictionary<,>);
+#else
+                    case DataTypes.FrozenSet:
+                    case DataTypes.FrozenDictionary:
                         return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationCollectionPlatformNotSupported(DataTypeToString(collectionDataType)));
 #endif
 

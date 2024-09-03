@@ -20,6 +20,9 @@ using System;
 using System.CodeDom.Compiler;
 #endif
 using System.Collections;
+#if NET8_0_OR_GREATER
+using System.Collections.Frozen;
+#endif
 #if !NET35
 using System.Collections.Concurrent;
 #endif
@@ -29,7 +32,6 @@ using System.Collections.Immutable;
 #endif
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
 using System.IO;
@@ -49,7 +51,9 @@ using System.Runtime.Intrinsics;
 using System.Runtime.Remoting.Messaging;
 #endif
 using System.Runtime.Serialization;
+#if !NET9_0_OR_GREATER
 using System.Runtime.Serialization.Formatters.Binary;
+#endif
 #if NETFRAMEWORK
 using System.Security;
 using System.Security.Permissions;
@@ -787,7 +791,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new Guid[] { new Guid("ca761232ed4211cebacd00aa0057b223"), Guid.NewGuid() },
                 new TimeSpan[] { new TimeSpan(1, 1, 1), new TimeSpan(DateTime.UtcNow.Ticks) },
                 new DateTimeOffset[] { new DateTimeOffset(DateTime.Now), new DateTimeOffset(DateTime.UtcNow), new DateTimeOffset(DateTime.Now.Ticks, new TimeSpan(1, 1, 0)) },
-                new Uri[] { new Uri(@"x:\teszt"), new Uri("ftp://myUrl/%2E%2E/%2E%2E"), null },
+                new Uri[] { new Uri(@"x:\test"), new Uri("ftp://myUrl/%2E%2E/%2E%2E"), null },
                 new DictionaryEntry[] { new DictionaryEntry(1, "alpha") },
                 new KeyValuePair<int, string>[] { new KeyValuePair<int, string>(1, "alpha") },
                 new BitArray[] { new BitArray(new[] { true, false, true }), null },
@@ -1262,9 +1266,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
                 EqualityComparer<int>.Default,
                 EqualityComparer<byte>.Default,
-#if !NET9_0_OR_GREATER // .NET 9+ changes StringEqualityComparer to GenericEqualityComparer<string>, which is intended: https://github.com/dotnet/runtime/blob/c87cbf63954f179785bb038c23352e60d3c0a933/src/libraries/System.Private.CoreLib/src/System/Collections/Generic/EqualityComparer.cs#L295
                 EqualityComparer<string>.Default,
-#endif
                 EqualityComparer<object>.Default,
                 Comparer<int>.Default,
                 Comparer<byte>.Default,
@@ -1287,8 +1289,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             // Only for HashSet<T> and .NET Core 2.x: typeof(IEqualityComparer<T>.IsAssignableFrom(comparer)) fails in HashSet.OnDeserialization. No idea why, and no idea why the same logic works for Dictionary.
             referenceObjects = referenceObjects.Where(o => !o.GetType().IsGenericTypeOf(typeof(HashSet<>))).ToArray();
 #endif
+#if !NET9_0_OR_GREATER // .NET 9+ changes StringEqualityComparer to GenericEqualityComparer<string>, which is intended: https://github.com/dotnet/runtime/blob/c87cbf63954f179785bb038c23352e60d3c0a933/src/libraries/System.Private.CoreLib/src/System/Collections/Generic/EqualityComparer.cs#L295
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes); 
 
             expectedTypes = GetExpectedTypes(referenceObjects).Concat(new[] { typeof(IEqualityComparer<>), EqualityComparer<int>.Default.GetType(), EqualityComparer<int[]>.Default.GetType(), StringComparer.CurrentCulture.GetType(), typeof(CompareInfo), typeof(CompareOptions),
 #if NETFRAMEWORK
@@ -1301,6 +1304,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 StringSegmentComparer.OrdinalIgnoreCase.GetType(), StringSegmentComparer.OrdinalRandomized.GetType() });
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.SafeMode, expectedTypes: expectedTypes);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.SafeMode, expectedTypes: expectedTypes);
+#endif
 
             // non-serializable types
             referenceObjects = new object[]
@@ -1383,6 +1387,25 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new Dictionary<ConsoleColor, string> { { ConsoleColor.Red, "R" }, { ConsoleColor.Green, "G" }, { ConsoleColor.Blue, "B" } }.ToImmutableSortedDictionary(EnumComparer<ConsoleColor>.Comparer).ToBuilder(),
                 new Dictionary<ConsoleColor, string> { { ConsoleColor.Red, "R" }, { ConsoleColor.Green, "G" }, { ConsoleColor.Blue, "B" } }.ToImmutableSortedDictionary(EnumComparer<ConsoleColor>.Comparer, StringComparer.OrdinalIgnoreCase).ToBuilder(),
 #endif
+#if NET8_0_OR_GREATER
+               FrozenSet<int>.Empty, // EmptyFrozenSet
+               Enumerable.Range(0, 3).ToFrozenSet(), // SmallValueTypeComparableFrozenSet
+               Enumerable.Range(0, 15).ToFrozenSet(), // Int32FrozenSet
+               Enumerable.Range(0, 15).Convert<byte[]>().ToFrozenSet(), // ValueTypeDefaultComparerFrozenSet
+               Enumerable.Range(0, 3).Convert<string[]>().ToFrozenSet(), // LengthBucketsFrozenSet
+               Enumerable.Range(0, 3).Convert<string[]>().ToFrozenSet(StringComparer.InvariantCulture), // SmallFrozenSet
+               Enumerable.Range(0, 15).Convert<string[]>().ToFrozenSet(), // OrdinalStringFrozenSet_Full
+               Enumerable.Range(0, 15).Convert<string[]>().ToFrozenSet(StringComparer.InvariantCulture), // DefaultFrozenSet
+               Enumerable.Range(0, 15).Select(i => $"{i}.").ToFrozenSet(), // OrdinalStringFrozenSet_LeftJustifiedSubstring
+               Enumerable.Range(0, 15).Select(i => $"#{i}").ToFrozenSet(), // OrdinalStringFrozenSet_RightJustifiedSubstring
+
+               FrozenDictionary<int, string>.Empty, // EmptyFrozenDictionary
+               Enumerable.Range(0, 3).ToFrozenDictionary(i => i), // SmallValueTypeComparableFrozenDictionary
+               Enumerable.Range(0, 15).ToFrozenDictionary(i => i), // Int32FrozenDictionary
+               Enumerable.Range(0, 15).ToFrozenDictionary(i => (byte)i), // ValueTypeDefaultComparerFrozenDictionary
+               Enumerable.Range(0, 3).ToFrozenDictionary(i => $"{i}"), // LengthBucketsFrozenDictionary
+               Enumerable.Range(0, 3).ToFrozenDictionary(i => $"{i}", StringComparer.InvariantCulture), // SmallFrozenDictionary
+#endif
             };
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
@@ -1392,7 +1415,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: expectedTypes);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: expectedTypes);
 
-#if !NET7_0_OR_GREATER
+#if !NET7_0_OR_GREATER // ConcurrentBag: https://github.com/dotnet/runtime/issues/67491
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.RecursiveSerializationAsFallback);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.RecursiveSerializationAsFallback);
 #endif
@@ -1573,6 +1596,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new Dictionary<int, DictionaryEntry> { { 1, new DictionaryEntry(1, 2) } }, // DictionaryEntry
                 new Dictionary<int, DictionaryEntry?> { { 1, new DictionaryEntry(1, 2) }, { 2, null } }, // DictionaryEntry?
 
+                // comparer value - the commented items are encoded with RecursiveObjectGraph element type because we support some known instances only, so they require specified types in SafeMode
+                new Dictionary<int, Comparer> { { 1, Comparer.Default }, { 2, Comparer.DefaultInvariant }, { 0, null } },
+                new Dictionary<int, CaseInsensitiveComparer> { { 1, CaseInsensitiveComparer.Default }, { 2, CaseInsensitiveComparer.DefaultInvariant }, { 0, null } },
+                new Dictionary<int, StringSegmentComparer> { { 1, StringSegmentComparer.Ordinal }, { 2, StringSegmentComparer.InvariantCulture }, { 0, null } },
+                //new Dictionary<int, StringComparer> { { 1, StringComparer.InvariantCulture }, { 0, null } },
+                //new Dictionary<int, EqualityComparer<byte>> { { 1, EqualityComparer<byte>.Default }, { 0, null } },
+                //new Dictionary<int, Comparer<byte>> { { 1, Comparer<byte>.Default }, { 0, null } },
+                //new Dictionary<int, EnumComparer<ConsoleColor>> { { 1, EnumComparer<ConsoleColor>.Comparer }, { 0, null } },
+
                 // tuple value
 #if !NET35
                 new Dictionary<int, Tuple<int, int>> { { 1, new Tuple<int, int>(1, 2) }, { 2, null } }, // Tuple
@@ -1602,7 +1634,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
-            IEnumerable<Type> expectedTypes = new[] { typeof(Collection<>), typeof(ReadOnlyCollection<>) };
+            IEnumerable<Type> expectedTypes = new[] { typeof(ConsoleColor), typeof(Collection<>), typeof(ReadOnlyCollection<>) };
             KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: expectedTypes);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: expectedTypes);
 
@@ -1613,9 +1645,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             expectedTypes = GetExpectedTypes(referenceObjects).Concat(new[] { EqualityComparer<int>.Default.GetType(), typeof(IEqualityComparer<>), Comparer<int>.Default.GetType(), typeof(IComparer<>),
                 Reflector.ResolveType("System.Collections.Generic.TreeSet`1"), Reflector.ResolveType("System.Collections.Generic.SortedDictionary`2+KeyValuePairComparer"),
                 typeof(IComparer), typeof(IHashCodeProvider), typeof(Comparer), typeof(CompareInfo), typeof(IEqualityComparer),
+                Reflector.ResolveType("System.CultureAwareComparer"), Reflector.ResolveType("System.Globalization.CompareOptions"),
+                StringSegmentComparer.Ordinal.GetType(), StringSegmentComparer.InvariantCulture.GetType(),
+                Reflector.ResolveType("KGySoft.CoreLibraries.EnumComparer`1+SerializationUnityHolder"),
                 Reflector.ResolveType("System.Collections.Specialized.ListDictionary+DictionaryNode") });
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.SafeMode, expectedTypes: expectedTypes);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.SafeMode, expectedTypes: expectedTypes);
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.SafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes, expectedTypes: expectedTypes);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.SafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes, expectedTypes: expectedTypes);
 #endif
 
             // non-serializable types
@@ -1646,6 +1681,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new Dictionary<int, ImmutableSortedDictionary<int, int>> { { 1, new Dictionary<int, int> { { 1, 2 } }.ToImmutableSortedDictionary() }, { 2, null } }, // ImmutableSortedDictionary 
 #endif
                 new Dictionary<int, AllowNullDictionary<int?, int>> { { 1, new AllowNullDictionary<int?, int> { { null, 0 }, { 1, 1 } } } },
+#if NET8_0_OR_GREATER
+                new Dictionary<int, FrozenSet<int>> { { 1, new[] { 1, 2, 3, 4 }.ToFrozenSet() } },
+                new Dictionary<int, FrozenDictionary<int, int>> { { 1, new Dictionary<int, int> { { 1, 2 } }.ToFrozenDictionary() }, { 2, null } },
+#endif
 #if NET9_0_OR_GREATER
                 new Dictionary<int, OrderedDictionary<int, int>> { { 1, new OrderedDictionary<int, int> { { 0, 0 }, { 1, 1 } } } },
 #endif
@@ -2439,8 +2478,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #endif
             };
 
-            //SystemSerializeObject(referenceObjects); // Field in TypedReferences cannot be static or init only (SelfReferencerDirect/Indirect), StrongBox is not serializable
-            //SystemSerializeObjects(referenceObjects);
+            SystemSerializeObject(referenceObjects); // Field in TypedReferences cannot be static or init only (SelfReferencerDirect/Indirect), StrongBox is not serializable
+            SystemSerializeObjects(referenceObjects);
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);

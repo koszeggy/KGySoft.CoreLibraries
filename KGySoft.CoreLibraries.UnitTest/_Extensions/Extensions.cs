@@ -18,6 +18,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+#if NETCOREAPP && !NETSTANDARD_TEST
+using System.Collections.Immutable;
+#endif
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
@@ -107,6 +110,20 @@ namespace KGySoft.CoreLibraries
             return $"{{{o.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)
                 .Where(p => p.CanRead && p.GetIndexParameters().Length == 0)
                 .Select(p => $"{p.Name} = {Dump(p.GetValue(o, null), true)}").Join(", ")}}}";
+        }
+
+        internal static bool AreDefaultOrSequenceEqual<T>(this IEnumerable<T> source, IEnumerable<T> target)
+        {
+            // including null
+            if (ReferenceEquals(source, target))
+                return true;
+
+#if NETCOREAPP && !NETSTANDARD_TEST
+            if ((source, target) is (ImmutableArray<T> { IsDefault: true }, ImmutableArray<T> { IsDefault: true }))
+                return true;
+#endif
+
+            return source.SequenceEqual(target);
         }
 
         #endregion

@@ -75,7 +75,6 @@ namespace KGySoft.Serialization.Binary
 {
     public sealed partial class BinarySerializationFormatter
     {
-
         /// <summary>
         /// A manager class that provides that stored types will be built up in the same order both at serialization and deserialization for complex types.
         /// </summary>
@@ -612,9 +611,9 @@ namespace KGySoft.Serialization.Binary
                         case DataTypes.Double:
                             return (8, (ulong)BitConverter.DoubleToInt64Bits((double)val));
                         case DataTypes.IntPtr:
-                            return (8, (ulong)(IntPtr)val);
+                            return (8, (ulong)(nint)val);
                         case DataTypes.UIntPtr:
-                            return (8, (ulong)(UIntPtr)val);
+                            return (8, (nuint)val);
                         default:
                             Throw.InternalError($"Unexpected compressible type: {dt}");
                             return default;
@@ -1158,6 +1157,8 @@ namespace KGySoft.Serialization.Binary
                     }
 
                     // recursion for generic arguments
+                    if (IsCollectionType(dataType))
+                        type = serializationInfo[GetUnderlyingCollectionDataType(dataType)].GetStoredType(type);
                     if (type.IsGenericType)
                     {
                         enumerator.MoveNextExtracted();
@@ -1195,28 +1196,18 @@ namespace KGySoft.Serialization.Binary
 
                 type = Nullable.GetUnderlyingType(type) ?? type;
 
-                // generic type
-                if (IsCollectionType(dataType) && type.IsGenericType || type.ContainsGenericParameters)
-                    return EncodeGenericCollection(type, dataType);
-
                 // element type
                 if (IsElementType(dataType))
                     return new CircularList<DataTypes> { dataType };
 
                 CollectionSerializationInfo serInfo = serializationInfo[GetUnderlyingCollectionDataType(dataType)];
-                
-                // actual type is non-generic but the dataType is generic (eg. recognized derived type of a known abstract generic type)
+
+                // generic type
                 if (serInfo.IsGeneric)
-                {
-                    Debug.Assert(serInfo is { IsComparer: true }); // currently these types are comparers only, eg. ByteEqualityComparer : EqualityComparer<byte>
-                    do
-                        type = type.BaseType!;
-                    while (!type.IsGenericType);
-                    return EncodeGenericCollection(type, dataType);
-                }
+                    return EncodeGenericCollection(serInfo.GetStoredType(type), dataType);
 
                 // non-generic collection
-                Debug.Assert(IsCollectionType(dataType) && !type.IsGenericType, $"Unexpected non-element type: {dataType}");
+                Debug.Assert(IsCollectionType(dataType), $"Unexpected non-element type: {dataType}");
 
                 // note: not encoding key/value separately even for dictionaries because they are the same
                 return new() { dataType | (serInfo.HasStringItemsOrKeys ? DataTypes.String : DataTypes.Object) };
@@ -1347,7 +1338,7 @@ namespace KGySoft.Serialization.Binary
                 // 3.a.) generic collection with single argument
                 if (serInfo.IsGenericCollection)
                 {
-                    elementType = type.GetGenericArguments()[0];
+                    elementType = serInfo.GetElementType(type);
                     WriteCollectionElements(bw, collection, collectionDataTypes, elementType);
                     return;
                 }
@@ -1355,18 +1346,8 @@ namespace KGySoft.Serialization.Binary
                 // 3.b.) generic dictionary
                 if (serInfo.IsGenericDictionary)
                 {
-                    Type[] argTypes = type.GetGenericArguments();
-                    if (serInfo.HasStringItemsOrKeys)
-                    {
-                        elementType = Reflector.StringType;
-                        dictionaryValueType = argTypes[0];
-                    }
-                    else
-                    {
-                        elementType = argTypes[0];
-                        dictionaryValueType = argTypes[1];
-                    }
-
+                    elementType = serInfo.GetElementType(type);
+                    dictionaryValueType = serInfo.GetValueType(type);
                     WriteDictionaryElements(bw, collection, serInfo, collectionDataTypes, elementType, dictionaryValueType);
                     return;
                 }
@@ -1773,7 +1754,7 @@ namespace KGySoft.Serialization.Binary
                     WriteType(bw, typeToWrite, DataTypes.RecursiveObjectGraph);
                 else
                     // trick: writing a bound name for our original type
-                    // ReSharper disable once ConstantNullCoalescingCondition - wrong, si.FullTypeName can be null, if SetType was called with a type without FullName
+                    // ReSharper disable once NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract - wrong, si.FullTypeName can be null, if SetType was called with a type without FullName
                     WriteTypeWithName(bw, type, explicitAsmName, explicitTypeName ?? String.Empty);
 
                 // 1/b.) If type must be written, then IsCustom comes after the type.

@@ -16,6 +16,10 @@
 #region Usings
 
 using System;
+#if NET8_0_OR_GREATER
+using System.Collections;
+using System.Collections.Frozen;
+#endif
 using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -290,36 +294,55 @@ namespace KGySoft.Serialization.Binary
 
             private static DataTypes DetermineSpecialSupport(Type type)
             {
-                // StringComparer
+                // When this method is called with an abstract type, then the result represents the abstract type itself
+                // that can be used in type encodings, such as generic type arguments. We allow this only when every possible instance is supported.
+                // When type is an implementation of a supported generic type, then we need to check whether we actually support that type.
+
+#if NET8_0_OR_GREATER
+                // Frozen collections: we support all derived types because the abstract constructor is internal,
+                // so we can be sure that there is no 3rd party implementation of them
+                if (typeof(IEnumerable).IsAssignableFrom(type))
+                {
+                    if (type.IsImplementationOfGenericType(typeof(FrozenSet<>)))
+                        return DataTypes.FrozenSet;
+                    if (type.IsImplementationOfGenericType(typeof(FrozenDictionary<,>)))
+                        return DataTypes.FrozenDictionary;
+                }
+#endif
+
+                // StringComparer: only subclasses. Otherwise, it's possible to encode a collection of StringComparer but a custom derived element cannot be saved.
+                // Thus, the StringComparer type itself is always encoded as RecursiveObjectGraph
                 if (type.IsSubclassOf(typeof(StringComparer)))
                 {
                     // Well-known string comparers. Some of the items may have the same type on some platforms.
                     // CurrentCulture is not a supported singleton, it's queried for CultureAware solutions. Possible unrecognized inner structure in handled in WriteStringComparer
                     // TODO: add non-randomized - https://github.com/dotnet/runtime/issues/77679
-                    return type.In(StringComparer.Ordinal.GetType, StringComparer.OrdinalIgnoreCase.GetType, StringComparer.InvariantCulture.GetType, StringComparer.InvariantCultureIgnoreCase.GetType, StringComparer.CurrentCulture.GetType)
+                    return type == typeof(StringComparer) || type.In(StringComparer.Ordinal.GetType, StringComparer.OrdinalIgnoreCase.GetType, StringComparer.InvariantCulture.GetType, StringComparer.InvariantCultureIgnoreCase.GetType, StringComparer.CurrentCulture.GetType)
                         ? DataTypes.StringComparer
                         : DataTypes.Null;
                 }
 
-                // StringSegmentComparer - no need to check anything else because it cannot be derived in a 3rd party assembly due to the abstract private protected members
-                if (type.IsSubclassOf(typeof(StringSegmentComparer)))
+                // StringSegmentComparer - no need to check anything else because it cannot be derived in a 3rd party assembly due to the abstract private protected members.
+                // Unlike StringComparer, it is allowed to be encoded as element types as well, hence IsAssignableFrom instead of IsSubclassOf.
+                if (typeof(StringSegmentComparer).IsAssignableFrom(type))
                     return DataTypes.StringSegmentComparer;
 
-                // EqualityComparer<T>.Default
+                // EqualityComparer<T>.Default. As anyone can create custom derived types, this is similar to StringComparer
                 if (type.IsSubclassOfGeneric(typeof(EqualityComparer<>), out Type? comparerType))
-                    return type == comparerType.GetPropertyValue(nameof(EqualityComparer<_>.Default))!.GetType()
-                        ? DataTypes.DefaultEqualityComparer
+                    return type == comparerType || type == comparerType.GetPropertyValue(nameof(EqualityComparer<_>.Default))!.GetType()
+                        ? DataTypes.GenericEqualityComparerDefault
                         : DataTypes.Null;
 
-                // Comparer<T>.Default
+                // Comparer<T>.Default. Like above.
                 if (type.IsSubclassOfGeneric(typeof(Comparer<>), out comparerType))
-                    return type == comparerType.GetPropertyValue(nameof(Comparer<_>.Default))!.GetType()
-                        ? DataTypes.DefaultComparer
+                    return type == comparerType || type == comparerType.GetPropertyValue(nameof(Comparer<_>.Default))!.GetType()
+                        ? DataTypes.GenericComparerDefault
                         : DataTypes.Null;
 
-                // EnumComparer<T>.Comparer
+                // EnumComparer<T>.Comparer. It also cannot be IsImplementationOfGenericType because the constructor must be protected
+                // so the dynamic builder (which is technically a 3rd party assembly) can derive it, meaning that anyone else can derive it, too.
                 if (type.IsSubclassOfGeneric(typeof(EnumComparer<>), out comparerType))
-                    return type == comparerType.GetPropertyValue(nameof(EnumComparer<_>.Comparer))!.GetType()
+                    return type == comparerType || type == comparerType.GetPropertyValue(nameof(EnumComparer<_>.Comparer))!.GetType()
                         ? DataTypes.EnumComparer
                         : DataTypes.Null;
 

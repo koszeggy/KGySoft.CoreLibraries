@@ -17,6 +17,9 @@
 
 using System;
 using System.Collections;
+#if NET8_0_OR_GREATER
+using System.Collections.Frozen;
+#endif
 using System.Collections.Generic;
 #if NETCOREAPP
 using System.Collections.Immutable;
@@ -1024,13 +1027,19 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             private readonly Tuple<T> tuple;
 #endif
 #if NET47_OR_GREATER || !NETFRAMEWORK
-            //private readonly ValueTuple<T> valueTuple; // known issue: replaced reference is not supported in a value field (Box<SelfReferenceIndirect>)
+            private readonly ValueTuple<T> valueTuple; // known issue: replaced reference is not supported in a value field (Box<SelfReferenceIndirect>)
 #endif
 #if NETCOREAPP && !NETSTANDARD_TEST
-            //private readonly ImmutableArray<T> valueImmutableArray;
-            //private readonly ImmutableArray<T>.Builder valueImmutableArrayBuilder;
-            //private readonly ImmutableList<T> valueImmutableList;
+            private readonly ImmutableArray<T> valueImmutableArray;
+            private readonly ImmutableArray<T>.Builder valueImmutableArrayBuilder;
+            private readonly ImmutableList<T> valueImmutableList;
             private readonly ImmutableList<T>.Builder valueImmutableListBuilder;
+#endif
+#if NET8_0_OR_GREATER
+            private readonly FrozenSet<T> valueFrozenSet;
+            private readonly FrozenDictionary<T, T> keyValueFrozenDictionary;
+            private readonly FrozenDictionary<T, string> keyFrozenDictionary;
+            private readonly FrozenDictionary<string, T> valueFrozenDictionary;
 #endif
 #if NET9_0_OR_GREATER
             private readonly OrderedDictionary<T, T> keyValueUsageOrderedDictionary;
@@ -1044,7 +1053,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             #region Constructors
 
-            internal Box(T value)
+            internal Box(T value, bool useProxyBuilderCollections)
             {
                 Value = value;
                 valueArray = new[] { value };
@@ -1064,15 +1073,28 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 tuple = new Tuple<T>(value);
 #endif
 #if NET47_OR_GREATER || !NETFRAMEWORK
-                //valueTuple = new ValueTuple<T>(value);
+                if (useProxyBuilderCollections) // actually does not proxy builder but setting a value type field in a value type field is not supported (issue is actively detected during deserialization)
+                    valueTuple = new ValueTuple<T>(value);
 #endif
 #if NETCOREAPP && !NETSTANDARD_TEST
-                //valueImmutableArray = ImmutableArray.Create(value);
-                //valueImmutableArrayBuilder = ImmutableArray.CreateBuilder<T>();
-                //valueImmutableArrayBuilder.Add(value);
-                //valueImmutableList = ImmutableList.Create(value);
+                valueImmutableArrayBuilder = ImmutableArray.CreateBuilder<T>();
+                valueImmutableArrayBuilder.Add(value);
                 valueImmutableListBuilder = ImmutableList.CreateBuilder<T>();
                 valueImmutableListBuilder.Add(value);
+                if (useProxyBuilderCollections)
+                {
+                    valueImmutableArray = ImmutableArray.Create(value);
+                    valueImmutableList = ImmutableList.Create(value);
+                }
+#endif
+#if NET8_0_OR_GREATER
+                if (useProxyBuilderCollections)
+                {
+                    valueFrozenSet = new[] { value }.ToFrozenSet();
+                    keyValueFrozenDictionary = new Dictionary<T, T>(1) { { value, value } }.ToFrozenDictionary();
+                    keyFrozenDictionary = new Dictionary<T, string>(1) { { value, value.ToString() } }.ToFrozenDictionary();
+                    valueFrozenDictionary = new Dictionary<string, T>(1) { { value.ToString(), value } }.ToFrozenDictionary();
+                }
 #endif
 #if NET9_0_OR_GREATER
                 keyValueUsageOrderedDictionary = new OrderedDictionary<T, T>(1) { { value, value } };
@@ -1108,13 +1130,19 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                     && Equals(tuple, other.tuple)
 #endif
 #if NET47_OR_GREATER || !NETFRAMEWORK
-                    //&& Equals(valueTuple, other.valueTuple)
+                    && Equals(valueTuple, other.valueTuple)
 #endif
 #if NETCOREAPP && !NETSTANDARD_TEST
-                    //&& Equals(valueImmutableArray[0], other.valueImmutableArray[0]) // does not work now in case of indirect reference
-                    //&& Equals(valueImmutableArrayBuilder[0], other.valueImmutableArrayBuilder[0]) // does not work now in case of indirect reference
-                    //&& Equals(valueImmutableList[0], other.valueImmutableList[0]) // does not work now in case of indirect reference
-                    && Equals(valueImmutableListBuilder[0], other.valueImmutableListBuilder[0])
+                    && valueImmutableArray.AreDefaultOrSequenceEqual(other.valueImmutableArray)
+                    && valueImmutableArrayBuilder.AreDefaultOrSequenceEqual(other.valueImmutableArrayBuilder)
+                    && valueImmutableList.AreDefaultOrSequenceEqual(other.valueImmutableList)
+                    && valueImmutableListBuilder.AreDefaultOrSequenceEqual(other.valueImmutableListBuilder)
+#endif
+#if NET8_0_OR_GREATER
+                    && valueFrozenSet.AreDefaultOrSequenceEqual(other.valueFrozenSet)
+                    && keyValueFrozenDictionary.AreDefaultOrSequenceEqual(other.keyValueFrozenDictionary)
+                    && keyFrozenDictionary.AreDefaultOrSequenceEqual(other.keyFrozenDictionary)
+                    && valueFrozenDictionary.AreDefaultOrSequenceEqual(other.valueFrozenDictionary)
 #endif
 #if NET9_0_OR_GREATER
                     && Equals(keyValueUsageOrderedDictionary[Value], other.keyValueUsageOrderedDictionary[other.Value])
@@ -1162,7 +1190,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             {
                 Name = name;
                 Self = this;
-                selfBox = new Box<SelfReferencerDirect>(this);
+                selfBox = new Box<SelfReferencerDirect>(this, true);
             }
 
             #endregion
@@ -1331,7 +1359,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             public SelfReferencerIndirect(string name, Box<SelfReferencerIndirect> box = null)
             {
                 Name = name;
-                SelfRef = box ?? new Box<SelfReferencerIndirect>(this);
+                SelfRef = box ?? new Box<SelfReferencerIndirect>(this, false);
             }
 
             #endregion

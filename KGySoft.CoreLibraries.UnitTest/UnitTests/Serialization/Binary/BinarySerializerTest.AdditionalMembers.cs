@@ -23,6 +23,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Text;
 
 using KGySoft.Reflection;
 using KGySoft.Serialization.Binary;
@@ -229,10 +230,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             public override void Write(string value)
             {
+#if !NET6_0_OR_GREATER // https://github.com/dotnet/runtime/issues/107265
                 base.Write(value);
+#else
+                var bytes = Encoding.UTF8.GetBytes(value);
+                Write7BitEncodedInt(bytes.Length);
+                OutStream.Write(bytes, 0, bytes.Length);
+#endif
                 Advance(value.Length); // depends on encoding but is alright for comparison
                 if (log)
-                    Console.WriteLine($"string: {value} - {GetStack()}");
+                    Console.WriteLine($"string: {value} - {GetStack()}"); 
             }
 
             public override void Write(uint value)
@@ -391,7 +398,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                     Console.WriteLine($"bool: {result > 0} ({Convert.ToInt32(result)}) - {GetStack()}");
                 if (result > 1)
                     Console.WriteLine($"!!! Suspicious bool value: {result}");
-                return result == 1;
+                return result != 0;
             }
 
             public override byte ReadByte()

@@ -141,6 +141,12 @@ namespace KGySoft.Serialization.Binary
             /// </summary>
             internal Func<object, object>? CreateFinalCollectionCallback { get; set; }
 
+            /// <summary>
+            /// Should be set if the supported public type is an abstract generic type, and we need to support its non-public derived instances (eg. comparers, frozen collections).
+            /// Required only for generic types if the possible derived instances may have different type arguments (if any).
+            /// </summary>
+            internal Type? ReferenceAbstractGenericType { get; set; }
+
 #if !NET35
             [SuppressMessage("ReSharper", "MemberCanBePrivate.Local", Justification = "For some targets it is needed to be internal")] 
 #endif
@@ -390,6 +396,21 @@ namespace KGySoft.Serialization.Binary
                 return CreateFinalCollectionCallback?.Invoke(result) ?? result;
             }
 
+            internal Type GetStoredType(Type type)
+            {
+                // If encoding as a known implementation of a public abstract type, then returning the constructed abstract generic type
+                if (ReferenceAbstractGenericType is Type toReturn)
+                {
+                    while (!type.IsGenericType || type.GetGenericTypeDefinition() != toReturn)
+                        type = type.BaseType!;
+                }
+
+                return type;
+            }
+
+            internal Type GetElementType(Type type) => HasStringItemsOrKeys ? Reflector.StringType : GetStoredType(type).GetGenericArguments()[0];
+            internal Type GetValueType(Type type) => HasStringItemsOrKeys ? type.GetGenericArguments()[0] : GetStoredType(type).GetGenericArguments()[1];
+
             #endregion
 
             #region Private Methods
@@ -417,7 +438,7 @@ namespace KGySoft.Serialization.Binary
                 if (!IsGeneric)
                     return HasEqualityComparer ? null : Comparer.Default;
 
-                Type elementType = type.GetGenericArguments()[0];
+                Type elementType = GetElementType(type);
                 if (UsesComparerHelper)
                     return HasEqualityComparer
                         ? typeof(ComparerHelper<>).GetPropertyValue(elementType, nameof(ComparerHelper<_>.EqualityComparer))
