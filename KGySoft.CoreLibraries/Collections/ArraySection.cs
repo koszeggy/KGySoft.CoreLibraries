@@ -372,7 +372,7 @@ namespace KGySoft.Collections
 #if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
             if (length >= poolingThreshold)
             {
-                length |= poolArrayMask;
+                this.length |= poolArrayMask;
                 array = ArrayPool<T>.Shared.Rent(length);
                 if (assureClean)
                     Clear();
