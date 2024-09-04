@@ -66,9 +66,57 @@ namespace KGySoft.Collections
     /// which is needed for the <see cref="Release">Release</see> method to work properly. As <see cref="ArraySection{T}"/> is a
     /// non-<c>readonly</c>&#160;<see langword="struct"/> it is not recommended to use it as a <c>readonly</c> field; otherwise,
     /// accessing its members would make the pre-C# 8.0 compilers to create defensive copies, which leads to a slight performance degradation.</para>
-    /// <note type="tip">You can always easily reinterpret an <see cref="ArraySection{T}"/> instance as a two or three-dimensional array by the <see cref="AsArray2D">AsArray2D</see>
-    /// and <see cref="AsArray3D">AsArray3D</see> methods without any allocation on the heap.</note>
+    /// <note type="tip">
+    /// <list type="bullet">
+    /// <item>You can always easily reinterpret an <see cref="ArraySection{T}"/> instance as a two or three-dimensional array by the <see cref="AsArray2D">AsArray2D</see>
+    /// and <see cref="AsArray3D">AsArray3D</see> methods without any allocation on the heap.</item>
+    /// <item>You can also reinterpret the element type by the <see cref="Cast{TFrom,TTo}">Cast</see> method that returns a <see cref="CastArray{TFrom,TTo}"/> instance.
+    /// Casts are also available as two or three-dimensional views by the <see cref="Cast2D{TFrom,TTo}">Cast2D</see> and <see cref="Cast3D{TFrom,TTo}">Cast3D</see> methods.</item>
+    /// </list></note>
     /// </remarks>
+    /// <example>
+    /// The following example demonstrates how to get various single and multidimensional views for an array without any heap allocation:
+    /// <code lang="C#"><![CDATA[
+    /// // The actual underlying buffer we want to use.
+    /// var buffer = new byte[256];
+    /// 
+    /// // Note that none of the lines below allocate anything on the heap.
+    /// 
+    /// // So far similar to AsSpan or AsMemory extensions, but this is available on all platforms:
+    /// ArraySection<byte> section = buffer.AsSection(25, 100); // 100 bytes starting at index 25
+    /// 
+    /// // But if you wish you can treat it as a 10x10 two-dimensional array:
+    /// Array2D<byte> as2d = section.AsArray2D(10, 10); // an Array3D can be created in a similar way
+    /// 
+    /// // 2D indexing works the same way as for a real multidimensional array. But this is actually faster:
+    /// byte element = as2d[2, 3]; // row index first, then column index (similarly to regular arrays)
+    /// 
+    /// // Slicing works the same way as for ArraySection/Spans:
+    /// Array2D<byte> someRows = as2d[1..^1]; // same as as2d.Slice(1, as2d.Height - 2)
+    /// 
+    /// // Or you can get a simple row:
+    /// ArraySection<byte> singleRow = as2d[0];
+    /// 
+    /// // You can even reinterpret the element type if you whish:
+    /// CastArray<byte, Color32> asColors = section.Cast<byte, Color32>();
+    /// 
+    /// // Now you can access the elements cast to the reinterpreted type:
+    /// Color32 c = asColors[0];
+    /// 
+    /// // Or the reference to them (if supported by the compiler you use):
+    /// ref Color32 cRef = ref asColors.GetElementReference(0);
+    /// 
+    /// // Casts also have their 2D/3D counterparts:
+    /// CastArray2D<byte, Color32> asColors2D = asColors.As2D(height: 4, width: 6);
+    /// 
+    /// // Or the same, directly from the section:
+    /// asColors2D = section.Cast2D<byte, Color32>(4, 6);]]></code>
+    /// </example>
+    /// <seealso cref="Array2D{T}"/>
+    /// <seealso cref="Array3D{T}"/>
+    /// <seealso cref="CastArray{TFrom,TTo}"/>
+    /// <seealso cref="CastArray2D{TFrom,TTo}"/>
+    /// <seealso cref="CastArray3D{TFrom,TTo}"/>
     [Serializable]
     [DebuggerTypeProxy(typeof(ArraySection<>.ArraySectionDebugView))]
     [DebuggerDisplay("{typeof(" + nameof(T) + ")." + nameof(Type.Name) + ",nq}[{" + nameof(Length) + "}]")]

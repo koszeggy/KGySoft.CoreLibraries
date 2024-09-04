@@ -28,6 +28,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 #endif
 using System.Security;
+using System.Security.Permissions;
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
 using System.Threading;
 #endif
@@ -63,10 +64,26 @@ namespace KGySoft.Collections
     /// <typeparam name="TFrom">The actual element type of the underlying array.</typeparam>
     /// <typeparam name="TTo">The reinterpreted element type of the underlying array.</typeparam>
     /// <remarks>
-    /// TODO: Pooling example. Returning to the pool must be done by the caller. You can use a self-allocating ArraySection, which can be released in the end.
-    /// TODO: Slice may throw ArgumentException.
-    /// TODO: .NET Framework 4.x only: in a partially trusted AppDomain the indexer and some methods may throw NotSupportedException, grant SecurityPermission with the SecurityPermissionFlag.SkipVerification flag.
+    /// <para><see cref="CastArray{TFrom,TTo}"/> is very similar to a reinterpreted <see cref="Span{T}"/>, but as the underlying buffer can only be an array,
+    /// it can reside on the heap, too (just like <see cref="Memory{T}"/>). Actually on platforms where <see cref="Span{T}"/> and <see cref="Memory{T}"/> are available
+    /// you can use the <see cref="AsSpan"/> and <see cref="AsMemory"/> properties.</para>
+    /// <note type="tip">Similarly to <see cref="ArraySection{T}"/>, <see cref="CastArray{TFrom,TTo}"/> also has its two and three-dimensional counterparts.
+    /// See the <see cref="Cast2D{T}">Cast2D</see>/<see cref="Cast3D{T}">Cast3D</see> methods, and the <see cref="CastArray2D{TFrom,TTo}"/>/<see cref="CastArray3D{TFrom,TTo}"/> types.</note>
+    /// <para>Unlike <see cref="ArraySection{T}"/>, <see cref="CastArray{TFrom,TTo}"/> has no self-allocating constructors. But you can pass
+    /// an <see cref="ArraySection{T}"/> instance to the constructor that allocated a buffer by itself. In such case it's the caller's responsibility to
+    /// call the <see cref="ArraySection{T}.Release">Release</see> method in the end to return the possibly rented array to the pool.</para>
+    /// <para>Though this type also supports slicing, it requires that the address of the start element (in terms of <typeparamref name="TTo"/>) must be aligned
+    /// to an element in the underlying array of <typeparamref name="TFrom"/> elements. It's not an issue for any start index if the size of <typeparamref name="TFrom"/> is 1
+    /// or equal to the size of <typeparamref name="TTo"/>. Otherwise, the <see cref="O:KGySoft.Collections.CastArray2D{TFrom,TTo}.Slice">Slice</see> methods may throw an <see cref="ArgumentException"/>.</para>
+    /// <note type="warning">.NET Framework 4.x only: When this type is used in a partially trusted domain that does not allow executing unverifiable code, then the indexers and some methods may throw
+    /// a <see cref="NotSupportedException"/>. You can avoid it by enabling the <see cref="SecurityPermissionFlag.SkipVerification"/> at the security permissions when creating the <see cref="AppDomain"/>.</note>
+    /// <note type="tip">See more details and some examples about KGy SOFT's span-like types at the <strong>Remarks</strong> section of the <see cref="ArraySection{T}"/> type.</note>
     /// </remarks>
+    /// <seealso cref="ArraySection{T}"/>
+    /// <seealso cref="Array2D{T}"/>
+    /// <seealso cref="Array3D{T}"/>
+    /// <seealso cref="CastArray2D{TFrom,TTo}"/>
+    /// <seealso cref="CastArray3D{TFrom,TTo}"/>
     [Serializable]
     [DebuggerTypeProxy(typeof(CastArray<,>.CastArrayDebugView))]
     [DebuggerDisplay("{typeof(" + nameof(TTo) + ")." + nameof(Type.Name) + ",nq}[{" + nameof(Length) + "}]")]

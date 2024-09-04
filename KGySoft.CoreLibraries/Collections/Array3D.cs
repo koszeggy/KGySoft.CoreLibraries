@@ -58,7 +58,13 @@ namespace KGySoft.Collections
     /// <para>Due to the <see cref="Dispose">Dispose</see> method <see cref="Array3D{T}"/> is a non-<c>readonly</c>&#160;<see langword="struct"/>.
     /// It is not recommended to use it as a <c>readonly</c> field; otherwise, accessing its members would make the pre-C# 8.0 compilers to create defensive copies,
     /// which leads to a slight performance degradation.</para>
+    /// <note type="tip">See more details and some examples about KGy SOFT's span-like types at the <strong>Remarks</strong> section of the <see cref="ArraySection{T}"/> type.</note>
     /// </remarks>
+    /// <seealso cref="ArraySection{T}"/>
+    /// <seealso cref="Array2D{T}"/>
+    /// <seealso cref="CastArray{TFrom,TTo}"/>
+    /// <seealso cref="CastArray2D{TFrom,TTo}"/>
+    /// <seealso cref="CastArray3D{TFrom,TTo}"/>
     [Serializable]
     [DebuggerDisplay("{typeof(" + nameof(T) + ")." + nameof(Type.Name) + ",nq}[{" + nameof(Depth) + "}, {" + nameof(Height) + "}, {" + nameof(Width) + "}]")]
     [DebuggerTypeProxy(typeof(Array3D<>.Array3DDebugView))]

@@ -43,6 +43,28 @@ using System.Security;
 
 namespace KGySoft.Collections
 {
+    /// <summary>
+    /// Represents a rectangular (two-dimensional) array backed by a single-dimensional array of element type <typeparamref name="TFrom"/>
+    /// where the reinterpreted element type is cast to <typeparamref name="TTo"/>.
+    /// It supports accessing its rows or the whole content as a single dimensional <see cref="CastArray{TFrom,TTo}"/>.
+    /// Depending on the used platform the reinterpreted elements can also be accessed as a <see cref="Span{T}"/>.
+    /// </summary>
+    /// <typeparam name="TFrom">The actual element type of the underlying array.</typeparam>
+    /// <typeparam name="TTo">The reinterpreted element type of the underlying array.</typeparam>
+    /// <remarks>
+    /// <para>In .NET Core 2.1/.NET Standard 2.1 and above a <see cref="CastArray2D{TFrom,TTo}"/> instance can be easily turned to a <see cref="Span{T}"/> instance (either by cast or by the <see cref="AsSpan"/> property).</para>
+    /// <para>The single dimensional buffer can be accessed by the <see cref="Buffer"/> property that returns a <see cref="CastArray{TFrom,TTo}"/> structure.
+    /// The actual underlying single dimensional array can be accessed via its <see cref="CastArray{TFrom,TTo}.Buffer"/> property that has an <see cref="ArraySection{T}.UnderlyingArray"/> property.</para>
+    /// <para>Unlike <see cref="Array2D{T}"/>, <see cref="CastArray2D{TFrom,TTo}"/> has no self-allocating constructors and it does not implement the <see cref="IDisposable"/> interface.
+    /// But you can pass an <see cref="ArraySection{T}"/> instance to the constructor that allocated a buffer by itself. In such case it's the caller's responsibility to
+    /// call the <see cref="ArraySection{T}.Release">Release</see> method in the end to return the possibly rented array to the pool.</para>
+    /// <note type="tip">See more details and some examples about KGy SOFT's span-like types at the <strong>Remarks</strong> section of the <see cref="ArraySection{T}"/> type.</note>
+    /// </remarks>
+    /// <seealso cref="ArraySection{T}"/>
+    /// <seealso cref="Array2D{T}"/>
+    /// <seealso cref="Array3D{T}"/>
+    /// <seealso cref="CastArray{TFrom,TTo}"/>
+    /// <seealso cref="CastArray3D{TFrom,TTo}"/>
     [Serializable]
     [DebuggerDisplay("{typeof(" + nameof(TTo) + ")." + nameof(Type.Name) + ",nq}[{" + nameof(Height) + "}, {" + nameof(Width) + "}]")]
     [DebuggerTypeProxy(typeof(CastArray2D<,>.CastArray2DDebugView))]
