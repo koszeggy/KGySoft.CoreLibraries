@@ -15,14 +15,10 @@
 
 #region Usings
 
-using System.Buffers;
-
-using CompareInfo = System.Globalization.CompareInfo;
-
 #region Used Namespaces
 
 using System;
-#if (NETCOREAPP && !NET6_0_OR_GREATER) || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
 using System.Buffers;
 #endif
 using System.Collections;

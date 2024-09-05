@@ -20,6 +20,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Security;
 
 #endregion
 
@@ -58,6 +59,7 @@ namespace KGySoft.Collections
         public readonly TTo Current
         {
             [MethodImpl(MethodImpl.AggressiveInlining)]
+            [SecuritySafeCritical]
             get => (uint)index >= castArray.Length ? default : castArray.GetElementReferenceInternal(index);
         }
 

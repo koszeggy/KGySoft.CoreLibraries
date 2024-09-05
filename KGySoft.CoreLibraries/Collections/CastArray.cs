@@ -970,7 +970,7 @@ namespace KGySoft.Collections
             if (IsNullOrEmpty)
                 return;
 
-            DoCopyToUnsafe(ref target.UnsafeGetRef(targetIndex));
+            DoCopyToUnsafe(ref target.GetElementReferenceInternal(targetIndex));
 #endif
         }
 
@@ -1092,6 +1092,7 @@ namespace KGySoft.Collections
             return Contains((TTo)value);
         }
 
+        [SecuritySafeCritical]
         void ICollection.CopyTo(Array targetArray, int index)
         {
             if (targetArray == null!)

@@ -21,11 +21,13 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.ExceptionServices;
+using System.Security;
 using System.Threading;
 #else
 using System.Collections.Concurrent;
 #if !NET6_0_OR_GREATER
 using System.Diagnostics;
+using System.Security;
 #endif
 using System.Threading.Tasks;
 #endif
@@ -575,6 +577,7 @@ namespace KGySoft.Threading
 #if NET6_0_OR_GREATER
         private static int GetCoreCount() => Environment.ProcessorCount;
 #else
+        [SecuritySafeCritical]
         private static int GetCoreCount()
         {
             if (!EnvironmentHelper.IsWindows)

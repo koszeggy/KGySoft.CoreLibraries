@@ -1759,7 +1759,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             int value = 1;
 
             Console.Write("System Reflection...");
-#if NET9_0_OR_GREATER // ArgumentException : Property set method not found.
+#if NET10_0_OR_GREATER // ArgumentException : Property set method not found.
             pi.SetValue(test, value, null);
 #else
             test.RefIntProperty = value;
@@ -1849,7 +1849,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             int value = 1;
 
             Console.Write("System Reflection...");
-#if NET9_0_OR_GREATER // ArgumentException : Property set method not found.
+#if NET10_0_OR_GREATER // ArgumentException : Property set method not found.
             pi.SetValue(test, value, null);
 #else
             typeof(TestClass).GetField(nameof(TestClass.ReadOnlyValueField))!.SetValue(test, value);
@@ -2004,7 +2004,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             object result, value = 1;
 
             Console.Write("System Reflection...");
-#if NET9_0_OR_GREATER // ArgumentException : Property set method not found.
+#if NET10_0_OR_GREATER // ArgumentException : Property set method not found.
             pi.SetValue(null, value, null);
 #else
             TestClass.StaticRefProperty = 1;
@@ -2077,7 +2077,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             object result, value = 1;
 
             Console.Write("System Reflection...");
-#if NET9_0_OR_GREATER // ArgumentException : Property set method not found.
+#if NET10_0_OR_GREATER // ArgumentException : Property set method not found.
             pi.SetValue(null, value, null);
 #else
             TestClass.StaticIntField = 1;
@@ -2259,7 +2259,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             string value = "alpha";
 
             Console.Write("System Reflection...");
-#if NET9_0_OR_GREATER // ArgumentException : Property set method not found.
+#if NET10_0_OR_GREATER // ArgumentException : Property set method not found.
             pi.SetValue(test, value, indexParameters);
 #else
             test[index] = value;
@@ -2457,7 +2457,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             int value = 1;
 
             Console.Write("System Reflection...");
-#if NET9_0_OR_GREATER // ArgumentException : Property set method not found.
+#if NET10_0_OR_GREATER // ArgumentException : Property set method not found.
             pi.SetValue(test, value, null);
 #else
             ((TestStruct)test).RefIntProperty = 1;
@@ -2558,7 +2558,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             object result, value = 1;
 
             Console.Write("System Reflection...");
-#if NET9_0_OR_GREATER // ArgumentException : Property set method not found.
+#if NET10_0_OR_GREATER // ArgumentException : Property set method not found.
             pi.SetValue(test, value, null);
 #else
             typeof(TestStruct).GetField(nameof(TestStruct.StaticIntField))!.SetValue(null, value);
@@ -2840,7 +2840,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             string value = "alpha";
 
             Console.Write("System Reflection...");
-#if NET9_0_OR_GREATER // ArgumentException : Property set method not found.
+#if NET10_0_OR_GREATER // ArgumentException : Property set method not found.
             pi.SetValue(test, value, indexParameters);
 #else
             ((TestStruct)test)[index] = value;

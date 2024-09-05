@@ -504,6 +504,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <returns>An array of element type <typeparamref name="TTo"/> containing copies of the elements of this <see cref="CastArray2D{TFrom,TTo}"/>,
         /// or <see langword="null"/> if <see cref="IsNull"/> is <see langword="true"/>.</returns>
+        [SecuritySafeCritical]
         public TTo[,]? To2DArray()
         {
             if (buffer.IsNull)
@@ -527,6 +528,7 @@ namespace KGySoft.Collections
         /// </summary>
         /// <returns>An array containing copies of the elements of this <see cref="CastArray2D{TFrom,TTo}"/>,
         /// or <see langword="null"/> if <see cref="IsNull"/> is <see langword="true"/>.</returns>
+        [SecuritySafeCritical]
         public TTo[][]? ToJaggedArray()
         {
             if (buffer.IsNull)

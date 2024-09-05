@@ -2647,7 +2647,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None, safeCompare: true);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, safeCompare: true);
 
-#if DEBUG
+#if DEBUG && !(NET35 || NET40 || NET45 || NET46)
             // In Debug build the safe mode array allocation threshold is intentionally very small and the array builder proxy points to itself before the final array is created
             Throws<SerializationException>(() => KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, safeCompare: true), Res.BinarySerializationCircularIObjectReference);
 

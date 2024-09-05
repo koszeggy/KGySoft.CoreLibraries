@@ -20,21 +20,17 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Runtime.CompilerServices;
-
-using KGySoft.Collections;
 #if NET35 || NET40 || NET45 || NETSTANDARD2_1 || NETCOREAPP2_1 || NETCOREAPP3_0
 using System.Runtime.Serialization;
 #endif
 
-#if !NETCOREAPP3_0_OR_GREATER
 using KGySoft.Collections;
-#endif
 
 #endregion
 
 #region Suppressions
 
-#if NETFRAMEWORK || NETSTANDARD2_0 || NETCOREAPP2_0
+#if !NET9_0_OR_GREATER
 #pragma warning disable CS1574, CS1580 // the documentation contains types that are not available in every target
 #endif
 

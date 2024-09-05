@@ -2869,7 +2869,7 @@ namespace KGySoft.Reflection
                 {
                     if (way == ReflectionWays.TypeDescriptor)
                     {
-                        result = TypeDescriptor.CreateInstance(null, type, ctorParams?.Select(p => p.ParameterType).ToArray(), parameters)!;
+                        result = TypeDescriptor.CreateInstance(null, type, ctorParams?.Select(p => p.ParameterType).ToArray(), parameters!)!;
                         return true;
                     }
 

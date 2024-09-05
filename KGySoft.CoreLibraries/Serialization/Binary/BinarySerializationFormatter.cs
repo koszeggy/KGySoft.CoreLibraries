@@ -1717,8 +1717,10 @@ namespace KGySoft.Serialization.Binary
                     }
                 }
             },
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             { DataTypes.Memory, CollectionSerializationInfo.Memory },
             { DataTypes.ReadOnlyMemory, CollectionSerializationInfo.Memory },
+#endif
 
             #endregion
 
