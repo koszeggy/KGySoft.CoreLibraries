@@ -277,8 +277,8 @@ namespace KGySoft.Collections
         /// <summary>
         /// Determines whether two specified <see cref="Array2D{T}"/> instances have different values.
         /// </summary>
-        /// <param name="a">The left argument of the equality check.</param>
-        /// <param name="b">The right argument of the equality check.</param>
+        /// <param name="a">The left argument of the inequality check.</param>
+        /// <param name="b">The right argument of the inequality check.</param>
         /// <returns>The result of the inequality check.</returns>
         public static bool operator !=(Array2D<T> a, Array2D<T> b) => !(a == b);
 

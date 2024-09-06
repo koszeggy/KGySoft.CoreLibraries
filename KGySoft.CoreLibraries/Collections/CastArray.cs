@@ -58,7 +58,7 @@ namespace KGySoft.Collections
 {
     /// <summary>
     /// Represents a one dimensional array (or a section of it) where the original element type of <typeparamref name="TFrom"/> is cast to another element type of <typeparamref name="TTo"/>.
-    /// Can be helpful on platforms where <see cref="Span{T}"/> is not available or wherever you must use arrays that you want to reinterpret. For example, you want to retrieve
+    /// Can be helpful on platforms where <see cref="Span{T}"/> is not available or wherever you must use arrays that you want to reinterpret. For example, if you want to retrieve
     /// only byte arrays from the <see cref="ArrayPool{T}"/> but you want to reinterpret them as other array types.
     /// </summary>
     /// <typeparam name="TFrom">The actual element type of the underlying array.</typeparam>
@@ -74,9 +74,9 @@ namespace KGySoft.Collections
     /// call the <see cref="ArraySection{T}.Release">Release</see> method in the end to return the possibly rented array to the pool.</para>
     /// <para>Though this type also supports slicing, it requires that the address of the start element (in terms of <typeparamref name="TTo"/>) must be aligned
     /// to an element in the underlying array of <typeparamref name="TFrom"/> elements. It's not an issue for any start index if the size of <typeparamref name="TFrom"/> is 1
-    /// or equal to the size of <typeparamref name="TTo"/>. Otherwise, the <see cref="O:KGySoft.Collections.CastArray2D{TFrom,TTo}.Slice">Slice</see> methods may throw an <see cref="ArgumentException"/>.</para>
+    /// or equal to the size of <typeparamref name="TTo"/>. Otherwise, the <see cref="O:KGySoft.Collections.CastArray`2.Slice">Slice</see> methods may throw an <see cref="ArgumentException"/>.</para>
     /// <note type="warning">.NET Framework 4.x only: When this type is used in a partially trusted domain that does not allow executing unverifiable code, then the indexers and some methods may throw
-    /// a <see cref="NotSupportedException"/>. You can avoid it by enabling the <see cref="SecurityPermissionFlag.SkipVerification"/> at the security permissions when creating the <see cref="AppDomain"/>.</note>
+    /// a <see cref="NotSupportedException"/>. You can avoid it by enabling the <see cref="SecurityPermissionFlag.SkipVerification"/> flag at the security permissions when creating the <see cref="AppDomain"/>.</note>
     /// <note type="tip">See more details and some examples about KGy SOFT's span-like types at the <strong>Remarks</strong> section of the <see cref="ArraySection{T}"/> type.</note>
     /// </remarks>
     /// <seealso cref="ArraySection{T}"/>
@@ -264,7 +264,7 @@ namespace KGySoft.Collections
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Returns this <see cref="CastArray{TFrom,TTo}"/> as a <see cref="Memory{T}"/> instance.
-        /// Please note that getting this property allocates a custom <see cref="MemoryManager{T}"/> instance internally.
+        /// Please note that getting this property allocates a custom <see cref="MemoryManager{T}"/> instance on the heap internally.
         /// </summary>
         /// <remarks><note>This member is available in .NET Core 2.1/.NET Standard 2.1 and above.</note></remarks>
         public Memory<TTo> AsMemory => IsNull ? default : new CastArrayMemoryManager(this).Memory;
@@ -309,7 +309,7 @@ namespace KGySoft.Collections
         /// <param name="index">The zero-based index of the element to get or set.</param>
         /// <returns>The element at the specified index.</returns>
         /// <remarks>
-        /// <para>This member validates <paramref name="index"/> against <see cref="Length"/>. To allow getting/setting any reference from the actual underlying array use
+        /// <para>This member validates <paramref name="index"/> against <see cref="Length"/>. To allow getting/setting any item in the actual underlying array use
         /// the <see cref="GetElementUnsafe">GetElementUnsafe</see>/<see cref="SetElementUnsafe">SetElementUnsafe</see> methods instead.</para>
         /// <para>If the compiler you use supports members that return a value by reference, you can also use the <see cref="GetElementReference">GetElementReference</see> method.</para>
         /// </remarks>
@@ -433,8 +433,8 @@ namespace KGySoft.Collections
         /// <summary>
         /// Determines whether two specified <see cref="CastArray{TFrom,TTo}"/> instances have different values.
         /// </summary>
-        /// <param name="a">The left argument of the equality check.</param>
-        /// <param name="b">The right argument of the equality check.</param>
+        /// <param name="a">The left argument of the inequality check.</param>
+        /// <param name="b">The right argument of the inequality check.</param>
         /// <returns>The result of the inequality check.</returns>
         public static bool operator !=(CastArray<TFrom, TTo> a, CastArray<TFrom, TTo> b) => !(a == b);
 
@@ -462,10 +462,10 @@ namespace KGySoft.Collections
 
         /// <summary>
         /// Initializes a new instance of the <see cref="CastArray{TFrom,TTo}" /> struct from the specified <see cref="ArraySection{T}"/>.
-        /// No heap allocation occurs when using this constructor.
         /// </summary>
         /// <param name="buffer">The <see cref="ArraySection{T}"/> to initialize the new <see cref="CastArray{TFrom,TTo}"/> from.</param>
-        /// <exception cref="ArgumentException"><see cref="ArraySection{T}.Length"/> of <paramref name="buffer"/> is too big to express it as the length in <typeparamref name="TTo"/> elements.</exception>
+        /// <exception cref="ArgumentException"><see cref="ArraySection{T}.Length"/> of <paramref name="buffer"/> is too big, because the <see cref="Length"/>
+        /// in <typeparamref name="TTo"/> elements would exceed <see cref="Int32.MaxValue">Int32.MaxValue</see>.</exception>
         [SecuritySafeCritical]
         public unsafe CastArray(ArraySection<TFrom> buffer)
         {
@@ -577,7 +577,7 @@ namespace KGySoft.Collections
         /// <summary>
         /// Gets this <see cref="CastArray{TFrom,TTo}"/> as an <see cref="CastArray2D{TFrom,TTo}"/> instance
         /// using the specified <paramref name="height"/> and <paramref name="width"/>.
-        /// The <see cref="CastArray2D{TFrom,TTo}"/> must have enough capacity for the specified dimensions.
+        /// The <see cref="CastArray{TFrom,TTo}"/> must have enough capacity for the specified dimensions.
         /// </summary>
         /// <param name="height">The height of the array to be returned.</param>
         /// <param name="width">The width of the array to be returned.</param>
@@ -587,7 +587,7 @@ namespace KGySoft.Collections
         /// <summary>
         /// Gets this <see cref="CastArray{TFrom,TTo}"/> as an <see cref="CastArray2D{TFrom,TTo}"/> instance
         /// using the specified <paramref name="height"/> and <paramref name="width"/>.
-        /// The <see cref="CastArray2D{TFrom,TTo}"/> must have enough capacity for the specified dimensions.
+        /// The <see cref="CastArray{TFrom,TTo}"/> must have enough capacity for the specified dimensions.
         /// </summary>
         /// <param name="depth">The depth of the array to be returned.</param>
         /// <param name="height">The height of the array to be returned.</param>
@@ -987,7 +987,7 @@ namespace KGySoft.Collections
         /// Indicates whether the current <see cref="CastArray{TFrom,TTo}"/> instance is equal to another one specified in the <paramref name="other"/> parameter.
         /// That is, when they have the same <see cref="Length"/>, and they both reference the same section of the same underlying array.
         /// </summary>
-        /// <param name="other">An <see cref="ArraySection{T}"/> instance to compare with this instance.</param>
+        /// <param name="other">A <see cref="CastArray{TFrom,TTo}"/> instance to compare with this instance.</param>
         /// <returns><see langword="true"/> if the current object is equal to the <paramref name="other"/> parameter; otherwise, <see langword="false"/>.</returns>
         public bool Equals(CastArray<TFrom, TTo> other) => length == other.length && buffer == other.buffer;
 

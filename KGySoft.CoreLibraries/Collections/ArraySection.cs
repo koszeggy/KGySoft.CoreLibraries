@@ -109,7 +109,7 @@ namespace KGySoft.Collections
     /// // Casts also have their 2D/3D counterparts:
     /// CastArray2D<byte, Color32> asColors2D = asColors.As2D(height: 4, width: 6);
     /// 
-    /// // Or the same, directly from the section:
+    /// // Same as above, but directly from the section:
     /// asColors2D = section.Cast2D<byte, Color32>(4, 6);]]></code>
     /// </example>
     /// <seealso cref="Array2D{T}"/>
@@ -389,8 +389,8 @@ namespace KGySoft.Collections
         /// <summary>
         /// Determines whether two specified <see cref="ArraySection{T}"/> instances have different values.
         /// </summary>
-        /// <param name="a">The left argument of the equality check.</param>
-        /// <param name="b">The right argument of the equality check.</param>
+        /// <param name="a">The left argument of the inequality check.</param>
+        /// <param name="b">The right argument of the inequality check.</param>
         /// <returns>The result of the inequality check.</returns>
         public static bool operator !=(ArraySection<T> a, ArraySection<T> b) => !(a == b);
 

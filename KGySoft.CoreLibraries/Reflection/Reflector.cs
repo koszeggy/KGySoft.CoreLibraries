@@ -3645,7 +3645,7 @@ namespace KGySoft.Reflection
         /// <note type="security">The default value of the <paramref name="options"/> parameter allows loading assemblies if <paramref name="typeName"/>
         /// is an assembly qualified name. This behavior is compatible with the <see cref="Type.GetType(string)">Type.GetType</see> method but
         /// can be a security risk if <paramref name="typeName"/> is from an untrusted source, eg. file, user input, remote service, database, etc.
-        /// In such cases do not enable the <see cref="ResolveTypeOptions.TryToLoadAssemblies"/> flag so the type can be resolved from the already loaded assemblies.</note>
+        /// In such cases do not enable the <see cref="ResolveTypeOptions.TryToLoadAssemblies"/> flag so the type can be resolved from the already loaded assemblies only.</note>
         /// <para><paramref name="typeName"/> can be generic and may contain fully or partially defined assembly names.</para>
         /// <para><paramref name="typeName"/> can contain generic parameter types in the format as they are returned by
         /// the <see cref="CoreLibraries.TypeExtensions.GetName(System.Type,CoreLibraries.TypeNameKind)">TypeExtensions.GetName</see> extension method.</para>
@@ -3744,7 +3744,7 @@ namespace KGySoft.Reflection
         /// <note type="security">The default value of the <paramref name="options"/> parameter allows loading assemblies if <paramref name="typeName"/>
         /// is an assembly qualified name. This behavior is compatible with the <see cref="Type.GetType(string)">Type.GetType</see> method but
         /// can be a security risk if <paramref name="typeName"/> is from an untrusted source, eg. file, user input, remote service, database, etc.
-        /// In such cases do not enable the <see cref="ResolveTypeOptions.TryToLoadAssemblies"/> flag so the type can be resolved from the already loaded assemblies.</note>
+        /// In such cases do not enable the <see cref="ResolveTypeOptions.TryToLoadAssemblies"/> flag so the type can be resolved from the already loaded assemblies only.</note>
         /// <para><paramref name="typeName"/> can be generic and may contain fully or partially defined assembly names.</para>
         /// </remarks>
         /// <seealso cref="ResolveTypeOptions"/>

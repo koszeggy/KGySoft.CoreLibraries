@@ -42,7 +42,13 @@ namespace KGySoft.Collections
     {
         #region Fields
 
+#if NETFRAMEWORK || NETSTANDARD2_0
+        [SuppressMessage("Style", "IDE0044:Add readonly modifier", Justification = "Must not be readonly because it may cause a VerificationException from a partially trusted domain")]
+        [SuppressMessage("ReSharper", "FieldCanBeMadeReadOnly.Local", Justification = "Must not be readonly because it may cause a VerificationException from a partially trusted domain")]
+        private CastArray<TFrom, TTo> castArray;
+#else
         private readonly CastArray<TFrom, TTo> castArray;
+#endif
 
         private int index;
 
@@ -60,7 +66,11 @@ namespace KGySoft.Collections
         {
             [MethodImpl(MethodImpl.AggressiveInlining)]
             [SecuritySafeCritical]
+#if NETFRAMEWORK || NETSTANDARD2_0 // To wrap a possible VerificationException into a much less scary NotSupportedException in a partially trusted domain.
+            get => (uint)index >= castArray.Length ? default : castArray.GetElementUnsafe(index);
+#else
             get => (uint)index >= castArray.Length ? default : castArray.GetElementReferenceInternal(index);
+#endif
         }
 
         #endregion

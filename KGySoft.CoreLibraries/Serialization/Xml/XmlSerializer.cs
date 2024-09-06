@@ -43,7 +43,7 @@ using KGySoft.Serialization.Binary;
 
 #region Suppressions
 
-#if !NET7_0_OR_GREATER
+#if !NET9_0_OR_GREATER
 #pragma warning disable CS1574 // the documentation contains types that are not available in every target
 #endif
 
@@ -167,6 +167,7 @@ namespace KGySoft.Serialization.Xml
     /// <item><see cref="SortedDictionary{TKey,TValue}"/></item>
     /// <item><see cref="CircularSortedList{TKey,TValue}"/></item>
     /// <item><see cref="ThreadSafeDictionary{TKey,TValue}"/></item>
+    /// <item><see cref="AllowNullDictionary{TKey,TValue}"/></item>
     /// <item><see cref="StringKeyedDictionary{TValue}"/></item>
     /// <item><see cref="Hashtable"/></item>
     /// <item><see cref="SortedList"/></item>
@@ -178,6 +179,7 @@ namespace KGySoft.Serialization.Xml
     /// <item><see cref="ConcurrentQueue{T}"/> (in .NET Framework 4.0 and above)</item>
     /// <item><see cref="ConcurrentStack{T}"/> (in .NET Framework 4.0 and above)</item>
     /// <item><see cref="ConcurrentDictionary{TKey,TValue}"/> (in .NET Framework 4.0 and above)</item>
+    /// <item><see cref="OrderedDictionary{TKey,TValue}"/> (in .NET 9.0 and above)</item>
     /// </list>
     /// <note>Please note that if a collection uses a custom or culture-aware comparer, some fallback option might be needed to be able to serialize it.
     /// <see cref="XmlSerializationOptions.RecursiveSerializationAsFallback"/> will omit the custom comparers so it is not guaranteed that such a collection

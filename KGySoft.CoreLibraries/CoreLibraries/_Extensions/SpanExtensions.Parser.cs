@@ -33,6 +33,12 @@ using KGySoft.Reflection;
 
 #endregion
 
+#region Suppressions
+
+#pragma warning disable CA2265 // Comparing a span to 'null' might be redundant, the 'null' literal will be implicitly converted to a 'Span<T>.Empty' - false alarm, the == operator is also overloaded so the check is relevant
+
+#endregion
+
 namespace KGySoft.CoreLibraries
 {
     partial class SpanExtensions
