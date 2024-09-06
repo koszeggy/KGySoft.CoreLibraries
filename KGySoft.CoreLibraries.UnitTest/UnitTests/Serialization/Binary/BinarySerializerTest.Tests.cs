@@ -54,8 +54,8 @@ using System.Runtime.Serialization;
 #if !NET9_0_OR_GREATER
 using System.Runtime.Serialization.Formatters.Binary;
 #endif
-#if NETFRAMEWORK
 using System.Security;
+#if NETFRAMEWORK
 using System.Security.Permissions;
 using System.Security.Policy;
 #endif
@@ -103,7 +103,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
                 var test = new BinarySerializerTest();
                 test.SerializeComplexTypes();
-                test.SerializeComplexGenericCollections(false); // false: Setting read-only field in ArraySection does not work without SecurityPermissionFlag.SkipVerification
+                test.SerializeComplexGenericCollections(false); // false: Setting read-only field in ArraySection does not work without SecurityPermissionFlag.SkipVerification, CastArray is not supported
                 test.SerializationSurrogateTest(false); // Setting read-only field in StringSegment
                 test.SerializeRemoteObjects();
                 test.SerializationBinderTest(false);
@@ -1716,7 +1716,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         }
 
         [TestCase(true)] // false is called from Sandbox.DoTest
-        public void SerializeComplexGenericCollections(bool includeForcedRecursive)
+        public void SerializeComplexGenericCollections(bool isFullyTrustedDomain)
         {
             object[] referenceObjects =
             {
@@ -1730,10 +1730,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new List<ArraySection<int?>?> { new ArraySection<int?>(new int?[] { 1, 2, 3, null }, 1, 2), new ArraySection<int?>(), null },
                 new List<Array2D<int>?> { new Array2D<int>(new[] { 1, 2, 3 }, 1, 2), new Array2D<int>(), null },
                 new List<Array2D<int?>?> { new Array2D<int?>(new int?[] { 1, 2, 3, null }, 1, 2), new Array2D<int?>(), null },
-
-                new CastArray<ConsoleColor, ValueTuple<byte, byte, byte, byte>>(new[] { ConsoleColor.Red, ConsoleColor.Green, ConsoleColor.Blue }.AsSection(1, 2)),
-                new CastArray<(byte A, byte R, byte G, byte B), KeyValuePair<ushort, ushort>>(new (byte, byte, byte, byte)[3].AsSection(1, 2)),
-                new CastArray<KeyValuePair<ushort, ushort>, (byte A, byte R, byte G, byte B)>(new KeyValuePair<ushort, ushort>[3].AsSection(1, 2)),
 
                 // a single key-value pair with a dictionary somewhere in value
                 new KeyValuePair<int[], KeyValuePair<string, Dictionary<string, string>>>(new int[1], new KeyValuePair<string, Dictionary<string, string>>("gamma", new Dictionary<string, string> { { "alpha", "beta" } })),
@@ -1796,10 +1792,34 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: expectedTypes);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: expectedTypes);
 
-            if (includeForcedRecursive)
+            try
             {
                 KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
                 KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
+
+                referenceObjects = new object[]
+                {
+                    new CastArray<ConsoleColor, ValueTuple<byte, byte, byte, byte>>(new[] { ConsoleColor.Red, ConsoleColor.Green, ConsoleColor.Blue }.AsSection(1, 2)),
+                    new CastArray<(byte A, byte R, byte G, byte B), KeyValuePair<ushort, ushort>>(new (byte, byte, byte, byte)[3].AsSection(1, 2)),
+                    new CastArray<KeyValuePair<ushort, ushort>, (byte A, byte R, byte G, byte B)>(new KeyValuePair<ushort, ushort>[3].AsSection(1, 2)),
+                };
+
+                SystemSerializeObject(referenceObjects);
+                SystemSerializeObjects(referenceObjects); // System deserialization fails at List<IBinarySerializable>: IBinarySerializable/IList is not marked as serializable.
+
+                KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
+                KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
+
+                expectedTypes = GetExpectedTypes(referenceObjects);
+                KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes:expectedTypes);
+                KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes:expectedTypes);
+
+                KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
+                KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
+            }
+            catch (NotSupportedException e) when (!isFullyTrustedDomain && e.InnerException is VerificationException)
+            {
+                Console.WriteLine($"Expected exception was thrown in partially trusted domain: {e.Message}");
             }
         }
 
@@ -2747,7 +2767,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         {
             var domain = CreateSandboxDomain(
 #if NET35
-                new EnvironmentPermission(PermissionState.Unrestricted),
+                            new EnvironmentPermission(PermissionState.Unrestricted),
 #endif
                 new ReflectionPermission(ReflectionPermissionFlag.MemberAccess),
                 new SecurityPermission(SecurityPermissionFlag.ControlEvidence | SecurityPermissionFlag.ControlAppDomain | SecurityPermissionFlag.SerializationFormatter | SecurityPermissionFlag.UnmanagedCode | SecurityPermissionFlag.ControlPolicy),

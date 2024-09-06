@@ -113,7 +113,7 @@ while (!rest.IsNull)
 [`ArraySection<T>`](https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Collections_ArraySection_1.htm), [`Array2D<T>`](https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Collections_Array2D_1.htm) and [`Array3D<T>`](https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Collections_Array3D_1.htm) types work similarly but for arrays. They are not just faster than `Memory<T>` (whose `Span` property has some extra cost) but offer some additional features as well:
 
 ```cs
-// So far similar to AsSpan or AsMemory extensions:
+// So far similar to AsSpan or AsMemory extensions, but this is available on all platforms:
 ArraySection<byte> section = myByteArray.AsSection(25, 100); // 100 bytes starting at index 25
 
 // But if you wish you can treat it as a 10x10 two-dimensional array:
@@ -132,6 +132,25 @@ ArraySection<byte> singleRow = as2d[0];
 Please note that none of the lines in the example above allocate anything on the heap.
 
 > 💡 _Tip:_ [`ArraySection<T>`](https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Collections_ArraySection_1.htm), [`Array2D<T>`](https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Collections_Array2D_1.htm) and [`Array3D<T>`](https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Collections_Array3D_1.htm) types have constructors where you can specify an arbitrary capacity. If the targeted platform supports it, then these use array pooling, which can be much faster than allocating new arrays. Do not forget to release the created instances that were created by the allocator constructors.
+
+If you want to reinterpret the element type of an array, the [`CastArray<TFrom, TTo>`](https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Collections_CastArray_2.htm), [`CastArray2D<TFrom, TTo>`](https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Collections_CastArray2D_2.htm) and [`CastArray3D<TFrom, TTo>`](https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Collections_CastArray3D_2.htm) types can be used similarly to the ones above. Continuing the previous example:
+
+```cs
+// You can reinterpret the element type if you whish:
+CastArray<byte, Color32> asColors = myByteArray.Cast<byte, Color32>();
+
+// Now you can access the elements cast to the reinterpreted type:
+Color32 c = asColors[0];
+
+// Or the reference to them (if supported by the compiler you use):
+ref Color32 cRef = ref asColors.GetElementReference(0);
+
+// Casts also have their 2D/3D counterparts:
+CastArray2D<byte, Color32> asColors2D = asColors.As2D(height: 4, width: 6);
+
+// Same as above, but directly from the section:
+asColors2D = section.Cast2D<byte, Color32>(4, 6);
+```
 
 - #### [`IDictionary<TKey, TValue>.GetValueOrDefault`](https://docs.kgysoft.net/corelibraries/html/Overload_KGySoft_CoreLibraries_DictionaryExtensions_GetValueOrDefault.htm) extension methods:
 

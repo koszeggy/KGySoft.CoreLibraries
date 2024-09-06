@@ -38,6 +38,7 @@
 + New CastArray<TFrom, TTo> struct to allow reinterpreting arrays of unmanaged element type on any platform target.
 + New CastArray2D<TFrom, TTo> struct: Like Array2D<T> but allows reinterpreting the original unmanaged element type.
 + New CastArray3D<TFrom, TTo> struct: Like Array3D<T> but allows reinterpreting the original unmanaged element type.
++ New CastArrayEnumerator<TFrom, TTo> struct.
 
 + KGySoft.Reflection namespace:
 ===============================
