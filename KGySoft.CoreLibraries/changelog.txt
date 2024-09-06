@@ -9,6 +9,10 @@
 ! v9.0.0:
 ~~~~~~~~~
 
++ Assembly changes:
+===================
++ Targeting also .NET 9.0.
+
 + KGySoft.CoreLibraries namespace:
 ==================================
 + ArrayExtensions class:
@@ -54,12 +58,13 @@
   + Supporting the FrozenDictionary<TKey, TValue> implementations natively (.NET 9.0 and above)
   + Supporting the OrderedDictionary<TKey, TValue> class natively (.NET 9.0 and above)
 
-+ KGySoft.Serialization.Xml namespace:
+* KGySoft.Serialization.Xml namespace:
 ======================================
-+ XmlSerializer class:
+* XmlSerializer class:
   + Serialize* methods: Supporting more collections without fallback options (if they use a supported comparer):
     + AllowNullDictionary<TKey, TValue>
     + OrderedDictionary<TKey, TValue> (.NET 9.0 and above)
+  - Sometimes type information was unnecessarily written for nullable value type elements.
 
 ! KGySoft.Threading namespace:
 ==============================

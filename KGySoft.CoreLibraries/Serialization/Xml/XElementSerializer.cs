@@ -299,11 +299,12 @@ namespace KGySoft.Serialization.Xml
                     XElement xKey = new XElement(nameof(KeyValuePair<_,_>.Key));
                     XElement xValue = new XElement(nameof(KeyValuePair<_,_>.Value));
                     ctx.Parent.Add(xKey, xValue);
+                    Type[] genericArgs = ctx.Type.GetGenericArguments();
                     if (key != null)
-                        SerializeObject(key, key.GetType() != ctx.Type.GetGenericArguments()[0], xKey, ctx.Visibility);
+                        SerializeObject(key, !genericArgs[0].IsSealed && genericArgs[0] != key.GetType(), xKey, ctx.Visibility);
 
                     if (value != null)
-                        SerializeObject(value, value.GetType() != ctx.Type.GetGenericArguments()[1], xValue, ctx.Visibility);
+                        SerializeObject(value, !genericArgs[1].IsSealed && genericArgs[1] != value.GetType(), xValue, ctx.Visibility);
 
                     return true;
                 }

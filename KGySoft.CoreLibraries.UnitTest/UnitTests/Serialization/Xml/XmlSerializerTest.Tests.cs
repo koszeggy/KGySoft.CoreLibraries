@@ -929,7 +929,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 new List<int?> { 1, 2, null },
                 new List<int[]> { new int[] { 1, 2, 3 }, null },
 
-                new CircularList<int> { 1, 2, 3 },
+                new CircularList<int?> { 1, 2, 3 },
 
                 // trusted with a known comparer
                 new HashSet<string> { "alpha", "beta", "gamma" },
@@ -975,7 +975,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 new ConcurrentDictionary<int, string>(new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } }),
 #endif
 #if NET9_0_OR_GREATER
-                new OrderedDictionary<int, int> { { 0, 0 }, { 1, 1 } },
+                new OrderedDictionary<int, int?> { { 0, null }, { 1, 1 } },
 #endif
             };
 
@@ -1155,7 +1155,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, alsoAsContent: false), "unsupported comparer");
 
             // Forced recursive: the deserialized instance uses a default comparer
-            Throws<AssertionException>(() => KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback, alsoAsContent: false), "Types are different. System.CultureAwareComparer <-> System.Collections.Generic.GenericEqualityComparer`1[System.String]");
+            Throws<AssertionException>(() => KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback, alsoAsContent: false),
+#if NET9_0_OR_GREATER
+                "Types are different. System.CultureAwareComparer <-> System.Collections.Generic.StringEqualityComparer"
+#else
+                "Types are different. System.CultureAwareComparer <-> System.Collections.Generic.GenericEqualityComparer`1[System.String]"
+#endif
+                );
 
             // Forced binary: works correctly
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, alsoAsContent: false);
@@ -1477,7 +1483,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 DictionaryProperty = { { "alpha", 1 }, { "beta", 2 } }
             };
 
+            // Adding 4 elements just because of Capacity property in .NET 9+ so they will not be different.
             testObj.QueueField.Enqueue(1);
+            testObj.QueueField.Enqueue(2);
+            testObj.QueueField.Enqueue(3);
+            testObj.QueueField.Enqueue(4);
 
             KGySerializeObject(testObj, XmlSerializationOptions.None);
         }

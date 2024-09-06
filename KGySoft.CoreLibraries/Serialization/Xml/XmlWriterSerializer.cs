@@ -286,22 +286,23 @@ namespace KGySoft.Serialization.Xml
 
                     object? key = Accessors.GetPropertyValue(ctx.Object, nameof(KeyValuePair<_, _>.Key));
                     object? value = Accessors.GetPropertyValue(ctx.Object, nameof(KeyValuePair<_, _>.Value));
+                    Type[] genericArgs = ctx.Type.GetGenericArguments();
 
-                    ctx.Writer.WriteStartElement(nameof(KeyValuePair<_, _>.Key));
+                    ctx.Writer.WriteStartElement(nameof(KeyValuePair<_,_>.Key));
                     if (key == null)
                         ctx.Writer.WriteEndElement();
                     else
                     {
-                        SerializeObject(key, key.GetType() != ctx.Type.GetGenericArguments()[0], ctx.Writer, ctx.Visibility);
+                        SerializeObject(key, !genericArgs[0].IsSealed && genericArgs[0] != key.GetType(), ctx.Writer, ctx.Visibility);
                         ctx.Writer.WriteFullEndElement();
                     }
 
-                    ctx.Writer.WriteStartElement(nameof(KeyValuePair<_, _>.Value));
+                    ctx.Writer.WriteStartElement(nameof(KeyValuePair<_,_>.Value));
                     if (value == null)
                         ctx.Writer.WriteEndElement();
                     else
                     {
-                        SerializeObject(value, value.GetType() != ctx.Type.GetGenericArguments()[1], ctx.Writer, ctx.Visibility);
+                        SerializeObject(value, !genericArgs[1].IsSealed && genericArgs[1] != value.GetType(), ctx.Writer, ctx.Visibility);
                         ctx.Writer.WriteFullEndElement();
                     }
 
