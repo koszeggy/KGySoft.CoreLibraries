@@ -495,7 +495,12 @@ namespace KGySoft.Serialization.Binary
 
                     // otherwise, allocating just a List with limited initial capacity
                     int capacity = Math.Min(TotalLength, ArrayAllocationThreshold / elementSize);
-                    if (elementType.IsPrimitive || elementType.IsValueType && !typeof(IObjectReference).IsAssignableFrom(elementType))
+                    if (elementType.IsPrimitive
+                        || elementType.IsValueType && !typeof(IObjectReference).IsAssignableFrom(elementType)
+#if NET35
+                        && !elementType.IsNullable() // .NET 3.5: adding null to nullable value type collections does not work by the non-generic way
+#endif
+                       )
                     {
                         // for primitive types and non-IObjectReference value type we use a strictly typed list
                         builder = (IList)Reflector.ListGenType.GetGenericType(elementType).CreateInstance(Reflector.IntType, capacity);
@@ -1390,6 +1395,10 @@ namespace KGySoft.Serialization.Binary
             /// <summary>
             /// Creates and populates a collection
             /// </summary>
+#if NET35
+            [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity",
+                Justification = "The .NET Framework 3.5 version has to contain more checks due to non-generic handling nullable element types.")]
+#endif
             [SecurityCritical]
             private object CreateCollection(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor)
             {
