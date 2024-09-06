@@ -397,6 +397,8 @@ namespace KGySoft.Collections
         #endregion
 
         #region Constructors
+        
+        #region Public Constructors
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ArraySection{T}" /> struct using an internally allocated buffer.
@@ -505,6 +507,19 @@ namespace KGySoft.Collections
             offset = arraySegment.Offset;
             length = arraySegment.Count;
         }
+
+        #endregion
+
+        #region Private Constructors
+
+        private ArraySection(T[]? array, int offset, int length, bool _)
+        {
+            this.array = array;
+            this.offset = offset;
+            this.length = length;
+        }
+
+        #endregion
 
         #endregion
 
@@ -909,7 +924,9 @@ namespace KGySoft.Collections
         {
             // This method is just to clear the poolArray flag from length after deserialization. Applying also on older frameworks because the serialized instance
             // may come from any platform. length &= lengthMask would be more obvious but that would require to make length non-readonly.
-            this = Slice(0, Length);
+            // NOTE: not using this = Slice(0, length & lengthMask) because if an ArraySection is a field in another struct (eg. Array2D, CastArray, etc.),
+            //       then array is still null when deserializing by BinaryFormatter (would work by BinarySerializationFormatter though, but it supports it natively anyway).
+            this = new ArraySection<T>(array, offset, length & lengthMask, default);
         }
 
         #endregion
