@@ -386,7 +386,8 @@ namespace KGySoft.Collections
         public ref TTo GetElementReference(int y, int x) => ref buffer.GetElementReference(y * width + x);
 
         /// <summary>
-        /// Gets the element at the specified indices without any range check.
+        /// Gets the element at the specified indices without any range check or validation.
+        /// This method can even throw a <see cref="NullReferenceException"/> if the <see cref="IsNull"/> property returns <see langword="true"/>.
         /// To validate the coordinates against <see cref="Length"/> use the appropriate <see cref="this[int,int]">indexer</see> instead.
         /// Parameter order is the same as in case of a regular two-dimensional array.
         /// </summary>
@@ -399,14 +400,15 @@ namespace KGySoft.Collections
         /// <para>If the compiler you use supports members that return a value by reference, you can also use
         /// the <see cref="GetElementReferenceUnsafe">GetElementReferenceUnsafe</see> method.</para>
         /// </remarks>
-        /// <exception cref="InvalidOperationException"><see cref="IsNullOrEmpty"/> returns <see langword="true"/>.</exception>
         /// <exception cref="NotSupportedException">.NET Framework only: you execute this method in a partially trusted <see cref="AppDomain"/> that does not allow executing unverifiable code.</exception>
+        /// <exception cref="InvalidOperationException"><see cref="IsNullOrEmpty"/> returns <see langword="true"/>.</exception>
         [SecurityCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public TTo GetElementUnsafe(int y, int x) => buffer.GetElementUnsafe(y * width + x);
 
         /// <summary>
-        /// Sets the element at the specified indices without any range check.
+        /// Sets the element at the specified indices without any range check or validation.
+        /// This method can even throw a <see cref="NullReferenceException"/> if the <see cref="IsNull"/> property returns <see langword="true"/>.
         /// To validate the coordinates against <see cref="Length"/> use the appropriate <see cref="this[int,int]">indexer</see> instead.
         /// Parameter order is the same as in case of a regular two-dimensional array.
         /// </summary>
@@ -419,14 +421,15 @@ namespace KGySoft.Collections
         /// <para>If the compiler you use supports members that return a value by reference, you can also use
         /// the <see cref="GetElementReferenceUnsafe">GetElementReferenceUnsafe</see> method.</para>
         /// </remarks>
-        /// <exception cref="InvalidOperationException"><see cref="IsNullOrEmpty"/> returns <see langword="true"/>.</exception>
         /// <exception cref="NotSupportedException">.NET Framework only: you execute this method in a partially trusted <see cref="AppDomain"/> that does not allow executing unverifiable code.</exception>
+        /// <exception cref="NullReferenceException"><see cref="IsNull"/> is <see langword="true"/>.</exception>
         [SecurityCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public void SetElementUnsafe(int y, int x, TTo value) => buffer.SetElementUnsafe(y * width + x, value);
 
         /// <summary>
-        /// Gets the reference to the element at the specified coordinates without any range check.
+        /// Gets the reference to the element at the specified coordinates without any range check or validation.
+        /// This method can even throw a <see cref="NullReferenceException"/> if the <see cref="IsNull"/> property returns <see langword="true"/>.
         /// To validate the coordinates against <see cref="Length"/> use
         /// the <see cref="GetElementReference">GetElementReference</see> method instead.
         /// Parameter order is the same as in case of a regular two-dimensional array.
@@ -440,8 +443,8 @@ namespace KGySoft.Collections
         /// <note>This method returns a value by reference. If this library is used by an older compiler that does not support such members,
         /// use the <see cref="GetElementUnsafe">GetElementUnsafe</see>/<see cref="SetElementUnsafe">SetElementUnsafe</see> methods instead.</note>
         /// </remarks>
-        /// <exception cref="InvalidOperationException"><see cref="IsNullOrEmpty"/> returns <see langword="true"/>.</exception>
         /// <exception cref="VerificationException">.NET Framework only: you execute this method in a partially trusted <see cref="AppDomain"/> that does not allow executing unverifiable code.</exception>
+        /// <exception cref="NullReferenceException"><see cref="IsNull"/> is <see langword="true"/>.</exception>
         [SecurityCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public ref TTo GetElementReferenceUnsafe(int y, int x) => ref buffer.GetElementReferenceUnsafe(y * width + x);

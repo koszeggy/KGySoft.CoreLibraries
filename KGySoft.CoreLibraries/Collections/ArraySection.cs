@@ -585,7 +585,7 @@ namespace KGySoft.Collections
         {
             if (IsNullOrEmpty)
                 Throw.InvalidOperationException(Res.ArraySectionEmpty);
-            return ref GetElementReferenceInternal(0);
+            return ref GetStartElementReferenceInternal();
         }
 
         /// <summary>
@@ -730,10 +730,12 @@ namespace KGySoft.Collections
         /// <summary>
         /// Gets the element at the specified <paramref name="index"/>, allowing it to point to any element in the <see cref="UnderlyingArray"/>.
         /// To validate <paramref name="index"/> against <see cref="Length"/> use the <see cref="this">indexer</see> instead.
+        /// This method does not perform any validation, so it can even throw a <see cref="NullReferenceException"/> if the <see cref="IsNull"/> property returns <see langword="true"/>.
         /// </summary>
         /// <param name="index">The index of the element to get.</param>
         /// <returns>The element at the specified index.</returns>
         /// <exception cref="IndexOutOfRangeException"><paramref name="index"/> plus <see cref="Offset"/> is less than zero or greater or equal to the length of the <see cref="UnderlyingArray"/>.</exception>
+        /// <exception cref="NullReferenceException">The <see cref="IsNull"/> property returns <see langword="true"/>.</exception>
         /// <remarks>
         /// <para>If the compiler you use supports members that return a value by reference, you can also use
         /// the <see cref="GetElementReferenceUnchecked">GetElementReferenceUnchecked</see> method.</para>
@@ -741,18 +743,21 @@ namespace KGySoft.Collections
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public readonly T GetElementUnchecked(int index)
         {
-            if (IsNull)
-                Throw.IndexOutOfRangeException();
+            // In .NET 9 the followingS check makes this method even slower than the indexer. Which is strange because .NET 8 has a much better performance. See ArraySectionPerformanceTest.CastTest
+            //if (IsNull)
+            //    Throw.IndexOutOfRangeException();
             return GetItemInternal(index);
         }
 
         /// <summary>
         /// Sets the element at the specified <paramref name="index"/>, allowing it to point to any element in the <see cref="UnderlyingArray"/>.
         /// To validate <paramref name="index"/> against <see cref="Length"/> use the <see cref="this">indexer</see> instead.
+        /// This method does not perform any validation, so it can even throw a <see cref="NullReferenceException"/> if the <see cref="IsNull"/> property returns <see langword="true"/>.
         /// </summary>
         /// <param name="index">The index of the element to set.</param>
         /// <param name="value">The value to set.</param>
         /// <exception cref="IndexOutOfRangeException"><paramref name="index"/> plus <see cref="Offset"/> is less than zero or greater or equal to the length of the <see cref="UnderlyingArray"/>.</exception>
+        /// <exception cref="NullReferenceException">The <see cref="IsNull"/> property returns <see langword="true"/>.</exception>
         /// <remarks>
         /// <para>If the compiler you use supports members that return a value by reference, you can also use
         /// the <see cref="GetElementReferenceUnchecked">GetElementReferenceUnchecked</see> method.</para>
@@ -760,19 +765,21 @@ namespace KGySoft.Collections
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public readonly void SetElementUnchecked(int index, T value)
         {
-            if (IsNull)
-                Throw.IndexOutOfRangeException();
+            //if (IsNull)
+            //    Throw.IndexOutOfRangeException();
             SetItemInternal(index, value);
         }
 
         /// <summary>
-        /// Gets the reference to the element at the specified <paramref name="index"/>, it to point to any element in the <see cref="UnderlyingArray"/>.
+        /// Gets the reference to the element at the specified <paramref name="index"/>, allowing it to point to any element in the <see cref="UnderlyingArray"/>.
         /// To validate <paramref name="index"/> against <see cref="Length"/> use the <see cref="GetElementReference">GetElementReference</see> method instead.
+        /// This method does not perform any validation, so it can even throw a <see cref="NullReferenceException"/> if the <see cref="IsNull"/> property returns <see langword="true"/>.
         /// </summary>
         /// <param name="index">The index of the element to get the reference for.</param>
         /// <returns>The reference to the element at the specified index.</returns>
         /// <exception cref="IndexOutOfRangeException"><paramref name="index"/> plus <see cref="Offset"/> is less than zero or greater or equal to the length of the <see cref="UnderlyingArray"/>.</exception>
         /// <exception cref="VerificationException">.NET Framework only: you execute this method in a partially trusted <see cref="AppDomain"/> that does not allow executing unverifiable code.</exception>
+        /// <exception cref="NullReferenceException">The <see cref="IsNull"/> property returns <see langword="true"/>.</exception>
         /// <remarks>
         /// <note>This method returns a value by reference. If this library is used by an older compiler that does not support such members,
         /// use the <see cref="GetElementUnchecked">GetElementUnchecked</see>/<see cref="SetElementUnchecked">SetElementUnchecked</see> methods instead.</note>
@@ -780,8 +787,8 @@ namespace KGySoft.Collections
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public readonly ref T GetElementReferenceUnchecked(int index)
         {
-            if (IsNull)
-                Throw.IndexOutOfRangeException();
+            //if (IsNull)
+            //    Throw.IndexOutOfRangeException();
             return ref GetElementReferenceInternal(index);
         }
 
@@ -913,6 +920,9 @@ namespace KGySoft.Collections
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal readonly ref T GetElementReferenceInternal(int index) => ref array![offset + index];
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        internal readonly ref T GetStartElementReferenceInternal() => ref array![offset];
 
         #endregion
 

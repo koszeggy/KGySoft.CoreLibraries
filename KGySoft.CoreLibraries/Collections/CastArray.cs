@@ -677,13 +677,14 @@ namespace KGySoft.Collections
         }
 
         /// <summary>
-        /// Gets the element at the specified <paramref name="index"/> without any range check.
+        /// Gets the element at the specified <paramref name="index"/> without any range check or validation.
+        /// This method can even throw a <see cref="NullReferenceException"/> if the <see cref="IsNull"/> property returns <see langword="true"/>.
         /// To validate <paramref name="index"/> against <see cref="Length"/> use the <see cref="this">indexer</see> instead.
         /// </summary>
         /// <param name="index">The index of the element to get.</param>
         /// <returns>The element at the specified index.</returns>
-        /// <exception cref="InvalidOperationException"><see cref="IsNullOrEmpty"/> returns <see langword="true"/>.</exception>
         /// <exception cref="NotSupportedException">.NET Framework only: you execute this method in a partially trusted <see cref="AppDomain"/> that does not allow executing unverifiable code.</exception>
+        /// <exception cref="NullReferenceException">The <see cref="IsNull"/> property returns <see langword="true"/>.</exception>
         /// <remarks>
         /// <note type="caution">You must ensure that <paramref name="index"/> falls within <see cref="Length"/>, or at least in the bounds
         /// of the actual underlying array. Attempting to access protected memory may crash the runtime.</note>
@@ -709,13 +710,14 @@ namespace KGySoft.Collections
         }
 
         /// <summary>
-        /// Sets the element at the specified <paramref name="index"/> without any range check.
+        /// Sets the element at the specified <paramref name="index"/> without any range check or validation.
+        /// This method can even throw a <see cref="NullReferenceException"/> if the <see cref="IsNull"/> property returns <see langword="true"/>.
         /// To validate <paramref name="index"/> against <see cref="Length"/> use the <see cref="this">indexer</see> instead.
         /// </summary>
         /// <param name="index">The index of the element to set.</param>
         /// <param name="value">The value to set.</param>
-        /// <exception cref="InvalidOperationException"><see cref="IsNullOrEmpty"/> returns <see langword="true"/>.</exception>
         /// <exception cref="NotSupportedException">.NET Framework only: you execute this method in a partially trusted <see cref="AppDomain"/> that does not allow executing unverifiable code.</exception>
+        /// <exception cref="NullReferenceException">The <see cref="IsNull"/> property returns <see langword="true"/>.</exception>
         /// <remarks>
         /// <note type="caution">You must ensure that <paramref name="index"/> falls within <see cref="Length"/>, or at least in the bounds
         /// of the actual underlying array. Attempting to access protected memory may crash the runtime.</note>
@@ -741,13 +743,14 @@ namespace KGySoft.Collections
         }
 
         /// <summary>
-        /// Gets the reference to the element at the specified <paramref name="index"/> without any range check.
+        /// Gets the reference to the element at the specified <paramref name="index"/> without any range check or validation.
+        /// This method can even throw a <see cref="NullReferenceException"/> if the <see cref="IsNull"/> property returns <see langword="true"/>.
         /// To validate <paramref name="index"/> against <see cref="Length"/> use the <see cref="GetElementReference">GetElementReference</see> method instead.
         /// </summary>
         /// <param name="index">The index of the element to get the reference for.</param>
         /// <returns>The reference to the element at the specified index.</returns>
-        /// <exception cref="InvalidOperationException"><see cref="IsNullOrEmpty"/> returns <see langword="true"/>.</exception>
         /// <exception cref="VerificationException">.NET Framework only: you execute this method in a partially trusted <see cref="AppDomain"/> that does not allow executing unverifiable code.</exception>
+        /// <exception cref="NullReferenceException">The <see cref="IsNull"/> property returns <see langword="true"/>.</exception>
         /// <remarks>
         /// <note type="caution">You must ensure that <paramref name="index"/> falls within <see cref="Length"/>, or at least in the bounds
         /// of the actual underlying array. Attempting to access protected memory may crash the runtime.</note>
@@ -756,18 +759,7 @@ namespace KGySoft.Collections
         /// </remarks>
         [SecurityCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public ref TTo GetElementReferenceUnsafe(int index)
-        {
-            if (IsNullOrEmpty)
-                Throw.InvalidOperationException(Res.CollectionEmpty);
-
-#if NETCOREAPP3_0_OR_GREATER
-            return ref Unsafe.Add(ref Unsafe.As<TFrom, TTo>(ref buffer.GetElementReferenceInternal(0)), index);
-#else
-            // There is no point in putting the try...catch (VerificationException) here. When it's thrown, it's already for this method as it has a ref return.
-            return ref GetElementReferenceInternal(index);
-#endif
-        }
+        public ref TTo GetElementReferenceUnsafe(int index) => ref GetElementReferenceInternal(index);
 
         /// <summary>
         /// Returns a reference to the first element in this <see cref="CastArray{TFrom,TTo}"/>.
@@ -784,11 +776,15 @@ namespace KGySoft.Collections
                 Throw.InvalidOperationException(Res.CollectionEmpty);
 
 #if NETCOREAPP3_0_OR_GREATER
-            return ref Unsafe.As<TFrom, TTo>(ref buffer.GetElementReferenceInternal(0));
+            return ref Unsafe.As<TFrom, TTo>(ref buffer.GetStartElementReferenceInternal());
 #else
             // There is no point in putting the try...catch (VerificationException) here. When it's thrown, it's already for this method as it has a ref return.
             // Besides, this method is to use this instance in a fixed statement, which cannot be used in such a partially trusted domain anyway.
-            return ref GetElementReferenceInternal(0);
+            unsafe
+            {
+                fixed (TFrom* pBuf = &buffer.GetStartElementReferenceInternal())
+                    return ref *((TTo*)pBuf);
+            }
 #endif
         }
 
@@ -849,7 +845,7 @@ namespace KGySoft.Collections
 #if NET5_0_OR_GREATER
             // Using the EqualityComparer<T>.Default intrinsic directly, which gets devirtualized
             // See https://github.com/dotnet/runtime/issues/10050
-            ref TTo current = ref Unsafe.As<TFrom, TTo>(ref buffer.GetElementReferenceInternal(0));
+            ref TTo current = ref Unsafe.As<TFrom, TTo>(ref buffer.GetStartElementReferenceInternal());
             for (int i = 0; i < length; i++)
             {
                 if (EqualityComparer<TTo>.Default.Equals(Unsafe.Add(ref current, i), item))
@@ -859,7 +855,7 @@ namespace KGySoft.Collections
             return -1;
 #elif NETCOREAPP3_0_OR_GREATER
             var comparer = ComparerHelper<TTo>.EqualityComparer;
-            ref TTo current = ref Unsafe.As<TFrom, TTo>(ref buffer.GetElementReferenceInternal(0));
+            ref TTo current = ref Unsafe.As<TFrom, TTo>(ref buffer.GetStartElementReferenceInternal());
             for (int i = 0; i < length; i++)
             {
                 if (comparer.Equals(Unsafe.Add(ref current, i), item))
@@ -1018,11 +1014,11 @@ namespace KGySoft.Collections
         internal ref TTo GetElementReferenceInternal(int index)
         {
 #if NETCOREAPP3_0_OR_GREATER
-            return ref Unsafe.Add(ref Unsafe.As<TFrom, TTo>(ref buffer.GetElementReferenceInternal(0)), index);
+            return ref Unsafe.Add(ref Unsafe.As<TFrom, TTo>(ref buffer.GetStartElementReferenceInternal()), index);
 #else
             unsafe
             {
-                fixed (TFrom* pBuf = &buffer.GetElementReferenceInternal(0))
+                fixed (TFrom* pBuf = &buffer.GetStartElementReferenceInternal())
                     return ref ((TTo*)pBuf)[index];
             }
 #endif
@@ -1038,7 +1034,7 @@ namespace KGySoft.Collections
         [MethodImpl(MethodImpl.AggressiveInlining)]
         private unsafe void DoCopyToUnsafe(ref TTo target)
         {
-            fixed (void* pSrc = &buffer.GetElementReferenceInternal(0))
+            fixed (void* pSrc = &buffer.GetStartElementReferenceInternal())
             fixed (TTo* pDst = &target)
                 MemoryHelper.CopyMemory(pSrc, pDst, (long)length * sizeof(TTo));
         }
@@ -1050,7 +1046,7 @@ namespace KGySoft.Collections
         private unsafe int DoIndexOfUnsafe(TTo item)
         {
             var comparer = ComparerHelper<TTo>.EqualityComparer;
-            fixed (TFrom* ptr = &buffer.GetElementReferenceInternal(0))
+            fixed (TFrom* ptr = &buffer.GetStartElementReferenceInternal())
             {
                 TTo* pTo = (TTo*)ptr;
                 for (int i = 0; i < length; i++)

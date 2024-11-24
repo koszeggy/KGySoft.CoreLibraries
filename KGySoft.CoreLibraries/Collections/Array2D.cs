@@ -395,6 +395,7 @@ namespace KGySoft.Collections
         /// Gets the element at the specified indices, allowing them to point to any element in the <see cref="ArraySection{T}.UnderlyingArray"/>
         /// of the <see cref="Buffer"/> property. To validate the coordinates against <see cref="Length"/> use the appropriate <see cref="this[int,int]">indexer</see> instead.
         /// Parameter order is the same as in case of a regular two-dimensional array.
+        /// This method does not perform any validation, so it can even throw a <see cref="NullReferenceException"/> if the <see cref="IsNull"/> property returns <see langword="true"/>.
         /// </summary>
         /// <param name="y">The Y-coordinate (row index) of the item to get.</param>
         /// <param name="x">The X-coordinate (column index) of the item to get.</param>
@@ -404,6 +405,7 @@ namespace KGySoft.Collections
         /// the <see cref="GetElementReferenceUnchecked">GetElementReferenceUnchecked</see> method.</para>
         /// </remarks>
         /// <exception cref="IndexOutOfRangeException">The specified indices refer to an invalid index in the actual underlying array.</exception>
+        /// <exception cref="NullReferenceException">The <see cref="IsNull"/> property returns <see langword="true"/>.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public readonly T GetElementUnchecked(int y, int x) => buffer.GetElementUnchecked(y * width + x);
 
@@ -411,6 +413,7 @@ namespace KGySoft.Collections
         /// Sets the element at the specified indices, allowing them to point to any element in the <see cref="ArraySection{T}.UnderlyingArray"/>
         /// of the <see cref="Buffer"/> property. To validate the coordinates against <see cref="Length"/> use the appropriate <see cref="this[int,int]">indexer</see> instead.
         /// Parameter order is the same as in case of a regular two-dimensional array.
+        /// This method does not perform any validation, so it can even throw a <see cref="NullReferenceException"/> if the <see cref="IsNull"/> property returns <see langword="true"/>.
         /// </summary>
         /// <param name="y">The Y-coordinate (row index) of the item to set.</param>
         /// <param name="x">The X-coordinate (column index) of the item to set.</param>
@@ -420,6 +423,7 @@ namespace KGySoft.Collections
         /// the <see cref="GetElementReferenceUnchecked">GetElementReferenceUnchecked</see> method.</para>
         /// </remarks>
         /// <exception cref="IndexOutOfRangeException">The specified indices refer to an invalid index in the actual underlying array.</exception>
+        /// <exception cref="NullReferenceException">The <see cref="IsNull"/> property returns <see langword="true"/>.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public readonly void SetElementUnchecked(int y, int x, T value) => buffer.SetElementUnchecked(y * width + x, value);
 
@@ -428,6 +432,7 @@ namespace KGySoft.Collections
         /// of the <see cref="Buffer"/> property. To validate the coordinates against <see cref="Length"/> use
         /// the <see cref="GetElementReference">GetElementReference</see> method instead.
         /// Parameter order is the same as in case of a regular two-dimensional array.
+        /// This method does not perform any validation, so it can even throw a <see cref="NullReferenceException"/> if the <see cref="IsNull"/> property returns <see langword="true"/>.
         /// </summary>
         /// <param name="y">The Y-coordinate (row index) of the item to get the reference for.</param>
         /// <param name="x">The X-coordinate (column index) of the item to get the reference for.</param>
@@ -438,6 +443,7 @@ namespace KGySoft.Collections
         /// </remarks>
         /// <exception cref="IndexOutOfRangeException">The specified indices refer to an invalid index in the actual underlying array.</exception>
         /// <exception cref="VerificationException">.NET Framework only: you execute this method in a partially trusted <see cref="AppDomain"/> that does not allow executing unverifiable code.</exception>
+        /// <exception cref="NullReferenceException">The <see cref="IsNull"/> property returns <see langword="true"/>.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public readonly ref T GetElementReferenceUnchecked(int y, int x) => ref buffer.GetElementReferenceUnchecked(y * width + x);
 
