@@ -36,6 +36,8 @@ namespace KGySoft.CoreLibraries
         [OneTimeSetUp]
         public void Initialize()
         {
+            if (Program.ConsoleWriter != null)
+                Console.SetOut(Program.ConsoleWriter);
             Console.WriteLine($"Referenced runtime by KGySoft.CoreLibraries: {typeof(Module).Assembly.GetReferencedAssemblies()[0]}");
 #if NET35
             if (typeof(object).Assembly.GetName().Version != new Version(2, 0, 0, 0))
