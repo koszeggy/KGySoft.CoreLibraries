@@ -13,8 +13,12 @@
 ===================
 + Targeting also .NET 9.0.
 
-+ KGySoft.CoreLibraries namespace:
+! KGySoft.CoreLibraries namespace:
 ==================================
+! ObjectExtensions class:
+  ! DeepClone method overloads: In the (T, bool) overload (obsolete since v5.6.1) the bool parameter is no longer
+    optional, whereas in the (T, Func<object, object>) overload the delegate parameter is now optional. Meaning, if
+    no optional parameters are specified, then the new, non-obsolete overload is called automatically.
 + ArrayExtensions class:
   + New Cast/Cast2D/Cast3D methods to reinterpret the element type of arrays and ArraySegment<T> instances.
 + StringSegmentComparer class:

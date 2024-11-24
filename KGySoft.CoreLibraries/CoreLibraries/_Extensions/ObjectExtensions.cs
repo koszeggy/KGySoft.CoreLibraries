@@ -254,8 +254,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="obj">The object to clone.</param>
         /// <param name="ignoreCustomSerialization"><see langword="true"/> to ignore <see cref="ISerializable"/> and <see cref="IObjectReference"/> implementations
         /// as well as serialization constructors and serializing methods; <see langword="false"/> to consider all of these techniques instead of performing a forced
-        /// field-based serialization. This parameter is optional.
-        /// <br/>Default value: <see langword="false"/>.</param>
+        /// field-based serialization.</param>
         /// <returns>The functionally equivalent clone of the object.</returns>
         /// <remarks>
         /// <note><strong>Obsolete Note:</strong> This overload uses the <see cref="BinarySerializationFormatter"/> internally, which is not always applicable.
@@ -268,7 +267,7 @@ namespace KGySoft.CoreLibraries
         /// <para>If <paramref name="ignoreCustomSerialization"/> is <see langword="false"/>, then it is not guaranteed that the object can be cloned in all circumstances (see the note above).</para>
         /// <para>On the other hand, if <paramref name="ignoreCustomSerialization"/> is <see langword="true"/>, then it can happen that even singleton types will be deep cloned.
         /// The cloning is performed by the <see cref="BinarySerializationFormatter"/> class, which supports some singleton types natively (such as <see cref="Type"/> and <see cref="DBNull"/>),
-        /// which will be always cloned correctly.</para>
+        /// which will always be cloned correctly.</para>
         /// <para>In .NET Framework remote objects are cloned in a special way and the result is always a local object.
         /// The <paramref name="ignoreCustomSerialization"/> parameter is ignored for remote objects.</para>
         /// </remarks>
@@ -276,7 +275,8 @@ namespace KGySoft.CoreLibraries
         [Obsolete("This DeepClone overload is obsolete. Use the DeepClone<T>(T,Func<object,object?>?) overload instead.")]
 #endif
         [SecuritySafeCritical]
-        [return:NotNullIfNotNull(nameof(obj))]public static T DeepClone<T>(this T obj, bool ignoreCustomSerialization = false)
+        [return:NotNullIfNotNull(nameof(obj))]
+        public static T DeepClone<T>(this T obj, bool ignoreCustomSerialization)
         {
             ISurrogateSelector? surrogate = null;
             var formatter = new BinarySerializationFormatter(BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.IgnoreTypeForwardedFromAttribute);
@@ -311,14 +311,16 @@ namespace KGySoft.CoreLibraries
         /// <param name="obj">The object to clone.</param>
         /// <param name="customClone">An optional delegate that can be used to customize the cloning of individual instances.
         /// If specified, then it is always called with a non-<see langword="null"/> instance.
-        /// If it returns <see langword="null"/>, then the input object will be cloned by using the default logic.</param>
+        /// If it returns <see langword="null"/>, then the input object will be cloned by using the default logic. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
         /// <returns>The clone of the object.</returns>
         /// <remarks>
         /// <para>If <paramref name="customClone"/> is <see langword="null"/>, then this method returns a functionally equivalent clone of the original object.</para>
         /// <para><see cref="string"/>, <see cref="Delegate"/> and runtime <see cref="Type"/> instances are not cloned but their original reference is returned in the result.
         /// This can be overridden by handling these types in <paramref name="customClone"/>.</para>
         /// </remarks>
-        [return:NotNullIfNotNull(nameof(obj))]public static T DeepClone<T>(this T obj, Func<object, object?>? customClone)
+        [return:NotNullIfNotNull(nameof(obj))]
+        public static T DeepClone<T>(this T obj, Func<object, object?>? customClone = null)
             => (T)ObjectCloner.Clone(obj, customClone)!;
 
         /// <summary>
