@@ -51,8 +51,8 @@ namespace KGySoft.CoreLibraries
     /// <note type="tip">Starting with .NET 9.0 this class implements the <see cref="IAlternateEqualityComparer{TAlternate,T}"/> interface, supporting both <see cref="StringSegment"/>
     /// and <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> types. This makes possible to use a regular <see cref="Dictionary{TKey,TValue}"/> class
     /// with <see cref="StringSegment"/> lookup if you initialize it with a <see cref="StringSegmentComparer"/> instance (see the static members) and use
-    /// the <see cref="System.Collections.Generic.CollectionExtensions.GetAlternateLookup{TKey,TValue,TAlternateKey}">GetAlternateLookup</see> extension,
-    /// specifying <see cref="StringSegment"/> for the <c>TAlternateKey</c> generic argument. Such an extension exists for the <see cref="HashSet{T}"/> class, too.</note>
+    /// the <see cref="Dictionary{TKey,TValue}.GetAlternateLookup{TAlternateKey}">GetAlternateLookup</see> method,
+    /// specifying <see cref="StringSegment"/> for the <c>TAlternateKey</c> generic argument. Such a method exists for the <see cref="HashSet{T}"/> class, too.</note>
     /// </remarks>
     [Serializable]
     public abstract class StringSegmentComparer : IEqualityComparer<StringSegment>, IComparer<StringSegment>,
@@ -1305,7 +1305,7 @@ namespace KGySoft.CoreLibraries
         string? IAlternateEqualityComparer<StringSegment, string?>.Create(StringSegment x) => x.ToString();
 
         bool IAlternateEqualityComparer<ReadOnlySpan<char>, string?>.Equals(ReadOnlySpan<char> x, string? y) => Equals(x, y);
-        string? IAlternateEqualityComparer<ReadOnlySpan<char>, string?>.Create(ReadOnlySpan<char> x) => x.ToString();
+        string IAlternateEqualityComparer<ReadOnlySpan<char>, string?>.Create(ReadOnlySpan<char> x) => x.ToString();
 #endif
 
         #endregion

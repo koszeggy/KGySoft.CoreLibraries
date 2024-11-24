@@ -56,7 +56,7 @@
   + Supporting the Memory<T> struct natively (.NET Core 2.1 and above)
   + Supporting the ReadOnlyMemory<T> struct natively (.NET Core 2.1 and above)
   + Supporting the FrozenSet<T> implementations natively (.NET 8.0 and above)
-  + Supporting the FrozenDictionary<TKey, TValue> implementations natively (.NET 9.0 and above)
+  + Supporting the FrozenDictionary<TKey, TValue> implementations natively (.NET 8.0 and above)
   + Supporting the OrderedDictionary<TKey, TValue> class natively (.NET 9.0 and above)
 
 * KGySoft.Serialization.Xml namespace:

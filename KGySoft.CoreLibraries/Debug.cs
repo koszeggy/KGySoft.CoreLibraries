@@ -16,6 +16,8 @@
 #region Usings
 
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
+
 using SystemDebug = System.Diagnostics.Debug;
 
 #endregion
@@ -31,7 +33,7 @@ namespace KGySoft
 #endif
 
         [Conditional("DEBUG")]
-        internal static void Assert(bool condition, string? message = null)
+        internal static void Assert(bool condition, [CallerArgumentExpression(nameof(condition))]string? message = null)
         {
 #if NETFRAMEWORK
             SystemDebug.Assert(condition, message);
