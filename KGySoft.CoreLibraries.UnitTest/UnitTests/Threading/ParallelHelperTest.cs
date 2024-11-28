@@ -18,8 +18,11 @@
 #region Usings
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+
+using KGySoft.Collections;
 #if !NET35
 using System.Threading.Tasks;
 #endif
@@ -200,6 +203,30 @@ namespace KGySoft.CoreLibraries.UnitTests.Threading
             Assert.IsTrue(bools.All(b => b));
         }
 #endif
+
+        [Test]
+        public void SortTest()
+        {
+            var random = new FastRandom(0);
+            int[] array = Enumerable.Range(0, 1000).Select(_ => random.Next()).ToArray();
+            ParallelHelper.Sort(null, array);
+            Assert.IsTrue(array.SequenceEqual(array.OrderBy(i => i)));
+
+            // ArraySection as IList<int>
+            ArraySection<int> section = Enumerable.Range(0, 1000).Select(_ => random.Next()).ToArray().AsSection();
+            ParallelHelper.Sort(null, (IList<int>)section);
+            Assert.IsTrue(section.SequenceEqual(section.OrderBy(i => i)));
+
+            // ArraySection as ArraySection
+            section = Enumerable.Range(0, 1000).Select(_ => random.Next()).ToArray().AsSection();
+            ParallelHelper.Sort(null, section);
+            Assert.IsTrue(section.SequenceEqual(section.OrderBy(i => i)));
+
+            // CastArray
+            var castArray = Enumerable.Range(0, 1000).Select(_ => random.Next()).ToArray().Cast<int, uint>();
+            ParallelHelper.Sort(null, castArray);
+            Assert.IsTrue(castArray.SequenceEqual(castArray.OrderBy(i => i)));
+        }
 
         #endregion
     }

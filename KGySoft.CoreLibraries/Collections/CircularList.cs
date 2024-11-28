@@ -42,11 +42,11 @@ namespace KGySoft.Collections
     /// <para>Circularity means a dynamic start/end position in the internal store. If inserting/removing elements is required typically
     /// at the first/last position, then using <see cref="CircularList{T}"/> could be a good choice because these operations have an O(1) cost. Inserting/removing at
     /// other positions have generally O(n) cost, though these operations are optimized for not moving more than n/2 elements.</para>
-    /// <para><see cref="CircularList{T}"/> is fully compatible with <see cref="List{T}"/> as it implements all of the public members of <see cref="List{T}"/>.</para>
+    /// <para><see cref="CircularList{T}"/> is fully compatible with <see cref="List{T}"/> as it implements all the public members of <see cref="List{T}"/>.</para>
     /// <para><see cref="CircularList{T}"/> can be a good option instead of <see cref="LinkedList{T}"/>, too. Generally <see cref="LinkedList{T}"/> is considered
     /// to be a good choice when elements should be inserted/removed at the middle of the list. However, unless a direct reference is kept to a
     /// <see cref="LinkedListNode{T}"/> to be removed or before/after which the new element has to be inserted, then the insert/remove operation will be
-    /// very slow in <see cref="LinkedList{T}"/>, as it has no indexed access, and the node has to be located by iterating the elements. Therefore in most cases
+    /// very slow in <see cref="LinkedList{T}"/>, as it has no indexed access, and the node has to be located by iterating the elements. Therefore, in most cases
     /// <see cref="CircularList{T}"/> outperforms <see cref="LinkedList{T}"/> in most practical cases.</para>
     /// <para>Adding elements to the first/last position are generally O(1) operations. If the capacity needs to be increased to accommodate the
     /// new element, adding becomes an O(n) operation, where n is <see cref="Count"/>. Though when elements are continuously added to the list,
@@ -55,7 +55,7 @@ namespace KGySoft.Collections
     /// items are added to a <see cref="CircularList{T}"/> that was created by the default constructor, capacity is increased only 23 times.</para>
     /// <para>Inserting more elements are also optimized. If the length of the <see cref="CircularList{T}"/> is n and the length of the collection to insert is m, then the cost of <see cref="InsertRange">InsertRange</see>
     /// to the first or last position is O(m). When the collection is inserted in the middle of the <see cref="CircularList{T}"/>, the cost is O(Max(n, m)), and in practice no more than n/2 elements are moved in the <see cref="CircularList{T}"/>.
-    /// In contrast, inserting a collection into the first position of a <see cref="List{T}"/> moves all of the already existing elements. And if the collection to insert does not implement <see cref="ICollection{T}"/>, then
+    /// In contrast, inserting a collection into the first position of a <see cref="List{T}"/> moves all the already existing elements. And if the collection to insert does not implement <see cref="ICollection{T}"/>, then
     /// <see cref="List{T}"/> works with an O(n * m) cost as it will insert the elements one by one, shifting the elements by 1 in every iteration.</para>
     /// <para><see cref="CircularList{T}"/> provides an O(1) solution also for emptying the collection: the <see cref="Reset">Reset</see> method clears all elements and resets the internal capacity to 0 in one
     /// quick step. The effect is the same as calling the <see cref="Clear">Clear</see> and <see cref="TrimExcess">TrimExcess</see> methods in a row but the latter solution has an O(n) cost.</para>
@@ -497,14 +497,7 @@ namespace KGySoft.Collections
                     Throw.ArgumentOutOfRangeException(Argument.value, Res.CircularListCapacityTooSmall);
 
                 if (value > 0)
-                {
-                    T[] newItems = new T[value];
-                    if (size > 0)
-                        CopyTo(newItems);
-
-                    items = newItems;
-                    startIndex = 0;
-                }
+                    Reallocate(value);
                 else
                     items = Reflector<T>.EmptyArray;
             }
@@ -2043,56 +2036,8 @@ namespace KGySoft.Collections
                 Throw.ArgumentException(Res.IListInvalidOffsLen);
 
             comparer ??= ComparerHelper<T>.Comparer;
-            int capacity = items.Length;
-            int start = startIndex + index;
-            int carry = start + count - capacity;
-
-            // the section to sort is wrapped
-            if (carry > 0 && start < capacity)
-            {
-                // fast solution: the whole list must be sorted
-                if (index == 0 && count == size)
-                {
-                    // fastest solution: the list is full, the full list will be sorted so no move is needed
-                    if (capacity == size)
-                        startIndex = 0;
-                    else
-                    {
-                        int nonWrapped = size - carry;
-
-                        // moving down the elements from the end
-                        if (nonWrapped <= carry)
-                        {
-                            items.CopyElements(startIndex, items, carry, nonWrapped);
-                            Array.Clear(items, capacity - nonWrapped, nonWrapped);
-                            startIndex = 0;
-                        }
-                        // moving up the elements from the start
-                        else
-                        {
-                            items.CopyElements(0, items, capacity - count, carry);
-                            Array.Clear(items, 0, carry);
-                            startIndex = capacity - count;
-                        }
-                    }
-
-                    start = startIndex;
-                }
-                // slower solution: copying into new array before sorting
-                else
-                {
-                    T[] newItems = new T[size];
-                    CopyTo(newItems);
-                    items = newItems;
-                    startIndex = 0;
-                    start = index;
-                }
-            }
-
-            if (start >= capacity)
-                start -= capacity;
+            ArrangeForSorting(index, count, out int start);
             Array.Sort(items, start, count, comparer);
-            version += 1;
         }
 
         /// <summary>
@@ -2236,6 +2181,13 @@ namespace KGySoft.Collections
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal int InternalBinarySearch(int index, int count, T item, IComparer<T> comparer)
             => startIndex == 0 ? Array.BinarySearch(items, index, count, item, comparer) : DoBinarySearch(index, count, item, comparer);
+
+        internal ArraySection<T> GetSectionToSort(int offset, int length)
+        {
+            Debug.Assert((uint)offset < (uint)size && (uint)length <= (uint)size && offset + length <= size && length > 1);
+            ArrangeForSorting(offset, length, out int sortStartIndex);
+            return new ArraySection<T>(items, sortStartIndex, length);
+        }
 
         #endregion
 
@@ -2405,6 +2357,16 @@ namespace KGySoft.Collections
             if (newCapacity < minCapacity)
                 newCapacity = minCapacity;
             Capacity = newCapacity;
+        }
+
+        private void Reallocate(int newCapacity)
+        {
+            T[] newItems = new T[newCapacity];
+            if (size > 0)
+                CopyTo(newItems);
+
+            items = newItems;
+            startIndex = 0;
         }
 
         private void InsertAt(int index, T item)
@@ -2772,6 +2734,56 @@ namespace KGySoft.Collections
             start -= capacity;
             result = Array.BinarySearch(items, start, count, item, comparer);
             return result >= 0 ? capacity - startIndex + result : ~(capacity - startIndex + ~result);
+        }
+
+        private void ArrangeForSorting(int index, int count, out int sortStartIndex)
+        {
+            int capacity = items.Length;
+            sortStartIndex = startIndex + index;
+            int carry = sortStartIndex + count - capacity;
+
+            // the section to sort is wrapped
+            if (carry > 0 && sortStartIndex < capacity)
+            {
+                // fast solution: the whole list must be sorted
+                if (index == 0 && count == size)
+                {
+                    // fastest solution: the list is full, the full list will be sorted so no move is needed
+                    if (capacity == size)
+                        startIndex = 0;
+                    else
+                    {
+                        int nonWrapped = size - carry;
+
+                        // moving down the elements from the end
+                        if (nonWrapped <= carry)
+                        {
+                            items.CopyElements(startIndex, items, carry, nonWrapped);
+                            Array.Clear(items, capacity - nonWrapped, nonWrapped);
+                            startIndex = 0;
+                        }
+                        // moving up the elements from the start
+                        else
+                        {
+                            items.CopyElements(0, items, capacity - count, carry);
+                            Array.Clear(items, 0, carry);
+                            startIndex = capacity - count;
+                        }
+                    }
+
+                    sortStartIndex = startIndex;
+                }
+                // slower solution: copying into new array before sorting (trims capacity)
+                else
+                {
+                    Reallocate(size);
+                    sortStartIndex = index;
+                }
+            }
+
+            if (sortStartIndex >= capacity)
+                sortStartIndex -= capacity;
+            version += 1;
         }
 
         #endregion

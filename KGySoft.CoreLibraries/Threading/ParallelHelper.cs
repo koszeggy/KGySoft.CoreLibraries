@@ -16,6 +16,12 @@
 #region Usings
 
 using System;
+using System.Collections.Generic;
+
+using KGySoft.Collections;
+using KGySoft.CoreLibraries;
+using KGySoft.Reflection;
+
 #if NET35
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -52,8 +58,14 @@ namespace KGySoft.Threading
     /// The <see cref="ParallelHelper"/> class contains similar methods to the <see cref="O:System.Threading.Tasks.Parallel.For">Parallel.For</see> overloads
     /// in .NET Framework 4.0 and later but the ones in this class can be used even on .NET Framework 3.5, support reporting progress and have async overloads.
     /// </summary>
-    public static class ParallelHelper
+    public static partial class ParallelHelper
     {
+        #region Constants
+
+        private const int sortParallelThreshold = 16;
+
+        #endregion
+
         #region Fields
 
 #if !NET35
@@ -72,6 +84,8 @@ namespace KGySoft.Threading
         #region Methods
 
         #region Public Methods
+
+        #region For
 
         /// <summary>
         /// Executes an indexed loop synchronously, in which iterations may run in parallel.
@@ -332,6 +346,89 @@ namespace KGySoft.Threading
 
         #endregion
 
+        #region Sort
+
+        #region Sync
+
+        #region DefaultContext
+
+        // TODO
+
+        #endregion
+
+        #region ParallelConfig
+
+        // TODO
+
+        #endregion
+
+        #region IAsyncContect
+
+        public static bool Sort<T>(IAsyncContext? context, IList<T> list, IComparer<T>? comparer = null)
+        {
+            if (list == null!)
+                Throw.ArgumentNullException(Argument.array);
+
+            int count = list.Count;
+            if (count < 2)
+                return true;
+
+            return DoSort(context ?? AsyncHelper.DefaultContext, list, 0, count, comparer);
+        }
+
+        public static bool Sort<T>(IAsyncContext? context, IList<T> list, int index, int count, IComparer<T>? comparer = null)
+        {
+            if (list == null!)
+                Throw.ArgumentNullException(Argument.list);
+            if (index < 0)
+                Throw.ArgumentOutOfRangeException(Argument.index);
+            if (count < 0)
+                Throw.ArgumentOutOfRangeException(Argument.count);
+            if (index + count > list.Count)
+                Throw.ArgumentException(Res.IListInvalidOffsLen);
+
+            if (count < 2)
+                return true;
+
+            return DoSort(context ?? AsyncHelper.DefaultContext, list, index, count, comparer);
+        }
+
+        public static bool Sort<T>(IAsyncContext? context, ArraySection<T> array, IComparer<T>? comparer = null)
+        {
+            if (array.Length < 2)
+                return true;
+            return DoSort(context ?? AsyncHelper.DefaultContext, array, comparer);
+        }
+
+        public static bool Sort<TFrom, TTo>(IAsyncContext? context, CastArray<TFrom, TTo> array, IComparer<TTo>? comparer = null)
+            where TFrom : unmanaged
+            where TTo : unmanaged
+        {
+            if (array.Length < 2)
+                return true;
+            return DoSort(context ?? AsyncHelper.DefaultContext, array, comparer);
+        }
+
+        #endregion
+
+        #endregion
+
+        #region Async APM
+
+        // TODO
+
+        #endregion
+
+        #region Async TPL
+
+        // TODO
+
+        #endregion
+
+        #endregion
+
+        #endregion
+
         #region Private Methods
 
 #if NET35
@@ -554,6 +651,82 @@ namespace KGySoft.Threading
             });
 #endif
 
+            return !context.IsCancellationRequested;
+        }
+
+        private static bool DoSort<T>(IAsyncContext context, IList<T> list, int startIndex, int count, IComparer<T>? comparer)
+        {
+            Debug.Assert(list.Count > 1);
+
+            // TODO: insert performance test result for reference
+            bool isSingleThread = IsSingleCoreCpu || context.MaxDegreeOfParallelism == 1;
+
+            switch (list)
+            {
+                case T[] array:
+                    if (isSingleThread)
+                        Array.Sort(array, startIndex, count, comparer);
+                    else
+                        SortHelper<T>.Instance.Sort(context, array, startIndex, count, comparer);
+                    break;
+
+                case List<T> genericList:
+                    // List<T>: multithreaded sorting is getting faster only from 4 cores. Unfortunately there is no public API to get
+                    // the underlying array, and CollectionMarshal.AsSpan cannot be used because spans cannot be passed to other threads.
+                    if (IsSingleCoreCpu || context.MaxDegreeOfParallelism is >= 1 and < 4)
+                        genericList.Sort(startIndex, count, comparer);
+                    else
+                        SortHelper<T>.Instance.Sort(context, genericList, startIndex, count, comparer);
+                    break;
+
+                case ArraySection<T> arraySection:
+                    if (isSingleThread)
+                        Array.Sort(arraySection.UnderlyingArray!, arraySection.Offset, arraySection.Length, comparer);
+                    else
+                        SortHelper<T>.Instance.Sort(context, arraySection.UnderlyingArray!, arraySection.Offset, arraySection.Length, comparer);
+
+                    break;
+
+                case CircularList<T> circularList:
+                    if (isSingleThread)
+                        circularList.Sort(startIndex, count, comparer);
+                    else
+                    {
+                        ArraySection<T> section = circularList.GetSectionToSort(startIndex, count);
+                        SortHelper<T>.Instance.Sort(context, section.UnderlyingArray!, section.Offset, section.Length, comparer);
+                    }
+
+                    break;
+
+                default:
+                    // From here the slow fallback path for IList<T> with virtual calls
+#if NET10_0_OR_GREATER // TODO: https://github.com/dotnet/runtime/issues/76375 - only if the fallback is not implemented by copying the elements to a new array, and then back
+                    if (isSingleThread)
+                    {
+                        CollectionExtensions.Sort(list, startIndex, count, comparer);
+                        break;
+                    }
+#endif
+                    SortHelper<T>.Instance.Sort(context, list, startIndex, count, comparer);
+                    break;
+            }
+
+            return !context.IsCancellationRequested;
+        }
+
+        private static bool DoSort<T>(IAsyncContext context, ArraySection<T> array, IComparer<T>? comparer)
+        {
+            Debug.Assert(array.Length > 1);
+            SortHelper<T>.Instance.Sort(context, array.UnderlyingArray!, array.Offset, array.Length, comparer);
+            return !context.IsCancellationRequested;
+        }
+
+        private static bool DoSort<TFrom, TTo>(IAsyncContext context, CastArray<TFrom, TTo> array, IComparer<TTo>? comparer)
+            where TFrom : unmanaged
+            where TTo : unmanaged
+        {
+            Debug.Assert(array.Length > 1);
+            SortHelper<TTo>.Instance.Sort(context, array, comparer);
             return !context.IsCancellationRequested;
         }
 
