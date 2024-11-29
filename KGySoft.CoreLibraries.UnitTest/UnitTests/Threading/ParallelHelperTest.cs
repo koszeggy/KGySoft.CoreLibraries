@@ -19,6 +19,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 
@@ -207,7 +208,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Threading
         [Test]
         public void SortTest()
         {
-            var random = new FastRandom(0);
+            var random = new FastRandom();
             int[] array = Enumerable.Range(0, 1000).Select(_ => random.Next()).ToArray();
             ParallelHelper.Sort(null, array);
             Assert.IsTrue(array.SequenceEqual(array.OrderBy(i => i)));
@@ -226,6 +227,38 @@ namespace KGySoft.CoreLibraries.UnitTests.Threading
             var castArray = Enumerable.Range(0, 1000).Select(_ => random.Next()).ToArray().Cast<int, uint>();
             ParallelHelper.Sort(null, castArray);
             Assert.IsTrue(castArray.SequenceEqual(castArray.OrderBy(i => i)));
+        }
+
+        [Test]
+        public void SortKeyValuesTest()
+        {
+            var random = new FastRandom();
+            int[] keys = Enumerable.Range(0, 1000).Select(_ => random.Next()).ToArray();
+            float[] values = keys.Select(i => (float)i).Append(Single.PositiveInfinity).ToArray();
+            ParallelHelper.Sort(null, keys, values);
+            Assert.IsTrue(keys.SequenceEqual(keys.OrderBy(i => i)));
+            Assert.IsTrue(values.SequenceEqual(values.OrderBy(i => i)));
+
+            // ArraySection as IList
+            ArraySection<int> sectionKeys = Enumerable.Range(0, 1000).Select(_ => random.Next()).ToArray().AsSection();
+            ArraySection<float> sectionValues = sectionKeys.Select(i => (float)i).Append(Single.PositiveInfinity).ToArray().AsSection();
+            ParallelHelper.Sort(null, (IList<int>)sectionKeys, sectionValues);
+            Assert.IsTrue(sectionKeys.SequenceEqual(sectionKeys.OrderBy(i => i)));
+            Assert.IsTrue(sectionValues.SequenceEqual(sectionValues.OrderBy(i => i)));
+
+            // ArraySection as ArraySection
+            sectionKeys = Enumerable.Range(0, 1000).Select(_ => random.Next()).ToArray().AsSection();
+            sectionValues = sectionKeys.Select(i => (float)i).Append(Single.PositiveInfinity).ToArray().AsSection();
+            ParallelHelper.Sort(null, sectionKeys, sectionValues);
+            Assert.IsTrue(sectionKeys.SequenceEqual(sectionKeys.OrderBy(i => i)));
+            Assert.IsTrue(sectionValues.SequenceEqual(sectionValues.OrderBy(i => i)));
+
+            // CastArray
+            var castArrayKeys = Enumerable.Range(0, 1000).Select(_ => random.Next()).ToArray().Cast<int, uint>();
+            var castArrayValues = castArrayKeys.Select(i => (long)i).Append(Int64.MaxValue).ToArray().Cast<long, ulong>();
+            ParallelHelper.Sort(null, castArrayKeys, castArrayValues);
+            Assert.IsTrue(castArrayKeys.SequenceEqual(castArrayKeys.OrderBy(i => i)));
+            Assert.IsTrue(castArrayValues.SequenceEqual(castArrayValues.OrderBy(i => i)));
         }
 
         #endregion

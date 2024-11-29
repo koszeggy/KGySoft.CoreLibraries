@@ -18,12 +18,7 @@
 using System;
 using System.Collections.Generic;
 
-using KGySoft.Collections;
-using KGySoft.CoreLibraries;
-using KGySoft.Reflection;
-
 #if NET35
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.ExceptionServices;
@@ -35,9 +30,11 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Security;
 #endif
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 #endif
 
+using KGySoft.Collections;
 #if !NET6_0_OR_GREATER
 using KGySoft.CoreLibraries;
 #endif
@@ -409,6 +406,65 @@ namespace KGySoft.Threading
             return DoSort(context ?? AsyncHelper.DefaultContext, array, comparer);
         }
 
+        public static bool Sort<TKey, TValue>(IAsyncContext? context, IList<TKey> keys, IList<TValue>? values, IComparer<TKey>? comparer = null)
+        {
+            if (keys == null!)
+                Throw.ArgumentNullException(Argument.keys);
+            return Sort(context, keys, values, 0, keys.Count, comparer);
+        }
+
+        // TODO: Remarks: special handling for keys and values works only if they are both arrays or their generic type definitions are the same
+        public static bool Sort<TKey, TValue>(IAsyncContext? context, IList<TKey> keys, IList<TValue>? values, int index, int count, IComparer<TKey>? comparer = null)
+        {
+            if (keys == null!)
+                Throw.ArgumentNullException(Argument.keys);
+            if (values == null)
+                return Sort(context, keys, index, count, comparer);
+            if (index < 0)
+                Throw.ArgumentOutOfRangeException(Argument.index);
+            if (count < 0)
+                Throw.ArgumentOutOfRangeException(Argument.count);
+            if (keys.Count - index < count || index > values.Count - count)
+                Throw.ArgumentException(Res.IListInvalidOffsLen);
+
+            if (count < 2)
+                return true;
+
+            return DoSort(context ?? AsyncHelper.DefaultContext, keys, values, index, count, comparer);
+        }
+
+        public static bool Sort<TKey, TValue>(IAsyncContext? context, ArraySection<TKey> keys, ArraySection<TValue> values, IComparer<TKey>? comparer = null)
+        {
+            if (values.IsNull)
+                return Sort(context, keys, comparer);
+            if (keys.Length > values.Length)
+                Throw.ArgumentException(Res.IListInvalidOffsLen);
+            if (keys.Length < 2)
+                return true;
+            if (keys.Length < values.Length)
+                values = values.Slice(0, keys.Length);
+
+            return DoSort(context ?? AsyncHelper.DefaultContext, keys, values, comparer);
+        }
+
+        public static bool Sort<TKeyFrom, TKeyTo, TValueFrom, TValueTo>(IAsyncContext? context, CastArray<TKeyFrom, TKeyTo> keys, CastArray<TValueFrom, TValueTo> values, IComparer<TKeyTo>? comparer = null)
+            where TKeyFrom : unmanaged
+            where TKeyTo : unmanaged
+            where TValueFrom : unmanaged
+            where TValueTo : unmanaged
+        {
+            if (values.IsNull)
+                return Sort(context, keys, comparer);
+            if (keys.Length > values.Length)
+                Throw.ArgumentException(Res.IListInvalidOffsLen);
+            if (keys.Length < 2)
+                return true;
+            if (keys.Length < values.Length)
+                values = values.Slice(0, keys.Length);
+
+            return DoSort(context ?? AsyncHelper.DefaultContext, keys, values, comparer);
+        }
+
         #endregion
 
         #endregion
@@ -659,12 +715,12 @@ namespace KGySoft.Threading
             Debug.Assert(list.Count > 1);
 
             // TODO: insert performance test result for reference
-            bool isSingleThread = IsSingleCoreCpu || context.MaxDegreeOfParallelism == 1;
+            bool isSingleThreadNotCancellable = !context.CanBeCanceled && (IsSingleCoreCpu || context.MaxDegreeOfParallelism == 1);
 
             switch (list)
             {
                 case T[] array:
-                    if (isSingleThread)
+                    if (isSingleThreadNotCancellable)
                         Array.Sort(array, startIndex, count, comparer);
                     else
                         SortHelper<T>.Instance.Sort(context, array, startIndex, count, comparer);
@@ -673,27 +729,35 @@ namespace KGySoft.Threading
                 case List<T> genericList:
                     // List<T>: multithreaded sorting is getting faster only from 4 cores. Unfortunately there is no public API to get
                     // the underlying array, and CollectionMarshal.AsSpan cannot be used because spans cannot be passed to other threads.
-                    if (IsSingleCoreCpu || context.MaxDegreeOfParallelism is >= 1 and < 4)
+                    if (isSingleThreadNotCancellable || context.MaxDegreeOfParallelism is >= 1 and < 4)
                         genericList.Sort(startIndex, count, comparer);
                     else
                         SortHelper<T>.Instance.Sort(context, genericList, startIndex, count, comparer);
                     break;
 
                 case ArraySection<T> arraySection:
-                    if (isSingleThread)
-                        Array.Sort(arraySection.UnderlyingArray!, arraySection.Offset, arraySection.Length, comparer);
+                    if (isSingleThreadNotCancellable)
+                        Array.Sort(arraySection.UnderlyingArray!, startIndex + arraySection.Offset, count, comparer);
                     else
-                        SortHelper<T>.Instance.Sort(context, arraySection.UnderlyingArray!, arraySection.Offset, arraySection.Length, comparer);
+                        SortHelper<T>.Instance.Sort(context, arraySection.UnderlyingArray!, startIndex + arraySection.Offset, count, comparer);
+
+                    break;
+
+                case ArraySegment<T> arraySection:
+                    if (isSingleThreadNotCancellable)
+                        Array.Sort(arraySection.Array!, startIndex + arraySection.Offset, count, comparer);
+                    else
+                        SortHelper<T>.Instance.Sort(context, arraySection.Array!, startIndex + arraySection.Offset, count, comparer);
 
                     break;
 
                 case CircularList<T> circularList:
-                    if (isSingleThread)
+                    if (isSingleThreadNotCancellable)
                         circularList.Sort(startIndex, count, comparer);
                     else
                     {
                         ArraySection<T> section = circularList.GetSectionToSort(startIndex, count);
-                        SortHelper<T>.Instance.Sort(context, section.UnderlyingArray!, section.Offset, section.Length, comparer);
+                        SortHelper<T>.Instance.Sort(context, section.UnderlyingArray!, section.Offset, count, comparer);
                     }
 
                     break;
@@ -717,7 +781,10 @@ namespace KGySoft.Threading
         private static bool DoSort<T>(IAsyncContext context, ArraySection<T> array, IComparer<T>? comparer)
         {
             Debug.Assert(array.Length > 1);
-            SortHelper<T>.Instance.Sort(context, array.UnderlyingArray!, array.Offset, array.Length, comparer);
+            if (!context.CanBeCanceled && (IsSingleCoreCpu || context.MaxDegreeOfParallelism == 1))
+                Array.Sort(array.UnderlyingArray!, array.Offset, array.Length, comparer);
+            else
+                SortHelper<T>.Instance.Sort(context, array.UnderlyingArray!, array.Offset, array.Length, comparer);
             return !context.IsCancellationRequested;
         }
 
@@ -726,7 +793,133 @@ namespace KGySoft.Threading
             where TTo : unmanaged
         {
             Debug.Assert(array.Length > 1);
-            SortHelper<TTo>.Instance.Sort(context, array, comparer);
+#if NET5_0_OR_GREATER
+            if (!context.CanBeCanceled && (IsSingleCoreCpu || context.MaxDegreeOfParallelism == 1))
+                array.AsSpan.Sort(comparer);
+#endif
+            else
+            {
+                SortHelper<TTo>.Instance.Sort(context, array, comparer);
+            }
+            return !context.IsCancellationRequested;
+        }
+
+        private static bool DoSort<TKey, TValue>(IAsyncContext context, IList<TKey> keys, IList<TValue> values, int startIndex, int count, IComparer<TKey>? comparer)
+        {
+            Debug.Assert(keys.Count > startIndex + 1 && values.Count >= keys.Count);
+
+            bool isSingleThreadNotCancellable = !context.CanBeCanceled && (IsSingleCoreCpu || context.MaxDegreeOfParallelism == 1);
+
+            switch ((keys, values))
+            {
+                case (TKey[] keysArray, TValue[] valuesArray):
+                    if (isSingleThreadNotCancellable)
+                        Array.Sort(keysArray, valuesArray, startIndex, count, comparer);
+                    else
+                        SortHelper<TKey, TValue>.Instance.Sort(context, keysArray, valuesArray, startIndex, count, comparer);
+                    break;
+
+                case (List<TKey> keysList, List<TValue> valuesList):
+                    // List<T>: multithreaded sorting is getting faster only from 4 cores. Unfortunately there is no public API to get
+                    // the underlying array, and CollectionMarshal.AsSpan cannot be used for multithreaded sorting because spans cannot be passed to other threads.
+#if NET5_0_OR_GREATER
+                    if (isSingleThreadNotCancellable || context.MaxDegreeOfParallelism is >= 1 and < 4)
+                        CollectionsMarshal.AsSpan(keysList.Slice(startIndex, count)).Sort(CollectionsMarshal.AsSpan(valuesList).Slice(startIndex, count), comparer);
+                    else
+#endif
+                    {
+                        SortHelper<TKey, TValue>.Instance.Sort(context, keysList, valuesList, startIndex, count, comparer);
+                    }
+                    break;
+
+                case (ArraySection<TKey> keysSection, ArraySection<TValue> valuesSection):
+#if NET5_0_OR_GREATER
+                    if (isSingleThreadNotCancellable)
+                        keysSection.AsSpan.Sort(valuesSection.AsSpan, comparer);
+#else
+                    if (isSingleThreadNotCancellable && keysSection.Offset == valuesSection.Offset)
+                        Array.Sort(keysSection.UnderlyingArray!, valuesSection.UnderlyingArray, startIndex + keysSection.Offset, count, comparer);
+#endif
+                    else
+                        SortHelper<TKey, TValue>.Instance.Sort(context, keysSection, valuesSection.Slice(startIndex, count), comparer);
+
+                    break;
+
+                case (ArraySegment<TKey> keysSection, ArraySegment<TValue> valuesSection):
+#if NET5_0_OR_GREATER
+                    if (isSingleThreadNotCancellable)
+                        keysSection.AsSpan().Sort(valuesSection.AsSpan(), comparer);
+#else
+                    if (isSingleThreadNotCancellable && keysSection.Offset == valuesSection.Offset)
+                        Array.Sort(keysSection.Array!, valuesSection.Array, startIndex + keysSection.Offset, count, comparer);
+#endif
+                    else
+                        SortHelper<TKey, TValue>.Instance.Sort(context, keysSection, valuesSection.Slice(startIndex, count), comparer);
+
+                    break;
+
+                case (CircularList<TKey> keysCircularList, CircularList<TValue> valuesCircularList):
+                    ArraySection<TKey> keysCListSection = keysCircularList.GetSectionToSort(startIndex, count);
+                    ArraySection<TValue> valuesCListSection = valuesCircularList.GetSectionToSort(startIndex, count);
+#if NET5_0_OR_GREATER
+                    if (isSingleThreadNotCancellable)
+                        keysCListSection.AsSpan.Sort(valuesCListSection.AsSpan, comparer);
+#else
+                    if (isSingleThreadNotCancellable && keysCListSection.Offset == valuesCListSection.Offset)
+                        Array.Sort(keysCListSection.UnderlyingArray!, valuesCListSection.UnderlyingArray, startIndex + keysCListSection.Offset, count, comparer);
+#endif
+                    else
+                        SortHelper<TKey, TValue>.Instance.Sort(context, keysCListSection, valuesCListSection.Slice(startIndex, count), comparer);
+
+                    break;
+
+                default:
+                    // From here the slow fallback path for IList<T> with virtual calls
+#if NET10_0_OR_GREATER // TODO: https://github.com/dotnet/runtime/issues/76375 - only if the fallback is not implemented by copying the elements to a new array, and then back
+                    if (isSingleThread)
+                    {
+                        CollectionExtensions.Sort(list, keys, arrays, startIndex, count, comparer);
+                        break;
+                    }
+#endif
+                    SortHelper<TKey, TValue>.Instance.Sort(context, keys, values, startIndex, count, comparer);
+                    break;
+            }
+
+            return !context.IsCancellationRequested;
+        }
+
+        private static bool DoSort<TKey, TValue>(IAsyncContext context, ArraySection<TKey> keys, ArraySection<TValue> values, IComparer<TKey>? comparer)
+        {
+            Debug.Assert(keys.Length > 1 && values.Length >= keys.Length);
+#if NET5_0_OR_GREATER
+            if (!context.CanBeCanceled && (IsSingleCoreCpu || context.MaxDegreeOfParallelism == 1))
+                keys.AsSpan.Sort(values.AsSpan, comparer);
+#else
+            if (!context.CanBeCanceled && (IsSingleCoreCpu || context.MaxDegreeOfParallelism == 1) && keys.Offset == values.Offset)
+                Array.Sort(keys.UnderlyingArray!, values.UnderlyingArray, keys.Offset, keys.Length, comparer);
+#endif
+            else
+                SortHelper<TKey, TValue>.Instance.Sort(context, keys, values.Slice(0, keys.Length), comparer);
+            return !context.IsCancellationRequested;
+        }
+
+        private static bool DoSort<TKeyFrom, TKeyTo, TValueFrom, TValueTo>(IAsyncContext context, CastArray<TKeyFrom, TKeyTo> keys, CastArray<TValueFrom, TValueTo> values, IComparer<TKeyTo>? comparer)
+            where TKeyFrom : unmanaged
+            where TKeyTo : unmanaged
+            where TValueFrom : unmanaged
+            where TValueTo : unmanaged
+        {
+            Debug.Assert(keys.Length > 1 && values.Length >= keys.Length);
+#if !NET5_0_OR_GREATER
+            if (!context.CanBeCanceled && (IsSingleCoreCpu || context.MaxDegreeOfParallelism == 1))
+                keys.AsSpan.Sort(values.AsSpan, comparer);
+            else
+#endif
+            {
+                SortHelper<TKeyTo, TValueTo>.Instance.Sort(context, keys, values.Slice(0, keys.Length), comparer);
+            }
+
             return !context.IsCancellationRequested;
         }
 

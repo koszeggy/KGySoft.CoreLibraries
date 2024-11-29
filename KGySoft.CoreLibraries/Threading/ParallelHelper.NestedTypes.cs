@@ -18,6 +18,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 #if NETCOREAPP3_0_OR_GREATER
 using System.Numerics;
 #endif
@@ -30,13 +31,16 @@ using KGySoft.CoreLibraries;
 
 namespace KGySoft.Threading
 {
-    [SuppressMessage("ReSharper", "SwapViaDeconstruction",
-        Justification = "Performance. The deconstruction would create additional locals and references.")]
+    [SuppressMessage("ReSharper", "SwapViaDeconstruction", Justification = "Performance. The deconstruction would create additional locals and references.")]
+    [SuppressMessage("ReSharper", "AccessToDisposedClosure", Justification = "Dispose happens after leaving the scope")]
+    [SuppressMessage("ReSharper", "MemberHidesStaticFromOuterClass", Justification = "The the outer static Sort method is never meant to be called from the private interface implementations.")]
     public static partial class ParallelHelper
     {
         #region Nested Types
 
         #region Nested Interfaces
+
+        #region ISortHelper<T> interface
 
         private interface ISortHelper<T>
         {
@@ -52,9 +56,29 @@ namespace KGySoft.Threading
 
         #endregion
 
+        #region ISortHelper<TKey, TValue> interface
+
+        private interface ISortHelper<TKey, TValue>
+        {
+            #region Methods
+
+            void Sort(IAsyncContext context, IList<TKey> keys, IList<TValue> values, int startIndex, int count, IComparer<TKey>? comparer);
+            void Sort(IAsyncContext context, TKey[] keys, TValue[] values, int startIndex, int count, IComparer<TKey>? comparer);
+            void Sort(IAsyncContext context, List<TKey> keys, List<TValue> values, int startIndex, int count, IComparer<TKey>? comparer);
+            void Sort(IAsyncContext context, ArraySection<TKey> keys, ArraySection<TValue> values, IComparer<TKey>? comparer); // Needed because array version cannot be used if offsets are different
+            void Sort<TKeyFrom, TKeyTo, TValueFrom, TValueTo>(IAsyncContext context, CastArray<TKeyFrom, TKeyTo> keys, CastArray<TValueFrom, TValueTo> values, IComparer<TKeyTo>? comparer)
+                where TKeyFrom : unmanaged where TKeyTo : unmanaged, TKey where TValueFrom : unmanaged where TValueTo : unmanaged, TValue;
+
+            #endregion
+        }
+
+        #endregion
+
+        #endregion
+
         #region Nested Classes
 
-        #region SortHelper class
+        #region SortHelper<T> class
 
         private sealed class SortHelper<T> : ISortHelper<T>
         {
@@ -626,7 +650,7 @@ namespace KGySoft.Threading
 
                 // Otherwise, doing the recursions on the current thread
                 DoSort(context, array.Slice(0, pivotIndex), comparer, freeDepth);
-                DoSort(context, array.Slice(pivotIndex, array.Length - pivotIndex), comparer, freeDepth);
+                DoSort(context, array.Slice(pivotIndex), comparer, freeDepth);
             }
 
             #endregion
@@ -863,7 +887,7 @@ namespace KGySoft.Threading
                     pivotIndex = left - 1;
                 }
 
-                return pivotIndex - 0;
+                return pivotIndex;
             }
 
             #endregion
@@ -874,7 +898,7 @@ namespace KGySoft.Threading
 
             public void Sort(IAsyncContext context, IList<T> list, int startIndex, int count, IComparer<T>? comparer)
             {
-                //Debug.Assert(list is not (T[] or ArraySegment<T> or List<T> or CircularList<T>) && !list.GetType().IsGenericTypeOf(typeof(CastArray<,>)), "Known ILists are expected to be handled in a special way to avoid slower virtual calls");
+                Debug.Assert(list is not (T[] or ArraySegment<T> or List<T> or CircularList<T>), "Known ILists are expected to be handled in a special way to avoid slower virtual calls");
                 int maxTasks = context.MaxDegreeOfParallelism;
                 if (maxTasks <= 0)
                     maxTasks = CoreCount;
@@ -903,7 +927,6 @@ namespace KGySoft.Threading
 
             public void Sort(IAsyncContext context, List<T> list, int startIndex, int count, IComparer<T>? comparer)
             {
-                //Debug.Assert(list is not (T[] or ArraySegment<T> or List<T> or CircularList<T>) && !list.GetType().IsGenericTypeOf(typeof(CastArray<,>)), "Known ILists are expected to be handled in a special way to avoid slower virtual calls");
                 int maxTasks = context.MaxDegreeOfParallelism;
                 if (maxTasks <= 0)
                     maxTasks = CoreCount;
@@ -939,7 +962,1166 @@ namespace KGySoft.Threading
 
         #endregion
 
-        #region ComparableSortHelper class
+        #region SortHelper<TKey, TValue> class
+
+        private sealed class SortHelper<TKey, TValue> : ISortHelper<TKey, TValue>
+        {
+            #region Fields
+
+            internal static ISortHelper<TKey, TValue> Instance { get; } = typeof(IComparable<TKey>).IsAssignableFrom(typeof(TKey))
+                ? (ISortHelper<TKey, TValue>)Activator.CreateInstance(typeof(ComparableSortHelper<,>).MakeGenericType(typeof(TKey), typeof(TValue)), true)!
+                : new SortHelper<TKey, TValue>();
+
+            #endregion
+
+            #region Methods
+
+            #region Static Methods
+
+            #region Internal Methods
+
+            internal static void DoSort(IAsyncContext context, IList<TKey> keys, IList<TValue> values, int startIndex, int count, IComparer<TKey> comparer, int freeDepth)
+            {
+                #region Local Methods
+
+                [MethodImpl(MethodImpl.AggressiveInlining)]
+                static void SwapIfGreater(IList<TKey> keys, IList<TValue> values, IComparer<TKey> comparer, int i, int j)
+                {
+                    if (comparer.Compare(keys[i], keys[j]) > 0)
+                    {
+                        TKey key = keys[i];
+                        keys[i] = keys[j];
+                        keys[j] = key;
+
+                        TValue value = values[i];
+                        values[i] = values[j];
+                        values[j] = value;
+                    }
+                }
+
+                #endregion
+
+                Debug.Assert(count > 1);
+                if (context.IsCancellationRequested)
+                    return;
+
+                // just a few elements: no parallel sorting and no recursion
+                if (count < sortParallelThreshold)
+                {
+                    if (count == 2)
+                    {
+                        SwapIfGreater(keys, values, comparer, startIndex, startIndex + 1);
+                        return;
+                    }
+
+                    if (count == 3)
+                    {
+                        SwapIfGreater(keys, values, comparer, startIndex, startIndex + 1);
+                        SwapIfGreater(keys, values, comparer, startIndex, startIndex + 2);
+                        SwapIfGreater(keys, values, comparer, startIndex + 1, startIndex + 2);
+                        return;
+                    }
+
+                    // insertion sort
+                    for (int i = startIndex + 1; i < startIndex + count; i++)
+                    {
+                        TKey currentKey = keys[i];
+                        TValue currentValue = values[i];
+                        int j = i - 1;
+                        while (j >= startIndex && comparer.Compare(currentKey, keys[j]) < 0)
+                        {
+                            keys[j + 1] = keys[j];
+                            values[j + 1] = values[j];
+                            j -= 1;
+                        }
+
+                        keys[j + 1] = currentKey;
+                        values[j + 1] = currentValue;
+                    }
+
+                    return;
+                }
+
+                // pivot index relative to startIndex, it's always between 0 and count
+                int pivotIndex;
+
+                // This is to prevent real recursion in trivial cases. We could use a stack to avoid real recursion, but in practice that is slower.
+                while (true)
+                {
+                    Debug.Assert(count > 1);
+
+                    // Separating two partitions and then sorting the halves separately.
+                    pivotIndex = Partition(keys, values, startIndex, count, comparer);
+                    Debug.Assert(pivotIndex < count);
+
+                    // Left half has <= 1 element: doing the right half only
+                    if (pivotIndex <= 1)
+                    {
+                        // Narrowing from the left if possible. Can happen if the values are the same according to the comparer.
+                        int endIndex = count - 1;
+                        while (pivotIndex < endIndex && comparer.Compare(keys[startIndex + pivotIndex], keys[startIndex + pivotIndex + 1]) == 0)
+                            pivotIndex += 1;
+
+                        // there is nothing left to sort
+                        if (count - pivotIndex <= 1)
+                            return;
+
+                        // "Recursion" with the right half only so free depth can remain the same
+                        startIndex += pivotIndex;
+                        count -= pivotIndex;
+                        continue;
+                    }
+
+                    // Right half has <= 1 element
+                    if (count - pivotIndex <= 1)
+                    {
+                        // Narrowing from the right if possible. Can happen if the values are the same according to the comparer.
+                        while (pivotIndex > 1 && comparer.Compare(keys[startIndex + pivotIndex], keys[startIndex + pivotIndex - 1]) == 0)
+                            pivotIndex -= 1;
+
+                        // there is nothing left to sort
+                        if (pivotIndex <= 1)
+                            return;
+
+                        // "Recursion" with the left half only so free depth can remain the same
+                        count = pivotIndex;
+                        continue;
+                    }
+
+                    // Only real recursions from here so breaking the loop.
+                    break;
+                }
+
+                // Here we have two partitions that we can sort independently. If we have free depth and both sides are big enough we can spawn a new thread.
+                if (freeDepth > 0 && Math.Min(pivotIndex, count - pivotIndex) >= sortParallelThreshold)
+                {
+                    // Only one of them is spawned on a new thread because the current thread can do one of the jobs just fine.
+                    // Always the smaller half is assigned to the new thread because of the overhead and to prevent the wait handle
+                    // from starting to sleep if possible.
+                    using var handle = new ManualResetEventSlim(false);
+                    if (pivotIndex <= count >> 1)
+                    {
+                        ThreadPool.UnsafeQueueUserWorkItem(_ =>
+                        {
+                            DoSort(context, keys, values, startIndex, pivotIndex, comparer, freeDepth - 1);
+                            handle.Set();
+                        }, null);
+                        DoSort(context, keys, values, startIndex + pivotIndex, count - pivotIndex, comparer, freeDepth - 1);
+                    }
+                    else
+                    {
+                        ThreadPool.UnsafeQueueUserWorkItem(_ =>
+                        {
+                            DoSort(context, keys, values, startIndex + pivotIndex, count - pivotIndex, comparer, freeDepth - 1);
+                            handle.Set();
+                        }, null);
+                        DoSort(context, keys, values, startIndex, pivotIndex, comparer, freeDepth - 1);
+                    }
+
+                    handle.Wait();
+                    return;
+                }
+
+                // Otherwise, doing the recursions on the current thread
+                DoSort(context, keys, values, startIndex, pivotIndex, comparer, freeDepth);
+                DoSort(context, keys, values, startIndex + pivotIndex, count - pivotIndex, comparer, freeDepth);
+            }
+
+            internal static void DoSort(IAsyncContext context, TKey[] keys, TValue[] values, int startIndex, int count, IComparer<TKey> comparer, int freeDepth)
+            {
+                #region Local Methods
+
+                [MethodImpl(MethodImpl.AggressiveInlining)]
+                static void SwapIfGreater(TKey[] keys, TValue[] values, IComparer<TKey> comparer, int i, int j)
+                {
+                    if (comparer.Compare(keys[i], keys[j]) > 0)
+                    {
+                        TKey key = keys[i];
+                        keys[i] = keys[j];
+                        keys[j] = key;
+
+                        TValue value = values[i];
+                        values[i] = values[j];
+                        values[j] = value;
+                    }
+                }
+
+                #endregion
+
+                Debug.Assert(count > 1);
+                if (context.IsCancellationRequested)
+                    return;
+
+                // just a few elements: no parallel sorting and no recursion
+                if (count < sortParallelThreshold)
+                {
+                    if (count == 2)
+                    {
+                        SwapIfGreater(keys, values, comparer, startIndex, startIndex + 1);
+                        return;
+                    }
+
+                    if (count == 3)
+                    {
+                        SwapIfGreater(keys, values, comparer, startIndex, startIndex + 1);
+                        SwapIfGreater(keys, values, comparer, startIndex, startIndex + 2);
+                        SwapIfGreater(keys, values, comparer, startIndex + 1, startIndex + 2);
+                        return;
+                    }
+
+                    // insertion sort
+                    for (int i = startIndex + 1; i < startIndex + count; i++)
+                    {
+                        TKey currentKey = keys[i];
+                        TValue currentValue = values[i];
+                        int j = i - 1;
+                        while (j >= startIndex && comparer.Compare(currentKey, keys[j]) < 0)
+                        {
+                            keys[j + 1] = keys[j];
+                            values[j + 1] = values[j];
+                            j -= 1;
+                        }
+
+                        keys[j + 1] = currentKey;
+                        values[j + 1] = currentValue;
+                    }
+
+                    return;
+                }
+
+                // pivot index relative to startIndex, it's always between 0 and count
+                int pivotIndex;
+
+                // This is to prevent real recursion in trivial cases. We could use a stack to avoid real recursion, but in practice that is slower.
+                while (true)
+                {
+                    Debug.Assert(count > 1);
+
+                    // Separating two partitions and then sorting the halves separately.
+                    pivotIndex = Partition(keys, values, startIndex, count, comparer);
+                    Debug.Assert(pivotIndex < count);
+
+                    // Left half has <= 1 element: doing the right half only
+                    if (pivotIndex <= 1)
+                    {
+                        // Narrowing from the left if possible. Can happen if the values are the same according to the comparer.
+                        int endIndex = count - 1;
+                        while (pivotIndex < endIndex && comparer.Compare(keys[startIndex + pivotIndex], keys[startIndex + pivotIndex + 1]) == 0)
+                            pivotIndex += 1;
+
+                        // there is nothing left to sort
+                        if (count - pivotIndex <= 1)
+                            return;
+
+                        // "Recursion" with the right half only so free depth can remain the same
+                        startIndex += pivotIndex;
+                        count -= pivotIndex;
+                        continue;
+                    }
+
+                    // Right half has <= 1 element
+                    if (count - pivotIndex <= 1)
+                    {
+                        // Narrowing from the right if possible. Can happen if the values are the same according to the comparer.
+                        while (pivotIndex > 1 && comparer.Compare(keys[startIndex + pivotIndex], keys[startIndex + pivotIndex - 1]) == 0)
+                            pivotIndex -= 1;
+
+                        // there is nothing left to sort
+                        if (pivotIndex <= 1)
+                            return;
+
+                        // "Recursion" with the left half only so free depth can remain the same
+                        count = pivotIndex;
+                        continue;
+                    }
+
+                    // Only real recursions from here so breaking the loop.
+                    break;
+                }
+
+                // Here we have two partitions that we can sort independently. If we have free depth and both sides are big enough we can spawn a new thread.
+                if (freeDepth > 0 && Math.Min(pivotIndex, count - pivotIndex) >= sortParallelThreshold)
+                {
+                    // Only one of them is spawned on a new thread because the current thread can do one of the jobs just fine.
+                    // Always the smaller half is assigned to the new thread because of the overhead and to prevent the wait handle
+                    // from starting to sleep if possible.
+                    using var handle = new ManualResetEventSlim(false);
+                    if (pivotIndex <= count >> 1)
+                    {
+                        ThreadPool.UnsafeQueueUserWorkItem(_ =>
+                        {
+                            DoSort(context, keys, values, startIndex, pivotIndex, comparer, freeDepth - 1);
+                            handle.Set();
+                        }, null);
+                        DoSort(context, keys, values, startIndex + pivotIndex, count - pivotIndex, comparer, freeDepth - 1);
+                    }
+                    else
+                    {
+                        ThreadPool.UnsafeQueueUserWorkItem(_ =>
+                        {
+                            DoSort(context, keys, values, startIndex + pivotIndex, count - pivotIndex, comparer, freeDepth - 1);
+                            handle.Set();
+                        }, null);
+                        DoSort(context, keys, values, startIndex, pivotIndex, comparer, freeDepth - 1);
+                    }
+
+                    handle.Wait();
+                    return;
+                }
+
+                // Otherwise, doing the recursions on the current thread
+                DoSort(context, keys, values, startIndex, pivotIndex, comparer, freeDepth);
+                DoSort(context, keys, values, startIndex + pivotIndex, count - pivotIndex, comparer, freeDepth);
+            }
+
+            internal static void DoSort(IAsyncContext context, List<TKey> keys, List<TValue> values, int startIndex, int count, IComparer<TKey> comparer, int freeDepth)
+            {
+                #region Local Methods
+
+                [MethodImpl(MethodImpl.AggressiveInlining)]
+                static void SwapIfGreater(List<TKey> keys, List<TValue> values, IComparer<TKey> comparer, int i, int j)
+                {
+                    if (comparer.Compare(keys[i], keys[j]) > 0)
+                    {
+                        TKey key = keys[i];
+                        keys[i] = keys[j];
+                        keys[j] = key;
+
+                        TValue value = values[i];
+                        values[i] = values[j];
+                        values[j] = value;
+                    }
+                }
+
+                #endregion
+
+                Debug.Assert(count > 1);
+                if (context.IsCancellationRequested)
+                    return;
+
+                // just a few elements: no parallel sorting and no recursion
+                if (count < sortParallelThreshold)
+                {
+                    if (count == 2)
+                    {
+                        SwapIfGreater(keys, values, comparer, startIndex, startIndex + 1);
+                        return;
+                    }
+
+                    if (count == 3)
+                    {
+                        SwapIfGreater(keys, values, comparer, startIndex, startIndex + 1);
+                        SwapIfGreater(keys, values, comparer, startIndex, startIndex + 2);
+                        SwapIfGreater(keys, values, comparer, startIndex + 1, startIndex + 2);
+                        return;
+                    }
+
+                    // insertion sort
+                    for (int i = startIndex + 1; i < startIndex + count; i++)
+                    {
+                        TKey currentKey = keys[i];
+                        TValue currentValue = values[i];
+                        int j = i - 1;
+                        while (j >= startIndex && comparer.Compare(currentKey, keys[j]) < 0)
+                        {
+                            keys[j + 1] = keys[j];
+                            values[j + 1] = values[j];
+                            j -= 1;
+                        }
+
+                        keys[j + 1] = currentKey;
+                        values[j + 1] = currentValue;
+                    }
+
+                    return;
+                }
+
+                // pivot index relative to startIndex, it's always between 0 and count
+                int pivotIndex;
+
+                // This is to prevent real recursion in trivial cases. We could use a stack to avoid real recursion, but in practice that is slower.
+                while (true)
+                {
+                    Debug.Assert(count > 1);
+
+                    // Separating two partitions and then sorting the halves separately.
+                    pivotIndex = Partition(keys, values, startIndex, count, comparer);
+                    Debug.Assert(pivotIndex < count);
+
+                    // Left half has <= 1 element: doing the right half only
+                    if (pivotIndex <= 1)
+                    {
+                        // Narrowing from the left if possible. Can happen if the values are the same according to the comparer.
+                        int endIndex = count - 1;
+                        while (pivotIndex < endIndex && comparer.Compare(keys[startIndex + pivotIndex], keys[startIndex + pivotIndex + 1]) == 0)
+                            pivotIndex += 1;
+
+                        // there is nothing left to sort
+                        if (count - pivotIndex <= 1)
+                            return;
+
+                        // "Recursion" with the right half only so free depth can remain the same
+                        startIndex += pivotIndex;
+                        count -= pivotIndex;
+                        continue;
+                    }
+
+                    // Right half has <= 1 element
+                    if (count - pivotIndex <= 1)
+                    {
+                        // Narrowing from the right if possible. Can happen if the values are the same according to the comparer.
+                        while (pivotIndex > 1 && comparer.Compare(keys[startIndex + pivotIndex], keys[startIndex + pivotIndex - 1]) == 0)
+                            pivotIndex -= 1;
+
+                        // there is nothing left to sort
+                        if (pivotIndex <= 1)
+                            return;
+
+                        // "Recursion" with the left half only so free depth can remain the same
+                        count = pivotIndex;
+                        continue;
+                    }
+
+                    // Only real recursions from here so breaking the loop.
+                    break;
+                }
+
+                // Here we have two partitions that we can sort independently. If we have free depth and both sides are big enough we can spawn a new thread.
+                if (freeDepth > 0 && Math.Min(pivotIndex, count - pivotIndex) >= sortParallelThreshold)
+                {
+                    // Only one of them is spawned on a new thread because the current thread can do one of the jobs just fine.
+                    // Always the smaller half is assigned to the new thread because of the overhead and to prevent the wait handle
+                    // from starting to sleep if possible.
+                    using var handle = new ManualResetEventSlim(false);
+                    if (pivotIndex <= count >> 1)
+                    {
+                        ThreadPool.UnsafeQueueUserWorkItem(_ =>
+                        {
+                            DoSort(context, keys, values, startIndex, pivotIndex, comparer, freeDepth - 1);
+                            handle.Set();
+                        }, null);
+                        DoSort(context, keys, values, startIndex + pivotIndex, count - pivotIndex, comparer, freeDepth - 1);
+                    }
+                    else
+                    {
+                        ThreadPool.UnsafeQueueUserWorkItem(_ =>
+                        {
+                            DoSort(context, keys, values, startIndex + pivotIndex, count - pivotIndex, comparer, freeDepth - 1);
+                            handle.Set();
+                        }, null);
+                        DoSort(context, keys, values, startIndex, pivotIndex, comparer, freeDepth - 1);
+                    }
+
+                    handle.Wait();
+                    return;
+                }
+
+                // Otherwise, doing the recursions on the current thread
+                DoSort(context, keys, values, startIndex, pivotIndex, comparer, freeDepth);
+                DoSort(context, keys, values, startIndex + pivotIndex, count - pivotIndex, comparer, freeDepth);
+            }
+
+            internal static void DoSort(IAsyncContext context, ArraySection<TKey> keys, ArraySection<TValue> values, IComparer<TKey> comparer, int freeDepth)
+            {
+                #region Local Methods
+
+                [MethodImpl(MethodImpl.AggressiveInlining)]
+                static void SwapIfGreater(ArraySection<TKey> keys, ArraySection<TValue> values, IComparer<TKey> comparer, int i, int j)
+                {
+                    if (comparer.Compare(keys[i], keys[j]) > 0)
+                    {
+                        TKey key = keys[i];
+                        keys[i] = keys[j];
+                        keys[j] = key;
+
+                        TValue value = values[i];
+                        values[i] = values[j];
+                        values[j] = value;
+                    }
+                }
+
+                #endregion
+
+                Debug.Assert(keys.Length > 1 && values.Length == keys.Length);
+                if (context.IsCancellationRequested)
+                    return;
+
+                // just a few elements: no parallel sorting and no recursion
+                if (keys.Length < sortParallelThreshold)
+                {
+                    if (keys.Length == 2)
+                    {
+                        SwapIfGreater(keys, values, comparer, 0, 1);
+                        return;
+                    }
+
+                    if (keys.Length == 3)
+                    {
+                        SwapIfGreater(keys, values, comparer, 0, 1);
+                        SwapIfGreater(keys, values, comparer, 0, 2);
+                        SwapIfGreater(keys, values, comparer, 1, 2);
+                        return;
+                    }
+
+                    // insertion sort
+                    for (int i = 1; i < keys.Length; i++)
+                    {
+                        TKey currentKey = keys[i];
+                        TValue currentValue = values[i];
+                        int j = i - 1;
+                        while (j >= 0 && comparer.Compare(currentKey, keys[j]) < 0)
+                        {
+                            keys[j + 1] = keys[j];
+                            values[j + 1] = values[j];
+                            j -= 1;
+                        }
+
+                        keys[j + 1] = currentKey;
+                        values[j + 1] = currentValue;
+                    }
+
+                    return;
+                }
+
+                // pivot index relative to startIndex, it's always between 0 and count
+                int pivotIndex;
+
+                // This is to prevent real recursion in trivial cases. We could use a stack to avoid real recursion, but in practice that is slower.
+                while (true)
+                {
+                    Debug.Assert(keys.Length > 1);
+
+                    // Separating two partitions and then sorting the halves separately.
+                    pivotIndex = Partition(keys, values, comparer);
+                    Debug.Assert(pivotIndex < keys.Length);
+
+                    // Left half has <= 1 element: doing the right half only
+                    if (pivotIndex <= 1)
+                    {
+                        // Narrowing from the left if possible. Can happen if the values are the same according to the comparer.
+                        int endIndex = keys.Length - 1;
+                        while (pivotIndex < endIndex && comparer.Compare(keys[pivotIndex], keys[pivotIndex + 1]) == 0)
+                            pivotIndex += 1;
+
+                        // there is nothing left to sort
+                        if (keys.Length - pivotIndex <= 1)
+                            return;
+
+                        // "Recursion" with the right half only so free depth can remain the same
+                        keys = keys.Slice(pivotIndex);
+                        values = values.Slice(pivotIndex);
+                        continue;
+                    }
+
+                    // Right half has <= 1 element
+                    if (keys.Length - pivotIndex <= 1)
+                    {
+                        // Narrowing from the right if possible. Can happen if the values are the same according to the comparer.
+                        while (pivotIndex > 1 && comparer.Compare(keys[pivotIndex], keys[pivotIndex - 1]) == 0)
+                            pivotIndex -= 1;
+
+                        // there is nothing left to sort
+                        if (pivotIndex <= 1)
+                            return;
+
+                        // "Recursion" with the left half only so free depth can remain the same
+                        keys = keys.Slice(0, pivotIndex);
+                        values = values.Slice(0, pivotIndex);
+                        continue;
+                    }
+
+                    // Only real recursions from here so breaking the loop.
+                    break;
+                }
+
+                // Here we have two partitions that we can sort independently. If we have free depth and both sides are big enough we can spawn a new thread.
+                if (freeDepth > 0 && Math.Min(pivotIndex, keys.Length - pivotIndex) >= sortParallelThreshold)
+                {
+                    // Only one of them is spawned on a new thread because the current thread can do one of the jobs just fine.
+                    // Always the smaller half is assigned to the new thread because of the overhead and to prevent the wait handle
+                    // from starting to sleep if possible.
+                    using var handle = new ManualResetEventSlim(false);
+                    if (pivotIndex <= keys.Length >> 1)
+                    {
+                        ThreadPool.UnsafeQueueUserWorkItem(_ =>
+                        {
+                            DoSort(context, keys.Slice(0, pivotIndex), values.Slice(0, pivotIndex), comparer, freeDepth - 1);
+                            handle.Set();
+                        }, null);
+                        DoSort(context, keys.Slice(pivotIndex), values.Slice(pivotIndex), comparer, freeDepth - 1);
+                    }
+                    else
+                    {
+                        ThreadPool.UnsafeQueueUserWorkItem(_ =>
+                        {
+                            DoSort(context, keys.Slice(pivotIndex), values.Slice(pivotIndex), comparer, freeDepth - 1);
+                            handle.Set();
+                        }, null);
+                        DoSort(context, keys.Slice(0, pivotIndex), values.Slice(0, pivotIndex), comparer, freeDepth - 1);
+                    }
+
+                    handle.Wait();
+                    return;
+                }
+
+                // Otherwise, doing the recursions on the current thread
+                DoSort(context, keys.Slice(0, pivotIndex), values.Slice(0, pivotIndex), comparer, freeDepth);
+                DoSort(context, keys.Slice(pivotIndex), values.Slice(pivotIndex), comparer, freeDepth);
+            }
+
+            internal static void DoSort<TKeyFrom, TKeyTo, TValueFrom, TValueTo>(IAsyncContext context, CastArray<TKeyFrom, TKeyTo> keys, CastArray<TValueFrom, TValueTo> values, IComparer<TKeyTo> comparer, int freeDepth)
+                where TKeyFrom : unmanaged
+                where TKeyTo : unmanaged, TKey
+                where TValueFrom : unmanaged
+                where TValueTo : unmanaged, TValue
+            {
+                #region Local Methods
+
+                [MethodImpl(MethodImpl.AggressiveInlining)]
+                static void SwapIfGreater(CastArray<TKeyFrom, TKeyTo> keys, CastArray<TValueFrom, TValueTo> values, IComparer<TKeyTo> comparer, int i, int j)
+                {
+                    if (comparer.Compare(keys[i], keys[j]) > 0)
+                    {
+                        TKeyTo key = keys[i];
+                        keys[i] = keys[j];
+                        keys[j] = key;
+
+                        TValueTo value = values[i];
+                        values[i] = values[j];
+                        values[j] = value;
+                    }
+                }
+
+                #endregion
+
+                Debug.Assert(keys.Length > 1 && values.Length == keys.Length);
+                if (context.IsCancellationRequested)
+                    return;
+
+                // just a few elements: no parallel sorting and no recursion
+                if (keys.Length < sortParallelThreshold)
+                {
+                    if (keys.Length == 2)
+                    {
+                        SwapIfGreater(keys, values, comparer, 0, 1);
+                        return;
+                    }
+
+                    if (keys.Length == 3)
+                    {
+                        SwapIfGreater(keys, values, comparer, 0, 1);
+                        SwapIfGreater(keys, values, comparer, 0, 2);
+                        SwapIfGreater(keys, values, comparer, 1, 2);
+                        return;
+                    }
+
+                    // insertion sort
+                    for (int i = 1; i < keys.Length; i++)
+                    {
+                        TKeyTo currentKey = keys[i];
+                        TValueTo currentValue = values[i];
+                        int j = i - 1;
+                        while (j >= 0 && comparer.Compare(currentKey, keys[j]) < 0)
+                        {
+                            keys[j + 1] = keys[j];
+                            values[j + 1] = values[j];
+                            j -= 1;
+                        }
+
+                        keys[j + 1] = currentKey;
+                        values[j + 1] = currentValue;
+                    }
+
+                    return;
+                }
+
+                // pivot index relative to startIndex, it's always between 0 and count
+                int pivotIndex;
+
+                // This is to prevent real recursion in trivial cases. We could use a stack to avoid real recursion, but in practice that is slower.
+                while (true)
+                {
+                    Debug.Assert(keys.Length > 1);
+
+                    // Separating two partitions and then sorting the halves separately.
+                    pivotIndex = Partition(keys, values, comparer);
+                    Debug.Assert(pivotIndex < keys.Length);
+
+                    // Left half has <= 1 element: doing the right half only
+                    if (pivotIndex <= 1)
+                    {
+                        // Narrowing from the left if possible. Can happen if the values are the same according to the comparer.
+                        int endIndex = keys.Length - 1;
+                        while (pivotIndex < endIndex && comparer.Compare(keys[pivotIndex], keys[pivotIndex + 1]) == 0)
+                            pivotIndex += 1;
+
+                        // there is nothing left to sort
+                        if (keys.Length - pivotIndex <= 1)
+                            return;
+
+                        // "Recursion" with the right half only so free depth can remain the same
+                        keys = keys.Slice(pivotIndex);
+                        values = values.Slice(pivotIndex);
+                        continue;
+                    }
+
+                    // Right half has <= 1 element
+                    if (keys.Length - pivotIndex <= 1)
+                    {
+                        // Narrowing from the right if possible. Can happen if the values are the same according to the comparer.
+                        while (pivotIndex > 1 && comparer.Compare(keys[pivotIndex], keys[pivotIndex - 1]) == 0)
+                            pivotIndex -= 1;
+
+                        // there is nothing left to sort
+                        if (pivotIndex <= 1)
+                            return;
+
+                        // "Recursion" with the left half only so free depth can remain the same
+                        keys = keys.Slice(0, pivotIndex);
+                        values = values.Slice(0, pivotIndex);
+                        continue;
+                    }
+
+                    // Only real recursions from here so breaking the loop.
+                    break;
+                }
+
+                // Here we have two partitions that we can sort independently. If we have free depth and both sides are big enough we can spawn a new thread.
+                if (freeDepth > 0 && Math.Min(pivotIndex, keys.Length - pivotIndex) >= sortParallelThreshold)
+                {
+                    // Only one of them is spawned on a new thread because the current thread can do one of the jobs just fine.
+                    // Always the smaller half is assigned to the new thread because of the overhead and to prevent the wait handle
+                    // from starting to sleep if possible.
+                    using var handle = new ManualResetEventSlim(false);
+                    if (pivotIndex <= keys.Length >> 1)
+                    {
+                        ThreadPool.UnsafeQueueUserWorkItem(_ =>
+                        {
+                            DoSort(context, keys.Slice(0, pivotIndex), values.Slice(0, pivotIndex), comparer, freeDepth - 1);
+                            handle.Set();
+                        }, null);
+                        DoSort(context, keys.Slice(pivotIndex), values.Slice(pivotIndex), comparer, freeDepth - 1);
+                    }
+                    else
+                    {
+                        ThreadPool.UnsafeQueueUserWorkItem(_ =>
+                        {
+                            DoSort(context, keys.Slice(pivotIndex), values.Slice(pivotIndex), comparer, freeDepth - 1);
+                            handle.Set();
+                        }, null);
+                        DoSort(context, keys.Slice(0, pivotIndex), values.Slice(0, pivotIndex), comparer, freeDepth - 1);
+                    }
+
+                    handle.Wait();
+                    return;
+                }
+
+                // Otherwise, doing the recursions on the current thread
+                DoSort(context, keys.Slice(0, pivotIndex), values.Slice(0, pivotIndex), comparer, freeDepth);
+                DoSort(context, keys.Slice(pivotIndex), values.Slice(pivotIndex), comparer, freeDepth);
+            }
+
+            #endregion
+
+            #region Private Methods
+
+            private static int Partition(IList<TKey> keys, IList<TValue> values, int startIndex, int count, IComparer<TKey> comparer)
+            {
+                #region Local Methods
+
+                [MethodImpl(MethodImpl.AggressiveInlining)]
+                static void Swap(IList<TKey> keys, IList<TValue> values, int i, int j)
+                {
+                    TKey key = keys[i];
+                    keys[i] = keys[j];
+                    keys[j] = key;
+
+                    TValue value = values[i];
+                    values[i] = values[j];
+                    values[j] = value;
+                }
+
+                #endregion
+
+                Debug.Assert(count > 1);
+                if (count == 2)
+                {
+                    if (comparer.Compare(keys[startIndex], keys[startIndex + 1]) > 0)
+                        Swap(keys, values, startIndex, startIndex + 1);
+
+                    return 1;
+                }
+
+                // taking the pivot from the middle
+                int pivotIndex = startIndex + (count >> 1);
+                TKey pivotValue = keys[pivotIndex];
+
+                int left = startIndex;
+                int right = startIndex + count - 1;
+
+                do
+                {
+                    while (left <= right && comparer.Compare(keys[left], pivotValue) <= 0)
+                        left += 1;
+                    while (left < right && comparer.Compare(pivotValue, keys[right]) < 0)
+                        right -= 1;
+                    if (left >= right)
+                        break;
+
+                    Swap(keys, values, left, right);
+                    if (pivotIndex == right)
+                        pivotIndex = left;
+
+                    left++;
+                    right--;
+                } while (left <= right);
+
+                // left - 1 is now the new place of the pivot
+                if (pivotIndex != left - 1)
+                {
+                    Swap(keys, values, pivotIndex, left - 1);
+                    pivotIndex = left - 1;
+                }
+
+                return pivotIndex - startIndex;
+            }
+
+            private static int Partition(TKey[] keys, TValue[] values, int startIndex, int count, IComparer<TKey> comparer)
+            {
+                #region Local Methods
+
+                [MethodImpl(MethodImpl.AggressiveInlining)]
+                static void Swap(TKey[] keys, TValue[] values, int i, int j)
+                {
+                    TKey key = keys[i];
+                    keys[i] = keys[j];
+                    keys[j] = key;
+
+                    TValue value = values[i];
+                    values[i] = values[j];
+                    values[j] = value;
+                }
+
+                #endregion
+
+                Debug.Assert(count > 1);
+                if (count == 2)
+                {
+                    if (comparer.Compare(keys[startIndex], keys[startIndex + 1]) > 0)
+                        Swap(keys, values, startIndex, startIndex + 1);
+
+                    return 1;
+                }
+
+                // taking the pivot from the middle
+                int pivotIndex = startIndex + (count >> 1);
+                TKey pivotValue = keys[pivotIndex];
+
+                int left = startIndex;
+                int right = startIndex + count - 1;
+
+                do
+                {
+                    while (left <= right && comparer.Compare(keys[left], pivotValue) <= 0)
+                        left += 1;
+                    while (left < right && comparer.Compare(pivotValue, keys[right]) < 0)
+                        right -= 1;
+                    if (left >= right)
+                        break;
+
+                    Swap(keys, values, left, right);
+                    if (pivotIndex == right)
+                        pivotIndex = left;
+
+                    left++;
+                    right--;
+                } while (left <= right);
+
+                // left - 1 is now the new place of the pivot
+                if (pivotIndex != left - 1)
+                {
+                    Swap(keys, values, pivotIndex, left - 1);
+                    pivotIndex = left - 1;
+                }
+
+                return pivotIndex - startIndex;
+            }
+
+            private static int Partition(List<TKey> keys, List<TValue> values, int startIndex, int count, IComparer<TKey> comparer)
+            {
+                #region Local Methods
+
+                [MethodImpl(MethodImpl.AggressiveInlining)]
+                static void Swap(List<TKey> keys, List<TValue> values, int i, int j)
+                {
+                    TKey key = keys[i];
+                    keys[i] = keys[j];
+                    keys[j] = key;
+
+                    TValue value = values[i];
+                    values[i] = values[j];
+                    values[j] = value;
+                }
+
+                #endregion
+
+                Debug.Assert(count > 1);
+                if (count == 2)
+                {
+                    if (comparer.Compare(keys[startIndex], keys[startIndex + 1]) > 0)
+                        Swap(keys, values, startIndex, startIndex + 1);
+
+                    return 1;
+                }
+
+                // taking the pivot from the middle
+                int pivotIndex = startIndex + (count >> 1);
+                TKey pivotValue = keys[pivotIndex];
+
+                int left = startIndex;
+                int right = startIndex + count - 1;
+
+                do
+                {
+                    while (left <= right && comparer.Compare(keys[left], pivotValue) <= 0)
+                        left += 1;
+                    while (left < right && comparer.Compare(pivotValue, keys[right]) < 0)
+                        right -= 1;
+                    if (left >= right)
+                        break;
+
+                    Swap(keys, values, left, right);
+                    if (pivotIndex == right)
+                        pivotIndex = left;
+
+                    left++;
+                    right--;
+                } while (left <= right);
+
+                // left - 1 is now the new place of the pivot
+                if (pivotIndex != left - 1)
+                {
+                    Swap(keys, values, pivotIndex, left - 1);
+                    pivotIndex = left - 1;
+                }
+
+                return pivotIndex - startIndex;
+            }
+
+            private static int Partition(ArraySection<TKey> keys, ArraySection<TValue> values, IComparer<TKey> comparer)
+            {
+                #region Local Methods
+
+                static void Swap(ArraySection<TKey> keys, ArraySection<TValue> values, int i, int j)
+                {
+                    TKey key = keys[i];
+                    keys[i] = keys[j];
+                    keys[j] = key;
+
+                    TValue value = values[i];
+                    values[i] = values[j];
+                    values[j] = value;
+                }
+
+                #endregion
+
+                Debug.Assert(keys.Length > 1);
+                if (keys.Length == 2)
+                {
+                    if (comparer.Compare(keys[0], keys[1]) > 0)
+                        Swap(keys, values, 0, 1);
+
+                    return 1;
+                }
+
+                // taking the pivot from the middle
+                int pivotIndex = (keys.Length >> 1);
+                TKey pivotValue = keys[pivotIndex];
+
+                int left = 0;
+                int right = keys.Length - 1;
+
+                do
+                {
+                    while (left <= right && comparer.Compare(keys[left], pivotValue) <= 0)
+                        left += 1;
+                    while (left < right && comparer.Compare(pivotValue, keys[right]) < 0)
+                        right -= 1;
+                    if (left >= right)
+                        break;
+
+                    Swap(keys, values, left, right);
+                    if (pivotIndex == right)
+                        pivotIndex = left;
+
+                    left++;
+                    right--;
+                } while (left <= right);
+
+                // left - 1 is now the new place of the pivot
+                if (pivotIndex != left - 1)
+                {
+                    Swap(keys, values, pivotIndex, left - 1);
+                    pivotIndex = left - 1;
+                }
+
+                return pivotIndex;
+            }
+
+            private static int Partition<TKeyFrom, TKeyTo, TValueFrom, TValueTo>(CastArray<TKeyFrom, TKeyTo> keys, CastArray<TValueFrom, TValueTo> values, IComparer<TKeyTo> comparer)
+                where TKeyFrom : unmanaged
+                where TKeyTo : unmanaged, TKey
+                where TValueFrom : unmanaged
+                where TValueTo : unmanaged, TValue
+            {
+                #region Local Methods
+
+                static void Swap(CastArray<TKeyFrom, TKeyTo> keys, CastArray<TValueFrom, TValueTo> values, int i, int j)
+                {
+                    TKeyTo key = keys[i];
+                    keys[i] = keys[j];
+                    keys[j] = key;
+
+                    TValueTo value = values[i];
+                    values[i] = values[j];
+                    values[j] = value;
+                }
+
+                #endregion
+
+                Debug.Assert(keys.Length > 1);
+                if (keys.Length == 2)
+                {
+                    if (comparer.Compare(keys[0], keys[1]) > 0)
+                        Swap(keys, values, 0, 1);
+
+                    return 1;
+                }
+
+                // taking the pivot from the middle
+                int pivotIndex = (keys.Length >> 1);
+                TKeyTo pivotValue = keys[pivotIndex];
+
+                int left = 0;
+                int right = keys.Length - 1;
+
+                do
+                {
+                    while (left <= right && comparer.Compare(keys[left], pivotValue) <= 0)
+                        left += 1;
+                    while (left < right && comparer.Compare(pivotValue, keys[right]) < 0)
+                        right -= 1;
+                    if (left >= right)
+                        break;
+
+                    Swap(keys, values, left, right);
+                    if (pivotIndex == right)
+                        pivotIndex = left;
+
+                    left++;
+                    right--;
+                } while (left <= right);
+
+                // left - 1 is now the new place of the pivot
+                if (pivotIndex != left - 1)
+                {
+                    Swap(keys, values, pivotIndex, left - 1);
+                    pivotIndex = left - 1;
+                }
+
+                return pivotIndex;
+            }
+
+            #endregion
+
+            #endregion
+
+            #region Instance Methods
+
+            public void Sort(IAsyncContext context, IList<TKey> keys, IList<TValue> values, int startIndex, int count, IComparer<TKey>? comparer)
+            {
+                int maxTasks = context.MaxDegreeOfParallelism;
+                if (maxTasks <= 0)
+                    maxTasks = CoreCount;
+
+                // Due to the recursive binary branching the allowed subtask count is logarithmic, eg. 3 if there are 8 cores.
+#if NETCOREAPP3_0_OR_GREATER
+                DoSort(context, keys, values, startIndex, count, comparer ?? ComparerHelper<TKey>.Comparer, BitOperations.Log2((uint)maxTasks));
+#else
+                DoSort(context, keys, values, startIndex, count, comparer ?? ComparerHelper<TKey>.Comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
+#endif
+            }
+
+            public void Sort(IAsyncContext context, TKey[] keys, TValue[] values, int startIndex, int count, IComparer<TKey>? comparer)
+            {
+                int maxTasks = context.MaxDegreeOfParallelism;
+                if (maxTasks <= 0)
+                    maxTasks = CoreCount;
+
+                // Due to the recursive binary branching the allowed subtask count is logarithmic, eg. 3 if there are 8 cores.
+#if NETCOREAPP3_0_OR_GREATER
+                DoSort(context, keys, values, startIndex, count, comparer ?? ComparerHelper<TKey>.Comparer, BitOperations.Log2((uint)maxTasks));
+#else
+                DoSort(context, keys, values, startIndex, count, comparer ?? ComparerHelper<TKey>.Comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
+#endif
+            }
+
+            public void Sort(IAsyncContext context, List<TKey> keys, List<TValue> values, int startIndex, int count, IComparer<TKey>? comparer)
+            {
+                int maxTasks = context.MaxDegreeOfParallelism;
+                if (maxTasks <= 0)
+                    maxTasks = CoreCount;
+
+                // Due to the recursive binary branching the allowed subtask count is logarithmic, eg. 3 if there are 8 cores.
+#if NETCOREAPP3_0_OR_GREATER
+                DoSort(context, keys, values, startIndex, count, comparer ?? ComparerHelper<TKey>.Comparer, BitOperations.Log2((uint)maxTasks));
+#else
+                DoSort(context, keys, values, startIndex, count, comparer ?? ComparerHelper<TKey>.Comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
+#endif
+            }
+
+            public void Sort(IAsyncContext context, ArraySection<TKey> keys, ArraySection<TValue> values, IComparer<TKey>? comparer)
+            {
+                Debug.Assert(keys.Length > 1 && keys.Length == values.Length);
+                int maxTasks = context.MaxDegreeOfParallelism;
+                if (maxTasks <= 0)
+                    maxTasks = CoreCount;
+
+                // Due to the recursive binary branching the allowed subtask array.Length is logarithmic, eg. 3 if there are 8 cores.
+#if NETCOREAPP3_0_OR_GREATER
+                DoSort(context, keys, values, comparer ?? ComparerHelper<TKey>.Comparer, BitOperations.Log2((uint)maxTasks));
+#else
+                DoSort(context, keys, values, comparer ?? ComparerHelper<TKey>.Comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
+#endif
+            }
+
+            public void Sort<TKeyFrom, TKeyTo, TValueFrom, TValueTo>(IAsyncContext context, CastArray<TKeyFrom, TKeyTo> keys, CastArray<TValueFrom, TValueTo> values, IComparer<TKeyTo>? comparer)
+                where TKeyFrom : unmanaged
+                where TKeyTo : unmanaged, TKey
+                where TValueFrom : unmanaged
+                where TValueTo : unmanaged, TValue
+            {
+                Debug.Assert(keys.Length > 1 && keys.Length == values.Length);
+                int maxTasks = context.MaxDegreeOfParallelism;
+                if (maxTasks <= 0)
+                    maxTasks = CoreCount;
+
+                // Due to the recursive binary branching the allowed subtask array.Length is logarithmic, eg. 3 if there are 8 cores.
+#if NETCOREAPP3_0_OR_GREATER
+                DoSort(context, keys, values, comparer ?? ComparerHelper<TKeyTo>.Comparer, BitOperations.Log2((uint)maxTasks));
+#else
+                DoSort(context, keys, values, comparer ?? ComparerHelper<TKeyTo>.Comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
+#endif
+            }
+
+            #endregion
+
+            #endregion
+        }
+
+        #endregion
+
+        #region ComparableSortHelper<T> class
 
         private sealed class ComparableSortHelper<T> : ISortHelper<T>
             where T : IComparable<T>
@@ -1484,13 +2666,13 @@ namespace KGySoft.Threading
                             DoSort(context, array.Slice(0, pivotIndex), freeDepth - 1);
                             handle.Set();
                         }, null);
-                        DoSort(context, array.Slice(pivotIndex, array.Length - pivotIndex), freeDepth - 1);
+                        DoSort(context, array.Slice(pivotIndex), freeDepth - 1);
                     }
                     else
                     {
                         ThreadPool.UnsafeQueueUserWorkItem(_ =>
                         {
-                            DoSort(context, array.Slice(pivotIndex, array.Length - pivotIndex), freeDepth - 1);
+                            DoSort(context, array.Slice(pivotIndex), freeDepth - 1);
                             handle.Set();
                         }, null);
                         DoSort(context, array.Slice(0, pivotIndex), freeDepth - 1);
@@ -1502,7 +2684,7 @@ namespace KGySoft.Threading
 
                 // Otherwise, doing the recursions on the current thread
                 DoSort(context, array.Slice(0, pivotIndex), freeDepth);
-                DoSort(context, array.Slice(pivotIndex, array.Length - pivotIndex), freeDepth);
+                DoSort(context, array.Slice(pivotIndex), freeDepth);
             }
 
             private static int Partition(IList<T> list, int startIndex, int count)
@@ -1735,7 +2917,7 @@ namespace KGySoft.Threading
                     pivotIndex = left - 1;
                 }
 
-                return pivotIndex - 0;
+                return pivotIndex;
             }
 
             #endregion
@@ -1744,6 +2926,7 @@ namespace KGySoft.Threading
 
             public void Sort(IAsyncContext context, IList<T> list, int startIndex, int count, IComparer<T>? comparer)
             {
+                Debug.Assert(list is not (T[] or ArraySegment<T> or List<T> or CircularList<T>), "Known ILists are expected to be handled in a special way to avoid slower virtual calls");
                 int maxTasks = context.MaxDegreeOfParallelism;
                 if (maxTasks <= 0)
                     maxTasks = CoreCount;
@@ -1837,6 +3020,1200 @@ namespace KGySoft.Threading
                 DoSort(context, list, BitOperations.Log2((uint)maxTasks));
 #else
                 DoSort(context, list, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
+#endif
+            }
+
+            #endregion
+
+            #endregion
+        }
+
+        #endregion
+
+        #region ComparableSortHelper<T> class
+
+        private sealed class ComparableSortHelper<TKey, TValue> : ISortHelper<TKey, TValue>
+            where TKey : IComparable<TKey>
+        {
+            #region Methods
+
+            #region Static Methods
+
+            private static void DoSort(IAsyncContext context, IList<TKey> keys, IList<TValue> values, int startIndex, int count, int freeDepth)
+            {
+                #region Local Methods
+
+                [MethodImpl(MethodImpl.AggressiveInlining)]
+                static void SwapIfGreater(IList<TKey> keys, IList<TValue> values, int i, int j)
+                {
+                    if (keys[i].CompareTo(keys[j]) > 0)
+                    {
+                        TKey key = keys[i];
+                        keys[i] = keys[j];
+                        keys[j] = key;
+
+                        TValue value = values[i];
+                        values[i] = values[j];
+                        values[j] = value;
+                    }
+                }
+
+                #endregion
+
+                Debug.Assert(count > 1);
+                if (context.IsCancellationRequested)
+                    return;
+
+                // just a few elements: no parallel sorting and no recursion
+                if (count < sortParallelThreshold)
+                {
+                    if (count == 2)
+                    {
+                        SwapIfGreater(keys, values, startIndex, startIndex + 1);
+                        return;
+                    }
+
+                    if (count == 3)
+                    {
+                        SwapIfGreater(keys, values, startIndex, startIndex + 1);
+                        SwapIfGreater(keys, values, startIndex, startIndex + 2);
+                        SwapIfGreater(keys, values, startIndex + 1, startIndex + 2);
+                        return;
+                    }
+
+                    // insertion sort
+                    for (int i = startIndex + 1; i < startIndex + count; i++)
+                    {
+                        TKey currentKey = keys[i];
+                        TValue currentValue = values[i];
+                        int j = i - 1;
+                        while (j >= startIndex && currentKey.CompareTo(keys[j]) < 0)
+                        {
+                            keys[j + 1] = keys[j];
+                            values[j + 1] = values[j];
+                            j -= 1;
+                        }
+
+                        keys[j + 1] = currentKey;
+                        values[j + 1] = currentValue;
+                    }
+
+                    return;
+                }
+
+                // pivot index relative to startIndex, it's always between 0 and count
+                int pivotIndex;
+
+                // This is to prevent real recursion in trivial cases. We could use a stack to avoid real recursion, but in practice that is slower.
+                while (true)
+                {
+                    Debug.Assert(count > 1);
+
+                    // Separating two partitions and then sorting the halves separately.
+                    pivotIndex = Partition(keys, values, startIndex, count);
+                    Debug.Assert(pivotIndex < count);
+
+                    // Left half has <= 1 element: doing the right half only
+                    if (pivotIndex <= 1)
+                    {
+                        // Narrowing from the left if possible. Can happen if the values are the same according to the comparer.
+                        int endIndex = count - 1;
+                        while (pivotIndex < endIndex && keys[startIndex + pivotIndex].CompareTo(keys[startIndex + pivotIndex + 1]) == 0)
+                            pivotIndex += 1;
+
+                        // there is nothing left to sort
+                        if (count - pivotIndex <= 1)
+                            return;
+
+                        // "Recursion" with the right half only so free depth can remain the same
+                        startIndex += pivotIndex;
+                        count -= pivotIndex;
+                        continue;
+                    }
+
+                    // Right half has <= 1 element
+                    if (count - pivotIndex <= 1)
+                    {
+                        // Narrowing from the right if possible. Can happen if the values are the same according to the comparer.
+                        while (pivotIndex > 1 && keys[startIndex + pivotIndex].CompareTo(keys[startIndex + pivotIndex - 1]) == 0)
+                            pivotIndex -= 1;
+
+                        // there is nothing left to sort
+                        if (pivotIndex <= 1)
+                            return;
+
+                        // "Recursion" with the left half only so free depth can remain the same
+                        count = pivotIndex;
+                        continue;
+                    }
+
+                    // Only real recursions from here so breaking the loop.
+                    break;
+                }
+
+                // Here we have two partitions that we can sort independently. If we have free depth and both sides are big enough we can spawn a new thread.
+                if (freeDepth > 0 && Math.Min(pivotIndex, count - pivotIndex) >= sortParallelThreshold)
+                {
+                    // Only one of them is spawned on a new thread because the current thread can do one of the jobs just fine.
+                    // Always the smaller half is assigned to the new thread because of the overhead and to prevent the wait handle
+                    // from starting to sleep if possible.
+                    using var handle = new ManualResetEventSlim(false);
+                    if (pivotIndex <= count >> 1)
+                    {
+                        ThreadPool.UnsafeQueueUserWorkItem(_ =>
+                        {
+                            DoSort(context, keys, values, startIndex, pivotIndex, freeDepth - 1);
+                            handle.Set();
+                        }, null);
+                        DoSort(context, keys, values, startIndex + pivotIndex, count - pivotIndex, freeDepth - 1);
+                    }
+                    else
+                    {
+                        ThreadPool.UnsafeQueueUserWorkItem(_ =>
+                        {
+                            DoSort(context, keys, values, startIndex + pivotIndex, count - pivotIndex, freeDepth - 1);
+                            handle.Set();
+                        }, null);
+                        DoSort(context, keys, values, startIndex, pivotIndex, freeDepth - 1);
+                    }
+
+                    handle.Wait();
+                    return;
+                }
+
+                // Otherwise, doing the recursions on the current thread
+                DoSort(context, keys, values, startIndex, pivotIndex, freeDepth);
+                DoSort(context, keys, values, startIndex + pivotIndex, count - pivotIndex, freeDepth);
+            }
+
+            private static void DoSort(IAsyncContext context, TKey[] keys, TValue[] values, int startIndex, int count, int freeDepth)
+            {
+                #region Local Methods
+
+                [MethodImpl(MethodImpl.AggressiveInlining)]
+                static void SwapIfGreater(TKey[] keys, TValue[] values, int i, int j)
+                {
+                    if (keys[i].CompareTo(keys[j]) > 0)
+                    {
+                        TKey key = keys[i];
+                        keys[i] = keys[j];
+                        keys[j] = key;
+
+                        TValue value = values[i];
+                        values[i] = values[j];
+                        values[j] = value;
+                    }
+                }
+
+                #endregion
+
+                Debug.Assert(count > 1);
+                if (context.IsCancellationRequested)
+                    return;
+
+                // just a few elements: no parallel sorting and no recursion
+                if (count < sortParallelThreshold)
+                {
+                    if (count == 2)
+                    {
+                        SwapIfGreater(keys, values, startIndex, startIndex + 1);
+                        return;
+                    }
+
+                    if (count == 3)
+                    {
+                        SwapIfGreater(keys, values, startIndex, startIndex + 1);
+                        SwapIfGreater(keys, values, startIndex, startIndex + 2);
+                        SwapIfGreater(keys, values, startIndex + 1, startIndex + 2);
+                        return;
+                    }
+
+                    // insertion sort
+                    for (int i = startIndex + 1; i < startIndex + count; i++)
+                    {
+                        TKey currentKey = keys[i];
+                        TValue currentValue = values[i];
+                        int j = i - 1;
+                        while (j >= startIndex && currentKey.CompareTo(keys[j]) < 0)
+                        {
+                            keys[j + 1] = keys[j];
+                            values[j + 1] = values[j];
+                            j -= 1;
+                        }
+
+                        keys[j + 1] = currentKey;
+                        values[j + 1] = currentValue;
+                    }
+
+                    return;
+                }
+
+                // pivot index relative to startIndex, it's always between 0 and count
+                int pivotIndex;
+
+                // This is to prevent real recursion in trivial cases. We could use a stack to avoid real recursion, but in practice that is slower.
+                while (true)
+                {
+                    Debug.Assert(count > 1);
+
+                    // Separating two partitions and then sorting the halves separately.
+                    pivotIndex = Partition(keys, values, startIndex, count);
+                    Debug.Assert(pivotIndex < count);
+
+                    // Left half has <= 1 element: doing the right half only
+                    if (pivotIndex <= 1)
+                    {
+                        // Narrowing from the left if possible. Can happen if the values are the same according to the comparer.
+                        int endIndex = count - 1;
+                        while (pivotIndex < endIndex && keys[startIndex + pivotIndex].CompareTo(keys[startIndex + pivotIndex + 1]) == 0)
+                            pivotIndex += 1;
+
+                        // there is nothing left to sort
+                        if (count - pivotIndex <= 1)
+                            return;
+
+                        // "Recursion" with the right half only so free depth can remain the same
+                        startIndex += pivotIndex;
+                        count -= pivotIndex;
+                        continue;
+                    }
+
+                    // Right half has <= 1 element
+                    if (count - pivotIndex <= 1)
+                    {
+                        // Narrowing from the right if possible. Can happen if the values are the same according to the comparer.
+                        while (pivotIndex > 1 && keys[startIndex + pivotIndex].CompareTo(keys[startIndex + pivotIndex - 1]) == 0)
+                            pivotIndex -= 1;
+
+                        // there is nothing left to sort
+                        if (pivotIndex <= 1)
+                            return;
+
+                        // "Recursion" with the left half only so free depth can remain the same
+                        count = pivotIndex;
+                        continue;
+                    }
+
+                    // Only real recursions from here so breaking the loop.
+                    break;
+                }
+
+                // Here we have two partitions that we can sort independently. If we have free depth and both sides are big enough we can spawn a new thread.
+                if (freeDepth > 0 && Math.Min(pivotIndex, count - pivotIndex) >= sortParallelThreshold)
+                {
+                    // Only one of them is spawned on a new thread because the current thread can do one of the jobs just fine.
+                    // Always the smaller half is assigned to the new thread because of the overhead and to prevent the wait handle
+                    // from starting to sleep if possible.
+                    using var handle = new ManualResetEventSlim(false);
+                    if (pivotIndex <= count >> 1)
+                    {
+                        ThreadPool.UnsafeQueueUserWorkItem(_ =>
+                        {
+                            DoSort(context, keys, values, startIndex, pivotIndex, freeDepth - 1);
+                            handle.Set();
+                        }, null);
+                        DoSort(context, keys, values, startIndex + pivotIndex, count - pivotIndex, freeDepth - 1);
+                    }
+                    else
+                    {
+                        ThreadPool.UnsafeQueueUserWorkItem(_ =>
+                        {
+                            DoSort(context, keys, values, startIndex + pivotIndex, count - pivotIndex, freeDepth - 1);
+                            handle.Set();
+                        }, null);
+                        DoSort(context, keys, values, startIndex, pivotIndex, freeDepth - 1);
+                    }
+
+                    handle.Wait();
+                    return;
+                }
+
+                // Otherwise, doing the recursions on the current thread
+                DoSort(context, keys, values, startIndex, pivotIndex, freeDepth);
+                DoSort(context, keys, values, startIndex + pivotIndex, count - pivotIndex, freeDepth);
+            }
+
+            private static void DoSort(IAsyncContext context, List<TKey> keys, List<TValue> values, int startIndex, int count, int freeDepth)
+            {
+                #region Local Methods
+
+                [MethodImpl(MethodImpl.AggressiveInlining)]
+                static void SwapIfGreater(List<TKey> keys, List<TValue> values, int i, int j)
+                {
+                    if (keys[i].CompareTo(keys[j]) > 0)
+                    {
+                        TKey key = keys[i];
+                        keys[i] = keys[j];
+                        keys[j] = key;
+
+                        TValue value = values[i];
+                        values[i] = values[j];
+                        values[j] = value;
+                    }
+                }
+
+                #endregion
+
+                Debug.Assert(count > 1);
+                if (context.IsCancellationRequested)
+                    return;
+
+                // just a few elements: no parallel sorting and no recursion
+                if (count < sortParallelThreshold)
+                {
+                    if (count == 2)
+                    {
+                        SwapIfGreater(keys, values, startIndex, startIndex + 1);
+                        return;
+                    }
+
+                    if (count == 3)
+                    {
+                        SwapIfGreater(keys, values, startIndex, startIndex + 1);
+                        SwapIfGreater(keys, values, startIndex, startIndex + 2);
+                        SwapIfGreater(keys, values, startIndex + 1, startIndex + 2);
+                        return;
+                    }
+
+                    // insertion sort
+                    for (int i = startIndex + 1; i < startIndex + count; i++)
+                    {
+                        TKey currentKey = keys[i];
+                        TValue currentValue = values[i];
+                        int j = i - 1;
+                        while (j >= startIndex && currentKey.CompareTo(keys[j]) < 0)
+                        {
+                            keys[j + 1] = keys[j];
+                            values[j + 1] = values[j];
+                            j -= 1;
+                        }
+
+                        keys[j + 1] = currentKey;
+                        values[j + 1] = currentValue;
+                    }
+
+                    return;
+                }
+
+                // pivot index relative to startIndex, it's always between 0 and count
+                int pivotIndex;
+
+                // This is to prevent real recursion in trivial cases. We could use a stack to avoid real recursion, but in practice that is slower.
+                while (true)
+                {
+                    Debug.Assert(count > 1);
+
+                    // Separating two partitions and then sorting the halves separately.
+                    pivotIndex = Partition(keys, values, startIndex, count);
+                    Debug.Assert(pivotIndex < count);
+
+                    // Left half has <= 1 element: doing the right half only
+                    if (pivotIndex <= 1)
+                    {
+                        // Narrowing from the left if possible. Can happen if the values are the same according to the comparer.
+                        int endIndex = count - 1;
+                        while (pivotIndex < endIndex && keys[startIndex + pivotIndex].CompareTo(keys[startIndex + pivotIndex + 1]) == 0)
+                            pivotIndex += 1;
+
+                        // there is nothing left to sort
+                        if (count - pivotIndex <= 1)
+                            return;
+
+                        // "Recursion" with the right half only so free depth can remain the same
+                        startIndex += pivotIndex;
+                        count -= pivotIndex;
+                        continue;
+                    }
+
+                    // Right half has <= 1 element
+                    if (count - pivotIndex <= 1)
+                    {
+                        // Narrowing from the right if possible. Can happen if the values are the same according to the comparer.
+                        while (pivotIndex > 1 && keys[startIndex + pivotIndex].CompareTo(keys[startIndex + pivotIndex - 1]) == 0)
+                            pivotIndex -= 1;
+
+                        // there is nothing left to sort
+                        if (pivotIndex <= 1)
+                            return;
+
+                        // "Recursion" with the left half only so free depth can remain the same
+                        count = pivotIndex;
+                        continue;
+                    }
+
+                    // Only real recursions from here so breaking the loop.
+                    break;
+                }
+
+                // Here we have two partitions that we can sort independently. If we have free depth and both sides are big enough we can spawn a new thread.
+                if (freeDepth > 0 && Math.Min(pivotIndex, count - pivotIndex) >= sortParallelThreshold)
+                {
+                    // Only one of them is spawned on a new thread because the current thread can do one of the jobs just fine.
+                    // Always the smaller half is assigned to the new thread because of the overhead and to prevent the wait handle
+                    // from starting to sleep if possible.
+                    using var handle = new ManualResetEventSlim(false);
+                    if (pivotIndex <= count >> 1)
+                    {
+                        ThreadPool.UnsafeQueueUserWorkItem(_ =>
+                        {
+                            DoSort(context, keys, values, startIndex, pivotIndex, freeDepth - 1);
+                            handle.Set();
+                        }, null);
+                        DoSort(context, keys, values, startIndex + pivotIndex, count - pivotIndex, freeDepth - 1);
+                    }
+                    else
+                    {
+                        ThreadPool.UnsafeQueueUserWorkItem(_ =>
+                        {
+                            DoSort(context, keys, values, startIndex + pivotIndex, count - pivotIndex, freeDepth - 1);
+                            handle.Set();
+                        }, null);
+                        DoSort(context, keys, values, startIndex, pivotIndex, freeDepth - 1);
+                    }
+
+                    handle.Wait();
+                    return;
+                }
+
+                // Otherwise, doing the recursions on the current thread
+                DoSort(context, keys, values, startIndex, pivotIndex, freeDepth);
+                DoSort(context, keys, values, startIndex + pivotIndex, count - pivotIndex, freeDepth);
+            }
+
+            private static void DoSort(IAsyncContext context, ArraySection<TKey> keys, ArraySection<TValue> values, int freeDepth)
+            {
+                #region Local Methods
+
+                [MethodImpl(MethodImpl.AggressiveInlining)]
+                static void SwapIfGreater(ArraySection<TKey> keys, ArraySection<TValue> values, int i, int j)
+                {
+                    if (keys[i].CompareTo(keys[j]) > 0)
+                    {
+                        TKey key = keys[i];
+                        keys[i] = keys[j];
+                        keys[j] = key;
+
+                        TValue value = values[i];
+                        values[i] = values[j];
+                        values[j] = value;
+                    }
+                }
+
+                #endregion
+
+                Debug.Assert(keys.Length > 1 && values.Length == keys.Length);
+                if (context.IsCancellationRequested)
+                    return;
+
+                // just a few elements: no parallel sorting and no recursion
+                if (keys.Length < sortParallelThreshold)
+                {
+                    if (keys.Length == 2)
+                    {
+                        SwapIfGreater(keys, values, 0, 1);
+                        return;
+                    }
+
+                    if (keys.Length == 3)
+                    {
+                        SwapIfGreater(keys, values, 0, 1);
+                        SwapIfGreater(keys, values, 0, 2);
+                        SwapIfGreater(keys, values, 1, 2);
+                        return;
+                    }
+
+                    // insertion sort
+                    for (int i = 1; i < keys.Length; i++)
+                    {
+                        TKey currentKey = keys[i];
+                        TValue currentValue = values[i];
+                        int j = i - 1;
+                        while (j >= 0 && currentKey.CompareTo(keys[j]) < 0)
+                        {
+                            keys[j + 1] = keys[j];
+                            values[j + 1] = values[j];
+                            j -= 1;
+                        }
+
+                        keys[j + 1] = currentKey;
+                        values[j + 1] = currentValue;
+                    }
+
+                    return;
+                }
+
+                // pivot index relative to startIndex, it's always between 0 and count
+                int pivotIndex;
+
+                // This is to prevent real recursion in trivial cases. We could use a stack to avoid real recursion, but in practice that is slower.
+                while (true)
+                {
+                    Debug.Assert(keys.Length > 1);
+
+                    // Separating two partitions and then sorting the halves separately.
+                    pivotIndex = Partition(keys, values);
+                    Debug.Assert(pivotIndex < keys.Length);
+
+                    // Left half has <= 1 element: doing the right half only
+                    if (pivotIndex <= 1)
+                    {
+                        // Narrowing from the left if possible. Can happen if the values are the same according to the comparer.
+                        int endIndex = keys.Length - 1;
+                        while (pivotIndex < endIndex && keys[pivotIndex].CompareTo(keys[pivotIndex + 1]) == 0)
+                            pivotIndex += 1;
+
+                        // there is nothing left to sort
+                        if (keys.Length - pivotIndex <= 1)
+                            return;
+
+                        // "Recursion" with the right half only so free depth can remain the same
+                        keys = keys.Slice(pivotIndex);
+                        values = values.Slice(pivotIndex);
+                        continue;
+                    }
+
+                    // Right half has <= 1 element
+                    if (keys.Length - pivotIndex <= 1)
+                    {
+                        // Narrowing from the right if possible. Can happen if the values are the same according to the comparer.
+                        while (pivotIndex > 1 && keys[pivotIndex].CompareTo(keys[pivotIndex - 1]) == 0)
+                            pivotIndex -= 1;
+
+                        // there is nothing left to sort
+                        if (pivotIndex <= 1)
+                            return;
+
+                        // "Recursion" with the left half only so free depth can remain the same
+                        keys = keys.Slice(0, pivotIndex);
+                        values = values.Slice(0, pivotIndex);
+                        continue;
+                    }
+
+                    // Only real recursions from here so breaking the loop.
+                    break;
+                }
+
+                // Here we have two partitions that we can sort independently. If we have free depth and both sides are big enough we can spawn a new thread.
+                if (freeDepth > 0 && Math.Min(pivotIndex, keys.Length - pivotIndex) >= sortParallelThreshold)
+                {
+                    // Only one of them is spawned on a new thread because the current thread can do one of the jobs just fine.
+                    // Always the smaller half is assigned to the new thread because of the overhead and to prevent the wait handle
+                    // from starting to sleep if possible.
+                    using var handle = new ManualResetEventSlim(false);
+                    if (pivotIndex <= keys.Length >> 1)
+                    {
+                        ThreadPool.UnsafeQueueUserWorkItem(_ =>
+                        {
+                            DoSort(context, keys.Slice(0, pivotIndex), values.Slice(0, pivotIndex), freeDepth - 1);
+                            handle.Set();
+                        }, null);
+                        DoSort(context, keys.Slice(pivotIndex), values.Slice(pivotIndex), freeDepth - 1);
+                    }
+                    else
+                    {
+                        ThreadPool.UnsafeQueueUserWorkItem(_ =>
+                        {
+                            DoSort(context, keys.Slice(pivotIndex), values.Slice(pivotIndex), freeDepth - 1);
+                            handle.Set();
+                        }, null);
+                        DoSort(context, keys.Slice(0, pivotIndex), values.Slice(0, pivotIndex), freeDepth - 1);
+                    }
+
+                    handle.Wait();
+                    return;
+                }
+
+                // Otherwise, doing the recursions on the current thread
+                DoSort(context, keys.Slice(0, pivotIndex), values.Slice(0, pivotIndex), freeDepth);
+                DoSort(context, keys.Slice(pivotIndex), values.Slice(pivotIndex), freeDepth);
+            }
+
+            private static void DoSort<TKeyFrom, TKeyTo, TValueFrom, TValueTo>(IAsyncContext context, CastArray<TKeyFrom, TKeyTo> keys, CastArray<TValueFrom, TValueTo> values, int freeDepth)
+                where TKeyFrom : unmanaged
+                where TKeyTo : unmanaged, TKey
+                where TValueFrom : unmanaged
+                where TValueTo : unmanaged, TValue
+            {
+                #region Local Methods
+
+                [MethodImpl(MethodImpl.AggressiveInlining)]
+                static void SwapIfGreater(CastArray<TKeyFrom, TKeyTo> keys, CastArray<TValueFrom, TValueTo> values, int i, int j)
+                {
+                    if (keys[i].CompareTo(keys[j]) > 0)
+                    {
+                        TKeyTo key = keys[i];
+                        keys[i] = keys[j];
+                        keys[j] = key;
+
+                        TValueTo value = values[i];
+                        values[i] = values[j];
+                        values[j] = value;
+                    }
+                }
+
+                #endregion
+
+                Debug.Assert(keys.Length > 1 && values.Length == keys.Length);
+                if (context.IsCancellationRequested)
+                    return;
+
+                // just a few elements: no parallel sorting and no recursion
+                if (keys.Length < sortParallelThreshold)
+                {
+                    if (keys.Length == 2)
+                    {
+                        SwapIfGreater(keys, values, 0, 1);
+                        return;
+                    }
+
+                    if (keys.Length == 3)
+                    {
+                        SwapIfGreater(keys, values, 0, 1);
+                        SwapIfGreater(keys, values, 0, 2);
+                        SwapIfGreater(keys, values, 1, 2);
+                        return;
+                    }
+
+                    // insertion sort
+                    for (int i = 1; i < keys.Length; i++)
+                    {
+                        TKeyTo currentKey = keys[i];
+                        TValueTo currentValue = values[i];
+                        int j = i - 1;
+                        while (j >= 0 && currentKey.CompareTo(keys[j]) < 0)
+                        {
+                            keys[j + 1] = keys[j];
+                            values[j + 1] = values[j];
+                            j -= 1;
+                        }
+
+                        keys[j + 1] = currentKey;
+                        values[j + 1] = currentValue;
+                    }
+
+                    return;
+                }
+
+                // pivot index relative to startIndex, it's always between 0 and count
+                int pivotIndex;
+
+                // This is to prevent real recursion in trivial cases. We could use a stack to avoid real recursion, but in practice that is slower.
+                while (true)
+                {
+                    Debug.Assert(keys.Length > 1);
+
+                    // Separating two partitions and then sorting the halves separately.
+                    pivotIndex = Partition(keys, values);
+                    Debug.Assert(pivotIndex < keys.Length);
+
+                    // Left half has <= 1 element: doing the right half only
+                    if (pivotIndex <= 1)
+                    {
+                        // Narrowing from the left if possible. Can happen if the values are the same according to the comparer.
+                        int endIndex = keys.Length - 1;
+                        while (pivotIndex < endIndex && keys[pivotIndex].CompareTo(keys[pivotIndex + 1]) == 0)
+                            pivotIndex += 1;
+
+                        // there is nothing left to sort
+                        if (keys.Length - pivotIndex <= 1)
+                            return;
+
+                        // "Recursion" with the right half only so free depth can remain the same
+                        keys = keys.Slice(pivotIndex);
+                        values = values.Slice(pivotIndex);
+                        continue;
+                    }
+
+                    // Right half has <= 1 element
+                    if (keys.Length - pivotIndex <= 1)
+                    {
+                        // Narrowing from the right if possible. Can happen if the values are the same according to the comparer.
+                        while (pivotIndex > 1 && keys[pivotIndex].CompareTo(keys[pivotIndex - 1]) == 0)
+                            pivotIndex -= 1;
+
+                        // there is nothing left to sort
+                        if (pivotIndex <= 1)
+                            return;
+
+                        // "Recursion" with the left half only so free depth can remain the same
+                        keys = keys.Slice(0, pivotIndex);
+                        values = values.Slice(0, pivotIndex);
+                        continue;
+                    }
+
+                    // Only real recursions from here so breaking the loop.
+                    break;
+                }
+
+                // Here we have two partitions that we can sort independently. If we have free depth and both sides are big enough we can spawn a new thread.
+                if (freeDepth > 0 && Math.Min(pivotIndex, keys.Length - pivotIndex) >= sortParallelThreshold)
+                {
+                    // Only one of them is spawned on a new thread because the current thread can do one of the jobs just fine.
+                    // Always the smaller half is assigned to the new thread because of the overhead and to prevent the wait handle
+                    // from starting to sleep if possible.
+                    using var handle = new ManualResetEventSlim(false);
+                    if (pivotIndex <= keys.Length >> 1)
+                    {
+                        ThreadPool.UnsafeQueueUserWorkItem(_ =>
+                        {
+                            DoSort(context, keys.Slice(0, pivotIndex), values.Slice(0, pivotIndex), freeDepth - 1);
+                            handle.Set();
+                        }, null);
+                        DoSort(context, keys.Slice(pivotIndex), values.Slice(pivotIndex), freeDepth - 1);
+                    }
+                    else
+                    {
+                        ThreadPool.UnsafeQueueUserWorkItem(_ =>
+                        {
+                            DoSort(context, keys.Slice(pivotIndex), values.Slice(pivotIndex), freeDepth - 1);
+                            handle.Set();
+                        }, null);
+                        DoSort(context, keys.Slice(0, pivotIndex), values.Slice(0, pivotIndex), freeDepth - 1);
+                    }
+
+                    handle.Wait();
+                    return;
+                }
+
+                // Otherwise, doing the recursions on the current thread
+                DoSort(context, keys.Slice(0, pivotIndex), values.Slice(0, pivotIndex), freeDepth);
+                DoSort(context, keys.Slice(pivotIndex), values.Slice(pivotIndex), freeDepth);
+            }
+
+            private static int Partition(IList<TKey> keys, IList<TValue> values, int startIndex, int count)
+            {
+                #region Local Methods
+
+                [MethodImpl(MethodImpl.AggressiveInlining)]
+                static void Swap(IList<TKey> keys, IList<TValue> values, int i, int j)
+                {
+                    TKey key = keys[i];
+                    keys[i] = keys[j];
+                    keys[j] = key;
+
+                    TValue value = values[i];
+                    values[i] = values[j];
+                    values[j] = value;
+                }
+
+                #endregion
+
+                Debug.Assert(count > 1);
+                if (count == 2)
+                {
+                    if (keys[startIndex].CompareTo(keys[startIndex + 1]) > 0)
+                        Swap(keys, values, startIndex, startIndex + 1);
+
+                    return 1;
+                }
+
+                // taking the pivot from the middle
+                int pivotIndex = startIndex + (count >> 1);
+                TKey pivotValue = keys[pivotIndex];
+
+                int left = startIndex;
+                int right = startIndex + count - 1;
+
+                do
+                {
+                    while (left <= right && keys[left].CompareTo(pivotValue) <= 0)
+                        left += 1;
+                    while (left < right && pivotValue.CompareTo(keys[right]) < 0)
+                        right -= 1;
+                    if (left >= right)
+                        break;
+
+                    Swap(keys, values, left, right);
+                    if (pivotIndex == right)
+                        pivotIndex = left;
+
+                    left++;
+                    right--;
+                } while (left <= right);
+
+                // left - 1 is now the new place of the pivot
+                if (pivotIndex != left - 1)
+                {
+                    Swap(keys, values, pivotIndex, left - 1);
+                    pivotIndex = left - 1;
+                }
+
+                return pivotIndex - startIndex;
+            }
+
+            private static int Partition(TKey[] keys, TValue[] values, int startIndex, int count)
+            {
+                #region Local Methods
+
+                [MethodImpl(MethodImpl.AggressiveInlining)]
+                static void Swap(TKey[] keys, TValue[] values, int i, int j)
+                {
+                    TKey key = keys[i];
+                    keys[i] = keys[j];
+                    keys[j] = key;
+
+                    TValue value = values[i];
+                    values[i] = values[j];
+                    values[j] = value;
+                }
+
+                #endregion
+
+                Debug.Assert(count > 1);
+                if (count == 2)
+                {
+                    if (keys[startIndex].CompareTo(keys[startIndex + 1]) > 0)
+                        Swap(keys, values, startIndex, startIndex + 1);
+
+                    return 1;
+                }
+
+                // taking the pivot from the middle
+                int pivotIndex = startIndex + (count >> 1);
+                TKey pivotValue = keys[pivotIndex];
+
+                int left = startIndex;
+                int right = startIndex + count - 1;
+
+                do
+                {
+                    while (left <= right && keys[left].CompareTo(pivotValue) <= 0)
+                        left += 1;
+                    while (left < right && pivotValue.CompareTo(keys[right]) < 0)
+                        right -= 1;
+                    if (left >= right)
+                        break;
+
+                    Swap(keys, values, left, right);
+                    if (pivotIndex == right)
+                        pivotIndex = left;
+
+                    left++;
+                    right--;
+                } while (left <= right);
+
+                // left - 1 is now the new place of the pivot
+                if (pivotIndex != left - 1)
+                {
+                    Swap(keys, values, pivotIndex, left - 1);
+                    pivotIndex = left - 1;
+                }
+
+                return pivotIndex - startIndex;
+            }
+
+            private static int Partition(List<TKey> keys, List<TValue> values, int startIndex, int count)
+            {
+                #region Local Methods
+
+                [MethodImpl(MethodImpl.AggressiveInlining)]
+                static void Swap(List<TKey> keys, List<TValue> values, int i, int j)
+                {
+                    TKey key = keys[i];
+                    keys[i] = keys[j];
+                    keys[j] = key;
+
+                    TValue value = values[i];
+                    values[i] = values[j];
+                    values[j] = value;
+                }
+
+                #endregion
+
+                Debug.Assert(count > 1);
+                if (count == 2)
+                {
+                    if (keys[startIndex].CompareTo(keys[startIndex + 1]) > 0)
+                        Swap(keys, values, startIndex, startIndex + 1);
+
+                    return 1;
+                }
+
+                // taking the pivot from the middle
+                int pivotIndex = startIndex + (count >> 1);
+                TKey pivotValue = keys[pivotIndex];
+
+                int left = startIndex;
+                int right = startIndex + count - 1;
+
+                do
+                {
+                    while (left <= right && keys[left].CompareTo(pivotValue) <= 0)
+                        left += 1;
+                    while (left < right && pivotValue.CompareTo(keys[right]) < 0)
+                        right -= 1;
+                    if (left >= right)
+                        break;
+
+                    Swap(keys, values, left, right);
+                    if (pivotIndex == right)
+                        pivotIndex = left;
+
+                    left++;
+                    right--;
+                } while (left <= right);
+
+                // left - 1 is now the new place of the pivot
+                if (pivotIndex != left - 1)
+                {
+                    Swap(keys, values, pivotIndex, left - 1);
+                    pivotIndex = left - 1;
+                }
+
+                return pivotIndex - startIndex;
+            }
+
+            private static int Partition(ArraySection<TKey> keys, ArraySection<TValue> values)
+            {
+                #region Local Methods
+
+                static void Swap(ArraySection<TKey> keys, ArraySection<TValue> values, int i, int j)
+                {
+                    TKey key = keys[i];
+                    keys[i] = keys[j];
+                    keys[j] = key;
+
+                    TValue value = values[i];
+                    values[i] = values[j];
+                    values[j] = value;
+                }
+
+                #endregion
+
+                Debug.Assert(keys.Length > 1);
+                if (keys.Length == 2)
+                {
+                    if (keys[0].CompareTo(keys[1]) > 0)
+                        Swap(keys, values, 0, 1);
+
+                    return 1;
+                }
+
+                // taking the pivot from the middle
+                int pivotIndex = (keys.Length >> 1);
+                TKey pivotValue = keys[pivotIndex];
+
+                int left = 0;
+                int right = keys.Length - 1;
+
+                do
+                {
+                    while (left <= right && keys[left].CompareTo(pivotValue) <= 0)
+                        left += 1;
+                    while (left < right && pivotValue.CompareTo(keys[right]) < 0)
+                        right -= 1;
+                    if (left >= right)
+                        break;
+
+                    Swap(keys, values, left, right);
+                    if (pivotIndex == right)
+                        pivotIndex = left;
+
+                    left++;
+                    right--;
+                } while (left <= right);
+
+                // left - 1 is now the new place of the pivot
+                if (pivotIndex != left - 1)
+                {
+                    Swap(keys, values, pivotIndex, left - 1);
+                    pivotIndex = left - 1;
+                }
+
+                return pivotIndex;
+            }
+
+            private static int Partition<TKeyFrom, TKeyTo, TValueFrom, TValueTo>(CastArray<TKeyFrom, TKeyTo> keys, CastArray<TValueFrom, TValueTo> values)
+                where TKeyFrom : unmanaged
+                where TKeyTo : unmanaged, TKey
+                where TValueFrom : unmanaged
+                where TValueTo : unmanaged, TValue
+            {
+                #region Local Methods
+
+                static void Swap(CastArray<TKeyFrom, TKeyTo> keys, CastArray<TValueFrom, TValueTo> values, int i, int j)
+                {
+                    TKeyTo key = keys[i];
+                    keys[i] = keys[j];
+                    keys[j] = key;
+
+                    TValueTo value = values[i];
+                    values[i] = values[j];
+                    values[j] = value;
+                }
+
+                #endregion
+
+                Debug.Assert(keys.Length > 1);
+                if (keys.Length == 2)
+                {
+                    if (keys[0].CompareTo(keys[1]) > 0)
+                        Swap(keys, values, 0, 1);
+
+                    return 1;
+                }
+
+                // taking the pivot from the middle
+                int pivotIndex = (keys.Length >> 1);
+                TKeyTo pivotValue = keys[pivotIndex];
+
+                int left = 0;
+                int right = keys.Length - 1;
+
+                do
+                {
+                    while (left <= right && keys[left].CompareTo(pivotValue) <= 0)
+                        left += 1;
+                    while (left < right && pivotValue.CompareTo(keys[right]) < 0)
+                        right -= 1;
+                    if (left >= right)
+                        break;
+
+                    Swap(keys, values, left, right);
+                    if (pivotIndex == right)
+                        pivotIndex = left;
+
+                    left++;
+                    right--;
+                } while (left <= right);
+
+                // left - 1 is now the new place of the pivot
+                if (pivotIndex != left - 1)
+                {
+                    Swap(keys, values, pivotIndex, left - 1);
+                    pivotIndex = left - 1;
+                }
+
+                return pivotIndex;
+            }
+
+            #endregion
+
+            #region Instance Methods
+
+            public void Sort(IAsyncContext context, IList<TKey> keys, IList<TValue> values, int startIndex, int count, IComparer<TKey>? comparer)
+            {
+                int maxTasks = context.MaxDegreeOfParallelism;
+                if (maxTasks <= 0)
+                    maxTasks = CoreCount;
+
+                if (comparer != null && !Equals(comparer, Comparer<TKey>.Default))
+                {
+#if NETCOREAPP3_0_OR_GREATER
+                    SortHelper<TKey, TValue>.DoSort(context, keys, values, startIndex, count, comparer, BitOperations.Log2((uint)maxTasks));
+#else
+                    SortHelper<TKey, TValue>.DoSort(context, keys, values, startIndex, count, comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
+#endif
+                    return;
+                }
+
+                // Due to the recursive binary branching the allowed subtask count is logarithmic, eg. 3 if there are 8 cores.
+#if NETCOREAPP3_0_OR_GREATER
+                DoSort(context, keys, values, startIndex, count, BitOperations.Log2((uint)maxTasks));
+#else
+                DoSort(context, keys, values, startIndex, count, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
+#endif
+            }
+
+            public void Sort(IAsyncContext context, TKey[] keys, TValue[] values, int startIndex, int count, IComparer<TKey>? comparer)
+            {
+                int maxTasks = context.MaxDegreeOfParallelism;
+                if (maxTasks <= 0)
+                    maxTasks = CoreCount;
+
+                if (comparer != null && !Equals(comparer, Comparer<TKey>.Default))
+                {
+#if NETCOREAPP3_0_OR_GREATER
+                    SortHelper<TKey, TValue>.DoSort(context, keys, values, startIndex, count, comparer, BitOperations.Log2((uint)maxTasks));
+#else
+                    SortHelper<TKey, TValue>.DoSort(context, keys, values, startIndex, count, comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
+#endif
+                    return;
+                }
+
+                // Due to the recursive binary branching the allowed subtask count is logarithmic, eg. 3 if there are 8 cores.
+#if NETCOREAPP3_0_OR_GREATER
+                DoSort(context, keys, values, startIndex, count, BitOperations.Log2((uint)maxTasks));
+#else
+                DoSort(context, keys, values, startIndex, count, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
+#endif
+            }
+
+            public void Sort(IAsyncContext context, List<TKey> keys, List<TValue> values, int startIndex, int count, IComparer<TKey>? comparer)
+            {
+                int maxTasks = context.MaxDegreeOfParallelism;
+                if (maxTasks <= 0)
+                    maxTasks = CoreCount;
+
+                if (comparer != null && !Equals(comparer, Comparer<TKey>.Default))
+                {
+#if NETCOREAPP3_0_OR_GREATER
+                    SortHelper<TKey, TValue>.DoSort(context, keys, values, startIndex, count, comparer, BitOperations.Log2((uint)maxTasks));
+#else
+                    SortHelper<TKey, TValue>.DoSort(context, keys, values, startIndex, count, comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
+#endif
+                    return;
+                }
+
+                // Due to the recursive binary branching the allowed subtask count is logarithmic, eg. 3 if there are 8 cores.
+#if NETCOREAPP3_0_OR_GREATER
+                DoSort(context, keys, values, startIndex, count, BitOperations.Log2((uint)maxTasks));
+#else
+                DoSort(context, keys, values, startIndex, count, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
+#endif
+            }
+
+            public void Sort(IAsyncContext context, ArraySection<TKey> keys, ArraySection<TValue> values, IComparer<TKey>? comparer)
+            {
+                Debug.Assert(keys.Length > 1 && keys.Length == values.Length);
+                int maxTasks = context.MaxDegreeOfParallelism;
+                if (maxTasks <= 0)
+                    maxTasks = CoreCount;
+
+                if (comparer != null && !Equals(comparer, Comparer<TKey>.Default))
+                {
+#if NETCOREAPP3_0_OR_GREATER
+                    SortHelper<TKey, TValue>.DoSort(context, keys, values, comparer, BitOperations.Log2((uint)maxTasks));
+#else
+                    SortHelper<TKey, TValue>.DoSort(context, keys, values, comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
+#endif
+                    return;
+                }
+
+                // Due to the recursive binary branching the allowed subtask array.Length is logarithmic, eg. 3 if there are 8 cores.
+#if NETCOREAPP3_0_OR_GREATER
+                DoSort(context, keys, values, BitOperations.Log2((uint)maxTasks));
+#else
+                DoSort(context, keys, values, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
+#endif
+            }
+
+            public void Sort<TKeyFrom, TKeyTo, TValueFrom, TValueTo>(IAsyncContext context, CastArray<TKeyFrom, TKeyTo> keys, CastArray<TValueFrom, TValueTo> values, IComparer<TKeyTo>? comparer)
+                where TKeyFrom : unmanaged
+                where TKeyTo : unmanaged, TKey
+                where TValueFrom : unmanaged
+                where TValueTo : unmanaged, TValue
+            {
+                Debug.Assert(keys.Length > 1 && keys.Length == values.Length);
+                int maxTasks = context.MaxDegreeOfParallelism;
+                if (maxTasks <= 0)
+                    maxTasks = CoreCount;
+
+                if (comparer != null && !Equals(comparer, Comparer<TKeyTo>.Default))
+                {
+#if NETCOREAPP3_0_OR_GREATER
+                    SortHelper<TKey, TValue>.DoSort(context, keys, values, comparer, BitOperations.Log2((uint)maxTasks));
+#else
+                    SortHelper<TKey, TValue>.DoSort(context, keys, values, comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
+#endif
+                    return;
+                }
+
+                // Due to the recursive binary branching the allowed subtask array.Length is logarithmic, eg. 3 if there are 8 cores.
+#if NETCOREAPP3_0_OR_GREATER
+                DoSort(context, keys, values, BitOperations.Log2((uint)maxTasks));
+#else
+                DoSort(context, keys, values, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
 #endif
             }
 
