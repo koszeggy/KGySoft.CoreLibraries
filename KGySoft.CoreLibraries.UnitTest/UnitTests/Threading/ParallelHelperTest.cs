@@ -19,7 +19,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Threading;
 
@@ -124,7 +123,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Threading
         {
             var bools = new bool[1000];
             var callbackCalled = new ManualResetEvent(false);
-            var asyncConfig = new AsyncConfig(ar => callbackCalled.Set());
+            var asyncConfig = new AsyncConfig(_ => callbackCalled.Set());
             IAsyncResult ar = ParallelHelper.BeginFor(0, bools.Length, asyncConfig, i => bools[i] = true);
             ar.AsyncWaitHandle.WaitOne();
             Assert.IsTrue(ar.IsCompleted);

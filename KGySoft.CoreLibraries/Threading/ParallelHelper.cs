@@ -365,6 +365,9 @@ namespace KGySoft.Threading
         /// or the <see cref="O:KGySoft.Threading.ParallelHelper.BeginSort">BeginSort</see>/<see cref="O:KGySoft.Threading.ParallelHelper.SortAsync">SortAsync</see>
         /// (in .NET Framework 4.0 and above) methods to perform the sorting asynchronously.</note>
         /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="list"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException">The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
         public static void Sort<T>(IList<T> list, IComparer<T>? comparer = null)
         {
             if (list == null!)
@@ -396,6 +399,12 @@ namespace KGySoft.Threading
         /// or the <see cref="O:KGySoft.Threading.ParallelHelper.BeginSort">BeginSort</see>/<see cref="O:KGySoft.Threading.ParallelHelper.SortAsync">SortAsync</see>
         /// (in .NET Framework 4.0 and above) methods to perform the sorting asynchronously.</note>
         /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="list"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> or <paramref name="count"/> is less than 0.</exception>
+        /// <exception cref="ArgumentException">The <paramref name="index"/> and <paramref name="count"/> do not denote a valid range in the <paramref name="list"/>.
+        /// <br/>-or-
+        /// The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
         public static void Sort<T>(IList<T> list, int index, int count, IComparer<T>? comparer = null)
         {
             if (list == null!)
@@ -426,6 +435,8 @@ namespace KGySoft.Threading
         /// or the <see cref="O:KGySoft.Threading.ParallelHelper.BeginSort">BeginSort</see>/<see cref="O:KGySoft.Threading.ParallelHelper.SortAsync">SortAsync</see>
         /// (in .NET Framework 4.0 and above) methods to perform the sorting asynchronously.</note>
         /// </remarks>
+        /// <exception cref="ArgumentException">The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
         public static void Sort<T>(ArraySection<T> array, IComparer<T>? comparer = null)
         {
             if (array.Length < 2)
@@ -447,6 +458,8 @@ namespace KGySoft.Threading
         /// or the <see cref="O:KGySoft.Threading.ParallelHelper.BeginSort">BeginSort</see>/<see cref="O:KGySoft.Threading.ParallelHelper.SortAsync">SortAsync</see>
         /// (in .NET Framework 4.0 and above) methods to perform the sorting asynchronously.</note>
         /// </remarks>
+        /// <exception cref="ArgumentException">The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
         public static void Sort<TFrom, TTo>(CastArray<TFrom, TTo> array, IComparer<TTo>? comparer = null)
             where TFrom : unmanaged
             where TTo : unmanaged
@@ -475,6 +488,11 @@ namespace KGySoft.Threading
         /// or the <see cref="O:KGySoft.Threading.ParallelHelper.BeginSort">BeginSort</see>/<see cref="O:KGySoft.Threading.ParallelHelper.SortAsync">SortAsync</see>
         /// (in .NET Framework 4.0 and above) methods to perform the sorting asynchronously.</note>
         /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="keys"/> or <paramref name="values"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="values"/> is not <see langword="null"/> and <paramref name="values"/> has fewer elements than <paramref name="keys"/>.
+        /// <br/>-or-
+        /// The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
         public static void Sort<TKey, TValue>(IList<TKey> keys, IList<TValue>? values, IComparer<TKey>? comparer = null)
         {
             if (keys == null!)
@@ -504,6 +522,12 @@ namespace KGySoft.Threading
         /// or the <see cref="O:KGySoft.Threading.ParallelHelper.BeginSort">BeginSort</see>/<see cref="O:KGySoft.Threading.ParallelHelper.SortAsync">SortAsync</see>
         /// (in .NET Framework 4.0 and above) methods to perform the sorting asynchronously.</note>
         /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="keys"/> or <paramref name="values"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> or <paramref name="count"/> is less than 0.</exception>
+        /// <exception cref="ArgumentException">The <paramref name="index"/> and <paramref name="count"/> do not denote a valid range in the <paramref name="keys"/> or <paramref name="values"/> list.
+        /// <br/>-or-
+        /// The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
         public static void Sort<TKey, TValue>(IList<TKey> keys, IList<TValue>? values, int index, int count, IComparer<TKey>? comparer = null)
         {
             if (keys == null!)
@@ -543,6 +567,10 @@ namespace KGySoft.Threading
         /// or the <see cref="O:KGySoft.Threading.ParallelHelper.BeginSort">BeginSort</see>/<see cref="O:KGySoft.Threading.ParallelHelper.SortAsync">SortAsync</see>
         /// (in .NET Framework 4.0 and above) methods to perform the sorting asynchronously.</note>
         /// </remarks>
+        /// <exception cref="ArgumentException">The <see cref="ArraySection{T}.IsNull"/> property of <paramref name="values"/> is <see langword="false"/> and <paramref name="values"/> has fewer elements than <paramref name="keys"/>.
+        /// <br/>-or-
+        /// The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
         public static void Sort<TKey, TValue>(ArraySection<TKey> keys, ArraySection<TValue> values, IComparer<TKey>? comparer = null)
         {
             if (values.IsNull)
@@ -579,6 +607,10 @@ namespace KGySoft.Threading
         /// or the <see cref="O:KGySoft.Threading.ParallelHelper.BeginSort">BeginSort</see>/<see cref="O:KGySoft.Threading.ParallelHelper.SortAsync">SortAsync</see>
         /// (in .NET Framework 4.0 and above) methods to perform the sorting asynchronously.</note>
         /// </remarks>
+        /// <exception cref="ArgumentException">The <see cref="CastArray{TFrom,TTo}.IsNull"/> property of <paramref name="values"/> is <see langword="false"/> and <paramref name="values"/> has fewer elements than <paramref name="keys"/>.
+        /// <br/>-or-
+        /// The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
         public static void Sort<TKeyFrom, TKeyTo, TValueFrom, TValueTo>(CastArray<TKeyFrom, TKeyTo> keys, CastArray<TValueFrom, TValueTo> values, IComparer<TKeyTo>? comparer = null)
             where TKeyFrom : unmanaged
             where TKeyTo : unmanaged
@@ -605,19 +637,61 @@ namespace KGySoft.Threading
 
         #region ParallelConfig
 
-        public static bool Sort<T>(IList<T> list, IComparer<T>? comparer, ParallelConfig? parallelConfig)
+        /// <summary>
+        /// Sorts the elements of the specified <paramref name="list"/> synchronously, potentially using multiple threads.
+        /// </summary>
+        /// <typeparam name="T">The type of the elements in the <paramref name="list"/>.</typeparam>
+        /// <param name="list">The list to sort.</param>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use a default comparer.</param>
+        /// <param name="configuration">An optional configuration to adjust parallelization or cancellation. Reporting progress is not supported in sorting methods.</param>
+        /// <returns><see langword="true"/>, if the operation completed successfully.
+        /// <br/><see langword="false"/>, if the operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in <paramref name="configuration"/> was set to <see langword="false"/>.</returns>
+        /// <remarks>
+        /// <para>In general, accessing <see cref="IList{T}"/> members is like calling virtual methods. For the best performance there is a special handling for <see cref="Array"/>,
+        /// <see cref="List{T}"/>, <see cref="ArraySegment{T}"/>, <see cref="ArraySection{T}"/> and <see cref="CircularList{T}"/> instances.
+        /// For <see cref="ArraySection{T}"/> and <see cref="CastArray{TFrom,TTo}"/> instances it is recommended to use the dedicated overloads for better performance.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="list"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException">The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
+        /// <exception cref="OperationCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in <paramref name="configuration"/> was <see langword="true"/>.</exception>
+        public static bool Sort<T>(IList<T> list, IComparer<T>? comparer, ParallelConfig? configuration)
         {
             if (list == null!)
                 Throw.ArgumentNullException(Argument.array);
 
             int count = list.Count;
             if (count < 2)
-                return AsyncHelper.FromResult(true, parallelConfig);
+                return AsyncHelper.FromResult(true, configuration);
 
-            return AsyncHelper.DoOperationSynchronously(ctx => DoSort(ctx, list, 0, count, comparer), parallelConfig);
+            return AsyncHelper.DoOperationSynchronously(ctx => DoSort(ctx, list, 0, count, comparer), configuration);
         }
 
-        public static bool Sort<T>(IList<T> list, int index, int count, IComparer<T>? comparer, ParallelConfig? parallelConfig)
+        /// <summary>
+        /// Sorts the elements of the specified <paramref name="list"/> synchronously, potentially using multiple threads.
+        /// The range of elements to sort is specified by a starting index and a length.
+        /// </summary>
+        /// <typeparam name="T">The type of the elements in the <paramref name="list"/>.</typeparam>
+        /// <param name="list">The list to sort.</param>
+        /// <param name="index">The zero-based starting index of the range to sort.</param>
+        /// <param name="count">The length of the range to sort.</param>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use a default comparer.</param>
+        /// <param name="configuration">An optional configuration to adjust parallelization or cancellation. Reporting progress is not supported in sorting methods.</param>
+        /// <returns><see langword="true"/>, if the operation completed successfully.
+        /// <br/><see langword="false"/>, if the operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in <paramref name="configuration"/> was set to <see langword="false"/>.</returns>
+        /// <remarks>
+        /// <para>In general, accessing <see cref="IList{T}"/> members is like calling virtual methods. For the best performance there is a special handling for <see cref="Array"/>,
+        /// <see cref="List{T}"/>, <see cref="ArraySegment{T}"/>, <see cref="ArraySection{T}"/> and <see cref="CircularList{T}"/> instances.
+        /// For <see cref="ArraySection{T}"/> and <see cref="CastArray{TFrom,TTo}"/> instances it is recommended to use the dedicated overloads for better performance.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="list"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> or <paramref name="count"/> is less than 0.</exception>
+        /// <exception cref="ArgumentException">The <paramref name="index"/> and <paramref name="count"/> do not denote a valid range in the <paramref name="list"/>.
+        /// <br/>-or-
+        /// The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
+        /// <exception cref="OperationCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in <paramref name="configuration"/> was <see langword="true"/>.</exception>
+        public static bool Sort<T>(IList<T> list, int index, int count, IComparer<T>? comparer, ParallelConfig? configuration)
         {
             if (list == null!)
                 Throw.ArgumentNullException(Argument.list);
@@ -629,41 +703,115 @@ namespace KGySoft.Threading
                 Throw.ArgumentException(Res.IListInvalidOffsLen);
 
             if (count < 2)
-                return AsyncHelper.FromResult(true, parallelConfig);
+                return AsyncHelper.FromResult(true, configuration);
 
-            return AsyncHelper.DoOperationSynchronously(ctx => DoSort(ctx, list, index, count, comparer), parallelConfig);
+            return AsyncHelper.DoOperationSynchronously(ctx => DoSort(ctx, list, index, count, comparer), configuration);
         }
 
-        public static bool Sort<T>(ArraySection<T> array, IComparer<T>? comparer, ParallelConfig? parallelConfig)
+        /// <summary>
+        /// Sorts the elements of the specified <see cref="ArraySection{T}"/> synchronously, potentially using multiple threads.
+        /// </summary>
+        /// <typeparam name="T">The type of the elements in the <see cref="ArraySection{T}"/>.</typeparam>
+        /// <param name="array">The <see cref="ArraySection{T}"/> instance to sort.</param>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use a default comparer.</param>
+        /// <param name="configuration">An optional configuration to adjust parallelization or cancellation. Reporting progress is not supported in sorting methods.</param>
+        /// <returns><see langword="true"/>, if the operation completed successfully.
+        /// <br/><see langword="false"/>, if the operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in <paramref name="configuration"/> was set to <see langword="false"/>.</returns>
+        /// <exception cref="ArgumentException">The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
+        /// <exception cref="OperationCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in <paramref name="configuration"/> was <see langword="true"/>.</exception>
+        public static bool Sort<T>(ArraySection<T> array, IComparer<T>? comparer, ParallelConfig? configuration)
         {
             if (array.Length < 2)
-                return AsyncHelper.FromResult(true, parallelConfig);
-            return AsyncHelper.DoOperationSynchronously(ctx => DoSort(ctx, array, comparer), parallelConfig);
+                return AsyncHelper.FromResult(true, configuration);
+            return AsyncHelper.DoOperationSynchronously(ctx => DoSort(ctx, array, comparer), configuration);
         }
 
-        public static bool Sort<TFrom, TTo>(CastArray<TFrom, TTo> array, IComparer<TTo>? comparer, ParallelConfig? parallelConfig)
+        /// <summary>
+        /// Sorts the elements of the specified <see cref="CastArray{TFrom,TTo}"/> synchronously, potentially using multiple threads.
+        /// </summary>
+        /// <typeparam name="TFrom">The actual element type of the underlying array.</typeparam>
+        /// <typeparam name="TTo">The reinterpreted element type of the <see cref="CastArray{TFrom,TTo}"/> instance.</typeparam>
+        /// <param name="array">The <see cref="CastArray{TFrom,TTo}"/> instance to sort.</param>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use a default comparer.</param>
+        /// <param name="configuration">An optional configuration to adjust parallelization or cancellation. Reporting progress is not supported in sorting methods.</param>
+        /// <returns><see langword="true"/>, if the operation completed successfully.
+        /// <br/><see langword="false"/>, if the operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in <paramref name="configuration"/> was set to <see langword="false"/>.</returns>
+        /// <exception cref="ArgumentException">The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
+        /// <exception cref="OperationCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in <paramref name="configuration"/> was <see langword="true"/>.</exception>
+        public static bool Sort<TFrom, TTo>(CastArray<TFrom, TTo> array, IComparer<TTo>? comparer, ParallelConfig? configuration)
             where TFrom : unmanaged
             where TTo : unmanaged
         {
             if (array.Length < 2)
-                return AsyncHelper.FromResult(true, parallelConfig);
-            return AsyncHelper.DoOperationSynchronously(ctx => DoSort(ctx, array, comparer), parallelConfig);
+                return AsyncHelper.FromResult(true, configuration);
+            return AsyncHelper.DoOperationSynchronously(ctx => DoSort(ctx, array, comparer), configuration);
         }
 
-        public static bool Sort<TKey, TValue>(IList<TKey> keys, IList<TValue>? values, IComparer<TKey>? comparer, ParallelConfig? parallelConfig)
+        /// <summary>
+        /// Sorts the elements in a pair of <see cref="IList{T}"/> instances synchronously (one contains the keys, the other contains the corresponding values), potentially using multiple threads.
+        /// </summary>
+        /// <typeparam name="TKey">The type of the elements in the <paramref name="keys"/> list.</typeparam>
+        /// <typeparam name="TValue">The type of the elements in the <paramref name="values"/> list.</typeparam>
+        /// <param name="keys">The <see cref="IList{T}"/> that contains the keys to sort.</param>
+        /// <param name="values">The <see cref="IList{T}"/> that contains the values that correspond to the keys in the <paramref name="keys"/> list, or <see langword="null"/> to sort only the keys.</param>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use a default comparer.</param>
+        /// <param name="configuration">An optional configuration to adjust parallelization or cancellation. Reporting progress is not supported in sorting methods.</param>
+        /// <returns><see langword="true"/>, if the operation completed successfully.
+        /// <br/><see langword="false"/>, if the operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in <paramref name="configuration"/> was set to <see langword="false"/>.</returns>
+        /// <remarks>
+        /// <para>In general, accessing <see cref="IList{T}"/> members is like calling virtual methods. For the best performance there is a special handling for <see cref="Array"/>,
+        /// <see cref="List{T}"/>, <see cref="ArraySegment{T}"/>, <see cref="ArraySection{T}"/> and <see cref="CircularList{T}"/> instances,
+        /// if both <paramref name="keys"/> and <paramref name="values"/> are of the same type (not considering the generic type arguments).
+        /// For <see cref="ArraySection{T}"/> and <see cref="CastArray{TFrom,TTo}"/> instances it is recommended to use the dedicated overloads for better performance.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="keys"/> or <paramref name="values"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="values"/> is not <see langword="null"/> and <paramref name="values"/> has fewer elements than <paramref name="keys"/>.
+        /// <br/>-or-
+        /// The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
+        /// <exception cref="OperationCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in <paramref name="configuration"/> was <see langword="true"/>.</exception>
+        public static bool Sort<TKey, TValue>(IList<TKey> keys, IList<TValue>? values, IComparer<TKey>? comparer, ParallelConfig? configuration)
         {
             if (keys == null!)
                 Throw.ArgumentNullException(Argument.keys);
-            return Sort(keys, values, 0, keys.Count, comparer, parallelConfig);
+            return Sort(keys, values, 0, keys.Count, comparer, configuration);
         }
 
-        // TODO: Remarks: special handling for keys and values works only if they are both arrays or their generic type definitions are the same
-        public static bool Sort<TKey, TValue>(IList<TKey> keys, IList<TValue>? values, int index, int count, IComparer<TKey>? comparer, ParallelConfig? parallelConfig)
+        /// <summary>
+        /// Sorts the elements in a pair of <see cref="IList{T}"/> instances synchronously (one contains the keys, the other contains the corresponding values), potentially using multiple threads.
+        /// The range of elements to sort is specified by a starting index and a length.
+        /// </summary>
+        /// <typeparam name="TKey">The type of the elements in the <paramref name="keys"/> list.</typeparam>
+        /// <typeparam name="TValue">The type of the elements in the <paramref name="values"/> list.</typeparam>
+        /// <param name="keys">The <see cref="IList{T}"/> that contains the keys to sort.</param>
+        /// <param name="values">The <see cref="IList{T}"/> that contains the values that correspond to the keys in the <paramref name="keys"/> list, or <see langword="null"/> to sort only the keys.</param>
+        /// <param name="index">The zero-based starting index of the range to sort.</param>
+        /// <param name="count">The length of the range to sort.</param>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use a default comparer.</param>
+        /// <param name="configuration">An optional configuration to adjust parallelization or cancellation. Reporting progress is not supported in sorting methods.</param>
+        /// <returns><see langword="true"/>, if the operation completed successfully.
+        /// <br/><see langword="false"/>, if the operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in <paramref name="configuration"/> was set to <see langword="false"/>.</returns>
+        /// <remarks>
+        /// <para>In general, accessing <see cref="IList{T}"/> members is like calling virtual methods. For the best performance there is a special handling for <see cref="Array"/>,
+        /// <see cref="List{T}"/>, <see cref="ArraySegment{T}"/>, <see cref="ArraySection{T}"/> and <see cref="CircularList{T}"/> instances,
+        /// if both <paramref name="keys"/> and <paramref name="values"/> are of the same type (not considering the generic type arguments).
+        /// For <see cref="ArraySection{T}"/> and <see cref="CastArray{TFrom,TTo}"/> instances it is recommended to use the dedicated overloads for better performance.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="keys"/> or <paramref name="values"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> or <paramref name="count"/> is less than 0.</exception>
+        /// <exception cref="ArgumentException">The <paramref name="index"/> and <paramref name="count"/> do not denote a valid range in the <paramref name="keys"/> or <paramref name="values"/> list.
+        /// <br/>-or-
+        /// The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
+        /// <exception cref="OperationCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in <paramref name="configuration"/> was <see langword="true"/>.</exception>
+        public static bool Sort<TKey, TValue>(IList<TKey> keys, IList<TValue>? values, int index, int count, IComparer<TKey>? comparer, ParallelConfig? configuration)
         {
             if (keys == null!)
                 Throw.ArgumentNullException(Argument.keys);
             if (values == null)
-                return Sort(keys, index, count, comparer, parallelConfig);
+                return Sort(keys, index, count, comparer, configuration);
             if (index < 0)
                 Throw.ArgumentOutOfRangeException(Argument.index);
             if (count < 0)
@@ -672,47 +820,105 @@ namespace KGySoft.Threading
                 Throw.ArgumentException(Res.IListInvalidOffsLen);
 
             if (count < 2)
-                return AsyncHelper.FromResult(true, parallelConfig);
+                return AsyncHelper.FromResult(true, configuration);
 
-            return AsyncHelper.DoOperationSynchronously(ctx => DoSort(ctx, keys, values, index, count, comparer), parallelConfig);
+            return AsyncHelper.DoOperationSynchronously(ctx => DoSort(ctx, keys, values, index, count, comparer), configuration);
         }
 
-        public static bool Sort<TKey, TValue>(ArraySection<TKey> keys, ArraySection<TValue> values, IComparer<TKey>? comparer, ParallelConfig? parallelConfig)
+        /// <summary>
+        /// Sorts the elements in a pair of <see cref="ArraySection{T}"/> instances synchronously (one contains the keys, the other contains the corresponding values), potentially using multiple threads.
+        /// </summary>
+        /// <typeparam name="TKey">The type of the elements in the <paramref name="keys"/> collection.</typeparam>
+        /// <typeparam name="TValue">The type of the elements in the <paramref name="values"/> collection.</typeparam>
+        /// <param name="keys">The <see cref="ArraySection{T}"/> that contains the keys to sort.</param>
+        /// <param name="values">The <see cref="ArraySection{T}"/> that contains the values that correspond to the keys in the <paramref name="keys"/> collection.
+        /// If the <see cref="ArraySection{T}.IsNull"/> property of <paramref name="values"/> is <see langword="true"/>, then only the keys are sorted.</param>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use a default comparer.</param>
+        /// <param name="configuration">An optional configuration to adjust parallelization or cancellation. Reporting progress is not supported in sorting methods.</param>
+        /// <returns><see langword="true"/>, if the operation completed successfully.
+        /// <br/><see langword="false"/>, if the operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in <paramref name="configuration"/> was set to <see langword="false"/>.</returns>
+        /// <exception cref="ArgumentException">The <see cref="ArraySection{T}.IsNull"/> property of <paramref name="values"/> is <see langword="false"/> and <paramref name="values"/> has fewer elements than <paramref name="keys"/>.
+        /// <br/>-or-
+        /// The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
+        /// <exception cref="OperationCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in <paramref name="configuration"/> was <see langword="true"/>.</exception>
+        public static bool Sort<TKey, TValue>(ArraySection<TKey> keys, ArraySection<TValue> values, IComparer<TKey>? comparer, ParallelConfig? configuration)
         {
             if (values.IsNull)
-                return Sort(keys, comparer, parallelConfig);
+                return Sort(keys, comparer, configuration);
             if (keys.Length > values.Length)
                 Throw.ArgumentException(Res.IListInvalidOffsLen);
             if (keys.Length < 2)
-                return AsyncHelper.FromResult(true, parallelConfig);
+                return AsyncHelper.FromResult(true, configuration);
             if (keys.Length < values.Length)
                 values = values.Slice(0, keys.Length);
 
-            return AsyncHelper.DoOperationSynchronously(ctx => DoSort(ctx, keys, values, comparer), parallelConfig);
+            return AsyncHelper.DoOperationSynchronously(ctx => DoSort(ctx, keys, values, comparer), configuration);
         }
 
-        public static bool Sort<TKeyFrom, TKeyTo, TValueFrom, TValueTo>(CastArray<TKeyFrom, TKeyTo> keys, CastArray<TValueFrom, TValueTo> values, IComparer<TKeyTo>? comparer, ParallelConfig? parallelConfig)
+        /// <summary>
+        /// Sorts the elements in a pair of <see cref="CastArray{TFrom,TTo}"/> instances synchronously (one contains the keys, the other contains the corresponding values), potentially using multiple threads.
+        /// </summary>
+        /// <typeparam name="TKeyFrom">The actual element type of the underlying array in <paramref name="keys"/>.</typeparam>
+        /// <typeparam name="TKeyTo">The reinterpreted element type of the <see cref="CastArray{TFrom,TTo}"/> instance in <paramref name="keys"/>.</typeparam>
+        /// <typeparam name="TValueFrom">The actual element type of the underlying array in <paramref name="values"/>.</typeparam>
+        /// <typeparam name="TValueTo">The reinterpreted element type of the <see cref="CastArray{TFrom,TTo}"/> instance in <paramref name="values"/>.</typeparam>
+        /// <param name="keys">The <see cref="CastArray{TFrom,TTo}"/> that contains the keys to sort.</param>
+        /// <param name="values">The <see cref="CastArray{TFrom,TTo}"/> that contains the values that correspond to the keys in the <paramref name="keys"/> collection.
+        /// If the <see cref="CastArray{TFrom,TTo}.IsNull"/> property of <paramref name="values"/> is <see langword="true"/>, then only the keys are sorted.</param>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use a default comparer.</param>
+        /// <param name="configuration">An optional configuration to adjust parallelization or cancellation. Reporting progress is not supported in sorting methods.</param>
+        /// <returns><see langword="true"/>, if the operation completed successfully.
+        /// <br/><see langword="false"/>, if the operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in <paramref name="configuration"/> was set to <see langword="false"/>.</returns>
+        /// <exception cref="ArgumentException">The <see cref="CastArray{TFrom,TTo}.IsNull"/> property of <paramref name="values"/> is <see langword="false"/> and <paramref name="values"/> has fewer elements than <paramref name="keys"/>.
+        /// <br/>-or-
+        /// The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
+        /// <exception cref="OperationCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in <paramref name="configuration"/> was <see langword="true"/>.</exception>
+        public static bool Sort<TKeyFrom, TKeyTo, TValueFrom, TValueTo>(CastArray<TKeyFrom, TKeyTo> keys, CastArray<TValueFrom, TValueTo> values, IComparer<TKeyTo>? comparer, ParallelConfig? configuration)
             where TKeyFrom : unmanaged
             where TKeyTo : unmanaged
             where TValueFrom : unmanaged
             where TValueTo : unmanaged
         {
             if (values.IsNull)
-                return Sort(keys, comparer, parallelConfig);
+                return Sort(keys, comparer, configuration);
             if (keys.Length > values.Length)
                 Throw.ArgumentException(Res.IListInvalidOffsLen);
             if (keys.Length < 2)
-                return AsyncHelper.FromResult(true, parallelConfig);
+                return AsyncHelper.FromResult(true, configuration);
             if (keys.Length < values.Length)
                 values = values.Slice(0, keys.Length);
 
-            return AsyncHelper.DoOperationSynchronously(ctx => DoSort(ctx, keys, values, comparer), parallelConfig);
+            return AsyncHelper.DoOperationSynchronously(ctx => DoSort(ctx, keys, values, comparer), configuration);
         }
 
         #endregion
 
         #region IAsyncContect
 
+        /// <summary>
+        /// Sorts the elements of the specified <paramref name="list"/> synchronously, potentially using multiple threads,
+        /// using a <paramref name="context"/> that may belong to a higher level, possibly asynchronous operation.
+        /// </summary>
+        /// <typeparam name="T">The type of the elements in the <paramref name="list"/>.</typeparam>
+        /// <param name="context">An <see cref="IAsyncContext"/> instance that contains information for asynchronous processing about the current operation.</param>
+        /// <param name="list">The list to sort.</param>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use a default comparer. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <returns><see langword="true"/>, if the operation completed successfully.
+        /// <br/><see langword="false"/>, if the operation has been canceled.</returns>
+        /// <remarks>
+        /// <para>In general, accessing <see cref="IList{T}"/> members is like calling virtual methods. For the best performance there is a special handling for <see cref="Array"/>,
+        /// <see cref="List{T}"/>, <see cref="ArraySegment{T}"/>, <see cref="ArraySection{T}"/> and <see cref="CircularList{T}"/> instances.
+        /// For <see cref="ArraySection{T}"/> and <see cref="CastArray{TFrom,TTo}"/> instances it is recommended to use the dedicated overloads for better performance.</para>
+        /// <para>This method blocks the caller thread but if <paramref name="context"/> belongs to an async top level method, then the execution may already run
+        /// on a pool thread. Degree of parallelism and the ability of cancellation depend on how these were configured at the top level method.
+        /// To reconfigure the degree of parallelism of an existing context, you can use the <see cref="AsyncContextWrapper"/> class.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="list"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException">The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
         public static bool Sort<T>(IAsyncContext? context, IList<T> list, IComparer<T>? comparer = null)
         {
             if (list == null!)
@@ -725,6 +931,34 @@ namespace KGySoft.Threading
             return DoSort(context ?? AsyncHelper.DefaultContext, list, 0, count, comparer);
         }
 
+        /// <summary>
+        /// Sorts the elements of the specified <paramref name="list"/> synchronously, potentially using multiple threads,
+        /// using a <paramref name="context"/> that may belong to a higher level, possibly asynchronous operation.
+        /// The range of elements to sort is specified by a starting index and a length.
+        /// </summary>
+        /// <typeparam name="T">The type of the elements in the <paramref name="list"/>.</typeparam>
+        /// <param name="context">An <see cref="IAsyncContext"/> instance that contains information for asynchronous processing about the current operation.</param>
+        /// <param name="list">The list to sort.</param>
+        /// <param name="index">The zero-based starting index of the range to sort.</param>
+        /// <param name="count">The length of the range to sort.</param>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use a default comparer. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <returns><see langword="true"/>, if the operation completed successfully.
+        /// <br/><see langword="false"/>, if the operation has been canceled.</returns>
+        /// <remarks>
+        /// <para>In general, accessing <see cref="IList{T}"/> members is like calling virtual methods. For the best performance there is a special handling for <see cref="Array"/>,
+        /// <see cref="List{T}"/>, <see cref="ArraySegment{T}"/>, <see cref="ArraySection{T}"/> and <see cref="CircularList{T}"/> instances.
+        /// For <see cref="ArraySection{T}"/> and <see cref="CastArray{TFrom,TTo}"/> instances it is recommended to use the dedicated overloads for better performance.</para>
+        /// <para>This method blocks the caller thread but if <paramref name="context"/> belongs to an async top level method, then the execution may already run
+        /// on a pool thread. Degree of parallelism and the ability of cancellation depend on how these were configured at the top level method.
+        /// To reconfigure the degree of parallelism of an existing context, you can use the <see cref="AsyncContextWrapper"/> class.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="list"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> or <paramref name="count"/> is less than 0.</exception>
+        /// <exception cref="ArgumentException">The <paramref name="index"/> and <paramref name="count"/> do not denote a valid range in the <paramref name="list"/>.
+        /// <br/>-or-
+        /// The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
         public static bool Sort<T>(IAsyncContext? context, IList<T> list, int index, int count, IComparer<T>? comparer = null)
         {
             if (list == null!)
@@ -742,6 +976,24 @@ namespace KGySoft.Threading
             return DoSort(context ?? AsyncHelper.DefaultContext, list, index, count, comparer);
         }
 
+        /// <summary>
+        /// Sorts the elements of the specified <see cref="ArraySection{T}"/> synchronously, potentially using multiple threads,
+        /// using a <paramref name="context"/> that may belong to a higher level, possibly asynchronous operation.
+        /// </summary>
+        /// <typeparam name="T">The type of the elements in the <see cref="ArraySection{T}"/>.</typeparam>
+        /// <param name="context">An <see cref="IAsyncContext"/> instance that contains information for asynchronous processing about the current operation.</param>
+        /// <param name="array">The <see cref="ArraySection{T}"/> instance to sort.</param>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use a default comparer. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <returns><see langword="true"/>, if the operation completed successfully.
+        /// <br/><see langword="false"/>, if the operation has been canceled.</returns>
+        /// <remarks>
+        /// <para>This method blocks the caller thread but if <paramref name="context"/> belongs to an async top level method, then the execution may already run
+        /// on a pool thread. Degree of parallelism and the ability of cancellation depend on how these were configured at the top level method.
+        /// To reconfigure the degree of parallelism of an existing context, you can use the <see cref="AsyncContextWrapper"/> class.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentException">The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
         public static bool Sort<T>(IAsyncContext? context, ArraySection<T> array, IComparer<T>? comparer = null)
         {
             if (array.Length < 2)
@@ -749,6 +1001,25 @@ namespace KGySoft.Threading
             return DoSort(context ?? AsyncHelper.DefaultContext, array, comparer);
         }
 
+        /// <summary>
+        /// Sorts the elements of the specified <see cref="CastArray{TFrom,TTo}"/> synchronously, potentially using multiple threads,
+        /// using a <paramref name="context"/> that may belong to a higher level, possibly asynchronous operation.
+        /// </summary>
+        /// <typeparam name="TFrom">The actual element type of the underlying array.</typeparam>
+        /// <typeparam name="TTo">The reinterpreted element type of the <see cref="CastArray{TFrom,TTo}"/> instance.</typeparam>
+        /// <param name="context">An <see cref="IAsyncContext"/> instance that contains information for asynchronous processing about the current operation.</param>
+        /// <param name="array">The <see cref="CastArray{TFrom,TTo}"/> instance to sort.</param>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use a default comparer. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <returns><see langword="true"/>, if the operation completed successfully.
+        /// <br/><see langword="false"/>, if the operation has been canceled.</returns>
+        /// <remarks>
+        /// <para>This method blocks the caller thread but if <paramref name="context"/> belongs to an async top level method, then the execution may already run
+        /// on a pool thread. Degree of parallelism and the ability of cancellation depend on how these were configured at the top level method.
+        /// To reconfigure the degree of parallelism of an existing context, you can use the <see cref="AsyncContextWrapper"/> class.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentException">The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
         public static bool Sort<TFrom, TTo>(IAsyncContext? context, CastArray<TFrom, TTo> array, IComparer<TTo>? comparer = null)
             where TFrom : unmanaged
             where TTo : unmanaged
@@ -758,6 +1029,33 @@ namespace KGySoft.Threading
             return DoSort(context ?? AsyncHelper.DefaultContext, array, comparer);
         }
 
+        /// <summary>
+        /// Sorts the elements in a pair of <see cref="IList{T}"/> instances synchronously (one contains the keys, the other contains the corresponding values), potentially using multiple threads,
+        /// using a <paramref name="context"/> that may belong to a higher level, possibly asynchronous operation.
+        /// </summary>
+        /// <typeparam name="TKey">The type of the elements in the <paramref name="keys"/> list.</typeparam>
+        /// <typeparam name="TValue">The type of the elements in the <paramref name="values"/> list.</typeparam>
+        /// <param name="context">An <see cref="IAsyncContext"/> instance that contains information for asynchronous processing about the current operation.</param>
+        /// <param name="keys">The <see cref="IList{T}"/> that contains the keys to sort.</param>
+        /// <param name="values">The <see cref="IList{T}"/> that contains the values that correspond to the keys in the <paramref name="keys"/> list, or <see langword="null"/> to sort only the keys.</param>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use a default comparer. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <returns><see langword="true"/>, if the operation completed successfully.
+        /// <br/><see langword="false"/>, if the operation has been canceled.</returns>
+        /// <remarks>
+        /// <para>In general, accessing <see cref="IList{T}"/> members is like calling virtual methods. For the best performance there is a special handling for <see cref="Array"/>,
+        /// <see cref="List{T}"/>, <see cref="ArraySegment{T}"/>, <see cref="ArraySection{T}"/> and <see cref="CircularList{T}"/> instances,
+        /// if both <paramref name="keys"/> and <paramref name="values"/> are of the same type (not considering the generic type arguments).
+        /// For <see cref="ArraySection{T}"/> and <see cref="CastArray{TFrom,TTo}"/> instances it is recommended to use the dedicated overloads for better performance.</para>
+        /// <para>This method blocks the caller thread but if <paramref name="context"/> belongs to an async top level method, then the execution may already run
+        /// on a pool thread. Degree of parallelism and the ability of cancellation depend on how these were configured at the top level method.
+        /// To reconfigure the degree of parallelism of an existing context, you can use the <see cref="AsyncContextWrapper"/> class.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="keys"/> or <paramref name="values"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="values"/> is not <see langword="null"/> and <paramref name="values"/> has fewer elements than <paramref name="keys"/>.
+        /// <br/>-or-
+        /// The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
         public static bool Sort<TKey, TValue>(IAsyncContext? context, IList<TKey> keys, IList<TValue>? values, IComparer<TKey>? comparer = null)
         {
             if (keys == null!)
@@ -765,7 +1063,37 @@ namespace KGySoft.Threading
             return Sort(context, keys, values, 0, keys.Count, comparer);
         }
 
-        // TODO: Remarks: special handling for keys and values works only if they are both arrays or their generic type definitions are the same
+        /// <summary>
+        /// Sorts the elements in a pair of <see cref="IList{T}"/> instances synchronously (one contains the keys, the other contains the corresponding values), potentially using multiple threads,
+        /// using a <paramref name="context"/> that may belong to a higher level, possibly asynchronous operation.
+        /// The range of elements to sort is specified by a starting index and a length.
+        /// </summary>
+        /// <typeparam name="TKey">The type of the elements in the <paramref name="keys"/> list.</typeparam>
+        /// <typeparam name="TValue">The type of the elements in the <paramref name="values"/> list.</typeparam>
+        /// <param name="context">An <see cref="IAsyncContext"/> instance that contains information for asynchronous processing about the current operation.</param>
+        /// <param name="keys">The <see cref="IList{T}"/> that contains the keys to sort.</param>
+        /// <param name="values">The <see cref="IList{T}"/> that contains the values that correspond to the keys in the <paramref name="keys"/> list, or <see langword="null"/> to sort only the keys.</param>
+        /// <param name="index">The zero-based starting index of the range to sort.</param>
+        /// <param name="count">The length of the range to sort.</param>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use a default comparer. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <returns><see langword="true"/>, if the operation completed successfully.
+        /// <br/><see langword="false"/>, if the operation has been canceled.</returns>
+        /// <remarks>
+        /// <para>In general, accessing <see cref="IList{T}"/> members is like calling virtual methods. For the best performance there is a special handling for <see cref="Array"/>,
+        /// <see cref="List{T}"/>, <see cref="ArraySegment{T}"/>, <see cref="ArraySection{T}"/> and <see cref="CircularList{T}"/> instances,
+        /// if both <paramref name="keys"/> and <paramref name="values"/> are of the same type (not considering the generic type arguments).
+        /// For <see cref="ArraySection{T}"/> and <see cref="CastArray{TFrom,TTo}"/> instances it is recommended to use the dedicated overloads for better performance.</para>
+        /// <para>This method blocks the caller thread but if <paramref name="context"/> belongs to an async top level method, then the execution may already run
+        /// on a pool thread. Degree of parallelism and the ability of cancellation depend on how these were configured at the top level method.
+        /// To reconfigure the degree of parallelism of an existing context, you can use the <see cref="AsyncContextWrapper"/> class.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="keys"/> or <paramref name="values"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> or <paramref name="count"/> is less than 0.</exception>
+        /// <exception cref="ArgumentException">The <paramref name="index"/> and <paramref name="count"/> do not denote a valid range in the <paramref name="keys"/> or <paramref name="values"/> list.
+        /// <br/>-or-
+        /// The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
         public static bool Sort<TKey, TValue>(IAsyncContext? context, IList<TKey> keys, IList<TValue>? values, int index, int count, IComparer<TKey>? comparer = null)
         {
             if (keys == null!)
@@ -785,6 +1113,29 @@ namespace KGySoft.Threading
             return DoSort(context ?? AsyncHelper.DefaultContext, keys, values, index, count, comparer);
         }
 
+        /// <summary>
+        /// Sorts the elements in a pair of <see cref="ArraySection{T}"/> instances synchronously (one contains the keys, the other contains the corresponding values), potentially using multiple threads,
+        /// using a <paramref name="context"/> that may belong to a higher level, possibly asynchronous operation.
+        /// </summary>
+        /// <typeparam name="TKey">The type of the elements in the <paramref name="keys"/> collection.</typeparam>
+        /// <typeparam name="TValue">The type of the elements in the <paramref name="values"/> collection.</typeparam>
+        /// <param name="context">An <see cref="IAsyncContext"/> instance that contains information for asynchronous processing about the current operation.</param>
+        /// <param name="keys">The <see cref="ArraySection{T}"/> that contains the keys to sort.</param>
+        /// <param name="values">The <see cref="ArraySection{T}"/> that contains the values that correspond to the keys in the <paramref name="keys"/> collection.
+        /// If the <see cref="ArraySection{T}.IsNull"/> property of <paramref name="values"/> is <see langword="true"/>, then only the keys are sorted.</param>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use a default comparer. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <returns><see langword="true"/>, if the operation completed successfully.
+        /// <br/><see langword="false"/>, if the operation has been canceled.</returns>
+        /// <remarks>
+        /// <para>This method blocks the caller thread but if <paramref name="context"/> belongs to an async top level method, then the execution may already run
+        /// on a pool thread. Degree of parallelism and the ability of cancellation depend on how these were configured at the top level method.
+        /// To reconfigure the degree of parallelism of an existing context, you can use the <see cref="AsyncContextWrapper"/> class.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentException">The <see cref="ArraySection{T}.IsNull"/> property of <paramref name="values"/> is <see langword="false"/> and <paramref name="values"/> has fewer elements than <paramref name="keys"/>.
+        /// <br/>-or-
+        /// The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
         public static bool Sort<TKey, TValue>(IAsyncContext? context, ArraySection<TKey> keys, ArraySection<TValue> values, IComparer<TKey>? comparer = null)
         {
             if (values.IsNull)
@@ -799,6 +1150,31 @@ namespace KGySoft.Threading
             return DoSort(context ?? AsyncHelper.DefaultContext, keys, values, comparer);
         }
 
+        /// <summary>
+        /// Sorts the elements in a pair of <see cref="CastArray{TFrom,TTo}"/> instances synchronously (one contains the keys, the other contains the corresponding values), potentially using multiple threads,
+        /// using a <paramref name="context"/> that may belong to a higher level, possibly asynchronous operation.
+        /// </summary>
+        /// <typeparam name="TKeyFrom">The actual element type of the underlying array in <paramref name="keys"/>.</typeparam>
+        /// <typeparam name="TKeyTo">The reinterpreted element type of the <see cref="CastArray{TFrom,TTo}"/> instance in <paramref name="keys"/>.</typeparam>
+        /// <typeparam name="TValueFrom">The actual element type of the underlying array in <paramref name="values"/>.</typeparam>
+        /// <typeparam name="TValueTo">The reinterpreted element type of the <see cref="CastArray{TFrom,TTo}"/> instance in <paramref name="values"/>.</typeparam>
+        /// <param name="context">An <see cref="IAsyncContext"/> instance that contains information for asynchronous processing about the current operation.</param>
+        /// <param name="keys">The <see cref="CastArray{TFrom,TTo}"/> that contains the keys to sort.</param>
+        /// <param name="values">The <see cref="CastArray{TFrom,TTo}"/> that contains the values that correspond to the keys in the <paramref name="keys"/> collection.
+        /// If the <see cref="CastArray{TFrom,TTo}.IsNull"/> property of <paramref name="values"/> is <see langword="true"/>, then only the keys are sorted.</param>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use a default comparer. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <returns><see langword="true"/>, if the operation completed successfully.
+        /// <br/><see langword="false"/>, if the operation has been canceled.</returns>
+        /// <remarks>
+        /// <para>This method blocks the caller thread but if <paramref name="context"/> belongs to an async top level method, then the execution may already run
+        /// on a pool thread. Degree of parallelism and the ability of cancellation depend on how these were configured at the top level method.
+        /// To reconfigure the degree of parallelism of an existing context, you can use the <see cref="AsyncContextWrapper"/> class.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentException">The <see cref="CastArray{TFrom,TTo}.IsNull"/> property of <paramref name="values"/> is <see langword="false"/> and <paramref name="values"/> has fewer elements than <paramref name="keys"/>.
+        /// <br/>-or-
+        /// The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
         public static bool Sort<TKeyFrom, TKeyTo, TValueFrom, TValueTo>(IAsyncContext? context, CastArray<TKeyFrom, TKeyTo> keys, CastArray<TValueFrom, TValueTo> values, IComparer<TKeyTo>? comparer = null)
             where TKeyFrom : unmanaged
             where TKeyTo : unmanaged
