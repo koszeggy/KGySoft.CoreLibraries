@@ -349,13 +349,229 @@ namespace KGySoft.Threading
 
         #region DefaultContext
 
-        // TODO
+        public static void Sort<T>(IList<T> list, IComparer<T>? comparer = null)
+        {
+            if (list == null!)
+                Throw.ArgumentNullException(Argument.array);
+
+            int count = list.Count;
+            if (count < 2)
+                return;
+
+            DoSort(AsyncHelper.DefaultContext, list, 0, count, comparer);
+        }
+
+        public static void Sort<T>(IList<T> list, int index, int count, IComparer<T>? comparer = null)
+        {
+            if (list == null!)
+                Throw.ArgumentNullException(Argument.list);
+            if (index < 0)
+                Throw.ArgumentOutOfRangeException(Argument.index);
+            if (count < 0)
+                Throw.ArgumentOutOfRangeException(Argument.count);
+            if (index + count > list.Count)
+                Throw.ArgumentException(Res.IListInvalidOffsLen);
+
+            if (count < 2)
+                return;
+
+            DoSort(AsyncHelper.DefaultContext, list, index, count, comparer);
+        }
+
+        public static void Sort<T>(ArraySection<T> array, IComparer<T>? comparer = null)
+        {
+            if (array.Length < 2)
+                return;
+            DoSort(AsyncHelper.DefaultContext, array, comparer);
+        }
+
+        public static void Sort<TFrom, TTo>(CastArray<TFrom, TTo> array, IComparer<TTo>? comparer = null)
+            where TFrom : unmanaged
+            where TTo : unmanaged
+        {
+            if (array.Length < 2)
+                return;
+            DoSort(AsyncHelper.DefaultContext, array, comparer);
+        }
+
+        public static void Sort<TKey, TValue>(IList<TKey> keys, IList<TValue>? values, IComparer<TKey>? comparer = null)
+        {
+            if (keys == null!)
+                Throw.ArgumentNullException(Argument.keys);
+            Sort(keys, values, 0, keys.Count, comparer);
+        }
+
+        // TODO: Remarks: special handling for keys and values works only if they are both arrays or their generic type definitions are the same
+        public static void Sort<TKey, TValue>(IList<TKey> keys, IList<TValue>? values, int index, int count, IComparer<TKey>? comparer = null)
+        {
+            if (keys == null!)
+                Throw.ArgumentNullException(Argument.keys);
+            if (values == null)
+            {
+                Sort(keys, index, count, comparer);
+                return;
+            }
+
+            if (index < 0)
+                Throw.ArgumentOutOfRangeException(Argument.index);
+            if (count < 0)
+                Throw.ArgumentOutOfRangeException(Argument.count);
+            if (keys.Count - index < count || index > values.Count - count)
+                Throw.ArgumentException(Res.IListInvalidOffsLen);
+
+            if (count < 2)
+                return;
+
+            DoSort(AsyncHelper.DefaultContext, keys, values, index, count, comparer);
+        }
+
+        public static void Sort<TKey, TValue>(ArraySection<TKey> keys, ArraySection<TValue> values, IComparer<TKey>? comparer = null)
+        {
+            if (values.IsNull)
+            {
+                Sort(keys, comparer);
+                return;
+            }
+
+            if (keys.Length > values.Length)
+                Throw.ArgumentException(Res.IListInvalidOffsLen);
+            if (keys.Length < 2)
+                return;
+            if (keys.Length < values.Length)
+                values = values.Slice(0, keys.Length);
+
+            DoSort(AsyncHelper.DefaultContext, keys, values, comparer);
+        }
+
+        public static void Sort<TKeyFrom, TKeyTo, TValueFrom, TValueTo>(CastArray<TKeyFrom, TKeyTo> keys, CastArray<TValueFrom, TValueTo> values, IComparer<TKeyTo>? comparer = null)
+            where TKeyFrom : unmanaged
+            where TKeyTo : unmanaged
+            where TValueFrom : unmanaged
+            where TValueTo : unmanaged
+        {
+            if (values.IsNull)
+            {
+                Sort(keys, comparer);
+                return;
+            }
+
+            if (keys.Length > values.Length)
+                Throw.ArgumentException(Res.IListInvalidOffsLen);
+            if (keys.Length < 2)
+                return;
+            if (keys.Length < values.Length)
+                values = values.Slice(0, keys.Length);
+
+            DoSort(AsyncHelper.DefaultContext, keys, values, comparer);
+        }
 
         #endregion
 
         #region ParallelConfig
 
-        // TODO
+        public static bool Sort<T>(IList<T> list, IComparer<T>? comparer, ParallelConfig? parallelConfig)
+        {
+            if (list == null!)
+                Throw.ArgumentNullException(Argument.array);
+
+            int count = list.Count;
+            if (count < 2)
+                return AsyncHelper.FromResult(true, parallelConfig);
+
+            return AsyncHelper.DoOperationSynchronously(ctx => DoSort(ctx, list, 0, count, comparer), parallelConfig);
+        }
+
+        public static bool Sort<T>(IList<T> list, int index, int count, IComparer<T>? comparer, ParallelConfig? parallelConfig)
+        {
+            if (list == null!)
+                Throw.ArgumentNullException(Argument.list);
+            if (index < 0)
+                Throw.ArgumentOutOfRangeException(Argument.index);
+            if (count < 0)
+                Throw.ArgumentOutOfRangeException(Argument.count);
+            if (index + count > list.Count)
+                Throw.ArgumentException(Res.IListInvalidOffsLen);
+
+            if (count < 2)
+                return AsyncHelper.FromResult(true, parallelConfig);
+
+            return AsyncHelper.DoOperationSynchronously(ctx => DoSort(ctx, list, index, count, comparer), parallelConfig);
+        }
+
+        public static bool Sort<T>(ArraySection<T> array, IComparer<T>? comparer, ParallelConfig? parallelConfig)
+        {
+            if (array.Length < 2)
+                return AsyncHelper.FromResult(true, parallelConfig);
+            return AsyncHelper.DoOperationSynchronously(ctx => DoSort(ctx, array, comparer), parallelConfig);
+        }
+
+        public static bool Sort<TFrom, TTo>(CastArray<TFrom, TTo> array, IComparer<TTo>? comparer, ParallelConfig? parallelConfig)
+            where TFrom : unmanaged
+            where TTo : unmanaged
+        {
+            if (array.Length < 2)
+                return AsyncHelper.FromResult(true, parallelConfig);
+            return AsyncHelper.DoOperationSynchronously(ctx => DoSort(ctx, array, comparer), parallelConfig);
+        }
+
+        public static bool Sort<TKey, TValue>(IList<TKey> keys, IList<TValue>? values, IComparer<TKey>? comparer, ParallelConfig? parallelConfig)
+        {
+            if (keys == null!)
+                Throw.ArgumentNullException(Argument.keys);
+            return Sort(keys, values, 0, keys.Count, comparer, parallelConfig);
+        }
+
+        // TODO: Remarks: special handling for keys and values works only if they are both arrays or their generic type definitions are the same
+        public static bool Sort<TKey, TValue>(IList<TKey> keys, IList<TValue>? values, int index, int count, IComparer<TKey>? comparer, ParallelConfig? parallelConfig)
+        {
+            if (keys == null!)
+                Throw.ArgumentNullException(Argument.keys);
+            if (values == null)
+                return Sort(keys, index, count, comparer, parallelConfig);
+            if (index < 0)
+                Throw.ArgumentOutOfRangeException(Argument.index);
+            if (count < 0)
+                Throw.ArgumentOutOfRangeException(Argument.count);
+            if (keys.Count - index < count || index > values.Count - count)
+                Throw.ArgumentException(Res.IListInvalidOffsLen);
+
+            if (count < 2)
+                return AsyncHelper.FromResult(true, parallelConfig);
+
+            return AsyncHelper.DoOperationSynchronously(ctx => DoSort(ctx, keys, values, index, count, comparer), parallelConfig);
+        }
+
+        public static bool Sort<TKey, TValue>(ArraySection<TKey> keys, ArraySection<TValue> values, IComparer<TKey>? comparer, ParallelConfig? parallelConfig)
+        {
+            if (values.IsNull)
+                return Sort(keys, comparer, parallelConfig);
+            if (keys.Length > values.Length)
+                Throw.ArgumentException(Res.IListInvalidOffsLen);
+            if (keys.Length < 2)
+                return AsyncHelper.FromResult(true, parallelConfig);
+            if (keys.Length < values.Length)
+                values = values.Slice(0, keys.Length);
+
+            return AsyncHelper.DoOperationSynchronously(ctx => DoSort(ctx, keys, values, comparer), parallelConfig);
+        }
+
+        public static bool Sort<TKeyFrom, TKeyTo, TValueFrom, TValueTo>(CastArray<TKeyFrom, TKeyTo> keys, CastArray<TValueFrom, TValueTo> values, IComparer<TKeyTo>? comparer, ParallelConfig? parallelConfig)
+            where TKeyFrom : unmanaged
+            where TKeyTo : unmanaged
+            where TValueFrom : unmanaged
+            where TValueTo : unmanaged
+        {
+            if (values.IsNull)
+                return Sort(keys, comparer, parallelConfig);
+            if (keys.Length > values.Length)
+                Throw.ArgumentException(Res.IListInvalidOffsLen);
+            if (keys.Length < 2)
+                return AsyncHelper.FromResult(true, parallelConfig);
+            if (keys.Length < values.Length)
+                values = values.Slice(0, keys.Length);
+
+            return AsyncHelper.DoOperationSynchronously(ctx => DoSort(ctx, keys, values, comparer), parallelConfig);
+        }
 
         #endregion
 
