@@ -903,12 +903,21 @@ namespace KGySoft.Threading
                 if (maxTasks <= 0)
                     maxTasks = CoreCount;
 
-                // Due to the recursive binary branching the allowed subtask count is logarithmic, eg. 3 if there are 8 cores.
+                try
+                {
+                    // Due to the recursive binary branching the allowed subtask count is logarithmic, eg. 3 if there are 8 cores.
 #if NETCOREAPP3_0_OR_GREATER
-                DoSort(context, list, startIndex, count, comparer ?? ComparerHelper<T>.Comparer, BitOperations.Log2((uint)maxTasks));
+                    DoSort(context, list, startIndex, count, comparer ?? ComparerHelper<T>.Comparer, BitOperations.Log2((uint)maxTasks));
 #else
-                DoSort(context, list, startIndex, count, comparer ?? ComparerHelper<T>.Comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
+                    DoSort(context, list, startIndex, count, comparer ?? ComparerHelper<T>.Comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
 #endif
+                }
+                catch (Exception e)
+                {
+                    if (e is IndexOutOfRangeException or ArgumentOutOfRangeException)
+                        Throw.ArgumentException(Res.IListInconsistentComparer);
+                    Throw.InvalidOperationException(Res.IListComparerFail, e);
+                }
             }
 
             public void Sort(IAsyncContext context, T[] array, int startIndex, int count, IComparer<T>? comparer)
@@ -917,12 +926,21 @@ namespace KGySoft.Threading
                 if (maxTasks <= 0)
                     maxTasks = CoreCount;
 
-                // Due to the recursive binary branching the allowed subtask count is logarithmic, eg. 3 if there are 8 cores.
+                try
+                {
+                    // Due to the recursive binary branching the allowed subtask count is logarithmic, eg. 3 if there are 8 cores.
 #if NETCOREAPP3_0_OR_GREATER
-                DoSort(context, array, startIndex, count, comparer ?? ComparerHelper<T>.Comparer, BitOperations.Log2((uint)maxTasks));
+                    DoSort(context, array, startIndex, count, comparer ?? ComparerHelper<T>.Comparer, BitOperations.Log2((uint)maxTasks));
 #else
-                DoSort(context, array, startIndex, count, comparer ?? ComparerHelper<T>.Comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
+                    DoSort(context, array, startIndex, count, comparer ?? ComparerHelper<T>.Comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
 #endif
+                }
+                catch (Exception e)
+                {
+                    if (e is IndexOutOfRangeException)
+                        Throw.ArgumentException(Res.IListInconsistentComparer);
+                    Throw.InvalidOperationException(Res.IListComparerFail, e);
+                }
             }
 
             public void Sort(IAsyncContext context, List<T> list, int startIndex, int count, IComparer<T>? comparer)
@@ -931,12 +949,21 @@ namespace KGySoft.Threading
                 if (maxTasks <= 0)
                     maxTasks = CoreCount;
 
-                // Due to the recursive binary branching the allowed subtask count is logarithmic, eg. 3 if there are 8 cores.
+                try
+                {
+                    // Due to the recursive binary branching the allowed subtask count is logarithmic, eg. 3 if there are 8 cores.
 #if NETCOREAPP3_0_OR_GREATER
-                DoSort(context, list, startIndex, count, comparer ?? ComparerHelper<T>.Comparer, BitOperations.Log2((uint)maxTasks));
+                    DoSort(context, list, startIndex, count, comparer ?? ComparerHelper<T>.Comparer, BitOperations.Log2((uint)maxTasks));
 #else
-                DoSort(context, list, startIndex, count, comparer ?? ComparerHelper<T>.Comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
+                    DoSort(context, list, startIndex, count, comparer ?? ComparerHelper<T>.Comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
 #endif
+                }
+                catch (Exception e)
+                {
+                    if (e is ArgumentOutOfRangeException)
+                        Throw.ArgumentException(Res.IListInconsistentComparer);
+                    Throw.InvalidOperationException(Res.IListComparerFail, e);
+                }
             }
 
             public void Sort<TFrom, TTo>(IAsyncContext context, CastArray<TFrom, TTo> list, IComparer<TTo>? comparer)
@@ -947,12 +974,21 @@ namespace KGySoft.Threading
                 if (maxTasks <= 0)
                     maxTasks = CoreCount;
 
-                // Due to the recursive binary branching the allowed subtask array.Length is logarithmic, eg. 3 if there are 8 cores.
+                try
+                {
+                    // Due to the recursive binary branching the allowed subtask array.Length is logarithmic, eg. 3 if there are 8 cores.
 #if NETCOREAPP3_0_OR_GREATER
-                DoSort(context, list, comparer ?? ComparerHelper<TTo>.Comparer, BitOperations.Log2((uint)maxTasks));
+                    DoSort(context, list, comparer ?? ComparerHelper<TTo>.Comparer, BitOperations.Log2((uint)maxTasks));
 #else
-                DoSort(context, list, comparer ?? ComparerHelper<TTo>.Comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
+                    DoSort(context, list, comparer ?? ComparerHelper<TTo>.Comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
 #endif
+                }
+                catch (Exception e)
+                {
+                    if (e is IndexOutOfRangeException)
+                        Throw.ArgumentException(Res.IListInconsistentComparer);
+                    Throw.InvalidOperationException(Res.IListComparerFail, e);
+                }
             }
 
             #endregion
@@ -2044,12 +2080,21 @@ namespace KGySoft.Threading
                 if (maxTasks <= 0)
                     maxTasks = CoreCount;
 
-                // Due to the recursive binary branching the allowed subtask count is logarithmic, eg. 3 if there are 8 cores.
+                try
+                {
+                    // Due to the recursive binary branching the allowed subtask count is logarithmic, eg. 3 if there are 8 cores.
 #if NETCOREAPP3_0_OR_GREATER
-                DoSort(context, keys, values, startIndex, count, comparer ?? ComparerHelper<TKey>.Comparer, BitOperations.Log2((uint)maxTasks));
+                    DoSort(context, keys, values, startIndex, count, comparer ?? ComparerHelper<TKey>.Comparer, BitOperations.Log2((uint)maxTasks));
 #else
-                DoSort(context, keys, values, startIndex, count, comparer ?? ComparerHelper<TKey>.Comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
+                    DoSort(context, keys, values, startIndex, count, comparer ?? ComparerHelper<TKey>.Comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
 #endif
+                }
+                catch (Exception e)
+                {
+                    if (e is IndexOutOfRangeException or ArgumentOutOfRangeException)
+                        Throw.ArgumentException(Res.IListInconsistentComparer);
+                    Throw.InvalidOperationException(Res.IListComparerFail, e);
+                }
             }
 
             public void Sort(IAsyncContext context, TKey[] keys, TValue[] values, int startIndex, int count, IComparer<TKey>? comparer)
@@ -2058,12 +2103,21 @@ namespace KGySoft.Threading
                 if (maxTasks <= 0)
                     maxTasks = CoreCount;
 
-                // Due to the recursive binary branching the allowed subtask count is logarithmic, eg. 3 if there are 8 cores.
+                try
+                {
+                    // Due to the recursive binary branching the allowed subtask count is logarithmic, eg. 3 if there are 8 cores.
 #if NETCOREAPP3_0_OR_GREATER
-                DoSort(context, keys, values, startIndex, count, comparer ?? ComparerHelper<TKey>.Comparer, BitOperations.Log2((uint)maxTasks));
+                    DoSort(context, keys, values, startIndex, count, comparer ?? ComparerHelper<TKey>.Comparer, BitOperations.Log2((uint)maxTasks));
 #else
-                DoSort(context, keys, values, startIndex, count, comparer ?? ComparerHelper<TKey>.Comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
+                    DoSort(context, keys, values, startIndex, count, comparer ?? ComparerHelper<TKey>.Comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
 #endif
+                }
+                catch (Exception e)
+                {
+                    if (e is IndexOutOfRangeException)
+                        Throw.ArgumentException(Res.IListInconsistentComparer);
+                    Throw.InvalidOperationException(Res.IListComparerFail, e);
+                }
             }
 
             public void Sort(IAsyncContext context, List<TKey> keys, List<TValue> values, int startIndex, int count, IComparer<TKey>? comparer)
@@ -2072,12 +2126,21 @@ namespace KGySoft.Threading
                 if (maxTasks <= 0)
                     maxTasks = CoreCount;
 
-                // Due to the recursive binary branching the allowed subtask count is logarithmic, eg. 3 if there are 8 cores.
+                try
+                {
+                    // Due to the recursive binary branching the allowed subtask count is logarithmic, eg. 3 if there are 8 cores.
 #if NETCOREAPP3_0_OR_GREATER
-                DoSort(context, keys, values, startIndex, count, comparer ?? ComparerHelper<TKey>.Comparer, BitOperations.Log2((uint)maxTasks));
+                    DoSort(context, keys, values, startIndex, count, comparer ?? ComparerHelper<TKey>.Comparer, BitOperations.Log2((uint)maxTasks));
 #else
-                DoSort(context, keys, values, startIndex, count, comparer ?? ComparerHelper<TKey>.Comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
+                    DoSort(context, keys, values, startIndex, count, comparer ?? ComparerHelper<TKey>.Comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
 #endif
+                }
+                catch (Exception e)
+                {
+                    if (e is ArgumentOutOfRangeException)
+                        Throw.ArgumentException(Res.IListInconsistentComparer);
+                    Throw.InvalidOperationException(Res.IListComparerFail, e);
+                }
             }
 
             public void Sort(IAsyncContext context, ArraySection<TKey> keys, ArraySection<TValue> values, IComparer<TKey>? comparer)
@@ -2087,12 +2150,21 @@ namespace KGySoft.Threading
                 if (maxTasks <= 0)
                     maxTasks = CoreCount;
 
-                // Due to the recursive binary branching the allowed subtask array.Length is logarithmic, eg. 3 if there are 8 cores.
+                try
+                {
+                    // Due to the recursive binary branching the allowed subtask array.Length is logarithmic, eg. 3 if there are 8 cores.
 #if NETCOREAPP3_0_OR_GREATER
-                DoSort(context, keys, values, comparer ?? ComparerHelper<TKey>.Comparer, BitOperations.Log2((uint)maxTasks));
+                    DoSort(context, keys, values, comparer ?? ComparerHelper<TKey>.Comparer, BitOperations.Log2((uint)maxTasks));
 #else
-                DoSort(context, keys, values, comparer ?? ComparerHelper<TKey>.Comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
+                    DoSort(context, keys, values, comparer ?? ComparerHelper<TKey>.Comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
 #endif
+                }
+                catch (Exception e)
+                {
+                    if (e is IndexOutOfRangeException)
+                        Throw.ArgumentException(Res.IListInconsistentComparer);
+                    Throw.InvalidOperationException(Res.IListComparerFail, e);
+                }
             }
 
             public void Sort<TKeyFrom, TKeyTo, TValueFrom, TValueTo>(IAsyncContext context, CastArray<TKeyFrom, TKeyTo> keys, CastArray<TValueFrom, TValueTo> values, IComparer<TKeyTo>? comparer)
@@ -2106,12 +2178,21 @@ namespace KGySoft.Threading
                 if (maxTasks <= 0)
                     maxTasks = CoreCount;
 
-                // Due to the recursive binary branching the allowed subtask array.Length is logarithmic, eg. 3 if there are 8 cores.
+                try
+                {
+                    // Due to the recursive binary branching the allowed subtask array.Length is logarithmic, eg. 3 if there are 8 cores.
 #if NETCOREAPP3_0_OR_GREATER
-                DoSort(context, keys, values, comparer ?? ComparerHelper<TKeyTo>.Comparer, BitOperations.Log2((uint)maxTasks));
+                    DoSort(context, keys, values, comparer ?? ComparerHelper<TKeyTo>.Comparer, BitOperations.Log2((uint)maxTasks));
 #else
-                DoSort(context, keys, values, comparer ?? ComparerHelper<TKeyTo>.Comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
+                    DoSort(context, keys, values, comparer ?? ComparerHelper<TKeyTo>.Comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
 #endif
+                }
+                catch (Exception e)
+                {
+                    if (e is IndexOutOfRangeException)
+                        Throw.ArgumentException(Res.IListInconsistentComparer);
+                    Throw.InvalidOperationException(Res.IListComparerFail, e);
+                }
             }
 
             #endregion
@@ -2933,12 +3014,21 @@ namespace KGySoft.Threading
 
                 if (comparer != null && !Equals(comparer, Comparer<T>.Default))
                 {
+                    try
+                    {
 #if NETCOREAPP3_0_OR_GREATER
-                    SortHelper<T>.DoSort(context, list, startIndex, count, comparer, BitOperations.Log2((uint)maxTasks));
+                        SortHelper<T>.DoSort(context, list, startIndex, count, comparer, BitOperations.Log2((uint)maxTasks));
 #else
-                    SortHelper<T>.DoSort(context, list, startIndex, count, comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
+                        SortHelper<T>.DoSort(context, list, startIndex, count, comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
 #endif
-                    return;
+                        return;
+                    }
+                    catch (Exception e)
+                    {
+                        if (e is IndexOutOfRangeException or ArgumentOutOfRangeException)
+                            Throw.ArgumentException(Res.IListInconsistentComparer);
+                        Throw.InvalidOperationException(Res.IListComparerFail, e);
+                    }
                 }
 
                 // Due to the recursive binary branching the allowed subtask count is logarithmic, eg. 3 if there are 8 cores.
@@ -2957,12 +3047,21 @@ namespace KGySoft.Threading
 
                 if (comparer != null && !Equals(comparer, Comparer<T>.Default))
                 {
+                    try
+                    {
 #if NETCOREAPP3_0_OR_GREATER
-                    SortHelper<T>.DoSort(context, array, startIndex, count, comparer, BitOperations.Log2((uint)maxTasks));
+                        SortHelper<T>.DoSort(context, array, startIndex, count, comparer, BitOperations.Log2((uint)maxTasks));
 #else
-                    SortHelper<T>.DoSort(context, array, startIndex, count, comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
+                        SortHelper<T>.DoSort(context, array, startIndex, count, comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
 #endif
-                    return;
+                        return;
+                    }
+                    catch (Exception e)
+                    {
+                        if (e is IndexOutOfRangeException)
+                            Throw.ArgumentException(Res.IListInconsistentComparer);
+                        Throw.InvalidOperationException(Res.IListComparerFail, e);
+                    }
                 }
 
                 // Due to the recursive binary branching the allowed subtask count is logarithmic, eg. 3 if there are 8 cores.
@@ -2981,12 +3080,21 @@ namespace KGySoft.Threading
 
                 if (comparer != null && !Equals(comparer, Comparer<T>.Default))
                 {
+                    try
+                    {
 #if NETCOREAPP3_0_OR_GREATER
-                    SortHelper<T>.DoSort(context, list, startIndex, count, comparer, BitOperations.Log2((uint)maxTasks));
+                        SortHelper<T>.DoSort(context, list, startIndex, count, comparer, BitOperations.Log2((uint)maxTasks));
 #else
-                    SortHelper<T>.DoSort(context, list, startIndex, count, comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
+                        SortHelper<T>.DoSort(context, list, startIndex, count, comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
 #endif
-                    return;
+                        return;
+                    }
+                    catch (Exception e)
+                    {
+                        if (e is ArgumentOutOfRangeException)
+                            Throw.ArgumentException(Res.IListInconsistentComparer);
+                        Throw.InvalidOperationException(Res.IListComparerFail, e);
+                    }
                 }
 
                 // Due to the recursive binary branching the allowed subtask count is logarithmic, eg. 3 if there are 8 cores.
@@ -3007,12 +3115,21 @@ namespace KGySoft.Threading
 
                 if (comparer != null && !Equals(comparer, Comparer<T>.Default))
                 {
+                    try
+                    {
 #if NETCOREAPP3_0_OR_GREATER
-                    SortHelper<T>.DoSort(context, list, comparer, BitOperations.Log2((uint)maxTasks));
+                        SortHelper<T>.DoSort(context, list, comparer, BitOperations.Log2((uint)maxTasks));
 #else
-                    SortHelper<T>.DoSort(context, list, comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
+                        SortHelper<T>.DoSort(context, list, comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
 #endif
-                    return;
+                        return;
+                    }
+                    catch (Exception e)
+                    {
+                        if (e is IndexOutOfRangeException)
+                            Throw.ArgumentException(Res.IListInconsistentComparer);
+                        Throw.InvalidOperationException(Res.IListComparerFail, e);
+                    }
                 }
 
                 // Due to the recursive binary branching the allowed subtask array.Length is logarithmic, eg. 3 if there are 8 cores.
@@ -4099,12 +4216,21 @@ namespace KGySoft.Threading
 
                 if (comparer != null && !Equals(comparer, Comparer<TKey>.Default))
                 {
+                    try
+                    {
 #if NETCOREAPP3_0_OR_GREATER
-                    SortHelper<TKey, TValue>.DoSort(context, keys, values, startIndex, count, comparer, BitOperations.Log2((uint)maxTasks));
+                        SortHelper<TKey, TValue>.DoSort(context, keys, values, startIndex, count, comparer, BitOperations.Log2((uint)maxTasks));
 #else
-                    SortHelper<TKey, TValue>.DoSort(context, keys, values, startIndex, count, comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
+                        SortHelper<TKey, TValue>.DoSort(context, keys, values, startIndex, count, comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
 #endif
-                    return;
+                        return;
+                    }
+                    catch (Exception e)
+                    {
+                        if (e is IndexOutOfRangeException or ArgumentOutOfRangeException)
+                            Throw.ArgumentException(Res.IListInconsistentComparer);
+                        Throw.InvalidOperationException(Res.IListComparerFail, e);
+                    }
                 }
 
                 // Due to the recursive binary branching the allowed subtask count is logarithmic, eg. 3 if there are 8 cores.
@@ -4123,12 +4249,21 @@ namespace KGySoft.Threading
 
                 if (comparer != null && !Equals(comparer, Comparer<TKey>.Default))
                 {
+                    try
+                    {
 #if NETCOREAPP3_0_OR_GREATER
-                    SortHelper<TKey, TValue>.DoSort(context, keys, values, startIndex, count, comparer, BitOperations.Log2((uint)maxTasks));
+                        SortHelper<TKey, TValue>.DoSort(context, keys, values, startIndex, count, comparer, BitOperations.Log2((uint)maxTasks));
 #else
-                    SortHelper<TKey, TValue>.DoSort(context, keys, values, startIndex, count, comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
+                        SortHelper<TKey, TValue>.DoSort(context, keys, values, startIndex, count, comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
 #endif
-                    return;
+                        return;
+                    }
+                    catch (Exception e)
+                    {
+                        if (e is IndexOutOfRangeException)
+                            Throw.ArgumentException(Res.IListInconsistentComparer);
+                        Throw.InvalidOperationException(Res.IListComparerFail, e);
+                    }
                 }
 
                 // Due to the recursive binary branching the allowed subtask count is logarithmic, eg. 3 if there are 8 cores.
@@ -4147,12 +4282,21 @@ namespace KGySoft.Threading
 
                 if (comparer != null && !Equals(comparer, Comparer<TKey>.Default))
                 {
+                    try
+                    {
 #if NETCOREAPP3_0_OR_GREATER
-                    SortHelper<TKey, TValue>.DoSort(context, keys, values, startIndex, count, comparer, BitOperations.Log2((uint)maxTasks));
+                        SortHelper<TKey, TValue>.DoSort(context, keys, values, startIndex, count, comparer, BitOperations.Log2((uint)maxTasks));
 #else
-                    SortHelper<TKey, TValue>.DoSort(context, keys, values, startIndex, count, comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
+                        SortHelper<TKey, TValue>.DoSort(context, keys, values, startIndex, count, comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
 #endif
-                    return;
+                        return;
+                    }
+                    catch (Exception e)
+                    {
+                        if (e is ArgumentOutOfRangeException)
+                            Throw.ArgumentException(Res.IListInconsistentComparer);
+                        Throw.InvalidOperationException(Res.IListComparerFail, e);
+                    }
                 }
 
                 // Due to the recursive binary branching the allowed subtask count is logarithmic, eg. 3 if there are 8 cores.
@@ -4172,12 +4316,21 @@ namespace KGySoft.Threading
 
                 if (comparer != null && !Equals(comparer, Comparer<TKey>.Default))
                 {
+                    try
+                    {
 #if NETCOREAPP3_0_OR_GREATER
-                    SortHelper<TKey, TValue>.DoSort(context, keys, values, comparer, BitOperations.Log2((uint)maxTasks));
+                        SortHelper<TKey, TValue>.DoSort(context, keys, values, comparer, BitOperations.Log2((uint)maxTasks));
 #else
-                    SortHelper<TKey, TValue>.DoSort(context, keys, values, comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
+                       SortHelper<TKey, TValue>.DoSort(context, keys, values, comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
 #endif
-                    return;
+                        return;
+                    }
+                    catch (Exception e)
+                    {
+                        if (e is IndexOutOfRangeException)
+                            Throw.ArgumentException(Res.IListInconsistentComparer);
+                        Throw.InvalidOperationException(Res.IListComparerFail, e);
+                    }
                 }
 
                 // Due to the recursive binary branching the allowed subtask array.Length is logarithmic, eg. 3 if there are 8 cores.
@@ -4201,12 +4354,21 @@ namespace KGySoft.Threading
 
                 if (comparer != null && !Equals(comparer, Comparer<TKeyTo>.Default))
                 {
+                    try
+                    {
 #if NETCOREAPP3_0_OR_GREATER
-                    SortHelper<TKey, TValue>.DoSort(context, keys, values, comparer, BitOperations.Log2((uint)maxTasks));
+                        SortHelper<TKey, TValue>.DoSort(context, keys, values, comparer, BitOperations.Log2((uint)maxTasks));
 #else
-                    SortHelper<TKey, TValue>.DoSort(context, keys, values, comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
+                        SortHelper<TKey, TValue>.DoSort(context, keys, values, comparer, (int)Math.Ceiling(Math.Log(maxTasks, 2)));
 #endif
-                    return;
+                        return;
+                    }
+                    catch (Exception e)
+                    {
+                        if (e is IndexOutOfRangeException)
+                            Throw.ArgumentException(Res.IListInconsistentComparer);
+                        Throw.InvalidOperationException(Res.IListComparerFail, e);
+                    }
                 }
 
                 // Due to the recursive binary branching the allowed subtask array.Length is logarithmic, eg. 3 if there are 8 cores.

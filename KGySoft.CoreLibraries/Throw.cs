@@ -85,6 +85,7 @@ namespace KGySoft
         [ContractAnnotation("=> halt")][DoesNotReturn]internal static T KeyNotFoundException<T>(string message) => throw CreateKeyNotFoundException(message);
 
         [ContractAnnotation("=> halt")][DoesNotReturn]internal static void InvalidOperationException(string? message = null) => throw CreateInvalidOperationException(message);
+        [ContractAnnotation("=> halt")][DoesNotReturn]internal static void InvalidOperationException(string message, Exception inner) => throw CreateInvalidOperationException(message, inner);
         [ContractAnnotation("=> halt")][DoesNotReturn]internal static T InvalidOperationException<T>(string message) => throw CreateInvalidOperationException(message);
         [ContractAnnotation("=> halt")][DoesNotReturn]internal static T InvalidOperationException<T>(string message, Exception inner) => throw CreateInvalidOperationException(message, inner);
 

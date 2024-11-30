@@ -148,6 +148,12 @@ namespace KGySoft
         /// <summary>Offset and length were out of bounds for the list or count is greater than the number of elements from index to the end of the source collection.</summary>
         internal static string IListInvalidOffsLen => Get("IList_InvalidOffsLen");
 
+        /// <summary>Failed to compare two elements in the collection.</summary>
+        internal static string IListComparerFail => Get("IList_ComparerFail");
+
+        /// <summary>The comparer returned inconsistent results.</summary>
+        internal static string IListInconsistentComparer => Get("IList_InconsistentComparer");
+
         #endregion
 
         #region General Internal
@@ -221,9 +227,6 @@ namespace KGySoft
         #endregion
 
         #region CircularList<T>
-
-        /// <summary>Failed to compare two elements in the collection.</summary>
-        internal static string CircularListComparerFail => Get("CircularList_ComparerFail");
 
         /// <summary>Capacity cannot be less than number of stored elements.</summary>
         internal static string CircularListCapacityTooSmall => Get("CircularList_CapacityTooSmall");

@@ -343,8 +343,11 @@ Hit rate: {8:P2}</value>
   <data name="CircularList_CapacityTooSmall" xml:space="preserve">
     <value>Capacity cannot be less than number of stored elements.</value>
   </data>
-  <data name="CircularList_ComparerFail" xml:space="preserve">
+  <data name="IList_ComparerFail" xml:space="preserve">
     <value>Failed to compare two elements in the collection.</value>
+  </data>
+  <data name="IList_InconsistentComparer" xml:space="preserve">
+    <value>The comparer returned inconsistent results.</value>
   </data>
   <data name="ICollection_CopyToDestArrayShort" xml:space="preserve">
     <value>Destination array is not long enough to copy all the items in the collection. Check array index and length.</value>

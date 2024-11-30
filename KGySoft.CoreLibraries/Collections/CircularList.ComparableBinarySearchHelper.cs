@@ -86,7 +86,7 @@ namespace KGySoft.Collections
             }
             catch (Exception e)
             {
-                throw new InvalidOperationException(Res.CircularListComparerFail, e);
+                throw new InvalidOperationException(Res.IListComparerFail, e);
             }
         }
 
