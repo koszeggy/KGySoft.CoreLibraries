@@ -687,14 +687,222 @@ namespace KGySoft.Threading
 
         #region Async APM
 
-        // TODO
+        public static IAsyncResult BeginSort<T>(IList<T> list, IComparer<T>? comparer = null, AsyncConfig? asyncConfig = null)
+        {
+            if (list == null!)
+                Throw.ArgumentNullException(Argument.array);
+
+            int count = list.Count;
+            if (count < 2)
+                return AsyncHelper.FromResult(true, asyncConfig);
+
+            return AsyncHelper.BeginOperation(ctx => DoSort(ctx, list, 0, count, comparer), asyncConfig);
+        }
+
+        public static IAsyncResult BeginSort<T>(IList<T> list, int index, int count, IComparer<T>? comparer = null, AsyncConfig? asyncConfig = null)
+        {
+            if (list == null!)
+                Throw.ArgumentNullException(Argument.list);
+            if (index < 0)
+                Throw.ArgumentOutOfRangeException(Argument.index);
+            if (count < 0)
+                Throw.ArgumentOutOfRangeException(Argument.count);
+            if (index + count > list.Count)
+                Throw.ArgumentException(Res.IListInvalidOffsLen);
+
+            if (count < 2)
+                return AsyncHelper.FromResult(true, asyncConfig);
+
+            return AsyncHelper.BeginOperation(ctx => DoSort(ctx, list, index, count, comparer), asyncConfig);
+        }
+
+        public static IAsyncResult BeginSort<T>(ArraySection<T> array, IComparer<T>? comparer = null, AsyncConfig? asyncConfig = null)
+        {
+            if (array.Length < 2)
+                return AsyncHelper.FromResult(true, asyncConfig);
+            return AsyncHelper.BeginOperation(ctx => DoSort(ctx, array, comparer), asyncConfig);
+        }
+
+        public static IAsyncResult BeginSort<TFrom, TTo>(CastArray<TFrom, TTo> array, IComparer<TTo>? comparer = null, AsyncConfig? asyncConfig = null)
+            where TFrom : unmanaged
+            where TTo : unmanaged
+        {
+            if (array.Length < 2)
+                return AsyncHelper.FromResult(true, asyncConfig);
+            return AsyncHelper.BeginOperation(ctx => DoSort(ctx, array, comparer), asyncConfig);
+        }
+
+        public static IAsyncResult BeginSort<TKey, TValue>(IList<TKey> keys, IList<TValue>? values, IComparer<TKey>? comparer = null, AsyncConfig? asyncConfig = null)
+        {
+            if (keys == null!)
+                Throw.ArgumentNullException(Argument.keys);
+            return BeginSort(keys, values, 0, keys.Count, comparer, asyncConfig);
+        }
+
+        // TODO: Remarks: special handling for keys and values works only if they are both arrays or their generic type definitions are the same
+        public static IAsyncResult BeginSort<TKey, TValue>(IList<TKey> keys, IList<TValue>? values, int index, int count, IComparer<TKey>? comparer = null, AsyncConfig? asyncConfig = null)
+        {
+            if (keys == null!)
+                Throw.ArgumentNullException(Argument.keys);
+            if (values == null)
+                return BeginSort(keys, index, count, comparer, asyncConfig);
+            if (index < 0)
+                Throw.ArgumentOutOfRangeException(Argument.index);
+            if (count < 0)
+                Throw.ArgumentOutOfRangeException(Argument.count);
+            if (keys.Count - index < count || index > values.Count - count)
+                Throw.ArgumentException(Res.IListInvalidOffsLen);
+
+            if (count < 2)
+                return AsyncHelper.FromResult(true, asyncConfig);
+
+            return AsyncHelper.BeginOperation(ctx => DoSort(ctx, keys, values, index, count, comparer), asyncConfig);
+        }
+
+        public static IAsyncResult BeginSort<TKey, TValue>(ArraySection<TKey> keys, ArraySection<TValue> values, IComparer<TKey>? comparer = null, AsyncConfig? asyncConfig = null)
+        {
+            if (values.IsNull)
+                return BeginSort(keys, comparer, asyncConfig);
+            if (keys.Length > values.Length)
+                Throw.ArgumentException(Res.IListInvalidOffsLen);
+            if (keys.Length < 2)
+                return AsyncHelper.FromResult(true, asyncConfig);
+            if (keys.Length < values.Length)
+                values = values.Slice(0, keys.Length);
+
+            return AsyncHelper.BeginOperation(ctx => DoSort(ctx, keys, values, comparer), asyncConfig);
+        }
+
+        public static IAsyncResult BeginSort<TKeyFrom, TKeyTo, TValueFrom, TValueTo>(CastArray<TKeyFrom, TKeyTo> keys, CastArray<TValueFrom, TValueTo> values, IComparer<TKeyTo>? comparer = null, AsyncConfig? asyncConfig = null)
+            where TKeyFrom : unmanaged
+            where TKeyTo : unmanaged
+            where TValueFrom : unmanaged
+            where TValueTo : unmanaged
+        {
+            if (values.IsNull)
+                return BeginSort(keys, comparer, asyncConfig);
+            if (keys.Length > values.Length)
+                Throw.ArgumentException(Res.IListInvalidOffsLen);
+            if (keys.Length < 2)
+                return AsyncHelper.FromResult(true, asyncConfig);
+            if (keys.Length < values.Length)
+                values = values.Slice(0, keys.Length);
+
+            return AsyncHelper.BeginOperation(ctx => DoSort(ctx, keys, values, comparer), asyncConfig);
+        }
+
+        public static bool EndSort(IAsyncResult asyncResult) => AsyncHelper.EndOperation<bool>(asyncResult, nameof(BeginSort));
 
         #endregion
 
         #region Async TPL
+#if !NET35
 
-        // TODO
+        public static Task<bool> SortAsync<T>(IList<T> list, IComparer<T>? comparer = null, TaskConfig? asyncConfig = null)
+        {
+            if (list == null!)
+                Throw.ArgumentNullException(Argument.array);
 
+            int count = list.Count;
+            if (count < 2)
+                return AsyncHelper.FromResult(true, asyncConfig);
+
+            return AsyncHelper.DoOperationAsync(ctx => DoSort(ctx, list, 0, count, comparer), asyncConfig);
+        }
+
+        public static Task<bool> SortAsync<T>(IList<T> list, int index, int count, IComparer<T>? comparer = null, TaskConfig? asyncConfig = null)
+        {
+            if (list == null!)
+                Throw.ArgumentNullException(Argument.list);
+            if (index < 0)
+                Throw.ArgumentOutOfRangeException(Argument.index);
+            if (count < 0)
+                Throw.ArgumentOutOfRangeException(Argument.count);
+            if (index + count > list.Count)
+                Throw.ArgumentException(Res.IListInvalidOffsLen);
+
+            if (count < 2)
+                return AsyncHelper.FromResult(true, asyncConfig);
+
+            return AsyncHelper.DoOperationAsync(ctx => DoSort(ctx, list, index, count, comparer), asyncConfig);
+        }
+
+        public static Task<bool> SortAsync<T>(ArraySection<T> array, IComparer<T>? comparer = null, TaskConfig? asyncConfig = null)
+        {
+            if (array.Length < 2)
+                return AsyncHelper.FromResult(true, asyncConfig);
+            return AsyncHelper.DoOperationAsync(ctx => DoSort(ctx, array, comparer), asyncConfig);
+        }
+
+        public static Task<bool> SortAsync<TFrom, TTo>(CastArray<TFrom, TTo> array, IComparer<TTo>? comparer = null, TaskConfig? asyncConfig = null)
+            where TFrom : unmanaged
+            where TTo : unmanaged
+        {
+            if (array.Length < 2)
+                return AsyncHelper.FromResult(true, asyncConfig);
+            return AsyncHelper.DoOperationAsync(ctx => DoSort(ctx, array, comparer), asyncConfig);
+        }
+
+        public static Task<bool> SortAsync<TKey, TValue>(IList<TKey> keys, IList<TValue>? values, IComparer<TKey>? comparer = null, TaskConfig? asyncConfig = null)
+        {
+            if (keys == null!)
+                Throw.ArgumentNullException(Argument.keys);
+            return SortAsync(keys, values, 0, keys.Count, comparer, asyncConfig);
+        }
+
+        // TODO: Remarks: special handling for keys and values works only if they are both arrays or their generic type definitions are the same
+        public static Task<bool> SortAsync<TKey, TValue>(IList<TKey> keys, IList<TValue>? values, int index, int count, IComparer<TKey>? comparer = null, TaskConfig? asyncConfig = null)
+        {
+            if (keys == null!)
+                Throw.ArgumentNullException(Argument.keys);
+            if (values == null)
+                return SortAsync(keys, index, count, comparer, asyncConfig);
+            if (index < 0)
+                Throw.ArgumentOutOfRangeException(Argument.index);
+            if (count < 0)
+                Throw.ArgumentOutOfRangeException(Argument.count);
+            if (keys.Count - index < count || index > values.Count - count)
+                Throw.ArgumentException(Res.IListInvalidOffsLen);
+
+            if (count < 2)
+                return AsyncHelper.FromResult(true, asyncConfig);
+
+            return AsyncHelper.DoOperationAsync(ctx => DoSort(ctx, keys, values, index, count, comparer), asyncConfig);
+        }
+
+        public static Task<bool> SortAsync<TKey, TValue>(ArraySection<TKey> keys, ArraySection<TValue> values, IComparer<TKey>? comparer = null, TaskConfig? asyncConfig = null)
+        {
+            if (values.IsNull)
+                return SortAsync(keys, comparer, asyncConfig);
+            if (keys.Length > values.Length)
+                Throw.ArgumentException(Res.IListInvalidOffsLen);
+            if (keys.Length < 2)
+                return AsyncHelper.FromResult(true, asyncConfig);
+            if (keys.Length < values.Length)
+                values = values.Slice(0, keys.Length);
+
+            return AsyncHelper.DoOperationAsync(ctx => DoSort(ctx, keys, values, comparer), asyncConfig);
+        }
+
+        public static Task<bool> SortAsync<TKeyFrom, TKeyTo, TValueFrom, TValueTo>(CastArray<TKeyFrom, TKeyTo> keys, CastArray<TValueFrom, TValueTo> values, IComparer<TKeyTo>? comparer = null, TaskConfig? asyncConfig = null)
+            where TKeyFrom : unmanaged
+            where TKeyTo : unmanaged
+            where TValueFrom : unmanaged
+            where TValueTo : unmanaged
+        {
+            if (values.IsNull)
+                return SortAsync(keys, comparer, asyncConfig);
+            if (keys.Length > values.Length)
+                Throw.ArgumentException(Res.IListInvalidOffsLen);
+            if (keys.Length < 2)
+                return AsyncHelper.FromResult(true, asyncConfig);
+            if (keys.Length < values.Length)
+                values = values.Slice(0, keys.Length);
+
+            return AsyncHelper.DoOperationAsync(ctx => DoSort(ctx, keys, values, comparer), asyncConfig);
+        }
+
+#endif
         #endregion
 
         #endregion

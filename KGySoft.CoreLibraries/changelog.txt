@@ -79,6 +79,8 @@
     the CPU affinity for the current process if the targeted platform is below .NET 6.0. From now on the CPU
     affinity is respected on all platform targets.
     See also: https://learn.microsoft.com/en-us/dotnet/core/compatibility/core-libraries/6.0/environment-processorcount-on-windows
+  + New Sort/BeginSort/EndSort/SortAsync methods to sort IList<T>, ArraySection<T> and CastArray<TFrom, TTo>
+    collections in parallel.
 
 
 ~~~~~~~~~
