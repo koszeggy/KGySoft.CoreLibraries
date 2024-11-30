@@ -349,6 +349,22 @@ namespace KGySoft.Threading
 
         #region DefaultContext
 
+        /// <summary>
+        /// Sorts the elements of the specified <paramref name="list"/> synchronously, potentially using multiple threads.
+        /// </summary>
+        /// <typeparam name="T">The type of the elements in the <paramref name="list"/>.</typeparam>
+        /// <param name="list">The list to sort.</param>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use a default comparer. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <remarks>
+        /// <para>In general, accessing <see cref="IList{T}"/> members is like calling virtual methods. For the best performance there is a special handling for <see cref="Array"/>,
+        /// <see cref="List{T}"/>, <see cref="ArraySegment{T}"/>, <see cref="ArraySection{T}"/> and <see cref="CircularList{T}"/> instances.
+        /// For <see cref="ArraySection{T}"/> and <see cref="CastArray{TFrom,TTo}"/> instances it is recommended to use the dedicated overloads for better performance.</para>
+        /// <note>This method adjusts the degree of parallelization automatically, blocks the caller, and does not support cancellation.
+        /// Use the overloads with a <see cref="ParallelConfig"/> parameter to adjust parallelization and to set up cancellation;
+        /// or the <see cref="O:KGySoft.Threading.ParallelHelper.BeginSort">BeginSort</see>/<see cref="O:KGySoft.Threading.ParallelHelper.SortAsync">SortAsync</see>
+        /// (in .NET Framework 4.0 and above) methods to perform the sorting asynchronously.</note>
+        /// </remarks>
         public static void Sort<T>(IList<T> list, IComparer<T>? comparer = null)
         {
             if (list == null!)
@@ -361,6 +377,25 @@ namespace KGySoft.Threading
             DoSort(AsyncHelper.DefaultContext, list, 0, count, comparer);
         }
 
+        /// <summary>
+        /// Sorts the elements of the specified <paramref name="list"/> synchronously, potentially using multiple threads.
+        /// The range of elements to sort is specified by a starting index and a length.
+        /// </summary>
+        /// <typeparam name="T">The type of the elements in the <paramref name="list"/>.</typeparam>
+        /// <param name="list">The list to sort.</param>
+        /// <param name="index">The zero-based starting index of the range to sort.</param>
+        /// <param name="count">The length of the range to sort.</param>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use a default comparer. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <remarks>
+        /// <para>In general, accessing <see cref="IList{T}"/> members is like calling virtual methods. For the best performance there is a special handling for <see cref="Array"/>,
+        /// <see cref="List{T}"/>, <see cref="ArraySegment{T}"/>, <see cref="ArraySection{T}"/> and <see cref="CircularList{T}"/> instances.
+        /// For <see cref="ArraySection{T}"/> and <see cref="CastArray{TFrom,TTo}"/> instances it is recommended to use the dedicated overloads for better performance.</para>
+        /// <note>This method adjusts the degree of parallelization automatically, blocks the caller, and does not support cancellation.
+        /// Use the overloads with a <see cref="ParallelConfig"/> parameter to adjust parallelization and to set up cancellation;
+        /// or the <see cref="O:KGySoft.Threading.ParallelHelper.BeginSort">BeginSort</see>/<see cref="O:KGySoft.Threading.ParallelHelper.SortAsync">SortAsync</see>
+        /// (in .NET Framework 4.0 and above) methods to perform the sorting asynchronously.</note>
+        /// </remarks>
         public static void Sort<T>(IList<T> list, int index, int count, IComparer<T>? comparer = null)
         {
             if (list == null!)
@@ -378,6 +413,19 @@ namespace KGySoft.Threading
             DoSort(AsyncHelper.DefaultContext, list, index, count, comparer);
         }
 
+        /// <summary>
+        /// Sorts the elements of the specified <see cref="ArraySection{T}"/> synchronously, potentially using multiple threads.
+        /// </summary>
+        /// <typeparam name="T">The type of the elements in the <see cref="ArraySection{T}"/>.</typeparam>
+        /// <param name="array">The <see cref="ArraySection{T}"/> instance to sort.</param>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use a default comparer. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <remarks>
+        /// <note>This method adjusts the degree of parallelization automatically, blocks the caller, and does not support cancellation.
+        /// Use the overloads with a <see cref="ParallelConfig"/> parameter to adjust parallelization and to set up cancellation;
+        /// or the <see cref="O:KGySoft.Threading.ParallelHelper.BeginSort">BeginSort</see>/<see cref="O:KGySoft.Threading.ParallelHelper.SortAsync">SortAsync</see>
+        /// (in .NET Framework 4.0 and above) methods to perform the sorting asynchronously.</note>
+        /// </remarks>
         public static void Sort<T>(ArraySection<T> array, IComparer<T>? comparer = null)
         {
             if (array.Length < 2)
@@ -385,6 +433,20 @@ namespace KGySoft.Threading
             DoSort(AsyncHelper.DefaultContext, array, comparer);
         }
 
+        /// <summary>
+        /// Sorts the elements of the specified <see cref="CastArray{TFrom,TTo}"/> synchronously, potentially using multiple threads.
+        /// </summary>
+        /// <typeparam name="TFrom">The actual element type of the underlying array.</typeparam>
+        /// <typeparam name="TTo">The reinterpreted element type of the <see cref="CastArray{TFrom,TTo}"/> instance.</typeparam>
+        /// <param name="array">The <see cref="CastArray{TFrom,TTo}"/> instance to sort.</param>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use a default comparer. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <remarks>
+        /// <note>This method adjusts the degree of parallelization automatically, blocks the caller, and does not support cancellation.
+        /// Use the overloads with a <see cref="ParallelConfig"/> parameter to adjust parallelization and to set up cancellation;
+        /// or the <see cref="O:KGySoft.Threading.ParallelHelper.BeginSort">BeginSort</see>/<see cref="O:KGySoft.Threading.ParallelHelper.SortAsync">SortAsync</see>
+        /// (in .NET Framework 4.0 and above) methods to perform the sorting asynchronously.</note>
+        /// </remarks>
         public static void Sort<TFrom, TTo>(CastArray<TFrom, TTo> array, IComparer<TTo>? comparer = null)
             where TFrom : unmanaged
             where TTo : unmanaged
@@ -394,6 +456,25 @@ namespace KGySoft.Threading
             DoSort(AsyncHelper.DefaultContext, array, comparer);
         }
 
+        /// <summary>
+        /// Sorts the elements in a pair of <see cref="IList{T}"/> instances synchronously (one contains the keys, the other contains the corresponding values), potentially using multiple threads.
+        /// </summary>
+        /// <typeparam name="TKey">The type of the elements in the <paramref name="keys"/> list.</typeparam>
+        /// <typeparam name="TValue">The type of the elements in the <paramref name="values"/> list.</typeparam>
+        /// <param name="keys">The <see cref="IList{T}"/> that contains the keys to sort.</param>
+        /// <param name="values">The <see cref="IList{T}"/> that contains the values that correspond to the keys in the <paramref name="keys"/> list, or <see langword="null"/> to sort only the keys.</param>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use a default comparer. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <remarks>
+        /// <para>In general, accessing <see cref="IList{T}"/> members is like calling virtual methods. For the best performance there is a special handling for <see cref="Array"/>,
+        /// <see cref="List{T}"/>, <see cref="ArraySegment{T}"/>, <see cref="ArraySection{T}"/> and <see cref="CircularList{T}"/> instances,
+        /// if both <paramref name="keys"/> and <paramref name="values"/> are of the same type (not considering the generic type arguments).
+        /// For <see cref="ArraySection{T}"/> and <see cref="CastArray{TFrom,TTo}"/> instances it is recommended to use the dedicated overloads for better performance.</para>
+        /// <note>This method adjusts the degree of parallelization automatically, blocks the caller, and does not support cancellation.
+        /// Use the overloads with a <see cref="ParallelConfig"/> parameter to adjust parallelization and to set up cancellation;
+        /// or the <see cref="O:KGySoft.Threading.ParallelHelper.BeginSort">BeginSort</see>/<see cref="O:KGySoft.Threading.ParallelHelper.SortAsync">SortAsync</see>
+        /// (in .NET Framework 4.0 and above) methods to perform the sorting asynchronously.</note>
+        /// </remarks>
         public static void Sort<TKey, TValue>(IList<TKey> keys, IList<TValue>? values, IComparer<TKey>? comparer = null)
         {
             if (keys == null!)
@@ -401,7 +482,28 @@ namespace KGySoft.Threading
             Sort(keys, values, 0, keys.Count, comparer);
         }
 
-        // TODO: Remarks: special handling for keys and values works only if they are both arrays or their generic type definitions are the same
+        /// <summary>
+        /// Sorts the elements in a pair of <see cref="IList{T}"/> instances synchronously (one contains the keys, the other contains the corresponding values), potentially using multiple threads.
+        /// The range of elements to sort is specified by a starting index and a length.
+        /// </summary>
+        /// <typeparam name="TKey">The type of the elements in the <paramref name="keys"/> list.</typeparam>
+        /// <typeparam name="TValue">The type of the elements in the <paramref name="values"/> list.</typeparam>
+        /// <param name="keys">The <see cref="IList{T}"/> that contains the keys to sort.</param>
+        /// <param name="values">The <see cref="IList{T}"/> that contains the values that correspond to the keys in the <paramref name="keys"/> list, or <see langword="null"/> to sort only the keys.</param>
+        /// <param name="index">The zero-based starting index of the range to sort.</param>
+        /// <param name="count">The length of the range to sort.</param>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use a default comparer. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <remarks>
+        /// <para>In general, accessing <see cref="IList{T}"/> members is like calling virtual methods. For the best performance there is a special handling for <see cref="Array"/>,
+        /// <see cref="List{T}"/>, <see cref="ArraySegment{T}"/>, <see cref="ArraySection{T}"/> and <see cref="CircularList{T}"/> instances,
+        /// if both <paramref name="keys"/> and <paramref name="values"/> are of the same type (not considering the generic type arguments).
+        /// For <see cref="ArraySection{T}"/> and <see cref="CastArray{TFrom,TTo}"/> instances it is recommended to use the dedicated overloads for better performance.</para>
+        /// <note>This method adjusts the degree of parallelization automatically, blocks the caller, and does not support cancellation.
+        /// Use the overloads with a <see cref="ParallelConfig"/> parameter to adjust parallelization and to set up cancellation;
+        /// or the <see cref="O:KGySoft.Threading.ParallelHelper.BeginSort">BeginSort</see>/<see cref="O:KGySoft.Threading.ParallelHelper.SortAsync">SortAsync</see>
+        /// (in .NET Framework 4.0 and above) methods to perform the sorting asynchronously.</note>
+        /// </remarks>
         public static void Sort<TKey, TValue>(IList<TKey> keys, IList<TValue>? values, int index, int count, IComparer<TKey>? comparer = null)
         {
             if (keys == null!)
@@ -425,6 +527,22 @@ namespace KGySoft.Threading
             DoSort(AsyncHelper.DefaultContext, keys, values, index, count, comparer);
         }
 
+        /// <summary>
+        /// Sorts the elements in a pair of <see cref="ArraySection{T}"/> instances synchronously (one contains the keys, the other contains the corresponding values), potentially using multiple threads.
+        /// </summary>
+        /// <typeparam name="TKey">The type of the elements in the <paramref name="keys"/> collection.</typeparam>
+        /// <typeparam name="TValue">The type of the elements in the <paramref name="values"/> collection.</typeparam>
+        /// <param name="keys">The <see cref="ArraySection{T}"/> that contains the keys to sort.</param>
+        /// <param name="values">The <see cref="ArraySection{T}"/> that contains the values that correspond to the keys in the <paramref name="keys"/> collection.
+        /// If the <see cref="ArraySection{T}.IsNull"/> property of <paramref name="values"/> is <see langword="true"/>, then only the keys are sorted.</param>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use a default comparer. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <remarks>
+        /// <note>This method adjusts the degree of parallelization automatically, blocks the caller, and does not support cancellation.
+        /// Use the overloads with a <see cref="ParallelConfig"/> parameter to adjust parallelization and to set up cancellation;
+        /// or the <see cref="O:KGySoft.Threading.ParallelHelper.BeginSort">BeginSort</see>/<see cref="O:KGySoft.Threading.ParallelHelper.SortAsync">SortAsync</see>
+        /// (in .NET Framework 4.0 and above) methods to perform the sorting asynchronously.</note>
+        /// </remarks>
         public static void Sort<TKey, TValue>(ArraySection<TKey> keys, ArraySection<TValue> values, IComparer<TKey>? comparer = null)
         {
             if (values.IsNull)
@@ -443,6 +561,24 @@ namespace KGySoft.Threading
             DoSort(AsyncHelper.DefaultContext, keys, values, comparer);
         }
 
+        /// <summary>
+        /// Sorts the elements in a pair of <see cref="CastArray{TFrom,TTo}"/> instances synchronously (one contains the keys, the other contains the corresponding values), potentially using multiple threads.
+        /// </summary>
+        /// <typeparam name="TKeyFrom">The actual element type of the underlying array in <paramref name="keys"/>.</typeparam>
+        /// <typeparam name="TKeyTo">The reinterpreted element type of the <see cref="CastArray{TFrom,TTo}"/> instance in <paramref name="keys"/>.</typeparam>
+        /// <typeparam name="TValueFrom">The actual element type of the underlying array in <paramref name="values"/>.</typeparam>
+        /// <typeparam name="TValueTo">The reinterpreted element type of the <see cref="CastArray{TFrom,TTo}"/> instance in <paramref name="values"/>.</typeparam>
+        /// <param name="keys">The <see cref="CastArray{TFrom,TTo}"/> that contains the keys to sort.</param>
+        /// <param name="values">The <see cref="CastArray{TFrom,TTo}"/> that contains the values that correspond to the keys in the <paramref name="keys"/> collection.
+        /// If the <see cref="CastArray{TFrom,TTo}.IsNull"/> property of <paramref name="values"/> is <see langword="true"/>, then only the keys are sorted.</param>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use a default comparer. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <remarks>
+        /// <note>This method adjusts the degree of parallelization automatically, blocks the caller, and does not support cancellation.
+        /// Use the overloads with a <see cref="ParallelConfig"/> parameter to adjust parallelization and to set up cancellation;
+        /// or the <see cref="O:KGySoft.Threading.ParallelHelper.BeginSort">BeginSort</see>/<see cref="O:KGySoft.Threading.ParallelHelper.SortAsync">SortAsync</see>
+        /// (in .NET Framework 4.0 and above) methods to perform the sorting asynchronously.</note>
+        /// </remarks>
         public static void Sort<TKeyFrom, TKeyTo, TValueFrom, TValueTo>(CastArray<TKeyFrom, TKeyTo> keys, CastArray<TValueFrom, TValueTo> values, IComparer<TKeyTo>? comparer = null)
             where TKeyFrom : unmanaged
             where TKeyTo : unmanaged
