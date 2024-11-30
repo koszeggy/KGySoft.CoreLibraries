@@ -1199,6 +1199,25 @@ namespace KGySoft.Threading
 
         #region Async APM
 
+        /// <summary>
+        /// Sorts the elements of the specified <paramref name="list"/> asynchronously, potentially using multiple threads.
+        /// </summary>
+        /// <typeparam name="T">The type of the elements in the <paramref name="list"/>.</typeparam>
+        /// <param name="list">The list to sort.</param>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use a default comparer. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <param name="asyncConfig">An optional configuration to adjust parallelization or cancellation. Reporting progress is not supported in sorting methods. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <returns>An <see cref="IAsyncResult"/> that represents the asynchronous operation, which could still be pending.</returns>
+        /// <remarks>
+        /// <para>In general, accessing <see cref="IList{T}"/> members is like calling virtual methods. For the best performance there is a special handling for <see cref="Array"/>,
+        /// <see cref="List{T}"/>, <see cref="ArraySegment{T}"/>, <see cref="ArraySection{T}"/> and <see cref="CircularList{T}"/> instances.
+        /// For <see cref="ArraySection{T}"/> and <see cref="CastArray{TFrom,TTo}"/> instances it is recommended to use the dedicated overloads for better performance.</para>
+        /// <para>In .NET Framework 4.0 and above you can use also the <see cref="O:KGySoft.Threading.ParallelHelper.SortAsync">SortAsync</see> methods.</para>
+        /// <para>To get the result or the exception that occurred during the operation you have to call the <see cref="EndSort">EndSort</see> method.</para>
+        /// <para>This method is not a blocking call even if the <see cref="AsyncConfigBase.MaxDegreeOfParallelism"/> property of the <paramref name="asyncConfig"/> parameter is 1.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="list"/> is <see langword="null"/>.</exception>
         public static IAsyncResult BeginSort<T>(IList<T> list, IComparer<T>? comparer = null, AsyncConfig? asyncConfig = null)
         {
             if (list == null!)
@@ -1211,6 +1230,30 @@ namespace KGySoft.Threading
             return AsyncHelper.BeginOperation(ctx => DoSort(ctx, list, 0, count, comparer), asyncConfig);
         }
 
+        /// <summary>
+        /// Sorts the elements of the specified <paramref name="list"/> asynchronously, potentially using multiple threads.
+        /// The range of elements to sort is specified by a starting index and a length.
+        /// </summary>
+        /// <typeparam name="T">The type of the elements in the <paramref name="list"/>.</typeparam>
+        /// <param name="list">The list to sort.</param>
+        /// <param name="index">The zero-based starting index of the range to sort.</param>
+        /// <param name="count">The length of the range to sort.</param>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use a default comparer. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <param name="asyncConfig">An optional configuration to adjust parallelization or cancellation. Reporting progress is not supported in sorting methods. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <returns>An <see cref="IAsyncResult"/> that represents the asynchronous operation, which could still be pending.</returns>
+        /// <remarks>
+        /// <para>In general, accessing <see cref="IList{T}"/> members is like calling virtual methods. For the best performance there is a special handling for <see cref="Array"/>,
+        /// <see cref="List{T}"/>, <see cref="ArraySegment{T}"/>, <see cref="ArraySection{T}"/> and <see cref="CircularList{T}"/> instances.
+        /// For <see cref="ArraySection{T}"/> and <see cref="CastArray{TFrom,TTo}"/> instances it is recommended to use the dedicated overloads for better performance.</para>
+        /// <para>In .NET Framework 4.0 and above you can use also the <see cref="O:KGySoft.Threading.ParallelHelper.SortAsync">SortAsync</see> methods.</para>
+        /// <para>To get the result or the exception that occurred during the operation you have to call the <see cref="EndSort">EndSort</see> method.</para>
+        /// <para>This method is not a blocking call even if the <see cref="AsyncConfigBase.MaxDegreeOfParallelism"/> property of the <paramref name="asyncConfig"/> parameter is 1.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="list"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> or <paramref name="count"/> is less than 0.</exception>
+        /// <exception cref="ArgumentException">The <paramref name="index"/> and <paramref name="count"/> do not denote a valid range in the <paramref name="list"/>.</exception>
         public static IAsyncResult BeginSort<T>(IList<T> list, int index, int count, IComparer<T>? comparer = null, AsyncConfig? asyncConfig = null)
         {
             if (list == null!)
@@ -1228,6 +1271,21 @@ namespace KGySoft.Threading
             return AsyncHelper.BeginOperation(ctx => DoSort(ctx, list, index, count, comparer), asyncConfig);
         }
 
+        /// <summary>
+        /// Sorts the elements of the specified <see cref="ArraySection{T}"/> asynchronously, potentially using multiple threads.
+        /// </summary>
+        /// <typeparam name="T">The type of the elements in the <see cref="ArraySection{T}"/>.</typeparam>
+        /// <param name="array">The <see cref="ArraySection{T}"/> instance to sort.</param>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use a default comparer. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <param name="asyncConfig">An optional configuration to adjust parallelization or cancellation. Reporting progress is not supported in sorting methods. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <returns>An <see cref="IAsyncResult"/> that represents the asynchronous operation, which could still be pending.</returns>
+        /// <remarks>
+        /// <para>In .NET Framework 4.0 and above you can use also the <see cref="O:KGySoft.Threading.ParallelHelper.SortAsync">SortAsync</see> methods.</para>
+        /// <para>To get the result or the exception that occurred during the operation you have to call the <see cref="EndSort">EndSort</see> method.</para>
+        /// <para>This method is not a blocking call even if the <see cref="AsyncConfigBase.MaxDegreeOfParallelism"/> property of the <paramref name="asyncConfig"/> parameter is 1.</para>
+        /// </remarks>
         public static IAsyncResult BeginSort<T>(ArraySection<T> array, IComparer<T>? comparer = null, AsyncConfig? asyncConfig = null)
         {
             if (array.Length < 2)
@@ -1235,6 +1293,22 @@ namespace KGySoft.Threading
             return AsyncHelper.BeginOperation(ctx => DoSort(ctx, array, comparer), asyncConfig);
         }
 
+        /// <summary>
+        /// Sorts the elements of the specified <see cref="CastArray{TFrom,TTo}"/> asynchronously, potentially using multiple threads.
+        /// </summary>
+        /// <typeparam name="TFrom">The actual element type of the underlying array.</typeparam>
+        /// <typeparam name="TTo">The reinterpreted element type of the <see cref="CastArray{TFrom,TTo}"/> instance.</typeparam>
+        /// <param name="array">The <see cref="CastArray{TFrom,TTo}"/> instance to sort.</param>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use a default comparer. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <param name="asyncConfig">An optional configuration to adjust parallelization or cancellation. Reporting progress is not supported in sorting methods. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <returns>An <see cref="IAsyncResult"/> that represents the asynchronous operation, which could still be pending.</returns>
+        /// <remarks>
+        /// <para>In .NET Framework 4.0 and above you can use also the <see cref="O:KGySoft.Threading.ParallelHelper.SortAsync">SortAsync</see> methods.</para>
+        /// <para>To get the result or the exception that occurred during the operation you have to call the <see cref="EndSort">EndSort</see> method.</para>
+        /// <para>This method is not a blocking call even if the <see cref="AsyncConfigBase.MaxDegreeOfParallelism"/> property of the <paramref name="asyncConfig"/> parameter is 1.</para>
+        /// </remarks>
         public static IAsyncResult BeginSort<TFrom, TTo>(CastArray<TFrom, TTo> array, IComparer<TTo>? comparer = null, AsyncConfig? asyncConfig = null)
             where TFrom : unmanaged
             where TTo : unmanaged
@@ -1244,6 +1318,29 @@ namespace KGySoft.Threading
             return AsyncHelper.BeginOperation(ctx => DoSort(ctx, array, comparer), asyncConfig);
         }
 
+        /// <summary>
+        /// Sorts the elements in a pair of <see cref="IList{T}"/> instances asynchronously (one contains the keys, the other contains the corresponding values), potentially using multiple threads.
+        /// </summary>
+        /// <typeparam name="TKey">The type of the elements in the <paramref name="keys"/> list.</typeparam>
+        /// <typeparam name="TValue">The type of the elements in the <paramref name="values"/> list.</typeparam>
+        /// <param name="keys">The <see cref="IList{T}"/> that contains the keys to sort.</param>
+        /// <param name="values">The <see cref="IList{T}"/> that contains the values that correspond to the keys in the <paramref name="keys"/> list, or <see langword="null"/> to sort only the keys.</param>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use a default comparer. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <param name="asyncConfig">An optional configuration to adjust parallelization or cancellation. Reporting progress is not supported in sorting methods. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <returns>An <see cref="IAsyncResult"/> that represents the asynchronous operation, which could still be pending.</returns>
+        /// <remarks>
+        /// <para>In general, accessing <see cref="IList{T}"/> members is like calling virtual methods. For the best performance there is a special handling for <see cref="Array"/>,
+        /// <see cref="List{T}"/>, <see cref="ArraySegment{T}"/>, <see cref="ArraySection{T}"/> and <see cref="CircularList{T}"/> instances,
+        /// if both <paramref name="keys"/> and <paramref name="values"/> are of the same type (not considering the generic type arguments).
+        /// For <see cref="ArraySection{T}"/> and <see cref="CastArray{TFrom,TTo}"/> instances it is recommended to use the dedicated overloads for better performance.</para>
+        /// <para>In .NET Framework 4.0 and above you can use also the <see cref="O:KGySoft.Threading.ParallelHelper.SortAsync">SortAsync</see> methods.</para>
+        /// <para>To get the result or the exception that occurred during the operation you have to call the <see cref="EndSort">EndSort</see> method.</para>
+        /// <para>This method is not a blocking call even if the <see cref="AsyncConfigBase.MaxDegreeOfParallelism"/> property of the <paramref name="asyncConfig"/> parameter is 1.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="keys"/> or <paramref name="values"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="values"/> is not <see langword="null"/> and <paramref name="values"/> has fewer elements than <paramref name="keys"/>.</exception>
         public static IAsyncResult BeginSort<TKey, TValue>(IList<TKey> keys, IList<TValue>? values, IComparer<TKey>? comparer = null, AsyncConfig? asyncConfig = null)
         {
             if (keys == null!)
@@ -1251,7 +1348,33 @@ namespace KGySoft.Threading
             return BeginSort(keys, values, 0, keys.Count, comparer, asyncConfig);
         }
 
-        // TODO: Remarks: special handling for keys and values works only if they are both arrays or their generic type definitions are the same
+        /// <summary>
+        /// Sorts the elements in a pair of <see cref="IList{T}"/> instances asynchronously (one contains the keys, the other contains the corresponding values), potentially using multiple threads.
+        /// The range of elements to sort is specified by a starting index and a length.
+        /// </summary>
+        /// <typeparam name="TKey">The type of the elements in the <paramref name="keys"/> list.</typeparam>
+        /// <typeparam name="TValue">The type of the elements in the <paramref name="values"/> list.</typeparam>
+        /// <param name="keys">The <see cref="IList{T}"/> that contains the keys to sort.</param>
+        /// <param name="values">The <see cref="IList{T}"/> that contains the values that correspond to the keys in the <paramref name="keys"/> list, or <see langword="null"/> to sort only the keys.</param>
+        /// <param name="index">The zero-based starting index of the range to sort.</param>
+        /// <param name="count">The length of the range to sort.</param>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use a default comparer. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <param name="asyncConfig">An optional configuration to adjust parallelization or cancellation. Reporting progress is not supported in sorting methods. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <returns>An <see cref="IAsyncResult"/> that represents the asynchronous operation, which could still be pending.</returns>
+        /// <remarks>
+        /// <para>In general, accessing <see cref="IList{T}"/> members is like calling virtual methods. For the best performance there is a special handling for <see cref="Array"/>,
+        /// <see cref="List{T}"/>, <see cref="ArraySegment{T}"/>, <see cref="ArraySection{T}"/> and <see cref="CircularList{T}"/> instances,
+        /// if both <paramref name="keys"/> and <paramref name="values"/> are of the same type (not considering the generic type arguments).
+        /// For <see cref="ArraySection{T}"/> and <see cref="CastArray{TFrom,TTo}"/> instances it is recommended to use the dedicated overloads for better performance.</para>
+        /// <para>In .NET Framework 4.0 and above you can use also the <see cref="O:KGySoft.Threading.ParallelHelper.SortAsync">SortAsync</see> methods.</para>
+        /// <para>To get the result or the exception that occurred during the operation you have to call the <see cref="EndSort">EndSort</see> method.</para>
+        /// <para>This method is not a blocking call even if the <see cref="AsyncConfigBase.MaxDegreeOfParallelism"/> property of the <paramref name="asyncConfig"/> parameter is 1.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="keys"/> or <paramref name="values"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> or <paramref name="count"/> is less than 0.</exception>
+        /// <exception cref="ArgumentException">The <paramref name="index"/> and <paramref name="count"/> do not denote a valid range in the <paramref name="keys"/> or <paramref name="values"/> list.</exception>
         public static IAsyncResult BeginSort<TKey, TValue>(IList<TKey> keys, IList<TValue>? values, int index, int count, IComparer<TKey>? comparer = null, AsyncConfig? asyncConfig = null)
         {
             if (keys == null!)
@@ -1271,6 +1394,25 @@ namespace KGySoft.Threading
             return AsyncHelper.BeginOperation(ctx => DoSort(ctx, keys, values, index, count, comparer), asyncConfig);
         }
 
+        /// <summary>
+        /// Sorts the elements in a pair of <see cref="ArraySection{T}"/> instances asynchronously (one contains the keys, the other contains the corresponding values), potentially using multiple threads.
+        /// </summary>
+        /// <typeparam name="TKey">The type of the elements in the <paramref name="keys"/> collection.</typeparam>
+        /// <typeparam name="TValue">The type of the elements in the <paramref name="values"/> collection.</typeparam>
+        /// <param name="keys">The <see cref="ArraySection{T}"/> that contains the keys to sort.</param>
+        /// <param name="values">The <see cref="ArraySection{T}"/> that contains the values that correspond to the keys in the <paramref name="keys"/> collection.
+        /// If the <see cref="ArraySection{T}.IsNull"/> property of <paramref name="values"/> is <see langword="true"/>, then only the keys are sorted.</param>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use a default comparer. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <param name="asyncConfig">An optional configuration to adjust parallelization or cancellation. Reporting progress is not supported in sorting methods. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <returns>An <see cref="IAsyncResult"/> that represents the asynchronous operation, which could still be pending.</returns>
+        /// <remarks>
+        /// <para>In .NET Framework 4.0 and above you can use also the <see cref="O:KGySoft.Threading.ParallelHelper.SortAsync">SortAsync</see> methods.</para>
+        /// <para>To get the result or the exception that occurred during the operation you have to call the <see cref="EndSort">EndSort</see> method.</para>
+        /// <para>This method is not a blocking call even if the <see cref="AsyncConfigBase.MaxDegreeOfParallelism"/> property of the <paramref name="asyncConfig"/> parameter is 1.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentException">The <see cref="ArraySection{T}.IsNull"/> property of <paramref name="values"/> is <see langword="false"/> and <paramref name="values"/> has fewer elements than <paramref name="keys"/>.</exception>
         public static IAsyncResult BeginSort<TKey, TValue>(ArraySection<TKey> keys, ArraySection<TValue> values, IComparer<TKey>? comparer = null, AsyncConfig? asyncConfig = null)
         {
             if (values.IsNull)
@@ -1285,6 +1427,27 @@ namespace KGySoft.Threading
             return AsyncHelper.BeginOperation(ctx => DoSort(ctx, keys, values, comparer), asyncConfig);
         }
 
+        /// <summary>
+        /// Sorts the elements in a pair of <see cref="CastArray{TFrom,TTo}"/> instances asynchronously (one contains the keys, the other contains the corresponding values), potentially using multiple threads.
+        /// </summary>
+        /// <typeparam name="TKeyFrom">The actual element type of the underlying array in <paramref name="keys"/>.</typeparam>
+        /// <typeparam name="TKeyTo">The reinterpreted element type of the <see cref="CastArray{TFrom,TTo}"/> instance in <paramref name="keys"/>.</typeparam>
+        /// <typeparam name="TValueFrom">The actual element type of the underlying array in <paramref name="values"/>.</typeparam>
+        /// <typeparam name="TValueTo">The reinterpreted element type of the <see cref="CastArray{TFrom,TTo}"/> instance in <paramref name="values"/>.</typeparam>
+        /// <param name="keys">The <see cref="CastArray{TFrom,TTo}"/> that contains the keys to sort.</param>
+        /// <param name="values">The <see cref="CastArray{TFrom,TTo}"/> that contains the values that correspond to the keys in the <paramref name="keys"/> collection.
+        /// If the <see cref="CastArray{TFrom,TTo}.IsNull"/> property of <paramref name="values"/> is <see langword="true"/>, then only the keys are sorted.</param>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use a default comparer. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <param name="asyncConfig">An optional configuration to adjust parallelization or cancellation. Reporting progress is not supported in sorting methods. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <returns>An <see cref="IAsyncResult"/> that represents the asynchronous operation, which could still be pending.</returns>
+        /// <remarks>
+        /// <para>In .NET Framework 4.0 and above you can use also the <see cref="O:KGySoft.Threading.ParallelHelper.SortAsync">SortAsync</see> methods.</para>
+        /// <para>To get the result or the exception that occurred during the operation you have to call the <see cref="EndSort">EndSort</see> method.</para>
+        /// <para>This method is not a blocking call even if the <see cref="AsyncConfigBase.MaxDegreeOfParallelism"/> property of the <paramref name="asyncConfig"/> parameter is 1.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentException">The <see cref="CastArray{TFrom,TTo}.IsNull"/> property of <paramref name="values"/> is <see langword="false"/> and <paramref name="values"/> has fewer elements than <paramref name="keys"/>.</exception>
         public static IAsyncResult BeginSort<TKeyFrom, TKeyTo, TValueFrom, TValueTo>(CastArray<TKeyFrom, TKeyTo> keys, CastArray<TValueFrom, TValueTo> values, IComparer<TKeyTo>? comparer = null, AsyncConfig? asyncConfig = null)
             where TKeyFrom : unmanaged
             where TKeyTo : unmanaged
@@ -1303,6 +1466,19 @@ namespace KGySoft.Threading
             return AsyncHelper.BeginOperation(ctx => DoSort(ctx, keys, values, comparer), asyncConfig);
         }
 
+        /// <summary>
+        /// Waits for the pending asynchronous operation started by one of the <see cref="O:KGySoft.Threading.ParallelHelper.BeginSort">BeginSort</see> methods to complete.
+        /// In .NET Framework 4.0 and above you can use the <see cref="O:KGySoft.Threading.ParallelHelper.SortAsync">SortAsync</see> methods instead.
+        /// </summary>
+        /// <param name="asyncResult">The reference to the pending asynchronous request to finish.</param>
+        /// <returns><see langword="true"/>, if the operation completed successfully.
+        /// <br/><see langword="false"/>, if the operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in the <c>asyncConfig</c> parameter was set to <see langword="false"/>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="asyncResult"/> is <see langword="null"/>.</exception>
+        /// <exception cref="InvalidOperationException"><paramref name="asyncResult"/> was not returned by a <see cref="O:KGySoft.Threading.ParallelHelper.BeginSort">BeginSort</see> overload or
+        /// this method was called with the same instance multiple times.</exception>
+        /// <exception cref="OperationCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in the <c>asyncConfig</c> parameter was <see langword="true"/>.</exception>
+        /// <exception cref="ArgumentException">The <see cref="IComparer{T}"/> returned inconsistent results.</exception>
+        /// <exception cref="InvalidOperationException"> The <see cref="IComparer{T}"/> instance was <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
         public static bool EndSort(IAsyncResult asyncResult) => AsyncHelper.EndOperation<bool>(asyncResult, nameof(BeginSort));
 
         #endregion
@@ -1310,6 +1486,28 @@ namespace KGySoft.Threading
         #region Async TPL
 #if !NET35
 
+        /// <summary>
+        /// Sorts the elements of the specified <paramref name="list"/> asynchronously, potentially using multiple threads.
+        /// </summary>
+        /// <typeparam name="T">The type of the elements in the <paramref name="list"/>.</typeparam>
+        /// <param name="list">The list to sort.</param>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use a default comparer. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <param name="asyncConfig">An optional configuration to adjust parallelization or cancellation. Reporting progress is not supported in sorting methods. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <returns>A task that represents the asynchronous operation. Its result is <see langword="true"/>, if the operation completed successfully,
+        /// or <see langword="false"/>, if the operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in <paramref name="asyncConfig"/> parameter was <see langword="false"/>.</returns>
+        /// <remarks>
+        /// <para>In general, accessing <see cref="IList{T}"/> members is like calling virtual methods. For the best performance there is a special handling for <see cref="Array"/>,
+        /// <see cref="List{T}"/>, <see cref="ArraySegment{T}"/>, <see cref="ArraySection{T}"/> and <see cref="CircularList{T}"/> instances.
+        /// For <see cref="ArraySection{T}"/> and <see cref="CastArray{TFrom,TTo}"/> instances it is recommended to use the dedicated overloads for better performance.</para>
+        /// <para>This method is not a blocking call even if the <see cref="AsyncConfigBase.MaxDegreeOfParallelism"/> property of the <paramref name="asyncConfig"/> parameter is 1.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="list"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException">The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
+        /// <exception cref="TaskCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/>
+        /// in <paramref name="asyncConfig"/> was <see langword="true"/>. This exception is thrown when the result is awaited.</exception>
         public static Task<bool> SortAsync<T>(IList<T> list, IComparer<T>? comparer = null, TaskConfig? asyncConfig = null)
         {
             if (list == null!)
@@ -1322,6 +1520,34 @@ namespace KGySoft.Threading
             return AsyncHelper.DoOperationAsync(ctx => DoSort(ctx, list, 0, count, comparer), asyncConfig);
         }
 
+        /// <summary>
+        /// Sorts the elements of the specified <paramref name="list"/> asynchronously, potentially using multiple threads.
+        /// The range of elements to sort is specified by a starting index and a length.
+        /// </summary>
+        /// <typeparam name="T">The type of the elements in the <paramref name="list"/>.</typeparam>
+        /// <param name="list">The list to sort.</param>
+        /// <param name="index">The zero-based starting index of the range to sort.</param>
+        /// <param name="count">The length of the range to sort.</param>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use a default comparer. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <param name="asyncConfig">An optional configuration to adjust parallelization or cancellation. Reporting progress is not supported in sorting methods. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <returns>A task that represents the asynchronous operation. Its result is <see langword="true"/>, if the operation completed successfully,
+        /// or <see langword="false"/>, if the operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in <paramref name="asyncConfig"/> parameter was <see langword="false"/>.</returns>
+        /// <remarks>
+        /// <para>In general, accessing <see cref="IList{T}"/> members is like calling virtual methods. For the best performance there is a special handling for <see cref="Array"/>,
+        /// <see cref="List{T}"/>, <see cref="ArraySegment{T}"/>, <see cref="ArraySection{T}"/> and <see cref="CircularList{T}"/> instances.
+        /// For <see cref="ArraySection{T}"/> and <see cref="CastArray{TFrom,TTo}"/> instances it is recommended to use the dedicated overloads for better performance.</para>
+        /// <para>This method is not a blocking call even if the <see cref="AsyncConfigBase.MaxDegreeOfParallelism"/> property of the <paramref name="asyncConfig"/> parameter is 1.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="list"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> or <paramref name="count"/> is less than 0.</exception>
+        /// <exception cref="ArgumentException">The <paramref name="index"/> and <paramref name="count"/> do not denote a valid range in the <paramref name="list"/>.
+        /// <br/>-or-
+        /// The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
+        /// <exception cref="TaskCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/>
+        /// in <paramref name="asyncConfig"/> was <see langword="true"/>. This exception is thrown when the result is awaited.</exception>
         public static Task<bool> SortAsync<T>(IList<T> list, int index, int count, IComparer<T>? comparer = null, TaskConfig? asyncConfig = null)
         {
             if (list == null!)
@@ -1339,6 +1565,24 @@ namespace KGySoft.Threading
             return AsyncHelper.DoOperationAsync(ctx => DoSort(ctx, list, index, count, comparer), asyncConfig);
         }
 
+        /// <summary>
+        /// Sorts the elements of the specified <see cref="ArraySection{T}"/> asynchronously, potentially using multiple threads.
+        /// </summary>
+        /// <typeparam name="T">The type of the elements in the <see cref="ArraySection{T}"/>.</typeparam>
+        /// <param name="array">The <see cref="ArraySection{T}"/> instance to sort.</param>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use a default comparer. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <param name="asyncConfig">An optional configuration to adjust parallelization or cancellation. Reporting progress is not supported in sorting methods. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <returns>A task that represents the asynchronous operation. Its result is <see langword="true"/>, if the operation completed successfully,
+        /// or <see langword="false"/>, if the operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in <paramref name="asyncConfig"/> parameter was <see langword="false"/>.</returns>
+        /// <remarks>
+        /// <para>This method is not a blocking call even if the <see cref="AsyncConfigBase.MaxDegreeOfParallelism"/> property of the <paramref name="asyncConfig"/> parameter is 1.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentException">The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
+        /// <exception cref="TaskCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/>
+        /// in <paramref name="asyncConfig"/> was <see langword="true"/>. This exception is thrown when the result is awaited.</exception>
         public static Task<bool> SortAsync<T>(ArraySection<T> array, IComparer<T>? comparer = null, TaskConfig? asyncConfig = null)
         {
             if (array.Length < 2)
@@ -1346,6 +1590,25 @@ namespace KGySoft.Threading
             return AsyncHelper.DoOperationAsync(ctx => DoSort(ctx, array, comparer), asyncConfig);
         }
 
+        /// <summary>
+        /// Sorts the elements of the specified <see cref="CastArray{TFrom,TTo}"/> asynchronously, potentially using multiple threads.
+        /// </summary>
+        /// <typeparam name="TFrom">The actual element type of the underlying array.</typeparam>
+        /// <typeparam name="TTo">The reinterpreted element type of the <see cref="CastArray{TFrom,TTo}"/> instance.</typeparam>
+        /// <param name="array">The <see cref="CastArray{TFrom,TTo}"/> instance to sort.</param>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use a default comparer. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <param name="asyncConfig">An optional configuration to adjust parallelization or cancellation. Reporting progress is not supported in sorting methods. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <returns>A task that represents the asynchronous operation. Its result is <see langword="true"/>, if the operation completed successfully,
+        /// or <see langword="false"/>, if the operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in <paramref name="asyncConfig"/> parameter was <see langword="false"/>.</returns>
+        /// <remarks>
+        /// <para>This method is not a blocking call even if the <see cref="AsyncConfigBase.MaxDegreeOfParallelism"/> property of the <paramref name="asyncConfig"/> parameter is 1.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentException">The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
+        /// <exception cref="TaskCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/>
+        /// in <paramref name="asyncConfig"/> was <see langword="true"/>. This exception is thrown when the result is awaited.</exception>
         public static Task<bool> SortAsync<TFrom, TTo>(CastArray<TFrom, TTo> array, IComparer<TTo>? comparer = null, TaskConfig? asyncConfig = null)
             where TFrom : unmanaged
             where TTo : unmanaged
@@ -1355,6 +1618,33 @@ namespace KGySoft.Threading
             return AsyncHelper.DoOperationAsync(ctx => DoSort(ctx, array, comparer), asyncConfig);
         }
 
+        /// <summary>
+        /// Sorts the elements in a pair of <see cref="IList{T}"/> instances asynchronously (one contains the keys, the other contains the corresponding values), potentially using multiple threads.
+        /// </summary>
+        /// <typeparam name="TKey">The type of the elements in the <paramref name="keys"/> list.</typeparam>
+        /// <typeparam name="TValue">The type of the elements in the <paramref name="values"/> list.</typeparam>
+        /// <param name="keys">The <see cref="IList{T}"/> that contains the keys to sort.</param>
+        /// <param name="values">The <see cref="IList{T}"/> that contains the values that correspond to the keys in the <paramref name="keys"/> list, or <see langword="null"/> to sort only the keys.</param>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use a default comparer. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <param name="asyncConfig">An optional configuration to adjust parallelization or cancellation. Reporting progress is not supported in sorting methods. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <returns>A task that represents the asynchronous operation. Its result is <see langword="true"/>, if the operation completed successfully,
+        /// or <see langword="false"/>, if the operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in <paramref name="asyncConfig"/> parameter was <see langword="false"/>.</returns>
+        /// <remarks>
+        /// <para>In general, accessing <see cref="IList{T}"/> members is like calling virtual methods. For the best performance there is a special handling for <see cref="Array"/>,
+        /// <see cref="List{T}"/>, <see cref="ArraySegment{T}"/>, <see cref="ArraySection{T}"/> and <see cref="CircularList{T}"/> instances,
+        /// if both <paramref name="keys"/> and <paramref name="values"/> are of the same type (not considering the generic type arguments).
+        /// For <see cref="ArraySection{T}"/> and <see cref="CastArray{TFrom,TTo}"/> instances it is recommended to use the dedicated overloads for better performance.</para>
+        /// <para>This method is not a blocking call even if the <see cref="AsyncConfigBase.MaxDegreeOfParallelism"/> property of the <paramref name="asyncConfig"/> parameter is 1.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="keys"/> or <paramref name="values"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="values"/> is not <see langword="null"/> and <paramref name="values"/> has fewer elements than <paramref name="keys"/>.
+        /// <br/>-or-
+        /// The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
+        /// <exception cref="TaskCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/>
+        /// in <paramref name="asyncConfig"/> was <see langword="true"/>. This exception is thrown when the result is awaited.</exception>
         public static Task<bool> SortAsync<TKey, TValue>(IList<TKey> keys, IList<TValue>? values, IComparer<TKey>? comparer = null, TaskConfig? asyncConfig = null)
         {
             if (keys == null!)
@@ -1362,7 +1652,37 @@ namespace KGySoft.Threading
             return SortAsync(keys, values, 0, keys.Count, comparer, asyncConfig);
         }
 
-        // TODO: Remarks: special handling for keys and values works only if they are both arrays or their generic type definitions are the same
+        /// <summary>
+        /// Sorts the elements in a pair of <see cref="IList{T}"/> instances asynchronously (one contains the keys, the other contains the corresponding values), potentially using multiple threads.
+        /// The range of elements to sort is specified by a starting index and a length.
+        /// </summary>
+        /// <typeparam name="TKey">The type of the elements in the <paramref name="keys"/> list.</typeparam>
+        /// <typeparam name="TValue">The type of the elements in the <paramref name="values"/> list.</typeparam>
+        /// <param name="keys">The <see cref="IList{T}"/> that contains the keys to sort.</param>
+        /// <param name="values">The <see cref="IList{T}"/> that contains the values that correspond to the keys in the <paramref name="keys"/> list, or <see langword="null"/> to sort only the keys.</param>
+        /// <param name="index">The zero-based starting index of the range to sort.</param>
+        /// <param name="count">The length of the range to sort.</param>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use a default comparer. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <param name="asyncConfig">An optional configuration to adjust parallelization or cancellation. Reporting progress is not supported in sorting methods. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <returns>A task that represents the asynchronous operation. Its result is <see langword="true"/>, if the operation completed successfully,
+        /// or <see langword="false"/>, if the operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in <paramref name="asyncConfig"/> parameter was <see langword="false"/>.</returns>
+        /// <remarks>
+        /// <para>In general, accessing <see cref="IList{T}"/> members is like calling virtual methods. For the best performance there is a special handling for <see cref="Array"/>,
+        /// <see cref="List{T}"/>, <see cref="ArraySegment{T}"/>, <see cref="ArraySection{T}"/> and <see cref="CircularList{T}"/> instances,
+        /// if both <paramref name="keys"/> and <paramref name="values"/> are of the same type (not considering the generic type arguments).
+        /// For <see cref="ArraySection{T}"/> and <see cref="CastArray{TFrom,TTo}"/> instances it is recommended to use the dedicated overloads for better performance.</para>
+        /// <para>This method is not a blocking call even if the <see cref="AsyncConfigBase.MaxDegreeOfParallelism"/> property of the <paramref name="asyncConfig"/> parameter is 1.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="keys"/> or <paramref name="values"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> or <paramref name="count"/> is less than 0.</exception>
+        /// <exception cref="ArgumentException">The <paramref name="index"/> and <paramref name="count"/> do not denote a valid range in the <paramref name="keys"/> or <paramref name="values"/> list.
+        /// <br/>-or-
+        /// The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
+        /// <exception cref="TaskCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/>
+        /// in <paramref name="asyncConfig"/> was <see langword="true"/>. This exception is thrown when the result is awaited.</exception>
         public static Task<bool> SortAsync<TKey, TValue>(IList<TKey> keys, IList<TValue>? values, int index, int count, IComparer<TKey>? comparer = null, TaskConfig? asyncConfig = null)
         {
             if (keys == null!)
@@ -1382,6 +1702,29 @@ namespace KGySoft.Threading
             return AsyncHelper.DoOperationAsync(ctx => DoSort(ctx, keys, values, index, count, comparer), asyncConfig);
         }
 
+        /// <summary>
+        /// Sorts the elements in a pair of <see cref="ArraySection{T}"/> instances asynchronously (one contains the keys, the other contains the corresponding values), potentially using multiple threads.
+        /// </summary>
+        /// <typeparam name="TKey">The type of the elements in the <paramref name="keys"/> collection.</typeparam>
+        /// <typeparam name="TValue">The type of the elements in the <paramref name="values"/> collection.</typeparam>
+        /// <param name="keys">The <see cref="ArraySection{T}"/> that contains the keys to sort.</param>
+        /// <param name="values">The <see cref="ArraySection{T}"/> that contains the values that correspond to the keys in the <paramref name="keys"/> collection.
+        /// If the <see cref="ArraySection{T}.IsNull"/> property of <paramref name="values"/> is <see langword="true"/>, then only the keys are sorted.</param>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use a default comparer. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <param name="asyncConfig">An optional configuration to adjust parallelization or cancellation. Reporting progress is not supported in sorting methods. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <returns>A task that represents the asynchronous operation. Its result is <see langword="true"/>, if the operation completed successfully,
+        /// or <see langword="false"/>, if the operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in <paramref name="asyncConfig"/> parameter was <see langword="false"/>.</returns>
+        /// <remarks>
+        /// <para>This method is not a blocking call even if the <see cref="AsyncConfigBase.MaxDegreeOfParallelism"/> property of the <paramref name="asyncConfig"/> parameter is 1.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentException">The <see cref="ArraySection{T}.IsNull"/> property of <paramref name="values"/> is <see langword="false"/> and <paramref name="values"/> has fewer elements than <paramref name="keys"/>.
+        /// <br/>-or-
+        /// The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
+        /// <exception cref="TaskCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/>
+        /// in <paramref name="asyncConfig"/> was <see langword="true"/>. This exception is thrown when the result is awaited.</exception>
         public static Task<bool> SortAsync<TKey, TValue>(ArraySection<TKey> keys, ArraySection<TValue> values, IComparer<TKey>? comparer = null, TaskConfig? asyncConfig = null)
         {
             if (values.IsNull)
@@ -1396,6 +1739,31 @@ namespace KGySoft.Threading
             return AsyncHelper.DoOperationAsync(ctx => DoSort(ctx, keys, values, comparer), asyncConfig);
         }
 
+        /// <summary>
+        /// Sorts the elements in a pair of <see cref="CastArray{TFrom,TTo}"/> instances asynchronously (one contains the keys, the other contains the corresponding values), potentially using multiple threads.
+        /// </summary>
+        /// <typeparam name="TKeyFrom">The actual element type of the underlying array in <paramref name="keys"/>.</typeparam>
+        /// <typeparam name="TKeyTo">The reinterpreted element type of the <see cref="CastArray{TFrom,TTo}"/> instance in <paramref name="keys"/>.</typeparam>
+        /// <typeparam name="TValueFrom">The actual element type of the underlying array in <paramref name="values"/>.</typeparam>
+        /// <typeparam name="TValueTo">The reinterpreted element type of the <see cref="CastArray{TFrom,TTo}"/> instance in <paramref name="values"/>.</typeparam>
+        /// <param name="keys">The <see cref="CastArray{TFrom,TTo}"/> that contains the keys to sort.</param>
+        /// <param name="values">The <see cref="CastArray{TFrom,TTo}"/> that contains the values that correspond to the keys in the <paramref name="keys"/> collection.
+        /// If the <see cref="CastArray{TFrom,TTo}.IsNull"/> property of <paramref name="values"/> is <see langword="true"/>, then only the keys are sorted.</param>
+        /// <param name="comparer">The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <see langword="null"/> to use a default comparer. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <param name="asyncConfig">An optional configuration to adjust parallelization or cancellation. Reporting progress is not supported in sorting methods. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <returns>A task that represents the asynchronous operation. Its result is <see langword="true"/>, if the operation completed successfully,
+        /// or <see langword="false"/>, if the operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in <paramref name="asyncConfig"/> parameter was <see langword="false"/>.</returns>
+        /// <remarks>
+        /// <para>This method is not a blocking call even if the <see cref="AsyncConfigBase.MaxDegreeOfParallelism"/> property of the <paramref name="asyncConfig"/> parameter is 1.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentException">The <see cref="CastArray{TFrom,TTo}.IsNull"/> property of <paramref name="values"/> is <see langword="false"/> and <paramref name="values"/> has fewer elements than <paramref name="keys"/>.
+        /// <br/>-or-
+        /// The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
+        /// <exception cref="TaskCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/>
+        /// in <paramref name="asyncConfig"/> was <see langword="true"/>. This exception is thrown when the result is awaited.</exception>
         public static Task<bool> SortAsync<TKeyFrom, TKeyTo, TValueFrom, TValueTo>(CastArray<TKeyFrom, TKeyTo> keys, CastArray<TValueFrom, TValueTo> values, IComparer<TKeyTo>? comparer = null, TaskConfig? asyncConfig = null)
             where TKeyFrom : unmanaged
             where TKeyTo : unmanaged
@@ -1650,7 +2018,66 @@ namespace KGySoft.Threading
         {
             Debug.Assert(list.Count > 1);
 
-            // TODO: insert performance test result for reference
+            // For reference, the result of the performance tests for the IList special handling cases (sorting 10_000_000 items):
+            // =[SortPerformanceTest<Int32> (.NET Core 9.0.0) Results]================================================
+            // Test Time: 5 000 ms
+            // Warming up: Yes
+            // Test cases: 10
+            // Repeats: 3
+            // Calling GC.Collect: Yes
+            // Forced CPU Affinity: No
+            // Cases are sorted by fulfilled iterations (the most first)
+            // --------------------------------------------------
+            // 1. ParallelHelper.Sort(CastArray<byte, Int32>) (8 threads): 33 iterations in 15 909,28 ms. Adjusted for 5 000 ms: 10,37
+            //   #1  11 iterations in 5 312,41 ms. Adjusted: 10,35
+            //   #2  11 iterations in 5 384,39 ms. Adjusted: 10,21	 <---- Worst
+            //   #3  11 iterations in 5 212,48 ms. Adjusted: 10,55	 <---- Best
+            //   Worst-Best difference: 0,34 (3,30%)
+            // 2. ParallelHelper.Sort(CastArray<Int32, Int32>) (8 threads): 33 iterations in 15 921,45 ms. Adjusted for 5 000 ms: 10,36 (-0,01 / 99,91%)
+            //   #1  11 iterations in 5 324,17 ms. Adjusted: 10,33
+            //   #2  11 iterations in 5 334,38 ms. Adjusted: 10,31	 <---- Worst
+            //   #3  11 iterations in 5 262,91 ms. Adjusted: 10,45	 <---- Best
+            //   Worst-Best difference: 0,14 (1,36%)
+            // 3. ParallelHelper.Sort(ArraySection) (8 threads): 30 iterations in 15 523,24 ms. Adjusted for 5 000 ms: 9,66 (-0,71 / 93,15%)
+            //   #1  10 iterations in 5 200,39 ms. Adjusted: 9,61	 <---- Worst
+            //   #2  10 iterations in 5 158,40 ms. Adjusted: 9,69	 <---- Best
+            //   #3  10 iterations in 5 164,45 ms. Adjusted: 9,68
+            //   Worst-Best difference: 0,08 (0,81%)
+            // 4. ParallelHelper.Sort(T[]) (8 threads): 30 iterations in 15 709,10 ms. Adjusted for 5 000 ms: 9,55 (-0,82 / 92,07%)
+            //   #1  10 iterations in 5 182,84 ms. Adjusted: 9,65
+            //   #2  10 iterations in 5 351,91 ms. Adjusted: 9,34	 <---- Worst
+            //   #3  10 iterations in 5 174,34 ms. Adjusted: 9,66	 <---- Best
+            //   Worst-Best difference: 0,32 (3,43%)
+            // 5. ParallelHelper.Sort(List<T>) (8 threads): 21 iterations in 15 367,65 ms. Adjusted for 5 000 ms: 6,83 (-3,54 / 65,87%)
+            //   #1  7 iterations in 5 131,20 ms. Adjusted: 6,82
+            //   #2  7 iterations in 5 102,99 ms. Adjusted: 6,86	 <---- Best
+            //   #3  7 iterations in 5 133,46 ms. Adjusted: 6,82	 <---- Worst
+            //   Worst-Best difference: 0,04 (0,60%)
+            // 6. ParallelHelper.Sort(T[]) (2 threads): 21 iterations in 15 373,99 ms. Adjusted for 5 000 ms: 6,83 (-3,54 / 65,84%)
+            //   #1  7 iterations in 5 104,71 ms. Adjusted: 6,86	 <---- Best
+            //   #2  7 iterations in 5 126,63 ms. Adjusted: 6,83
+            //   #3  7 iterations in 5 142,66 ms. Adjusted: 6,81	 <---- Worst
+            //   Worst-Best difference: 0,05 (0,74%)
+            // 7. ParallelHelper.Sort(ArraySection) (2 threads): 21 iterations in 15 414,39 ms. Adjusted for 5 000 ms: 6,81 (-3,56 / 65,67%)
+            //   #1  7 iterations in 5 116,86 ms. Adjusted: 6,84	 <---- Best
+            //   #2  7 iterations in 5 120,20 ms. Adjusted: 6,84
+            //   #3  7 iterations in 5 177,33 ms. Adjusted: 6,76	 <---- Worst
+            //   Worst-Best difference: 0,08 (1,18%)
+            // 8. ParallelHelper.Sort(CastArray as IList) (8 threads): 21 iterations in 16 227,64 ms. Adjusted for 5 000 ms: 6,47 (-3,90 / 62,38%)
+            //   #1  7 iterations in 5 425,92 ms. Adjusted: 6,45	 <---- Worst
+            //   #2  7 iterations in 5 415,67 ms. Adjusted: 6,46
+            //   #3  7 iterations in 5 386,05 ms. Adjusted: 6,50	 <---- Best
+            //   Worst-Best difference: 0,05 (0,74%)
+            // 9. Array.Sort: 20 iterations in 16 657,91 ms. Adjusted for 5 000 ms: 6,00 (-4,37 / 57,83%)
+            //   #1  7 iterations in 5 809,20 ms. Adjusted: 6,02
+            //   #2  6 iterations in 5 102,40 ms. Adjusted: 5,88	 <---- Worst
+            //   #3  7 iterations in 5 746,31 ms. Adjusted: 6,09	 <---- Best
+            //   Worst-Best difference: 0,21 (3,59%)
+            // 10. ParallelHelper.Sort(T[]) (single thread): 16 iterations in 15 245,16 ms. Adjusted for 5 000 ms: 5,25 (-5,12 / 50,62%)
+            //   #1  4 iterations in 5 106,41 ms. Adjusted: 3,92	 <---- Worst
+            //   #2  6 iterations in 5 077,82 ms. Adjusted: 5,91
+            //   #3  6 iterations in 5 060,93 ms. Adjusted: 5,93	 <---- Best
+            //   Worst-Best difference: 2,01 (51,35%)
             bool isSingleThreadNotCancellable = !context.CanBeCanceled && (IsSingleCoreCpu || context.MaxDegreeOfParallelism == 1);
 
             switch (list)

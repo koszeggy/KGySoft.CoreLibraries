@@ -34,6 +34,8 @@ namespace KGySoft.Threading
     [SuppressMessage("ReSharper", "SwapViaDeconstruction", Justification = "Performance. The deconstruction would create additional locals and references.")]
     [SuppressMessage("ReSharper", "AccessToDisposedClosure", Justification = "Dispose happens after leaving the scope")]
     [SuppressMessage("ReSharper", "MemberHidesStaticFromOuterClass", Justification = "The the outer static Sort method is never meant to be called from the private interface implementations.")]
+    [SuppressMessage("Design", "CA1031:Do not catch general exception types",
+        Justification = "False alarm, exceptions are re-thrown but the analyzer fails to consider the both the [DoesNotReturn] and [ContractAnnotation] attributes")]
     public static partial class ParallelHelper
     {
         #region Nested Types

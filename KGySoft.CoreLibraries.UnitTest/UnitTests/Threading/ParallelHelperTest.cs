@@ -214,17 +214,17 @@ namespace KGySoft.CoreLibraries.UnitTests.Threading
 
             // ArraySection as IList<int>
             ArraySection<int> section = Enumerable.Range(0, 1000).Select(_ => random.Next()).ToArray().AsSection();
-            ParallelHelper.Sort(null, (IList<int>)section);
+            ParallelHelper.Sort((IList<int>)section);
             Assert.IsTrue(section.SequenceEqual(section.OrderBy(i => i)));
 
             // ArraySection as ArraySection
             section = Enumerable.Range(0, 1000).Select(_ => random.Next()).ToArray().AsSection();
-            ParallelHelper.Sort(null, section);
+            ParallelHelper.Sort(section);
             Assert.IsTrue(section.SequenceEqual(section.OrderBy(i => i)));
 
             // CastArray
             var castArray = Enumerable.Range(0, 1000).Select(_ => random.Next()).ToArray().Cast<int, uint>();
-            ParallelHelper.Sort(null, castArray);
+            ParallelHelper.Sort(castArray);
             Assert.IsTrue(castArray.SequenceEqual(castArray.OrderBy(i => i)));
         }
 
@@ -234,28 +234,28 @@ namespace KGySoft.CoreLibraries.UnitTests.Threading
             var random = new FastRandom();
             int[] keys = Enumerable.Range(0, 1000).Select(_ => random.Next()).ToArray();
             float[] values = keys.Select(i => (float)i).Append(Single.PositiveInfinity).ToArray();
-            ParallelHelper.Sort(null, keys, values);
+            ParallelHelper.Sort(keys, values);
             Assert.IsTrue(keys.SequenceEqual(keys.OrderBy(i => i)));
             Assert.IsTrue(values.SequenceEqual(values.OrderBy(i => i)));
 
             // ArraySection as IList
             ArraySection<int> sectionKeys = Enumerable.Range(0, 1000).Select(_ => random.Next()).ToArray().AsSection();
             ArraySection<float> sectionValues = sectionKeys.Select(i => (float)i).Append(Single.PositiveInfinity).ToArray().AsSection();
-            ParallelHelper.Sort(null, (IList<int>)sectionKeys, sectionValues);
+            ParallelHelper.Sort((IList<int>)sectionKeys, sectionValues);
             Assert.IsTrue(sectionKeys.SequenceEqual(sectionKeys.OrderBy(i => i)));
             Assert.IsTrue(sectionValues.SequenceEqual(sectionValues.OrderBy(i => i)));
 
             // ArraySection as ArraySection
             sectionKeys = Enumerable.Range(0, 1000).Select(_ => random.Next()).ToArray().AsSection();
             sectionValues = sectionKeys.Select(i => (float)i).Append(Single.PositiveInfinity).ToArray().AsSection();
-            ParallelHelper.Sort(null, sectionKeys, sectionValues);
+            ParallelHelper.Sort(sectionKeys, sectionValues);
             Assert.IsTrue(sectionKeys.SequenceEqual(sectionKeys.OrderBy(i => i)));
             Assert.IsTrue(sectionValues.SequenceEqual(sectionValues.OrderBy(i => i)));
 
             // CastArray
             var castArrayKeys = Enumerable.Range(0, 1000).Select(_ => random.Next()).ToArray().Cast<int, uint>();
             var castArrayValues = castArrayKeys.Select(i => (long)i).Append(Int64.MaxValue).ToArray().Cast<long, ulong>();
-            ParallelHelper.Sort(null, castArrayKeys, castArrayValues);
+            ParallelHelper.Sort(castArrayKeys, castArrayValues);
             Assert.IsTrue(castArrayKeys.SequenceEqual(castArrayKeys.OrderBy(i => i)));
             Assert.IsTrue(castArrayValues.SequenceEqual(castArrayValues.OrderBy(i => i)));
         }
