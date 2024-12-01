@@ -926,37 +926,30 @@ namespace KGySoft.Collections
         }
 
         /// <summary>
-        /// Copies the items of this <see cref="CastArray{TFrom,TTo}"/> to a compatible <see cref="ArraySection{T}"/>, starting at a particular index.
+        /// Copies the items of this <see cref="CastArray{TFrom,TTo}"/> to a compatible <see cref="ArraySection{T}"/>.
         /// </summary>
         /// <param name="target">The <see cref="ArraySection{T}"/> that is the destination of the elements copied from this <see cref="CastArray{TFrom,TTo}"/>.</param>
-        /// <param name="targetIndex">The zero-based index in <paramref name="target"/> at which copying begins. This parameter is optional.
-        /// <br/>Default value: 0.</param>
-        public void CopyTo(ArraySection<TTo> target, int targetIndex = 0) => CopyTo(target.UnderlyingArray!, targetIndex + target.Offset);
+        public void CopyTo(ArraySection<TTo> target) => CopyTo(target.UnderlyingArray!, target.Offset);
 
         /// <summary>
-        /// Copies the items of this <see cref="CastArray{TFrom,TTo}"/> to a compatible instance, starting at a particular index.
+        /// Copies the items of this <see cref="CastArray{TFrom,TTo}"/> to a compatible instance.
         /// </summary>
         /// <param name="target">The <see cref="CastArray{TFrom,TTo}"/> that is the destination of the elements copied from this instance.</param>
-        /// <param name="targetIndex">The zero-based index in <paramref name="target"/> at which copying begins. This parameter is optional.
-        /// <br/>Default value: 0.</param>
         [SecuritySafeCritical]
-        public void CopyTo(CastArray<TFrom, TTo> target, int targetIndex = 0)
+        public void CopyTo(CastArray<TFrom, TTo> target)
         {
-            if (targetIndex < 0 || targetIndex > target.length)
-                Throw.ArgumentOutOfRangeException(Argument.targetIndex);
-
-            if (target.Length - targetIndex < length)
+            if (target.Length < length)
                 Throw.ArgumentException(Argument.target, Res.ICollectionCopyToDestArrayShort);
 
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
-            AsSpan.CopyTo(target.AsSpan.Slice(targetIndex));
+            AsSpan.CopyTo(target);
 #elif NETFRAMEWORK || NETSTANDARD2_0
             if (IsNullOrEmpty)
                 return;
 
             try
             {
-                DoCopyToUnsafe(ref target.GetElementReferenceInternal(targetIndex));
+                DoCopyToUnsafe(ref target.GetStartElementReferenceInternal());
             }
             catch (VerificationException e) when (EnvironmentHelper.IsPartiallyTrustedDomain)
             {
@@ -966,7 +959,7 @@ namespace KGySoft.Collections
             if (IsNullOrEmpty)
                 return;
 
-            DoCopyToUnsafe(ref target.GetElementReferenceInternal(targetIndex));
+            DoCopyToUnsafe(ref target.GetStartElementReferenceInternal());
 #endif
         }
 
@@ -1029,7 +1022,10 @@ namespace KGySoft.Collections
         #region Private Methods
 
 #if !(NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER)
+        private ref TTo GetStartElementReferenceInternal() => ref Unsafe.As<TFrom, TTo>(ref buffer.GetStartElementReferenceInternal());
+#endif
 
+#if !(NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER)
         [SecurityCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
         private unsafe void DoCopyToUnsafe(ref TTo target)

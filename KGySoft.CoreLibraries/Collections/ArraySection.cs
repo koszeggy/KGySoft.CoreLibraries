@@ -836,21 +836,17 @@ namespace KGySoft.Collections
         }
 
         /// <summary>
-        /// Copies the items of this <see cref="ArraySection{T}"/> to a compatible instance, starting at a particular index.
+        /// Copies the items of this <see cref="ArraySection{T}"/> to a compatible instance.
         /// </summary>
         /// <param name="target">The <see cref="ArraySection{T}"/> that is the destination of the elements copied from this instance.</param>
-        /// <param name="targetIndex">The zero-based index in <paramref name="target"/> at which copying begins.</param>
-        public readonly void CopyTo(ArraySection<T> target, int targetIndex = 0)
+        public readonly void CopyTo(ArraySection<T> target)
         {
             if (target.IsNull)
                 Throw.ArgumentNullException(Argument.target);
-            if (targetIndex < 0 || targetIndex > target.Length)
-                Throw.ArgumentOutOfRangeException(Argument.targetIndex);
-
             int len = Length;
-            if (target.length - targetIndex < len)
+            if (target.length < len)
                 Throw.ArgumentException(Argument.target, Res.ICollectionCopyToDestArrayShort);
-            array?.CopyElements(offset, target.array!, target.offset + targetIndex, len);
+            array?.CopyElements(offset, target.array!, target.offset, len);
         }
 
         /// <summary>
