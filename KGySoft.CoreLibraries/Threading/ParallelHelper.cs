@@ -16,23 +16,34 @@
 #region Usings
 
 using System;
-using System.Collections.Generic;
 
-#if NET35
-using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using System.Runtime.ExceptionServices;
-using System.Security;
-using System.Threading;
-#else
+#if !NET35
 using System.Collections.Concurrent;
+#endif
+using System.Collections.Generic;
 #if !NET6_0_OR_GREATER
 using System.Diagnostics;
+#endif
+#if NET35
+using System.Diagnostics.CodeAnalysis;
+#endif
+#if NETCOREAPP3_0_OR_GREATER
+using System.Numerics;
+#endif
+#if NET35
+using System.Runtime.ExceptionServices;
+#else
+using System.Runtime.InteropServices;
+#endif
+#if !NET6_0_OR_GREATER
 using System.Security;
 #endif
-using System.Runtime.InteropServices;
+#if NET35
+using System.Threading;
+#else
 using System.Threading.Tasks;
 #endif
+
 
 using KGySoft.Collections;
 #if !NET6_0_OR_GREATER
@@ -1783,7 +1794,7 @@ namespace KGySoft.Threading
         }
 
 #endif
-        #endregion
+#endregion
 
         #endregion
 
@@ -1832,7 +1843,7 @@ namespace KGySoft.Threading
             }
 
 #endif
-            #endregion
+#endregion
 
             Debug.Assert(toExclusive > fromInclusive);
             int count = toExclusive - fromInclusive;
@@ -2333,6 +2344,12 @@ namespace KGySoft.Threading
                 return Environment.ProcessorCount;
             }
         }
+#endif
+
+#if NETCOREAPP3_0_OR_GREATER
+        private static int Log2(int value) => BitOperations.Log2((uint)value);
+#else
+        private static int Log2(int value) => (int)Math.Ceiling(Math.Log(value, 2));
 #endif
 
         #endregion

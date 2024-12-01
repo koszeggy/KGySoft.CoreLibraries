@@ -260,6 +260,17 @@ namespace KGySoft.CoreLibraries.UnitTests.Threading
             Assert.IsTrue(castArrayValues.SequenceEqual(castArrayValues.OrderBy(i => i)));
         }
 
+        [Test]
+        public void AsyncSortTest()
+        {
+            var random = new FastRandom();
+            int[] items = Enumerable.Range(0, 10_000).Select(_ => random.Next()).ToArray();
+
+            var asyncResult = ParallelHelper.BeginSort(items, asyncConfig: new AsyncConfig { MaxDegreeOfParallelism = 0 });
+            Assert.IsTrue(ParallelHelper.EndSort(asyncResult));
+            Assert.IsTrue(items.SequenceEqual(items.OrderBy(i => i)));
+        }
+
         #endregion
     }
 }
