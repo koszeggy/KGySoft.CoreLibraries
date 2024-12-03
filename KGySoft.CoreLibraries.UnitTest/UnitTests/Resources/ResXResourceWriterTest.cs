@@ -42,7 +42,6 @@ using System.Windows.Forms;
 #endif
 
 using KGySoft.Collections;
-using KGySoft.Drawing;
 using KGySoft.ComponentModel;
 using KGySoft.Reflection;
 using KGySoft.Resources;
@@ -681,9 +680,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             typeof(Version).RegisterTypeConverter<VersionConverter>();
 #endif
             typeof(Encoding).RegisterTypeConverter<EncodingConverter>();
-#if !(NETCOREAPP2_0 || NETCOREAPP2_1)
-            typeof(Image).RegisterTypeConverter<AdvancedImageConverter>();
-#endif
 #if NETCOREAPP
             Assembly.Load("System.Drawing"); // preloading assembly for safe mode
 #endif
@@ -709,15 +705,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 // partly working built-in
 #if NETFRAMEWORK
                 Cursors.Arrow, // a default cursor: by string
-#endif
-
-#if !(NETCOREAPP2_0 || NETCOREAPP2_1) && WINDOWS
-                Icons.Information, // multi-resolution icon
-                Icons.Information.ToMultiResBitmap(), // multi-resolution bitmap-icon (built-in saves one page only)  
-#if WINDOWS
-                CreateTestTiff(), // multipage TIFF (built-in saves first page only)
-                CreateTestMetafile(), // EMF image (built-in saves it as a PNG)  
-#endif
 #endif
                 // pure custom
                 new Version(1, 2, 3, 4),

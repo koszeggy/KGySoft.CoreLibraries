@@ -44,10 +44,10 @@
 
   <!-- Common NuGet references -->
   <ItemGroup>
-    <PackageReference Include="KGySoft.Drawing" Version="8.0.0" />
+    <!--<PackageReference Include="KGySoft.Drawing" Version="8.0.0" />-->
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
-    <PackageReference Include="NUnit" Version="3.13.1" />
-    <PackageReference Include="NUnit3TestAdapter" Version="3.17.0">
+    <PackageReference Include="NUnit" Version="3.14" />
+    <PackageReference Include="NUnit3TestAdapter" Version="4.6.0">
       <NoWarn>NU1701</NoWarn>
     </PackageReference>
   </ItemGroup>
@@ -62,19 +62,28 @@
   <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.0' OR '$(TargetFramework)' == 'netcoreapp2.1'">
     <!--Needed for CodePagesEncodingProvider. Must not be upgraded because newer versions do not support .NET Core 2.x -->
     <PackageReference Include="System.Text.Encoding.CodePages" Version="5.0.0" />
+    <PackageReference Condition="'$(IsWindows)'=='true'" Include="System.Drawing.Common" Version="9.0.0"/>
   </ItemGroup>
 
   <!-- .NET Core 3.0 only references -->
   <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.0'">
     <!--For non-string resources. Must not be upgraded because newer versions do not support .NET Core 3.0 -->
     <PackageReference Include="System.Resources.Extensions" Version="5.0.0" />
+    <PackageReference Condition="'$(IsWindows)'=='true'" Include="System.Drawing.Common" Version="9.0.0"/>
   </ItemGroup>
 
   <!-- .NET only references -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net5.0' OR '$(TargetFramework)' == 'net6.0' OR '$(TargetFramework)' == 'net7.0' OR '$(TargetFramework)' == 'net8.0' OR '$(TargetFramework)' == 'net9.0'">
 	  <!--For non-string resources-->
     <PackageReference Include="System.Resources.Extensions" Version="6.0.0" />
+    <PackageReference Condition="'$(IsWindows)'=='true'" Include="System.Drawing.Common" Version="9.0.0"/>
   </ItemGroup>
+
+  <!-- Windows only references -->
+  <PropertyGroup Condition="'$(IsWindows)'=='true'">
+    <DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
+  </PropertyGroup>
+
 
   <!-- Project references -->
   <ItemGroup>

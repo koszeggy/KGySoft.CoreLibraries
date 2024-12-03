@@ -36,8 +36,8 @@
   <!-- Common NuGet references -->
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
-    <PackageReference Include="NUnit" Version="3.13.1" />
-    <PackageReference Include="NUnit3TestAdapter" Version="3.17.0">
+    <PackageReference Include="NUnit" Version="3.14" />
+    <PackageReference Include="NUnit3TestAdapter" Version="4.6.0">
       <NoWarn>NU1701</NoWarn>
     </PackageReference>
   </ItemGroup>

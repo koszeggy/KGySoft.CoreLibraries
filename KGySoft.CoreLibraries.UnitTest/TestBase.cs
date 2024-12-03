@@ -50,7 +50,6 @@ using System.Windows.Forms;
 #endif
 
 using KGySoft.Collections;
-using KGySoft.Drawing;
 using KGySoft.Reflection;
 using KGySoft.Resources;
 using KGySoft.Serialization.Binary;
@@ -250,43 +249,6 @@ namespace KGySoft.CoreLibraries
         } 
 #endif
 
-#if !NETCOREAPP2_0 && WINDOWS
-        protected static Metafile CreateTestMetafile()
-        {
-            Graphics refGraph = Graphics.FromHwnd(IntPtr.Zero);
-            IntPtr hdc = refGraph.GetHdc();
-            Metafile result = new Metafile(hdc, EmfType.EmfOnly, "Test");
-
-            //Draw some silly drawing
-            using (var g = Graphics.FromImage(result))
-            {
-                var r = new Rectangle(0, 0, 100, 100);
-                var reye1 = new Rectangle(20, 20, 20, 30);
-                var reye2 = new Rectangle(60, 20, 20, 30);
-
-                g.FillEllipse(Brushes.Yellow, r);
-                g.FillEllipse(Brushes.White, reye1);
-                g.FillEllipse(Brushes.White, reye2);
-                g.DrawEllipse(Pens.Black, reye1);
-                g.DrawEllipse(Pens.Black, reye2);
-                g.DrawBezier(Pens.Red, new Point(10, 50), new Point(10, 100), new Point(90, 100), new Point(90, 50));
-            }
-
-            refGraph.ReleaseHdc(hdc);
-            refGraph.Dispose();
-            return result;
-        }
-
-        protected static Bitmap CreateTestTiff()
-        {
-            var msTiff = new MemoryStream();
-            Icons.Information.ExtractBitmaps().SaveAsMultipageTiff(msTiff);
-            msTiff.Position = 0L;
-            var tiffImage = new Bitmap(msTiff);
-            return tiffImage;
-        } 
-#endif
-
         protected static string Combine(string p1, string p2, string p3) =>
 #if NET35
             Path.Combine(p1, Path.Combine(p2, p3));
@@ -422,11 +384,6 @@ namespace KGySoft.CoreLibraries
 
                 if (typeRef == typeof(Bitmap))
                     return CheckImages((Bitmap)reference, (Bitmap)check, errors);
-
-                if (typeRef == typeof(Metafile))
-                    return CheckImages(((Metafile)reference).ToBitmap(((Metafile)reference).Size), ((Metafile)check).ToBitmap(((Metafile)check).Size), errors);
-                if (typeRef == typeof(Icon))
-                    return CheckImages(((Icon)reference).ToAlphaBitmap(), ((Icon)check).ToAlphaBitmap(), errors);
 
 #if NETFRAMEWORK
                 if (typeRef == typeof(ImageListStreamer))
