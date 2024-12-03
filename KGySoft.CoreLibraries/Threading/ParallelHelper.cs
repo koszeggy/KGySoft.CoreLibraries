@@ -32,7 +32,8 @@ using System.Numerics;
 #endif
 #if NET35
 using System.Runtime.ExceptionServices;
-#else
+#endif
+#if NET5_0_OR_GREATER
 using System.Runtime.InteropServices;
 #endif
 #if !NET6_0_OR_GREATER
@@ -44,11 +45,8 @@ using System.Threading;
 using System.Threading.Tasks;
 #endif
 
-
 using KGySoft.Collections;
-#if !NET6_0_OR_GREATER
 using KGySoft.CoreLibraries;
-#endif
 
 #endregion
 
@@ -2170,8 +2168,8 @@ namespace KGySoft.Threading
 #if NET5_0_OR_GREATER
             if (!context.CanBeCanceled && (IsSingleCoreCpu || context.MaxDegreeOfParallelism == 1))
                 array.AsSpan.Sort(comparer);
-#endif
             else
+#endif
             {
                 SortHelper<TTo>.Instance.Sort(context, array, comparer);
             }
@@ -2198,7 +2196,7 @@ namespace KGySoft.Threading
                     // the underlying array, and CollectionMarshal.AsSpan cannot be used for multithreaded sorting because spans cannot be passed to other threads.
 #if NET5_0_OR_GREATER
                     if (isSingleThreadNotCancellable || context.MaxDegreeOfParallelism is >= 1 and < 4)
-                        CollectionsMarshal.AsSpan(keysList.Slice(startIndex, count)).Sort(CollectionsMarshal.AsSpan(valuesList).Slice(startIndex, count), comparer);
+                        CollectionsMarshal.AsSpan(keysList).Slice(startIndex, count).Sort(CollectionsMarshal.AsSpan(valuesList).Slice(startIndex, count), comparer);
                     else
 #endif
                     {
@@ -2228,7 +2226,7 @@ namespace KGySoft.Threading
                         Array.Sort(keysSection.Array!, valuesSection.Array, startIndex + keysSection.Offset, count, comparer);
 #endif
                     else
-                        SortHelper<TKey, TValue>.Instance.Sort(context, keysSection, valuesSection.Slice(startIndex, count), comparer);
+                        SortHelper<TKey, TValue>.Instance.Sort(context, keysSection.AsSection(), valuesSection.AsSection().Slice(startIndex, count), comparer);
 
                     break;
 
@@ -2285,7 +2283,7 @@ namespace KGySoft.Threading
             where TValueTo : unmanaged
         {
             Debug.Assert(keys.Length > 1 && values.Length >= keys.Length);
-#if !NET5_0_OR_GREATER
+#if NET5_0_OR_GREATER
             if (!context.CanBeCanceled && (IsSingleCoreCpu || context.MaxDegreeOfParallelism == 1))
                 keys.AsSpan.Sort(values.AsSpan, comparer);
             else

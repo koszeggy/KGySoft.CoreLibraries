@@ -1022,7 +1022,11 @@ namespace KGySoft.Collections
         #region Private Methods
 
 #if !(NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER)
-        private ref TTo GetStartElementReferenceInternal() => ref Unsafe.As<TFrom, TTo>(ref buffer.GetStartElementReferenceInternal());
+        private unsafe ref TTo GetStartElementReferenceInternal()
+        {
+            fixed (TFrom* pBuf = &buffer.GetStartElementReferenceInternal())
+                return ref *((TTo*)pBuf);
+        }
 #endif
 
 #if !(NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER)
