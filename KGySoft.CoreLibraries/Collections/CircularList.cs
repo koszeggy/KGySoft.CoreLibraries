@@ -1999,7 +1999,9 @@ namespace KGySoft.Collections
             if (comparison == null!)
                 Throw.ArgumentNullException(Argument.comparison);
 
-            if (size > 0)
+            if (Capacity == Count)
+                Array.Sort(items, comparison);
+            else
                 Sort(0, size, new ComparisonWrapper(comparison));
         }
 
@@ -2036,8 +2038,8 @@ namespace KGySoft.Collections
                 Throw.ArgumentException(Res.IListInvalidOffsLen);
 
             comparer ??= ComparerHelper<T>.Comparer;
-            ArrangeForSorting(index, count, out int start);
-            Array.Sort(items, start, count, comparer);
+            ArrangeForSorting(index, count, out int sortStart);
+            Array.Sort(items, sortStart, count, comparer);
         }
 
         /// <summary>
@@ -2131,6 +2133,27 @@ namespace KGySoft.Collections
 
             return result;
         }
+
+        /// <summary>
+        /// Gets a new <see cref="CircularList{T}"/> instance, which represents a subsection of the current instance with the specified start <paramref name="index"/>.
+        /// </summary>
+        /// <param name="index">The zero-based index at which the range starts.</param>
+        /// <returns>A shallow copy of a range of elements in the source <see cref="CircularList{T}"/>.</returns>
+        /// <remarks>
+        /// </remarks>
+        public CircularList<T> Slice(int index) => Slice(index, size - index);
+
+        /// <summary>
+        /// Gets a new <see cref="CircularList{T}"/> instance, which represents a subsection of the current instance with the specified start <paramref name="index"/> and <paramref name="count"/>.
+        /// </summary>
+        /// <param name="index">The zero-based index at which the range starts.</param>
+        /// <param name="count">The number of elements in the range.</param>
+        /// <returns>A shallow copy of a range of elements in the source <see cref="CircularList{T}"/>.</returns>
+        /// <remarks>
+        /// <para>This method provides the same result as the <see cref="GetRange">GetRange</see> method.
+        /// It exists for compatibility with <see cref="List{T}"/> in .NET 8 and above.</para>
+        /// </remarks>
+        public CircularList<T> Slice(int index, int count) => GetRange(index, count);
 
         /// <summary>
         /// Determines whether every element in the <see cref="CircularList{T}"/> matches the conditions defined by the specified predicate.
