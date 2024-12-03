@@ -774,18 +774,7 @@ namespace KGySoft.Collections
         {
             if (IsNullOrEmpty)
                 Throw.InvalidOperationException(Res.CollectionEmpty);
-
-#if NETCOREAPP3_0_OR_GREATER
-            return ref Unsafe.As<TFrom, TTo>(ref buffer.GetStartElementReferenceInternal());
-#else
-            // There is no point in putting the try...catch (VerificationException) here. When it's thrown, it's already for this method as it has a ref return.
-            // Besides, this method is to use this instance in a fixed statement, which cannot be used in such a partially trusted domain anyway.
-            unsafe
-            {
-                fixed (TFrom* pBuf = &buffer.GetStartElementReferenceInternal())
-                    return ref *((TTo*)pBuf);
-            }
-#endif
+            return ref GetStartElementReferenceInternal();
         }
 
         /// <summary>
@@ -821,8 +810,34 @@ namespace KGySoft.Collections
 
         /// <summary>
         /// Clears the items in this <see cref="CastArray{TFrom,TTo}"/> instance so all elements will have the default value of type <typeparamref name="TTo"/>.
+        /// To clear the items with a specific value use the <see cref="Fill">Fill</see> method instead.
         /// </summary>
         public void Clear() => buffer.Clear();
+
+        /// <summary>
+        /// Assigns the specified <paramref name="value"/> to all elements in this <see cref="CastArray{TFrom,TTo}"/> instance.
+        /// </summary>
+        /// <param name="value">The value to assign to all elements.</param>
+        public void Fill(TTo value)
+        {
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            AsSpan.Fill(value);
+#else
+            if (IsNullOrEmpty)
+                return;
+
+            unsafe
+            {
+                // Not using this.GetStartElementReferenceInternal here because it would mean two fixed statements
+                fixed (TFrom* ptr = &buffer.GetStartElementReferenceInternal())
+                {
+                    TTo* pTo = (TTo*)ptr;
+                    for (int i = 0; i < length; i++)
+                        pTo[i] = value;
+                }
+            }
+#endif
+        }
 
         /// <summary>
         /// Determines the index of a specific item in this <see cref="CastArray{TFrom,TTo}"/>.
@@ -845,7 +860,7 @@ namespace KGySoft.Collections
 #if NET5_0_OR_GREATER
             // Using the EqualityComparer<T>.Default intrinsic directly, which gets devirtualized
             // See https://github.com/dotnet/runtime/issues/10050
-            ref TTo current = ref Unsafe.As<TFrom, TTo>(ref buffer.GetStartElementReferenceInternal());
+            ref TTo current = ref GetStartElementReferenceInternal();
             for (int i = 0; i < length; i++)
             {
                 if (EqualityComparer<TTo>.Default.Equals(Unsafe.Add(ref current, i), item))
@@ -855,7 +870,7 @@ namespace KGySoft.Collections
             return -1;
 #elif NETCOREAPP3_0_OR_GREATER
             var comparer = ComparerHelper<TTo>.EqualityComparer;
-            ref TTo current = ref Unsafe.As<TFrom, TTo>(ref buffer.GetStartElementReferenceInternal());
+            ref TTo current = ref GetStartElementReferenceInternal();
             for (int i = 0; i < length; i++)
             {
                 if (comparer.Equals(Unsafe.Add(ref current, i), item))
@@ -1007,10 +1022,11 @@ namespace KGySoft.Collections
         internal ref TTo GetElementReferenceInternal(int index)
         {
 #if NETCOREAPP3_0_OR_GREATER
-            return ref Unsafe.Add(ref Unsafe.As<TFrom, TTo>(ref buffer.GetStartElementReferenceInternal()), index);
+            return ref Unsafe.Add(ref GetStartElementReferenceInternal(), index);
 #else
             unsafe
             {
+                // we could use this.GetStartElementReferenceInternal like in the > .NET Core 3.0 case but that would mean two fixed statements.
                 fixed (TFrom* pBuf = &buffer.GetStartElementReferenceInternal())
                     return ref ((TTo*)pBuf)[index];
             }
@@ -1021,13 +1037,20 @@ namespace KGySoft.Collections
 
         #region Private Methods
 
-#if !(NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER)
-        private unsafe ref TTo GetStartElementReferenceInternal()
+        private ref TTo GetStartElementReferenceInternal()
         {
-            fixed (TFrom* pBuf = &buffer.GetStartElementReferenceInternal())
-                return ref *((TTo*)pBuf);
-        }
+#if NETCOREAPP3_0_OR_GREATER
+            return ref Unsafe.As<TFrom, TTo>(ref buffer.GetStartElementReferenceInternal());
+#else
+            // There is no point in putting the try...catch (VerificationException) here. When it's thrown, it's already for this method as it has a ref return.
+            // Besides, this method is to use this instance in a fixed statement, which cannot be used in such a partially trusted domain anyway.
+            unsafe
+            {
+                fixed (TFrom* pBuf = &buffer.GetStartElementReferenceInternal())
+                    return ref *((TTo*)pBuf);
+            }
 #endif
+        }
 
 #if !(NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER)
         [SecurityCritical]
@@ -1046,6 +1069,8 @@ namespace KGySoft.Collections
         private unsafe int DoIndexOfUnsafe(TTo item)
         {
             var comparer = ComparerHelper<TTo>.EqualityComparer;
+
+            // Not using this.GetStartElementReferenceInternal here because it would mean two fixed statements
             fixed (TFrom* ptr = &buffer.GetStartElementReferenceInternal())
             {
                 TTo* pTo = (TTo*)ptr;
@@ -1060,8 +1085,7 @@ namespace KGySoft.Collections
         }
 #endif
 
-
-        #endregion
+#endregion
 
         #region Explicitly Implemented Interface Methods
 
@@ -1128,6 +1152,6 @@ namespace KGySoft.Collections
 
         #endregion
 
-        #endregion
+#endregion
     }
 }

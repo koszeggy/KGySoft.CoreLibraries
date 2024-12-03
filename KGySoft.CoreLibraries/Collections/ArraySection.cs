@@ -537,12 +537,30 @@ namespace KGySoft.Collections
 
         /// <summary>
         /// Clears the items in this <see cref="ArraySection{T}"/> instance so all elements will have the default value of type <typeparamref name="T"/>.
+        /// To clear the items with a specific value use the <see cref="Fill">Fill</see> method instead.
         /// </summary>
         public readonly void Clear()
         {
             if (length == 0) // zero length sections never have pooled arrays so using the field is alright here
                 return;
             Array.Clear(array!, offset, Length);
+        }
+
+        /// <summary>
+        /// Assigns the specified <paramref name="value"/> to all elements in this <see cref="ArraySection{T}"/> instance.
+        /// </summary>
+        /// <param name="value">The value to assign to all elements.</param>
+        public readonly void Fill(T value)
+        {
+            if (length == 0) // zero length sections never have pooled arrays so using the field is alright here
+                return;
+#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
+            Array.Fill(array!, value, offset, Length);
+#else
+            int end = offset + Length;
+            for (int i = offset; i < end; i++)
+                array![i] = value;
+#endif
         }
 
         /// <summary>

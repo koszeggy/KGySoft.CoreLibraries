@@ -33,6 +33,7 @@
   + New GetElementUnchecked/SetElementUnchecked/GetElementReferenceUnchecked methods: To omit length check, allowing
     to reference any element in the underlying array.
   + New Cast/Cast2D/Cast3D methods to reinterpret the element type.
+  + New Fill method.
 + Array2D<T> struct:
   + New GetElementUnchecked/SetElementUnchecked/GetElementReferenceUnchecked methods: To omit length check, allowing
     to reference any element in the underlying array.
