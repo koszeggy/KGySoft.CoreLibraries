@@ -205,7 +205,7 @@ namespace KGySoft.Threading
                     // Only one of them is spawned on a new thread because the current thread can do one of the jobs just fine.
                     // Always the smaller half is assigned to the new thread because of the overhead and to prevent the wait handle
                     // from starting to sleep if possible.
-                    using var handle = new ManualResetEventSlim(false);
+                    using var handle = new ManualResetEventSlim();
                     if (pivotIndex <= count >> 1)
                     {
                         ThreadPool.UnsafeQueueUserWorkItem(_ =>
@@ -344,7 +344,7 @@ namespace KGySoft.Threading
                     // Only one of them is spawned on a new thread because the current thread can do one of the jobs just fine.
                     // Always the smaller half is assigned to the new thread because of the overhead and to prevent the wait handle
                     // from starting to sleep if possible.
-                    using var handle = new ManualResetEventSlim(false);
+                    using var handle = new ManualResetEventSlim();
                     if (pivotIndex <= count >> 1)
                     {
                         ThreadPool.UnsafeQueueUserWorkItem(_ =>
@@ -483,7 +483,7 @@ namespace KGySoft.Threading
                     // Only one of them is spawned on a new thread because the current thread can do one of the jobs just fine.
                     // Always the smaller half is assigned to the new thread because of the overhead and to prevent the wait handle
                     // from starting to sleep if possible.
-                    using var handle = new ManualResetEventSlim(false);
+                    using var handle = new ManualResetEventSlim();
                     if (pivotIndex <= count >> 1)
                     {
                         ThreadPool.UnsafeQueueUserWorkItem(_ =>
@@ -623,7 +623,7 @@ namespace KGySoft.Threading
                     // Only one of them is spawned on a new thread because the current thread can do one of the jobs just fine.
                     // Always the smaller half is assigned to the new thread because of the overhead and to prevent the wait handle
                     // from starting to sleep if possible.
-                    using var handle = new ManualResetEventSlim(false);
+                    using var handle = new ManualResetEventSlim();
                     if (pivotIndex <= array.Length >> 1)
                     {
                         ThreadPool.UnsafeQueueUserWorkItem(_ =>
@@ -1117,7 +1117,7 @@ namespace KGySoft.Threading
                     // Only one of them is spawned on a new thread because the current thread can do one of the jobs just fine.
                     // Always the smaller half is assigned to the new thread because of the overhead and to prevent the wait handle
                     // from starting to sleep if possible.
-                    using var handle = new ManualResetEventSlim(false);
+                    using var handle = new ManualResetEventSlim();
                     if (pivotIndex <= count >> 1)
                     {
                         ThreadPool.UnsafeQueueUserWorkItem(_ =>
@@ -1264,7 +1264,7 @@ namespace KGySoft.Threading
                     // Only one of them is spawned on a new thread because the current thread can do one of the jobs just fine.
                     // Always the smaller half is assigned to the new thread because of the overhead and to prevent the wait handle
                     // from starting to sleep if possible.
-                    using var handle = new ManualResetEventSlim(false);
+                    using var handle = new ManualResetEventSlim();
                     if (pivotIndex <= count >> 1)
                     {
                         ThreadPool.UnsafeQueueUserWorkItem(_ =>
@@ -1411,7 +1411,7 @@ namespace KGySoft.Threading
                     // Only one of them is spawned on a new thread because the current thread can do one of the jobs just fine.
                     // Always the smaller half is assigned to the new thread because of the overhead and to prevent the wait handle
                     // from starting to sleep if possible.
-                    using var handle = new ManualResetEventSlim(false);
+                    using var handle = new ManualResetEventSlim();
                     if (pivotIndex <= count >> 1)
                     {
                         ThreadPool.UnsafeQueueUserWorkItem(_ =>
@@ -1559,7 +1559,7 @@ namespace KGySoft.Threading
                     // Only one of them is spawned on a new thread because the current thread can do one of the jobs just fine.
                     // Always the smaller half is assigned to the new thread because of the overhead and to prevent the wait handle
                     // from starting to sleep if possible.
-                    using var handle = new ManualResetEventSlim(false);
+                    using var handle = new ManualResetEventSlim();
                     if (pivotIndex <= keys.Length >> 1)
                     {
                         ThreadPool.UnsafeQueueUserWorkItem(_ =>
@@ -1711,7 +1711,7 @@ namespace KGySoft.Threading
                     // Only one of them is spawned on a new thread because the current thread can do one of the jobs just fine.
                     // Always the smaller half is assigned to the new thread because of the overhead and to prevent the wait handle
                     // from starting to sleep if possible.
-                    using var handle = new ManualResetEventSlim(false);
+                    using var handle = new ManualResetEventSlim();
                     if (pivotIndex <= keys.Length >> 1)
                     {
                         ThreadPool.UnsafeQueueUserWorkItem(_ =>
@@ -2284,7 +2284,7 @@ namespace KGySoft.Threading
                     // Only one of them is spawned on a new thread because the current thread can do one of the jobs just fine.
                     // Always the smaller half is assigned to the new thread because of the overhead and to prevent the wait handle
                     // from starting to sleep if possible.
-                    using var handle = new ManualResetEventSlim(false);
+                    using var handle = new ManualResetEventSlim();
                     if (pivotIndex <= count >> 1)
                     {
                         ThreadPool.UnsafeQueueUserWorkItem(_ =>
@@ -2423,7 +2423,7 @@ namespace KGySoft.Threading
                     // Only one of them is spawned on a new thread because the current thread can do one of the jobs just fine.
                     // Always the smaller half is assigned to the new thread because of the overhead and to prevent the wait handle
                     // from starting to sleep if possible.
-                    using var handle = new ManualResetEventSlim(false);
+                    using var handle = new ManualResetEventSlim();
                     if (pivotIndex <= count >> 1)
                     {
                         ThreadPool.UnsafeQueueUserWorkItem(_ =>
@@ -2562,7 +2562,7 @@ namespace KGySoft.Threading
                     // Only one of them is spawned on a new thread because the current thread can do one of the jobs just fine.
                     // Always the smaller half is assigned to the new thread because of the overhead and to prevent the wait handle
                     // from starting to sleep if possible.
-                    using var handle = new ManualResetEventSlim(false);
+                    using var handle = new ManualResetEventSlim();
                     if (pivotIndex <= count >> 1)
                     {
                         ThreadPool.UnsafeQueueUserWorkItem(_ =>
@@ -2702,7 +2702,7 @@ namespace KGySoft.Threading
                     // Only one of them is spawned on a new thread because the current thread can do one of the jobs just fine.
                     // Always the smaller half is assigned to the new thread because of the overhead and to prevent the wait handle
                     // from starting sleeping if possible.
-                    using var handle = new ManualResetEventSlim(false);
+                    using var handle = new ManualResetEventSlim();
                     if (pivotIndex <= array.Length >> 1)
                     {
                         ThreadPool.UnsafeQueueUserWorkItem(_ =>
@@ -3205,7 +3205,7 @@ namespace KGySoft.Threading
                     // Only one of them is spawned on a new thread because the current thread can do one of the jobs just fine.
                     // Always the smaller half is assigned to the new thread because of the overhead and to prevent the wait handle
                     // from starting to sleep if possible.
-                    using var handle = new ManualResetEventSlim(false);
+                    using var handle = new ManualResetEventSlim();
                     if (pivotIndex <= count >> 1)
                     {
                         ThreadPool.UnsafeQueueUserWorkItem(_ =>
@@ -3352,7 +3352,7 @@ namespace KGySoft.Threading
                     // Only one of them is spawned on a new thread because the current thread can do one of the jobs just fine.
                     // Always the smaller half is assigned to the new thread because of the overhead and to prevent the wait handle
                     // from starting to sleep if possible.
-                    using var handle = new ManualResetEventSlim(false);
+                    using var handle = new ManualResetEventSlim();
                     if (pivotIndex <= count >> 1)
                     {
                         ThreadPool.UnsafeQueueUserWorkItem(_ =>
@@ -3499,7 +3499,7 @@ namespace KGySoft.Threading
                     // Only one of them is spawned on a new thread because the current thread can do one of the jobs just fine.
                     // Always the smaller half is assigned to the new thread because of the overhead and to prevent the wait handle
                     // from starting to sleep if possible.
-                    using var handle = new ManualResetEventSlim(false);
+                    using var handle = new ManualResetEventSlim();
                     if (pivotIndex <= count >> 1)
                     {
                         ThreadPool.UnsafeQueueUserWorkItem(_ =>
@@ -3647,7 +3647,7 @@ namespace KGySoft.Threading
                     // Only one of them is spawned on a new thread because the current thread can do one of the jobs just fine.
                     // Always the smaller half is assigned to the new thread because of the overhead and to prevent the wait handle
                     // from starting to sleep if possible.
-                    using var handle = new ManualResetEventSlim(false);
+                    using var handle = new ManualResetEventSlim();
                     if (pivotIndex <= keys.Length >> 1)
                     {
                         ThreadPool.UnsafeQueueUserWorkItem(_ =>
@@ -3799,7 +3799,7 @@ namespace KGySoft.Threading
                     // Only one of them is spawned on a new thread because the current thread can do one of the jobs just fine.
                     // Always the smaller half is assigned to the new thread because of the overhead and to prevent the wait handle
                     // from starting to sleep if possible.
-                    using var handle = new ManualResetEventSlim(false);
+                    using var handle = new ManualResetEventSlim();
                     if (pivotIndex <= keys.Length >> 1)
                     {
                         ThreadPool.UnsafeQueueUserWorkItem(_ =>

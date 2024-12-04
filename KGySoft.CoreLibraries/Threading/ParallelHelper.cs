@@ -16,7 +16,6 @@
 #region Usings
 
 using System;
-
 #if !NET35
 using System.Collections.Concurrent;
 #endif
@@ -2115,6 +2114,7 @@ namespace KGySoft.Threading
 
                     break;
 
+#if !NET35
                 case ArraySegment<T> arraySection:
                     if (isSingleThreadNotCancellable)
                         Array.Sort(arraySection.Array!, startIndex + arraySection.Offset, count, comparer);
@@ -2122,6 +2122,7 @@ namespace KGySoft.Threading
                         SortHelper<T>.Instance.Sort(context, arraySection.Array!, startIndex + arraySection.Offset, count, comparer);
 
                     break;
+#endif
 
                 case CircularList<T> circularList:
                     if (isSingleThreadNotCancellable)
@@ -2217,6 +2218,7 @@ namespace KGySoft.Threading
 
                     break;
 
+#if !NET35
                 case (ArraySegment<TKey> keysSection, ArraySegment<TValue> valuesSection):
 #if NET5_0_OR_GREATER
                     if (isSingleThreadNotCancellable)
@@ -2229,6 +2231,7 @@ namespace KGySoft.Threading
                         SortHelper<TKey, TValue>.Instance.Sort(context, keysSection.AsSection(), valuesSection.AsSection().Slice(startIndex, count), comparer);
 
                     break;
+#endif
 
                 case (CircularList<TKey> keysCircularList, CircularList<TValue> valuesCircularList):
                     ArraySection<TKey> keysCListSection = keysCircularList.GetSectionToSort(startIndex, count);
