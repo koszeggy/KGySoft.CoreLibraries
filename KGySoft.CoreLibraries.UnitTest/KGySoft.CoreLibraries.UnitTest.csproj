@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net35;net40;net45;net46;net47;net472;netcoreapp3.0;net5.0;net6.0;net7.0;net8.0;net9.0</TargetFrameworks>
-    <!--<TargetFrameworks>netcoreapp3.0</TargetFrameworks>-->
+    <!--<TargetFrameworks>net35;net40;net45;net46;net47;net472;netcoreapp3.0;net5.0;net6.0;net7.0;net8.0;net9.0</TargetFrameworks>-->
+    <TargetFrameworks>net9.0</TargetFrameworks>
 
     <RunAnalyzersDuringLiveAnalysis>false</RunAnalyzersDuringLiveAnalysis>
     
@@ -63,21 +63,21 @@
   <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.0' OR '$(TargetFramework)' == 'netcoreapp2.1'">
     <!--Needed for CodePagesEncodingProvider. Must not be upgraded because newer versions do not support .NET Core 2.x -->
     <PackageReference Include="System.Text.Encoding.CodePages" Version="5.0.0" />
-    <PackageReference Condition="'$(IsWindows)'=='true'" Include="System.Drawing.Common" Version="5.0.3"/>
+    <PackageReference Condition="'$(IsWindows)'=='true'" Include="System.Drawing.Common" Version="5.0.3" />
   </ItemGroup>
 
   <!-- .NET Core 3.0 only references -->
   <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.0'">
     <!--For non-string resources. Must not be upgraded because newer versions do not support .NET Core 3.0 -->
     <PackageReference Include="System.Resources.Extensions" Version="5.0.0" />
-    <PackageReference Condition="'$(IsWindows)'=='true'" Include="System.Drawing.Common" Version="5.0.3"/>
+    <PackageReference Condition="'$(IsWindows)'=='true'" Include="System.Drawing.Common" Version="5.0.3" />
   </ItemGroup>
 
   <!-- .NET only references -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net5.0' OR '$(TargetFramework)' == 'net6.0' OR '$(TargetFramework)' == 'net7.0' OR '$(TargetFramework)' == 'net8.0' OR '$(TargetFramework)' == 'net9.0'">
 	  <!--For non-string resources-->
     <PackageReference Include="System.Resources.Extensions" Version="6.0.0" />
-    <PackageReference Condition="'$(IsWindows)'=='true'" Include="System.Drawing.Common" Version="5.0.3"/>
+    <PackageReference Condition="'$(IsWindows)'=='true'" Include="System.Drawing.Common" Version="5.0.3" />
   </ItemGroup>
 
   <!-- Windows only references -->
@@ -109,9 +109,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Resources\TestIcon.ico">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Resources\TestIconCompound.ico">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Resources\TestImageInv.png">

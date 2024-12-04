@@ -128,7 +128,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
         public void SerializeTest()
         {
             var comparer = EnumComparer<TestLongEnum>.Comparer;
-            var clone = comparer.DeepClone();
+            var clone = comparer.DeepClone(false);
             Assert.AreSame(comparer, clone);
         }
 

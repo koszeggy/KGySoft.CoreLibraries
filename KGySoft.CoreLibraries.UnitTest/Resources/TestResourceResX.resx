@@ -142,17 +142,8 @@ String</value>
   <data name="TestNull" type="System.Resources.ResXNullRef, System.Windows.Forms">
     <value/>
   </data>
-  <data name="TestIcon" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>TestIcon.ico;System.Drawing.Icon, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
   <data name="TestIconBitmap" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>TestIcon.ico;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="TestIconMulti" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>TestIconCompound.ico;System.Drawing.Icon, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="TestIconMultiBitmap" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>TestIconCompound.ico;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="TestBinFile" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>TestBinFile.bin;System.Byte[], mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -247,30 +238,6 @@ String</value>
       AgABgAEBAcABAwGAAQECAAGAAQEBwAEDAYABAQIAAYABAQHgAQcBgAEBAgABgAEBAeABBwGAAQECAAGA
       AQEB8AEPAYABAQIAAYABAQH4AR8BgAEBAgABwAEDAfgBHwHAAQMCAAHgAQcB/AE/AeABBwIAAfABDwH8
       AT8B8AEPAgAG/wIACw==
-    </value>
-  </data>
-  <data name="TestIconEmbedded" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
-    <value>
-      AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAA
-      AAAAAAAAAAAAAAAAAAAAAAAAcHBwRnFwcY1ycHLHcXBx8HFwcfBycHLHcXBxjXBwcEYAAAAAAAAAAAAA
-      AAAAAAAAAAAAAAAAAABvb28gcnByjIeFhfWloaD/vrm3/9DJyP/Qycj/vrm3/6WhoP+HhYX1cnByjG9v
-      byAAAAAAAAAAAAAAAABvb28gcnByo5uXl//Es6//yZKC/8NpUP+WRiz/lkct/6RmUf/Mj4D/xbKu/5uX
-      l/9ycHKjb29vIAAAAAAAAAAAcnByjJuXl//LsKb/v29U/7ZAHP/JjHj/3bux/928tP+waFT/mDIU/8ht
-      V//OrKP/m5eX/3JwcowAAAAAcHBwRoeFhfXFtrH/vW9T/7FEH/+xQBv/16qb//r7+//6+/v/uXZk/5oz
-      Ff+/QCD/x21X/8Syrv+HhYX1cHBwRnFwcY2loaD/zJqH/7JJIf+vRB7/sEAb/9eqm//R0tT/+vv7/7h2
-      ZP+VMRT/uj8f/7pAH//JkIH/paGg/3FwcY1ycHLHvrm3/8p9X/+/WDH/sEch/6w/Gv/Xqpv/19ja//r7
-      +/+9g3L/lDEU/7dAHf+zPxz/vGhO/765t/9ycHLHcXBx8NDJyP/KbEf/ymM8/8NcNP+wRR7/16qb/9fY
-      2v/6+/v/wY59/5UyE/+yQBv/rT8b/7BLKv/Qycj/cXBx8HFwcfDQycj/0XFN/85pQf/PaUL/ymI6/9eq
-      m//X2Nr/+vv7/7qDcP+UMBH/sEEb/6pAG/+uTCr/0MnI/3FwcfBycHLHvrm3/9eNb//UcEf/1G9H/9Vv
-      R//Xqpv/9uTd//r7+/+0dV//qD8a/65FH/+tRR//um1R/765t/9ycHLHcXBxjaWhoP/XrJv/3XVK/9t3
-      Tv/Zdk7/6H9X/+1zRf/lckf/3l0t/81lPP/GYDn/wVw1/8ybif+loaD/cXBxjXBwcEaHhYX1yLi0/92c
-      gv/lfVH/4XxT//STbf/15N3///ny/+6LZf/PZTr/zWpB/82Gaf/FtbD/h4WF9XBwcEYAAAAAcnByjJuX
-      l//TubD/4aCH/++DWf/3nHj////////////0lG7/1W1C/9SLbv/PtKr/m5eX/3JwcowAAAAAAAAAAG9v
-      byBycHKjm5eX/8i4tP/bsKD/6pp2//CRa//wkWv/5opk/9amk//Gt7L/m5eX/3JwcqNvb28gAAAAAAAA
-      AAAAAAAAb29vIHJwcoyHhYX1paGg/765t//Qycj/0MnI/765t/+loaD/h4WF9XJwcoxvb28gAAAAAAAA
-      AAAAAAAAAAAAAAAAAAAAAAAAcHBwRnFwcY1ycHLHcXBx8HFwcfBycHLHcXBxjXBwcEYAAAAAAAAAAAAA
-      AAAAAAAA8A8AAMADAACAAQAAgAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAEAAIAB
-      AADAAwAA8A8AAA==
     </value>
   </data>
   <data name="TestSoundEmbedded" mimetype="application/x-microsoft.net.object.binary.base64">

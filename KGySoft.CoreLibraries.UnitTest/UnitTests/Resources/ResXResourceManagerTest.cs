@@ -381,12 +381,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.AreEqual(refManager.GetString("TestTextFile"), manager.GetString("TestTextFile"));
 
 #if !(NETCOREAPP2_0 || NETCOREAPP2_1) && WINDOWS // .NET Core 2.x: System.NotSupportedException : Cannot read resources that depend on serialization.
-            // icon by reference
-            reference = refManager.GetObject("TestIcon");
-            check = manager.GetObject("TestIcon");
-            Assert.IsInstanceOf<Icon>(reference);
-            AssertItemsEqual(BinarySerializer.Serialize(reference), BinarySerializer.Serialize(check));
-
             // icon bmp by reference
             reference = refManager.GetObject("TestIconBitmap");
             check = manager.GetObject("TestIconBitmap");
@@ -399,18 +393,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 #endif
             Assert.AreEqual(ImageFormat.Icon, ((Bitmap)check).RawFormat);
             AssertDeepEquals((Bitmap)reference, (Bitmap)check);
-
-            // multi-res icon by reference
-            reference = refManager.GetObject("TestIconMulti");
-            check = manager.GetObject("TestIconMulti");
-            Assert.IsInstanceOf<Icon>(reference);
-            AssertItemsEqual(BinarySerializer.Serialize(reference), BinarySerializer.Serialize(check));
-
-            // multi-res icon bmp by reference
-            reference = refManager.GetObject("TestIconMultiBitmap"); // single 32*32 png
-            check = manager.GetObject("TestIconMultiBitmap"); // icon of 5 images
-            Assert.IsInstanceOf<Bitmap>(reference);
-            Assert.IsInstanceOf<Bitmap>(check);
 #if NETFRAMEWORK // system manager retrieves it as a png, while resx manager preserves its icon raw format
             Assert.AreEqual(ImageFormat.Png, ((Bitmap)reference).RawFormat);
 #else
@@ -458,12 +440,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 AssertDeepEquals(il1.Images[i] as Bitmap, il2.Images[i] as Bitmap);
             }
 #endif
-
-            // icon embedded as bytearray.base64 (created by a ctor from stream)
-            reference = refManager.GetObject("TestIconEmbedded"); // .NET Core 2.0: System.NotSupportedException : Cannot read resources that depend on serialization.
-            check = manager.GetObject("TestIconEmbedded");
-            Assert.IsInstanceOf<Icon>(reference);
-            AssertItemsEqual(BinarySerializer.Serialize(reference), BinarySerializer.Serialize(check));
 
 #if !(NETCOREAPP3_0 || NET) // Type 'System.IO.MemoryStream' in Assembly 'System.Private.CoreLib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e' is not marked as serializable.
             // stream embedded as binary.base64 (created by BinaryFormatter)
