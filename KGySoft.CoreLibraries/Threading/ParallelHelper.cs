@@ -62,6 +62,7 @@ namespace KGySoft.Threading
     /// <summary>
     /// The <see cref="ParallelHelper"/> class contains similar methods to the <see cref="O:System.Threading.Tasks.Parallel.For">Parallel.For</see> overloads
     /// in .NET Framework 4.0 and later but the ones in this class can be used even on .NET Framework 3.5, support reporting progress and have async overloads.
+    /// Furthermore, it also contains several sorting methods that can sort <see cref="IList{T}"/> instances in place using multiple threads.
     /// </summary>
     public static partial class ParallelHelper
     {
