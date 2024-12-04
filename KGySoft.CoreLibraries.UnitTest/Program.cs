@@ -18,9 +18,8 @@
 using System;
 using System.Collections.Generic;
 
-#if NETCOREAPP
 using System.IO;
-#elif !NETFRAMEWORK
+#if !NETFRAMEWORK
 using System.Runtime.InteropServices;
 #endif
 

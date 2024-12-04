@@ -1,14 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <!--<TargetFrameworks>net35;net40;net45;net46;net47;net472;netcoreapp2.0;netcoreapp2.1;netcoreapp3.0;net5.0;net6.0;net7.0;net8.0;net9.0</TargetFrameworks>-->
-    <TargetFrameworks>net9.0</TargetFrameworks>
+    <TargetFrameworks>net35;net40;net45;net46;net47;net472;netcoreapp3.0;net5.0;net6.0;net7.0;net8.0;net9.0</TargetFrameworks>
+    <!--<TargetFrameworks>netcoreapp3.0</TargetFrameworks>-->
 
     <RunAnalyzersDuringLiveAnalysis>false</RunAnalyzersDuringLiveAnalysis>
     
     <!--For UnitTesting the .NET Standard versions-->
     <!--<TargetFrameworks>netcoreapp2.0;netcoreapp3.0</TargetFrameworks>-->
     <!--<DefineConstants>NETSTANDARD_TEST</DefineConstants>-->
+
+    <!--All targets including the ones dropped from the NuGet package. The project still should be able to be compiled with all of them (if the targets are enabled in the main project, too). -->
+    <!--<TargetFrameworks>net35;net40;net45;net46;net47;net472;netcoreapp2.0;netcoreapp2.1;netcoreapp3.0;net5.0;net6.0;net7.0;net8.0;net9.0</TargetFrameworks>-->
 
     <!--For testing in a 32-bit process-->
     <!--<PlatformTarget>x86</PlatformTarget>-->
@@ -31,11 +34,9 @@
     <!--Suppressions:
       - MSB3568: Duplicate resources - intended, test data
       - MSB3825: Resources serialized by BinaryFormatter - intended, test data (among others, for security checks)
-      - NETSDK1138: The target framework 'netcoreapp2.0'/'netcoreapp2.1'/'netcoreapp3.0' is out of support - this is not an application but a library so targeting the lowest possible versions is intended
-      - NETSDK1138: The target framework 'netcoreapp2.0'/'netcoreapp2.1'/'netcoreapp3.0' is out of support - this is not an application but a library so targeting the lowest possible versions is intended
-      - NU1902, NU1903: netcoreapp2.1 has known vulnerabilities - it's a targeted plartform and not a referenced package. A consumer of this library can also pick newer supported platforms.
+      - NETSDK1138: The target framework 'tfm' is out of support - this is not an application but a library so targeting the lowest possible versions is intended
       -->
-    <NoWarn>$(NoWarn);MSB3568;MSB3825;NETSDK1138;NU1902;NU1903</NoWarn>
+    <NoWarn>$(NoWarn);MSB3568;MSB3825;NETSDK1138</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(IsWindows)'=='true'">
@@ -58,25 +59,25 @@
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
 
-  <!-- .NET Core 2.x only references -->
+  <!-- .NET Core 2.x only references (not uspported by JetBrains Rider) - not supporting anymore but left here for forced manaul build as the code still compiles if the same targets are enabled in the main project, too. -->
   <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.0' OR '$(TargetFramework)' == 'netcoreapp2.1'">
     <!--Needed for CodePagesEncodingProvider. Must not be upgraded because newer versions do not support .NET Core 2.x -->
     <PackageReference Include="System.Text.Encoding.CodePages" Version="5.0.0" />
-    <PackageReference Condition="'$(IsWindows)'=='true'" Include="System.Drawing.Common" Version="9.0.0"/>
+    <PackageReference Condition="'$(IsWindows)'=='true'" Include="System.Drawing.Common" Version="5.0.3"/>
   </ItemGroup>
 
   <!-- .NET Core 3.0 only references -->
   <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.0'">
     <!--For non-string resources. Must not be upgraded because newer versions do not support .NET Core 3.0 -->
     <PackageReference Include="System.Resources.Extensions" Version="5.0.0" />
-    <PackageReference Condition="'$(IsWindows)'=='true'" Include="System.Drawing.Common" Version="9.0.0"/>
+    <PackageReference Condition="'$(IsWindows)'=='true'" Include="System.Drawing.Common" Version="5.0.3"/>
   </ItemGroup>
 
   <!-- .NET only references -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net5.0' OR '$(TargetFramework)' == 'net6.0' OR '$(TargetFramework)' == 'net7.0' OR '$(TargetFramework)' == 'net8.0' OR '$(TargetFramework)' == 'net9.0'">
 	  <!--For non-string resources-->
     <PackageReference Include="System.Resources.Extensions" Version="6.0.0" />
-    <PackageReference Condition="'$(IsWindows)'=='true'" Include="System.Drawing.Common" Version="9.0.0"/>
+    <PackageReference Condition="'$(IsWindows)'=='true'" Include="System.Drawing.Common" Version="5.0.3"/>
   </ItemGroup>
 
   <!-- Windows only references -->

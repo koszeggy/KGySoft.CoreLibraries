@@ -349,7 +349,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             ReadWriteReadResX(path, true, false);
 
 #if NETFRAMEWORK
-            typeof(Image).RegisterTypeConverter<AdvancedImageConverter>();
             path = Combine(Files.GetExecutingPath(), "Resources", "TestResourceResX.resx");
             ReadWriteReadResX(path, true, true);
             ReadWriteReadResX(path, false, true);

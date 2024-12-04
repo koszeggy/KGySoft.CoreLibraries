@@ -9,8 +9,12 @@
 ! v9.0.0:
 ~~~~~~~~~
 
-+ Assembly changes:
+! Assembly changes:
 ===================
+! Dropping support for .NET Core 2.0 and .NET Core 2.1. Manual compilation for these platforms is still possible
+  but the public NuGet packages are not going to support these platforms anymore. If you target these platforms in
+  your project, the v9.0.0 version will map to the .NET Standard 2.0 build instead, which may be a breaking change
+  if you relied on features that were available only in the .NET Core 2.0/2.1 build.
 + Targeting also .NET 9.0.
 
 ! KGySoft.CoreLibraries namespace:

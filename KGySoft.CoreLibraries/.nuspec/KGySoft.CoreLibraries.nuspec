@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>KGySoft.CoreLibraries</id>
-    <version>9.0.0-preview.1</version>
+    <version>9.0.0-rc.1</version>
     <title>KGy SOFT Core Libraries</title>
     <authors>György Kőszeg</authors>
     <owners>György Kőszeg</owners>
@@ -43,11 +43,9 @@ Change Log: https://github.com/koszeggy/KGySoft.CoreLibraries/blob/master/KGySof
       <group targetFramework="net40" />
       <group targetFramework="net45" />
       <group targetFramework="net472" />
-      <group targetFramework="netcoreapp2.0" />
-      <group targetFramework="netcoreapp2.1" />
-      <group targetFramework="netcoreapp3.0" />
       <group targetFramework="netstandard2.0" />
       <group targetFramework="netstandard2.1" />
+      <group targetFramework="netcoreapp3.0" />
       <group targetFramework="net5.0" />
       <group targetFramework="net6.0" />
       <group targetFramework="net7.0" />
@@ -68,16 +66,12 @@ Change Log: https://github.com/koszeggy/KGySoft.CoreLibraries/blob/master/KGySof
     <file src="..\bin\Release\net45\KGySoft.CoreLibraries.xml" target="lib\net45" />
     <file src="..\bin\Release\net472\KGySoft.CoreLibraries.dll" target="lib\net472" />
     <file src="..\bin\Release\net472\KGySoft.CoreLibraries.xml" target="lib\net472" />
-    <file src="..\bin\Release\netcoreapp2.0\KGySoft.CoreLibraries.dll" target="lib\netcoreapp2.0" />
-    <file src="..\bin\Release\netcoreapp2.0\KGySoft.CoreLibraries.xml" target="lib\netcoreapp2.0" />
-    <file src="..\bin\Release\netcoreapp2.1\KGySoft.CoreLibraries.dll" target="lib\netcoreapp2.1" />
-    <file src="..\bin\Release\netcoreapp2.1\KGySoft.CoreLibraries.xml" target="lib\netcoreapp2.1" />
-    <file src="..\bin\Release\netcoreapp3.0\KGySoft.CoreLibraries.dll" target="lib\netcoreapp3.0" />
-    <file src="..\bin\Release\netcoreapp3.0\KGySoft.CoreLibraries.xml" target="lib\netcoreapp3.0" />
     <file src="..\bin\Release\netstandard2.0\KGySoft.CoreLibraries.dll" target="lib\netstandard2.0" />
     <file src="..\bin\Release\netstandard2.0\KGySoft.CoreLibraries.xml" target="lib\netstandard2.0" />
     <file src="..\bin\Release\netstandard2.1\KGySoft.CoreLibraries.dll" target="lib\netstandard2.1" />
     <file src="..\bin\Release\netstandard2.1\KGySoft.CoreLibraries.xml" target="lib\netstandard2.1" />
+    <file src="..\bin\Release\netcoreapp3.0\KGySoft.CoreLibraries.dll" target="lib\netcoreapp3.0" />
+    <file src="..\bin\Release\netcoreapp3.0\KGySoft.CoreLibraries.xml" target="lib\netcoreapp3.0" />
     <file src="..\bin\Release\net5.0\KGySoft.CoreLibraries.dll" target="lib\net5.0" />
     <file src="..\bin\Release\net5.0\KGySoft.CoreLibraries.xml" target="lib\net5.0" />
     <file src="..\bin\Release\net6.0\KGySoft.CoreLibraries.dll" target="lib\net6.0" />
