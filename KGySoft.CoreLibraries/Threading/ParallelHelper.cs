@@ -16,6 +16,7 @@
 #region Usings
 
 using System;
+using System.Collections;
 #if !NET35
 using System.Collections.Concurrent;
 #endif
@@ -375,12 +376,18 @@ namespace KGySoft.Threading
         /// (in .NET Framework 4.0 and above) methods to perform the sorting asynchronously.</note>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="list"/> is <see langword="null"/>.</exception>
-        /// <exception cref="ArgumentException">The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <exception cref="ArgumentException"><paramref name="list"/> is read-only.
+        /// <br/>-or-
+        /// <br/>The <paramref name="comparer"/> returned inconsistent results.</exception>
         /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
         public static void Sort<T>(IList<T> list, IComparer<T>? comparer = null)
         {
             if (list == null!)
-                Throw.ArgumentNullException(Argument.array);
+                Throw.ArgumentNullException(Argument.list);
+            
+            // If implements the non-generic IList, checking its IsReadOnly, which can be false for array-like fixed-size collections
+            if (list is IList { IsReadOnly: true } || list is not IList && list.IsReadOnly)
+                Throw.ArgumentException(Argument.list, Res.ICollectionReadOnlyModifyNotSupported);
 
             int count = list.Count;
             if (count < 2)
@@ -410,14 +417,20 @@ namespace KGySoft.Threading
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="list"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> or <paramref name="count"/> is less than 0.</exception>
-        /// <exception cref="ArgumentException">The <paramref name="index"/> and <paramref name="count"/> do not denote a valid range in the <paramref name="list"/>.
+        /// <exception cref="ArgumentException"><paramref name="list"/> is read-only.
         /// <br/>-or-
-        /// The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <br/>The <paramref name="index"/> and <paramref name="count"/> do not denote a valid range in the <paramref name="list"/>.
+        /// <br/>-or-
+        /// <br/>The <paramref name="comparer"/> returned inconsistent results.</exception>
         /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
         public static void Sort<T>(IList<T> list, int index, int count, IComparer<T>? comparer = null)
         {
             if (list == null!)
                 Throw.ArgumentNullException(Argument.list);
+
+            // If implements the non-generic IList, checking its IsReadOnly, which can be false for array-like fixed-size collections
+            if (list is IList { IsReadOnly: true } || list is not IList && list.IsReadOnly)
+                Throw.ArgumentException(Argument.list, Res.ICollectionReadOnlyModifyNotSupported);
             if (index < 0)
                 Throw.ArgumentOutOfRangeException(Argument.index);
             if (count < 0)
@@ -498,9 +511,11 @@ namespace KGySoft.Threading
         /// (in .NET Framework 4.0 and above) methods to perform the sorting asynchronously.</note>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="keys"/> or <paramref name="values"/> is <see langword="null"/>.</exception>
-        /// <exception cref="ArgumentException"><paramref name="values"/> is not <see langword="null"/> and <paramref name="values"/> has fewer elements than <paramref name="keys"/>.
+        /// <exception cref="ArgumentException"><paramref name="keys"/> or <paramref name="values"/> is read-only.
         /// <br/>-or-
-        /// The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <br/><paramref name="values"/> is not <see langword="null"/> and <paramref name="values"/> has fewer elements than <paramref name="keys"/>.
+        /// <br/>-or-
+        /// <br/>The <paramref name="comparer"/> returned inconsistent results.</exception>
         /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
         public static void Sort<TKey, TValue>(IList<TKey> keys, IList<TValue>? values, IComparer<TKey>? comparer = null)
         {
@@ -533,9 +548,11 @@ namespace KGySoft.Threading
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="keys"/> or <paramref name="values"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> or <paramref name="count"/> is less than 0.</exception>
-        /// <exception cref="ArgumentException">The <paramref name="index"/> and <paramref name="count"/> do not denote a valid range in the <paramref name="keys"/> or <paramref name="values"/> list.
+        /// <exception cref="ArgumentException"><paramref name="keys"/> or <paramref name="values"/> is read-only.
         /// <br/>-or-
-        /// The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <br/>The <paramref name="index"/> and <paramref name="count"/> do not denote a valid range in the <paramref name="keys"/> or <paramref name="values"/> list.
+        /// <br/>-or-
+        /// <br/>The <paramref name="comparer"/> returned inconsistent results.</exception>
         /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
         public static void Sort<TKey, TValue>(IList<TKey> keys, IList<TValue>? values, int index, int count, IComparer<TKey>? comparer = null)
         {
@@ -547,6 +564,10 @@ namespace KGySoft.Threading
                 return;
             }
 
+            if (keys is IList { IsReadOnly: true } || keys is not IList && keys.IsReadOnly)
+                Throw.ArgumentException(Argument.list, Res.ICollectionReadOnlyModifyNotSupported);
+            if (values is IList { IsReadOnly: true } || values is not IList && values.IsReadOnly)
+                Throw.ArgumentException(Argument.values, Res.ICollectionReadOnlyModifyNotSupported);
             if (index < 0)
                 Throw.ArgumentOutOfRangeException(Argument.index);
             if (count < 0)
@@ -578,7 +599,7 @@ namespace KGySoft.Threading
         /// </remarks>
         /// <exception cref="ArgumentException">The <see cref="ArraySection{T}.IsNull"/> property of <paramref name="values"/> is <see langword="false"/> and <paramref name="values"/> has fewer elements than <paramref name="keys"/>.
         /// <br/>-or-
-        /// The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <br/>The <paramref name="comparer"/> returned inconsistent results.</exception>
         /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
         public static void Sort<TKey, TValue>(ArraySection<TKey> keys, ArraySection<TValue> values, IComparer<TKey>? comparer = null)
         {
@@ -618,7 +639,7 @@ namespace KGySoft.Threading
         /// </remarks>
         /// <exception cref="ArgumentException">The <see cref="CastArray{TFrom,TTo}.IsNull"/> property of <paramref name="values"/> is <see langword="false"/> and <paramref name="values"/> has fewer elements than <paramref name="keys"/>.
         /// <br/>-or-
-        /// The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <br/>The <paramref name="comparer"/> returned inconsistent results.</exception>
         /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
         public static void Sort<TKeyFrom, TKeyTo, TValueFrom, TValueTo>(CastArray<TKeyFrom, TKeyTo> keys, CastArray<TValueFrom, TValueTo> values, IComparer<TKeyTo>? comparer = null)
             where TKeyFrom : unmanaged
@@ -661,13 +682,19 @@ namespace KGySoft.Threading
         /// For <see cref="ArraySection{T}"/> and <see cref="CastArray{TFrom,TTo}"/> instances it is recommended to use the dedicated overloads for better performance.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="list"/> is <see langword="null"/>.</exception>
-        /// <exception cref="ArgumentException">The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <exception cref="ArgumentException"><paramref name="list"/> is read-only.
+        /// <br/>-or-
+        /// <br/>The <paramref name="comparer"/> returned inconsistent results.</exception>
         /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
         /// <exception cref="OperationCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in <paramref name="configuration"/> was <see langword="true"/>.</exception>
         public static bool Sort<T>(IList<T> list, IComparer<T>? comparer, ParallelConfig? configuration)
         {
             if (list == null!)
                 Throw.ArgumentNullException(Argument.array);
+
+            // If implements the non-generic IList, checking its IsReadOnly, which can be false for array-like fixed-size collections
+            if (list is IList { IsReadOnly: true } || list is not IList && list.IsReadOnly)
+                Throw.ArgumentException(Argument.list, Res.ICollectionReadOnlyModifyNotSupported);
 
             int count = list.Count;
             if (count < 2)
@@ -695,15 +722,21 @@ namespace KGySoft.Threading
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="list"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> or <paramref name="count"/> is less than 0.</exception>
-        /// <exception cref="ArgumentException">The <paramref name="index"/> and <paramref name="count"/> do not denote a valid range in the <paramref name="list"/>.
+        /// <exception cref="ArgumentException"><paramref name="list"/> is read-only.
         /// <br/>-or-
-        /// The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <br/>The <paramref name="index"/> and <paramref name="count"/> do not denote a valid range in the <paramref name="list"/>.
+        /// <br/>-or-
+        /// <br/>The <paramref name="comparer"/> returned inconsistent results.</exception>
         /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
         /// <exception cref="OperationCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in <paramref name="configuration"/> was <see langword="true"/>.</exception>
         public static bool Sort<T>(IList<T> list, int index, int count, IComparer<T>? comparer, ParallelConfig? configuration)
         {
             if (list == null!)
                 Throw.ArgumentNullException(Argument.list);
+
+            // If implements the non-generic IList, checking its IsReadOnly, which can be false for array-like fixed-size collections
+            if (list is IList { IsReadOnly: true } || list is not IList && list.IsReadOnly)
+                Throw.ArgumentException(Argument.list, Res.ICollectionReadOnlyModifyNotSupported);
             if (index < 0)
                 Throw.ArgumentOutOfRangeException(Argument.index);
             if (count < 0)
@@ -776,9 +809,11 @@ namespace KGySoft.Threading
         /// For <see cref="ArraySection{T}"/> and <see cref="CastArray{TFrom,TTo}"/> instances it is recommended to use the dedicated overloads for better performance.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="keys"/> or <paramref name="values"/> is <see langword="null"/>.</exception>
-        /// <exception cref="ArgumentException"><paramref name="values"/> is not <see langword="null"/> and <paramref name="values"/> has fewer elements than <paramref name="keys"/>.
+        /// <exception cref="ArgumentException"><paramref name="keys"/> or <paramref name="values"/> is read-only.
         /// <br/>-or-
-        /// The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <br/><paramref name="values"/> is not <see langword="null"/> and <paramref name="values"/> has fewer elements than <paramref name="keys"/>.
+        /// <br/>-or-
+        /// <br/>The <paramref name="comparer"/> returned inconsistent results.</exception>
         /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
         /// <exception cref="OperationCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in <paramref name="configuration"/> was <see langword="true"/>.</exception>
         public static bool Sort<TKey, TValue>(IList<TKey> keys, IList<TValue>? values, IComparer<TKey>? comparer, ParallelConfig? configuration)
@@ -810,9 +845,11 @@ namespace KGySoft.Threading
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="keys"/> or <paramref name="values"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> or <paramref name="count"/> is less than 0.</exception>
-        /// <exception cref="ArgumentException">The <paramref name="index"/> and <paramref name="count"/> do not denote a valid range in the <paramref name="keys"/> or <paramref name="values"/> list.
+        /// <exception cref="ArgumentException"><paramref name="keys"/> or <paramref name="values"/> is read-only.
         /// <br/>-or-
-        /// The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <br/>The <paramref name="index"/> and <paramref name="count"/> do not denote a valid range in the <paramref name="keys"/> or <paramref name="values"/> list.
+        /// <br/>-or-
+        /// <br/>The <paramref name="comparer"/> returned inconsistent results.</exception>
         /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
         /// <exception cref="OperationCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in <paramref name="configuration"/> was <see langword="true"/>.</exception>
         public static bool Sort<TKey, TValue>(IList<TKey> keys, IList<TValue>? values, int index, int count, IComparer<TKey>? comparer, ParallelConfig? configuration)
@@ -821,6 +858,11 @@ namespace KGySoft.Threading
                 Throw.ArgumentNullException(Argument.keys);
             if (values == null)
                 return Sort(keys, index, count, comparer, configuration);
+
+            if (keys is IList { IsReadOnly: true } || keys is not IList && keys.IsReadOnly)
+                Throw.ArgumentException(Argument.list, Res.ICollectionReadOnlyModifyNotSupported);
+            if (values is IList { IsReadOnly: true } || values is not IList && values.IsReadOnly)
+                Throw.ArgumentException(Argument.values, Res.ICollectionReadOnlyModifyNotSupported);
             if (index < 0)
                 Throw.ArgumentOutOfRangeException(Argument.index);
             if (count < 0)
@@ -848,7 +890,7 @@ namespace KGySoft.Threading
         /// <br/><see langword="false"/>, if the operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in <paramref name="configuration"/> was set to <see langword="false"/>.</returns>
         /// <exception cref="ArgumentException">The <see cref="ArraySection{T}.IsNull"/> property of <paramref name="values"/> is <see langword="false"/> and <paramref name="values"/> has fewer elements than <paramref name="keys"/>.
         /// <br/>-or-
-        /// The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <br/>The <paramref name="comparer"/> returned inconsistent results.</exception>
         /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
         /// <exception cref="OperationCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in <paramref name="configuration"/> was <see langword="true"/>.</exception>
         public static bool Sort<TKey, TValue>(ArraySection<TKey> keys, ArraySection<TValue> values, IComparer<TKey>? comparer, ParallelConfig? configuration)
@@ -881,7 +923,7 @@ namespace KGySoft.Threading
         /// <br/><see langword="false"/>, if the operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in <paramref name="configuration"/> was set to <see langword="false"/>.</returns>
         /// <exception cref="ArgumentException">The <see cref="CastArray{TFrom,TTo}.IsNull"/> property of <paramref name="values"/> is <see langword="false"/> and <paramref name="values"/> has fewer elements than <paramref name="keys"/>.
         /// <br/>-or-
-        /// The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <br/>The <paramref name="comparer"/> returned inconsistent results.</exception>
         /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
         /// <exception cref="OperationCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/> in <paramref name="configuration"/> was <see langword="true"/>.</exception>
         public static bool Sort<TKeyFrom, TKeyTo, TValueFrom, TValueTo>(CastArray<TKeyFrom, TKeyTo> keys, CastArray<TValueFrom, TValueTo> values, IComparer<TKeyTo>? comparer, ParallelConfig? configuration)
@@ -926,12 +968,18 @@ namespace KGySoft.Threading
         /// To reconfigure the degree of parallelism of an existing context, you can use the <see cref="AsyncContextWrapper"/> class.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="list"/> is <see langword="null"/>.</exception>
-        /// <exception cref="ArgumentException">The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <exception cref="ArgumentException"><paramref name="list"/> is read-only.
+        /// <br/>-or-
+        /// <br/>The <paramref name="comparer"/> returned inconsistent results.</exception>
         /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
         public static bool Sort<T>(IAsyncContext? context, IList<T> list, IComparer<T>? comparer = null)
         {
             if (list == null!)
                 Throw.ArgumentNullException(Argument.array);
+
+            // If implements the non-generic IList, checking its IsReadOnly, which can be false for array-like fixed-size collections
+            if (list is IList { IsReadOnly: true } || list is not IList && list.IsReadOnly)
+                Throw.ArgumentException(Argument.list, Res.ICollectionReadOnlyModifyNotSupported);
 
             int count = list.Count;
             if (count < 2)
@@ -964,14 +1012,20 @@ namespace KGySoft.Threading
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="list"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> or <paramref name="count"/> is less than 0.</exception>
-        /// <exception cref="ArgumentException">The <paramref name="index"/> and <paramref name="count"/> do not denote a valid range in the <paramref name="list"/>.
+        /// <exception cref="ArgumentException"><paramref name="list"/> is read-only.
         /// <br/>-or-
-        /// The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <br/>The <paramref name="index"/> and <paramref name="count"/> do not denote a valid range in the <paramref name="list"/>.
+        /// <br/>-or-
+        /// <br/>The <paramref name="comparer"/> returned inconsistent results.</exception>
         /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
         public static bool Sort<T>(IAsyncContext? context, IList<T> list, int index, int count, IComparer<T>? comparer = null)
         {
             if (list == null!)
                 Throw.ArgumentNullException(Argument.list);
+
+            // If implements the non-generic IList, checking its IsReadOnly, which can be false for array-like fixed-size collections
+            if (list is IList { IsReadOnly: true } || list is not IList && list.IsReadOnly)
+                Throw.ArgumentException(Argument.list, Res.ICollectionReadOnlyModifyNotSupported);
             if (index < 0)
                 Throw.ArgumentOutOfRangeException(Argument.index);
             if (count < 0)
@@ -1061,9 +1115,11 @@ namespace KGySoft.Threading
         /// To reconfigure the degree of parallelism of an existing context, you can use the <see cref="AsyncContextWrapper"/> class.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="keys"/> or <paramref name="values"/> is <see langword="null"/>.</exception>
-        /// <exception cref="ArgumentException"><paramref name="values"/> is not <see langword="null"/> and <paramref name="values"/> has fewer elements than <paramref name="keys"/>.
+        /// <exception cref="ArgumentException"><paramref name="keys"/> or <paramref name="values"/> is read-only.
         /// <br/>-or-
-        /// The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <br/><paramref name="values"/> is not <see langword="null"/> and <paramref name="values"/> has fewer elements than <paramref name="keys"/>.
+        /// <br/>-or-
+        /// <br/>The <paramref name="comparer"/> returned inconsistent results.</exception>
         /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
         public static bool Sort<TKey, TValue>(IAsyncContext? context, IList<TKey> keys, IList<TValue>? values, IComparer<TKey>? comparer = null)
         {
@@ -1099,9 +1155,11 @@ namespace KGySoft.Threading
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="keys"/> or <paramref name="values"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> or <paramref name="count"/> is less than 0.</exception>
-        /// <exception cref="ArgumentException">The <paramref name="index"/> and <paramref name="count"/> do not denote a valid range in the <paramref name="keys"/> or <paramref name="values"/> list.
+        /// <exception cref="ArgumentException"><paramref name="keys"/> or <paramref name="values"/> is read-only.
         /// <br/>-or-
-        /// The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <br/>The <paramref name="index"/> and <paramref name="count"/> do not denote a valid range in the <paramref name="keys"/> or <paramref name="values"/> list.
+        /// <br/>-or-
+        /// <br/>The <paramref name="comparer"/> returned inconsistent results.</exception>
         /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
         public static bool Sort<TKey, TValue>(IAsyncContext? context, IList<TKey> keys, IList<TValue>? values, int index, int count, IComparer<TKey>? comparer = null)
         {
@@ -1109,6 +1167,11 @@ namespace KGySoft.Threading
                 Throw.ArgumentNullException(Argument.keys);
             if (values == null)
                 return Sort(context, keys, index, count, comparer);
+
+            if (keys is IList { IsReadOnly: true } || keys is not IList && keys.IsReadOnly)
+                Throw.ArgumentException(Argument.list, Res.ICollectionReadOnlyModifyNotSupported);
+            if (values is IList { IsReadOnly: true } || values is not IList && values.IsReadOnly)
+                Throw.ArgumentException(Argument.values, Res.ICollectionReadOnlyModifyNotSupported);
             if (index < 0)
                 Throw.ArgumentOutOfRangeException(Argument.index);
             if (count < 0)
@@ -1143,7 +1206,7 @@ namespace KGySoft.Threading
         /// </remarks>
         /// <exception cref="ArgumentException">The <see cref="ArraySection{T}.IsNull"/> property of <paramref name="values"/> is <see langword="false"/> and <paramref name="values"/> has fewer elements than <paramref name="keys"/>.
         /// <br/>-or-
-        /// The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <br/>The <paramref name="comparer"/> returned inconsistent results.</exception>
         /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
         public static bool Sort<TKey, TValue>(IAsyncContext? context, ArraySection<TKey> keys, ArraySection<TValue> values, IComparer<TKey>? comparer = null)
         {
@@ -1182,7 +1245,7 @@ namespace KGySoft.Threading
         /// </remarks>
         /// <exception cref="ArgumentException">The <see cref="CastArray{TFrom,TTo}.IsNull"/> property of <paramref name="values"/> is <see langword="false"/> and <paramref name="values"/> has fewer elements than <paramref name="keys"/>.
         /// <br/>-or-
-        /// The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <br/>The <paramref name="comparer"/> returned inconsistent results.</exception>
         /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
         public static bool Sort<TKeyFrom, TKeyTo, TValueFrom, TValueTo>(IAsyncContext? context, CastArray<TKeyFrom, TKeyTo> keys, CastArray<TValueFrom, TValueTo> values, IComparer<TKeyTo>? comparer = null)
             where TKeyFrom : unmanaged
@@ -1227,10 +1290,15 @@ namespace KGySoft.Threading
         /// <para>This method is not a blocking call even if the <see cref="AsyncConfigBase.MaxDegreeOfParallelism"/> property of the <paramref name="asyncConfig"/> parameter is 1.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="list"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="list"/> is read-only.</exception>
         public static IAsyncResult BeginSort<T>(IList<T> list, IComparer<T>? comparer = null, AsyncConfig? asyncConfig = null)
         {
             if (list == null!)
                 Throw.ArgumentNullException(Argument.array);
+
+            // If implements the non-generic IList, checking its IsReadOnly, which can be false for array-like fixed-size collections
+            if (list is IList { IsReadOnly: true } || list is not IList && list.IsReadOnly)
+                Throw.ArgumentException(Argument.list, Res.ICollectionReadOnlyModifyNotSupported);
 
             int count = list.Count;
             if (count < 2)
@@ -1262,11 +1330,17 @@ namespace KGySoft.Threading
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="list"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> or <paramref name="count"/> is less than 0.</exception>
-        /// <exception cref="ArgumentException">The <paramref name="index"/> and <paramref name="count"/> do not denote a valid range in the <paramref name="list"/>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="list"/> is read-only.
+        /// <br/>-or-
+        /// <br/>The <paramref name="index"/> and <paramref name="count"/> do not denote a valid range in the <paramref name="list"/>.</exception>
         public static IAsyncResult BeginSort<T>(IList<T> list, int index, int count, IComparer<T>? comparer = null, AsyncConfig? asyncConfig = null)
         {
             if (list == null!)
                 Throw.ArgumentNullException(Argument.list);
+
+            // If implements the non-generic IList, checking its IsReadOnly, which can be false for array-like fixed-size collections
+            if (list is IList { IsReadOnly: true } || list is not IList && list.IsReadOnly)
+                Throw.ArgumentException(Argument.list, Res.ICollectionReadOnlyModifyNotSupported);
             if (index < 0)
                 Throw.ArgumentOutOfRangeException(Argument.index);
             if (count < 0)
@@ -1349,7 +1423,9 @@ namespace KGySoft.Threading
         /// <para>This method is not a blocking call even if the <see cref="AsyncConfigBase.MaxDegreeOfParallelism"/> property of the <paramref name="asyncConfig"/> parameter is 1.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="keys"/> or <paramref name="values"/> is <see langword="null"/>.</exception>
-        /// <exception cref="ArgumentException"><paramref name="values"/> is not <see langword="null"/> and <paramref name="values"/> has fewer elements than <paramref name="keys"/>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="keys"/> or <paramref name="values"/> is read-only.
+        /// <br/>-or-
+        /// <br/><paramref name="values"/> is not <see langword="null"/> and <paramref name="values"/> has fewer elements than <paramref name="keys"/>.</exception>
         public static IAsyncResult BeginSort<TKey, TValue>(IList<TKey> keys, IList<TValue>? values, IComparer<TKey>? comparer = null, AsyncConfig? asyncConfig = null)
         {
             if (keys == null!)
@@ -1383,13 +1459,20 @@ namespace KGySoft.Threading
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="keys"/> or <paramref name="values"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> or <paramref name="count"/> is less than 0.</exception>
-        /// <exception cref="ArgumentException">The <paramref name="index"/> and <paramref name="count"/> do not denote a valid range in the <paramref name="keys"/> or <paramref name="values"/> list.</exception>
+        /// <exception cref="ArgumentException"><paramref name="keys"/> or <paramref name="values"/> is read-only.
+        /// <br/>-or-
+        /// <br/>The <paramref name="index"/> and <paramref name="count"/> do not denote a valid range in the <paramref name="keys"/> or <paramref name="values"/> list.</exception>
         public static IAsyncResult BeginSort<TKey, TValue>(IList<TKey> keys, IList<TValue>? values, int index, int count, IComparer<TKey>? comparer = null, AsyncConfig? asyncConfig = null)
         {
             if (keys == null!)
                 Throw.ArgumentNullException(Argument.keys);
             if (values == null)
                 return BeginSort(keys, index, count, comparer, asyncConfig);
+
+            if (keys is IList { IsReadOnly: true } || keys is not IList && keys.IsReadOnly)
+                Throw.ArgumentException(Argument.list, Res.ICollectionReadOnlyModifyNotSupported);
+            if (values is IList { IsReadOnly: true } || values is not IList && values.IsReadOnly)
+                Throw.ArgumentException(Argument.values, Res.ICollectionReadOnlyModifyNotSupported);
             if (index < 0)
                 Throw.ArgumentOutOfRangeException(Argument.index);
             if (count < 0)
@@ -1513,7 +1596,9 @@ namespace KGySoft.Threading
         /// <para>This method is not a blocking call even if the <see cref="AsyncConfigBase.MaxDegreeOfParallelism"/> property of the <paramref name="asyncConfig"/> parameter is 1.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="list"/> is <see langword="null"/>.</exception>
-        /// <exception cref="ArgumentException">The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <exception cref="ArgumentException"><paramref name="list"/> is read-only.
+        /// <br/>-or-
+        /// <br/>The <paramref name="comparer"/> returned inconsistent results.</exception>
         /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
         /// <exception cref="TaskCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/>
         /// in <paramref name="asyncConfig"/> was <see langword="true"/>. This exception is thrown when the result is awaited.</exception>
@@ -1521,6 +1606,10 @@ namespace KGySoft.Threading
         {
             if (list == null!)
                 Throw.ArgumentNullException(Argument.array);
+
+            // If implements the non-generic IList, checking its IsReadOnly, which can be false for array-like fixed-size collections
+            if (list is IList { IsReadOnly: true } || list is not IList && list.IsReadOnly)
+                Throw.ArgumentException(Argument.list, Res.ICollectionReadOnlyModifyNotSupported);
 
             int count = list.Count;
             if (count < 2)
@@ -1551,9 +1640,11 @@ namespace KGySoft.Threading
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="list"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> or <paramref name="count"/> is less than 0.</exception>
-        /// <exception cref="ArgumentException">The <paramref name="index"/> and <paramref name="count"/> do not denote a valid range in the <paramref name="list"/>.
+        /// <exception cref="ArgumentException"><paramref name="list"/> is read-only.
         /// <br/>-or-
-        /// The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <br/>The <paramref name="index"/> and <paramref name="count"/> do not denote a valid range in the <paramref name="list"/>.
+        /// <br/>-or-
+        /// <br/>The <paramref name="comparer"/> returned inconsistent results.</exception>
         /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
         /// <exception cref="TaskCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/>
         /// in <paramref name="asyncConfig"/> was <see langword="true"/>. This exception is thrown when the result is awaited.</exception>
@@ -1561,6 +1652,10 @@ namespace KGySoft.Threading
         {
             if (list == null!)
                 Throw.ArgumentNullException(Argument.list);
+
+            // If implements the non-generic IList, checking its IsReadOnly, which can be false for array-like fixed-size collections
+            if (list is IList { IsReadOnly: true } || list is not IList && list.IsReadOnly)
+                Throw.ArgumentException(Argument.list, Res.ICollectionReadOnlyModifyNotSupported);
             if (index < 0)
                 Throw.ArgumentOutOfRangeException(Argument.index);
             if (count < 0)
@@ -1648,9 +1743,11 @@ namespace KGySoft.Threading
         /// <para>This method is not a blocking call even if the <see cref="AsyncConfigBase.MaxDegreeOfParallelism"/> property of the <paramref name="asyncConfig"/> parameter is 1.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="keys"/> or <paramref name="values"/> is <see langword="null"/>.</exception>
-        /// <exception cref="ArgumentException"><paramref name="values"/> is not <see langword="null"/> and <paramref name="values"/> has fewer elements than <paramref name="keys"/>.
+        /// <exception cref="ArgumentException"><paramref name="keys"/> or <paramref name="values"/> is read-only.
         /// <br/>-or-
-        /// The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <br/><paramref name="values"/> is not <see langword="null"/> and <paramref name="values"/> has fewer elements than <paramref name="keys"/>.
+        /// <br/>-or-
+        /// <br/>The <paramref name="comparer"/> returned inconsistent results.</exception>
         /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
         /// <exception cref="TaskCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/>
         /// in <paramref name="asyncConfig"/> was <see langword="true"/>. This exception is thrown when the result is awaited.</exception>
@@ -1686,9 +1783,11 @@ namespace KGySoft.Threading
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="keys"/> or <paramref name="values"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> or <paramref name="count"/> is less than 0.</exception>
-        /// <exception cref="ArgumentException">The <paramref name="index"/> and <paramref name="count"/> do not denote a valid range in the <paramref name="keys"/> or <paramref name="values"/> list.
+        /// <exception cref="ArgumentException"><paramref name="keys"/> or <paramref name="values"/> is read-only.
         /// <br/>-or-
-        /// The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <br/>The <paramref name="index"/> and <paramref name="count"/> do not denote a valid range in the <paramref name="keys"/> or <paramref name="values"/> list.
+        /// <br/>-or-
+        /// <br/>The <paramref name="comparer"/> returned inconsistent results.</exception>
         /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
         /// <exception cref="TaskCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/>
         /// in <paramref name="asyncConfig"/> was <see langword="true"/>. This exception is thrown when the result is awaited.</exception>
@@ -1698,6 +1797,11 @@ namespace KGySoft.Threading
                 Throw.ArgumentNullException(Argument.keys);
             if (values == null)
                 return SortAsync(keys, index, count, comparer, asyncConfig);
+
+            if (keys is IList { IsReadOnly: true } || keys is not IList && keys.IsReadOnly)
+                Throw.ArgumentException(Argument.list, Res.ICollectionReadOnlyModifyNotSupported);
+            if (values is IList { IsReadOnly: true } || values is not IList && values.IsReadOnly)
+                Throw.ArgumentException(Argument.values, Res.ICollectionReadOnlyModifyNotSupported);
             if (index < 0)
                 Throw.ArgumentOutOfRangeException(Argument.index);
             if (count < 0)
@@ -1730,7 +1834,7 @@ namespace KGySoft.Threading
         /// </remarks>
         /// <exception cref="ArgumentException">The <see cref="ArraySection{T}.IsNull"/> property of <paramref name="values"/> is <see langword="false"/> and <paramref name="values"/> has fewer elements than <paramref name="keys"/>.
         /// <br/>-or-
-        /// The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <br/>The <paramref name="comparer"/> returned inconsistent results.</exception>
         /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
         /// <exception cref="TaskCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/>
         /// in <paramref name="asyncConfig"/> was <see langword="true"/>. This exception is thrown when the result is awaited.</exception>
@@ -1769,7 +1873,7 @@ namespace KGySoft.Threading
         /// </remarks>
         /// <exception cref="ArgumentException">The <see cref="CastArray{TFrom,TTo}.IsNull"/> property of <paramref name="values"/> is <see langword="false"/> and <paramref name="values"/> has fewer elements than <paramref name="keys"/>.
         /// <br/>-or-
-        /// The <paramref name="comparer"/> returned inconsistent results.</exception>
+        /// <br/>The <paramref name="comparer"/> returned inconsistent results.</exception>
         /// <exception cref="InvalidOperationException"><paramref name="comparer"/> is <see langword="null"/>, and an element does not implement the <see cref="IComparable{T}"/> interface.</exception>
         /// <exception cref="TaskCanceledException">The operation has been canceled and <see cref="AsyncConfigBase.ThrowIfCanceled"/>
         /// in <paramref name="asyncConfig"/> was <see langword="true"/>. This exception is thrown when the result is awaited.</exception>
