@@ -317,7 +317,7 @@ namespace KGySoft.Collections
                 Throw.ArgumentOutOfRangeException(Argument.width);
             this.height = height;
             this.width = width;
-            buffer = new ArraySection<T>(height * width, assureClean);
+            buffer = new ArraySection<T>(checked(height * width), assureClean);
         }
 
         /// <summary>

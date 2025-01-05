@@ -761,7 +761,7 @@ namespace KGySoft.Collections
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public readonly T GetElementUnchecked(int index)
         {
-            // In .NET 9 the followingS check makes this method even slower than the indexer. Which is strange because .NET 8 has a much better performance. See ArraySectionPerformanceTest.CastTest
+            // In .NET 9 the following check makes this method even slower than the indexer. Which is strange because .NET 8 has a much better performance. See ArraySectionPerformanceTest.CastTest
             //if (IsNull)
             //    Throw.IndexOutOfRangeException();
             return GetItemInternal(index);

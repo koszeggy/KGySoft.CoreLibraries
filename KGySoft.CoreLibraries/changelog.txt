@@ -11,10 +11,10 @@
 
 ! Assembly changes:
 ===================
-! Dropping support for .NET Core 2.0 and .NET Core 2.1. Manual compilation for these platforms is still possible
+! Dropping support for .NET Core 2.0 and .NET Core 2.1. Manual compilation for these platforms is still possible,
   but the public NuGet packages are not going to support these platforms anymore. If you target these platforms in
-  your project, the v9.0.0 version will map to the .NET Standard 2.0 build instead, which may be a breaking change
-  if you relied on features that were available only in the .NET Core 2.0/2.1 build.
+  your project, the v9.0.0 version of the NuGet package will pick the .NET Standard 2.0 build instead, which may be
+  a breaking change if you relied on features that were available only in the .NET Core 2.0/2.1 builds.
 + Targeting also .NET 9.0.
 
 ! KGySoft.CoreLibraries namespace:
@@ -22,7 +22,7 @@
 ! ObjectExtensions class:
   ! DeepClone method overloads: In the (T, bool) overload (obsolete since v5.6.1) the bool parameter is no longer
     optional, whereas in the (T, Func<object, object>) overload the delegate parameter is now optional. Meaning, if
-    no optional parameters are specified, then the new, non-obsolete overload is called automatically.
+    no optional parameters are specified, then after a rebuild, the new, non-obsolete overload will be called.
 + ArrayExtensions class:
   + New Cast/Cast2D/Cast3D methods to reinterpret the element type of arrays and ArraySegment<T> instances.
 + StringSegmentComparer class:
@@ -38,11 +38,17 @@
     to reference any element in the underlying array.
   + New Cast/Cast2D/Cast3D methods to reinterpret the element type.
   + New Fill method.
-+ Array2D<T> struct:
-  + New GetElementUnchecked/SetElementUnchecked/GetElementReferenceUnchecked methods: To omit length check, allowing
+! Array2D<T> struct:
+  ! From now on, the self-allocating constructor calculates the required length in checked context, which throws an
+    OverflowException for too large dimensions. Though this is actually a bug fix, it is considered as a breaking
+    change because of the different exception type.
+  + New GetElementUnchecked/SetElementUnchecked/GetElementReferenceUnchecked methods to omit length check, allowing
     to reference any element in the underlying array.
-+ Array3D<T> struct:
-  + New GetElementUnchecked/SetElementUnchecked/GetElementReferenceUnchecked methods: To omit length check, allowing
+! Array3D<T> struct:
+  ! From now on, the self-allocating constructor calculates the required length in checked context, which throws an
+    OverflowException for too large dimensions. Though this is actually a bug fix, it is considered as a breaking
+    change because of the different exception type.
+  + New GetElementUnchecked/SetElementUnchecked/GetElementReferenceUnchecked methods to omit length check, allowing
     to reference any element in the underlying array.
 + New CastArray<TFrom, TTo> struct to allow reinterpreting arrays of unmanaged element type on any platform target.
 + New CastArray2D<TFrom, TTo> struct: Like Array2D<T> but allows reinterpreting the original unmanaged element type.

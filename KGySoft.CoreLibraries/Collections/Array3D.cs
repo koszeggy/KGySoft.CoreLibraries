@@ -332,8 +332,8 @@ namespace KGySoft.Collections
             this.depth = depth;
             this.height = height;
             this.width = width;
-            planeSize = height * width;
-            buffer = new ArraySection<T>(depth * planeSize, assureClean);
+            planeSize = checked(height * width);
+            buffer = new ArraySection<T>(checked(depth * planeSize), assureClean);
         }
 
         /// <summary>
