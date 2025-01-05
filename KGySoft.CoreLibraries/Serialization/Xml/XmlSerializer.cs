@@ -54,10 +54,11 @@ namespace KGySoft.Serialization.Xml
     /// <summary>
     /// <see cref="XmlSerializer"/> makes possible serializing and deserializing objects into/from XML content. The class contains various overloads to support serializing directly into file or by
     /// <see cref="XElement"/>, <see cref="XmlWriter"/>, any <see cref="TextWriter"/> and any <see cref="Stream"/> implementations.
+    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Serialization_Xml_XmlSerializer.htm">online help</a> for a more detailed description with examples.</div>
     /// </summary>
     /// <remarks>
     /// <note type="security">The <see cref="XmlSerializer"/> supports polymorphism and stores type information whenever the type of a member or collection element differs from the
-    /// type of the member or collection element type. If the XML content to deserialize is from an untrusted source (eg. remote service, file or database) make sure to use
+    /// type of the member or collection element type. If the XML content to deserialize is from an untrusted source (e.g. remote service, file or database) make sure to use
     /// the <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.DeserializeSafe">DeserializeSafe</see> or <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.DeserializeContentSafe">DeserializeContentSafe</see>
     /// methods to prevent resolving any type names during the deserialization. They require to specify every natively not supported type that can occur in the serialized data whose names then will be mapped to the specified expected types.</note>
     /// <para><see cref="XmlSerializer"/> supports serialization of any simple types and complex objects with their public properties and fields as well as several collection types.
@@ -85,6 +86,68 @@ namespace KGySoft.Serialization.Xml
     /// <see cref="XElement"/> node or by an <see cref="XmlWriter"/>, which already opened and XML element before calling the <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.SerializeContent">SerializeContent</see> method. When deserializing,
     /// the result object should be created by the caller, and the content can be deserialized by the <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.DeserializeContent">DeserializeContent</see> methods.</note>
     /// </para>
+    /// </remarks>
+    /// <example>
+    /// <note type="tip">Try also <a href="https://dotnetfiddle.net/M2dfrx" target="_blank">online</a>.</note>
+    /// <code lang="C#"><![CDATA[
+    /// using System;
+    /// using System.IO;
+    /// using System.Text;
+    /// using System.ComponentModel;
+    /// using System.Collections.Generic;
+    /// using System.Collections.ObjectModel;
+    /// using System.Xml.Linq;
+    /// using KGySoft.CoreLibraries;
+    /// using KGySoft.Serialization.Xml;
+    /// 
+    /// // A good candidate for XML serialization:
+    /// public class Person
+    /// {
+    ///     public string FirstName { get; set; }
+    /// 
+    ///     [DefaultValue(null)] // will not be serialized if null
+    ///     public string MiddleName { get; set; }
+    /// 
+    ///     public string LastName { get; set; }
+    /// 
+    ///     public DateTime BirthDate { get; set; }
+    /// 
+    ///     // System serializer fails here: the property has no setter and its type cannot be instantiated.
+    ///     public IList<string> PhoneNumbers { get; } = new Collection<string>();
+    /// }
+    /// 
+    /// public class Program
+    /// {
+    ///     public static void Main()
+    ///     {
+    ///         var person = ThreadSafeRandom.Instance.NextObject<Person>();
+    ///         var options = XmlSerializationOptions.RecursiveSerializationAsFallback;
+    /// 
+    ///         // serializing into XElement
+    ///         XElement element = XmlSerializer.Serialize(person, options);
+    ///         var clone = (Person)XmlSerializer.Deserialize(element);
+    /// 
+    ///         // serializing into file/Stream/TextWriter/XmlWriter are also supported: An XmlWriter will be used
+    ///         var sb = new StringBuilder();
+    ///         XmlSerializer.Serialize(new StringWriter(sb), person, options);
+    ///         clone = (Person)XmlSerializer.Deserialize(new StringReader(sb.ToString()));
+    /// 
+    ///         Console.WriteLine(sb);
+    ///     }
+    /// }
+    /// 
+    /// // This code example produces a similar output to this one:
+    /// // <?xml version="1.0" encoding="utf-16"?>
+    /// // <object type="Person">
+    /// //   <FirstName>Uehaccuj</FirstName>
+    /// //   <MiddleName>Rnig</MiddleName>
+    /// //   <LastName>Iuvmozu</LastName>
+    /// //   <BirthDate>1996-06-02T00:00:00Z</BirthDate>
+    /// //   <PhoneNumbers type="System.Collections.ObjectModel.Collection`1[System.String]">
+    /// //     <item>694677853</item>
+    /// //     <item>6344</item>
+    /// //   </PhoneNumbers>
+    /// // </object>]]></code>
     /// <h2>Options</h2>
     /// <para>By specifying the <see cref="XmlSerializationOptions"/> argument in the <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.Serialize">Serialize</see> and <see cref="O:KGySoft.Serialization.Xml.XmlSerializer.SerializeContent">SerializeContent</see>
     /// methods you can override the default behavior of serialization. The <see cref="XmlSerializationOptions.None"/> option and the default <c>options</c> parameter value of the serialization methods ensure that
@@ -186,7 +249,7 @@ namespace KGySoft.Serialization.Xml
     /// can be deserialized perfectly, whereas <see cref="XmlSerializationOptions.BinarySerializationAsFallback"/> may successfully serialize also the comparer
     /// but for safe mode deserialization it may be needed to specify also the comparer as an expected custom type.</note>
     /// </para>
-    /// <h2>Comparison with System.Xml.Serialization.XmlSerializer</h2>
+    /// <h2>Comparison with <c>System.Xml.Serialization.XmlSerializer</c></h2>
     /// <para><strong>New features and improvements</strong> compared to <a href="https://learn.microsoft.com/en-us/dotnet/api/system.xml.serialization.xmlserializer" target="_blank">System.Xml.Serialization.XmlSerializer</a>:
     /// <list type="bullet">
     /// <item><term>Strings</term><description>If a string contains only white spaces, then system <see cref="System.Xml.Serialization.XmlSerializer"/> cannot deserialize it properly. <see cref="string"/> instances containing
@@ -199,68 +262,6 @@ namespace KGySoft.Serialization.Xml
     /// <item><term>Objects without default constructors</term><description>The system serializer requires that the deserialized types have default constructors. On deserializing fields and properties, this <see cref="XmlSerializer"/> implementation
     /// is able to use the returned value of the members. If they are not <see langword="null"/> after creating their container object, then the returned instances can be reused instead of creating a new instance.</description></item>
     /// </list></para>
-    /// </remarks>
-    /// <example>
-    /// <note type="tip">Try also <a href="https://dotnetfiddle.net/M2dfrx" target="_blank">online</a>.</note>
-    /// <code lang="C#"><![CDATA[
-    /// using System;
-    /// using System.IO;
-    /// using System.Text;
-    /// using System.ComponentModel;
-    /// using System.Collections.Generic;
-    /// using System.Collections.ObjectModel;
-    /// using System.Xml.Linq;
-    /// using KGySoft.CoreLibraries;
-    /// using KGySoft.Serialization.Xml;
-    /// 
-    /// // A good candidate for XML serialization:
-    /// public class Person
-    /// {
-    ///     public string FirstName { get; set; }
-    /// 
-    ///     [DefaultValue(null)] // will not be serialized if null
-    ///     public string MiddleName { get; set; }
-    /// 
-    ///     public string LastName { get; set; }
-    /// 
-    ///     public DateTime BirthDate { get; set; }
-    /// 
-    ///     // System serializer fails here: the property has no setter and its type cannot be instantiated.
-    ///     public IList<string> PhoneNumbers { get; } = new Collection<string>();
-    /// }
-    /// 
-    /// public class Program
-    /// {
-    ///     public static void Main()
-    ///     {
-    ///         var person = ThreadSafeRandom.Instance.NextObject<Person>();
-    ///         var options = XmlSerializationOptions.RecursiveSerializationAsFallback;
-    /// 
-    ///         // serializing into XElement
-    ///         XElement element = XmlSerializer.Serialize(person, options);
-    ///         var clone = (Person)XmlSerializer.Deserialize(element);
-    /// 
-    ///         // serializing into file/Stream/TextWriter/XmlWriter are also supported: An XmlWriter will be used
-    ///         var sb = new StringBuilder();
-    ///         XmlSerializer.Serialize(new StringWriter(sb), person, options);
-    ///         clone = (Person)XmlSerializer.Deserialize(new StringReader(sb.ToString()));
-    /// 
-    ///         Console.WriteLine(sb);
-    ///     }
-    /// }
-    /// 
-    /// // This code example produces a similar output to this one:
-    /// // <?xml version="1.0" encoding="utf-16"?>
-    /// // <object type="Person">
-    /// //   <FirstName>Uehaccuj</FirstName>
-    /// //   <MiddleName>Rnig</MiddleName>
-    /// //   <LastName>Iuvmozu</LastName>
-    /// //   <BirthDate>1996-06-02T00:00:00Z</BirthDate>
-    /// //   <PhoneNumbers type="System.Collections.ObjectModel.Collection`1[System.String]">
-    /// //     <item>694677853</item>
-    /// //     <item>6344</item>
-    /// //   </PhoneNumbers>
-    /// // </object>]]></code>
     /// </example>
     /// <seealso cref="XmlSerializationOptions"/>
     /// <seealso cref="BinarySerializer"/>

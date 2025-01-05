@@ -42,6 +42,7 @@ namespace KGySoft.ComponentModel
 {
     /// <summary>
     /// Provides a generic list that is able to notify its consumer about changes and supports data binding.
+    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_ComponentModel_FastBindingList_1.htm">online help</a> for a more detailed description.</div>
     /// </summary>
     /// <typeparam name="T">The type of elements in the list.</typeparam>
     /// <remarks>
@@ -49,7 +50,9 @@ namespace KGySoft.ComponentModel
     /// in <see cref="FastBindingList{T}"/> is an O(1) operation. In contrast, element lookup in <see cref="BindingList{T}"/> is an O(n) operation, which makes
     /// <see cref="BindingList{T}.AddNew"><![CDATA[BindingList<T>.AddNew]]></see> and <see cref="BindingList{T}.ListChanged"><![CDATA[BindingList<T>.ListChanged]]></see> invocation (when an element is changed)
     /// slow because they call the <see cref="Collection{T}.IndexOf"><![CDATA[Collection{T}.IndexOf]]></see> method to determine the position of the added or changed element.</note>
-    /// <h2>Comparison with <see cref="BindingList{T}"/></h2>
+    /// </remarks>
+    /// <example>
+    /// <para>This section provides some examples for feature comparisons with <see cref="BindingList{T}"/>.</para>
     /// <para><strong>Incompatibility</strong> with <see cref="BindingList{T}"/>:
     /// <list type="bullet">
     /// <item><see cref="BindingList{T}"/> is derived from <see cref="Collection{T}"/>, whereas <see cref="FastBindingList{T}"/> is derived from <see cref="FastLookupCollection{T}"/>, which is derived from <see cref="VirtualCollection{T}"/>.
@@ -92,7 +95,7 @@ namespace KGySoft.ComponentModel
     /// </list>
     /// </para>
     /// <note type="tip"><see cref="FastBindingList{T}"/> does not implement sorting. See the derived <see cref="SortableBindingList{T}"/> class for an <see cref="IBindingList"/> implementation with sorting support.</note>
-    /// </remarks>
+    /// </example>
     [Serializable]
     public class FastBindingList<T> : FastLookupCollection<T>, IBindingList, ICancelAddNew, IRaiseItemChangedEvents, IDisposable
     {

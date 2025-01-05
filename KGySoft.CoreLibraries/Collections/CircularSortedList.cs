@@ -41,13 +41,36 @@ namespace KGySoft.Collections
     /// Represents a dictionary of key/value pairs that are sorted by key based on the associated <see cref="IComparer{T}"/> implementation.
     /// The dictionary behaves as list as well, as it has a direct indexed access to the elements through <see cref="Keys"/> and <see cref="Values"/> properties or by the <see cref="ElementAt">ElementAt</see> method.
     /// <see cref="CircularSortedList{TKey,TValue}"/> is fully compatible with <see cref="SortedList{TKey,TValue}"/>, but is generally faster than that.
+    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Collections_CircularSortedList_2.htm">online help</a> for a more detailed description.</div>
     /// </summary>
     /// <typeparam name="TKey">Type of the keys stored in the sorted list.</typeparam>
     /// <typeparam name="TValue">Type of the values stored in the sorted list.</typeparam>
     /// <remarks>
     /// <para>
     /// The <see cref="CircularSortedList{TKey,TValue}"/> generic class is an array of key/value pairs with O(log n) retrieval,
-    /// where n is the number of elements in the dictionary. In that regard it is similar to the <see cref="SortedList{TKey,TValue}"/> and <see cref="SortedDictionary{TKey,TValue}"/> generic classes.
+    /// where n is the number of elements in the dictionary.</para>
+    /// <para>Similarly to <see cref="SortedList{TKey,TValue}"/>, <see cref="CircularSortedList{TKey,TValue}"/> supports efficient indexed retrieval of keys and values through the collections returned by the <see cref="Keys"/> and <see cref="Values"/> properties.
+    /// It is not necessary to regenerate the lists when the properties are accessed, because the lists are just wrappers for the internal arrays of keys and values.</para>
+    /// <para><see cref="CircularSortedList{TKey,TValue}"/> is implemented as a pair of <see cref="CircularList{T}"/> of key/value pairs, sorted by the key. Each element can be retrieved as a <see cref="KeyValuePair{TKey,TValue}"/> object.</para>
+    /// <para>Key objects must be immutable as long as they are used as keys in the <see cref="CircularSortedList{TKey,TValue}"/>. Every key in a <see cref="CircularSortedList{TKey,TValue}"/> must be unique.
+    /// A key cannot be <see langword="null"/>, but a value can be, if the type of values in the list, <typeparamref name="TValue"/>, is a reference type, or is a <see cref="Nullable{T}"/> type.</para>
+    /// <para><see cref="CircularSortedList{TKey,TValue}"/> requires a comparer implementation to sort and to perform comparisons.
+    /// If comparer is not defined when <see cref="CircularSortedList{TKey,TValue}"/> is instantiated by one of the constructors, the comparer will be chosen automatically.
+    /// Only when targeting the .NET Framework, if <typeparamref name="TKey"/> is an <see langword="enum"/> type, then the comparer will be the <see cref="EnumComparer{TEnum}.Comparer"><![CDATA[EnumComparer<TEnum>.Comparer]]></see>.
+    /// Otherwise, the default comparer <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> will be chosen. The default comparer checks whether the key type <typeparamref name="TKey"/> implements <see cref="IComparable{T}"/> and uses that implementation, if available.
+    /// If not, <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> checks whether the key type <typeparamref name="TKey"/> implements <see cref="IComparable"/>. If the key type <typeparamref name="TKey"/> does not implement
+    /// either interface, you can specify an <see cref="IComparable{T}"/> implementation in a constructor overload that accepts a comparer parameter.</para>
+    /// <para>The capacity of a <see cref="CircularSortedList{TKey,TValue}"/> is the number of elements the <see cref="CircularSortedList{TKey,TValue}"/> can hold. As elements are added to a <see cref="CircularSortedList{TKey,TValue}"/>,
+    /// the capacity is automatically increased as required by reallocating the internal array. The capacity can be decreased by calling <see cref="TrimExcess">TrimExcess</see> or by setting the <see cref="Capacity"/> property explicitly.
+    /// Decreasing the capacity reallocates memory and copies all the elements in the <see cref="CircularSortedList{TKey,TValue}"/>.</para>
+    /// </remarks>
+    /// <example>
+    /// <para><see cref="CircularSortedList{TKey,TValue}"/> implements <see cref="IList{T}"/> as well, so it can be indexed directly when cast to <see cref="IList{T}"/> or though the <see cref="AsList"/> property:
+    /// <code lang="C#"><![CDATA[KeyValuePair<int, string> firstItem = myCircularSortedList.AsList[0];]]></code>
+    /// Setting the <see cref="P:System.Collections.Generic.IList`1.Item(System.Int32)">IList&lt;T&gt;.Item</see> property or using the <see cref="IList{T}.Insert">IList&lt;T&gt;.Insert</see> method throws
+    /// a <see cref="NotSupportedException"/> for <see cref="CircularSortedList{TKey,TValue}"/>, as the position of an element cannot be set directly, it always depends on the comparer implementation.</para>
+    /// <h2>Comparison with <c>SortedList</c> and <c>SortedDictionary</c> classes</h2>
+    /// <see cref="CircularSortedList{TKey,TValue}"/> is similar to the <see cref="SortedList{TKey,TValue}"/> and <see cref="SortedDictionary{TKey,TValue}"/> generic classes.
     /// These three classes serve a similar purpose, and all have O(log n) retrieval. Where the three classes differ is in memory use and speed of insertion and removal:
     /// <list type="table">
     /// <listheader><term>Collection type</term><description>Behavior</description></listheader>
@@ -89,26 +112,7 @@ namespace KGySoft.Collections
     /// </list>
     /// </description></item>
     /// </list>
-    /// </para>
-    /// <para>Similarly to <see cref="SortedList{TKey,TValue}"/>, <see cref="CircularSortedList{TKey,TValue}"/> supports efficient indexed retrieval of keys and values through the collections returned by the <see cref="Keys"/> and <see cref="Values"/> properties.
-    /// It is not necessary to regenerate the lists when the properties are accessed, because the lists are just wrappers for the internal arrays of keys and values.</para>
-    /// <para><see cref="CircularSortedList{TKey,TValue}"/> is implemented as a pair of <see cref="CircularList{T}"/> of key/value pairs, sorted by the key. Each element can be retrieved as a <see cref="KeyValuePair{TKey,TValue}"/> object.</para>
-    /// <para>Key objects must be immutable as long as they are used as keys in the <see cref="CircularSortedList{TKey,TValue}"/>. Every key in a <see cref="CircularSortedList{TKey,TValue}"/> must be unique.
-    /// A key cannot be <see langword="null"/>, but a value can be, if the type of values in the list, <typeparamref name="TValue"/>, is a reference type, or is a <see cref="Nullable{T}"/> type.</para>
-    /// <para><see cref="CircularSortedList{TKey,TValue}"/> implements <see cref="IList{T}"/> as well, so it can be indexed directly when cast to <see cref="IList{T}"/> or though the <see cref="AsList"/> property:
-    /// <code lang="C#"><![CDATA[KeyValuePair<int, string> firstItem = myCircularSortedList.AsList[0];]]></code>
-    /// Setting the <see cref="P:System.Collections.Generic.IList`1.Item(System.Int32)">IList&lt;T&gt;.Item</see> property or using the <see cref="IList{T}.Insert">IList&lt;T&gt;.Insert</see> method throws
-    /// a <see cref="NotSupportedException"/> for <see cref="CircularSortedList{TKey,TValue}"/>, as the position of an element cannot be set directly, it always depends on the comparer implementation.</para>
-    /// <para><see cref="CircularSortedList{TKey,TValue}"/> requires a comparer implementation to sort and to perform comparisons.
-    /// If comparer is not defined when <see cref="CircularSortedList{TKey,TValue}"/> is instantiated by one of the constructors, the comparer will be chosen automatically.
-    /// Only when targeting the .NET Framework, if <typeparamref name="TKey"/> is an <see langword="enum"/> type, then the comparer will be the <see cref="EnumComparer{TEnum}.Comparer"><![CDATA[EnumComparer<TEnum>.Comparer]]></see>.
-    /// Otherwise, the default comparer <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> will be chosen. The default comparer checks whether the key type <typeparamref name="TKey"/> implements <see cref="IComparable{T}"/> and uses that implementation, if available.
-    /// If not, <see cref="Comparer{T}.Default">Comparer&lt;T&gt;.Default</see> checks whether the key type <typeparamref name="TKey"/> implements <see cref="IComparable"/>. If the key type <typeparamref name="TKey"/> does not implement
-    /// either interface, you can specify an <see cref="IComparable{T}"/> implementation in a constructor overload that accepts a comparer parameter.</para>
-    /// <para>The capacity of a <see cref="CircularSortedList{TKey,TValue}"/> is the number of elements the <see cref="CircularSortedList{TKey,TValue}"/> can hold. As elements are added to a <see cref="CircularSortedList{TKey,TValue}"/>,
-    /// the capacity is automatically increased as required by reallocating the internal array. The capacity can be decreased by calling <see cref="TrimExcess">TrimExcess</see> or by setting the <see cref="Capacity"/> property explicitly.
-    /// Decreasing the capacity reallocates memory and copies all the elements in the <see cref="CircularSortedList{TKey,TValue}"/>.</para>
-    /// </remarks>
+    /// </example>
     [Serializable]
     [DebuggerTypeProxy(typeof(DictionaryDebugView<,>))]
     [DebuggerDisplay("Count = {" + nameof(Count) + "}; TKey = {typeof(" + nameof(TKey) + ").Name}; TValue = {typeof(" + nameof(TValue) + ").Name}")]

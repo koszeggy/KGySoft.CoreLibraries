@@ -51,6 +51,7 @@ namespace KGySoft.Collections
     /// This type is very similar to <see cref="ArraySegment{T}"/>/<see cref="Memory{T}"><![CDATA[Memory<T>]]></see> types but can be used on every platform in the same way,
     /// allows span-like operations such as slicing, and it is faster than <see cref="Memory{T}"><![CDATA[Memory<T>]]></see> in most cases.
     /// Depending on the used platform it supports <see cref="ArrayPool{T}"/> allocation.
+    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Collections_ArraySection_1.htm">online help</a> for examples.</div>
     /// </summary>
     /// <typeparam name="T">The type of the elements in the collection.</typeparam>
     /// <remarks>
@@ -948,7 +949,7 @@ namespace KGySoft.Collections
         {
             // This method is just to clear the poolArray flag from length after deserialization. Applying also on older frameworks because the serialized instance
             // may come from any platform. length &= lengthMask would be more obvious but that would require to make length non-readonly.
-            // NOTE: not using this = Slice(0, length & lengthMask) because if an ArraySection is a field in another struct (eg. Array2D, CastArray, etc.),
+            // NOTE: not using this = Slice(0, length & lengthMask) because if an ArraySection is a field in another struct (e.g. Array2D, CastArray, etc.),
             //       then array is still null when deserializing by BinaryFormatter (would work by BinarySerializationFormatter though, but it supports it natively anyway).
             this = new ArraySection<T>(array, offset, length & lengthMask, default);
         }

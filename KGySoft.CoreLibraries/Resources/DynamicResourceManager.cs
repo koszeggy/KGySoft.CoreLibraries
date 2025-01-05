@@ -40,6 +40,7 @@ namespace KGySoft.Resources
     /// <c>.exe</c> files, and XML resources from <c>.resx</c> files at the same time. Based on the selected strategies when a resource
     /// is not found in a language it can automatically add the missing resource from a base culture or even create completely new resource sets
     /// and save them into <c>.resx</c> files. For text entries the untranslated elements will be marked so they can be found easily for translation.
+    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Resources_DynamicResourceManager.htm">online help</a> for examples with images.</div>
     /// </summary>
     /// <remarks>
     /// <para><see cref="DynamicResourceManager"/> class is derived from <see cref="HybridResourceManager"/> and adds the functionality
@@ -58,7 +59,9 @@ namespace KGySoft.Resources
     /// explicitly add new content and save it (see the example of the <see cref="HybridResourceManager"/> base class).
     /// If you restrict even the source of the resources, then you can get the functionality of the <see cref="ResXResourceManager"/> class (<see cref="Source"/> is <see cref="ResourceManagerSources.ResXOnly"/>),
     /// or the <see cref="ResourceManager"/> class (<see cref="Source"/> is <see cref="ResourceManagerSources.CompiledOnly"/>).</para>
-    /// <h2>Additional features compared to <see cref="HybridResourceManager"/></h2>
+    /// </remarks>
+    /// <example>
+    /// <para>The following section highlights the additional features compared to <see cref="HybridResourceManager"/>:</para>
     /// <para><strong>Centralized vs. individual settings</strong>:
     /// <br/>The behavior of <see cref="DynamicResourceManager"/> instances can be controlled in two ways, which can be configured by the <see cref="UseLanguageSettings"/> property.
     /// <list type="bullet">
@@ -126,8 +129,8 @@ namespace KGySoft.Resources
     /// </root>]]></code></description></item>
     /// <item><term>Appending neutral and specific cultures</term>
     /// <description>The previous section was about expanding the resource file of the invariant culture represented by the <see cref="CultureInfo.InvariantCulture">CultureInfo.InvariantCulture</see> property.
-    /// Every other <see cref="CultureInfo"/> instance can be classified as either a neutral or specific culture. Neutral cultures are region independent (eg. <c>en</c> is the English culture in general), whereas
-    /// specific cultures are related to a specific region (eg. <c>en-US</c> is the American English culture). The parent of a specific culture can be another specific or a neutral one, and the parent
+    /// Every other <see cref="CultureInfo"/> instance can be classified as either a neutral or specific culture. Neutral cultures are region independent (e.g. <c>en</c> is the English culture in general), whereas
+    /// specific cultures are related to a specific region (e.g. <c>en-US</c> is the American English culture). The parent of a specific culture can be another specific or a neutral one, and the parent
     /// of a neutral culture can be another neutral or the invariant culture. In most cases there is one specific and one neutral culture in a full chain, for example:
     /// <br/><c>en-US (specific) -> en (neutral) -> Invariant</c>
     /// <br/>But sometimes there can be more neutral cultures:
@@ -137,9 +140,9 @@ namespace KGySoft.Resources
     /// <br/> There are two groups of options, which control where the untranslated resources should be merged from and to:
     /// <list type="number">
     /// <item><see cref="AutoAppendOptions.AppendFirstNeutralCulture"/>, <see cref="AutoAppendOptions.AppendLastNeutralCulture"/> and <see cref="AutoAppendOptions.AppendNeutralCultures"/> options
-    /// will append the neutral cultures (eg. <c>en</c>) if a requested resource is found in the invariant culture.</item>
+    /// will append the neutral cultures (e.g. <c>en</c>) if a requested resource is found in the invariant culture.</item>
     /// <item><see cref="AutoAppendOptions.AppendFirstSpecificCulture"/> and <see cref="AutoAppendOptions.AppendSpecificCultures"/> options
-    /// will append the specific cultures (eg. <c>en-US</c>) if a requested resource is found in any parent culture. <see cref="AutoAppendOptions.AppendLastSpecificCulture"/> does the same,
+    /// will append the specific cultures (e.g. <c>en-US</c>) if a requested resource is found in any parent culture. <see cref="AutoAppendOptions.AppendLastSpecificCulture"/> does the same,
     /// except that the found resource must be in the resource set of a non-specific culture..</item>
     /// </list>
     /// If the merged resource is a <see cref="string"/>, then the value of the existing resource will be prefixed by the
@@ -510,7 +513,7 @@ namespace KGySoft.Resources
     /// <item>To see how to use dynamically created resources for any language in a live application with editing support see
     /// the <a href="https://github.com/koszeggy/KGySoft.Drawing.Tools" target="_blank">KGySoft.Drawing.Tools</a> GitHub repository.</item>
     /// </list></note>
-    /// </remarks>
+    /// </example>
     [Serializable]
     public class DynamicResourceManager : HybridResourceManager
     {
@@ -579,7 +582,7 @@ namespace KGySoft.Resources
         /// Occurs when an exception is thrown on auto saving. If this event is not subscribed, the following exception types are automatically suppressed,
         /// as they can occur on save: <see cref="IOException"/>, <see cref="SecurityException"/>, <see cref="UnauthorizedAccessException"/>. If such an
         /// exception is suppressed some resources might remain unsaved. Though the event is a static one, the sender of the handler is the corresponding <see cref="DynamicResourceManager"/> instance.
-        /// Thus the save failures of the non public <see cref="DynamicResourceManager"/> instances (eg. resource managers of an assembly) can be tracked, too.
+        /// Thus the save failures of the non public <see cref="DynamicResourceManager"/> instances (e.g. resource managers of an assembly) can be tracked, too.
         /// </summary>
         /// <seealso cref="AutoSave"/>
         public static event EventHandler<AutoSaveErrorEventArgs>? AutoSaveError;

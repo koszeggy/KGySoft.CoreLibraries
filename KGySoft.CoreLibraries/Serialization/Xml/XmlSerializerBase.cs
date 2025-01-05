@@ -51,7 +51,7 @@ using ReferenceEqualityComparer = KGySoft.CoreLibraries.ReferenceEqualityCompare
 
 #region Suppressions
 
-#if !(NETSTANDARD2_1_OR_GREATER && NETCOREAPP3_0_OR_GREATER)
+#if !(NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER)
 #pragma warning disable CS8602 // Dereference of a possibly null reference
 #endif
 
@@ -563,7 +563,7 @@ namespace KGySoft.Serialization.Xml
             if (hasDefaultValue && Equals(value, defaultValue))
                 return true;
 
-            // Skip 4.) The member returns the same reference as the object itself (eg. a self cast to an interface)
+            // Skip 4.) The member returns the same reference as the object itself (e.g. a self cast to an interface)
             return ReferenceEquals(value, obj);
         }
 

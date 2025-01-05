@@ -39,6 +39,7 @@ namespace KGySoft.Reflection
 {
     /// <summary>
     /// Provides an efficient way for invoking methods via dynamically created delegates.
+    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Reflection_MethodAccessor.htm">online help</a> for an example.</div>
     /// </summary>
     /// <remarks>
     /// <para>You can obtain a <see cref="MethodAccessor"/> instance by the static <see cref="GetAccessor">GetAccessor</see> method.</para>

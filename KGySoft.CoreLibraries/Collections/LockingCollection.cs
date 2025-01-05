@@ -31,9 +31,10 @@ namespace KGySoft.Collections
     /// <summary>
     /// Provides a simple wrapper for an <see cref="ICollection{T}"/> where all members are thread-safe.
     /// This only means that the inner state of the wrapped collection remains always consistent and not that all the multi-threading concerns can be ignored.
+    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Collections_LockingCollection_1.htm">online help</a> for a more detailed description with examples.</div>
     /// </summary>
     /// <typeparam name="T">The type of the elements in the collection.</typeparam>
-    /// <remarks>
+    /// <example>
     /// <note>Use this class only if you want to wrap a generic <see cref="ICollection{T}"/> instance to make it thread-safe.
     /// If you want to use a thread-safe hash set optimized for concurrent operations consider to use the <see cref="ThreadSafeHashSet{T}"/> class instead.</note>
     /// <para>Thread safety means that all members of the underlying collection are accessed in a lock, which only provides that the collection remains consistent as long as it is accessed only by the members of this class.
@@ -66,12 +67,12 @@ namespace KGySoft.Collections
     /// <para>To avoid confusion, the non-generic <see cref="ICollection"/> interface is not implemented by the <see cref="LockingCollection{T}"/> class because it uses a different aspect of synchronization.</para>
     /// <para>The <see cref="GetEnumerator">GetEnumerator</see> method creates a snapshot of the underlying collection so obtaining the enumerator has an O(n) cost on this class.</para>
     /// <para><note>Starting with .NET 4 a sort of concurrent collections appeared. While they provide good scalability for multiple concurrent readers by using separate locks for entries or for a set of entries,
-    /// in many situations they perform worse than a simple locking collection, especially if the collection to lock uses a fast accessible storage (eg. an array) internally. It also may worth to mention that some members
+    /// in many situations they perform worse than a simple locking collection, especially if the collection to lock uses a fast accessible storage (e.g. an array) internally. It also may worth to mention that some members
     /// (such as the <c>Count</c> property) are surprisingly expensive operations on most concurrent collections as they traverse the inner storage and in the meantime they lock all entries while counting the elements.
     /// So it always depends on the concrete scenario whether a simple locking collection or a concurrent collection is more beneficial to use.</note>
     /// <note type="tip">To use a thread-safe hash set without wrapping any <see cref="ICollection{T}"/> instance consider to use the <see cref="ThreadSafeHashSet{T}"/> class instead.</note>
     /// </para>
-    /// </remarks>
+    /// </example>
     /// <threadsafety instance="true"/>
     /// <seealso cref="ICollection{T}" />
     /// <seealso cref="ThreadSafeHashSet{T}" />

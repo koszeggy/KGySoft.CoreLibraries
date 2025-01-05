@@ -52,7 +52,7 @@ namespace KGySoft.ComponentModel
     /// <br/>See also the <strong>Remarks</strong> section of the <see cref="FastBindingList{T}"/> class for the differences compared to the <see cref="BindingList{T}"/> class.</note>
     /// <para>The <see cref="SortableBindingList{T}"/> class provides a sortable view for the wrapped list specified in the constructor.</para>
     /// <para>To sort the list the <see cref="O:KGySoft.ComponentModel.FastBindingList`1.ApplySort">ApplySort</see> overloads can be used. As sorting is supported via the standard <see cref="IBindingList"/> interface,
-    /// binding a <see cref="SortableBindingList{T}"/> instance to UI controls (eg. to a grid) enables sorting automatically in several GUI frameworks.</para>
+    /// binding a <see cref="SortableBindingList{T}"/> instance to UI controls (e.g. to a grid) enables sorting automatically in several GUI frameworks.</para>
     /// <note>Sorting does not change the order of the elements in the wrapped underlying collection. When items are added while <see cref="FastBindingList{T}.IsSorted"/> returns <see langword="true"/>, then new items are added
     /// to the end of the underlying list.</note>
     /// <note type="warning">Do not store elements in a <see cref="SortableBindingList{T}"/> that may change their hash code while they are added to the collection.

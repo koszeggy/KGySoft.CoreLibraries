@@ -1738,7 +1738,7 @@ namespace KGySoft.Serialization.Binary
                     ? (object?)typeToWrite ?? $"{si.AssemblyName}, {si.FullTypeName}"
                     : type);
 
-                // 1/a.) If type is not forced (eg. known collection element), then the IsCustom is the first to write. On custom
+                // 1/a.) If type is not forced (e.g. known collection element), then the IsCustom is the first to write. On custom
                 // serialization we write the type anyway though, because it can be changed by SerializationInfo. Not bothering with
                 // writing a bool flag whether type has changed though because for known types just a 7-bit encoded id is written.
                 if (!forcedType)

@@ -49,6 +49,7 @@ namespace KGySoft.Collections
     /// Implements a thread-safe hash set, which has similar characteristics to <see cref="ThreadSafeDictionary{TKey,TValue}"/>.
     /// It can be a good alternative for <see cref="HashSet{T}"/>, <see cref="LockingCollection{T}"/>, or when one would use
     /// a <see cref="ConcurrentDictionary{TKey,TValue}"/> with ignored values.
+    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Collections_ThreadSafeHashSet_1.htm">online help</a> for a more detailed description.</div>
     /// </summary>
     /// <typeparam name="T">Type of the items stored in the <see cref="ThreadSafeHashSet{T}"/>.</typeparam>
     /// <remarks>
@@ -65,7 +66,9 @@ namespace KGySoft.Collections
     /// the <see cref="PreserveMergedItems"/> property is <see langword="false"/>; otherwise, the already merged items are just marked deleted when removed from
     /// the <see cref="ThreadSafeHashSet{T}"/> or when you call the <see cref="Clear">Clear</see> method. To remove even the merged items you must call
     /// the <see cref="Reset">Reset</see> method, or to remove the deleted items only you can explicitly call the <see cref="TrimExcess">TrimExcess</see> method.</note></para>
-    /// <h2>Comparison with other thread-safe collections.</h2>
+    /// </remarks>
+    /// <example>
+    /// <para>This section contains some comparisons with other thread-safe collections.</para>
     /// <para><strong>When to prefer</strong>&#160;<see cref="ThreadSafeHashSet{T}"/> over <see cref="ConcurrentDictionary{TKey,TValue}"/>:
     /// <list type="bullet">
     /// <item>If you would use only the keys, without any value.</item>
@@ -73,7 +76,7 @@ namespace KGySoft.Collections
     /// in which case <see cref="ThreadSafeHashSet{T}"/> may become mainly lock-free.</item>
     /// <item>If the same set of items are deleted and re-added again and again. In this case consider to set the <see cref="PreserveMergedItems"/>
     /// to <see langword="true"/>, so it is not checked whether a cleanup should be performed due to many deleted items.</item>
-    /// <item>If it is needed to access <see cref="Count"/>, enumerate the items or you need to call <see cref="ToArray">ToArray</see>,
+    /// <item>If it is needed to access <see cref="Count"/>, enumerate the items, or you need to call <see cref="ToArray">ToArray</see>,
     /// which are particularly slow in case of <see cref="ConcurrentDictionary{TKey,TValue}"/>.</item>
     /// <item>If it is expected that there will be many hash collisions.</item>
     /// <item>If the collection is needed to be serialized.</item>
@@ -81,7 +84,7 @@ namespace KGySoft.Collections
     /// <note type="tip">If <typeparamref name="T"/> is <see cref="string">string</see> and it is safe to use a non-randomized string comparer,
     /// then you can pass <see cref="StringSegmentComparer.Ordinal">StringSegmentComparer.Ordinal</see> to the constructor for even better performance.
     /// Or, you can use <see cref="StringSegmentComparer.OrdinalRandomized">StringSegmentComparer.OrdinalRandomized</see> to use a comparer with randomized hash also on
-    /// platforms where default string hashing is not randomized (eg. .NET Framework 3.5).</note></para>
+    /// platforms where default string hashing is not randomized (e.g. .NET Framework 3.5).</note></para>
     /// <para><strong>When to prefer</strong>&#160;<see cref="LockingCollection{T}"/> over <see cref="ThreadSafeHashSet{T}"/>:
     /// <list type="bullet">
     /// <item>If you just need a wrapper for an already existing <see cref="ICollection{T}"/> without copying the actual items.</item>
@@ -97,7 +100,7 @@ namespace KGySoft.Collections
     /// is implemented explicitly, though it is not recommended to use it because when elements are added or removed during the operation
     /// you cannot tell how many elements were actually copied. Use the <see cref="ToArray">ToArray</see> method instead, which works in all circumstances.</item>
     /// </list></para>
-    /// </remarks>
+    /// </example>
     /// <threadsafety instance="true"/>
     /// <seealso cref="LockingCollection{T}"/>
     /// <seealso cref="ThreadSafeDictionary{TKey,TValue}"/>
@@ -314,7 +317,7 @@ namespace KGySoft.Collections
         /// <para>Even if the value of this property is <see cref="TimeSpan.Zero">TimeSpan.Zero</see>, adding new items are not necessarily merged immediately
         /// to the fast-accessing storage. Depending on the targeted platform a minimum 15 ms delay is possible. Setting <see cref="TimeSpan.Zero">TimeSpan.Zero</see>
         /// is not recommended though, unless new items are almost never added at the same time.</para>
-        /// <para>When the value of this property is negative (eg. <see cref="Timeout.InfiniteTimeSpan">Timeout.InfiniteTimeSpan</see>), then the locking storage is not merged
+        /// <para>When the value of this property is negative (e.g. <see cref="Timeout.InfiniteTimeSpan">Timeout.InfiniteTimeSpan</see>), then the locking storage is not merged
         /// automatically with the lock-free storage. You still can call the <see cref="EnsureMerged">EnsureMerged</see> method to perform a merge explicitly.</para>
         /// <para>This property is ignored if an item is accessed in the fast-accessing storage including removing and adding items that have already been merged to the lock-free storage.</para>
         /// <note>Some operations (such as enumerating the <see cref="ThreadSafeHashSet{T}"/>, calling the <see cref="ToArray">ToArray</see>

@@ -35,7 +35,7 @@ using KGySoft.Serialization.Binary;
 
 #region Suppressions
 
-#if !(NETSTANDARD2_1_OR_GREATER && NETCOREAPP3_0_OR_GREATER)
+#if !(NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER)
 #pragma warning disable CS8602 // Dereference of a possibly null reference
 #endif
 
@@ -45,6 +45,7 @@ namespace KGySoft.Resources
 {
     /// <summary>
     /// Enumerates XML resource (.resx) files and streams, and reads the sequential resource name and value pairs.
+    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Resources_ResXResourceReader.htm">online help</a> for a more detailed description with examples.</div>
     /// </summary>
     /// <remarks>
     /// <note>This class is similar to <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a>
@@ -74,11 +75,14 @@ namespace KGySoft.Resources
     /// <para>If you want to retrieve named resources from a .resx file rather than enumerating its resources, then you can instantiate a <see cref="ResXResourceSet"/> object and call its
     /// <see cref="ResXResourceSet.GetString(string)">GetString</see>/<see cref="ResXResourceSet.GetObject(string)">GetObject</see>, <see cref="ResXResourceSet.GetMetaString">GetMetaString</see>/<see cref="ResXResourceSet.GetMetaObject">GetMetaObject</see> and <see cref="ResXResourceSet.GetAliasValue">GetAliasValue</see> methods.
     /// Also <see cref="ResXResourceSet"/> supports <see cref="ResXResourceSet.SafeMode"/>.</para>
+    /// </remarks>
     /// <example>
+    /// <h4>Example 1: Safe vs. Unsafe Mode</h4>
+    /// <para>
     /// The following example shows how to enumerate the resources, metadata and aliases of a .resx file and what is the difference between safe and non-safe mode.
     /// Please note that <see cref="SafeMode"/> property can be switched on and off during the enumeration, too. Please also note that the values returned by the <see cref="GetAliasEnumerator">GetAliasEnumerator</see> are always
     /// strings, regardless of the value of <see cref="SafeMode"/> property. See also the example of the <see cref="ResXDataNode"/> class to see how to examine the properties of the <see cref="ResXDataNode"/> instances
-    /// in safe mode.
+    /// in safe mode.</para>
     /// <code lang="C#"><![CDATA[
     /// using System;
     /// using System.Collections;
@@ -184,7 +188,6 @@ namespace KGySoft.Resources
     /// // Name: CustomAlias
     /// // Value in SafeMode:     System.Drawing, Version= 4.0.0.0, Culture= neutral, PublicKeyToken= b03f5f7f11d50a3a (System.String)
     /// // Value in non-SafeMode: System.Drawing, Version= 4.0.0.0, Culture= neutral, PublicKeyToken= b03f5f7f11d50a3a (System.String)</code>
-    /// </example>
     /// <para>
     /// By default, <see cref="ResXResourceReader"/> allows duplicated keys with different values (see <see cref="AllowDuplicatedKeys"/> property). Though such a .resx file is not strictly valid, its
     /// complete content can be retrieved. When <see cref="AllowDuplicatedKeys"/> is <see langword="true"/>, <see cref="GetEnumerator">GetEnumerator</see>, <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> and
@@ -192,7 +195,7 @@ namespace KGySoft.Resources
     /// for the second time, a cached enumerator is returned with the whole parsed .resx content. If duplicates are disabled, the lastly defined values will be returned of a redefined name. This behavior is
     /// similar to the <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a> class, which does not allow duplicates.
     /// </para>
-    /// <example>
+    /// <h4>Example 2: Lazy vs. Greedy Reading</h4>
     /// The following example demonstrates the difference of lazy (allowing duplicates) and greedy (disabling duplicates) reading.
     /// <code lang="C#"><![CDATA[
     /// using System;
@@ -250,8 +253,7 @@ namespace KGySoft.Resources
     /// // -------Greedy reading------
     /// // Key: item
     /// // Value: This is a duplicate for key 'item'.</code>
-    /// </example>
-    /// <h2>Comparison with System.Resources.ResXResourceReader<a name="comparison">&#160;</a></h2>
+    /// <h2>Comparison with <c>System.Resources.ResXResourceReader</c><a name="comparison">&#160;</a></h2>
     /// <para><see cref="ResXResourceReader"/> can read .resx files produced both by <see cref="ResXResourceWriter"/> and <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxresourcewriter" target="_blank">System.Resources.ResXResourceWriter</a>.
     /// <note>When reading a .resx file written by the <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxresourcewriter" target="_blank">System.Resources.ResXResourceWriter</a> class,
     /// the <c>System.Windows.Forms.dll</c> is not loaded during resolving <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxfileref" target="_blank">System.Resources.ResXFileRef</a>
@@ -311,7 +313,7 @@ namespace KGySoft.Resources
     /// <item><term>Type resolving</term>
     /// <description>If an <see cref="ITypeResolutionService"/> instance is passed to one of the constructors, it is used also for the type references in <see cref="ResXFileRef"/> instances.</description></item>
     /// </list></para>
-    /// </remarks>
+    /// </example>
     /// <seealso cref="ResXDataNode"/>
     /// <seealso cref="ResXResourceWriter"/>
     /// <seealso cref="ResXResourceSet"/>

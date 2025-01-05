@@ -562,7 +562,7 @@ namespace KGySoft.Resources
                 return;
 
             // not disposing the wrapped resource sets just nullifying them because their life cycle can be longer
-            // than the hybrid one (eg. changing source from mixed to single one).
+            // than the hybrid one (e.g. changing source from mixed to single one).
             resxResourceSet = null;
             compiledResourceSet = null;
             compiledKeys = null;

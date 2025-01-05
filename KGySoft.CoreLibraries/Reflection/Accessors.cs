@@ -374,7 +374,7 @@ namespace KGySoft.Reflection
         {
             static PropertyAccessor? GetPropertyAccessor((Type DeclaringType, string PropertyName) key)
             {
-                // Ignoring case is allowed due to some incompatibilities between platforms (eg. internal IsSzArray vs. public IsSZArray).
+                // Ignoring case is allowed due to some incompatibilities between platforms (e.g. internal IsSzArray vs. public IsSZArray).
                 // This may prevent an InvalidOperationException when the Framework binaries are executed on .NET Core (may occur when using debugger visualizers, for example).
                 PropertyInfo? property = key.DeclaringType.GetProperty(key.PropertyName, BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.IgnoreCase);
                 return property == null ? null : PropertyAccessor.GetAccessor(property);

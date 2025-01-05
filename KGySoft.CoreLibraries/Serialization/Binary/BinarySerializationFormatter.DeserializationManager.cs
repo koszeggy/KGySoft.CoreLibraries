@@ -2480,7 +2480,7 @@ namespace KGySoft.Serialization.Binary
 
             private void AddOrderedDictionaryElement(IDictionary dict, MethodAccessor? insertMethod, object? key, object? value, int index, bool isTrackedProxyCollection)
             {
-                Debug.Assert(!isTrackedProxyCollection, "So far no ordered dictionary with a proxy collection (eg. FrozenOrderedDictionary) was implemented. Add the required implementation.");
+                Debug.Assert(!isTrackedProxyCollection, "So far no ordered dictionary with a proxy collection (e.g. FrozenOrderedDictionary) was implemented. Add the required implementation.");
                 UsageReferences? keyUsages = key == null ? null : objectsBeingDeserialized?.GetValueOrDefault(key);
                 UsageReferences? valueUsages = value == null ? null : objectsBeingDeserialized?.GetValueOrDefault(value);
                 if (objectsBeingDeserialized == null || keyUsages == null && valueUsages == null)

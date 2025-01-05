@@ -182,13 +182,13 @@ namespace KGySoft.Serialization.Xml
         ExcludeFields = 1 << 11,
 
         /// <summary>
-        /// <para>By default read-only properties and fields are serialized only if they are <see cref="IXmlSerializable"/> implementations or collections that can be populated.
+        /// <para>By default, read-only properties and fields are serialized only if they are <see cref="IXmlSerializable"/> implementations or collections that can be populated.
         /// This option forces to serialize read-only fields and properties, as well as collections that are read-only and have no recognizable initializer constructor.
         /// <note><list type="bullet"><item>Public properties with a private setter accessor are serializable even without this option.</item>
         /// <item>Read-only collections with recognizable collection initializer constructor are serializable even without this option.</item></list></note>
         /// <note type="caution">Enabling this option can make it possible that properties without setter accessor will not be able to deserialized.
-        /// Deserialization will fail if the read-only property returns <see langword="null"/> or its content cannot be restored (eg. it has a simple type or is a read-only collection).
-        /// Use this option only if an object has to be serialized only for information (eg. logging) and deserialization is not necessary.</note>
+        /// Deserialization will fail if the read-only property returns <see langword="null"/> or its content cannot be restored (e.g. it has a simple type or is a read-only collection).
+        /// Use this option only if an object has to be serialized only for information (e.g. logging) and deserialization is not necessary.</note>
         /// </para>
         /// <para>Default state at serialization methods: <strong>Disabled</strong></para>
         /// </summary>

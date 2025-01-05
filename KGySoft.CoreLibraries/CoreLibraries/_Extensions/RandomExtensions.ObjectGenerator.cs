@@ -338,12 +338,12 @@ namespace KGySoft.CoreLibraries
                             continue;
                         }
 
-                        // Skipping if the requested type was non generic and is not compatible with current type (eg. EventArgs -> List<>)
+                        // Skipping if the requested type was non generic and is not compatible with current type (e.g. EventArgs -> List<>)
                         // Explanation: for example, IList is assignable from List<> definition but IList<int> is not assignable from List<> but only from List<int>
                         if (!type.IsGenericType && !type.IsAssignableFrom(t))
                             continue;
 
-                        // 2.) Generic type for generic interface (eg. IList<int> -> List<int>)
+                        // 2.) Generic type for generic interface (e.g. IList<int> -> List<int>)
                         if (isGenericInterface)
                         {
                             try
@@ -356,7 +356,7 @@ namespace KGySoft.CoreLibraries
                             continue;
                         }
 
-                        // Generic type for non-generic interface or for non-interface (eg. IList -> List<object> or BaseClass<MyType> -> DerivedClass<MyType>)
+                        // Generic type for non-generic interface or for non-interface (e.g. IList -> List<object> or BaseClass<MyType> -> DerivedClass<MyType>)
                         // Trying to resolve its constraints and see whether the construction is compatible with the provided type.
                         Type? constructedType = DefaultConstructedGenerics[(t, new TypesKey(genericArguments))];
                         if (constructedType != null && type.IsAssignableFrom(constructedType))

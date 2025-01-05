@@ -78,8 +78,8 @@ using KGySoft.Serialization.Xml;
  * - If contains a delegate
  * - If may contain a pointer or may require unmanaged preallocated memory
  * When to add with special care and only if really justified
- * - If type is abstract, non-sealed or internal (eg. object, RuntimeType)
- * - If type has known values but the type in general cannot be supported (eg. comparer singleton instances vs. general instances)
+ * - If type is abstract, non-sealed or internal (e.g. object, RuntimeType)
+ * - If type has known values but the type in general cannot be supported (e.g. comparer singleton instances vs. general instances)
  * - If type is impure (ambiguous without extra info) or may contain elements that make safe deserialization impossible
  * 1. Add type to DataTypes bits 0..5 (adjust free places in comments) or to bits 16..23 (Extended)
  * 2. If type is pure (unambiguous by DataTypes) add it to supportedNonPrimitiveElementTypes.
@@ -89,7 +89,7 @@ using KGySoft.Serialization.Xml;
  *    Otherwise, handle it in SerializationManager.WriteImpureObject. Create a WriteXXX that can be called separately from writing type.
  * 4. Handle type in DeserializationManager.ReadObject:
  *    - For reference types call TryGetFromCache (or TryGetFromCacheOrAddPlaceholder if ReadXXX also accesses the cache).
- *    - Always set createdResult if addToCache is not handled in ReadXXX (eg. impure types handle it by themselves).
+ *    - Always set createdResult if addToCache is not handled in ReadXXX (e.g. impure types handle it by themselves).
  *    - If type is value type and it can read nested cached objects the caching condition is different (see StringSegment)
  * 5. Add type to DataTypeDescriptor.GetElementType.
  *    If type is non-pure and WriteXXX starts with WriteType, then you can put it into the group with ReadType.
@@ -104,12 +104,12 @@ using KGySoft.Serialization.Xml;
  * II. Adding a collection type
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  * When NOT to add
- * - If may contain delegate or event subscriptions (eg. Cache<TKey, TValue>, ObservableCollection<T>)
- * - If may wrap another exposed collection of any type (eg. Collection<T>, exposed by Items)
+ * - If may contain delegate or event subscriptions (e.g. Cache<TKey, TValue>, ObservableCollection<T>)
+ * - If may wrap another exposed collection of any type (e.g. Collection<T>, exposed by Items)
  * - If may wrap another collection that is not exposed, though the wrapped collection type may affect the behavior (locking collections, BlockingCollection<T>)
  * When to add with special care and only if really justified
- * - If type is abstract, non-sealed or internal (eg. frozen collections)
- * - If may contain a dependency that can be extracted legally (eg. underlying array/string/manager of Memory<T> can be extracted by MemoryMarshal)
+ * - If type is abstract, non-sealed or internal (e.g. frozen collections)
+ * - If may contain a dependency that can be extracted legally (e.g. underlying array/string/manager of Memory<T> can be extracted by MemoryMarshal)
  * 1. Add type to DataTypes 8..13 bits (adjust free places in comments) or to bits 24..30 (Extended)
  *    - 1..15 << 8: Generic collections
  *    - 16..31 << 8: Non-generic collections or special collections
@@ -143,6 +143,7 @@ namespace KGySoft.Serialization.Binary
 {
     /// <summary>
     /// Serializes and deserializes objects in binary format.
+    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Serialization_Binary_BinarySerializationFormatter.htm">online help</a> for a more detailed description with examples.</div>
     /// </summary>
     /// <seealso cref="BinarySerializer"/>
     /// <seealso cref="BinarySerializationOptions"/>
@@ -153,7 +154,7 @@ namespace KGySoft.Serialization.Binary
     /// only if your serialized objects purely consist of natively supported types (see them below). If you need to serialize custom types, then it is recommended
     /// to do it for in-process purposes only, such as deep cloning or undo/redo, etc. If it is known that a type will be deserialized in another environment and
     /// it can be completely restored by its public members, then a text-based serialization (see also <see cref="XmlSerializer"/>) can be a better choice.</note>
-    /// <note type="security"><para>If the serialization stream may come from an untrusted source (eg. remote service, file or database) make sure you enable
+    /// <note type="security"><para>If the serialization stream may come from an untrusted source (e.g. remote service, file or database) make sure you enable
     /// the <see cref="BinarySerializationOptions.SafeMode"/> option. It prevents loading assemblies during the deserialization, denies resolving unexpected natively not supported types by name,
     /// does not allow instantiating natively not supported types that are not serializable, and guards against some attacks that may cause <see cref="OutOfMemoryException"/>.
     /// When using <see cref="BinarySerializationOptions.SafeMode"/> all of the natively not supported types, whose assembly qualified names are
@@ -173,17 +174,176 @@ namespace KGySoft.Serialization.Binary
     /// <para>Starting with version 8.0.0 in safe mode the <see cref="Binder"/> property can only be <see langword="null"/> or a <see cref="ForwardedTypesSerializationBinder"/> instance if you set
     /// its <see cref="ForwardedTypesSerializationBinder.SafeMode"/> to <see langword="true"/>. Furthermore, in safe mode it is not allowed to set any surrogate selectors in the <see cref="SurrogateSelector"/> property.
     /// Please note that this library also contains a sort of serialization binders and surrogates, most of them have their own <c>SafeMode</c> property
-    /// (eg. <see cref="WeakAssemblySerializationBinder"/>, <see cref="CustomSerializerSurrogateSelector"/> or <see cref="NameInvariantSurrogateSelector"/>), still,
+    /// (e.g. <see cref="WeakAssemblySerializationBinder"/>, <see cref="CustomSerializerSurrogateSelector"/> or <see cref="NameInvariantSurrogateSelector"/>), still,
     /// not even they are allowed to be used when the <see cref="BinarySerializationOptions.SafeMode"/> option is enabled. It's because their safe mode just provide some not too strict general protection,
     /// instead of being able to filter a specific set of predefined types.</para>
     /// <para>If you must disable <see cref="BinarySerializationOptions.SafeMode"/> for some reason, then use binary serialization in-process only, or apply some cryptographically secure encryption
     /// to the serialization stream.</para></note>
     /// <para><see cref="BinarySerializationFormatter"/> aims to serialize objects effectively where the serialized data is almost always more compact than the results produced by the <see cref="BinaryFormatter"/> class.</para>
-    /// <para><see cref="BinarySerializationFormatter"/> natively supports all of the primitive types and a sort of other simple types, arrays, generic and non-generic collections.
+    /// <para><see cref="BinarySerializationFormatter"/> natively supports all the primitive types and a sort of other simple types, arrays, generic and non-generic collections.</para>
+    /// </remarks>
+    /// <example>
+    /// <h4>Example 1: Size comparison to BinaryFormatter</h4>
+    /// <note type="tip">Try also <a href="https://dotnetfiddle.net/nQfFrQ" target="_blank">online</a>.</note>
+    /// The following example demonstrates the length difference produced by the <see cref="BinarySerializationFormatter"/> and <see cref="BinaryFormatter"/> classes. Feel free to change the generated type.
+    /// <code lang="C#"><![CDATA[
+    /// using System;
+    /// using System.Collections;
+    /// using System.Collections.Generic;
+    /// using System.Globalization;
+    /// using System.IO;
+    /// using System.Linq;
+    /// using System.Reflection;
+    /// using System.Runtime.Serialization;
+    /// using System.Runtime.Serialization.Formatters.Binary;
+    /// 
+    /// using KGySoft.CoreLibraries;
+    /// using KGySoft.Serialization.Binary;
+    ///
+    /// public static class Example
+    /// {
+    ///     public static void Main()
+    ///     {
+    ///         IFormatter formatter;
+    ///
+    ///         // feel free to change the type in NextObject<>
+    ///         var instance = ThreadSafeRandom.Instance.NextObject<Dictionary<int, List<string>>>();
+    ///         Console.WriteLine("Generated object:   " + Dump(instance));
+    ///
+    ///         using (var ms = new MemoryStream())
+    ///         {
+    ///             // serializing by KGy SOFT version:
+    ///             formatter = new BinarySerializationFormatter();
+    ///             formatter.Serialize(ms, instance);
+    ///
+    ///             // deserialization:
+    ///             ms.Position = 0L;
+    ///             object deserialized = formatter.Deserialize(ms);
+    ///
+    ///             Console.WriteLine("Deserialized object " + Dump(deserialized));
+    ///             Console.WriteLine("Length by BinarySerializationFormatter: " + ms.Length);
+    ///         }
+    ///
+    ///         using (var ms = new MemoryStream())
+    ///         {
+    ///             // serializing by System version:
+    ///             formatter = new BinaryFormatter();
+    ///             formatter.Serialize(ms, instance);
+    ///             Console.WriteLine("Length by BinaryFormatter: " + ms.Length);
+    ///         }
+    ///     }
+    ///
+    ///     private static string Dump(object o)
+    ///     {
+    ///         if (o == null)
+    ///             return "<null>";
+    ///
+    ///         if (o is IConvertible convertible)
+    ///             return convertible.ToString(CultureInfo.InvariantCulture);
+    ///
+    ///         if (o is IEnumerable enumerable)
+    ///             return $"[{enumerable.Cast<object>().Select(Dump).Join(", ")}]";
+    ///
+    ///         return $"{{{o.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance).Select(p => $"{p.Name} = {Dump(p.GetValue(o))}").Join(", ")}}}";
+    ///     }
+    /// }
+    ///
+    /// // This code example produces a similar output to this one:
+    /// // Generated object:   [{Key = 1418272504, Value = [aqez]}, {Key = 552276491, Value = [addejibude, yifefa]}]
+    /// // Deserialized object [{Key = 1418272504, Value = [aqez]}, {Key = 552276491, Value = [addejibude, yifefa]}]
+    /// // Length by BinarySerializationFormatter: 50
+    /// // Length by BinaryFormatter: 2217]]></code>
     /// <note>Serialization of natively supported types produce an especially compact result because these types are not serialized by traversing and storing the fields of the object graph recursively.
     /// This means not just better performance and improved security for these types but also prevents compatibility issues between different platforms because these types are not encoded by assembly identity and type name.
     /// Serialization of natively not supported types can be somewhat slower for the first time than by <see cref="BinaryFormatter"/> but the serialized result is almost always shorter than the one by <see cref="BinaryFormatter"/>,
-    /// especially when generic types are involved.</note></para>
+    /// especially when generic types are involved.</note>
+    /// <h4>Example 2: How to implement a custom serializable type<a name="example">&#160;</a></h4>
+    /// <note type="tip">For the most compact result and to avoid using the obsoleted serialization infrastructure in .NET 8.0 and above it is recommended to implement the <see cref="IBinarySerializable"/> interface.
+    /// <br/>See the <strong>Remarks</strong> section of the <see cref="IBinarySerializable"/> interface for details and examples.</note>
+    /// <para>The following example shows how to apply validation for a serializable class that does not implement <see cref="ISerializable"/> so it will be serialized by its fields.</para>
+    /// <code lang="C#"><![CDATA[
+    /// using System;
+    /// using System.Runtime.Serialization;
+    ///  
+    /// [Serializable]
+    /// public class Example1
+    /// {
+    ///     public int IntProp { get; set; }
+    ///     public string StringProp { get; set; }
+    ///
+    ///     // Regular validation when constructing the class normally
+    ///     public Example1(int intValue, string stringValue)
+    ///     {
+    ///         if (intValue <= 0)
+    ///             throw new ArgumentOutOfRangeException(nameof(intValue));
+    ///         if (stringValue == null)
+    ///             throw new ArgumentNullException(nameof(stringValue));
+    ///         if (stringValue.Length == 0)
+    ///             throw new ArgumentException("Value is empty", nameof(stringValue));
+    ///
+    ///         IntProp = intValue;
+    ///         StringProp = stringValue;
+    ///     }
+    ///
+    ///     // The validation for deserialization. This is executed once the instance is deserialized.
+    ///     // Another way for post-validation if you implement the IDeserializationCallback interface.
+    ///     [OnDeserialized]
+    ///     private void OnDeserialized(StreamingContext context)
+    ///     {
+    ///         if (IntProp <= 0 || String.IsNullOrEmpty(StringProp))
+    ///             throw new SerializationException("Invalid serialization stream");
+    ///     }
+    /// }]]></code>
+    /// <para>The example above may not be applicable if you need to validate the values in advance just like in the constructor.
+    /// In that case you can implement the <see cref="ISerializable"/> interface and do the validation in the special serialization constructor:</para>
+    /// <code lang="C#"><![CDATA[
+    /// using System;
+    /// using System.Runtime.Serialization;
+    ///  
+    /// [Serializable]
+    /// public class Example2 : ISerializable
+    /// {
+    ///     public int IntProp { get; set; }
+    ///     public string StringProp { get; set; }
+    ///
+    ///     // Regular validation when constructing the class normally
+    ///     public Example2(int intValue, string stringValue)
+    ///     {
+    ///         if (intValue <= 0)
+    ///             throw new ArgumentOutOfRangeException(nameof(intValue));
+    ///         if (stringValue == null)
+    ///             throw new ArgumentNullException(nameof(stringValue));
+    ///         if (stringValue.Length == 0)
+    ///             throw new ArgumentException("Value is empty", nameof(stringValue));
+    ///
+    ///         IntProp = intValue;
+    ///         StringProp = stringValue;
+    ///     }
+    ///
+    ///     // Deserialization constructor with validation
+    ///     private Example2(SerializationInfo info, StreamingContext context)
+    ///     {
+    ///         // GetValue throws SerializationException internally if the specified name is not found
+    ///         if (info.GetValue(nameof(IntProp), typeof(int)) is not int i || i <= 0)
+    ///             throw new SerializationException("IntProp is invalid");
+    ///         if (info.GetValue(nameof(StringProp), typeof(string)) is not string s || s.Length == 0)
+    ///             throw new SerializationException("StringProp is invalid");
+    ///
+    ///         IntProp = i;
+    ///         StringProp = s;
+    ///     }
+    ///
+    ///     // Serialization
+    ///     void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
+    ///     {
+    ///         info.AddValue(nameof(IntProp), IntProp);
+    ///         info.AddValue(nameof(StringProp), StringProp);
+    ///     }
+    /// }]]></code>
+    /// <note type="caution">The examples above are compatible also with <see cref="BinaryFormatter"/>.
+    /// Still, it is not recommended to use <see cref="BinaryFormatter"/> because it is vulnerable at multiple levels.
+    /// See the security notes at the top of the page for more details.</note>
+    /// <h2>Further Remarks</h2>
     /// <para>Even if a type is not marked to be serializable by the <see cref="SerializableAttribute"/>, then you can use the <see cref="BinarySerializationOptions.RecursiveSerializationAsFallback"/>
     /// option to force its serialization. Please note though that such types might not be able to be deserialized when <see cref="BinarySerializationOptions.SafeMode"/> is enabled. Alternatively, you can implement
     /// the <see cref="IBinarySerializable"/> interface, which can be used to produce a more compact custom serialization than the one provided by implementing the <see cref="ISerializable"/> interface.</para>
@@ -204,7 +364,7 @@ namespace KGySoft.Serialization.Binary
     /// to and from a <see cref="Stream"/>, and the the <see cref="SerializeByWriter">SerializeByWriter</see>/<see cref="O:KGySoft.Serialization.Binary.BinarySerializationFormatter.DeserializeByReader">DeserializeByReader</see>
     /// methods to use specific <see cref="BinaryWriter"/> and <see cref="BinaryReader"/> instances for serialization and deserialization, respectively.</para>
     /// <note type="warning">In .NET Framework almost every type was serializable by <see cref="BinaryFormatter"/>. In .NET Core this principle has been
-    /// radically changed. Many types are just simply not marked by the <see cref="SerializableAttribute"/> anymore (eg. <see cref="MemoryStream"/>,
+    /// radically changed. Many types are just simply not marked by the <see cref="SerializableAttribute"/> anymore (e.g. <see cref="MemoryStream"/>,
     /// <see cref="CultureInfo"/>, <see cref="Encoding"/>), whereas some types, which still implement <see cref="ISerializable"/> now
     /// throw a <see cref="PlatformNotSupportedException"/> from their <see cref="ISerializable.GetObjectData">GetObjectData</see>.
     /// Binary serialization of these types is not recommended anymore. If you still must serialize or deserialize such types
@@ -384,163 +544,7 @@ namespace KGySoft.Serialization.Binary
     /// <note>Please note that if a value type was serialized by the <see cref="BinarySerializationOptions.CompactSerializationOfStructures"/> option, then the method of <see cref="OnDeserializingAttribute"/> can be invoked
     /// only after restoring the whole content so fields will be already restored.</note>
     /// </para>
-    /// <h2>Example: Size comparison to BinaryFormatter</h2>
-    /// <note type="tip">Try also <a href="https://dotnetfiddle.net/nQfFrQ" target="_blank">online</a>.</note>
-    /// The following example demonstrates the length difference produced by the <see cref="BinarySerializationFormatter"/> and <see cref="BinaryFormatter"/> classes. Feel free to change the generated type.
-    /// <code lang="C#"><![CDATA[
-    /// using System;
-    /// using System.Collections;
-    /// using System.Collections.Generic;
-    /// using System.Globalization;
-    /// using System.IO;
-    /// using System.Linq;
-    /// using System.Reflection;
-    /// using System.Runtime.Serialization;
-    /// using System.Runtime.Serialization.Formatters.Binary;
-    /// 
-    /// using KGySoft.CoreLibraries;
-    /// using KGySoft.Serialization.Binary;
-    ///
-    /// public static class Example
-    /// {
-    ///     public static void Main()
-    ///     {
-    ///         IFormatter formatter;
-    ///
-    ///         // feel free to change the type in NextObject<>
-    ///         var instance = ThreadSafeRandom.Instance.NextObject<Dictionary<int, List<string>>>();
-    ///         Console.WriteLine("Generated object:   " + Dump(instance));
-    ///
-    ///         using (var ms = new MemoryStream())
-    ///         {
-    ///             // serializing by KGy SOFT version:
-    ///             formatter = new BinarySerializationFormatter();
-    ///             formatter.Serialize(ms, instance);
-    ///
-    ///             // deserialization:
-    ///             ms.Position = 0L;
-    ///             object deserialized = formatter.Deserialize(ms);
-    ///
-    ///             Console.WriteLine("Deserialized object " + Dump(deserialized));
-    ///             Console.WriteLine("Length by BinarySerializationFormatter: " + ms.Length);
-    ///         }
-    ///
-    ///         using (var ms = new MemoryStream())
-    ///         {
-    ///             // serializing by System version:
-    ///             formatter = new BinaryFormatter();
-    ///             formatter.Serialize(ms, instance);
-    ///             Console.WriteLine("Length by BinaryFormatter: " + ms.Length);
-    ///         }
-    ///     }
-    ///
-    ///     private static string Dump(object o)
-    ///     {
-    ///         if (o == null)
-    ///             return "<null>";
-    ///
-    ///         if (o is IConvertible convertible)
-    ///             return convertible.ToString(CultureInfo.InvariantCulture);
-    ///
-    ///         if (o is IEnumerable enumerable)
-    ///             return $"[{enumerable.Cast<object>().Select(Dump).Join(", ")}]";
-    ///
-    ///         return $"{{{o.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance).Select(p => $"{p.Name} = {Dump(p.GetValue(o))}").Join(", ")}}}";
-    ///     }
-    /// }
-    ///
-    /// // This code example produces a similar output to this one:
-    /// // Generated object:   [{Key = 1418272504, Value = [aqez]}, {Key = 552276491, Value = [addejibude, yifefa]}]
-    /// // Deserialized object [{Key = 1418272504, Value = [aqez]}, {Key = 552276491, Value = [addejibude, yifefa]}]
-    /// // Length by BinarySerializationFormatter: 50
-    /// // Length by BinaryFormatter: 2217]]></code>
-    /// <h2>Example: How to implement a custom serializable type<a name="example">&#160;</a></h2>
-    /// <note type="tip">For the most compact result and to avoid using the obsoleted serialization infrastructure in .NET 8.0 and above it is recommended to implement the <see cref="IBinarySerializable"/> interface.
-    /// <br/>See the <strong>Remarks</strong> section of the <see cref="IBinarySerializable"/> interface for details and examples.</note>
-    /// <para>The following example shows how to apply validation for a serializable class that does not implement <see cref="ISerializable"/> so it will be serialized by its fields.</para>
-    /// <code lang="C#"><![CDATA[
-    /// using System;
-    /// using System.Runtime.Serialization;
-    ///  
-    /// [Serializable]
-    /// public class Example1
-    /// {
-    ///     public int IntProp { get; set; }
-    ///     public string StringProp { get; set; }
-    ///
-    ///     // Regular validation when constructing the class normally
-    ///     public Example1(int intValue, string stringValue)
-    ///     {
-    ///         if (intValue <= 0)
-    ///             throw new ArgumentOutOfRangeException(nameof(intValue));
-    ///         if (stringValue == null)
-    ///             throw new ArgumentNullException(nameof(stringValue));
-    ///         if (stringValue.Length == 0)
-    ///             throw new ArgumentException("Value is empty", nameof(stringValue));
-    ///
-    ///         IntProp = intValue;
-    ///         StringProp = stringValue;
-    ///     }
-    ///
-    ///     // The validation for deserialization. This is executed once the instance is deserialized.
-    ///     // Another way for post-validation if you implement the IDeserializationCallback interface.
-    ///     [OnDeserialized]
-    ///     private void OnDeserialized(StreamingContext context)
-    ///     {
-    ///         if (IntProp <= 0 || String.IsNullOrEmpty(StringProp))
-    ///             throw new SerializationException("Invalid serialization stream");
-    ///     }
-    /// }]]></code>
-    /// <para>The example above may not be applicable if you if you need to validate the values in advance just like in the constructor.
-    /// In that case you can implement the <see cref="ISerializable"/> interface and do the validation in the special serialization constructor:</para>
-    /// <code lang="C#"><![CDATA[
-    /// using System;
-    /// using System.Runtime.Serialization;
-    ///  
-    /// [Serializable]
-    /// public class Example2 : ISerializable
-    /// {
-    ///     public int IntProp { get; set; }
-    ///     public string StringProp { get; set; }
-    ///
-    ///     // Regular validation when constructing the class normally
-    ///     public Example2(int intValue, string stringValue)
-    ///     {
-    ///         if (intValue <= 0)
-    ///             throw new ArgumentOutOfRangeException(nameof(intValue));
-    ///         if (stringValue == null)
-    ///             throw new ArgumentNullException(nameof(stringValue));
-    ///         if (stringValue.Length == 0)
-    ///             throw new ArgumentException("Value is empty", nameof(stringValue));
-    ///
-    ///         IntProp = intValue;
-    ///         StringProp = stringValue;
-    ///     }
-    ///
-    ///     // Deserialization constructor with validation
-    ///     private Example2(SerializationInfo info, StreamingContext context)
-    ///     {
-    ///         // GetValue throws SerializationException internally if the specified name is not found
-    ///         if (info.GetValue(nameof(IntProp), typeof(int)) is not int i || i <= 0)
-    ///             throw new SerializationException("IntProp is invalid");
-    ///         if (info.GetValue(nameof(StringProp), typeof(string)) is not string s || s.Length == 0)
-    ///             throw new SerializationException("StringProp is invalid");
-    ///
-    ///         IntProp = i;
-    ///         StringProp = s;
-    ///     }
-    ///
-    ///     // Serialization
-    ///     void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
-    ///     {
-    ///         info.AddValue(nameof(IntProp), IntProp);
-    ///         info.AddValue(nameof(StringProp), StringProp);
-    ///     }
-    /// }]]></code>
-    /// <note type="caution">The examples above are compatible also with <see cref="BinaryFormatter"/>.
-    /// Still, it is not recommended to use <see cref="BinaryFormatter"/> because it is vulnerable at multiple levels.
-    /// See the security notes at the top of the page for more details.</note>
-    /// </remarks>
+    /// </example>
     /// <seealso cref="BinarySerializer"/>
     [SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Supports many types natively, which is intended. See also DataTypes enum.")]
     public sealed partial class BinarySerializationFormatter : IFormatter
@@ -554,7 +558,7 @@ namespace KGySoft.Serialization.Binary
         /// Nested generic collections can be encoded by multiple consecutive <see cref="DataTypes"/> values.
         /// </summary>
         [Flags]
-        [SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Names match the corresponding type names (eg. DBNull, Matrix3x2)")]
+        [SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Names match the corresponding type names (e.g. DBNull, Matrix3x2)")]
         //[DebuggerDisplay("{BinarySerializationFormatter.DataTypeToString(this)}")] // If debugger cannot display it: Tools/Options/Debugging/General: Use Managed Compatibility Mode
         private enum DataTypes : uint
         {
@@ -908,12 +912,12 @@ namespace KGySoft.Serialization.Binary
             NonNullDefaultComparer = 1 << 10,
 
             /// <summary>
-            /// Indicates that the backing array is an actually wrapped reference, so it is stored in the id cache and can be even null (eg. ArraySegment).
+            /// Indicates that the backing array is an actually wrapped reference, so it is stored in the id cache and can be even null (e.g. ArraySegment).
             /// </summary>
             IsBackingArrayActuallyStored = 1 << 11,
 
             /// <summary>
-            /// Indicates that the backing array has a known size (eg. Vector*)
+            /// Indicates that the backing array has a known size (e.g. Vector*)
             /// </summary>
             BackingArrayHasKnownSize = 1 << 12,
 
@@ -978,7 +982,7 @@ namespace KGySoft.Serialization.Binary
         /// <summary>
         /// Contains some serialization-time attributes for non-primitive types.
         /// This ensures that the deserializer can process a type (or at least throw a reasonable exception)
-        /// if it changed since serialization (eg. sealed vs non-sealed, serialization way, etc.)
+        /// if it changed since serialization (e.g. sealed vs non-sealed, serialization way, etc.)
         /// </summary>
         [Flags]
         private enum TypeAttributes // : byte
@@ -2260,7 +2264,7 @@ namespace KGySoft.Serialization.Binary
                 return;
             }
 
-            // writing all 4 bytes (eg. extended collection with extended nullable element)
+            // writing all 4 bytes (e.g. extended collection with extended nullable element)
             if (((uint)dataType & 0xFF00u) != 0u && ((uint)dataType & 0xFF0000u) != 0u && ((uint)dataType & 0xFF000000u) != 0u)
             {
                 bw.Write((uint)dataType);
@@ -2425,7 +2429,7 @@ namespace KGySoft.Serialization.Binary
         /// then the actual type also might needed to be included in <paramref name="expectedCustomTypes"/>.</para>
         /// <para>You can specify <paramref name="expectedCustomTypes"/> even if <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <see cref="Options"/>
         /// as it may improve the performance of type resolving and can help avoiding possible ambiguities if types were not serialized with full assembly identity
-        /// (eg. if <see cref="BinarySerializationOptions.OmitAssemblyQualifiedNames"/> was enabled on serialization).</para>
+        /// (e.g. if <see cref="BinarySerializationOptions.OmitAssemblyQualifiedNames"/> was enabled on serialization).</para>
         /// <para>If a type in <paramref name="expectedCustomTypes"/> has a different assembly identity in the deserialization stream, and it is not indicated
         /// by a <see cref="TypeForwardedFromAttribute"/> declared on the type, then you should set the <see cref="Binder"/> property to
         /// a <see cref="ForwardedTypesSerializationBinder"/> instance to specify the expected types.</para>
@@ -2553,7 +2557,7 @@ namespace KGySoft.Serialization.Binary
         /// then the actual type also might needed to be included in <paramref name="expectedCustomTypes"/>.</para>
         /// <para>You can specify <paramref name="expectedCustomTypes"/> even if <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <see cref="Options"/>
         /// as it may improve the performance of type resolving and can help avoiding possible ambiguities if types were not serialized with full assembly identity
-        /// (eg. if <see cref="BinarySerializationOptions.OmitAssemblyQualifiedNames"/> was enabled on serialization).</para>
+        /// (e.g. if <see cref="BinarySerializationOptions.OmitAssemblyQualifiedNames"/> was enabled on serialization).</para>
         /// <para>If a type in <paramref name="expectedCustomTypes"/> has a different assembly identity in the deserialization stream, and it is not indicated
         /// by a <see cref="TypeForwardedFromAttribute"/> declared on the type, then you should set the <see cref="Binder"/> property to
         /// a <see cref="ForwardedTypesSerializationBinder"/> instance to specify the expected types.</para>
@@ -2653,7 +2657,7 @@ namespace KGySoft.Serialization.Binary
         /// then the actual type also might needed to be included in <paramref name="expectedCustomTypes"/>.</para>
         /// <para>You can specify <paramref name="expectedCustomTypes"/> even if <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <see cref="Options"/>
         /// as it may improve the performance of type resolving and can help avoiding possible ambiguities if types were not serialized with full assembly identity
-        /// (eg. if <see cref="BinarySerializationOptions.OmitAssemblyQualifiedNames"/> was enabled on serialization).</para>
+        /// (e.g. if <see cref="BinarySerializationOptions.OmitAssemblyQualifiedNames"/> was enabled on serialization).</para>
         /// <para>If a type in <paramref name="expectedCustomTypes"/> has a different assembly identity in the deserialization stream, and it is not indicated
         /// by a <see cref="TypeForwardedFromAttribute"/> declared on the type, then you should set the <see cref="Binder"/> property to
         /// a <see cref="ForwardedTypesSerializationBinder"/> instance to specify the expected types.</para>

@@ -31,7 +31,7 @@ namespace KGySoft.CoreLibraries
             Debug.Assert(value != 0U);
             // In .NET Core 3.0 and above we could use this:
             // return value.IsSingleFlag() ? value - 1 : BitOperations.RoundUpToPowerOf2(value) - 1;
-            // But it contains an extra condition and it cannot be always HW accelerated (eg. 32 bit process/CPU),
+            // But it contains an extra condition and it cannot be always HW accelerated (e.g. 32 bit process/CPU),
             // so it is almost always slower than the following software solution (even when HW acceleration is available).
 
             // This is the SW version of RoundUpToPowerOf2, except the last step,

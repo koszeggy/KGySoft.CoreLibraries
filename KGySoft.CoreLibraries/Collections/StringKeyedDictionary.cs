@@ -63,8 +63,8 @@ namespace KGySoft.Collections
     /// <para>The <see cref="StringKeyedDictionary{TValue}"/> class uses a custom hashing, which usually makes it faster
     /// than a regular <see cref="Dictionary{TKey,TValue}"/> with <see cref="string">string</see> key.
     /// <note type="security">Without specifying a comparer, the <see cref="StringKeyedDictionary{TValue}"/> class
-    /// does not use randomized hashing for keys no longer than 32 characters. If you want to want to expose a <see cref="StringKeyedDictionary{TValue}"/>
-    /// to a public service, then make sure you use it with a randomized hash comparer (eg. with <see cref="StringSegmentComparer.OrdinalRandomized"/>).</note></para>
+    /// does not use randomized hashing for keys no longer than 32 characters. If you want to expose a <see cref="StringKeyedDictionary{TValue}"/>
+    /// to a public service, then make sure you use it with a randomized hash comparer (e.g. with <see cref="StringSegmentComparer.OrdinalRandomized"/>).</note></para>
     /// <para>Depending on the context, the <see cref="StringKeyedDictionary{TValue}"/> can return either a value type or reference type enumerator.
     /// When used in a C# <see langword="foreach"/> statement directly, the public <see cref="Enumerator"/> type is used, which is a value type
     /// (this behavior is similar to the regular <see cref="Dictionary{TKey,TValue}"/> class). But when the enumerator is obtained via the <see cref="IEnumerable{T}"/> interface

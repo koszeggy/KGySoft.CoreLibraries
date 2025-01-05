@@ -29,7 +29,7 @@ namespace KGySoft.ComponentModel
 {
     /// <summary>
     /// Represents a collection of command bindings. If a component or control uses events, then this class can be used
-    /// to create and hold the event bindings, regardless of any used technology. When this class is disposed, all of the
+    /// to create and hold the event bindings, regardless of any used technology. When this class is disposed, all the
     /// internally subscribed events will be released at once. Removed and replaced bindings will also be disposed.
     /// <br/>See the <strong>Remarks</strong> section of the <see cref="ICommand"/> interface for details and examples about commands.
     /// </summary>

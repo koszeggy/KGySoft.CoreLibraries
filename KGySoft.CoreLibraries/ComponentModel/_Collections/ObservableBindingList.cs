@@ -37,6 +37,7 @@ namespace KGySoft.ComponentModel
     /// <summary>
     /// Provides a class that combines the features of an <see cref="ObservableCollection{T}"/> and <see cref="BindingList{T}"/>. Unlike <see cref="ObservableCollection{T}"/>, can raise the <see cref="CollectionChanged"/> event also when a property
     /// of a contained element changes.
+    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_ComponentModel_ObservableBindingList_1.htm">online help</a> for a more detailed description.</div>
     /// </summary>
     /// <typeparam name="T">The type of elements in the collection.</typeparam>
     /// <seealso cref="ObservableCollection{T}" />
@@ -47,8 +48,11 @@ namespace KGySoft.ComponentModel
     /// <para>If initialized by another <see cref="IBindingList"/> or <see cref="INotifyCollectionChanged"/> implementations, the <see cref="ObservableBindingList{T}"/> will capture and delegate also the events of the inner collections.</para>
     /// <para>If the <see cref="ObservableBindingList{T}"/> is initialized by the default constructor it will use a <see cref="SortableBindingList{T}"/> inside.</para>
     /// <note type="tip">In an environment, which supports only the <see cref="IBindingList"/> or <see cref="INotifyCollectionChanged"/> interface but not the other, <see cref="ObservableBindingList{T}"/> can be used as a bridge between the two worlds.
-    /// For example, by passing an <see cref="ObservableCollection{T}"/> to the constructor, it will be able to be accessed as an <see cref="IBindingList"/> implementation, and vice-versa: by wrapping an <see cref="IBindingList"/> instance
+    /// For example, by passing an <see cref="ObservableCollection{T}"/> to the constructor, it will be able to be accessed as an <see cref="IBindingList"/> implementation, and vice versa: by wrapping an <see cref="IBindingList"/> instance
     /// (such as <see cref="FastBindingList{T}"/> or <see cref="SortableBindingList{T}"/>), it can be used as an <see cref="INotifyCollectionChanged"/> implementation by the <see cref="ObservableBindingList{T}"/> class.</note>
+    /// </remarks>
+    /// <example>
+    /// <para>This section provides some examples for feature comparisons with <see cref="ObservableCollection{T}"/> and <see cref="BindingList{T}"/>.</para>
     /// <para><strong>Differences</strong> to the <see cref="ObservableCollection{T}"/> class:
     /// <list type="bullet">
     /// <item>The <see cref="PropertyChanged"/> event is raised also for a sort of additional properties, such as <see cref="AllowNew"/>, <see cref="AllowEdit"/>, <see cref="AllowRemove"/>, <see cref="RaiseCollectionChangedEvents"/>,
@@ -57,7 +61,7 @@ namespace KGySoft.ComponentModel
     /// This behavior can be adjusted by the <see cref="RaiseItemChangedEvents"/> property.</item>
     /// <item>There is no constructor that accepts an <see cref="IEnumerable{T}"/> instance. Instead, an instance of <see cref="IList{T}"/> must be provided.</item>
     /// <item>When the <see cref="ObservableBindingList{T}"/> is initialized by another <see cref="IList{T}"/>, then the passed instance will be wrapped rather than just copying the elements.
-    /// Therefore the changes performed on the <see cref="ObservableBindingList{T}"/> will be reflected also in the wrapped list.
+    /// Therefore, the changes performed on the <see cref="ObservableBindingList{T}"/> will be reflected also in the wrapped list.
     /// <br/>In contrast, passing any collection to an <see cref="ObservableCollection{T}"/> will copy the items in a new <see cref="List{T}"/> to be used inside the <see cref="ObservableCollection{T}"/>.</item>
     /// <item>In <see cref="ObservableBindingList{T}"/> the <see cref="OnCollectionChanged">OnCollectionChanged</see> method simply raises the <see cref="CollectionChanged"/> event without calling <see cref="BlockReentrancy">BlockReentrancy</see>,
     /// which is rather called explicitly whenever it is needed.</item>
@@ -122,7 +126,7 @@ namespace KGySoft.ComponentModel
     /// <br/>The <see cref="ObservableBindingList{T}"/> implements the <see cref="IDisposable"/> interface. When an instance is disposed, then both
     /// incoming and outgoing event subscriptions (self events and <see cref="INotifyPropertyChanged.PropertyChanged"/> event of the elements) are removed. If the wrapped collection passed
     /// to the constructor is disposable, then it will also be disposed. After disposing accessing the public members may throw <see cref="ObjectDisposedException"/>.</para>
-    /// </remarks>
+    /// </example>
     [Serializable]
     public class ObservableBindingList<T> : Collection<T>, IDisposable,
         INotifyCollectionChanged, INotifyPropertyChanged,

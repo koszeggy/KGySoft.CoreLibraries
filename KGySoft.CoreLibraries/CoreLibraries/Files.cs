@@ -313,8 +313,8 @@ namespace KGySoft.CoreLibraries
             try
             {
                 // We keep this code for compatibility reason. It may differ from AppDomain.BaseDirectory in special cases
-                // (eg. when an the code is executed from a sandbox domain using a subdirectory).
-                // Example: for debugger visualizers GetExecutingPath returns the location of the deployed visualizer (eg. Documents/VS version/Visualizers
+                // (e.g. when an the code is executed from a sandbox domain using a subdirectory).
+                // Example: for debugger visualizers GetExecutingPath returns the location of the deployed visualizer (e.g. Documents/VS version/Visualizers
                 // instead of the path of the Visual Studio installation).
                 return Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!;
             }

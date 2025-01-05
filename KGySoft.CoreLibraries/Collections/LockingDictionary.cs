@@ -39,10 +39,11 @@ namespace KGySoft.Collections
     /// <summary>
     /// Provides a simple wrapper for an <see cref="IDictionary{TKey,TValue}"/> where all members are thread-safe.
     /// This only means that the inner state of the wrapped dictionary remains always consistent and not that all the multi-threading concerns can be ignored.
+    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Collections_LockingDictionary_2.htm">online help</a> for a more detailed description with examples.</div>
     /// </summary>
     /// <typeparam name="TKey">The type of the keys in the dictionary.</typeparam>
     /// <typeparam name="TValue">The type of the values in the dictionary.</typeparam>
-    /// <remarks>
+    /// <example>
     /// <note>Use this class only if you want to wrap a generic <see cref="IDictionary{TKey,TValue}"/> instance to make it thread-safe.
     /// If you want to use a thread-safe dictionary optimized for concurrent operations consider to use the <see cref="ThreadSafeDictionary{TKey,TValue}"/> class instead.</note>
     /// <para>Thread safety means that all members of the underlying collection are accessed in a lock, which only provides that the collection remains consistent as long as it is accessed only by the members of this class.
@@ -76,7 +77,7 @@ namespace KGySoft.Collections
     /// <para>The <see cref="LockingCollection{T}.GetEnumerator">GetEnumerator</see> method and <see cref="Keys"/> and <see cref="Values"/> properties create a snapshot of the underlying collections so obtaining
     /// these members have an O(n) cost on this class.</para>
     /// <para><note>Starting with .NET 4 a sort of concurrent collections appeared. While they provide good scalability for multiple concurrent readers by using separate locks for entries or for a set of entries,
-    /// in many situations they perform worse than a simple locking collection, especially if the collection to lock uses a fast accessible storage (eg. an array) internally. It also may worth to mention that some members
+    /// in many situations they perform worse than a simple locking collection, especially if the collection to lock uses a fast accessible storage (e.g. an array) internally. It also may worth to mention that some members
     /// (such as the <c>Count</c> property) are surprisingly expensive operations on most concurrent collections as they traverse the inner storage and in the meantime they lock all entries while counting the elements.
     /// So it always depends on the concrete scenario whether a simple locking collection or a concurrent collection is more beneficial to use.</note>
     /// <note type="tip"><list type="bullet">
@@ -87,7 +88,7 @@ namespace KGySoft.Collections
     /// <item>To create a thread-safe <see cref="IThreadSafeCacheAccessor{TKey,TValue}"/> instance that fits the best for your needs use the members of the <see cref="ThreadSafeCacheFactory"/> class.</item>
     /// </list></note>
     /// </para>
-    /// </remarks>
+    /// </example>
     /// <threadsafety instance="true"/>
     /// <seealso cref="IDictionary{TKey,TValue}" />
     /// <seealso cref="LockingCollection{T}" />

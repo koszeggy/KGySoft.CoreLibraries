@@ -55,7 +55,7 @@ namespace KGySoft.Serialization.Binary
     /// which should be enabled when deserializing anything from an untrusted source.</para>
     /// <para>When deserializing a stream that has an <see cref="AnyObjectSerializerWrapper"/> reference, it is ensured that no assemblies
     /// are loaded while unwrapping its content (it may not be true for other entries in the serialization stream, if the formatter is a <see cref="BinaryFormatter"/>, for example).
-    /// Therefore all of the assemblies that are involved by the types wrapped into an <see cref="AnyObjectSerializerWrapper"/> must be preloaded before deserializing such a stream.</para>
+    /// Therefore, all the assemblies that are involved by the types wrapped into an <see cref="AnyObjectSerializerWrapper"/> must be preloaded before deserializing such a stream.</para>
     /// <para>See the security notes at the <strong>Remarks</strong> section of the <see cref="BinarySerializationFormatter"/> class for more details.</para></note>
     /// <para>Since <see cref="BinarySerializationFormatter"/> supports serialization of
     /// any class, this object is not necessarily needed when <see cref="BinarySerializationFormatter"/> is used.</para>

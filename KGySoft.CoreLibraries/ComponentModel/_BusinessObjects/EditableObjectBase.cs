@@ -27,6 +27,7 @@ namespace KGySoft.ComponentModel
     /// Represents an object with editing capabilities by adding <see cref="ICanEdit"/> implementation to the <see cref="PersistableObjectBase"/> class.
     /// Starting an edit session saves a snapshot of the stored properties, which can be either applied or reverted.
     /// Saving and restoring properties works for properties set through the <see cref="IPersistableObject"/> implementation and the <see cref="ObservableObjectBase.Set">ObservableObjectBase.Set</see> method.
+    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_ComponentModel_EditableObjectBase.htm">online help</a> for the image in the description.</div>
     /// </summary>
     /// <seealso cref="ICanEdit" />
     /// <seealso cref="IEditableObject" />

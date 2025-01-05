@@ -28,6 +28,7 @@ namespace KGySoft.ComponentModel
     /// <summary>
     /// Represents an object with step-by-step undo/redo capabilities by adding <see cref="ICanUndoRedo"/> implementation to the <see cref="PersistableObjectBase"/> class.
     /// Undoing and redoing works for properties set through the <see cref="IPersistableObject"/> implementation and the <see cref="ObservableObjectBase.Set">ObservableObjectBase.Set</see> method.
+    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_ComponentModel_UndoableObjectBase.htm">online help</a> for the image in the description.</div>
     /// </summary>
     /// <remarks>
     /// <para>An object derived from <see cref="UndoableObjectBase"/> continuously tracks the property changes of properties, which are set through the <see cref="IPersistableObject"/> implementation
@@ -56,7 +57,7 @@ namespace KGySoft.ComponentModel
     /// <para><strong><see cref="ObservableObjectBase.IsModified"/> vs. <see cref="CanUndo">CanUndo</see></strong>:
     /// <list type="bullet">
     /// <item>The <see cref="ObservableObjectBase.IsModified"/> property reflects the object's "dirty" state, meaning, it has been changed since the initialization or last save.
-    /// The modified state can be cleared by the <see cref="ObservableObjectBase.SetModified">SetModified</see> method. Clearing the modified state (eg. on saving the object) does not affect the undo capabilities, though.</item>
+    /// The modified state can be cleared by the <see cref="ObservableObjectBase.SetModified">SetModified</see> method. Clearing the modified state (e.g. on saving the object) does not affect the undo capabilities, though.</item>
     /// <item>The <see cref="CanUndo"/> property tells whether there are any steps to undo. On saving an object the modified state can be cleared and still there can be undoable steps. And vice versa, undoing all steps will not clear the modified state.</item>
     /// </list>
     /// </para>

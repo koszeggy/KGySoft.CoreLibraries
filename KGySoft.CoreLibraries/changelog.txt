@@ -467,7 +467,7 @@
 ================================
 - PerformanceTestBase<TDelegate, TResult> class:
   - Fixing possible VerificationException from partially trusted domains created by an assembly
-    with Level2 security (eg. the sandbox domains in .NET Fiddle). Affects .NET Framework 4.x only.
+    with Level2 security (e.g. the sandbox domains in .NET Fiddle). Affects .NET Framework 4.x only.
 
 
 ~~~~~~~~~
@@ -630,7 +630,7 @@
 ==================================
 + EnumerableExtensions class: New TryGetCount methods.
 - Enum<TEnum> class: fixing possible VerificationException from partially trusted domains created by an assembly
-  with Level2 security (eg. the sandbox domains in .NET Fiddle). Affects .NET Framework 4.x only.
+  with Level2 security (e.g. the sandbox domains in .NET Fiddle). Affects .NET Framework 4.x only.
 - RandomExtensions class: NextBigInteger methods did not always use the full specified range.
 
 
@@ -846,7 +846,7 @@
 - KGySoft.Collections namespace:
 ================================
 - ThreadSafeCacheFactory class: When using lock free caches, fixing possible VerificationException
-  from partially trusted domains (eg. in .NET Fiddle). Affects .NET Framework only.
+  from partially trusted domains (e.g. in .NET Fiddle). Affects .NET Framework only.
 
 * KGySoft.CoreLibraries namespace:
 ==================================
@@ -1301,7 +1301,7 @@ MOST IMPORTANT CHANGES: Safe deserialization support (BinarySerializationFormatt
   are called multiple times with generic collections of different generic argument types.
 + ObjectExtensions class:
   + The DeepClone<T> method now has an optional ignoreCustomSerialization parameter, which allows cloning even if
-    the ISerializable members throw exceptions (eg. PlatformNotSupportedException in .NET Core).
+    the ISerializable members throw exceptions (e.g. PlatformNotSupportedException in .NET Core).
   + New In overload with ReadOnlySpan (only in .NET Core 3.0 and .NET Standard 2.1)
 + RandomExtensions class:
   + New NextString overloads
@@ -1672,7 +1672,7 @@ Adjusting security settings.
     * None option allows to serialize some trusted collection types and object with only public properties and fields.
     + New flag: ExcludeFields - to serialize public properties only.
     + New flag: ForcedSerializationOfReadOnlyMembersAndCollections - to serialize read-only properties and fields even if they are not
-      mutable collections or IXmlSerializable instances. Enabling this flag can be used for one-way serialization only (eg. for logs),
+      mutable collections or IXmlSerializable instances. Enabling this flag can be used for one-way serialization only (e.g. for logs),
       because it is high likely that the object will not be able to be deserialized.
   + Escaping is possible even if a value is converted by a TypeConverter
   + Creates instances internally so there is no locking when used parallelly

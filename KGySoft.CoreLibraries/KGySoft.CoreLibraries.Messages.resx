@@ -835,10 +835,10 @@ Either try to use the ForceRecursiveSerializationOfSupportedTypes option on seri
 In safe mode you must specify every non-natively supported type that are expected to be present in the XML stream.</value>
   </data>
   <data name="XmlSerialization_SerializingTypeNotSupportedFormat" xml:space="preserve">
-    <value>Serializing type "{0}" is not supported with following options: {1}. You may either use fallback options (eg. RecursiveSerializationAsFallback) or provide a type converter for the type.</value>
+    <value>Serializing type "{0}" is not supported with following options: {1}. You may either use fallback options (e.g. RecursiveSerializationAsFallback) or provide a type converter for the type.</value>
   </data>
   <data name="XmlSerialization_CannotSerializeCollectionFormat" xml:space="preserve">
-    <value>Cannot serialize collection "{0}" with following options: "{1}". You may either use fallback options (eg. RecursiveSerializationAsFallback), provide a type converter or apply DesignerSerializationVisibilityAttribute with value Content on the container collection property or field.</value>
+    <value>Cannot serialize collection "{0}" with following options: "{1}". You may either use fallback options (e.g. RecursiveSerializationAsFallback), provide a type converter or apply DesignerSerializationVisibilityAttribute with value Content on the container collection property or field.</value>
   </data>
   <data name="XmlSerialization_CannotSerializeUnsupportedComparerFormat" xml:space="preserve">
     <value>Cannot serialize known collection "{0}" with following options: "{1}" because it has an unsupported comparer.

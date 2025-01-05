@@ -35,6 +35,7 @@ namespace KGySoft.Diagnostics
 {
     /// <summary>
     /// Provides members for performance monitoring.
+    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Diagnostics_Profiler.htm">online help</a> for an example with images.</div>
     /// </summary>
     /// <remarks>
     /// <para>The <see cref="Profiler"/> class can be used to place measurement sections into the code. The results can be accessed either directly

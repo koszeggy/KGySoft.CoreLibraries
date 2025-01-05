@@ -112,7 +112,7 @@ namespace KGySoft.ComponentModel
                 // trick: setting the value field in the enum instance so the boxed component variable will be reassigned
                 Reflector.SetField(component, valueField, Reflector.GetField(Enum.ToObject(ComponentType, result), valueField));
 
-                // if there is a context (eg. property grid), then we set the enum property of its parent instance
+                // if there is a context (e.g. property grid), then we set the enum property of its parent instance
                 if (context?.Instance != null)
                     context.PropertyDescriptor?.SetValue(context.Instance, component);
             }

@@ -51,6 +51,7 @@ namespace KGySoft.Collections
     /// <summary>
     /// Implements a thread-safe dictionary, which can be a good alternative for <see cref="ConcurrentDictionary{TKey,TValue}"/> where it is not available (.NET Framework 3.5),
     /// or where <see cref="ConcurrentDictionary{TKey,TValue}"/> has a poorer performance.
+    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Collections_ThreadSafeDictionary_2.htm">online help</a> for a more detailed description.</div>
     /// </summary>
     /// <typeparam name="TKey">Type of the keys stored in the dictionary.</typeparam>
     /// <typeparam name="TValue">Type of the values stored in the dictionary.</typeparam>
@@ -72,7 +73,9 @@ namespace KGySoft.Collections
     /// make sure the <see cref="PreserveMergedKeys"/> property is <see langword="false"/>; otherwise, the already merged keys are not removed from the <see cref="ThreadSafeDictionary{TKey,TValue}"/>
     /// even if they are deleted or when you call the <see cref="Clear">Clear</see> method. To remove even the merged keys you must call the <see cref="Reset">Reset</see> method,
     /// or to remove the deleted keys only you can explicitly call the <see cref="TrimExcess">TrimExcess</see> method.</note></para>
-    /// <h2>Comparison with <see cref="ConcurrentDictionary{TKey,TValue}"/></h2>
+    /// </remarks>
+    /// <example>
+    /// <para>This section compares <see cref="ThreadSafeDictionary{TKey,TValue}"/> with <see cref="ConcurrentDictionary{TKey,TValue}"/>, demonstrating also some examples with different core counts.</para>
     /// <para><strong>When to use</strong>&#160;<see cref="ThreadSafeDictionary{TKey,TValue}"/>:
     /// <list type="bullet">
     /// <item>If it is known that a fixed set of keys will be used. <see cref="ThreadSafeDictionary{TKey,TValue}"/> is fast if the already added keys are updated,
@@ -111,7 +114,7 @@ namespace KGySoft.Collections
     /// <note type="tip">If <typeparamref name="TKey"/> is <see cref="string">string</see> and it is safe to use a non-randomized string comparer,
     /// then you can pass <see cref="StringSegmentComparer.Ordinal">StringSegmentComparer.Ordinal</see> to the constructor for even better performance.
     /// Or, you can use <see cref="StringSegmentComparer.OrdinalRandomized">StringSegmentComparer.OrdinalRandomized</see> to use a comparer with randomized hash also on
-    /// platforms where default string hashing is not randomized (eg. .NET Framework 3.5).</note></para>
+    /// platforms where default string hashing is not randomized (e.g. .NET Framework 3.5).</note></para>
     /// <para><strong>Incompatibilities</strong> with <see cref="ConcurrentDictionary{TKey,TValue}"/>:
     /// <list type="bullet">
     /// <item>Constructor signatures are different</item>
@@ -130,7 +133,7 @@ namespace KGySoft.Collections
     /// <item>The <see cref="ICollection.SyncRoot"/> property of <see cref="Keys"/> and <see cref="Values"/> as well as for the <see cref="ThreadSafeDictionary{TKey,TValue}"/>
     /// itself throws a <see cref="NotSupportedException"/>.</item>
     /// </list></para>
-    /// </remarks>
+    /// </example>
     /// <threadsafety instance="true"/>
     /// <seealso cref="ThreadSafeCacheFactory"/>
     /// <seealso cref="LockingDictionary{TKey,TValue}"/>
@@ -257,7 +260,7 @@ namespace KGySoft.Collections
         /// <para>Even if the value of this property is <see cref="TimeSpan.Zero">TimeSpan.Zero</see>, adding new items are not necessarily merged immediately
         /// to the fast-accessing storage. Depending on the targeted platform a minimum 15 ms delay is possible. Setting <see cref="TimeSpan.Zero">TimeSpan.Zero</see>
         /// is not recommended though, unless new items are almost never added at the same time.</para>
-        /// <para>When the value of this property is negative (eg. <see cref="Timeout.InfiniteTimeSpan">Timeout.InfiniteTimeSpan</see>), then the locking storage is not merged
+        /// <para>When the value of this property is negative (e.g. <see cref="Timeout.InfiniteTimeSpan">Timeout.InfiniteTimeSpan</see>), then the locking storage is not merged
         /// automatically with the lock-free storage. You still can call the <see cref="EnsureMerged">EnsureMerged</see> method to perform a merge explicitly.</para>
         /// <para>This property is ignored if a value is accessed in the fast-accessing storage including removing and adding values of keys that have already been merged to the lock-free storage.</para>
         /// <note>Some operations (such as enumerating the <see cref="ThreadSafeDictionary{TKey,TValue}"/> or its <see cref="Keys"/> and <see cref="Values"/>,

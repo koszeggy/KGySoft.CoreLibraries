@@ -48,7 +48,7 @@ namespace KGySoft.ComponentModel
 #endif
 #endif
         ICommandState,
-        ICustomTypeDescriptor // so the dynamic properties can be reflected as normal ones (eg. in a property grid)
+        ICustomTypeDescriptor // so the dynamic properties can be reflected as normal ones (e.g. in a property grid)
     {
         #region CommandStatePropertyDescriptor class
 

@@ -261,7 +261,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode);
 
-            // NOTE: SafeMode with ForceRecursiveSerializationOfSupportedTypes cannot be used (eg. due to the internal CultureData type)
+            // NOTE: SafeMode with ForceRecursiveSerializationOfSupportedTypes cannot be used (e.g. due to the internal CultureData type)
 
 #if NETFRAMEWORK
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);

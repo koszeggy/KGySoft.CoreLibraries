@@ -36,6 +36,7 @@ namespace KGySoft.Resources
 {
     /// <summary>
     /// Represents the complete content of an XML resource (.resx) file including resources, metadata and aliases.
+    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Resources_ResXResourceSet.htm">online help</a> for a more detailed description with examples.</div>
     /// </summary>
     /// <remarks>
     /// <note>This class is similar to <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxresourceset" target="_blank">System.Resources.ResXResourceSet</a>
@@ -47,7 +48,9 @@ namespace KGySoft.Resources
     /// These contents are available either by enumerators (<see cref="GetEnumerator">GetEnumerator</see>, <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> and <see cref="GetAliasEnumerator">GetAliasEnumerator</see> methods) or directly by key
     /// (<see cref="GetString(string)">GetString</see> and <see cref="GetObject(string)">GetObject</see> methods for resources, <see cref="GetMetaString">GetMetaString</see> and <see cref="GetMetaObject">GetMetaObject</see>
     /// for metadata, and <see cref="GetAliasValue">GetAliasValue</see> for aliases).</para>
-    /// <h2>Example: Enumerating resources, metadata and aliases</h2>
+    /// </remarks>
+    /// <example>
+    /// <h4>Example 1: Enumerating resources, metadata and aliases</h4>
     /// <para>
     /// The following example demonstrates how to access the content of a .resx file by the <see cref="ResXResourceSet"/> class using the enumerators.
     /// This is very similar to the first example of <see cref="ResXResourceReader"/>.
@@ -160,7 +163,7 @@ namespace KGySoft.Resources
     /// <para>The <see cref="ResXResourceSet"/> class supports adding new resources (<see cref="SetObject">SetObject</see>), metadata (<see cref="SetMetaObject">SetMetaObject</see>) and aliases (<see cref="SetAliasValue">SetAliasValue</see>).
     /// Existing entries can be removed by <see cref="RemoveObject">RemoveObject</see>, <see cref="RemoveMetaObject">RemoveMetaObject</see> and <see cref="RemoveAliasValue">RemoveAliasValue</see> methods.
     /// The changed set can be saved by the <see cref="O:KGySoft.Resources.ResXResourceSet.Save">Save</see> overloads.</para>
-    /// <h2>Example: Populating and saving a new resource set</h2>
+    /// <h4>Example 2: Populating and saving a new resource set</h4>
     /// <para>
     /// The following example shows how to create a new resource set, add a new resource and save the content. It demonstrates the usage of the key-based resource access, too.
     /// <code lang="C#"><![CDATA[
@@ -210,7 +213,7 @@ namespace KGySoft.Resources
     /// </para>
     /// <para>If <see cref="SafeMode"/> property is <see langword="true"/> the <see cref="O:KGySoft.Resources.ResXResourceSet.GetString">GetString</see> and <see cref="GetMetaString">GetMetaString</see> methods will not throw an
     /// <see cref="InvalidOperationException"/> even for non-string values; they return the raw XML value instead.</para>
-    /// <h2>Example: The SafeMode property</h2>
+    /// <h4>Example 3: The SafeMode property</h4>
     /// <para>
     /// The following example demonstrates the behavior of <see cref="SafeMode"/> property (see the first example as well, where the entries are accessed by the enumerators).
     /// <code lang="C#"><![CDATA[
@@ -337,7 +340,7 @@ namespace KGySoft.Resources
     /// // Obtaining 'dangerous' failed with an error: The input is not a valid Base-64 string as it contains a non-base 64 character,
     /// // more than two padding characters, or an illegal character among the padding characters.</code>
     /// </para>
-    /// <h2>Comparison with System.Resources.ResXResourceSet<a name="comparison">&#160;</a></h2>
+    /// <h2>Comparison with <c>System.Resources.ResXResourceSet</c><a name="comparison">&#160;</a></h2>
     /// <para><see cref="ResXResourceSet"/> can load .resx files produced both by <see cref="ResXResourceWriter"/> and <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxresourcewriter" target="_blank">System.Resources.ResXResourceWriter</a>.
     /// <note>When reading a .resx file written by the <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxresourcewriter" target="_blank">System.Resources.ResXResourceWriter</a> class,
     /// the <c>System.Windows.Forms.dll</c> is not loaded during resolving <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxfileref" target="_blank">System.Resources.ResXFileRef</a>
@@ -367,13 +370,13 @@ namespace KGySoft.Resources
     /// <description>This <see cref="ResXResourceSet"/> is much more safe, even if <see cref="SafeMode"/> is <see langword="false"/>, because no object is deserialized at load time.
     /// If <see cref="SafeMode"/> is <see langword="true"/>, then security is even more increased as <see cref="GetObject(string,bool)">GetObject</see> and <see cref="GetMetaObject">GetMetaObject</see> methods, and the <see cref="IDictionaryEnumerator.Value">IDictionaryEnumerator.Value</see>
     /// property of the enumerators returned by <see cref="GetEnumerator">GetEnumerator</see> and <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> methods return a <see cref="ResXDataNode"/> instance instead of a deserialized object
-    /// so you can check whether the resource or metadata can be treat as a safe object before actually deserializing it. See the example above for more details.</description></item>
+    /// so you can check whether the resource or metadata can be treated as a safe object before actually deserializing it. See the example above for more details.</description></item>
     /// <item><term>Write support</term>
     /// <description>The .resx file content can be expanded, existing entries can be replaced or removed and the new content can be saved by the <see cref="O:KGySoft.Resources.ResXResourceSet.Save">Save</see> methods.
     /// You can start even with a completely empty set, add content dynamically and save the new resource set.</description></item>
     /// </list>
     /// </para>
-    /// </remarks>
+    /// </example>
     /// <seealso cref="ResXDataNode"/>
     /// <seealso cref="ResXFileRef"/>
     /// <seealso cref="ResXResourceReader"/>

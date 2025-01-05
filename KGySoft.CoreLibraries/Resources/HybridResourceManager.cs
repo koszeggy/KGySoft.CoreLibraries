@@ -38,6 +38,7 @@ namespace KGySoft.Resources
     /// Represents a resource manager that provides convenient access to culture-specific resources at run time.
     /// It can handle both compiled resources from <c>.dll</c> and <c>.exe</c> files, and <c>.resx</c> files at
     /// the same time. New elements can be added as well, which can be saved into <c>.resx</c> files.
+    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Resources_HybridResourceManager.htm">online help</a> for examples with images.</div>
     /// </summary>
     /// <remarks>
     /// <para><see cref="HybridResourceManager"/> class is derived from <see cref="ResourceManager"/> and uses a <see cref="ResXResourceManager"/> internally.
@@ -48,7 +49,8 @@ namespace KGySoft.Resources
     /// <para>See the <a href="#comparison">Comparison with ResourceManager</a> section to see all of the differences.</para>
     /// <note type="tip">To see when to use the <see cref="ResXResourceReader"/>, <see cref="ResXResourceWriter"/>, <see cref="ResXResourceSet"/>, <see cref="ResXResourceManager"/>, <see cref="HybridResourceManager"/> and <see cref="DynamicResourceManager"/>
     /// classes see the documentation of the <see cref="N:KGySoft.Resources">KGySoft.Resources</see> namespace.</note>
-    /// <h2>Example: Expanding compiled resources created by Visual Studio</h2>
+    /// </remarks>
+    /// <example>
     /// <para>You can create compiled resources by Visual Studio and you can dynamically expand them by <see cref="HybridResourceManager"/>. The new and overridden content
     /// will be saved as .resx files. See the following example for a step-by-step guide.
     /// <list type="number">
@@ -215,13 +217,13 @@ namespace KGySoft.Resources
     /// property is <see langword="false"/>. Objects are deserialized only when they are accessed (see <see cref="O:KGySoft.Resources.HybridResourceManager.GetObject">GetObject</see>/<see cref="GetMetaObject">GetMetaObject</see>).
     /// If <see cref="SafeMode"/> is <see langword="true"/>, then security is even more increased because the <see cref="O:KGySoft.Resources.HybridResourceManager.GetObject">GetObject</see> and <see cref="GetMetaObject">GetMetaObject</see> methods
     /// return a <see cref="ResXDataNode"/> instance instead of a deserialized object so you can check whether the resource or metadata
-    /// can be treat as a safe object before actually deserializing it. See the <a href="#safety">Safety</a> section above for more details.</description></item>
+    /// can be treated as a safe object before actually deserializing it. See the <a href="#safety">Safety</a> section above for more details.</description></item>
     /// <item><term>Disposal</term>
     /// <description>As <see cref="ResourceSet"/> implementations are disposable objects, <see cref="HybridResourceManager"/> itself implements
     /// the <see cref="IDisposable"/> interface as well.</description></item>
     /// </list>
     /// </para>
-    /// </remarks>
+    /// </example>
     /// <seealso cref="LanguageSettings"/>
     /// <seealso cref="ResXDataNode"/>
     /// <seealso cref="ResXFileRef"/>

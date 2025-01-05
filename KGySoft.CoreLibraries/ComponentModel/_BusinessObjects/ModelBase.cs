@@ -27,6 +27,7 @@ namespace KGySoft.ComponentModel
 {
     /// <summary>
     /// Provides a base object for model classes or business objects, which can validate their state, have undo/redo capability and can support committable/revertible editing.
+    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_ComponentModel_ModelBase.htm">online help</a> for the image in the description.</div>
     /// </summary>
     /// <remarks>
     /// <note>This class unifies the capabilities of <see cref="ValidatingObjectBase"/>, <see cref="EditableObjectBase"/> and <see cref="UndoableObjectBase"/> classes.

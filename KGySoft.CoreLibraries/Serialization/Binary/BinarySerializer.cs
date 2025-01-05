@@ -138,7 +138,7 @@ namespace KGySoft.Serialization.Binary
         /// then the actual type also might needed to be included in <paramref name="expectedCustomTypes"/>.</para>
         /// <para>You can specify <paramref name="expectedCustomTypes"/> even if <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <paramref name="options"/>
         /// as it may improve the performance of type resolving and can help avoiding possible ambiguities if types were not serialized with full assembly identity
-        /// (eg. if <see cref="BinarySerializationOptions.OmitAssemblyQualifiedNames"/> was enabled on serialization).</para>
+        /// (e.g. if <see cref="BinarySerializationOptions.OmitAssemblyQualifiedNames"/> was enabled on serialization).</para>
         /// <para>If a type in <paramref name="expectedCustomTypes"/> has a different assembly identity in the deserialization stream, and
         /// it is not indicated by a <see cref="TypeForwardedFromAttribute"/> declared on the type, then you should instantiate a <see cref="BinarySerializationFormatter"/> class
         /// manually and set its <see cref="BinarySerializationFormatter.Binder"/> property to a <see cref="ForwardedTypesSerializationBinder"/> instance
@@ -287,7 +287,7 @@ namespace KGySoft.Serialization.Binary
         /// then the actual type also might needed to be included in <paramref name="expectedCustomTypes"/>.</para>
         /// <para>You can specify <paramref name="expectedCustomTypes"/> even if <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <paramref name="options"/>
         /// as it may improve the performance of type resolving and can help avoiding possible ambiguities if types were not serialized with full assembly identity
-        /// (eg. if <see cref="BinarySerializationOptions.OmitAssemblyQualifiedNames"/> was enabled on serialization).</para>
+        /// (e.g. if <see cref="BinarySerializationOptions.OmitAssemblyQualifiedNames"/> was enabled on serialization).</para>
         /// <para>If a type in <paramref name="expectedCustomTypes"/> has a different assembly identity in the deserialization stream, and
         /// it is not indicated by a <see cref="TypeForwardedFromAttribute"/> declared on the type, then you should instantiate a <see cref="BinarySerializationFormatter"/> class
         /// manually and set its <see cref="BinarySerializationFormatter.Binder"/> property to a <see cref="ForwardedTypesSerializationBinder"/> instance
@@ -439,7 +439,7 @@ namespace KGySoft.Serialization.Binary
         /// then the actual type also might needed to be included in <paramref name="expectedCustomTypes"/>.</para>
         /// <para>You can specify <paramref name="expectedCustomTypes"/> even if <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <paramref name="options"/>
         /// as it may improve the performance of type resolving and can help avoiding possible ambiguities if types were not serialized with full assembly identity
-        /// (eg. if <see cref="BinarySerializationOptions.OmitAssemblyQualifiedNames"/> was enabled on serialization).</para>
+        /// (e.g. if <see cref="BinarySerializationOptions.OmitAssemblyQualifiedNames"/> was enabled on serialization).</para>
         /// <para>If a type in <paramref name="expectedCustomTypes"/> has a different assembly identity in the deserialization stream, and
         /// it is not indicated by a <see cref="TypeForwardedFromAttribute"/> declared on the type, then you should instantiate a <see cref="BinarySerializationFormatter"/> class
         /// manually and set its <see cref="BinarySerializationFormatter.Binder"/> property to a <see cref="ForwardedTypesSerializationBinder"/> instance

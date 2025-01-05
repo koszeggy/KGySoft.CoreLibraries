@@ -28,7 +28,7 @@ using System.Text;
 
 #region Suppressions
 
-#if !(NETSTANDARD2_1_OR_GREATER && NETCOREAPP3_0_OR_GREATER)
+#if !(NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER)
 #pragma warning disable CS8602 // Dereference of a possibly null reference
 #endif
 

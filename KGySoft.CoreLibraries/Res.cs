@@ -1143,7 +1143,7 @@ namespace KGySoft
 
         #region XmlSerialization
 
-        /// <summary>Serializing type "{0}" is not supported with following options: {1}. You may either use fallback options (eg. RecursiveSerializationAsFallback) or provide a type converter for the type.</summary>
+        /// <summary>Serializing type "{0}" is not supported with following options: {1}. You may either use fallback options (e.g. RecursiveSerializationAsFallback) or provide a type converter for the type.</summary>
         internal static string XmlSerializationSerializingTypeNotSupported(Type type, XmlSerializationOptions options) => Get("XmlSerialization_SerializingTypeNotSupportedFormat", type.GetName(TypeNameKind.LongName), options.ToString<XmlSerializationOptions>());
 
         /// <summary>Root named "object" expected but "{0}" found.</summary>
@@ -1166,7 +1166,7 @@ namespace KGySoft
         /// <summary>Binary serialization of type "{0}" failed with options "{1}": {2}</summary>
         internal static string XmlSerializationBinarySerializationFailed(Type type, XmlSerializationOptions options, string errorMessage) => Get("XmlSerialization_BinarySerializationFailedFormat", type.GetName(TypeNameKind.LongName), options.ToString<XmlSerializationOptions>(), errorMessage);
 
-        /// <summary>Cannot serialize collection "{0}" with following options: "{1}". You may either use fallback options (eg. RecursiveSerializationAsFallback), provide a type converter or apply DesignerSerializationVisibilityAttribute with value Content on the container collection property or field.</summary>
+        /// <summary>Cannot serialize collection "{0}" with following options: "{1}". You may either use fallback options (e.g. RecursiveSerializationAsFallback), provide a type converter or apply DesignerSerializationVisibilityAttribute with value Content on the container collection property or field.</summary>
         internal static string XmlSerializationCannotSerializeCollection(Type type, XmlSerializationOptions options) => Get("XmlSerialization_CannotSerializeCollectionFormat", type.GetName(TypeNameKind.LongName), options.ToString<XmlSerializationOptions>());
 
         /// <summary>Cannot serialize known collection "{0}" with following options: "{1}" because it has an unsupported comparer.

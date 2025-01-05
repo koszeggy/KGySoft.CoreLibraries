@@ -52,6 +52,7 @@ namespace KGySoft.Resources
 {
     /// <summary>
     /// Represents a resource or metadata element in an XML resource (.resx) file.
+    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Resources_ResXDataNode.htm">online help</a> for a more detailed description with an example.</div>
     /// </summary>
     /// <remarks>
     /// <note>This class is similar to <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxdatanode" target="_blank">System.Resources.ResXDataNode</a>
@@ -85,6 +86,7 @@ namespace KGySoft.Resources
     /// methods with a key, which exists in the .resx file.</item>
     /// </list>
     /// </para>
+    /// </remarks>
     /// <example>
     /// The following example shows how to retrieve <see cref="ResXDataNode"/> instances from the <see cref="IDictionaryEnumerator"/> returned by <see cref="ResXResourceReader.GetEnumerator">ResXResourceReader.GetEnumerator</see>
     /// and <see cref="ResXResourceReader.GetMetadataEnumerator">ResXResourceReader.GetMetadataEnumerator</see> methods. Before the actual deserialization
@@ -230,7 +232,6 @@ namespace KGySoft.Resources
     /// //   Comment:
     /// //   Raw value:   Meta String
     /// //   Real value:  Meta String (System.String) </code>
-    /// </example>
     /// <h2>Comparison with System.Resources.ResXDataNode<a name="comparison">&#160;</a></h2>
     /// <para>
     /// If instantiated from a <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxdatanode" target="_blank">System.Resources.ResXDataNode</a> or <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxfileref" target="_blank">System.Resources.ResXFileRef</a>
@@ -295,7 +296,7 @@ namespace KGySoft.Resources
     /// <item><term>Support of generics</term>
     /// <description>This <see cref="ResXDataNode"/> class uses a special <see cref="SerializationBinder"/> implementation, which supports generic types correctly.</description></item>
     /// </list></para>
-    /// </remarks>
+    /// </example>
     /// <seealso cref="ResXFileRef"/>
     /// <seealso cref="ResXResourceReader"/>
     /// <seealso cref="ResXResourceWriter"/>
@@ -841,7 +842,7 @@ namespace KGySoft.Resources
             #region Local Methods
 
             // Only in safeMode, when there is no expected type.
-            // Used from TypeResolver rather than calling ResolveKnownType directly so modifiers (eg. array) are handled automatically.
+            // Used from TypeResolver rather than calling ResolveKnownType directly so modifiers (e.g. array) are handled automatically.
             static Type ResolveKnownType(AssemblyName? asmName, string typeName)
             {
                 if (SerializationHelper.TryGetKnownSimpleType(typeName, out Type? result))

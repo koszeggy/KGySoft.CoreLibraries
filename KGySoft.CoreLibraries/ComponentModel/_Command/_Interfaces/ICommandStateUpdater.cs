@@ -24,7 +24,7 @@ namespace KGySoft.ComponentModel
     /// <summary>
     /// Represents an updater for the <see cref="ICommandState"/> entries that apply the state values on the command source instances.
     /// For example, if the command source is a UI element such as a button or menu item, then the <see cref="ICommandState.Enabled"/> property
-    /// or any arbitrary state (eg. text, image, shortcut, etc.) can be applied to the sources.
+    /// or any arbitrary state (e.g. text, image, shortcut, etc.) can be applied to the sources.
     /// </summary>
     /// <remarks>
     /// <para>If a binding has no updaters, then the states are not synchronized back to the sources.</para>

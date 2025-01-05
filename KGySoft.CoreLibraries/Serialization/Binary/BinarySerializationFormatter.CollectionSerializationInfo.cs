@@ -104,9 +104,9 @@ namespace KGySoft.Serialization.Binary
             internal Func<Type, MethodAccessor>? GetSpecificAddMethod { get; set; }
 
             /// <summary>
-            /// Should be specified if the collection is a value type, and it has a publicly exposed backing array that can have more elements than the wrapper type (eg. ArraySegment),
-            /// or, if it does not expose or wrap any array, but it can be represented as a (fixed size) array (eg. Vector128).
-            /// If the collection does not actually wrap the array, then it must not contain any direct circular reference to the object itself because it makes proper deserialization impossible (eg. object element type must not be supported by the collection)
+            /// Should be specified if the collection is a value type, and it has a publicly exposed backing array that can have more elements than the wrapper type (e.g. ArraySegment),
+            /// or, if it does not expose or wrap any array, but it can be represented as a (fixed size) array (e.g. Vector128).
+            /// If the collection does not actually wrap the array, then it must not contain any direct circular reference to the object itself because it makes proper deserialization impossible (e.g. object element type must not be supported by the collection)
             /// </summary>
             internal Func<object, Array?>? GetBackingArray { get; set; }
 
@@ -142,7 +142,7 @@ namespace KGySoft.Serialization.Binary
             internal Func<object, object>? CreateFinalCollectionCallback { get; set; }
 
             /// <summary>
-            /// Should be set if the supported public type is an abstract generic type, and we need to support its non-public derived instances (eg. comparers, frozen collections).
+            /// Should be set if the supported public type is an abstract generic type, and we need to support its non-public derived instances (e.g. comparers, frozen collections).
             /// Required only for generic types if the possible derived instances may have different type arguments (if any).
             /// </summary>
             internal Type? ReferenceAbstractGenericType { get; set; }
@@ -222,7 +222,7 @@ namespace KGySoft.Serialization.Binary
             /// <summary>
             /// Writes specific properties of a collection that are needed for deserialization
             /// </summary>
-            /// <returns>true if the whole write is finished (eg. default instance); otherwise, false</returns>
+            /// <returns>true if the whole write is finished (e.g. default instance); otherwise, false</returns>
             [SecurityCritical]
             internal bool WriteSpecificProperties(BinaryWriter bw, [NoEnumeration]IEnumerable collection, SerializationManager manager)
             {

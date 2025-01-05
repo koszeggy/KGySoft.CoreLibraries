@@ -59,9 +59,9 @@ namespace KGySoft.Collections
         /// <br/>Default value: <c>1024</c>.
         /// </summary>
         /// <remarks>
-        /// <para>The value of the <see cref="ThresholdCapacity"/> property must be greater or equal to the value of the <see cref="InitialCapacity"/> property.</para>
+        /// <para>The value of the <see cref="ThresholdCapacity"/> property must be greater than or equal to the value of the <see cref="InitialCapacity"/> property.</para>
         /// <para>When the first element is about to be stored a dynamic storage is allocated that can optimally store about as many elements as specified by the <see cref="InitialCapacity"/> property.
-        /// When the number of stored elements reaches <see cref="InitialCapacity"/> capacity, then content of the dynamic storage is copied into a faster read-only storage, and for additional elements
+        /// When the number of stored elements reaches <see cref="InitialCapacity"/> capacity, then the content of the dynamic storage is copied into a faster read-only storage, and for additional elements
         /// a new dynamic storage is allocated with either doubled capacity or the specified <see cref="ThresholdCapacity"/>, whichever is less.</para>
         /// <para>Once the number of stored elements in the dynamically growing storage reaches <see cref="ThresholdCapacity"/>, the complete previous content of the faster read-only storage is replaced
         /// by the elements in the growing storage. Therefore, when adding new items continuously, the number of stored elements will be between <see cref="ThresholdCapacity"/> and twice of <see cref="ThresholdCapacity"/>.</para>

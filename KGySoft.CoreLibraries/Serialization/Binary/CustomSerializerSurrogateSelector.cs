@@ -39,9 +39,10 @@ namespace KGySoft.Serialization.Binary
     /// including non-serializable ones by an <see cref="IFormatter"/> such as <see cref="BinarySerializationFormatter"/>
     /// or the legacy <see cref="BinaryFormatter"/>.
     /// <br/>When targeting .NET 8 or later this class is marked as obsolete.
+    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Serialization_Binary_CustomSerializerSurrogateSelector.htm">online help</a> for a more detailed description with examples.</div>
     /// </summary>
     /// <remarks>
-    /// <note type="security"><para>Do no use the <see cref="CustomSerializerSurrogateSelector"/> class to be able to deserialize any type
+    /// <note type="security"><para>Do not use the <see cref="CustomSerializerSurrogateSelector"/> class to be able to deserialize any type
     /// from an untrusted source. If you deserialize a stream from an untrusted source make sure that you set the <see cref="SafeMode"/> property,
     /// which prevents supporting non-serializable types, or set the <see cref="IsTypeSupported"/> property to explicitly tell what types are supported.</para>
     /// <para>See also the security notes at the <strong>Remarks</strong> section of the <see cref="BinarySerializationFormatter"/> class for more details.</para></note>
@@ -52,6 +53,8 @@ namespace KGySoft.Serialization.Binary
     /// Please note though that you cannot use this class for <see cref="BinarySerializationFormatter"/> when the <see cref="BinarySerializationOptions.SafeMode"/> flag
     /// is enabled in its <see cref="BinarySerializationFormatter.Options"/> property, even if the <see cref="SafeMode"/> property is set to <see langword="true"/>.</note>
     /// </para>
+    /// </remarks>
+    /// <example>
     /// <para>To serialize a non-serializable type, or a type, which contains non-serializable types, it is usually enough to assign
     /// a <see cref="CustomSerializerSurrogateSelector"/> to the formatter:
     /// <code lang="C#"><![CDATA[
@@ -65,15 +68,15 @@ namespace KGySoft.Serialization.Binary
     /// <para>
     /// <list type="definition">
     /// <item><term>Basic case</term><description>If the only difference is that the type, which is serializable in the original platform
-    /// is not marked by the <see cref="SerializableAttribute"/> in the new one (eg.: <see cref="MemoryStream"/> is not serializable
-    /// in .NET Core but otherwise it is still the same as in .NET Framework), then it is enough to use the default <see cref="CustomSerializerSurrogateSelector"/>:
+    /// is not marked by the <see cref="SerializableAttribute"/> in the new one (e.g.: <see cref="MemoryStream"/> is not serializable
+    /// in .NET Core, but otherwise it is still the same as in .NET Framework), then it is enough to use the default <see cref="CustomSerializerSurrogateSelector"/>:
     /// <code lang="C#"><![CDATA[
     /// // deserializing a MemoryStream in .NET Core that was serialized in .NET Framework
     /// var formatter = new BinaryFormatter { SurrogateSelector = new CustomSerializerSurrogateSelector() };
     /// var memoryStream = (MemoryStream)formatter.Deserialize(streamSerializedInNetFramework); ]]></code></description></item>
     /// <item><term>The original type implements <see cref="ISerializable"/></term><description>In .NET Core there are several types that still
     /// implement <see cref="ISerializable"/>, though their <see cref="ISerializable.GetObjectData">ISerializable.GetObjectData</see> method
-    /// throws a <see cref="PlatformNotSupportedException"/> (eg. <see cref="DBNull"/>, <see cref="Type"/> and <see cref="Assembly"/> in .NET Core 2.0).
+    /// throws a <see cref="PlatformNotSupportedException"/> (e.g. <see cref="DBNull"/>, <see cref="Type"/> and <see cref="Assembly"/> in .NET Core 2.0).
     /// On the other hand, in .NET Core 3.0 <see cref="DBNull"/> is serializable again, <see cref="Assembly"/> remained the same and
     /// from <see cref="Type"/> the <see cref="ISerializable"/> implementation has also been removed along with the <see cref="SerializableAttribute"/>.
     /// For such cases there are more possible solutions:
@@ -100,7 +103,7 @@ namespace KGySoft.Serialization.Binary
     /// </list>
     /// </description></item>
     /// <item><term>Deserializing refactored types</term><description>If the object was serialized by fields but the field names have been
-    /// refactored since then, then you can handle the <see cref="SettingField"/> event where you can either lookup and set the appropriate
+    /// refactored since then, then you can handle the <see cref="SettingField"/> event where you can either look up and set the appropriate
     /// <see cref="SettingFieldEventArgs.Field"/> or do whatever custom processing and set the <see cref="HandledEventArgs.Handled"/> property
     /// to <see langword="true"/> to indicate that you processed the entry manually. If you can initialize the complete object by yourself
     /// based on the serialized <see cref="SerializationInfo"/>, then you can handle the <see cref="Deserializing"/> event and set
@@ -137,7 +140,7 @@ namespace KGySoft.Serialization.Binary
     /// <note type="caution">Some of the solutions above are more workarounds for situations arose rather than recommended practices.
     /// If it is known that a type will be deserialized in another environment and it can be completely restored by its public members,
     /// then a text-based serialization (see also <see cref="XmlSerializer"/>) can be a better choice.</note>
-    /// </remarks>
+    /// </example>
     /// <seealso cref="NameInvariantSurrogateSelector" />
     /// <seealso cref="BinarySerializationFormatter" />
 #if NET8_0_OR_GREATER

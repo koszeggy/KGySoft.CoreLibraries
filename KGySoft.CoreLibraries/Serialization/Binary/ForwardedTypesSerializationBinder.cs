@@ -41,6 +41,7 @@ namespace KGySoft.Serialization.Binary
 {
     /// <summary>
     /// Provides a <see cref="SerializationBinder"/> that makes possible to serialize and deserialize types with custom assembly identity.
+    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Serialization_Binary_ForwardedTypesSerializationBinder.htm">online help</a> for examples.</div>
     /// </summary>
     /// <remarks>
     /// <note type="security"><para>If a deserialization stream may come from an untrusted source, then make sure to set the <see cref="SafeMode"/> property

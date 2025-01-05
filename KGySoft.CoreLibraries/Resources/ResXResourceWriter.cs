@@ -49,6 +49,7 @@ namespace KGySoft.Resources
 {
     /// <summary>
     /// Writes resources in an XML resource (.resx) file or an output stream.
+    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Resources_ResXResourceWriter.htm">online help</a> for a more detailed description with an example.</div>
     /// </summary>
     /// <remarks>
     /// <note>This class is similar to <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxresourcewriter" target="_blank">System.Resources.ResXResourceWriter</a>
@@ -58,8 +59,9 @@ namespace KGySoft.Resources
     /// <para>Resources are specified as name/value pairs using the <see cref="AddResource(string,object)">AddResource</see> method.</para>
     /// <para>If <see cref="CompatibleFormat"/> property is <see langword="true"/>, <see cref="ResXResourceWriter"/> emits .resx files, which can be then read not just by <see cref="ResXResourceReader"/>
     /// but by the original <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a> class, too.</para>
+    /// </remarks>
     /// <example>
-    /// The following example shows how to create a resource file by <see cref="ResXResourceWriter"/> and add different kind of resource objects to it. At the end it displays the resulting .resx file content.
+    /// <para>The following example shows how to create a resource file by <see cref="ResXResourceWriter"/> and add different kind of resource objects to it. At the end it displays the resulting .resx file content.</para>
     /// <code lang="C#"><![CDATA[
     /// using System;
     /// using System.Drawing;
@@ -117,8 +119,7 @@ namespace KGySoft.Resources
     /// //     </value>
     /// //   </data>
     /// // </root>]]></code>
-    /// </example>
-    /// <h2>Comparison with System.Resources.ResXResourceWriter<a name="comparison">&#160;</a></h2>
+    /// <h2>Comparison with <c>System.Resources.ResXResourceWriter</c><a name="comparison">&#160;</a></h2>
     /// <note>When writing a .resx file in <see cref="CompatibleFormat"/>, the <c>System.Windows.Forms.dll</c> is not loaded when referencing
     /// <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxfileref" target="_blank">System.Resources.ResXFileRef</a> and <strong>System.Resources.ResXNullRef</strong> types.</note>
     /// <para><strong>Incompatibility</strong> with <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxresourcewriter" target="_blank">System.Resources.ResXResourceWriter</a>:
@@ -206,7 +207,7 @@ namespace KGySoft.Resources
     /// </list></item>
     /// </list>
     /// </para>
-    /// </remarks>
+    /// </example>
     public sealed class ResXResourceWriter : IResourceWriter
     {
         #region ResXWriter class
@@ -654,7 +655,7 @@ namespace KGySoft.Resources
         /// Initializes a new instance of the <see cref="ResXResourceWriter"/> class that writes the resources to a specified file.
         /// </summary>
         /// <param name="fileName">The file to send output to.</param>
-        /// <param name="typeNameConverter">A delegate that can be used to specify type names explicitly (eg. to target earlier versions of assemblies or the .NET Framework). This parameter is optional.
+        /// <param name="typeNameConverter">A delegate that can be used to specify type names explicitly (e.g. to target earlier versions of assemblies or the .NET Framework). This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <remarks>If <paramref name="typeNameConverter"/> is specified it can be used to dump custom type names for any type. If it returns <see langword="null"/> for a <see cref="Type"/>, then the default
         /// name will be used. To deserialize a .resx content with custom type names the <see cref="ResXResourceReader"/> constructors should be called with a non-<see langword="null"/>&#160;<see cref="ITypeResolutionService"/> instance.</remarks>
@@ -672,7 +673,7 @@ namespace KGySoft.Resources
         /// Initializes a new instance of the <see cref="ResXResourceWriter"/> class that writes the resources to a specified <paramref name="stream"/>.
         /// </summary>
         /// <param name="stream">The <see cref="Stream"/> to send the output to.</param>
-        /// <param name="typeNameConverter">A delegate that can be used to specify type names explicitly (eg. to target earlier versions of assemblies or the .NET Framework). This parameter is optional.
+        /// <param name="typeNameConverter">A delegate that can be used to specify type names explicitly (e.g. to target earlier versions of assemblies or the .NET Framework). This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <remarks>If <paramref name="typeNameConverter"/> is specified it can be used to dump custom type names for any type. If it returns <see langword="null"/> for a <see cref="Type"/>, then the default
         /// name will be used. To deserialize a .resx content with custom type names the <see cref="ResXResourceReader"/> constructors should be called with a non-<see langword="null"/>&#160;<see cref="ITypeResolutionService"/> instance.</remarks>
@@ -690,7 +691,7 @@ namespace KGySoft.Resources
         /// Initializes a new instance of the <see cref="ResXResourceWriter"/> class that writes the resources by a specified <paramref name="textWriter"/>.
         /// </summary>
         /// <param name="textWriter">The <see cref="TextWriter"/> object to send output to.</param>
-        /// <param name="typeNameConverter">A delegate that can be used to specify type names explicitly (eg. to target earlier versions of assemblies or the .NET Framework). This parameter is optional.
+        /// <param name="typeNameConverter">A delegate that can be used to specify type names explicitly (e.g. to target earlier versions of assemblies or the .NET Framework). This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <remarks>If <paramref name="typeNameConverter"/> is specified it can be used to dump custom type names for any type. If it returns <see langword="null"/> for a <see cref="Type"/>, then the default
         /// name will be used. To deserialize a .resx content with custom type names the <see cref="ResXResourceReader"/> constructors should be called with a non-<see langword="null"/>&#160;<see cref="ITypeResolutionService"/> instance.</remarks>

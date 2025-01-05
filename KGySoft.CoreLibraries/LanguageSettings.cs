@@ -38,6 +38,7 @@ namespace KGySoft
     /// Represents the language settings of the current thread. Use this class also when you want to be notified on
     /// language changes and to control the behavior of those <see cref="DynamicResourceManager"/> instances,
     /// which are configured to use centralized settings.
+    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_LanguageSettings.htm">online help</a> for examples.</div>
     /// </summary>
     /// <seealso cref="PublicResources"/>
     /// <seealso cref="DynamicResourceManager.UseLanguageSettings"/>
@@ -47,7 +48,7 @@ namespace KGySoft
     /// the <see cref="PublicResources"/> class and let the consumers of your library adjusting the language settings by this class in their applications.</para>
     /// <para>If you use <c>KGySoft.CoreLibraries</c> or other class libraries dependent on <c>KGySoft.CoreLibraries</c> in an application, then use this class to
     /// set the language of your application and the behavior of centralized resource managers. The <c>KGySoft.CoreLibraries</c> contains one centralized resource manager
-    /// for the string resources used in the library. Some of these strings can be publicly accessed via the <see cref="PublicResources"/> members. See also the example below.</para>
+    /// for the string resources used in the library. Some of these strings can be publicly accessed via the <see cref="PublicResources"/> members.</para>
     /// </remarks>
     /// <example>
     /// The following example demonstrates how to generate resource files in your application for any language.
@@ -104,7 +105,7 @@ namespace KGySoft
     /// <para>Search for the <c>[T]</c> values in the generated file to find the untranslated resources and feel free to change them. If you change the resource and execute the example again it will now show the translation you provided.</para>
     /// <note type="tip"><list type="bullet">
     /// <item>If the <see cref="AutoAppendOptions.AppendOnLoad"/> flag is enabled in <see cref="DynamicResourceManagersAutoAppend"/> property, then not only the explicitly obtained resources but all resource entries will
-    /// appeared in the localized resource set.</item>
+    /// appear in the localized resource set.</item>
     /// <item>You can use the <see cref="EnsureResourcesGenerated">EnsureResourcesGenerated</see> method to generate the possibly non-existing resource sets without explicitly accessing a resource first.</item>
     /// <item>You can use the <see cref="EnsureInvariantResourcesMerged">EnsureInvariantResourcesMerged</see> method to forcibly merge all invariant resource entries even if a localized resource set already exists.
     /// This can be useful to add the possibly missing entries to the localization, if some new entries have been introduced in a new version, for example.</item>

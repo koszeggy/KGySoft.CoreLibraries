@@ -22,6 +22,7 @@ namespace KGySoft.ComponentModel
     /// <summary>
     /// Represents a command, which can be used to create a binding between an event of one or more sources and zero or more target objects. Can be used easily to bind
     /// events with targets with any technology.
+    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_ComponentModel_ICommand.htm">online help</a> for examples.</div>
     /// </summary>
     /// <remarks>
     /// <para>Unlike the <see cref="System.Windows.Input.ICommand">System.Windows.Input.ICommand</see> type, this <see cref="ICommand"/> represents a stateless
@@ -30,10 +31,11 @@ namespace KGySoft.ComponentModel
     /// which returns an <see cref="ICommandState"/> instance.</para>
     /// <para>To implement a command by using a delegate you can also choose one of the four pairs of predefined classes: <see cref="SimpleCommand"/>/<see cref="SimpleCommand{TParam}"/>,
     /// <see cref="TargetedCommand{TTarget}"/>/<see cref="TargetedCommand{TTarget,TParam}"/>, <see cref="SourceAwareCommand{TEventArgs}"/>/<see cref="SourceAwareCommand{TEventArgs,TParam}"/>
-    /// and <see cref="SourceAwareTargetedCommand{TEventArgs, TTarget}"/>/<see cref="SourceAwareTargetedCommand{TEventArgs,TTarget,TParam}"/> depending whether the command is parameterized,
+    /// and <see cref="SourceAwareTargetedCommand{TEventArgs, TTarget}"/>/<see cref="SourceAwareTargetedCommand{TEventArgs,TTarget,TParam}"/> depending on whether the command is parameterized,
     /// targets specific objects and behaves differently based on the source's state or event arguments.</para>
     /// <para>A binding can be created by the <see cref="O:KGySoft.ComponentModel.Command.CreateBinding">Commands.CreateBinding</see> methods or by the <see cref="CommandBindingsCollection"/> class.
-    /// When a binding or a collection of bindings are disposed all of the event subscriptions are released, which makes the cleanup really simple.</para>
+    /// When a binding or a collection of bindings are disposed all the event subscriptions are released, which makes the cleanup really simple.</para>
+    /// </remarks>
     /// <example>
     /// <note type="tip"><list type="bullet">
     /// <item>Try also <a href="https://dotnetfiddle.net/7b0lFq" target="_blank">online</a>.</item>
@@ -138,7 +140,6 @@ namespace KGySoft.ComponentModel
     ///     .AddTarget(panelInfo) // now multiple targets will be set by the same parameter
     ///     .AddTarget(buttonDoSomething);]]></code></para>
     /// </example>
-    /// </remarks>
     /// <seealso cref="ICommandBinding"/>
     /// <seealso cref="CommandBindingsCollection"/>
     /// <seealso cref="ICommandState"/>

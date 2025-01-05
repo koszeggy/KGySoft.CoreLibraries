@@ -38,6 +38,7 @@ namespace KGySoft.Diagnostics
 {
     /// <summary>
     /// Provides a base class for performance tests.
+    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Diagnostics_PerformanceTestBase_2.htm">online help</a> for a more detailed description with examples.</div>
     /// </summary>
     /// <typeparam name="TDelegate">The delegate type of the test cases.</typeparam>
     /// <typeparam name="TResult">The type of the result.</typeparam>
