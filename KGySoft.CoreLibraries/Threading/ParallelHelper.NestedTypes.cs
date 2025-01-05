@@ -19,6 +19,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Security;
 using System.Threading;
 
 using KGySoft.Collections;
@@ -512,19 +513,22 @@ namespace KGySoft.Threading
                 DoSort(context, list, startIndex + pivotIndex, count - pivotIndex, comparer, freeDepth);
             }
 
+            [SecuritySafeCritical]
             internal static void DoSort<TFrom, TTo>(IAsyncContext context, CastArray<TFrom, TTo> array, IComparer<TTo> comparer, int freeDepth)
                 where TFrom : unmanaged
                 where TTo : unmanaged, T
             {
                 #region Local Methods
 
+                [SecuritySafeCritical]
+                [MethodImpl(MethodImpl.AggressiveInlining)]
                 static void SwapIfGreater(CastArray<TFrom, TTo> array, IComparer<TTo> comparer, int i, int j)
                 {
-                    if (comparer.Compare(array[i], array[j]) > 0)
+                    if (comparer.Compare(array.GetElementUnsafe(i), array.GetElementUnsafe(j)) > 0)
                     {
-                        TTo temp = array[i];
-                        array[i] = array[j];
-                        array[j] = temp;
+                        TTo temp = array.GetElementUnsafe(i);
+                        array.SetElementUnsafe(i, array.GetElementUnsafe(j));
+                        array.SetElementUnsafe(j, temp);
                     }
                 }
 
@@ -554,15 +558,15 @@ namespace KGySoft.Threading
                     // insertion sort
                     for (int i = 1; i < array.Length; i++)
                     {
-                        TTo current = array[i];
+                        TTo current = array.GetElementUnsafe(i);
                         int j = i - 1;
-                        while (j >= 0 && comparer.Compare(current, array[j]) < 0)
+                        while (j >= 0 && comparer.Compare(current, array.GetElementUnsafe(j)) < 0)
                         {
-                            array[j + 1] = array[j];
+                            array.SetElementUnsafe(j + 1, array.GetElementUnsafe(j));
                             j -= 1;
                         }
 
-                        array[j + 1] = current;
+                        array.SetElementUnsafe(j + 1, current);
                     }
 
                     return;
@@ -585,7 +589,7 @@ namespace KGySoft.Threading
                     {
                         // Narrowing from the left if possible. Can happen if the values are the same according to the comparer.
                         int endIndex = array.Length - 1;
-                        while (pivotIndex < endIndex && comparer.Compare(array[pivotIndex], array[pivotIndex + 1]) == 0)
+                        while (pivotIndex < endIndex && comparer.Compare(array.GetElementUnsafe(pivotIndex), array.GetElementUnsafe(pivotIndex + 1)) == 0)
                             pivotIndex += 1;
 
                         // there is nothing left to sort
@@ -601,7 +605,7 @@ namespace KGySoft.Threading
                     if (array.Length - pivotIndex <= 1)
                     {
                         // Narrowing from the right if possible. Can happen if the values are the same according to the comparer.
-                        while (pivotIndex > 1 && comparer.Compare(array[pivotIndex], array[pivotIndex - 1]) == 0)
+                        while (pivotIndex > 1 && comparer.Compare(array.GetElementUnsafe(pivotIndex), array.GetElementUnsafe(pivotIndex - 1)) == 0)
                             pivotIndex -= 1;
 
                         // there is nothing left to sort
@@ -831,17 +835,20 @@ namespace KGySoft.Threading
                 return pivotIndex - startIndex;
             }
 
+            [SecuritySafeCritical]
             private static int Partition<TFrom, TTo>(CastArray<TFrom, TTo> array, IComparer<TTo> comparer)
                 where TFrom : unmanaged
                 where TTo : unmanaged, T
             {
                 #region Local Methods
 
+                [SecuritySafeCritical]
+                [MethodImpl(MethodImpl.AggressiveInlining)]
                 static void Swap(CastArray<TFrom, TTo> array, int i, int j)
                 {
-                    var temp = array[i];
-                    array[i] = array[j];
-                    array[j] = temp;
+                    TTo temp = array.GetElementUnsafe(i);
+                    array.SetElementUnsafe(i, array.GetElementUnsafe(j));
+                    array.SetElementUnsafe(j, temp);
                 }
 
                 #endregion
@@ -849,7 +856,7 @@ namespace KGySoft.Threading
                 Debug.Assert(array.Length > 1);
                 if (array.Length == 2)
                 {
-                    if (comparer.Compare(array[0], array[1]) > 0)
+                    if (comparer.Compare(array.GetElementUnsafe(0), array.GetElementUnsafe(1)) > 0)
                         Swap(array, 0, 1);
 
                     return 1;
@@ -857,16 +864,16 @@ namespace KGySoft.Threading
 
                 // taking the pivot from the middle
                 int pivotIndex = (array.Length >> 1);
-                TTo pivotValue = array[pivotIndex];
+                TTo pivotValue = array.GetElementUnsafe(pivotIndex);
 
                 int left = 0;
                 int right = array.Length - 1;
 
                 do
                 {
-                    while (left <= right && comparer.Compare(array[left], pivotValue) <= 0)
+                    while (left <= right && comparer.Compare(array.GetElementUnsafe(left), pivotValue) <= 0)
                         left += 1;
-                    while (left < right && comparer.Compare(pivotValue, array[right]) < 0)
+                    while (left < right && comparer.Compare(pivotValue, array.GetElementUnsafe(right)) < 0)
                         right -= 1;
                     if (left >= right)
                         break;
@@ -1447,15 +1454,15 @@ namespace KGySoft.Threading
                 [MethodImpl(MethodImpl.AggressiveInlining)]
                 static void SwapIfGreater(ArraySection<TKey> keys, ArraySection<TValue> values, IComparer<TKey> comparer, int i, int j)
                 {
-                    if (comparer.Compare(keys[i], keys[j]) > 0)
+                    if (comparer.Compare(keys.GetElementUnchecked(i), keys.GetElementUnchecked(j)) > 0)
                     {
-                        TKey key = keys[i];
-                        keys[i] = keys[j];
-                        keys[j] = key;
+                        TKey key = keys.GetElementUnchecked(i);
+                        keys.SetElementUnchecked(i, keys.GetElementUnchecked(j));
+                        keys.SetElementUnchecked(j, key);
 
-                        TValue value = values[i];
-                        values[i] = values[j];
-                        values[j] = value;
+                        TValue value = values.GetElementUnchecked(i);
+                        values.SetElementUnchecked(i, values.GetElementUnchecked(j));
+                        values.SetElementUnchecked(j, value);
                     }
                 }
 
@@ -1485,18 +1492,18 @@ namespace KGySoft.Threading
                     // insertion sort
                     for (int i = 1; i < keys.Length; i++)
                     {
-                        TKey currentKey = keys[i];
-                        TValue currentValue = values[i];
+                        TKey currentKey = keys.GetElementUnchecked(i);
+                        TValue currentValue = values.GetElementUnchecked(i);
                         int j = i - 1;
-                        while (j >= 0 && comparer.Compare(currentKey, keys[j]) < 0)
+                        while (j >= 0 && comparer.Compare(currentKey, keys.GetElementUnchecked(j)) < 0)
                         {
-                            keys[j + 1] = keys[j];
-                            values[j + 1] = values[j];
+                            keys.SetElementUnchecked(j + 1, keys.GetElementUnchecked(j));
+                            values.SetElementUnchecked(j + 1, values.GetElementUnchecked(j));
                             j -= 1;
                         }
 
-                        keys[j + 1] = currentKey;
-                        values[j + 1] = currentValue;
+                        keys.SetElementUnchecked(j + 1, currentKey);
+                        values.SetElementUnchecked(j + 1, currentValue);
                     }
 
                     return;
@@ -1519,7 +1526,7 @@ namespace KGySoft.Threading
                     {
                         // Narrowing from the left if possible. Can happen if the values are the same according to the comparer.
                         int endIndex = keys.Length - 1;
-                        while (pivotIndex < endIndex && comparer.Compare(keys[pivotIndex], keys[pivotIndex + 1]) == 0)
+                        while (pivotIndex < endIndex && comparer.Compare(keys.GetElementUnchecked(pivotIndex), keys.GetElementUnchecked(pivotIndex + 1)) == 0)
                             pivotIndex += 1;
 
                         // there is nothing left to sort
@@ -1536,7 +1543,7 @@ namespace KGySoft.Threading
                     if (keys.Length - pivotIndex <= 1)
                     {
                         // Narrowing from the right if possible. Can happen if the values are the same according to the comparer.
-                        while (pivotIndex > 1 && comparer.Compare(keys[pivotIndex], keys[pivotIndex - 1]) == 0)
+                        while (pivotIndex > 1 && comparer.Compare(keys.GetElementUnchecked(pivotIndex), keys.GetElementUnchecked(pivotIndex - 1)) == 0)
                             pivotIndex -= 1;
 
                         // there is nothing left to sort
@@ -1588,6 +1595,7 @@ namespace KGySoft.Threading
                 DoSort(context, keys.Slice(pivotIndex), values.Slice(pivotIndex), comparer, freeDepth);
             }
 
+            [SecuritySafeCritical]
             internal static void DoSort<TKeyFrom, TKeyTo, TValueFrom, TValueTo>(IAsyncContext context, CastArray<TKeyFrom, TKeyTo> keys, CastArray<TValueFrom, TValueTo> values, IComparer<TKeyTo> comparer, int freeDepth)
                 where TKeyFrom : unmanaged
                 where TKeyTo : unmanaged, TKey
@@ -1596,18 +1604,19 @@ namespace KGySoft.Threading
             {
                 #region Local Methods
 
+                [SecuritySafeCritical]
                 [MethodImpl(MethodImpl.AggressiveInlining)]
                 static void SwapIfGreater(CastArray<TKeyFrom, TKeyTo> keys, CastArray<TValueFrom, TValueTo> values, IComparer<TKeyTo> comparer, int i, int j)
                 {
-                    if (comparer.Compare(keys[i], keys[j]) > 0)
+                    if (comparer.Compare(keys.GetElementUnsafe(i), keys.GetElementUnsafe(j)) > 0)
                     {
-                        TKeyTo key = keys[i];
-                        keys[i] = keys[j];
-                        keys[j] = key;
+                        TKeyTo key = keys.GetElementUnsafe(i);
+                        keys.SetElementUnsafe(i, keys.GetElementUnsafe(j));
+                        keys.SetElementUnsafe(j, key);
 
-                        TValueTo value = values[i];
-                        values[i] = values[j];
-                        values[j] = value;
+                        TValueTo value = values.GetElementUnsafe(i);
+                        values.SetElementUnsafe(i, values.GetElementUnsafe(j));
+                        values.SetElementUnsafe(j, value);
                     }
                 }
 
@@ -1637,18 +1646,18 @@ namespace KGySoft.Threading
                     // insertion sort
                     for (int i = 1; i < keys.Length; i++)
                     {
-                        TKeyTo currentKey = keys[i];
-                        TValueTo currentValue = values[i];
+                        TKeyTo currentKey = keys.GetElementUnsafe(i);
+                        TValueTo currentValue = values.GetElementUnsafe(i);
                         int j = i - 1;
-                        while (j >= 0 && comparer.Compare(currentKey, keys[j]) < 0)
+                        while (j >= 0 && comparer.Compare(currentKey, keys.GetElementUnsafe(j)) < 0)
                         {
-                            keys[j + 1] = keys[j];
-                            values[j + 1] = values[j];
+                            keys.SetElementUnsafe(j + 1, keys.GetElementUnsafe(j));
+                            values.SetElementUnsafe(j + 1, values.GetElementUnsafe(j));
                             j -= 1;
                         }
 
-                        keys[j + 1] = currentKey;
-                        values[j + 1] = currentValue;
+                        keys.SetElementUnsafe(j + 1, currentKey);
+                        values.SetElementUnsafe(j + 1, currentValue);
                     }
 
                     return;
@@ -1671,7 +1680,7 @@ namespace KGySoft.Threading
                     {
                         // Narrowing from the left if possible. Can happen if the values are the same according to the comparer.
                         int endIndex = keys.Length - 1;
-                        while (pivotIndex < endIndex && comparer.Compare(keys[pivotIndex], keys[pivotIndex + 1]) == 0)
+                        while (pivotIndex < endIndex && comparer.Compare(keys.GetElementUnsafe(pivotIndex), keys.GetElementUnsafe(pivotIndex + 1)) == 0)
                             pivotIndex += 1;
 
                         // there is nothing left to sort
@@ -1688,7 +1697,7 @@ namespace KGySoft.Threading
                     if (keys.Length - pivotIndex <= 1)
                     {
                         // Narrowing from the right if possible. Can happen if the values are the same according to the comparer.
-                        while (pivotIndex > 1 && comparer.Compare(keys[pivotIndex], keys[pivotIndex - 1]) == 0)
+                        while (pivotIndex > 1 && comparer.Compare(keys.GetElementUnsafe(pivotIndex), keys.GetElementUnsafe(pivotIndex - 1)) == 0)
                             pivotIndex -= 1;
 
                         // there is nothing left to sort
@@ -1933,13 +1942,13 @@ namespace KGySoft.Threading
 
                 static void Swap(ArraySection<TKey> keys, ArraySection<TValue> values, int i, int j)
                 {
-                    TKey key = keys[i];
-                    keys[i] = keys[j];
-                    keys[j] = key;
+                    TKey key = keys.GetElementUnchecked(i);
+                    keys.SetElementUnchecked(i, keys.GetElementUnchecked(j));
+                    keys.SetElementUnchecked(j, key);
 
-                    TValue value = values[i];
-                    values[i] = values[j];
-                    values[j] = value;
+                    TValue value = values.GetElementUnchecked(i);
+                    values.SetElementUnchecked(i, values.GetElementUnchecked(j));
+                    values.SetElementUnchecked(j, value);
                 }
 
                 #endregion
@@ -1947,7 +1956,7 @@ namespace KGySoft.Threading
                 Debug.Assert(keys.Length > 1);
                 if (keys.Length == 2)
                 {
-                    if (comparer.Compare(keys[0], keys[1]) > 0)
+                    if (comparer.Compare(keys.GetElementUnchecked(0), keys.GetElementUnchecked(1)) > 0)
                         Swap(keys, values, 0, 1);
 
                     return 1;
@@ -1955,16 +1964,16 @@ namespace KGySoft.Threading
 
                 // taking the pivot from the middle
                 int pivotIndex = (keys.Length >> 1);
-                TKey pivotValue = keys[pivotIndex];
+                TKey pivotValue = keys.GetElementUnchecked(pivotIndex);
 
                 int left = 0;
                 int right = keys.Length - 1;
 
                 do
                 {
-                    while (left <= right && comparer.Compare(keys[left], pivotValue) <= 0)
+                    while (left <= right && comparer.Compare(keys.GetElementUnchecked(left), pivotValue) <= 0)
                         left += 1;
-                    while (left < right && comparer.Compare(pivotValue, keys[right]) < 0)
+                    while (left < right && comparer.Compare(pivotValue, keys.GetElementUnchecked(right)) < 0)
                         right -= 1;
                     if (left >= right)
                         break;
@@ -1987,6 +1996,7 @@ namespace KGySoft.Threading
                 return pivotIndex;
             }
 
+            [SecuritySafeCritical]
             private static int Partition<TKeyFrom, TKeyTo, TValueFrom, TValueTo>(CastArray<TKeyFrom, TKeyTo> keys, CastArray<TValueFrom, TValueTo> values, IComparer<TKeyTo> comparer)
                 where TKeyFrom : unmanaged
                 where TKeyTo : unmanaged, TKey
@@ -1995,15 +2005,17 @@ namespace KGySoft.Threading
             {
                 #region Local Methods
 
+                [SecuritySafeCritical]
+                [MethodImpl(MethodImpl.AggressiveInlining)]
                 static void Swap(CastArray<TKeyFrom, TKeyTo> keys, CastArray<TValueFrom, TValueTo> values, int i, int j)
                 {
-                    TKeyTo key = keys[i];
-                    keys[i] = keys[j];
-                    keys[j] = key;
+                    TKeyTo key = keys.GetElementUnsafe(i);
+                    keys.SetElementUnsafe(i, keys.GetElementUnsafe(j));
+                    keys.SetElementUnsafe(j, key);
 
-                    TValueTo value = values[i];
-                    values[i] = values[j];
-                    values[j] = value;
+                    TValueTo value = values.GetElementUnsafe(i);
+                    values.SetElementUnsafe(i, values.GetElementUnsafe(j));
+                    values.SetElementUnsafe(j, value);
                 }
 
                 #endregion
@@ -2011,7 +2023,7 @@ namespace KGySoft.Threading
                 Debug.Assert(keys.Length > 1);
                 if (keys.Length == 2)
                 {
-                    if (comparer.Compare(keys[0], keys[1]) > 0)
+                    if (comparer.Compare(keys.GetElementUnsafe(0), keys.GetElementUnsafe(1)) > 0)
                         Swap(keys, values, 0, 1);
 
                     return 1;
@@ -2019,16 +2031,16 @@ namespace KGySoft.Threading
 
                 // taking the pivot from the middle
                 int pivotIndex = (keys.Length >> 1);
-                TKeyTo pivotValue = keys[pivotIndex];
+                TKeyTo pivotValue = keys.GetElementUnsafe(pivotIndex);
 
                 int left = 0;
                 int right = keys.Length - 1;
 
                 do
                 {
-                    while (left <= right && comparer.Compare(keys[left], pivotValue) <= 0)
+                    while (left <= right && comparer.Compare(keys.GetElementUnsafe(left), pivotValue) <= 0)
                         left += 1;
-                    while (left < right && comparer.Compare(pivotValue, keys[right]) < 0)
+                    while (left < right && comparer.Compare(pivotValue, keys.GetElementUnsafe(right)) < 0)
                         right -= 1;
                     if (left >= right)
                         break;
@@ -2591,19 +2603,22 @@ namespace KGySoft.Threading
                 DoSort(context, list, startIndex + pivotIndex, count - pivotIndex, freeDepth);
             }
 
+            [SecuritySafeCritical]
             private static void DoSort<TFrom, TTo>(IAsyncContext context, CastArray<TFrom, TTo> array, int freeDepth)
                 where TFrom : unmanaged
                 where TTo : unmanaged, T
             {
                 #region Local Methods
 
+                [SecuritySafeCritical]
+                [MethodImpl(MethodImpl.AggressiveInlining)]
                 static void SwapIfGreater(CastArray<TFrom, TTo> array, int i, int j)
                 {
-                    if (array[i].CompareTo(array[j]) > 0)
+                    if (array.GetElementUnsafe(i).CompareTo(array.GetElementUnsafe(j)) > 0)
                     {
-                        TTo temp = array[i];
-                        array[i] = array[j];
-                        array[j] = temp;
+                        TTo temp = array.GetElementUnsafe(i);
+                        array.SetElementUnsafe(i, array.GetElementUnsafe(j));
+                        array.SetElementUnsafe(j, temp);
                     }
                 }
 
@@ -2633,15 +2648,15 @@ namespace KGySoft.Threading
                     // insertion sort
                     for (int i = 1; i < array.Length; i++)
                     {
-                        TTo current = array[i];
+                        TTo current = array.GetElementUnsafe(i);
                         int j = i - 1;
-                        while (j >= 0 && current.CompareTo(array[j]) < 0)
+                        while (j >= 0 && current.CompareTo(array.GetElementUnsafe(j)) < 0)
                         {
-                            array[j + 1] = array[j];
+                            array.SetElementUnsafe(j + 1, array.GetElementUnsafe(j));
                             j -= 1;
                         }
 
-                        array[j + 1] = current;
+                        array.SetElementUnsafe(j + 1, current);
                     }
 
                     return;
@@ -2664,7 +2679,7 @@ namespace KGySoft.Threading
                     {
                         // Narrowing from the left if possible. Can happen if the values are the same according to the comparer.
                         int endIndex = array.Length - 1;
-                        while (pivotIndex < endIndex && array[pivotIndex].CompareTo(array[pivotIndex + 1]) == 0)
+                        while (pivotIndex < endIndex && array.GetElementUnsafe(pivotIndex).CompareTo(array.GetElementUnsafe(pivotIndex + 1)) == 0)
                             pivotIndex += 1;
 
                         // there is nothing left to sort
@@ -2680,7 +2695,7 @@ namespace KGySoft.Threading
                     if (array.Length - pivotIndex <= 1)
                     {
                         // Narrowing from the right if possible. Can happen if the values are the same according to the comparer.
-                        while (pivotIndex > 1 && array[pivotIndex].CompareTo(array[pivotIndex - 1]) == 0)
+                        while (pivotIndex > 1 && array.GetElementUnsafe(pivotIndex).CompareTo(array.GetElementUnsafe(pivotIndex - 1)) == 0)
                             pivotIndex -= 1;
 
                         // there is nothing left to sort
@@ -2906,17 +2921,20 @@ namespace KGySoft.Threading
                 return pivotIndex - startIndex;
             }
 
+            [SecuritySafeCritical]
             private static int Partition<TFrom, TTo>(CastArray<TFrom, TTo> array)
                 where TFrom : unmanaged
                 where TTo : unmanaged, T
             {
                 #region Local Methods
 
+                [SecuritySafeCritical]
+                [MethodImpl(MethodImpl.AggressiveInlining)]
                 static void Swap(CastArray<TFrom, TTo> array, int i, int j)
                 {
-                    var temp = array[i];
-                    array[i] = array[j];
-                    array[j] = temp;
+                    var temp = array.GetElementUnsafe(i);
+                    array.SetElementUnsafe(i, array.GetElementUnsafe(j));
+                    array.SetElementUnsafe(j, temp);
                 }
 
                 #endregion
@@ -2924,7 +2942,7 @@ namespace KGySoft.Threading
                 Debug.Assert(array.Length > 1);
                 if (array.Length == 2)
                 {
-                    if (array[0].CompareTo(array[1]) > 0)
+                    if (array.GetElementUnsafe(0).CompareTo(array.GetElementUnsafe(1)) > 0)
                         Swap(array, 0, 1);
 
                     return 1;
@@ -2932,16 +2950,16 @@ namespace KGySoft.Threading
 
                 // taking the pivot from the middle
                 int pivotIndex = array.Length >> 1;
-                T pivotValue = array[pivotIndex];
+                T pivotValue = array.GetElementUnsafe(pivotIndex);
 
                 int left = 0;
                 int right = array.Length - 1;
 
                 do
                 {
-                    while (left <= right && array[left].CompareTo(pivotValue) <= 0)
+                    while (left <= right && array.GetElementUnsafe(left).CompareTo(pivotValue) <= 0)
                         left += 1;
-                    while (left < right && pivotValue.CompareTo(array[right]) < 0)
+                    while (left < right && pivotValue.CompareTo(array.GetElementUnsafe(right)) < 0)
                         right -= 1;
                     if (left >= right)
                         break;
@@ -3535,15 +3553,15 @@ namespace KGySoft.Threading
                 [MethodImpl(MethodImpl.AggressiveInlining)]
                 static void SwapIfGreater(ArraySection<TKey> keys, ArraySection<TValue> values, int i, int j)
                 {
-                    if (keys[i].CompareTo(keys[j]) > 0)
+                    if (keys.GetElementUnchecked(i).CompareTo(keys.GetElementUnchecked(j)) > 0)
                     {
-                        TKey key = keys[i];
-                        keys[i] = keys[j];
-                        keys[j] = key;
+                        TKey key = keys.GetElementUnchecked(i);
+                        keys.SetElementUnchecked(i, keys.GetElementUnchecked(j));
+                        keys.SetElementUnchecked(j, key);
 
-                        TValue value = values[i];
-                        values[i] = values[j];
-                        values[j] = value;
+                        TValue value = values.GetElementUnchecked(i);
+                        values.SetElementUnchecked(i, values.GetElementUnchecked(j));
+                        values.SetElementUnchecked(j, value);
                     }
                 }
 
@@ -3573,18 +3591,18 @@ namespace KGySoft.Threading
                     // insertion sort
                     for (int i = 1; i < keys.Length; i++)
                     {
-                        TKey currentKey = keys[i];
-                        TValue currentValue = values[i];
+                        TKey currentKey = keys.GetElementUnchecked(i);
+                        TValue currentValue = values.GetElementUnchecked(i);
                         int j = i - 1;
-                        while (j >= 0 && currentKey.CompareTo(keys[j]) < 0)
+                        while (j >= 0 && currentKey.CompareTo(keys.GetElementUnchecked(j)) < 0)
                         {
-                            keys[j + 1] = keys[j];
-                            values[j + 1] = values[j];
+                            keys.SetElementUnchecked(j + 1, keys.GetElementUnchecked(j));
+                            values.SetElementUnchecked(j + 1, values.GetElementUnchecked(j));
                             j -= 1;
                         }
 
-                        keys[j + 1] = currentKey;
-                        values[j + 1] = currentValue;
+                        keys.SetElementUnchecked(j + 1, currentKey);
+                        values.SetElementUnchecked(j + 1, currentValue);
                     }
 
                     return;
@@ -3607,7 +3625,7 @@ namespace KGySoft.Threading
                     {
                         // Narrowing from the left if possible. Can happen if the values are the same according to the comparer.
                         int endIndex = keys.Length - 1;
-                        while (pivotIndex < endIndex && keys[pivotIndex].CompareTo(keys[pivotIndex + 1]) == 0)
+                        while (pivotIndex < endIndex && keys.GetElementUnchecked(pivotIndex).CompareTo(keys.GetElementUnchecked(pivotIndex + 1)) == 0)
                             pivotIndex += 1;
 
                         // there is nothing left to sort
@@ -3624,7 +3642,7 @@ namespace KGySoft.Threading
                     if (keys.Length - pivotIndex <= 1)
                     {
                         // Narrowing from the right if possible. Can happen if the values are the same according to the comparer.
-                        while (pivotIndex > 1 && keys[pivotIndex].CompareTo(keys[pivotIndex - 1]) == 0)
+                        while (pivotIndex > 1 && keys.GetElementUnchecked(pivotIndex).CompareTo(keys.GetElementUnchecked(pivotIndex - 1)) == 0)
                             pivotIndex -= 1;
 
                         // there is nothing left to sort
@@ -3676,6 +3694,8 @@ namespace KGySoft.Threading
                 DoSort(context, keys.Slice(pivotIndex), values.Slice(pivotIndex), freeDepth);
             }
 
+            [SecuritySafeCritical]
+            [MethodImpl(MethodImpl.AggressiveInlining)]
             private static void DoSort<TKeyFrom, TKeyTo, TValueFrom, TValueTo>(IAsyncContext context, CastArray<TKeyFrom, TKeyTo> keys, CastArray<TValueFrom, TValueTo> values, int freeDepth)
                 where TKeyFrom : unmanaged
                 where TKeyTo : unmanaged, TKey
@@ -3684,18 +3704,19 @@ namespace KGySoft.Threading
             {
                 #region Local Methods
 
+                [SecuritySafeCritical]
                 [MethodImpl(MethodImpl.AggressiveInlining)]
                 static void SwapIfGreater(CastArray<TKeyFrom, TKeyTo> keys, CastArray<TValueFrom, TValueTo> values, int i, int j)
                 {
-                    if (keys[i].CompareTo(keys[j]) > 0)
+                    if (keys.GetElementUnsafe(i).CompareTo(keys.GetElementUnsafe(j)) > 0)
                     {
-                        TKeyTo key = keys[i];
-                        keys[i] = keys[j];
-                        keys[j] = key;
+                        TKeyTo key = keys.GetElementUnsafe(i);
+                        keys.SetElementUnsafe(i, keys.GetElementUnsafe(j));
+                        keys.SetElementUnsafe(j, key);
 
-                        TValueTo value = values[i];
-                        values[i] = values[j];
-                        values[j] = value;
+                        TValueTo value = values.GetElementUnsafe(i);
+                        values.SetElementUnsafe(i, values.GetElementUnsafe(j));
+                        values.SetElementUnsafe(j, value);
                     }
                 }
 
@@ -3725,18 +3746,18 @@ namespace KGySoft.Threading
                     // insertion sort
                     for (int i = 1; i < keys.Length; i++)
                     {
-                        TKeyTo currentKey = keys[i];
-                        TValueTo currentValue = values[i];
+                        TKeyTo currentKey = keys.GetElementUnsafe(i);
+                        TValueTo currentValue = values.GetElementUnsafe(i);
                         int j = i - 1;
-                        while (j >= 0 && currentKey.CompareTo(keys[j]) < 0)
+                        while (j >= 0 && currentKey.CompareTo(keys.GetElementUnsafe(j)) < 0)
                         {
-                            keys[j + 1] = keys[j];
-                            values[j + 1] = values[j];
+                            keys.SetElementUnsafe(j + 1, keys.GetElementUnsafe(j));
+                            values.SetElementUnsafe(j + 1, values.GetElementUnsafe(j));
                             j -= 1;
                         }
 
-                        keys[j + 1] = currentKey;
-                        values[j + 1] = currentValue;
+                        keys.SetElementUnsafe(j + 1, currentKey);
+                        values.SetElementUnsafe(j + 1, currentValue);
                     }
 
                     return;
@@ -3759,7 +3780,7 @@ namespace KGySoft.Threading
                     {
                         // Narrowing from the left if possible. Can happen if the values are the same according to the comparer.
                         int endIndex = keys.Length - 1;
-                        while (pivotIndex < endIndex && keys[pivotIndex].CompareTo(keys[pivotIndex + 1]) == 0)
+                        while (pivotIndex < endIndex && keys.GetElementUnsafe(pivotIndex).CompareTo(keys.GetElementUnsafe(pivotIndex + 1)) == 0)
                             pivotIndex += 1;
 
                         // there is nothing left to sort
@@ -3776,7 +3797,7 @@ namespace KGySoft.Threading
                     if (keys.Length - pivotIndex <= 1)
                     {
                         // Narrowing from the right if possible. Can happen if the values are the same according to the comparer.
-                        while (pivotIndex > 1 && keys[pivotIndex].CompareTo(keys[pivotIndex - 1]) == 0)
+                        while (pivotIndex > 1 && keys.GetElementUnsafe(pivotIndex).CompareTo(keys.GetElementUnsafe(pivotIndex - 1)) == 0)
                             pivotIndex -= 1;
 
                         // there is nothing left to sort
@@ -4017,13 +4038,13 @@ namespace KGySoft.Threading
 
                 static void Swap(ArraySection<TKey> keys, ArraySection<TValue> values, int i, int j)
                 {
-                    TKey key = keys[i];
-                    keys[i] = keys[j];
-                    keys[j] = key;
+                    TKey key = keys.GetElementUnchecked(i);
+                    keys.SetElementUnchecked(i, keys.GetElementUnchecked(j));
+                    keys.SetElementUnchecked(j, key);
 
-                    TValue value = values[i];
-                    values[i] = values[j];
-                    values[j] = value;
+                    TValue value = values.GetElementUnchecked(i);
+                    values.SetElementUnchecked(i, values.GetElementUnchecked(j));
+                    values.SetElementUnchecked(j, value);
                 }
 
                 #endregion
@@ -4031,7 +4052,7 @@ namespace KGySoft.Threading
                 Debug.Assert(keys.Length > 1);
                 if (keys.Length == 2)
                 {
-                    if (keys[0].CompareTo(keys[1]) > 0)
+                    if (keys.GetElementUnchecked(0).CompareTo(keys.GetElementUnchecked(1)) > 0)
                         Swap(keys, values, 0, 1);
 
                     return 1;
@@ -4039,16 +4060,16 @@ namespace KGySoft.Threading
 
                 // taking the pivot from the middle
                 int pivotIndex = (keys.Length >> 1);
-                TKey pivotValue = keys[pivotIndex];
+                TKey pivotValue = keys.GetElementUnchecked(pivotIndex);
 
                 int left = 0;
                 int right = keys.Length - 1;
 
                 do
                 {
-                    while (left <= right && keys[left].CompareTo(pivotValue) <= 0)
+                    while (left <= right && keys.GetElementUnchecked(left).CompareTo(pivotValue) <= 0)
                         left += 1;
-                    while (left < right && pivotValue.CompareTo(keys[right]) < 0)
+                    while (left < right && pivotValue.CompareTo(keys.GetElementUnchecked(right)) < 0)
                         right -= 1;
                     if (left >= right)
                         break;
@@ -4071,6 +4092,8 @@ namespace KGySoft.Threading
                 return pivotIndex;
             }
 
+            [SecuritySafeCritical]
+            [MethodImpl(MethodImpl.AggressiveInlining)]
             private static int Partition<TKeyFrom, TKeyTo, TValueFrom, TValueTo>(CastArray<TKeyFrom, TKeyTo> keys, CastArray<TValueFrom, TValueTo> values)
                 where TKeyFrom : unmanaged
                 where TKeyTo : unmanaged, TKey
@@ -4079,15 +4102,17 @@ namespace KGySoft.Threading
             {
                 #region Local Methods
 
+                [SecuritySafeCritical]
+                [MethodImpl(MethodImpl.AggressiveInlining)]
                 static void Swap(CastArray<TKeyFrom, TKeyTo> keys, CastArray<TValueFrom, TValueTo> values, int i, int j)
                 {
-                    TKeyTo key = keys[i];
-                    keys[i] = keys[j];
-                    keys[j] = key;
+                    TKeyTo key = keys.GetElementUnsafe(i);
+                    keys.SetElementUnsafe(i, keys.GetElementUnsafe(j));
+                    keys.SetElementUnsafe(j, key);
 
-                    TValueTo value = values[i];
-                    values[i] = values[j];
-                    values[j] = value;
+                    TValueTo value = values.GetElementUnsafe(i);
+                    values.SetElementUnsafe(i, values.GetElementUnsafe(j));
+                    values.SetElementUnsafe(j, value);
                 }
 
                 #endregion
@@ -4095,7 +4120,7 @@ namespace KGySoft.Threading
                 Debug.Assert(keys.Length > 1);
                 if (keys.Length == 2)
                 {
-                    if (keys[0].CompareTo(keys[1]) > 0)
+                    if (keys.GetElementUnsafe(0).CompareTo(keys.GetElementUnsafe(1)) > 0)
                         Swap(keys, values, 0, 1);
 
                     return 1;
@@ -4103,16 +4128,16 @@ namespace KGySoft.Threading
 
                 // taking the pivot from the middle
                 int pivotIndex = (keys.Length >> 1);
-                TKeyTo pivotValue = keys[pivotIndex];
+                TKeyTo pivotValue = keys.GetElementUnsafe(pivotIndex);
 
                 int left = 0;
                 int right = keys.Length - 1;
 
                 do
                 {
-                    while (left <= right && keys[left].CompareTo(pivotValue) <= 0)
+                    while (left <= right && keys.GetElementUnsafe(left).CompareTo(pivotValue) <= 0)
                         left += 1;
-                    while (left < right && pivotValue.CompareTo(keys[right]) < 0)
+                    while (left < right && pivotValue.CompareTo(keys.GetElementUnsafe(right)) < 0)
                         right -= 1;
                     if (left >= right)
                         break;
