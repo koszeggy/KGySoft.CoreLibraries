@@ -39,5 +39,5 @@ using System.Security;
 
 #if !NET35
 // To avoid VerificationException from reflection
-[assembly: SecurityRules(SecurityRuleSet.Level2, SkipVerificationInFullTrust = true)]
+[assembly: SecurityRules(SecurityRuleSet.Level1, SkipVerificationInFullTrust = true)]
 #endif

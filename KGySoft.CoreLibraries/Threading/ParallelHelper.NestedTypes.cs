@@ -96,6 +96,7 @@ namespace KGySoft.Threading
 
             #region Internal Methods
 
+            [SecuritySafeCritical]
             internal static void DoSort(IAsyncContext context, IList<T> list, int startIndex, int count, IComparer<T> comparer, int freeDepth)
             {
                 #region Local Methods
@@ -235,6 +236,7 @@ namespace KGySoft.Threading
                 DoSort(context, list, startIndex + pivotIndex, count - pivotIndex, comparer, freeDepth);
             }
 
+            [SecuritySafeCritical]
             internal static void DoSort(IAsyncContext context, T[] array, int startIndex, int count, IComparer<T> comparer, int freeDepth)
             {
                 #region Local Methods
@@ -374,6 +376,7 @@ namespace KGySoft.Threading
                 DoSort(context, array, startIndex + pivotIndex, count - pivotIndex, comparer, freeDepth);
             }
 
+            [SecuritySafeCritical]
             internal static void DoSort(IAsyncContext context, List<T> list, int startIndex, int count, IComparer<T> comparer, int freeDepth)
             {
                 #region Local Methods
@@ -1006,6 +1009,7 @@ namespace KGySoft.Threading
 
             #region Internal Methods
 
+            [SecuritySafeCritical]
             internal static void DoSort(IAsyncContext context, IList<TKey> keys, IList<TValue> values, int startIndex, int count, IComparer<TKey> comparer, int freeDepth)
             {
                 #region Local Methods
@@ -1153,6 +1157,7 @@ namespace KGySoft.Threading
                 DoSort(context, keys, values, startIndex + pivotIndex, count - pivotIndex, comparer, freeDepth);
             }
 
+            [SecuritySafeCritical]
             internal static void DoSort(IAsyncContext context, TKey[] keys, TValue[] values, int startIndex, int count, IComparer<TKey> comparer, int freeDepth)
             {
                 #region Local Methods
@@ -1300,6 +1305,7 @@ namespace KGySoft.Threading
                 DoSort(context, keys, values, startIndex + pivotIndex, count - pivotIndex, comparer, freeDepth);
             }
 
+            [SecuritySafeCritical]
             internal static void DoSort(IAsyncContext context, List<TKey> keys, List<TValue> values, int startIndex, int count, IComparer<TKey> comparer, int freeDepth)
             {
                 #region Local Methods
@@ -1447,6 +1453,7 @@ namespace KGySoft.Threading
                 DoSort(context, keys, values, startIndex + pivotIndex, count - pivotIndex, comparer, freeDepth);
             }
 
+            [SecuritySafeCritical]
             internal static void DoSort(IAsyncContext context, ArraySection<TKey> keys, ArraySection<TValue> values, IComparer<TKey> comparer, int freeDepth)
             {
                 #region Local Methods
@@ -2186,6 +2193,7 @@ namespace KGySoft.Threading
 
             #region Static Methods
 
+            [SecuritySafeCritical]
             private static void DoSort(IAsyncContext context, IList<T> list, int startIndex, int count, int freeDepth)
             {
                 #region Local Methods
@@ -2325,6 +2333,7 @@ namespace KGySoft.Threading
                 DoSort(context, list, startIndex + pivotIndex, count - pivotIndex, freeDepth);
             }
 
+            [SecuritySafeCritical]
             private static void DoSort(IAsyncContext context, T[] array, int startIndex, int count, int freeDepth)
             {
                 #region Local Methods
@@ -2464,6 +2473,7 @@ namespace KGySoft.Threading
                 DoSort(context, array, startIndex + pivotIndex, count - pivotIndex, freeDepth);
             }
 
+            [SecuritySafeCritical]
             private static void DoSort(IAsyncContext context, List<T> list, int startIndex, int count, int freeDepth)
             {
                 #region Local Methods
@@ -3105,6 +3115,7 @@ namespace KGySoft.Threading
 
             #region Static Methods
 
+            [SecuritySafeCritical]
             private static void DoSort(IAsyncContext context, IList<TKey> keys, IList<TValue> values, int startIndex, int count, int freeDepth)
             {
                 #region Local Methods
@@ -3252,6 +3263,7 @@ namespace KGySoft.Threading
                 DoSort(context, keys, values, startIndex + pivotIndex, count - pivotIndex, freeDepth);
             }
 
+            [SecuritySafeCritical]
             private static void DoSort(IAsyncContext context, TKey[] keys, TValue[] values, int startIndex, int count, int freeDepth)
             {
                 #region Local Methods
@@ -3399,6 +3411,7 @@ namespace KGySoft.Threading
                 DoSort(context, keys, values, startIndex + pivotIndex, count - pivotIndex, freeDepth);
             }
 
+            [SecuritySafeCritical]
             private static void DoSort(IAsyncContext context, List<TKey> keys, List<TValue> values, int startIndex, int count, int freeDepth)
             {
                 #region Local Methods
@@ -3546,6 +3559,7 @@ namespace KGySoft.Threading
                 DoSort(context, keys, values, startIndex + pivotIndex, count - pivotIndex, freeDepth);
             }
 
+            [SecuritySafeCritical]
             private static void DoSort(IAsyncContext context, ArraySection<TKey> keys, ArraySection<TValue> values, int freeDepth)
             {
                 #region Local Methods
@@ -3695,7 +3709,6 @@ namespace KGySoft.Threading
             }
 
             [SecuritySafeCritical]
-            [MethodImpl(MethodImpl.AggressiveInlining)]
             private static void DoSort<TKeyFrom, TKeyTo, TValueFrom, TValueTo>(IAsyncContext context, CastArray<TKeyFrom, TKeyTo> keys, CastArray<TValueFrom, TValueTo> values, int freeDepth)
                 where TKeyFrom : unmanaged
                 where TKeyTo : unmanaged, TKey
