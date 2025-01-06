@@ -34,10 +34,12 @@ namespace KGySoft.CoreLibraries
         {
 #if NETCOREAPP
             var strippedName = TypeResolver.StripName(name, false);
+#if !NETCOREAPP3_0_OR_GREATER && WINDOWS
             if (strippedName == typeof(Bitmap).FullName)
                 return typeof(Bitmap);
             if (strippedName == typeof(Icon).FullName)
                 return typeof(Icon);
+#endif
 #endif
 
             return Reflector.ResolveType(name);

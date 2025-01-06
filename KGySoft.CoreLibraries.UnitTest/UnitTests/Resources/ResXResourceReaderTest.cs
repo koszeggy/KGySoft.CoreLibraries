@@ -164,7 +164,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                     Console.WriteLine($"!!!Key: {enumerator.Key} - Error: {e.Message}");
 
 #if !WINDOWS
-                    if (e is PlatformNotSupportedException || e.InnerException is PlatformNotSupportedException)
+                    if (e is PlatformNotSupportedException || e.InnerException is PlatformNotSupportedException || e is TypeLoadException)
                         continue;
 #endif
 #if !NETFRAMEWORK

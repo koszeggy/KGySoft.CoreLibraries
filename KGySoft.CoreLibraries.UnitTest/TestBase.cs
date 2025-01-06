@@ -382,8 +382,10 @@ namespace KGySoft.CoreLibraries
                     return result;
                 }
 
+#if WINDOWS
                 if (typeRef == typeof(Bitmap))
                     return CheckImages((Bitmap)reference, (Bitmap)check, errors);
+#endif
 
 #if NETFRAMEWORK
                 if (typeRef == typeof(ImageListStreamer))
@@ -563,7 +565,8 @@ namespace KGySoft.CoreLibraries
             return true;
         }
 
-        private static bool CheckImages(Bitmap reference, Bitmap check, List<string> errors)
+#if WINDOWS
+        private static bool CheckImages(Bitmap reference, Bitmap check, List<string> errors)       
         {
             // using the not so fast GetPixel compare. This works also for different pixel formats and raw formats.
             // There is a 2% brightness tolerance for icons
@@ -583,7 +586,8 @@ namespace KGySoft.CoreLibraries
             }
 
             return true;
-        } 
+        }
+#endif
 
         private static void AssertResult(bool result, List<string> errors)
         {

@@ -251,7 +251,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Collections
             var cDict = new ConcurrentDictionary<PoorHashTest, int>(dict);
 #endif
             var tDict = new ThreadSafeDictionary<PoorHashTest, int>(dict, strategy: HashingStrategy.And);
-            var gDict = new LockFreeCache<PoorHashTest, int>.GrowOnlyDictionary(count, null, true);
+            var gDict = new LockFreeCache<PoorHashTest, int>.GrowOnlyDictionary(count, ComparerHelper<PoorHashTest>.EqualityComparer, true);
             foreach (var item in dict)
                 gDict[item.Key] = item.Value;
 

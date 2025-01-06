@@ -1,13 +1,25 @@
 {
     "version": "2.0.0",
     "tasks": [
+        // {
+        //     "label": "build Performance Test",
+        //     "command": "/usr/bin/dotnet",
+        //     "type": "process",
+        //     "args": [
+        //         "build",
+        //         "${workspaceFolder}/KGySoft.CoreLibraries.PerformanceTest/KGySoft.CoreLibraries.PerformanceTest.csproj",
+        //         "/property:GenerateFullPaths=true",
+        //         "/consoleloggerparameters:NoSummary"
+        //     ],
+        //     "problemMatcher": "$msCompile"
+        // },
         {
-            "label": "build",
+            "label": "build Unit Test",
             "command": "/usr/bin/dotnet",
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/KGySoft.CoreLibraries.PerformanceTest/KGySoft.CoreLibraries.PerformanceTest.csproj",
+                "${workspaceFolder}/KGySoft.CoreLibraries.UnitTest/KGySoft.CoreLibraries.UnitTest.csproj",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary"
             ],
