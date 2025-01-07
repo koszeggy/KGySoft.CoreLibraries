@@ -268,7 +268,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Console.WriteLine(cache["gamma"]);
             Assert.IsTrue(cache.Remove("beta"));
 
-            var cacheCopy = cache.DeepClone();
+            var cacheCopy = cache.DeepClone(false);
             Assert.AreNotSame(cache, cacheCopy);
             Assert.AreEqual(cache.Count, cacheCopy.Count);
             Assert.AreEqual(cache.Capacity, cacheCopy.Capacity);
@@ -291,7 +291,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             cache["Two"] = 2;
             cache["Three"] = 3;
 
-            var cacheCopy = cache.DeepClone();
+            var cacheCopy = cache.DeepClone(false);
             Assert.AreNotSame(cache, cacheCopy);
             Assert.AreEqual(cache.Count, cacheCopy.Count);
             Assert.AreEqual(cache.Capacity, cacheCopy.Capacity);

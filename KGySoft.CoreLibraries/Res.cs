@@ -978,6 +978,9 @@ namespace KGySoft
         /// <summary>Pointer type '{0}' is not supported.</summary>
         internal static string ReflectionPointerTypeNotSupported(Type type) => Get("Reflection_PointerTypeNotSupportedFormat", type.GetName(TypeNameKind.LongName));
 
+        /// <summary>Reflecting pointer type '{0}' is not supported on the Mono platform.</summary>
+        internal static string ReflectionPointerTypeMonoNotSupported(Type type) => Get("Reflection_PointerTypeMonoNotSupportedFormat", type.GetName(TypeNameKind.LongName));
+
         /// <summary>Setting read-only field '{0}' of type '{1}' is not supported by the generic methods of FieldAccessor in the .NET Standard 2.0 version of this library. Use the non-generic Set method instead.</summary>
         internal static string ReflectionSetReadOnlyFieldGenericNetStandard20(string fieldName, Type? type) => Get("Reflection_SetReadOnlyFieldGenericNetStandard20Format", fieldName, type?.GetName(TypeNameKind.LongName));
 

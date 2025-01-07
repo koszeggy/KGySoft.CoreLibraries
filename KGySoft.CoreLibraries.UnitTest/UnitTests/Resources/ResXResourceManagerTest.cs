@@ -671,17 +671,17 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.IsNotNull(testResRef);
             Assert.IsNotNull(testRes);
 #if !NET35 // After deserializing a standard ResourceManager on runtime 2.0 an ObjectDisposedException occurs for GetString
-            refManager = refManager.DeepClone();
+            refManager = refManager.DeepClone(false);
             Assert.AreEqual(testResRef, refManager.GetString(resName)); 
 #endif
-            manager = manager.DeepClone();
+            manager = manager.DeepClone(false);
             Assert.AreEqual(testRes, manager.GetString(resName));
 
             // introducing a change: serialization preserves the change
             Assert.IsFalse(manager.IsModified);
             manager.SetObject(resName, "new string");
             Assert.IsTrue(manager.IsModified);
-            manager = manager.DeepClone();
+            manager = manager.DeepClone(false);
             Assert.IsTrue(manager.IsModified);
             Assert.AreNotEqual(testRes, manager.GetString(resName));
         } 

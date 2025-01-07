@@ -101,10 +101,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
         public void SerializationTest()
         {
             var section = ArraySection<int>.Null;
-            Assert.AreEqual(section, section.DeepClone());
+            Assert.AreEqual(section, section.DeepClone(false));
 
             section = new[] { 1, 2, 3, 4, 5 }.AsSection(1, 3);
-            Assert.IsTrue(section.SequenceEqual(section.DeepClone()));
+            Assert.IsTrue(section.SequenceEqual(section.DeepClone(false)));
         }
 
         #endregion

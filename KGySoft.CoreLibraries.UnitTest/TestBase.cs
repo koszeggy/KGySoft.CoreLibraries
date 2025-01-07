@@ -178,7 +178,7 @@ namespace KGySoft.CoreLibraries
         {
             var e = Assert.Throws<T>(code);
             Assert.IsInstanceOf(typeof(T), e);
-            Assert.IsTrue(expectedMessageContent == null || e.Message.Contains(expectedMessageContent), $"Expected message: {expectedMessageContent}{Environment.NewLine}Actual message: {e.Message}");
+            Assert.IsTrue(expectedMessageContent == null || e.Message.Contains(expectedMessageContent, StringComparison.Ordinal), $"Expected message: {expectedMessageContent}{Environment.NewLine}Actual message: {e.Message}");
             Console.WriteLine($"Expected exception {typeof(T)} has been thrown: {e.Message}");
         }
 
@@ -230,23 +230,31 @@ namespace KGySoft.CoreLibraries
 #if NETFRAMEWORK
         protected static AppDomain CreateSandboxDomain(params IPermission[] permissions)
         {
-            var evidence = new Evidence(AppDomain.CurrentDomain.Evidence);
-            var permissionSet = GetPermissionSet(permissions);
-            var setup = new AppDomainSetup
+            try
             {
-                ApplicationBase = AppDomain.CurrentDomain.BaseDirectory,
-            };
+                var evidence = new Evidence(AppDomain.CurrentDomain.Evidence);
+                var permissionSet = GetPermissionSet(permissions);
+                var setup = new AppDomainSetup
+                {
+                    ApplicationBase = AppDomain.CurrentDomain.BaseDirectory,
+                };
 
-            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-            var strongNames = new List<StrongName>();
-            foreach (Assembly asm in assemblies)
-            {
-                AssemblyName asmName = asm.GetName();
-                strongNames.Add(new StrongName(new StrongNamePublicKeyBlob(asmName.GetPublicKey()), asmName.Name, asmName.Version));
+                var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+                var strongNames = new List<StrongName>();
+                foreach (Assembly asm in assemblies)
+                {
+                    AssemblyName asmName = asm.GetName();
+                    strongNames.Add(new StrongName(new StrongNamePublicKeyBlob(asmName.GetPublicKey()), asmName.Name, asmName.Version));
+                }
+
+                return AppDomain.CreateDomain("SandboxDomain", evidence, setup, permissionSet, strongNames.ToArray());
             }
-
-            return AppDomain.CreateDomain("SandboxDomain", evidence, setup, permissionSet, strongNames.ToArray());
-        } 
+            catch (MissingMethodException e) when (EnvironmentHelper.IsMono)
+            {
+                Assert.Inconclusive($"Not supported on Mono: {e}");
+                throw;
+            }
+        }
 #endif
 
         protected static string Combine(string p1, string p2, string p3) =>

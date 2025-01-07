@@ -133,7 +133,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             };
 
             // By BinarySerializationFormatter
-            StringKeyedDictionary<int> clone = dict.DeepClone();
+            StringKeyedDictionary<int> clone = dict.DeepClone(false);
             Assert.AreNotSame(dict, clone);
             Assert.AreEqual(dict.Count, clone.Count);
             CollectionAssert.AreEqual(dict, clone);

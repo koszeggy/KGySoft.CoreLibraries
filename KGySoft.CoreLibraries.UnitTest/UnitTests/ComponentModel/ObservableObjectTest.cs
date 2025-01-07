@@ -137,7 +137,7 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
         public void SerializationTest()
         {
             var test = new Derived(true);
-            var clone = test.DeepClone();
+            var clone = test.DeepClone(false);
             Assert.AreEqual(test.PublicProperty, clone.PublicProperty);
         }
 

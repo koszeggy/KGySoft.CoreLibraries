@@ -18,7 +18,6 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Data;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -36,7 +35,9 @@ using NUnit.Framework.Internal;
 namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 {
     [TestFixture]
+#if NET8_0_OR_GREATER
     [Obsolete]
+#endif
     public class CustomSerializerSurrogateSelectorTest : TestBase
     {
         #region Nested classes
@@ -653,7 +654,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             Throws<SerializationException>(() => DoTest(bf, surrogate, obj, true, true, true), "is not marked as serializable");
 #endif
             // BinarySerializationFormatter: serialization is not supported with the provided options
-            Throws<NotSupportedException>(() => DoTest(bsf, surrogate, obj, true, true, true), $"is not supported with following serialization options: None.{Environment.NewLine}You can try to enable the RecursiveSerializationAsFallback flag, though the serialized data will possibly not be able to be deserialized using the SafeMode flag.");
+            Throws<NotSupportedException>(() => DoTest(bsf, surrogate, obj, true, true, true), Res.BinarySerializationNotSupported(typeof(NonSerializableClass), bsf.Options));
 
             // Enabling RecursiveSerializationAsFallback: the serialization works indeed, so the SafeMode setting on the surrogate selector didn't matter
             bsf.Options |= BinarySerializationOptions.RecursiveSerializationAsFallback;
@@ -662,7 +663,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             // Enabling SafeMode on the formatter itself: not allowing any surrogate even if they would happily do the serialization
             bsf.Options |= BinarySerializationOptions.SafeMode;
             surrogate.SafeMode = false; // so the surrogate would support it again
-            Throws<SerializationException>(() => DoTest(bsf, surrogate, obj, true, true, true), "In safe mode no serialization surrogate is allowed to be used.");
+            Throws<SerializationException>(() => DoTest(bsf, surrogate, obj, true, true, true), Res.BinarySerializationSurrogateNotAllowedInSafeMode);
         }
 
         #endregion

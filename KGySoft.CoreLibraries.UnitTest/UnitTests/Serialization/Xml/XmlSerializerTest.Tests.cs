@@ -404,8 +404,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             // These objects cannot be (de)serialized with system serializer
             referenceObjects = new object[]
             {
-                new Uri(@"x:\teszt"),
-                new Uri("ftp://myUrl/%2E%2E/%2E%2E"),
+                EnvironmentHelper.IsMono ? new Uri("file:///x:/test") : new Uri(@"x:\test") ,
+                EnvironmentHelper.IsMono ? new Uri("ftp://myurl.com/regular/path") : new Uri("ftp://myUrl.com/%2E%2E/%2E%2E"),
                 new Version(1, 2, 3, 4),
 #if !NET
 		        Encoding.UTF7,
@@ -1416,6 +1416,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         [Test]
         public unsafe void SerializePointers()
         {
+            if (EnvironmentHelper.IsMono)
+                Assert.Inconclusive("Mono does not support pointer serialization.");
+
             object[] referenceObjects =
             {
                 // Pointer fields

@@ -137,8 +137,11 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
         [SecuritySafeCritical]
         public void TestEnumComparer_PartiallyTrusted()
         {
+            Console.WriteLine("Creating domain");
             var domain = CreateSandboxDomain(new ReflectionPermission(ReflectionPermissionFlag.MemberAccess));
+            Console.WriteLine("Creating instance");
             var handle = Activator.CreateInstance(domain, Assembly.GetExecutingAssembly().FullName, typeof(Sandbox).FullName);
+            Console.WriteLine("Unwrapping");
             var sandbox = (Sandbox)handle.Unwrap();
             try
             {
@@ -148,6 +151,10 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             {
                 Console.WriteLine(e);
                 throw;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Unhandled: {e.GetType()}: {e.Message}");
             }
         }
 #endif

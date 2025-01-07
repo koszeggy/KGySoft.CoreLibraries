@@ -3566,6 +3566,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Throws<InvalidOperationException>(() => accessor.CreateInstance<object>(), Res.ReflectionInstanceCtorExpected);
 
             // module constructor
+            if (EnvironmentHelper.IsMono)
+                return;
             ci = ((Type)Reflector.GetProperty(typeof(Module).Module, "RuntimeType"))!.GetConstructor(BindingFlags.NonPublic | BindingFlags.Static, null, Type.EmptyTypes, null)!;
             accessor = CreateInstanceAccessor.GetAccessor(ci);
             Throws<InvalidOperationException>(() => accessor.CreateInstance(null), Res.ReflectionInstanceCtorExpected);

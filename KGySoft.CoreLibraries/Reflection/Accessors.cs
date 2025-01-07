@@ -992,8 +992,9 @@ namespace KGySoft.Reflection
 
         #region Type
 #if NETFRAMEWORK
-
-        internal static bool IsSzArray(this Type type) => GetProperty(Reflector.Type, nameof(IsSzArray))!.GetInstanceValue<Type, bool>(type);
+        internal static bool IsSzArray(this Type type) => EnvironmentHelper.IsMono
+            ? type.IsArray && type.Name.EndsWith("[]", StringComparison.Ordinal)
+            : GetProperty(Reflector.Type, nameof(IsSzArray))!.GetInstanceValue<Type, bool>(type);
 
 #endif
         #endregion
@@ -1068,6 +1069,8 @@ namespace KGySoft.Reflection
             if (field.FieldType.IsPointer)
             {
 #if NETFRAMEWORK || NETSTANDARD2_0
+                if (EnvironmentHelper.IsMono)
+                    Throw.PlatformNotSupportedException<object>(Res.ReflectionPointerTypeMonoNotSupported(field.FieldType));
                 if (EnvironmentHelper.IsPartiallyTrustedDomain)
                     return GetPointerFieldPartiallyTrusted(field, instance);
 #endif
@@ -1087,6 +1090,14 @@ namespace KGySoft.Reflection
                 SetPointerField(field, instance, value);
                 return;
             }
+
+#if NETFRAMEWORK
+            if (EnvironmentHelper.IsMono)
+            {
+                field.SetValue(instance, value);
+                return;
+            }
+#endif
 
 #if NETSTANDARD2_0
             if (field.IsInitOnly || !field.IsStatic && field.DeclaringType?.IsValueType == true)

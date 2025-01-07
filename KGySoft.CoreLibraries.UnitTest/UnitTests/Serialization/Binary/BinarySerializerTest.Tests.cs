@@ -215,7 +215,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 typeof(int),
                 CultureInfo.InvariantCulture,
                 CultureInfo.CurrentCulture,
-                CultureInfo.GetCultureInfo(0x10407), // Name: de-DE, CompareInfo.Name: de-DE_phoneb
+                EnvironmentHelper.IsMono ? null : CultureInfo.GetCultureInfo(0x10407), // Name: de-DE, CompareInfo.Name: de-DE_phoneb
                 StringComparer.Ordinal,
                 StringComparer.OrdinalIgnoreCase,
                 CaseInsensitiveComparer.DefaultInvariant,
@@ -264,6 +264,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             // NOTE: SafeMode with ForceRecursiveSerializationOfSupportedTypes cannot be used (e.g. due to the internal CultureData type)
 
 #if NETFRAMEWORK
+            if (EnvironmentHelper.IsMono)
+            {
+                // Object[][9]:
+                // 	Types are different. System.OrdinalCaseSensitiveComparer <-> System.OrdinalComparer
+                // Object[][10]:
+                // 	Types are different. System.OrdinalIgnoreCaseComparer <-> System.OrdinalComparer
+                referenceObjects[9] = null;
+                referenceObjects[10] = null;
+            }
+
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
 #else
@@ -1149,7 +1159,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback);
 
-
             expectedTypes = new[] { typeof(NonSerializableStruct) };
             KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.SafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes, expectedTypes: expectedTypes);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.SafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes, expectedTypes: expectedTypes);
@@ -1288,20 +1297,24 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #if NETCOREAPP2_0 || NETCOREAPP2_1
             // Only for HashSet<T> and .NET Core 2.x: typeof(IEqualityComparer<T>.IsAssignableFrom(comparer)) fails in HashSet.OnDeserialization. No idea why, and no idea why the same logic works for Dictionary.
             referenceObjects = referenceObjects.Where(o => !o.GetType().IsGenericTypeOf(typeof(HashSet<>))).ToArray();
+#elif NETFRAMEWORK
+            // Mono: HashSet<T> fails in OnDeserialization with InvalidCastException : Object must implement IConvertible
+            if (EnvironmentHelper.IsMono)
+                referenceObjects = referenceObjects.Where(o => !o.GetType().IsGenericTypeOf(typeof(HashSet<>))).ToArray();
 #endif
 #if !NET9_0_OR_GREATER // .NET 9+ changes StringEqualityComparer to GenericEqualityComparer<string>, which is intended: https://github.com/dotnet/runtime/blob/c87cbf63954f179785bb038c23352e60d3c0a933/src/libraries/System.Private.CoreLib/src/System/Collections/Generic/EqualityComparer.cs#L295
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes); 
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
 
             expectedTypes = GetExpectedTypes(referenceObjects).Concat(new[] { typeof(IEqualityComparer<>), EqualityComparer<int>.Default.GetType(), EqualityComparer<int[]>.Default.GetType(), StringComparer.CurrentCulture.GetType(), typeof(CompareInfo), typeof(CompareOptions),
 #if NETFRAMEWORK
-                StringComparer.Ordinal.GetType(),
+                EnvironmentHelper.IsMono ? Reflector.ResolveType("System.OrdinalComparer") : StringComparer.Ordinal.GetType(),
 #else
-		        StringComparer.Ordinal.GetType().BaseType,
+	            StringComparer.Ordinal.GetType().BaseType,
 #endif
                 Reflector.ResolveType("KGySoft.CoreLibraries.EnumComparer`1+SerializationUnityHolder"), typeof(IComparer<>), typeof(KeyValuePair<,>), Comparer<int>.Default.GetType(), Comparer<int[]>.Default.GetType(),
                 Reflector.ResolveType("System.Collections.Generic.TreeSet`1"), Reflector.ResolveType("System.Collections.Generic.SortedDictionary`2+KeyValuePairComparer"),
-                StringSegmentComparer.OrdinalIgnoreCase.GetType(), StringSegmentComparer.OrdinalRandomized.GetType() });
+            StringSegmentComparer.OrdinalIgnoreCase.GetType(), StringSegmentComparer.OrdinalRandomized.GetType() });
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.SafeMode, expectedTypes: expectedTypes);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.SafeMode, expectedTypes: expectedTypes);
 #endif
@@ -1485,7 +1498,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             var expectedTypes = GetExpectedTypes(referenceObjects).Concat(new[] { typeof(DateTime), typeof(IComparer), typeof(IHashCodeProvider), typeof(decimal),
                 StringComparer.CurrentCulture.GetType(), typeof(CompareInfo), typeof(CompareOptions), typeof(IEqualityComparer), typeof(Comparer),
 #if NETFRAMEWORK
-                StringComparer.OrdinalIgnoreCase.GetType(),
+                EnvironmentHelper.IsMono ? Reflector.ResolveType("System.OrdinalComparer") : StringComparer.OrdinalIgnoreCase.GetType(),
 #else
 		        StringComparer.OrdinalIgnoreCase.GetType().BaseType,
 #endif
@@ -1639,18 +1652,22 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: expectedTypes);
 
 #if !(NETCOREAPP2_0 || NETCOREAPP2_1) // HashSet<T>.OnDeserialized for its comparer: InvalidCastException: Object must implement IConvertible
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
+            // Mono also fails in HashSet.OnDeserialization with InvalidCastException: Object must implement IConvertible
+            if (!EnvironmentHelper.IsMono)
+            {
+                KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
+                KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
 
-            expectedTypes = GetExpectedTypes(referenceObjects).Concat(new[] { EqualityComparer<int>.Default.GetType(), typeof(IEqualityComparer<>), Comparer<int>.Default.GetType(), typeof(IComparer<>),
-                Reflector.ResolveType("System.Collections.Generic.TreeSet`1"), Reflector.ResolveType("System.Collections.Generic.SortedDictionary`2+KeyValuePairComparer"),
-                typeof(IComparer), typeof(IHashCodeProvider), typeof(Comparer), typeof(CompareInfo), typeof(IEqualityComparer),
-                Reflector.ResolveType("System.CultureAwareComparer"), Reflector.ResolveType("System.Globalization.CompareOptions"),
-                StringSegmentComparer.Ordinal.GetType(), StringSegmentComparer.InvariantCulture.GetType(),
-                Reflector.ResolveType("KGySoft.CoreLibraries.EnumComparer`1+SerializationUnityHolder"),
-                Reflector.ResolveType("System.Collections.Specialized.ListDictionary+DictionaryNode") });
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.SafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes, expectedTypes: expectedTypes);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.SafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes, expectedTypes: expectedTypes);
+                expectedTypes = GetExpectedTypes(referenceObjects).Concat(new[] { EqualityComparer<int>.Default.GetType(), typeof(IEqualityComparer<>), Comparer<int>.Default.GetType(), typeof(IComparer<>),
+                    Reflector.ResolveType("System.Collections.Generic.TreeSet`1"), Reflector.ResolveType("System.Collections.Generic.SortedDictionary`2+KeyValuePairComparer"),
+                    typeof(IComparer), typeof(IHashCodeProvider), typeof(Comparer), typeof(CompareInfo), typeof(IEqualityComparer),
+                    Reflector.ResolveType("System.CultureAwareComparer"), Reflector.ResolveType("System.Globalization.CompareOptions"),
+                    StringSegmentComparer.Ordinal.GetType(), StringSegmentComparer.InvariantCulture.GetType(),
+                    Reflector.ResolveType("KGySoft.CoreLibraries.EnumComparer`1+SerializationUnityHolder"),
+                    Reflector.ResolveType("System.Collections.Specialized.ListDictionary+DictionaryNode") });
+                KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.SafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes, expectedTypes:expectedTypes);
+                KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.SafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes, expectedTypes:expectedTypes);
+            }
 #endif
 
             // non-serializable types
@@ -1998,7 +2015,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 | BinarySerializationOptions.IgnoreISerializable, // .NET Core 2: still, it has the GetObjectData that throws a PlatformNotSupportedException
                 title, safeCompare: true, binder: binder); // safeCompare: the cloned runtime types are not equal
 #else
-            if (includeForcedRecursive)
+            if (includeForcedRecursive && !EnvironmentHelper.IsMono) // Mono: HashSet<int> fails in OnDeserialization with InvalidCastException : Object must implement IConvertible
             {
                 KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, title, binder:binder);
                 KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, title, binder:binder);
@@ -2074,8 +2091,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 | BinarySerializationOptions.IgnoreISerializable, // .NET Core 2: still, it has the GetObjectData that throws a PlatformNotSupportedException
                 title, safeCompare: true, binder: binder); // safeCompare: the cloned runtime types are not equal
 #else
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, title, binder: binder);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, title, binder: binder);
+            // Mono fails in HashSet.OnDeserialization with InvalidCastException: Object must implement IConvertible
+            if (!EnvironmentHelper.IsMono)
+            {
+                KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, title, binder: binder);
+                KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, title, binder: binder);
+            }
 #endif
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.OmitAssemblyQualifiedNames, title, binder: binder);
@@ -2355,7 +2376,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new CircularSortedList<int, int> { { 1, 1 }, { 2, 2 }, { 3, 3 } },
 
                 // Pointer fields
-                new UnsafeStruct(),
+                EnvironmentHelper.IsMono ? null : new UnsafeStruct(),
             };
 
             ISurrogateSelector selector = new NameInvariantSurrogateSelector();
@@ -2394,7 +2415,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new Collection<Encoding> { Encoding.ASCII, Encoding.Unicode },
 
                 // pointer arrays
-                new UnsafeStruct(),
+                EnvironmentHelper.IsMono ? null : new UnsafeStruct(),
             };
 
             var selector = new CustomSerializerSurrogateSelector();
@@ -2767,7 +2788,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         {
             var domain = CreateSandboxDomain(
 #if NET35
-                            new EnvironmentPermission(PermissionState.Unrestricted),
+                new EnvironmentPermission(PermissionState.Unrestricted),
 #endif
                 new ReflectionPermission(ReflectionPermissionFlag.MemberAccess),
                 new SecurityPermission(SecurityPermissionFlag.ControlEvidence | SecurityPermissionFlag.ControlAppDomain | SecurityPermissionFlag.SerializationFormatter | SecurityPermissionFlag.UnmanagedCode | SecurityPermissionFlag.ControlPolicy),
@@ -2789,6 +2810,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         [Test]
         public unsafe void SerializePointers()
         {
+            if (EnvironmentHelper.IsMono)
+                Assert.Inconclusive("Mono does not support pointer serialization.");
+
             object[] referenceObjects =
             {
                 // Pointer fields
@@ -3054,7 +3078,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new BitArray(new[] { 1 }), // mscorlib -> System.Collections
 #if !(NETCOREAPP2_0 || NETCOREAPP2_1)
                 // Only for HashSet<T> and .NET Core 2.x: typeof(IEqualityComparer<T>.IsAssignableFrom(comparer)) fails in HashSet.OnDeserialization. No idea why, and no idea why the same logic works for Dictionary.
-                new HashSet<int> { 1, 2, 3 }, // System.Core -> System.Collections  
+                // Mono also fails in HashSet.OnDeserialization with InvalidCastException: Object must implement IConvertible
+                EnvironmentHelper.IsMono ? null : new HashSet<int> { 1, 2, 3 }, // System.Core -> System.Collections
 #endif
                 new LinkedList<int>(new[] { 1, 2, 3 }), // System -> System.Collections
             };
@@ -3256,7 +3281,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             byte[] manipulatedData = serData.ToArray();
 
             // without safe mode a huge array is about to be allocated
-            Throws<OutOfMemoryException>(() => DeserializeObject(manipulatedData, bsf));
+            if (!EnvironmentHelper.IsMono) // Is Mono the array is simply allocated so the same "SerializationException: Data length is too small." is thrown as in SafeMode
+                Throws<OutOfMemoryException>(() => DeserializeObject(manipulatedData, bsf));
 
             // in SafeMode the array is allocated in chunks and the stream simply ends unexpectedly
             bsf.Options = BinarySerializationOptions.SafeMode;
@@ -3283,7 +3309,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             byte[] manipulatedData = serData.ToArray();
 
             // without safe mode the list is allocated with MaxInt capacity
-            Throws<OutOfMemoryException>(() => DeserializeObject(manipulatedData, bsf));
+            if (!EnvironmentHelper.IsMono) // Is Mono the array is simply allocated so no exception occurs
+                Throws<OutOfMemoryException>(() => DeserializeObject(manipulatedData, bsf));
 
             // in SafeMode the too large capacity is ignored and the list simply can be deserialized
             bsf.Options = BinarySerializationOptions.SafeMode;

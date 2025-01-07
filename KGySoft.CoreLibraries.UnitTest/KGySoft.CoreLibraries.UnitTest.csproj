@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <!--<TargetFrameworks>net35;net40;net45;net47;net472;netcoreapp3.0;net5.0;net6.0;net7.0;net8.0;net9.0</TargetFrameworks>-->
-    <TargetFrameworks>net9.0</TargetFrameworks>
+    <TargetFrameworks>net472</TargetFrameworks>
 
     <RunAnalyzersDuringLiveAnalysis>false</RunAnalyzersDuringLiveAnalysis>
     
@@ -79,12 +79,6 @@
     <PackageReference Include="System.Resources.Extensions" Version="6.0.0" />
     <PackageReference Condition="'$(IsWindows)'=='true'" Include="System.Drawing.Common" Version="5.0.3" />
   </ItemGroup>
-
-  <!-- Windows only references -->
-  <PropertyGroup Condition="'$(IsWindows)'=='true'">
-    <DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
-  </PropertyGroup>
-
 
   <!-- Project references -->
   <ItemGroup>

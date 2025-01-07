@@ -211,10 +211,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
         public void SerializationTest()
         {
             var castArray = CastArray<int, byte>.Null;
-            Assert.AreEqual(castArray, castArray.DeepClone());
+            Assert.AreEqual(castArray, castArray.DeepClone(false));
 
             castArray = new[] { 1, 2, 3, 4, 5 }.Cast<int, byte>();
-            Assert.IsTrue(castArray.SequenceEqual(castArray.DeepClone()));
+            Assert.IsTrue(castArray.SequenceEqual(castArray.DeepClone(false)));
         }
 
 #if NETFRAMEWORK

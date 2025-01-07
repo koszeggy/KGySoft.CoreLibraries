@@ -15,7 +15,7 @@
 
 #region Usings
 
-
+using System.Runtime.CompilerServices;
 
 #region Used Namespaces
 
@@ -236,46 +236,58 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 #if NETFRAMEWORK
         private static void SystemSerializeObjects(object[] referenceObjects, Func<Type, string> typeNameConverter = null, ITypeResolutionService typeResolver = null)
         {
+            #region Local Methods
+
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            void DoSystemSerializeObjects()
+            {
+                StringBuilder sb = new StringBuilder();
+                using (SystemResXResourceWriter writer =
+#if NET35
+                    new SystemResXResourceWriter(new StringWriter(sb))
+
+#else
+                    new SystemResXResourceWriter(new StringWriter(sb), typeNameConverter)
+#endif
+
+                      )
+                {
+                    int i = 0;
+                    foreach (object item in referenceObjects)
+                    {
+                        writer.AddResource(i++ + "_" + (item == null ? "null" : item.GetType().Name), item);
+                    }
+                }
+
+                Console.WriteLine(sb.ToString());
+                List<object> deserializedObjects = new List<object>();
+                using (SystemResXResourceReader reader = SystemResXResourceReader.FromFileContents(sb.ToString(), typeResolver))
+                {
+                    foreach (DictionaryEntry item in reader)
+                    {
+                        deserializedObjects.Add(item.Value);
+                    }
+                }
+
+                AssertItemsEqual(referenceObjects, deserializedObjects.ToArray());
+            }
+
+            #endregion
+
+            if (EnvironmentHelper.IsMono)
+                return;
             using (new TestExecutionContext.IsolatedContext())
             {
                 Console.WriteLine($"------------------System ResXResourceWriter (Items Count: {referenceObjects.Length})--------------------");
                 try
                 {
-                    StringBuilder sb = new StringBuilder();
-                    using (SystemResXResourceWriter writer =
-#if NET35
-                        new SystemResXResourceWriter(new StringWriter(sb))
-
-#else
-                        new SystemResXResourceWriter(new StringWriter(sb), typeNameConverter)
-#endif
-
-                        )
-                    {
-                        int i = 0;
-                        foreach (object item in referenceObjects)
-                        {
-                            writer.AddResource(i++ + "_" + (item == null ? "null" : item.GetType().Name), item);
-                        }
-                    }
-
-                    Console.WriteLine(sb.ToString());
-                    List<object> deserializedObjects = new List<object>();
-                    using (SystemResXResourceReader reader = SystemResXResourceReader.FromFileContents(sb.ToString(), typeResolver))
-                    {
-                        foreach (DictionaryEntry item in reader)
-                        {
-                            deserializedObjects.Add(item.Value);
-                        }
-                    }
-
-                    AssertItemsEqual(referenceObjects, deserializedObjects.ToArray());
+                    DoSystemSerializeObjects();
                 }
                 catch (Exception e)
                 {
                     Console.WriteLine($"System serialization failed: {e}");
                 }
-            }  
+            }
         }
 #endif
 
@@ -349,6 +361,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             ReadWriteReadResX(path, true, false);
 
 #if NETFRAMEWORK
+            if (EnvironmentHelper.IsMono)
+                return;
             path = Combine(Files.GetExecutingPath(), "Resources", "TestResourceResX.resx");
             ReadWriteReadResX(path, true, true);
             ReadWriteReadResX(path, false, true);
@@ -377,7 +391,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 (double)1,
                 (decimal)1,
                 new IntPtr(1),
-                new UIntPtr(1),
+                EnvironmentHelper.IsMono ? null : new UIntPtr(1), // Mono: In compatibility mode BinaryFormatter fails: The constructor to deserialize an object of type 'System.UIntPtr' was not found.
 #if !NET35
                 new BigInteger(1),
 #endif
@@ -703,7 +717,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
                 // partly working built-in
 #if NETFRAMEWORK
-                Cursors.Arrow, // a default cursor: by string
+                EnvironmentHelper.IsMono ? null : Cursors.Arrow, // a default cursor: by string - Mono: NullReferenceException from Cursor.GetObjectData
 #endif
                 // pure custom
                 new Version(1, 2, 3, 4),
@@ -881,21 +895,20 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         }
 
         [Test]
+        [Obsolete]
         public void SerializeSpecialTypes()
         {
             // these types will be transformed to their wrapped representations
             string path = Combine(Files.GetExecutingPath(), "Resources", "TestRes.resx");
             object[] referenceObjects =
             {
-#pragma warning disable 618
                 // binary wrapper
                 new AnyObjectSerializerWrapper("test", false),
-#pragma warning restore 618
 #if NETFRAMEWORK
                 // legacy formats: KGy version converts these to self formats
                 new System.Resources.ResXFileRef(path, TypeResolver.StringTypeFullName),
-                new System.Resources.ResXDataNode("TestString", "string"),
-                new System.Resources.ResXDataNode("TestRef", new System.Resources.ResXFileRef(path, TypeResolver.StringTypeFullName)),
+                EnvironmentHelper.IsMono ? null : new System.Resources.ResXDataNode("TestString", "string"),
+                EnvironmentHelper.IsMono ? null : new System.Resources.ResXDataNode("TestRef", new System.Resources.ResXFileRef(path, TypeResolver.StringTypeFullName)),
 #endif
             };
 
@@ -913,7 +926,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 new ResXFileRef(path, typeof(string)),
                 new ResXDataNode("TestString", "string"),
 #if NETFRAMEWORK
-                new ResXDataNode("TestRef", new System.Resources.ResXFileRef(path, TypeResolver.StringTypeFullName)),
+                EnvironmentHelper.IsMono ? null : new ResXDataNode("TestRef", new System.Resources.ResXFileRef(path, TypeResolver.StringTypeFullName)),
 #endif
             };
 

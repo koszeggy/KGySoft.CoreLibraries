@@ -657,6 +657,9 @@ You can try to enable the RecursiveSerializationAsFallback flag, though the seri
   <data name="Reflection_PointerTypeNotSupportedFormat" xml:space="preserve">
     <value>Pointer type '{0}' is not supported.</value>
   </data>
+  <data name="Reflection_PointerTypeMonoNotSupportedFormat" xml:space="preserve">
+    <value>Reflecting pointer type '{0}' is not supported on the Mono platform.</value>
+  </data>
   <data name="Reflection_SetReadOnlyFieldGenericNetStandard20Format" xml:space="preserve">
     <value>Setting read-only field '{0}' of type '{1}' is not supported by the generic methods of FieldAccessor in the .NET Standard 2.0 version of this library. Use the non-generic Set method instead.</value>
   </data>

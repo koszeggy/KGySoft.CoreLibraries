@@ -22,6 +22,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Resources;
+using System.Runtime.CompilerServices;
 using System.Security;
 using System.Security.Policy;
 using System.Xml;
@@ -77,7 +78,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             }
 
             #endregion
-        } 
+        }
 #endif
 
         #endregion
@@ -112,89 +113,28 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
         #region Methods
 
+        #region Public Methods
+
 #if NETFRAMEWORK
         /// <summary>
         /// Creates a culture chain with more specific and neutral cultures.
         /// </summary>
-        [SecuritySafeCritical]
         [OneTimeSetUp]
-        public void CreateCustomCultures()
+        public void OneTimeSetUp()
         {
-            CultureAndRegionInfoBuilder cibHuRunic = new CultureAndRegionInfoBuilder("hu-Runic", CultureAndRegionModifiers.Neutral);
-            cibHuRunic.LoadDataFromCultureInfo(hu);
-            cibHuRunic.IsRightToLeft = true;
-            cibHuRunic.Parent = hu;
-            cibHuRunic.CultureEnglishName = "Hungarian (Runic)";
-            cibHuRunic.CultureNativeName = "magyar (Rovásírás)";
-
-            try
-            {
-                cibHuRunic.Register();
-            }
-            catch (UnauthorizedAccessException)
-            {
-                //Assert.Inconclusive("To run the tests in this class, administrator rights are required: " + e);
-                return; // no admin rights - basic tests will be executed
-            }
-            catch (InvalidOperationException e) when (e.Message.Contains("already exists"))
-            {
-                // culture is already registered
-            }
-
-            huRunic = CultureInfo.GetCultureInfo("hu-Runic");
-
-            CultureAndRegionInfoBuilder cibHuRunicHU = new CultureAndRegionInfoBuilder("hu-Runic-HU", CultureAndRegionModifiers.None);
-            cibHuRunicHU.LoadDataFromCultureInfo(huHU);
-            cibHuRunicHU.LoadDataFromRegionInfo(new RegionInfo(huHU.Name));
-            cibHuRunicHU.Parent = huRunic;
-            cibHuRunicHU.CultureEnglishName = "Hungarian (Runic, Hungary)";
-            cibHuRunicHU.CultureNativeName = "magyar (Rovásírás, Magyarország)";
-
-            try
-            {
-                cibHuRunicHU.Register();
-            }
-            catch (InvalidOperationException e) when (e.Message.Contains("already exists"))
-            {
-                // culture is already registered
-            }
-
-            huRunicHU = CultureInfo.GetCultureInfo("hu-Runic-HU");
-
-            CultureAndRegionInfoBuilder cibHuRunicHULowland = new CultureAndRegionInfoBuilder("hu-Runic-HU-lowland", CultureAndRegionModifiers.None);
-            cibHuRunicHULowland.LoadDataFromCultureInfo(huRunicHU);
-            cibHuRunicHULowland.LoadDataFromRegionInfo(new RegionInfo(huRunicHU.Name));
-            cibHuRunicHULowland.Parent = huRunicHU;
-            cibHuRunicHULowland.CultureEnglishName = "Hungarian (Runic, Hungary, Lowland)";
-            cibHuRunicHULowland.CultureNativeName = "magyar (Rovásírás, Magyarország, Alföld)";
-            try
-            {
-                cibHuRunicHULowland.Register();
-            }
-            catch (InvalidOperationException e) when (e.Message.Contains("already exists"))
-            {
-                // culture is already registered
-            }
-
-            huRunicHULowland = CultureInfo.GetCultureInfo("hu-Runic-HU-lowland");
+            if (EnvironmentHelper.IsMono)
+                return;
+            CreateCustomCultures();
         }
 
         [OneTimeTearDown]
-        public void RemoveCustomCultures()
+        public void OneTimeTearDown()
         {
-            if (huRunic == null)
+            if (huRunic == null || EnvironmentHelper.IsMono)
                 return;
-            try
-            {
-                CultureAndRegionInfoBuilder.Unregister(huRunicHULowland.Name);
-                CultureAndRegionInfoBuilder.Unregister(huRunicHU.Name);
-                CultureAndRegionInfoBuilder.Unregister(huRunic.Name);
-            }
-            catch (UnauthorizedAccessException)
-            {
-                // no admin rights
-            }
-        } 
+
+            RemoveCustomCultures();
+        }
 #endif
 
         [Test]
@@ -329,7 +269,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.IsTrue(((string)manager.GetObject(key, huHU)).StartsWith(LanguageSettings.UntranslatedResourcePrefix, StringComparison.Ordinal));
 
 #if NETFRAMEWORK
-            Assert.Inconclusive("To run the tests in this class with full functionality, administrator rights are required"); 
+            Assert.Inconclusive("To run the tests in this class with full functionality, administrator rights are required");
 #endif
         }
 
@@ -776,20 +716,20 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.IsNotNull(testResRef);
             Assert.IsNotNull(testRes);
 #if !NET35 // After deserializing a standard ResourceManager on runtime 2.0 an ObjectDisposedException occurs for GetString
-            refManager = refManager.DeepClone();
-            Assert.AreEqual(testResRef, refManager.GetString(resName)); 
+            refManager = refManager.DeepClone(false);
+            Assert.AreEqual(testResRef, refManager.GetString(resName));
 #endif
-            manager = manager.DeepClone();
+            manager = manager.DeepClone(false);
             Assert.AreEqual(testRes, manager.GetString(resName));
 
             // introducing a change: serialization preserves the change
             Assert.IsFalse(manager.IsModified);
             manager.SetObject(resName, "new string");
             Assert.IsTrue(manager.IsModified);
-            manager = manager.DeepClone();
+            manager = manager.DeepClone(false);
             Assert.IsTrue(manager.IsModified);
             Assert.AreNotEqual(testRes, manager.GetString(resName));
-        } 
+        }
 #endif
 
         [Test]
@@ -905,6 +845,94 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 File.Delete(path);
             }
         }
+
+        #endregion
+
+        #region Private Methods
+
+#if NETFRAMEWORK
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        [SecuritySafeCritical]
+        private void CreateCustomCultures()
+        {
+            CultureAndRegionInfoBuilder cibHuRunic = new CultureAndRegionInfoBuilder("hu-Runic", CultureAndRegionModifiers.Neutral);
+            cibHuRunic.LoadDataFromCultureInfo(hu);
+            cibHuRunic.IsRightToLeft = true;
+            cibHuRunic.Parent = hu;
+            cibHuRunic.CultureEnglishName = "Hungarian (Runic)";
+            cibHuRunic.CultureNativeName = "magyar (Rovásírás)";
+
+            try
+            {
+                cibHuRunic.Register();
+            }
+            catch (UnauthorizedAccessException)
+            {
+                //Assert.Inconclusive("To run the tests in this class, administrator rights are required: " + e);
+                return; // no admin rights - basic tests will be executed
+            }
+            catch (InvalidOperationException e) when (e.Message.Contains("already exists"))
+            {
+                // culture is already registered
+            }
+
+            huRunic = CultureInfo.GetCultureInfo("hu-Runic");
+
+            CultureAndRegionInfoBuilder cibHuRunicHU = new CultureAndRegionInfoBuilder("hu-Runic-HU", CultureAndRegionModifiers.None);
+            cibHuRunicHU.LoadDataFromCultureInfo(huHU);
+            cibHuRunicHU.LoadDataFromRegionInfo(new RegionInfo(huHU.Name));
+            cibHuRunicHU.Parent = huRunic;
+            cibHuRunicHU.CultureEnglishName = "Hungarian (Runic, Hungary)";
+            cibHuRunicHU.CultureNativeName = "magyar (Rovásírás, Magyarország)";
+
+            try
+            {
+                cibHuRunicHU.Register();
+            }
+            catch (InvalidOperationException e) when (e.Message.Contains("already exists"))
+            {
+                // culture is already registered
+            }
+
+            huRunicHU = CultureInfo.GetCultureInfo("hu-Runic-HU");
+
+            CultureAndRegionInfoBuilder cibHuRunicHULowland = new CultureAndRegionInfoBuilder("hu-Runic-HU-lowland", CultureAndRegionModifiers.None);
+            cibHuRunicHULowland.LoadDataFromCultureInfo(huRunicHU);
+            cibHuRunicHULowland.LoadDataFromRegionInfo(new RegionInfo(huRunicHU.Name));
+            cibHuRunicHULowland.Parent = huRunicHU;
+            cibHuRunicHULowland.CultureEnglishName = "Hungarian (Runic, Hungary, Lowland)";
+            cibHuRunicHULowland.CultureNativeName = "magyar (Rovásírás, Magyarország, Alföld)";
+            try
+            {
+                cibHuRunicHULowland.Register();
+            }
+            catch (InvalidOperationException e) when (e.Message.Contains("already exists"))
+            {
+                // culture is already registered
+            }
+
+            huRunicHULowland = CultureInfo.GetCultureInfo("hu-Runic-HU-lowland");
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private void RemoveCustomCultures()
+        {
+            try
+            {
+                CultureAndRegionInfoBuilder.Unregister(huRunicHULowland.Name);
+                CultureAndRegionInfoBuilder.Unregister(huRunicHU.Name);
+                CultureAndRegionInfoBuilder.Unregister(huRunic.Name);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                // no admin rights
+            }
+        }
+
+#endif
+
+        #endregion
 
         #endregion
     }

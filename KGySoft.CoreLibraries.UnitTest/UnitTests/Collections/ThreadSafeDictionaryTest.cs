@@ -457,7 +457,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
                 ["gamma"] = 3,
             };
 
-            ThreadSafeDictionary<string, int> clone = dict.DeepClone();
+            ThreadSafeDictionary<string, int> clone = dict.DeepClone(false);
             Assert.IsTrue(dict.SequenceEqual(clone));
         }
 

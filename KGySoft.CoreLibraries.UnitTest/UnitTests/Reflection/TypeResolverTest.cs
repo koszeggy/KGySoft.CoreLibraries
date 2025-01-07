@@ -110,8 +110,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         [TestCase("System.Collections.Generic.List`1[[System.Int32[]]]")] // List<int[]>
         [TestCase("System.Collections.Generic.List`1[[System.Int32][]]")] // fail
         [TestCase("System.Collections.Generic.List`1[System.Int32]&")] // List<int>&
-        [TestCase("System.Collections.Generic.List`1[System.Int32&]")] // fail: The type 'System.Int32&' may not be used as a type argument.
-        [TestCase("System.Collections.Generic.List`1[System.Int32*]")] // fail: The type 'System.Int32*' may not be used as a type argument.
+        [TestCase("System.Collections.Generic.List`1[System.Int32&]")] // fail: The type 'System.Int32&' may not be used as a type argument (except in Mono)
+        [TestCase("System.Collections.Generic.List`1[System.Int32*]")] // fail: The type 'System.Int32*' may not be used as a type argument (except in Mono)
         [TestCase("System.Collections.Generic.Dictionary`2[System.Int32,System.String]")] // Dictionary<int, string>
         [TestCase("System.Collections.Generic.Dictionary`2[ System.Int32, System.String]")] // Dictionary<int, string>
         [TestCase("System.Collections.Generic.Dictionary`2[[System.Int32],[System.String]]")] // Dictionary<int, string>
@@ -136,9 +136,21 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 #endif
 
             if (type == null)
-                Assert.Catch<Exception>(() => Type.GetType(typeName, true));
-            else
-                Assert.AreEqual(type, Type.GetType(typeName));
+            {
+                // On Mono, it's quite unpredictable what Type.GetType does with invalid type names: null, exception, or even a successful resolution.
+                if (!EnvironmentHelper.IsMono)
+                    Assert.Catch<Exception>(() => Type.GetType(typeName, true));
+                return;
+            }
+
+            Type bySystem = Type.GetType(typeName);
+            if (bySystem == null && EnvironmentHelper.IsMono)
+            {
+                Assert.Inconclusive($"On Mono System.Type.GetType fails to resolve {typeName}");
+                return;
+            }
+
+            Assert.AreEqual(type, bySystem);
         }
 
         [TestCaseSource(nameof(sourceDumpAndResolveTypesContainingGenericArguments))]

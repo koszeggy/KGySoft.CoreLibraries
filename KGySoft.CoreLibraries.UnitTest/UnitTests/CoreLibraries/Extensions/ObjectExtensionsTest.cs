@@ -109,7 +109,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             new Collection<Encoding> { Encoding.ASCII, Encoding.Unicode },
             new MemoryStream(new byte[] { 1, 2, 3 }),
 
-            // contains delegate
+            // contains delegate (it crashes the Mono runtime)
             new Cache<int, string>(i => i.ToString()),
 
             // pointer fields
@@ -329,14 +329,22 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
         [TestCaseSource(nameof(deepCloneBySerializerTestSource))]
         public void DeepCloneBySerializerTest(object obj)
         {
-            AssertDeepEquals(obj, obj.DeepClone());
+#if NETFRAMEWORK
+            if (obj is UnsafeStruct && EnvironmentHelper.IsMono)
+                Assert.Inconclusive($"{obj.GetType()} serialization is not supported on Mono");
+#endif
+            AssertDeepEquals(obj, obj.DeepClone(false));
             AssertDeepEquals(obj, obj.DeepClone(true));
         }
 
         [TestCaseSource(nameof(deepCloneByObjectClonerTestSource))]
         public void DeepCloneByObjectClonerTest(object obj)
         {
-            AssertDeepEquals(obj, obj.DeepClone(null));
+#if NETFRAMEWORK
+            if (obj is CultureInfo or UnsafeStruct && EnvironmentHelper.IsMono)
+                Assert.Inconclusive($"{obj.GetType()} serialization is not supported on Mono");
+#endif
+            AssertDeepEquals(obj, obj.DeepClone());
         }
 
         [Test]
@@ -345,7 +353,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             var obj = new object[1];
             obj[0] = obj;
 
-            object[] clone = obj.DeepClone(null);
+            object[] clone = obj.DeepClone();
             AssertDeepEquals(obj, clone);
             Assert.AreSame(clone, clone[0]);
         }

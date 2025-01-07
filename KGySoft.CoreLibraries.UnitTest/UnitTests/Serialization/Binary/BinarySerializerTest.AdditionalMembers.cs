@@ -802,6 +802,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             {
                 if (expectedTypes == null && (options & (BinarySerializationOptions.SafeMode | BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes)) == (BinarySerializationOptions.SafeMode | BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes))
                     expectedTypes = GetExpectedTypes(obj);
+                else if (expectedTypes != null)
+                    expectedTypes = expectedTypes.Where(t => t != null);
+
                 if (expectedTypes != null)
                     Console.WriteLine($"Expected types: {expectedTypes.Select(t => t.GetName(TypeNameKind.ShortName)).Join(',')}{Environment.NewLine}");
                 byte[] serData = SerializeObject(obj, bsf);
@@ -831,6 +834,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             {
                 if (expectedTypes == null && (options & (BinarySerializationOptions.SafeMode | BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes)) == (BinarySerializationOptions.SafeMode | BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes))
                     expectedTypes = GetExpectedTypes(referenceObjects);
+                else if (expectedTypes != null)
+                    expectedTypes = expectedTypes.Where(t => t != null);
+
                 if (expectedTypes != null)
                     Console.WriteLine($"Expected types: {expectedTypes.Select(t => t.GetName(TypeNameKind.ShortName)).Join(',')}{Environment.NewLine}");
                 byte[] serData = SerializeObjects(referenceObjects, bsf);

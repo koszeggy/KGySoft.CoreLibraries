@@ -252,7 +252,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
         {
             var set = new ThreadSafeHashSet<string> { "alpha", "beta", "gamma", null };
 
-            ThreadSafeHashSet<string> clone = set.DeepClone();
+            ThreadSafeHashSet<string> clone = set.DeepClone(false);
             Assert.IsTrue(set.SequenceEqual(clone));
         }
 
