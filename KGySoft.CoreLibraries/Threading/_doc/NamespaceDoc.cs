@@ -16,9 +16,6 @@
 #region Usings
 
 using System.Runtime.CompilerServices;
-#if !NET35
-using System.Threading.Tasks; 
-#endif
 
 using KGySoft.Collections;
 
@@ -36,8 +33,7 @@ namespace KGySoft.Threading
 {
     /// <summary>
     /// The <see cref="N:KGySoft.Threading"/> namespace contains the static <see cref="AsyncHelper"/> class that makes possible to implement sync and async versions of a possibly parallel operation
-    /// supporting cancellation and reporting progress using a single shared implementation. One built-in example is the <see cref="ParallelHelper"/> class
-    /// (which is basically a target framework independent advanced version of <see cref="Parallel.For(int,int,System.Action{int})">Parallel.For</see>)
+    /// supporting cancellation and reporting progress using a single shared implementation. One built-in example is the <see cref="ParallelHelper"/> class,
     /// but you can find many examples in other dependent libraries such as the <a href="https://www.nuget.org/packages/KGySoft.Drawing.Core/" target="_blank">KGySoft.Drawing.Core</a> package
     /// that uses many parallel operations for image processing. Apart from these you can find here the <see cref="WaitHandleExtensions"/> and some
     /// other types related to configuring or tracking asynchronous operations.
