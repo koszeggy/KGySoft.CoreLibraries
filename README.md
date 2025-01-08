@@ -163,7 +163,7 @@ asColors2D = section.Cast2D<byte, Color32>(4, 6);
 <summary><strong><code><a href="https://docs.kgysoft.net/corelibraries/html/Overload_KGySoft_CoreLibraries_DictionaryExtensions_GetValueOrDefault.htm">IDictionary&lt;TKey, TValue>.GetValueOrDefault</a></code> extension methods</strong></summary><p/>
 
 > ℹ️ **Note**<p/>
-> Since then .NET Core 2.0 also introduced a `GetValueOrDefault` method for the `IReadOnlyDictionary<TKey, TValue>` interface. But KGy SOFT's [`IDictionary<TKey, TValue>.GetValueOrDefault`](https://docs.kgysoft.net/corelibraries/html/Overload_KGySoft_CoreLibraries_DictionaryExtensions_GetValueOrDefault.htm) methods offer more features, such using a factory delegate if the default value is expensive to evaluate, using a more specific value type than `TValue` (with special handling for `IDictionary<string, object>` types where you need to specify only one type argument):
+> Since then .NET Core 2.0 also introduced a `GetValueOrDefault` method for the `IReadOnlyDictionary<TKey, TValue>` interface. But KGy SOFT's [`IDictionary<TKey, TValue>.GetValueOrDefault`](https://docs.kgysoft.net/corelibraries/html/Overload_KGySoft_CoreLibraries_DictionaryExtensions_GetValueOrDefault.htm) methods offer more features, such as using a factory delegate if the default value is expensive to evaluate, using a more specific value type than `TValue` (with special handling for `IDictionary<string, object>` types where you need to specify only one type argument):
 
 ```cs
 // old way:
