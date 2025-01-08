@@ -1621,12 +1621,17 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             Console.WriteLine(xml);
 
             // 1.) by XElement
-            Throws<OutOfMemoryException>(() => XmlSerializer.Deserialize(xml));
+            if (!EnvironmentHelper.IsMono) // In Mono the array is simply allocated so no exception occurs
+                Throws<OutOfMemoryException>(() => XmlSerializer.Deserialize(xml));
             Throws<ArgumentException>(() => XmlSerializer.DeserializeSafe(xml), "Array items length mismatch. Expected items: 2147483647, found items: 3.");
 
             // 2.) by reader
-            using (var reader = XmlReader.Create(new StringReader(xml.ToString()), new XmlReaderSettings { CloseInput = true }))
+            if (!EnvironmentHelper.IsMono) // In Mono the array is simply allocated so no exception occurs
+            {
+                using var reader = XmlReader.Create(new StringReader(xml.ToString()), new XmlReaderSettings { CloseInput = true });
                 Throws<OutOfMemoryException>(() => XmlSerializer.Deserialize(reader));
+            }
+
             using (var reader = XmlReader.Create(new StringReader(xml.ToString()), new XmlReaderSettings { CloseInput = true }))
                 Throws<ArgumentException>(() => XmlSerializer.DeserializeSafe(reader), "Array items length mismatch. Expected items: 2147483647, found items: 3.");
         }
@@ -1648,13 +1653,18 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             Console.WriteLine(xml);
 
             // 1.) by XElement
-            Throws<OutOfMemoryException>(() => XmlSerializer.Deserialize(xml));
+            if (!EnvironmentHelper.IsMono) // In Mono the list is simply allocated so no exception occurs
+                Throws<OutOfMemoryException>(() => XmlSerializer.Deserialize(xml));
             var list = XmlSerializer.DeserializeSafe<List<int>>(xml);
             AssertItemsEqual(obj, list);
 
             // 2.) by reader
-            using (var reader = XmlReader.Create(new StringReader(xml.ToString()), new XmlReaderSettings { CloseInput = true }))
+            if (!EnvironmentHelper.IsMono) // In Mono the list is simply allocated so no exception occurs
+            {
+                using var reader = XmlReader.Create(new StringReader(xml.ToString()), new XmlReaderSettings { CloseInput = true });
                 Throws<OutOfMemoryException>(() => XmlSerializer.Deserialize(reader));
+            }
+
             using (var reader = XmlReader.Create(new StringReader(xml.ToString()), new XmlReaderSettings { CloseInput = true }))
                 list = XmlSerializer.DeserializeSafe<List<int>>(reader);
             AssertItemsEqual(obj, list);

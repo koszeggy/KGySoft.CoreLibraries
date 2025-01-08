@@ -3281,7 +3281,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             byte[] manipulatedData = serData.ToArray();
 
             // without safe mode a huge array is about to be allocated
-            if (!EnvironmentHelper.IsMono) // Is Mono the array is simply allocated so the same "SerializationException: Data length is too small." is thrown as in SafeMode
+            if (!EnvironmentHelper.IsMono) // In Mono the array is simply allocated so the same "SerializationException: Data length is too small." is thrown as in SafeMode
                 Throws<OutOfMemoryException>(() => DeserializeObject(manipulatedData, bsf));
 
             // in SafeMode the array is allocated in chunks and the stream simply ends unexpectedly
@@ -3309,7 +3309,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             byte[] manipulatedData = serData.ToArray();
 
             // without safe mode the list is allocated with MaxInt capacity
-            if (!EnvironmentHelper.IsMono) // Is Mono the array is simply allocated so no exception occurs
+            if (!EnvironmentHelper.IsMono) // In Mono the list is simply allocated so no exception occurs
                 Throws<OutOfMemoryException>(() => DeserializeObject(manipulatedData, bsf));
 
             // in SafeMode the too large capacity is ignored and the list simply can be deserialized
@@ -3340,7 +3340,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             byte[] manipulatedData = serData.ToArray();
 
             // without safe mode the dictionary is allocated with MaxInt capacity
-            Throws<OutOfMemoryException>(() => DeserializeObject(manipulatedData, bsf));
+            if (!EnvironmentHelper.IsMono) // In Mono the dictionary is simply allocated so no exception occurs
+                Throws<OutOfMemoryException>(() => DeserializeObject(manipulatedData, bsf));
 
             // in SafeMode the capacity is not preallocated and the deserialization fails when the stream ends unexpectedly
             bsf.Options = BinarySerializationOptions.SafeMode;
