@@ -245,7 +245,7 @@ if (stringValue.In("something", "something else", "maybe some other value", "or.
     DoSomething();
 ```
 
-> 📝 Note</p>
+> 📝 **Note**</p>
 > Since C# 9.0 this exact example above can be simplified also by the new `or` keyword. But the `In` method can be used in other cases as well, such as when the values to compare are not constant expressions. Also, when they are too expensive to evaluate in advance, you can use the `In` overload that accepts a collection of delegates.
 
 </details>
