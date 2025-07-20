@@ -35,7 +35,7 @@ namespace KGySoft.CoreLibraries
         public float Delay { get; }
 
         /// <summary>
-        /// Gets the number of the fallen out <see cref="HiResTimer.Enabled">HiResTimer.Enabled</see> events since the last invoke.
+        /// Gets the number of the fallen out <see cref="HiResTimer.Elapsed">HiResTimer.Elapsed</see> events since the last invoke.
         /// The value is nonzero if a larger delay occurred than the value of the <see cref="HiResTimer.IgnoreElapsedThreshold">HiResTimer.IgnoreElapsedThreshold</see> property
         /// and thus one or more <see cref="HiResTimer.Elapsed">HiResTimer.Elapsed</see> events were skipped to catch up the timer.
         /// </summary>
