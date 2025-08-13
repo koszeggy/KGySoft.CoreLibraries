@@ -863,7 +863,7 @@ namespace KGySoft.Reflection
 
         #endregion
 
-        #region IEnumerables
+        #region IEnumerable
 
         internal static int Count([NoEnumeration]this IEnumerable collection)
         {

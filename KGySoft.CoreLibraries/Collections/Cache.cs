@@ -49,6 +49,7 @@ namespace KGySoft.Collections
     /// <see cref="M:KGySoft.Collections.Cache`2.#ctor(System.Func{`0,`1},System.Int32,System.Collections.Generic.IEqualityComparer{`0})">constructor</see>.
     /// If the cache is full (elements <see cref="Count"/> reaches the <see cref="Capacity"/>) and a new element has to be stored, then
     /// the oldest or least recent used element (depends on the value of <see cref="Behavior"/>) is removed from the cache.
+    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Collections_Cache_2.htm">online help</a> for a more detailed description.</div>
     /// </summary>
     /// <typeparam name="TKey">Type of the keys stored in the cache.</typeparam>
     /// <typeparam name="TValue">Type of the values stored in the cache.</typeparam>
@@ -1034,7 +1035,7 @@ namespace KGySoft.Collections
         /// <list type="bullet">
         /// <item>The <see cref="Cache{TKey,TValue}"/> is full (that is, when <see cref="Count"/> equals <see cref="Capacity"/>), and
         /// a new item has to be stored so an element has to be dropped.</item>
-        /// <item><see cref="Capacity"/> is decreased and therefore elements has to be dropped.</item>
+        /// <item><see cref="Capacity"/> is decreased and therefore elements have to be dropped.</item>
         /// <item>The <see cref="Cache{TKey,TValue}"/> is accessed via an <see cref="IThreadSafeCacheAccessor{TKey,TValue}"/> instance and item for the same <typeparamref name="TKey"/>
         /// has been loaded concurrently so all but one loaded elements have to be discarded.</item>
         /// </list>

@@ -140,7 +140,7 @@ namespace KGySoft.Collections
         /// Gets an <see cref="ICollection{T}" /> containing the values of the <see cref="LockingDictionary{TKey,TValue}" />.
         /// </summary>
         /// <remarks>
-        /// <para>The returned collection represents a moment-in-time snapshot of the values of the <see cref="LockingDictionary{TKey,TValue}"/>. It does not reflect any updates to the dictionary after <see cref="Keys"/> were obtained.
+        /// <para>The returned collection represents a moment-in-time snapshot of the values of the <see cref="LockingDictionary{TKey,TValue}"/>. It does not reflect any updates to the dictionary after <see cref="Values"/> were obtained.
         /// The collection is safe to use concurrently with reads from and writes to the dictionary.</para>
         /// <para>This property has an O(n) cost where n is the number of elements in the dictionary.</para>
         /// <note>The enumerator of the returned collection supports the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
