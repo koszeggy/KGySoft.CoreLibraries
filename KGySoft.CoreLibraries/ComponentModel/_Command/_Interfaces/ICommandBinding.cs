@@ -175,9 +175,10 @@ namespace KGySoft.ComponentModel
         bool RemoveStateUpdater(ICommandStateUpdater updater);
 
         /// <summary>
-        /// Invokes the underlying <see cref="ICommand"/> for all of the added targets using the specified source, event name, event arguments and parameters.
+        /// Invokes the underlying <see cref="ICommand"/> for every added target using the specified source, event name, event arguments and parameters.
         /// </summary>
-        /// <param name="source">The source. It is not checked whether the source is actually added to this <see cref="ICommandBinding"/>. Can be a <see cref="Type"/> for static events.</param>
+        /// <param name="source">The source. It is not checked whether the source is actually added to this <see cref="ICommandBinding"/>. Can be a <see cref="Type"/> for static events.
+        /// It will be used also as the sender in the underlying event handler.</param>
         /// <param name="eventName">Name of the event. It is not checked whether this is en existing event.</param>
         /// <param name="eventArgs">The <see cref="EventArgs"/> instance containing the event data.</param>
         /// <param name="parameter">The parameter value to be passed to the invoked command. A possible previous <see cref="WithParameter">WithParameter</see> call

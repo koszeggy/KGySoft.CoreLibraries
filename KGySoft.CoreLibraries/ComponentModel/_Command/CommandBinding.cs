@@ -66,7 +66,7 @@ namespace KGySoft.ComponentModel
             [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Event handler")]
             [SuppressMessage("ReSharper", "UnusedParameter.Local", Justification = "Event handler")]
             [MethodImpl(MethodImpl.AggressiveInlining)]
-            internal void Execute(object sender, TEventArgs e)
+            internal void Execute(object? sender, TEventArgs e)
             {
                 object? param = null;
                 try
@@ -81,6 +81,7 @@ namespace KGySoft.ComponentModel
                 Binding.InvokeCommand(new CommandSource<TEventArgs>
                 {
                     Source = Source,
+                    Sender = sender,
                     TriggeringEvent = EventName,
                     EventArgs = e
                 }, param);
@@ -359,6 +360,7 @@ namespace KGySoft.ComponentModel
             InvokeCommand(new CommandSource<EventArgs>
             {
                 Source = source,
+                Sender = source, // would be better from a new parameter but that would be a breaking change on the interface
                 TriggeringEvent = eventName,
                 EventArgs = eventArgs,
             }, parameter);

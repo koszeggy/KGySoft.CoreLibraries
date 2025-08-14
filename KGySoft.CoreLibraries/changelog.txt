@@ -5,6 +5,18 @@
 + New feature
 ===============================================================================
 
+~~~~~~~~~~
+! v10.0.0:
+~~~~~~~~~~
+
+! KGySoft.ComponentModel namespace:
+===================================
+! ICommandSource interface:
+  ! New Sender property. Not a breaking change on .NET [Core] and .NET Standard 2.1 platforms, where it returns the
+    Source property if the new member is not implemented. But as you normally don't need to implement this
+    interface, the change hardly would break anything even on the .NET Framework.
+
+
 ~~~~~~~~~
 ! v9.0.0:
 ~~~~~~~~~

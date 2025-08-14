@@ -467,6 +467,7 @@ namespace KGySoft.ComponentModel
             {
                 EventArgs = (T)orig.EventArgs,
                 Source = orig.Source,
+                Sender = orig.Sender,
                 TriggeringEvent = orig.TriggeringEvent
             };
 
