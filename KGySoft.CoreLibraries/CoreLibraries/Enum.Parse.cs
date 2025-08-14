@@ -243,7 +243,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="result">Returns the default value of <typeparamref name="TEnum"/>, if return value is <see langword="false"/>; otherwise, the parsed <see langword="enum"/> value.</param>
         /// <returns><see langword="false"/> if the <see cref="StringSegment"/> in <paramref name="value"/> parameter cannot be parsed as <typeparamref name="TEnum"/>; otherwise, <see langword="true"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see cref="StringSegment.Null"/>.</exception>
-        public static bool TryParse(StringSegment value, bool ignoreCase, out TEnum result) => TryParse(value, EnumExtensions.DefaultParseSeparator, ignoreCase, out result);
+        public static bool TryParse(StringSegment value, bool ignoreCase, out TEnum result) => TryParse(value, EnumExtensions.DefaultParseSeparator.AsSegment(), ignoreCase, out result);
 
         /// <summary>
         /// Tries to convert the string representation of the name or numeric value of one or more enumerated values to an equivalent enumerated object.
@@ -264,7 +264,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="result">Returns the default value of <typeparamref name="TEnum"/>, if return value is <see langword="false"/>; otherwise, the parsed <see langword="enum"/> value.</param>
         /// <returns><see langword="false"/> if the <see cref="StringSegment"/> in <paramref name="value"/> parameter cannot be parsed as <typeparamref name="TEnum"/>; otherwise, <see langword="true"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see cref="StringSegment.Null"/>.</exception>
-        public static bool TryParse(StringSegment value, out TEnum result) => TryParse(value, EnumExtensions.DefaultParseSeparator, false, out result);
+        public static bool TryParse(StringSegment value, out TEnum result) => TryParse(value, EnumExtensions.DefaultParseSeparator.AsSegment(), false, out result);
 
         /// <summary>
         /// Converts the string representation of the name or numeric value of one or more enumerated values to an equivalent enumerated object.

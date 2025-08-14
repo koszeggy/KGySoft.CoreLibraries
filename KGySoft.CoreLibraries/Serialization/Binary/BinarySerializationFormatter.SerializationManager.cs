@@ -969,7 +969,7 @@ namespace KGySoft.Serialization.Binary
                     case StringComparer when ReferenceEquals(comparer, StringComparer.InvariantCultureIgnoreCase):
                         bw.Write((byte)ComparerType.InvariantIgnoreCase);
                         return;
-#if NET10_0_OR_GREATER // TODO - https://github.com/dotnet/runtime/issues/77679
+#if NET11_0_OR_GREATER // TODO - https://github.com/dotnet/runtime/issues/77679
 #error check if already available
                     case StringComparer when ReferenceEquals(comparer, StringComparer.OrdinalNonRandomized):
                         bw.Write((byte)ComparerType.OrdinalNonRandomized);

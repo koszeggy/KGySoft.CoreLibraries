@@ -413,7 +413,7 @@ namespace KGySoft.Serialization.Xml
                 : Equals(StringComparer.OrdinalIgnoreCase, stringComparer) ? ComparerType.OrdinalIgnoreCase
                 : Equals(StringComparer.InvariantCulture, stringComparer) ? ComparerType.Invariant
                 : Equals(StringComparer.InvariantCultureIgnoreCase, stringComparer) ? ComparerType.InvariantIgnoreCase
-#if NET10_0_OR_GREATER // TODO - https://github.com/dotnet/runtime/issues/77679
+#if NET11_0_OR_GREATER // TODO - https://github.com/dotnet/runtime/issues/77679
 #error check if already available
                 : Equals(StringComparer.OrdinalNonRandomized, stringComparer) ? ComparerType.OrdinalNonRandomized
                 : Equals(StringComparer.OrdinalIgnoreCaseNonRandomized, stringComparer) ? ComparerType.OrdinalIgnoreCaseNonRandomized

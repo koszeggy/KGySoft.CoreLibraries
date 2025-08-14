@@ -1903,7 +1903,7 @@ namespace KGySoft.Serialization.Binary
 #else
                 ComparerType.CultureSpecific => StringComparer.Create(CultureInfo.GetCultureInfo(ReadStringValue(br, addToCache)), (CompareOptions)Read7BitInt(br) == CompareOptions.IgnoreCase),
 #endif
-#if NET10_0_OR_GREATER
+#if NET11_0_OR_GREATER
                 ComparerType.OrdinalNonRandomized => NonRandomizedStringEqualityComparer.Ordinal,
                 ComparerType.OrdinalIgnoreCaseNonRandomized => NonRandomizedStringEqualityComparer.OrdinalIgnoreCase,
 #else

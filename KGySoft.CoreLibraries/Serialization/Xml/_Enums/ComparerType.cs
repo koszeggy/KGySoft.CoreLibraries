@@ -42,7 +42,7 @@ namespace KGySoft.Serialization.Xml
         OrdinalIgnoreCase, // StringComparer.OrdinalIgnoreCase
         Invariant, // StringComparer.InvariantCulture
         InvariantIgnoreCase, // StringComparer.InvariantCultureIgnoreCase
-#if NET10_0_OR_GREATER // TODO - https://github.com/dotnet/runtime/issues/77679
+#if NET11_0_OR_GREATER // TODO - https://github.com/dotnet/runtime/issues/77679
 #error check if already available
         OrdinalNonRandomized, // StringComparer.OrdinalNonRandomized
         OrdinalIgnoreCaseNonRandomized, // StringComparer.OrdinalIgnoreCaseNonRandomized  
