@@ -1808,10 +1808,13 @@ namespace KGySoft.Resources
                     EnsureResourcesGenerated(LanguageSettings.DisplayLanguage);
                     break;
                 case LanguageSettingsSignal.SavePendingResources:
-                    SaveAllResources();
+                    SaveAllResources(compatibleFormat: CompatibleFormat);
                     break;
                 case LanguageSettingsSignal.SavePendingResourcesCompatible:
                     SaveAllResources(compatibleFormat: true);
+                    break;
+                case LanguageSettingsSignal.SavePendingResourcesNonCompatible:
+                    SaveAllResources(compatibleFormat: false);
                     break;
                 case LanguageSettingsSignal.ReleaseAllResourceSets:
                     ReleaseAllResources();

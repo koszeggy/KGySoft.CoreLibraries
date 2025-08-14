@@ -411,7 +411,7 @@ namespace KGySoft
         /// of all centralized <see cref="DynamicResourceManager"/> instances so setting it to <see langword="null"/> again will not make them switch back
         /// to their previous value.</para>
         /// <note>Changing this property does not trigger any auto save or release operation.
-        /// To save the possible changes regarding to the original path you need to call the <see cref="SavePendingResources">SavePendingResources</see> method
+        /// To save the possible changes to the original path you need to call the <see cref="SavePendingResources()">SavePendingResources</see> method
         /// before changing this property. After changing this property it is recommended to call the <see cref="ReleaseAllResources">ReleaseAllResources</see>
         /// method to drop all possibly loaded/created resources that are related to the original path.</note>
         /// </remarks>
@@ -487,7 +487,7 @@ namespace KGySoft
         /// load or generate the resource set for the current <see cref="DisplayLanguage"/> in memory. This makes possible that for the next auto save event
         /// (see also the <see cref="DynamicResourceManagersAutoSave"/> property) all such <see cref="DynamicResourceManager"/> instances will have
         /// a saved resource set for the current <see cref="DisplayLanguage"/>.</para>
-        /// <para>You can call also the <see cref="SavePendingResources">SavePendingResources</see> method to save the generated resource sets immediately.</para>
+        /// <para>You can call also the <see cref="SavePendingResources()">SavePendingResources</see> method to save the generated resource sets immediately.</para>
         /// <para>When generating resources, the value of the <see cref="DynamicResourceManagersAutoAppend"/> is be respected.</para>
         /// <note>This method has no effect if <see cref="DynamicResourceManagersSource"/> is <see cref="ResourceManagerSources.CompiledOnly"/>,
         /// or when there are no append options enabled in the <see cref="DynamicResourceManagersAutoAppend"/> property.</note>
@@ -506,7 +506,7 @@ namespace KGySoft
         /// are also merged into the optionally already existing resource set files.</note>
         /// <para>If there are no existing resources for the current <see cref="DisplayLanguage"/> yet, then this method is functionally equivalent with
         /// the <see cref="EnsureResourcesGenerated">EnsureResourcesGenerated</see> method, though it can be significantly slower than that.</para>
-        /// <para>You can call also the <see cref="SavePendingResources">SavePendingResources</see> method to save the generated or updated resource sets immediately.</para>
+        /// <para>You can call also the <see cref="SavePendingResources()">SavePendingResources</see> method to save the generated or updated resource sets immediately.</para>
         /// <para>Merging is performed using the rules specified by the <see cref="DynamicResourceManagersAutoAppend"/> property.</para>
         /// <note>This method has no effect if <see cref="DynamicResourceManagersSource"/> is <see cref="ResourceManagerSources.CompiledOnly"/>,
         /// or when there are no append options enabled in the <see cref="DynamicResourceManagersAutoAppend"/> property.</note>
@@ -521,17 +521,33 @@ namespace KGySoft
         /// <param name="compatibleFormat">If set to <see langword="true"/>, the result .resx files can be read
         /// by a <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a> instance
         /// and the Visual Studio Resource Editor. If set to <see langword="false"/>, the result .resx files are often shorter, and the values can be deserialized with better
-        /// accuracy (see the remarks at <see cref="ResXResourceWriter" />), but the result can be read only by the <see cref="ResXResourceReader" /> class. This parameter is optional.
-        /// <br/>Default value: <see langword="false"/>.</param>
+        /// accuracy (see the remarks at <see cref="ResXResourceWriter" />), but the result can be read only by the <see cref="ResXResourceReader" /> class.</param>
         /// <remarks>
         /// <para>This method forces all <see cref="DynamicResourceManager"/> instances with centralized settings to save possibly changed or generated resources
-        /// independently from the value of the <see cref="DynamicResourceManagersAutoSave"/> property.</para>
+        /// independently of the value of the <see cref="DynamicResourceManagersAutoSave"/> property.</para>
         /// <para>If this method is called right after the <see cref="EnsureResourcesGenerated">EnsureResourcesGenerated</see> method, then we can ensure that
         /// resource files are generated for the currently set <see cref="DisplayLanguage"/>.</para>
         /// <note>This method has no effect if <see cref="DynamicResourceManagersSource"/> is <see cref="ResourceManagerSources.CompiledOnly"/>.</note>
         /// </remarks>
-        public static void SavePendingResources(bool compatibleFormat = false)
-            => DynamicResourceManagersCommonSignal?.Invoke(null, new EventArgs<LanguageSettingsSignal>(compatibleFormat ? LanguageSettingsSignal.SavePendingResourcesCompatible : LanguageSettingsSignal.SavePendingResources));
+        public static void SavePendingResources(bool compatibleFormat)
+            => DynamicResourceManagersCommonSignal?.Invoke(null, new EventArgs<LanguageSettingsSignal>(compatibleFormat ? LanguageSettingsSignal.SavePendingResourcesCompatible : LanguageSettingsSignal.SavePendingResourcesNonCompatible));
+
+        /// <summary>
+        /// Ensures that <see cref="DynamicResourceManager"/> instances with centralized settings save all pending changes. This method affects
+        /// all <see cref="DynamicResourceManager"/> instances in the current application domain, whose <see cref="DynamicResourceManager.UseLanguageSettings"/> is <see langword="true"/>.
+        /// </summary>
+        /// <remarks>
+        /// <para>When using this overload, the format of the saved .resx files is determined by the <see cref="DynamicResourceManager.CompatibleFormat"/> property
+        /// of each <see cref="DynamicResourceManager"/> instance. To force a specific format for all <see cref="DynamicResourceManager"/> instances,
+        /// use the <see cref="SavePendingResources(bool)"/> overload instead.</para>
+        /// <para>This method forces all <see cref="DynamicResourceManager"/> instances with centralized settings to save possibly changed or generated resources
+        /// independently of the value of the <see cref="DynamicResourceManagersAutoSave"/> property.</para>
+        /// <para>If this method is called right after the <see cref="EnsureResourcesGenerated">EnsureResourcesGenerated</see> method, then we can ensure that
+        /// resource files are generated for the currently set <see cref="DisplayLanguage"/>.</para>
+        /// <note>This method has no effect if <see cref="DynamicResourceManagersSource"/> is <see cref="ResourceManagerSources.CompiledOnly"/>.</note>
+        /// </remarks>
+        public static void SavePendingResources()
+            => DynamicResourceManagersCommonSignal?.Invoke(null, new EventArgs<LanguageSettingsSignal>(LanguageSettingsSignal.SavePendingResources));
 
         /// <summary>
         /// Ensures that <see cref="DynamicResourceManager"/> instances with centralized settings release all loaded resource sets without saving. This method affects

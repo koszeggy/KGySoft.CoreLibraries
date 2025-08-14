@@ -1026,7 +1026,7 @@ namespace KGySoft.Resources
         /// <summary>
         /// Saves all already loaded resources.
         /// </summary>
-        /// <param name="force"><see langword="true"/> to save all of the already loaded resource sets regardless if they have been modified; <see langword="false"/> to save only the modified resource sets. This parameter is optional.
+        /// <param name="force"><see langword="true"/> to save all the already loaded resource sets regardless if they have been modified; <see langword="false"/> to save only the modified resource sets. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <param name="compatibleFormat">If set to <see langword="true"/>, the result .resx files can be read by a <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a> instance
         /// and the Visual Studio Resource Editor. If set to <see langword="false"/>, the result .resx files are often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter" />),

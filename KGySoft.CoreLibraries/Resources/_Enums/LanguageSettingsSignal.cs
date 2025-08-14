@@ -20,6 +20,7 @@ namespace KGySoft.Resources
         EnsureResourcesGenerated,
         SavePendingResources,
         SavePendingResourcesCompatible,
+        SavePendingResourcesNonCompatible,
         ReleaseAllResourceSets,
         EnsureInvariantResourcesMerged
     }

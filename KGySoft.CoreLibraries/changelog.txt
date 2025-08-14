@@ -9,6 +9,12 @@
 ! v10.0.0:
 ~~~~~~~~~~
 
++ KGySoft namespace:
+====================
++ LanguageSettings class:
+  + New SavePendingResources overload without a compatibleFormat parameter: It saves the pending resources using the
+    actual value of the CompatibleFormat property of each DynamimcResourceManager instance.
+
 ! KGySoft.ComponentModel namespace:
 ===================================
 ! ICommandSource interface:
