@@ -30,6 +30,8 @@
   + Implementing IParsable<T> and ISpanParsable<T> interfaces (.NET 7.0 and above)
   + Implementing IUtf8SpanParsable<T> interface (.NET 8.0 and above)
   - Fixing LastIndexOf(char, int, int): It could throw an ArgumentOutOfRangeException even with valid parameters
++ StringExtensions and SpanExtensions classes:
+  + New IsValidUnicode methods: To check whether a string or a span contains only valid Unicode codepoints.
 
 
 ~~~~~~~~~

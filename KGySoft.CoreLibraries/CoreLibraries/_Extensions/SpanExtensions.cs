@@ -300,7 +300,7 @@ namespace KGySoft.CoreLibraries
         #region Misc Tools
 
         /// <summary>
-        /// Extracts content of a single or double quoted string.
+        /// Extracts content of a single or double-quoted string.
         /// </summary>
         /// <param name="span">The span to be extracted from quotes.</param>
         /// <returns>If <paramref name="span"/> was surrounded by single or double quotes, returns a new string without the quotes; otherwise, returns <paramref name="span"/>.</returns>
@@ -312,7 +312,7 @@ namespace KGySoft.CoreLibraries
                     : span;
 
         /// <summary>
-        /// Extracts content of a single or double quoted string.
+        /// Extracts content of a single or double-quoted string.
         /// </summary>
         /// <param name="span">The span to be extracted from quotes.</param>
         /// <returns>If <paramref name="span"/> was surrounded by single or double quotes, returns a new string without the quotes; otherwise, returns <paramref name="span"/>.</returns>
@@ -322,6 +322,30 @@ namespace KGySoft.CoreLibraries
                 : span.Length > 1 && (span[0] == '"' && span[span.Length - 1] == '"' || span[0] == '\'' && span[span.Length - 1] == '\'')
                     ? span.Slice(1, span.Length - 2)
                     : span;
+
+        /// <summary>
+        /// Checks whether the specified <paramref name="span"/> is a valid Unicode string.
+        /// That is, when it does not contain unpaired high surrogates or non-character code points.
+        /// </summary>
+        /// <param name="span">The span to check.</param>
+        /// <returns><see langword="true"/>, if <paramref name="span"/> is a valid Unicode string; otherwise, <see langword="false"/>.</returns>
+        public static bool IsValidUnicode(this Span<char> span)
+        {
+            for (int i = 0; i < span.Length; i++)
+            {
+                char c = span[i];
+                if (Char.IsHighSurrogate(c))
+                {
+                    if (i + 1 >= span.Length || !Char.IsLowSurrogate(span[i + 1]))
+                        return false; // unpaired high surrogate
+                    i += 1; // skipping the low surrogate
+                }
+                else if (Char.IsLowSurrogate(c) || !c.IsNonCharacter())
+                    return false;
+            }
+
+            return true;
+        }
 
         #endregion
 
@@ -581,6 +605,18 @@ namespace KGySoft.CoreLibraries
             }
 
             charsWritten = 0;
+            return false;
+        }
+
+        internal static bool TryWrite(this Span<byte> utf8destination, ReadOnlySpan<byte> value, out int bytesWritten)
+        {
+            if (value.TryCopyTo(utf8destination))
+            {
+                bytesWritten = value.Length;
+                return true;
+            }
+
+            bytesWritten = 0;
             return false;
         }
 

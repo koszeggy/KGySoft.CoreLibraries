@@ -61,7 +61,7 @@ namespace KGySoft.CoreLibraries
         #region Misc Tools
 
         /// <summary>
-        /// Extracts content of a single or double quoted string.
+        /// Extracts content of a single or double-quoted string.
         /// </summary>
         /// <param name="s">The string to be extracted from quotes.</param>
         /// <returns>If <paramref name="s"/> was surrounded by single or double quotes, returns a new string without the quotes; otherwise, returns <paramref name="s"/>.</returns>
@@ -124,6 +124,32 @@ namespace KGySoft.CoreLibraries
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// Checks whether the specified <see cref="string">string</see> is a valid Unicode string.
+        /// That is, when it does not contain unpaired high surrogates or non-character code points.
+        /// </summary>
+        /// <param name="s">The <see cref="string">string</see> to check.</param>
+        /// <returns><see langword="true"/>, if <paramref name="s"/> is a valid Unicode string; otherwise, <see langword="false"/>.</returns>
+        public static bool IsValidUnicode(this string s)
+        {
+            if (s == null!)
+                Throw.ArgumentNullException(Argument.s);
+            for (int i = 0; i < s.Length; i++)
+            {
+                char c = s[i];
+                if (Char.IsHighSurrogate(c))
+                {
+                    if (i + 1 >= s.Length || !Char.IsLowSurrogate(s[i + 1]))
+                        return false; // unpaired high surrogate
+                    i += 1; // skipping the low surrogate
+                }
+                else if (Char.IsLowSurrogate(c) || !c.IsNonCharacter())
+                    return false;
+            }
+
+            return true;
         }
 
         #endregion
