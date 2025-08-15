@@ -21,6 +21,14 @@ using System.Runtime.CompilerServices;
 
 #endregion
 
+#region Suppressions
+
+#if !(NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER)
+#pragma warning disable CS8602 // Dereference of a possibly null reference
+#endif
+
+#endregion
+
 namespace KGySoft.CoreLibraries
 {
     partial struct StringSegment

@@ -22,6 +22,10 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Text;
+#if NET8_0_OR_GREATER
+using System.Text.Unicode;
+#endif
 
 using KGySoft.ComponentModel;
 
@@ -186,6 +190,9 @@ namespace KGySoft.CoreLibraries
 #if NET7_0_OR_GREATER
         ISpanParsable<StringSegment>,
 #endif
+#if NET8_0_OR_GREATER
+        IUtf8SpanParsable<StringSegment>,
+#endif
 #if NET35 || NET40
         IEnumerable<char>
 #else
@@ -296,7 +303,7 @@ namespace KGySoft.CoreLibraries
 
         #region Constants
 
-#if NET7_0
+#if NET7_0_OR_GREATER
         private const int maxLength = 0x3FFFFFDF;
 #endif
 
@@ -549,6 +556,46 @@ namespace KGySoft.CoreLibraries
             return false;
 #endif
         }
+#endif
+
+#if NET8_0_OR_GREATER
+        static StringSegment IUtf8SpanParsable<StringSegment>.Parse(ReadOnlySpan<byte> utf8Text, IFormatProvider? provider)
+        {
+            #region Local Methods
+
+            // Just to be able to invoke StringSegment.ISpanParsable<StringSegment>.TryParse
+            static bool ISpanParsableTryParse<T>(ReadOnlySpan<byte> utf8Text, IFormatProvider? provider, [MaybeNullWhen(returnValue:false)]out T result)
+                where T : IUtf8SpanParsable<T>
+                => T.TryParse(utf8Text, provider, out result);
+
+            #endregion
+
+            // just calling StringSegment.ISpanParsable<StringSegment>.TryParse
+            if (!ISpanParsableTryParse(utf8Text, provider, out StringSegment result))
+                Throw.FormatException();
+            return result;
+        }
+
+        static bool IUtf8SpanParsable<StringSegment>.TryParse(ReadOnlySpan<byte> utf8Text, IFormatProvider? provider, out StringSegment result)
+        {
+            try
+            {
+                if (!Utf8.IsValid(utf8Text) || Encoding.UTF8.GetCharCount(utf8Text) > maxLength)
+                {
+                    result = Null;
+                    return false;
+                }
+
+                result = Encoding.UTF8.GetString(utf8Text);
+                return true;
+            }
+            catch (Exception)
+            {
+                result = Null;
+                return false;
+            }
+        }
+
 #endif
 
         #endregion
