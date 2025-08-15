@@ -183,6 +183,9 @@ namespace KGySoft.CoreLibraries
         Justification = "Not implementing <, <=, >, >= operators because even string does not implement them")]
     [DebuggerDisplay("{" + nameof(ToString) + "()}")] // to display quotes and even the null value properly
     public readonly partial struct StringSegment : IEquatable<StringSegment>, IComparable<StringSegment>, IComparable,
+#if NET7_0_OR_GREATER
+        ISpanParsable<StringSegment>,
+#endif
 #if NET35 || NET40
         IEnumerable<char>
 #else
@@ -288,6 +291,14 @@ namespace KGySoft.CoreLibraries
 
             #endregion
         }
+
+        #endregion
+
+        #region Constants
+
+#if NET7_0
+        private const int maxLength = 0x3FFFFFDF;
+#endif
 
         #endregion
 
@@ -479,6 +490,71 @@ namespace KGySoft.CoreLibraries
 
         #region Methods
 
+        #region Static Methods
+
+#if NET7_0_OR_GREATER
+        static StringSegment IParsable<StringSegment>.Parse(string? s, IFormatProvider? provider) => s;
+
+        static bool IParsable<StringSegment>.TryParse(string? s, IFormatProvider? provider, out StringSegment result)
+        {
+            result = s;
+            return true;
+        }
+
+        static StringSegment ISpanParsable<StringSegment>.Parse(ReadOnlySpan<char> s, IFormatProvider? provider)
+        {
+            #region Local Methods
+
+#if NET8_0_OR_GREATER
+            // Just to be able to invoke String.ISpanParsable<string>.Parse
+            static T ISpanParsableParse<T>(ReadOnlySpan<char> s, IFormatProvider? provider) where T : ISpanParsable<T> => T.Parse(s, provider);
+#endif
+
+            #endregion
+
+#if NET8_0_OR_GREATER
+            // just calling String.ISpanParsable<string>.Parse, which will handle the length check
+            return ISpanParsableParse<string>(s, provider);
+#else // .NET 7: manual check as string does not implement ISpanParsable<string>
+            if (s.Length > maxLength)
+                Throw.FormatException();
+            return s.ToString();
+#endif
+        }
+
+        static bool ISpanParsable<StringSegment>.TryParse(ReadOnlySpan<char> s, IFormatProvider? provider, out StringSegment result)
+        {
+            #region Local Methods
+
+#if NET8_0_OR_GREATER
+            // Just to be able to invoke String.ISpanParsable<string>.TryParse
+            static bool ISpanParsableTryParse<T>(ReadOnlySpan<char> s, IFormatProvider? provider, [MaybeNullWhen(returnValue: false)]out T result) where T : ISpanParsable<T> => T.TryParse(s, provider, out result);
+#endif
+
+            #endregion
+
+#if NET8_0_OR_GREATER
+            // just calling String.ISpanParsable<string>.TryParse, which will handle the length check
+            bool success = ISpanParsableTryParse<string>(s, provider, out string? str);
+            result = str;
+            return success;
+#else // .NET 7: manual check as string does not implement ISpanParsable<string>
+            if (s.Length <= maxLength)
+            {
+                result = s.ToString();
+                return true;
+            }
+
+            result = null;
+            return false;
+#endif
+        }
+#endif
+
+        #endregion
+
+        #region Instance Methods
+
         #region Public Methods
 
         /// <summary>
@@ -576,6 +652,8 @@ namespace KGySoft.CoreLibraries
 
         IEnumerator<char> IEnumerable<char>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+        #endregion
 
         #endregion
 

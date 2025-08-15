@@ -27,6 +27,7 @@
 * StringSegment struct:
   + New IndexOf and LastIndexOf overloads
   + New Contains methods
+  + Implementing IParsable<T> and ISpanParsable<T> interfaces (.NET 7.0 and above)
   - Fixing LastIndexOf(char, int, int): It could throw an ArgumentOutOfRangeException even with valid parameters
 
 

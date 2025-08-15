@@ -122,6 +122,8 @@ namespace KGySoft
 
         [ContractAnnotation("=> halt")][DoesNotReturn]internal static void OperationCanceledException() => throw new OperationCanceledException(Res.OperationCanceled);
 
+        [ContractAnnotation("=> halt")][DoesNotReturn]internal static void FormatException() => throw new FormatException(Res.ArgumentInvalidString);
+
         #endregion
 
         #region Private Methods
