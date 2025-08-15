@@ -41,13 +41,14 @@ namespace KGySoft.CoreLibraries
     /// Represents a segment of a <see cref="string">string</see>. This type is similar to <see cref="ReadOnlyMemory{T}"><![CDATA[ReadOnlyMemory<char>]]></see>/<see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see>
     /// but <see cref="StringSegment"/> can be used on all platforms in the same way and is optimized for some dedicated string operations.
     /// <br/>To create an instance use the <see cref="O:KGySoft.CoreLibraries.StringExtensions.AsSegment">AsSegment</see> extension method overloads or just cast a string instance to <see cref="StringSegment"/>.
+    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_CoreLibraries_StringSegment.htm">online help</a> for a more detailed description with examples.</div>
     /// </summary>
     /// <remarks>
     /// <para>To create a <see cref="StringSegment"/> instance from a string you can use the implicit conversion, or the <see cref="O:KGySoft.CoreLibraries.StringExtensions.AsSegment">AsSegment</see> extension methods.</para>
     /// <para>To convert a <see cref="StringSegment"/> instance to <see cref="string">string</see> use an explicit cast or the <see cref="ToString()">ToString</see> method.</para>
     /// <note>The <see cref="StringSegment"/> type <em>may</em> outperform <see cref="string">string</see> in scenarios when usual string splitting/trimming operations would allocate long strings.
     /// <br/>See a live example with performance test <a href="https://dotnetfiddle.net/Byk0YM" target="_blank">here</a>.</note>
-    /// <para>Depending on the used platform some members of the <see cref="StringSegment"/> type may allocate a new string.
+    /// <para>When targeting older platforms, some members of the <see cref="StringSegment"/> type may allocate a new string.
     /// The affected members are:
     /// <list type="bullet">
     /// <item><see cref="GetHashCode(StringComparison)"/>: if comparison is not <see cref="StringComparison.Ordinal"/> or <see cref="StringComparison.OrdinalIgnoreCase"/>.</item>
@@ -57,6 +58,7 @@ namespace KGySoft.CoreLibraries
     /// <note>On .NET Core 3.0 and newer platforms none of the members above allocate a new string.
     /// On .NET Standard 2.1/.NET Core 2.1 and newer platforms the <see cref="O:KGySoft.CoreLibraries.StringSegment.IndexOf">IndexOf</see> overloads are not affected.</note></para>
     /// <para>As opposed to the <see cref="String"/> class, the default comparison strategy in <see cref="StringSegment"/> members is <see cref="StringComparison.Ordinal"/>.</para>
+    /// </remarks>
     /// <example>
     /// <para>The following example demonstrates how to use the <see cref="StringSegment"/> type:
     /// <code lang="C#"><![CDATA[
@@ -175,7 +177,6 @@ namespace KGySoft.CoreLibraries
     /// }]]></code>
     /// </para>
     /// </example>
-    /// </remarks>
     [Serializable]
     [TypeConverter(typeof(StringSegmentConverter))]
     [SuppressMessage("Design", "CA1036:Override methods on comparable types",

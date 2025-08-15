@@ -16,6 +16,7 @@
 #region Usings
 
 using System;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 
 #endregion
@@ -218,6 +219,59 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public int IndexOf(char value) => IndexOfInternal(value, 0, length);
 
+        /// <summary>
+        /// Gets the zero-based index of the first occurrence of the specified <paramref name="value"/> in this <see cref="StringSegment"/>
+        /// using the specified <paramref name="comparison"/>.
+        /// </summary>
+        /// <param name="value">The character to seek.</param>
+        /// <param name="comparison">A <see cref="StringComparison"/> value that specified the rules for the search.</param>
+        /// <returns>The zero-based index position of <paramref name="value"/> if that character is found, or -1 if it is not.</returns>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public int IndexOf(char value, StringComparison comparison)
+        {
+            if (comparison == StringComparison.Ordinal)
+                return IndexOfInternal(value, 0, length);
+            CheckComparison(comparison);
+            return IndexOfInternal(value, 0, length, comparison);
+        }
+
+        /// <summary>
+        /// Gets the zero-based index of the first occurrence of the specified <paramref name="value"/> in this <see cref="StringSegment"/>
+        /// using the specified <paramref name="startIndex"/> and <paramref name="comparison"/>.
+        /// </summary>
+        /// <param name="value">The character to seek.</param>
+        /// <param name="startIndex">The search starting position.</param>
+        /// <param name="comparison">A <see cref="StringComparison"/> value that specified the rules for the search.</param>
+        /// <returns>The zero-based index position of <paramref name="value"/> if that character is found, or -1 if it is not.</returns>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public int IndexOf(char value, int startIndex, StringComparison comparison)
+        {
+            if ((uint)startIndex > (uint)length)
+                Throw.ArgumentOutOfRangeException(Argument.startIndex);
+            CheckComparison(comparison);
+            return IndexOfInternal(value, startIndex, length - startIndex, comparison);
+        }
+
+        /// <summary>
+        /// Gets the zero-based index of the first occurrence of the specified <paramref name="value"/> in this <see cref="StringSegment"/>
+        /// using the specified <paramref name="startIndex"/>, <paramref name="count"/> and <paramref name="comparison"/>.
+        /// </summary>
+        /// <param name="value">The character to seek.</param>
+        /// <param name="startIndex">The search starting position.</param>
+        /// <param name="count">The number of character positions to examine.</param>
+        /// <param name="comparison">A <see cref="StringComparison"/> value that specified the rules for the search.</param>
+        /// <returns>The zero-based index position of <paramref name="value"/> if that character is found, or -1 if it is not.</returns>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public int IndexOf(char value, int startIndex, int count, StringComparison comparison)
+        {
+            if ((uint)startIndex > (uint)length)
+                Throw.ArgumentOutOfRangeException(Argument.startIndex);
+            if ((uint)startIndex + count > (uint)length)
+                Throw.ArgumentOutOfRangeException(Argument.count);
+            CheckComparison(comparison);
+            return IndexOfInternal(value, startIndex, count, comparison);
+        }
+
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         /// <summary>
         /// Gets the zero-based index of the first occurrence of the specified <paramref name="value"/> in this <see cref="StringSegment"/>
@@ -284,6 +338,96 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public int IndexOf(ReadOnlySpan<char> value, StringComparison comparison)
             => comparison == StringComparison.Ordinal ? IndexOf(value) : IndexOf(value, 0, length, comparison);
+#endif
+
+        #endregion
+
+        #region Contains
+
+        /// <summary>
+        /// Checks whether this <see cref="StringSegment"/> contains the specified <paramref name="value"/>.
+        /// </summary>
+        /// <param name="value">The <see cref="StringSegment"/> to seek.</param>
+        /// <returns><see langword="true"/> if this <see cref="StringSegment"/> contains the specified <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public bool Contains(string value)
+        {
+            if (value == null!)
+                Throw.ArgumentNullException(Argument.value);
+            return !IsNull && IndexOfInternal(value, 0, length) != -1;
+        }
+
+        /// <summary>
+        /// Checks whether this <see cref="StringSegment"/> contains the specified <paramref name="value"/> using the specified <paramref name="comparison"/>.
+        /// </summary>
+        /// <param name="value">The <see cref="StringSegment"/> to seek.</param>
+        /// <param name="comparison">A <see cref="StringComparison"/> value that specified the rules for the search.</param>
+        /// <returns><see langword="true"/> if this <see cref="StringSegment"/> contains the specified <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public bool Contains(string value, StringComparison comparison)
+            => (comparison == StringComparison.Ordinal ? IndexOf(value) : IndexOf(value, 0, length, comparison)) != -1;
+
+        /// <summary>
+        /// Checks whether this <see cref="StringSegment"/> contains the specified <paramref name="value"/>.
+        /// </summary>
+        /// <param name="value">The <see cref="StringSegment"/> to seek.</param>
+        /// <returns><see langword="true"/> if this <see cref="StringSegment"/> contains the specified <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public bool Contains(StringSegment value)
+        {
+            if (value.IsNull)
+                Throw.ArgumentNullException(Argument.value);
+            return !IsNull && IndexOfInternal(value, 0, length) != -1;
+        }
+
+        /// <summary>
+        /// Checks whether this <see cref="StringSegment"/> contains the specified <paramref name="value"/> using the specified <paramref name="comparison"/>.
+        /// </summary>
+        /// <param name="value">The <see cref="StringSegment"/> to seek.</param>
+        /// <param name="comparison">A <see cref="StringComparison"/> value that specified the rules for the search.</param>
+        /// <returns><see langword="true"/> if this <see cref="StringSegment"/> contains the specified <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
+        public bool Contains(StringSegment value, StringComparison comparison)
+            => (comparison == StringComparison.Ordinal ? IndexOf(value) : IndexOf(value, 0, length, comparison)) != -1;
+
+        /// <summary>
+        /// Checks whether this <see cref="StringSegment"/> contains the specified <paramref name="value"/>.
+        /// </summary>
+        /// <param name="value">The <see cref="StringSegment"/> to seek.</param>
+        /// <returns><see langword="true"/> if this <see cref="StringSegment"/> contains the specified <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
+        public bool Contains(char value) => IndexOfInternal(value, 0, length) != -1;
+
+        /// <summary>
+        /// Checks whether this <see cref="StringSegment"/> contains the specified <paramref name="value"/> using the specified <paramref name="comparison"/>.
+        /// </summary>
+        /// <param name="value">The <see cref="StringSegment"/> to seek.</param>
+        /// <param name="comparison">A <see cref="StringComparison"/> value that specified the rules for the search.</param>
+        /// <returns><see langword="true"/> if this <see cref="StringSegment"/> contains the specified <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public bool Contains(char value, StringComparison comparison)
+        {
+            if (comparison == StringComparison.Ordinal)
+                return IndexOfInternal(value, 0, length) != -1;
+            CheckComparison(comparison);
+            return IndexOfInternal(value, 0, length, comparison) != -1;
+        }
+
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+        /// <summary>
+        /// Checks whether this <see cref="StringSegment"/> contains the specified <paramref name="value"/>.
+        /// </summary>
+        /// <param name="value">The <see cref="StringSegment"/> to seek.</param>
+        /// <returns><see langword="true"/> if this <see cref="StringSegment"/> contains the specified <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public bool Contains(ReadOnlySpan<char> value) => !IsNull && IndexOfInternal(value, 0, length) != -1;
+
+        /// <summary>
+        /// Checks whether this <see cref="StringSegment"/> contains the specified <paramref name="value"/> using the specified <paramref name="comparison"/>.
+        /// </summary>
+        /// <param name="value">The <see cref="StringSegment"/> to seek.</param>
+        /// <param name="comparison">A <see cref="StringComparison"/> value that specified the rules for the search.</param>
+        /// <returns><see langword="true"/> if this <see cref="StringSegment"/> contains the specified <paramref name="value"/>; otherwise, <see langword="false"/>.</returns>
+        public bool Contains(ReadOnlySpan<char> value, StringComparison comparison)
+            => (comparison == StringComparison.Ordinal ? IndexOf(value) : IndexOf(value, 0, length, comparison)) != -1;
 #endif
 
         #endregion
@@ -425,7 +569,7 @@ namespace KGySoft.CoreLibraries
 
             if (length == 0)
                 return -1;
-            int result = str!.LastIndexOf(value, offset + startIndex, count);
+            int result = str!.LastIndexOf(value, offset + startIndex + count - 1, count);
             return result >= 0 ? result - offset : -1;
         }
 
@@ -450,8 +594,61 @@ namespace KGySoft.CoreLibraries
         {
             if (length == 0)
                 return -1;
-            int result = str!.LastIndexOf(value, offset, length);
+            int result = str!.LastIndexOf(value, offset + length - 1, length);
             return result >= 0 ? result - offset : -1;
+        }
+
+        /// <summary>
+        /// Gets the zero-based index of the last occurrence of the specified <paramref name="value"/> in this <see cref="StringSegment"/>
+        /// using the specified <paramref name="comparison"/>.
+        /// </summary>
+        /// <param name="value">The character to seek.</param>
+        /// <param name="comparison">A <see cref="StringComparison"/> value that specified the rules for the search.</param>
+        /// <returns>The zero-based index position of <paramref name="value"/> if that character is found, or -1 if it is not.</returns>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public int LastIndexOf(char value, StringComparison comparison)
+        {
+            if (comparison == StringComparison.Ordinal)
+                return LastIndexOf(value, 0, length);
+            CheckComparison(comparison);
+            return LastIndexOfInternal(value, 0, length, comparison);
+        }
+
+        /// <summary>
+        /// Gets the zero-based index of the last occurrence of the specified <paramref name="value"/> in this <see cref="StringSegment"/>
+        /// using the specified <paramref name="startIndex"/> and <paramref name="comparison"/>.
+        /// </summary>
+        /// <param name="value">The character to seek.</param>
+        /// <param name="startIndex">The search starting position.</param>
+        /// <param name="comparison">A <see cref="StringComparison"/> value that specified the rules for the search.</param>
+        /// <returns>The zero-based index position of <paramref name="value"/> if that character is found, or -1 if it is not.</returns>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public int LastIndexOf(char value, int startIndex, StringComparison comparison)
+        {
+            if ((uint)startIndex > (uint)length)
+                Throw.ArgumentOutOfRangeException(Argument.startIndex);
+            CheckComparison(comparison);
+            return LastIndexOfInternal(value, startIndex, length - startIndex, comparison);
+        }
+
+        /// <summary>
+        /// Gets the zero-based index of the last occurrence of the specified <paramref name="value"/> in this <see cref="StringSegment"/>
+        /// using the specified <paramref name="startIndex"/>, <paramref name="count"/> and <paramref name="comparison"/>.
+        /// </summary>
+        /// <param name="value">The character to seek.</param>
+        /// <param name="startIndex">The search starting position.</param>
+        /// <param name="count">The number of character positions to examine.</param>
+        /// <param name="comparison">A <see cref="StringComparison"/> value that specified the rules for the search.</param>
+        /// <returns>The zero-based index position of <paramref name="value"/> if that character is found, or -1 if it is not.</returns>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public int LastIndexOf(char value, int startIndex, int count, StringComparison comparison)
+        {
+            if ((uint)startIndex > (uint)length)
+                Throw.ArgumentOutOfRangeException(Argument.startIndex);
+            if ((uint)startIndex + count > (uint)length)
+                Throw.ArgumentOutOfRangeException(Argument.count);
+            CheckComparison(comparison);
+            return LastIndexOfInternal(value, startIndex, count, comparison);
         }
 
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
@@ -784,6 +981,46 @@ namespace KGySoft.CoreLibraries
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
+        private int IndexOfInternal(char c, int startIndex, int count, StringComparison comparison)
+        {
+            if (length == 0)
+                return -1;
+            CompareInfo compareInfo = comparison is StringComparison.CurrentCulture or StringComparison.CurrentCultureIgnoreCase
+                ? CultureInfo.CurrentCulture.CompareInfo
+                : CultureInfo.InvariantCulture.CompareInfo;
+            var options = comparison switch
+            {
+                StringComparison.Ordinal => CompareOptions.Ordinal,
+                StringComparison.OrdinalIgnoreCase => CompareOptions.OrdinalIgnoreCase,
+                StringComparison.InvariantCultureIgnoreCase or StringComparison.CurrentCultureIgnoreCase => CompareOptions.IgnoreCase,
+                _ => CompareOptions.None
+            };
+
+            int result = compareInfo.IndexOf(str!, c, offset + startIndex, count, options);
+            return result >= 0 ? result - offset : -1;
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        private int LastIndexOfInternal(char c, int startIndex, int count, StringComparison comparison)
+        {
+            if (length == 0)
+                return -1;
+            CompareInfo compareInfo = comparison is StringComparison.CurrentCulture or StringComparison.CurrentCultureIgnoreCase
+                ? CultureInfo.CurrentCulture.CompareInfo
+                : CultureInfo.InvariantCulture.CompareInfo;
+            var options = comparison switch
+            {
+                StringComparison.Ordinal => CompareOptions.Ordinal,
+                StringComparison.OrdinalIgnoreCase => CompareOptions.OrdinalIgnoreCase,
+                StringComparison.InvariantCultureIgnoreCase or StringComparison.CurrentCultureIgnoreCase => CompareOptions.IgnoreCase,
+                _ => CompareOptions.None
+            };
+
+            int result = compareInfo.LastIndexOf(str!, c, offset + startIndex + count - 1, count, options);
+            return result >= 0 ? result - offset : -1;
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         private int IndexOfInternal(string s, int startIndex, int count)
         {
             Debug.Assert(!IsNull);
@@ -913,7 +1150,7 @@ namespace KGySoft.CoreLibraries
                     if (String.IsNullOrEmpty(separator))
                         continue;
 
-                    int sepLength = separator!.Length;
+                    int sepLength = separator.Length;
                     if (GetCharInternal(i) != separator[0] || sepLength > count - i)
                         continue;
                     if (sepLength == 1 || SubstringInternal(i, sepLength).Equals(separator))

@@ -121,7 +121,9 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
         public void IndexOf(int expectedResult, string s, string toSearch)
         {
             Assert.AreEqual(expectedResult, s.AsSegment().IndexOf(toSearch));
+            Assert.AreEqual(expectedResult >= 0, s.AsSegment().Contains(toSearch));
             Assert.AreEqual(expectedResult, s.AsSegment().IndexOf(toSearch.AsSegment()));
+            Assert.AreEqual(expectedResult >= 0, s.AsSegment().Contains(toSearch.AsSegment()));
             Assert.AreEqual(expectedResult, s.AsSegment().IndexOf(toSearch, 0, s?.Length ?? 0));
             Assert.AreEqual(expectedResult, s.AsSegment().IndexOf(toSearch.AsSegment(), 0, s?.Length ?? 0));
             Assert.AreEqual(expectedResult, s.AsSegment().IndexOf((" " + toSearch).AsSegment(1), 0, s?.Length ?? 0));
@@ -130,6 +132,14 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
                 Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).IndexOf(toSearch));
                 Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).IndexOf(toSearch.AsSegment()));
                 Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).IndexOf((" " + toSearch).AsSegment(1)));
+            }
+
+            if (toSearch.Length == 1)
+            {
+                Assert.AreEqual(expectedResult, s.AsSegment().IndexOf(toSearch[0]));
+                Assert.AreEqual(expectedResult >= 0, s.AsSegment().Contains(toSearch[0]));
+                Assert.AreEqual(expectedResult, s.AsSegment().IndexOf(toSearch[0], 0));
+                Assert.AreEqual(expectedResult, s.AsSegment().IndexOf(toSearch[0], 0, s?.Length ?? 0));
             }
 
 #if NETCOREAPP2_1_OR_GREATER
@@ -147,6 +157,16 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
                 Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).IndexOf(toSearch.AsSegment(), 0, s.Length, stringComparison));
                 Assert.AreEqual(expectedResult, (" " + s + " ").AsSegment(1, s.Length).IndexOf(toSearch, 0, s.Length, stringComparison));
                 Assert.AreEqual(expectedResult, (" " + s + " ").AsSegment(1, s.Length).IndexOf(toSearch.AsSegment(), 0, s.Length, stringComparison));
+                Assert.AreEqual(expectedResult >= 0, (" " + s + " ").AsSegment(1, s.Length).Contains(toSearch, stringComparison));
+                Assert.AreEqual(expectedResult >= 0, (" " + s + " ").AsSegment(1, s.Length).Contains(toSearch.AsSegment(), stringComparison));
+
+                if (toSearch.Length == 1)
+                {
+                    Assert.AreEqual(expectedResult, (" " + s + " ").AsSegment(1, s.Length).IndexOf(toSearch[0], stringComparison));
+                    Assert.AreEqual(expectedResult >= 0, (" " + s + " ").AsSegment(1, s.Length).Contains(toSearch[0], stringComparison));
+                    Assert.AreEqual(expectedResult, (" " + s + " ").AsSegment(1, s.Length).IndexOf(toSearch[0], 0, stringComparison));
+                    Assert.AreEqual(expectedResult, (" " + s + " ").AsSegment(1, s.Length).IndexOf(toSearch[0], 0, s.Length, stringComparison));
+                }
             }
         }
 
@@ -170,13 +190,27 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             Assert.AreEqual(expectedResult, s.AsSegment().LastIndexOf(toSearch.AsSpan(), 0, s?.Length ?? 0));
             Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).LastIndexOf(toSearch.AsSpan(), 0, s?.Length ?? 0));
 #endif
+            if (toSearch.Length == 1)
+            {
+                Assert.AreEqual(expectedResult, s.AsSegment().LastIndexOf(toSearch[0]));
+                Assert.AreEqual(expectedResult, s.AsSegment().LastIndexOf(toSearch[0], 0));
+                Assert.AreEqual(expectedResult, s.AsSegment().LastIndexOf(toSearch[0], 0, s.Length));
+            }
 
             foreach (StringComparison stringComparison in Enum<StringComparison>.GetValues())
             {
                 Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).LastIndexOf(toSearch, 0, s.Length, stringComparison));
                 Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).LastIndexOf(toSearch.AsSegment(), 0, s.Length, stringComparison));
+                Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).LastIndexOf(toSearch.AsSegment(), 0, stringComparison));
                 Assert.AreEqual(expectedResult, (" " + s + " ").AsSegment(1, s.Length).LastIndexOf(toSearch, 0, s.Length, stringComparison));
                 Assert.AreEqual(expectedResult, (" " + s + " ").AsSegment(1, s.Length).LastIndexOf(toSearch.AsSegment(), 0, s.Length, stringComparison));
+
+                if (toSearch.Length == 1)
+                {
+                    Assert.AreEqual(expectedResult, (" " + s + " ").AsSegment(1, s.Length).LastIndexOf(toSearch[0], stringComparison));
+                    Assert.AreEqual(expectedResult, (" " + s + " ").AsSegment(1, s.Length).LastIndexOf(toSearch[0], 0, stringComparison));
+                    Assert.AreEqual(expectedResult, (" " + s + " ").AsSegment(1, s.Length).LastIndexOf(toSearch[0], 0, s.Length, stringComparison));
+                }
             }
         }
 

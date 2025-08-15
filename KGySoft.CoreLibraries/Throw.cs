@@ -67,7 +67,7 @@ namespace KGySoft
 
         [ContractAnnotation("=> halt")]
         [DoesNotReturn]
-        internal static void EnumArgumentOutOfRange<TEnum>(Argument arg, TEnum value) where TEnum : struct, Enum 
+        internal static TEnum EnumArgumentOutOfRange<TEnum>(Argument arg, TEnum value) where TEnum : struct, Enum 
             => throw CreateArgumentOutOfRangeException(arg, Res.EnumOutOfRange(value));
 
         [ContractAnnotation("=> halt")]
