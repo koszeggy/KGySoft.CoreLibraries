@@ -589,7 +589,7 @@ namespace KGySoft.CoreLibraries
                 result = Encoding.UTF8.GetString(utf8Text);
                 return true;
             }
-            catch (Exception)
+            catch (ArgumentException)
             {
                 result = Null;
                 return false;

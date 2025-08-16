@@ -104,26 +104,20 @@ namespace KGySoft.CoreLibraries
             if (value == 0)
                 return "0";
 
-            char* buf = stackalloc char[21];
-            int size = 0;
-            while (value > 0)
-            {
-                buf[size] = (char)(value % 10 + '0');
-                size += 1;
-                value /= 10;
-            }
-
-            if (isNegative)
-            {
-                buf[size] = '-';
-                size += 1;
-            }
-
-            string result = new String('\0', size);
+            int length = value.DecimalDigitsCount() + (isNegative ? 1 : 0);
+            string result = new String('\0', length);
             fixed (char* s = result)
             {
-                for (int i = size - 1; i >= 0; i--)
-                    s[size - i - 1] = buf[i];
+                int pos = length;
+                while (value > 0)
+                {
+                    s[--pos] = (char)(value % 10 + '0');
+                    value /= 10;
+                }
+
+                Debug.Assert(!isNegative && pos == 0 || isNegative && pos == 1);
+                if (isNegative)
+                    s[0] = '-';
             }
 
             return result;

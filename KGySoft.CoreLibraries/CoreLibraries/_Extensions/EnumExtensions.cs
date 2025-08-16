@@ -44,6 +44,14 @@ namespace KGySoft.CoreLibraries
 
         #endregion
 
+        #region Properties
+
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+        internal static ReadOnlySpan<byte> DefaultFormatSeparatorUtf8 => ", "u8;
+#endif
+
+        #endregion
+
         #region Methods
 
         #region Public methods

@@ -20,6 +20,7 @@ using System;
 using System.Diagnostics.CodeAnalysis; 
 #endif
 using System.Linq;
+using System.Text;
 #if NETFRAMEWORK
 using System.Reflection;
 using System.Security;
@@ -224,6 +225,10 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
                 Assert.IsTrue(Enum<TEnum>.TryFormat(value, buffer, out int charsWritten, format));
                 Assert.AreEqual(expectedValue.Length, charsWritten);
                 Assert.AreEqual(expectedValue, buffer.ToString());
+                Span<byte> bufferUtf8 = stackalloc byte[expectedValue.Length];
+                Assert.IsTrue(Enum<TEnum>.TryFormat(value, bufferUtf8, out int bytesWritten, format));
+                Assert.AreEqual(expectedValue.Length, bytesWritten);
+                Assert.AreEqual(expectedValue, Encoding.UTF8.GetString(bufferUtf8));
 #endif
             }
 

@@ -21,6 +21,9 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+using System.Text;
+#endif
 
 using KGySoft.Collections;
 
@@ -67,7 +70,13 @@ namespace KGySoft.CoreLibraries
         private static Array? underlyingValues;
         private static Dictionary<TEnum, string>? valueNamePairs;
         private static StringKeyedDictionary<TEnum>? nameValuePairs;
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+        private static Dictionary<TEnum, byte[]>? valueUtf8NamePairs;
+#endif
         private static (ulong[]? RawValues, string[]? Names) rawValueNamePairs;
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+        private static (byte[][]? Names, bool[]? IsValidName) utf8Names; // acts as additional items in rawValueNamePairs tuple, requires EnsureRawValueNamePairs first
+#endif
         private static StringKeyedDictionary<ulong>? nameRawValuePairs;
         private static StringKeyedDictionary<ulong>? nameRawValuePairsIgnoreCase;
         private static ulong? flagsMask;
@@ -78,8 +87,11 @@ namespace KGySoft.CoreLibraries
 
         private static string[] Names => names ?? InitNames();
         private static TEnum[] Values => values ?? InitValues();
-        private static Array UnderlyingValues => values ?? InitUnderlyingValues();
+        private static Array UnderlyingValues => underlyingValues ?? InitUnderlyingValues();
         private static Dictionary<TEnum, string> ValueNamePairs => valueNamePairs ?? InitValueNamePairs();
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+        private static Dictionary<TEnum, byte[]> ValueUtf8NamePairs => valueUtf8NamePairs ?? InitValueUtf8NamePairs(); 
+#endif
         private static StringKeyedDictionary<TEnum> NameValuePairs => nameValuePairs ?? InitNameValuePairs();
         private static StringKeyedDictionary<ulong> NameRawValuePairs => nameRawValuePairs ?? InitNameRawValuePairs();
         private static StringKeyedDictionary<ulong> NameRawValuePairsIgnoreCase => nameRawValuePairsIgnoreCase ?? InitNameRawValuePairsIgnoreCase();
@@ -94,6 +106,19 @@ namespace KGySoft.CoreLibraries
                     : "0";
             }
         }
+
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+        private static ReadOnlySpan<byte> ZeroUtf8
+        {
+            get
+            {
+                Debug.Assert(utf8Names.Names != null, $"{nameof(EnsureRawValueUtf8NamePairs)} was not called");
+                return rawValueNamePairs.RawValues!.Length > 0 && rawValueNamePairs.RawValues[0] == 0UL
+                    ? utf8Names.Names![0]
+                    : "0"u8;
+            }
+        }
+#endif
 
         private static ulong FlagsMask
             => flagsMask ??= Values.Select(converter.ToUInt64).Where(UInt64Extensions.IsSingleFlag).Aggregate(0UL, (acc, value) => acc | value);
@@ -669,9 +694,34 @@ namespace KGySoft.CoreLibraries
                     result.Add(value, names![i]);
             }
 
-            rawValueNamePairs.RawValues = result.Keys.ToArray();
+            // initializing names first, because Ensure checks values, and the initialization does not use locking
             rawValueNamePairs.Names = result.Values.ToArray();
+            rawValueNamePairs.RawValues = result.Keys.ToArray();
         }
+
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+        private static void EnsureRawValueUtf8NamePairs()
+        {
+            EnsureRawValueNamePairs();
+            if (utf8Names.Names == null)
+                InitUtf8Names();
+        }
+
+        private static void InitUtf8Names()
+        {
+            Debug.Assert(rawValueNamePairs.Names != null);
+            var result = new byte[rawValueNamePairs.Names!.Length][];
+            var isValid = new bool[result.Length];
+            for (int i = 0; i < rawValueNamePairs.Names.Length; i++)
+            {
+                isValid[i] = rawValueNamePairs.Names[i].IsValidUnicode();
+                result[i] = isValid[i] ? Encoding.UTF8.GetBytes(rawValueNamePairs.Names[i]) : ToNumericStringUtf8(rawValueNamePairs.RawValues![i]);
+            }
+
+            utf8Names.IsValidName = isValid;
+            utf8Names.Names = result;
+        }
+#endif
 
         private static string[] InitNames()
         {
@@ -774,7 +824,6 @@ namespace KGySoft.CoreLibraries
                     default:
                         return Throw.InternalError<Array>($"Not an enum type: {typeof(TEnum)}");
                 }
-
 #endif
             }
         }
@@ -817,6 +866,31 @@ namespace KGySoft.CoreLibraries
                 return valueNamePairs = result;
             }
         }
+
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+        private static Dictionary<TEnum, byte[]> InitValueUtf8NamePairs()
+        {
+            lock (syncRoot)
+            {
+                Dictionary<TEnum, byte[]>? result = valueUtf8NamePairs;
+
+                // lost race
+                if (result != null)
+                    return result;
+
+                result = new Dictionary<TEnum, byte[]>(Names.Length, ComparerHelper<TEnum>.EqualityComparer);
+                for (int i = 0; i < Values.Length; i++)
+                {
+                    // avoiding duplicated keys (multiple names for the same value)
+                    if (!result.ContainsKey(values![i]))
+                        // is a name contains invalid sequence in UTF16, then its numeric representation is used because that can be parsed back
+                        result.Add(values[i], names![i].IsValidUnicode() ? Encoding.UTF8.GetBytes(names[i]) : ToNumericStringUtf8(converter.ToUInt64(values[i])));
+                }
+
+                return valueUtf8NamePairs = result;
+            }
+        }
+#endif
 
         private static StringKeyedDictionary<ulong> InitNameRawValuePairs()
         {

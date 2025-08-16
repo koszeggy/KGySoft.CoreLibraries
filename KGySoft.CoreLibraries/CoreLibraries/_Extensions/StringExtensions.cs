@@ -145,7 +145,7 @@ namespace KGySoft.CoreLibraries
                         return false; // unpaired high surrogate
                     i += 1; // skipping the low surrogate
                 }
-                else if (Char.IsLowSurrogate(c) || !c.IsNonCharacter())
+                else if (Char.IsLowSurrogate(c) || c.IsNonCharacter())
                     return false;
             }
 

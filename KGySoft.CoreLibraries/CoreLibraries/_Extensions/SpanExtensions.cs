@@ -620,7 +620,47 @@ namespace KGySoft.CoreLibraries
             return false;
         }
 
+#if !NET8_0_OR_GREATER
+        internal static bool TryWrite(this Span<byte> utf8Destination, ulong value, bool isNegative, out int bytesWritten)
+        {
+            int length = value.DecimalDigitsCount() + (isNegative ? 1 : 0);
+            if (length > utf8Destination.Length)
+            {
+                bytesWritten = 0;
+                return false;
+            }
+
+            bytesWritten = length;
+            if (value == 0)
+            {
+                utf8Destination[0] = (byte)'0';
+                return true;
+            }
+
+            int pos = length - 1;
+            while (value > 0)
+            {
+                utf8Destination[pos] = (byte)(value % 10 + '0');
+                pos -= 1;
+                value /= 10;
+            }
+
+            Debug.Assert(!isNegative && pos == -1 || isNegative && pos == 0);
+            if (isNegative)
+                utf8Destination[pos] = (byte)'-';
+
+            return true;
+        }
+#endif
+
         internal static void Append(this ref Span<char> destination, ReadOnlySpan<char> value)
+        {
+            Debug.Assert(destination.Length >= value.Length);
+            value.CopyTo(destination);
+            destination = destination.Slice(value.Length);
+        }
+
+        internal static void Append(this ref Span<byte> destination, ReadOnlySpan<byte> value)
         {
             Debug.Assert(destination.Length >= value.Length);
             value.CopyTo(destination);
