@@ -25,7 +25,8 @@
 ! KGySoft.CoreLibraries namespace:
 ==================================
 ! ByteArrayExtensions class:
-  ! Encrypt/Decrypt methods: the salt no longer can be null.
+  ! Encrypt/Decrypt methods: The overloads with string salt parameter are now obsolete, and they no longer accept a
+    null salt.
   + New Encrypt overload with an auto-generated salt: It generates a random salt and returns it as an out parameter.
   + New Decrypt overload with byte[] salt parameter: It allows decrypting data encrypted with the new overload.
 + Enum<TEnum> class:

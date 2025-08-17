@@ -156,7 +156,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
         {
             byte[] bytes = Enumerable.Range(1, 1000).Select(i => (byte)i).ToArray();
 
-            Throws<ArgumentNullException>(() => bytes.ToDecimalValuesString(null));
+            Throws<ArgumentNullException>(() => bytes.ToDecimalValuesString(null!));
             Throws<ArgumentException>(() => bytes.ToDecimalValuesString("0"));
             Assert.AreEqual(bytes.Select(b => b.ToString(CultureInfo.InvariantCulture)).Join(", "), bytes.ToDecimalValuesString());
         }
@@ -211,10 +211,12 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             string message = "Hello, World!";
             byte[] rawMessage = Encoding.UTF8.GetBytes(message);
 
+#pragma warning disable CS0618 // Type or member is obsolete
             // Fix string salt
             byte[] encrypted = rawMessage.Encrypt(password, String.Empty);
             Console.WriteLine(encrypted.ToHexValuesString(","));
             Assert.AreEqual(message, Encoding.UTF8.GetString(encrypted.Decrypt(password, String.Empty)));
+#pragma warning restore CS0618 // Type or member is obsolete
 
             // Random bytes salt
             encrypted = rawMessage.Encrypt(password, out byte[] saltBytes);

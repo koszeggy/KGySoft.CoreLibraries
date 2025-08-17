@@ -381,6 +381,7 @@ namespace KGySoft.CoreLibraries
 #if NETFRAMEWORK && !NET472_OR_GREATER || NETSTANDARD2_0
         [SuppressMessage("Security", "CA5379:Do Not Use Weak Key Derivation Function Algorithm", Justification = "The overload with a stronger algorithm requires at least .NET 4.7.2")]
 #endif
+        [Obsolete("Passing the salt as input parameter is not the best approach. It's better if you let it generated for each session by the other overload where the the salt is an out parameter.")]
         public static byte[] Encrypt(this byte[] bytes, SymmetricAlgorithm algorithm, string password, string salt)
         {
             if (password == null!)
@@ -422,6 +423,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="salt">A salt value to be used to derive the key and initialization vector bytes.
         /// It is recommended to be unique for each case the same <paramref name="password"/> is used.</param>
         /// <returns>The encrypted result of <paramref name="bytes"/>.</returns>
+        [Obsolete("Passing the salt as input parameter is not the best approach. It's better if you let it generated for each session by the other overload where the the salt is an out parameter.")]
         public static byte[] Encrypt(this byte[] bytes, string password, string salt)
         {
 #if NETFRAMEWORK
@@ -582,12 +584,13 @@ namespace KGySoft.CoreLibraries
         /// <param name="bytes">Source bytes to decrypt.</param>
         /// <param name="algorithm">A <see cref="SymmetricAlgorithm"/> instance to use for decryption.</param>
         /// <param name="password">Password of decryption.</param>
-        /// <param name="salt">A salt value to be used to derive the key and initialization vector bytes. If <see langword="null"/> or is empty, a default salt will be used.
+        /// <param name="salt">A salt value to be used to derive the key and initialization vector bytes.
         /// It should be the same as the one used for the <see cref="Encrypt(byte[],SymmetricAlgorithm,string,string)"/> method.</param>
 #if NETFRAMEWORK && !NET472_OR_GREATER || NETSTANDARD2_0
         [SuppressMessage("Security", "CA5379:Do Not Use Weak Key Derivation Function Algorithm", Justification = "The overload with a stronger algorithm requires at least .NET 4.7.2")]
 #endif
-        public static byte[] Decrypt(this byte[] bytes, SymmetricAlgorithm algorithm, string password, string? salt)
+        [Obsolete("Use the overload where salt is a byte[] instead.")]
+        public static byte[] Decrypt(this byte[] bytes, SymmetricAlgorithm algorithm, string password, string salt)
         {
             if (algorithm == null!)
                 Throw.ArgumentNullException(Argument.algorithm);
@@ -625,9 +628,10 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="bytes">Source bytes to decrypt.</param>
         /// <param name="password">Password of decryption.</param>
-        /// <param name="salt">A salt value to be used to derive the key and initialization vector bytes. If <see langword="null"/> or is empty, a default salt will be used.
+        /// <param name="salt">A salt value to be used to derive the key and initialization vector bytes.
         /// It should be the same as the one used for the <see cref="Encrypt(byte[],string,string)"/> method.</param>
-        public static byte[] Decrypt(this byte[] bytes, string password, string? salt)
+        [Obsolete("Use the overload where salt is a byte[] instead.")]
+        public static byte[] Decrypt(this byte[] bytes, string password, string salt)
         {
 #if NETFRAMEWORK
             using SymmetricAlgorithm alg = new AesManaged();
