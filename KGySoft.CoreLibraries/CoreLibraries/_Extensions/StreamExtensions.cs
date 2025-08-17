@@ -16,7 +16,13 @@
 #region Usings
 
 using System;
+#if NETFRAMEWORK && !NET472_OR_GREATER || NETSTANDARD2_0
+using System.Diagnostics.CodeAnalysis;
+#endif
 using System.IO;
+using System.Security.Cryptography;
+
+using KGySoft.Security.Cryptography;
 
 #endregion
 
@@ -126,6 +132,273 @@ namespace KGySoft.CoreLibraries
             {
                 s.Seek(pos, SeekOrigin.Begin);
             }
+        }
+
+        /// <summary>
+        /// Encrypts a <paramref name="source"/> stream by the provided symmetric <paramref name="algorithm"/>, <paramref name="key"/> and <paramref name="iv"/>,
+        /// and writes the encrypted result to the <paramref name="destination"/> stream. Both streams remain open after the encryption is done.
+        /// </summary>
+        /// <param name="source">The source stream to encrypt.</param>
+        /// <param name="destination">The destination stream to write the encrypted data to.</param>
+        /// <param name="algorithm">A <see cref="SymmetricAlgorithm"/> instance to be used for encryption.</param>
+        /// <param name="key">Key to be used for encryption.</param>
+        /// <param name="iv">Initialization vector to be used for encryption.</param>
+        public static void Encrypt(this Stream source, Stream destination, SymmetricAlgorithm algorithm, byte[] key, byte[] iv)
+        {
+            if (source == null!)
+                Throw.ArgumentNullException(Argument.source);
+            if (destination == null!)
+                Throw.ArgumentNullException(Argument.destination);
+            if (algorithm == null!)
+                Throw.ArgumentNullException(Argument.algorithm);
+            if (key == null!)
+                Throw.ArgumentNullException(Argument.key);
+            if (iv == null!)
+                Throw.ArgumentNullException(Argument.iv);
+
+            algorithm.Key = key;
+            algorithm.IV = iv;
+
+            using ICryptoTransform encryptor = algorithm.CreateEncryptor();
+#if NET472_OR_GREATER || NETCOREAPP
+            using var encryptStream = new CryptoStream(destination, encryptor, CryptoStreamMode.Write, true);
+            source.CopyTo(encryptStream);
+#else
+            var encryptStream = new CryptoStream(destination, encryptor, CryptoStreamMode.Write);
+            try
+            {
+                source.CopyTo(encryptStream);
+            }
+            finally
+            {
+                encryptStream.FlushFinalBlock();
+            }
+#endif
+        }
+
+        /// <summary>
+        /// Encrypts a <paramref name="source"/> stream by the provided symmetric <paramref name="algorithm"/> and <paramref name="password"/>, using a randomly generated <paramref name="salt"/>,
+        /// and writes the encrypted result to the <paramref name="destination"/> stream. Both streams remain open after the encryption is done.
+        /// </summary>
+        /// <param name="source">The source stream to encrypt.</param>
+        /// <param name="destination">The destination stream to write the encrypted data to.</param>
+        /// <param name="algorithm">A <see cref="SymmetricAlgorithm"/> instance to be used for encryption.</param>
+        /// <param name="password">Password of encryption.</param>
+        /// <param name="salt">When this method returns, contains the randomly generated salt bytes used to derive the key and initialization vector bytes. This parameter is passed uninitialized.</param>
+#if NETFRAMEWORK && !NET472_OR_GREATER || NETSTANDARD2_0
+        [SuppressMessage("Security", "CA5379:Do Not Use Weak Key Derivation Function Algorithm", Justification = "The overload with a stronger algorithm requires at least .NET 4.7.2")]
+#endif
+        public static void Encrypt(this Stream source, Stream destination, SymmetricAlgorithm algorithm, string password, out byte[] salt)
+        {
+            if (password == null!)
+                Throw.ArgumentNullException(Argument.password);
+            if (algorithm == null!)
+                Throw.ArgumentNullException(Argument.algorithm);
+
+            salt = SecureRandom.Instance.NextBytes(8);
+            int keyBytes = algorithm.KeySize >> 3;
+            int blockBytes = algorithm.BlockSize >> 3;
+
+#if NET6_0_OR_GREATER
+            Span<byte> dest = stackalloc byte[keyBytes + blockBytes];
+            Rfc2898DeriveBytes.Pbkdf2(password, salt, dest, 1000, HashAlgorithmName.SHA256);
+            Encrypt(source, destination, algorithm, dest.Slice(0, keyBytes).ToArray(), dest.Slice(keyBytes).ToArray());
+#else
+#if NETFRAMEWORK && !NET472_OR_GREATER || NETSTANDARD2_0
+            var passwordKey = new Rfc2898DeriveBytes(password, salt);
+#else
+            var passwordKey = new Rfc2898DeriveBytes(password, salt, 1000, HashAlgorithmName.SHA256);
+#endif
+#if !NET35
+            using (passwordKey)
+#endif
+            {
+                Encrypt(source, destination, algorithm, passwordKey.GetBytes(keyBytes), passwordKey.GetBytes(blockBytes));
+            }
+#endif
+        }
+
+        /// <summary>
+        /// Encrypts a <paramref name="source"/> stream by the <see cref="Aes"/> algorithm using the provided <paramref name="password"/> and a randomly generated <paramref name="salt"/>,
+        /// and writes the encrypted result to the <paramref name="destination"/> stream. Both streams remain open after the encryption is done.
+        /// </summary>
+        /// <param name="source">The source stream to encrypt.</param>
+        /// <param name="destination">The destination stream to write the encrypted data to.</param>
+        /// <param name="password">Password of encryption.</param>
+        /// <param name="salt">When this method returns, contains the randomly generated salt bytes used to derive the key and initialization vector bytes. This parameter is passed uninitialized.</param>
+        public static void Encrypt(this Stream source, Stream destination, string password, out byte[] salt)
+        {
+#if NETFRAMEWORK
+            using SymmetricAlgorithm alg = new AesManaged();
+#else
+            using SymmetricAlgorithm alg = Aes.Create();
+#endif
+            Encrypt(source, destination, alg, password, out salt);
+        }
+
+        /// <summary>
+        /// Encrypts a <paramref name="source"/> stream by the provided symmetric <paramref name="algorithm"/>, using a randomly generated key and initialization vector, which are
+        /// returned in <paramref name="key"/> and <paramref name="iv"/> parameters, respectively. The encrypted result is written to the <paramref name="destination"/> stream.
+        /// Both streams remain open after the encryption is done.
+        /// </summary>
+        /// <param name="source">The source stream to encrypt.</param>
+        /// <param name="destination">The destination stream to write the encrypted data to.</param>
+        /// <param name="algorithm">A <see cref="SymmetricAlgorithm"/> instance to be used for encryption.</param>
+        /// <param name="key">Returns the automatically generated key used for encryption.</param>
+        /// <param name="iv">Returns the automatically generated initialization vector used for encryption.</param>
+        [CLSCompliant(false)]
+        public static void Encrypt(this Stream source, Stream destination, SymmetricAlgorithm algorithm, out byte[] key, out byte[] iv)
+        {
+            if (algorithm == null!)
+                Throw.ArgumentNullException(Argument.algorithm);
+
+            algorithm.GenerateKey();
+            algorithm.GenerateIV();
+            key = algorithm.Key;
+            iv = algorithm.IV;
+            Encrypt(source, destination, algorithm, key, iv);
+        }
+
+        /// <summary>
+        /// Encrypts a <paramref name="source"/> stream by the <see cref="Aes"/> algorithm using a randomly generated key and initialization vector, which are
+        /// returned in <paramref name="key"/> and <paramref name="iv"/> parameters, respectively. The encrypted result is written to the <paramref name="destination"/> stream.
+        /// Both streams remain open after the encryption is done.
+        /// </summary>
+        /// <param name="source">The source stream to encrypt.</param>
+        /// <param name="destination">The destination stream to write the encrypted data to.</param>
+        /// <param name="key">Returns the automatically generated key used for encryption.</param>
+        /// <param name="iv">Returns the automatically generated initialization vector used for encryption.</param>
+        public static void Encrypt(this Stream source, Stream destination, out byte[] key, out byte[] iv)
+        {
+#if NETFRAMEWORK
+            using SymmetricAlgorithm alg = new AesManaged();
+#else
+            using SymmetricAlgorithm alg = Aes.Create();
+#endif
+            Encrypt(source, destination, alg, out key, out iv);
+        }
+
+        /// <summary>
+        /// Decrypts a <paramref name="source"/> stream by the provided symmetric <paramref name="algorithm"/>, <paramref name="key"/> and initialization vector,
+        /// and writes the decrypted result to the <paramref name="destination"/> stream. Both streams remain open after the decryption is done.
+        /// </summary>
+        /// <param name="source">The source stream to decrypt.</param>
+        /// <param name="destination">The destination stream to write the decrypted data to.</param>
+        /// <param name="algorithm">A <see cref="SymmetricAlgorithm"/> instance to use for decryption.</param>
+        /// <param name="key">Key of decryption.</param>
+        /// <param name="iv">The initialization vector to be used for decryption.</param>
+        public static void Decrypt(this Stream source, Stream destination, SymmetricAlgorithm algorithm, byte[] key, byte[] iv)
+        {
+            if (source == null!)
+                Throw.ArgumentNullException(Argument.source);
+            if (destination == null!)
+                Throw.ArgumentNullException(Argument.destination);
+            if (algorithm == null!)
+                Throw.ArgumentNullException(Argument.algorithm);
+            if (key == null!)
+                Throw.ArgumentNullException(Argument.key);
+            if (iv == null!)
+                Throw.ArgumentNullException(Argument.iv);
+
+            algorithm.Key = key;
+            algorithm.IV = iv;
+
+            using ICryptoTransform decryptor = algorithm.CreateDecryptor();
+#if NET472_OR_GREATER || NETCOREAPP
+            using CryptoStream encryptStream = new CryptoStream(source, decryptor, CryptoStreamMode.Read, true);
+            encryptStream.CopyTo(destination);
+#else
+            var encryptStream = new CryptoStream(source, decryptor, CryptoStreamMode.Read);
+            try
+            {
+                encryptStream.CopyTo(destination);
+            }
+            finally
+            {
+                encryptStream.Flush(); // not calling FlushFinalBlock here, because it is called implicitly when decrypting a stream
+            }
+#endif
+        }
+
+        /// <summary>
+        /// Decrypts a <paramref name="source"/> stream by the <see cref="Aes"/> algorithm using the provided <paramref name="key"/> and initialization vector,
+        /// and writes the decrypted result to the <paramref name="destination"/> stream. Both streams remain open after the decryption is done.
+        /// </summary>
+        /// <param name="source">The source stream to decrypt.</param>
+        /// <param name="destination">The destination stream to write the decrypted data to.</param>
+        /// <param name="key">Key of decryption.</param>
+        /// <param name="iv">The initialization vector to be used for decryption.</param>
+        public static void Decrypt(this Stream source, Stream destination, byte[] key, byte[] iv)
+        {
+#if NETFRAMEWORK
+            using SymmetricAlgorithm alg = new AesManaged();
+#else
+            using SymmetricAlgorithm alg = Aes.Create();
+#endif
+            Decrypt(source, destination, alg, key, iv);
+        }
+
+        /// <summary>
+        /// Decrypts a <paramref name="source"/> stream by the provided symmetric <paramref name="algorithm"/>, <paramref name="password"/> and <paramref name="salt"/>,
+        /// and writes the decrypted result to the <paramref name="destination"/> stream. Both streams remain open after the decryption is done.
+        /// </summary>
+        /// <param name="source">The source stream to decrypt.</param>
+        /// <param name="destination">The destination stream to write the decrypted data to.</param>
+        /// <param name="algorithm">A <see cref="SymmetricAlgorithm"/> instance to use for decryption.</param>
+        /// <param name="password">Password of decryption.</param>
+        /// <param name="salt">A salt value to be used to derive the key and initialization vector bytes.
+        /// It should be the same as the one generated by the <see cref="Encrypt(Stream,Stream,SymmetricAlgorithm,string,out byte[])"/> method.</param>
+#if NETFRAMEWORK && !NET472_OR_GREATER || NETSTANDARD2_0
+        [SuppressMessage("Security", "CA5379:Do Not Use Weak Key Derivation Function Algorithm", Justification = "The overload with a stronger algorithm requires at least .NET 4.7.2")]
+#endif
+        public static void Decrypt(this Stream source, Stream destination, SymmetricAlgorithm algorithm, string password, byte[] salt)
+        {
+            if (algorithm == null!)
+                Throw.ArgumentNullException(Argument.algorithm);
+            if (password == null!)
+                Throw.ArgumentNullException(Argument.password);
+            if (salt == null!)
+                Throw.ArgumentNullException(Argument.salt);
+
+            int keyBytes = algorithm.KeySize >> 3;
+            int blockBytes = algorithm.BlockSize >> 3;
+#if NET6_0_OR_GREATER
+            Span<byte> dest = stackalloc byte[keyBytes + blockBytes];
+            Rfc2898DeriveBytes.Pbkdf2(password, salt, dest, 1000, HashAlgorithmName.SHA256);
+            Decrypt(source, destination, algorithm, dest.Slice(0, keyBytes).ToArray(), dest.Slice(keyBytes).ToArray());
+#else
+
+#if NETFRAMEWORK && !NET472_OR_GREATER || NETSTANDARD2_0
+            var passwordKey = new Rfc2898DeriveBytes(password, salt);
+#else
+            var passwordKey = new Rfc2898DeriveBytes(password, salt, 1000, HashAlgorithmName.SHA256);
+#endif
+#if !NET35
+            using (passwordKey)
+#endif
+            {
+                Decrypt(source, destination, algorithm, passwordKey.GetBytes(keyBytes), passwordKey.GetBytes(blockBytes));
+            }
+#endif
+        }
+
+        /// <summary>
+        /// Decrypts a <paramref name="source"/> stream by the <see cref="Aes"/> algorithm using the provided <paramref name="password"/> and <paramref name="salt"/>,
+        /// and writes the decrypted result to the <paramref name="destination"/> stream. Both streams remain open after the decryption is done.
+        /// </summary>
+        /// <param name="source">The source stream to decrypt.</param>
+        /// <param name="destination">The destination stream to write the decrypted data to.</param>
+        /// <param name="password">Password of decryption.</param>
+        /// <param name="salt">A salt value to be used to derive the key and initialization vector bytes.
+        /// It should be the same as the one generated by the <see cref="Encrypt(Stream,Stream,string,out byte[])"/> method.</param>
+        public static void Decrypt(this Stream source, Stream destination, string password, byte[] salt)
+        {
+#if NETFRAMEWORK
+            using SymmetricAlgorithm alg = new AesManaged();
+#else
+            using SymmetricAlgorithm alg = Aes.Create();
+#endif
+            Decrypt(source, destination, alg, password, salt);
         }
 
         #endregion
