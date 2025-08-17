@@ -16,7 +16,9 @@
 #region Usings
 
 using System;
+#if NETFRAMEWORK && !NET472_OR_GREATER || NETSTANDARD2_0
 using System.Diagnostics.CodeAnalysis;
+#endif
 #if NETFRAMEWORK || NETSTANDARD2_0
 using System.Globalization;
 #endif
@@ -28,6 +30,16 @@ using System.Security.Cryptography;
 using System.Text;
 
 using KGySoft.Collections;
+using KGySoft.Security.Cryptography;
+
+#endregion
+
+#region Suppressions
+
+#if !NETCOREAPP3_0_OR_GREATER
+#pragma warning disable CS8602 // Dereference of a possibly null reference. - analyzer false alarm for .NET Framework and .NET Standard
+#pragma warning disable CS8604 // Possible null reference argument. - analyzer false alarm for .NET Framework and .NET Standard
+#endif
 
 #endregion
 
@@ -145,7 +157,7 @@ namespace KGySoft.CoreLibraries
                 return Split(raw, lineLength, indentSize, indentChar, indentSingleLine);
             }
 
-            return Wrap(raw, separator!, lineLength, indentSize, indentChar, indentSingleLine);
+            return Wrap(raw, separator, lineLength, indentSize, indentChar, indentSingleLine);
         }
 
         #endregion
@@ -349,16 +361,13 @@ namespace KGySoft.CoreLibraries
             algorithm.Key = key;
             algorithm.IV = iv;
 
-            ICryptoTransform encryptor = algorithm.CreateEncryptor();
-            using (MemoryStream encryptedResult = new MemoryStream())
-            {
-                using (CryptoStream encryptStream = new CryptoStream(encryptedResult, encryptor, CryptoStreamMode.Write))
-                    encryptStream.Write(bytes, 0, bytes.Length);
+            using ICryptoTransform encryptor = algorithm.CreateEncryptor();
+            using var encryptedResult = new MemoryStream();
+            using (var encryptStream = new CryptoStream(encryptedResult, encryptor, CryptoStreamMode.Write))
+                encryptStream.Write(bytes, 0, bytes.Length);
 
-                return encryptedResult.ToArray();
-            }
+            return encryptedResult.ToArray();
         }
-
 
         /// <summary>
         /// Encrypts a byte array by the provided symmetric <paramref name="algorithm"/>, <paramref name="password"/> and <paramref name="salt"/>.
@@ -366,30 +375,43 @@ namespace KGySoft.CoreLibraries
         /// <param name="bytes">Source bytes to encrypt.</param>
         /// <param name="algorithm">A <see cref="SymmetricAlgorithm"/> instance to be used for encryption.</param>
         /// <param name="password">Password of encryption.</param>
-        /// <param name="salt">A salt value to be used for encryption. If <see langword="null"/> or is empty, a default salt will be used.</param>
+        /// <param name="salt">A salt value to be used to derive the key and initialization vector bytes.
+        /// It is recommended to be unique for each case the same <paramref name="password"/> is used.</param>
         /// <returns>The encrypted result of <paramref name="bytes"/>.</returns>
 #if NETFRAMEWORK && !NET472_OR_GREATER || NETSTANDARD2_0
-        [SuppressMessage("Security", "CA5379:Do Not Use Weak Key Derivation Function Algorithm", Justification = "The overload with a stronger algorithm requires at least .NET 4.7.2")] 
+        [SuppressMessage("Security", "CA5379:Do Not Use Weak Key Derivation Function Algorithm", Justification = "The overload with a stronger algorithm requires at least .NET 4.7.2")]
 #endif
-        public static byte[] Encrypt(this byte[] bytes, SymmetricAlgorithm algorithm, string password, string? salt)
+        public static byte[] Encrypt(this byte[] bytes, SymmetricAlgorithm algorithm, string password, string salt)
         {
             if (password == null!)
                 Throw.ArgumentNullException(Argument.password);
             if (algorithm == null!)
                 Throw.ArgumentNullException(Argument.algorithm);
+            if (salt == null!)
+                Throw.ArgumentNullException(Argument.salt);
 
             CheckSalt(ref salt);
-#if NETFRAMEWORK && !NET472_OR_GREATER || NETSTANDARD2_0
-            var passwordKey = new Rfc2898DeriveBytes(password, Encoding.UTF8.GetBytes(salt));
+            byte[] rawSalt = Encoding.UTF8.GetBytes(salt);
+            int keyBytes = algorithm.KeySize >> 3;
+            int blockBytes = algorithm.BlockSize >> 3;
+
+#if NET6_0_OR_GREATER
+            Span<byte> dest = stackalloc byte[keyBytes + blockBytes];
+            Rfc2898DeriveBytes.Pbkdf2(password, rawSalt, dest, 1000, HashAlgorithmName.SHA256);
+            return Encrypt(bytes, algorithm, dest.Slice(0, keyBytes).ToArray(), dest.Slice(keyBytes).ToArray());
 #else
-            var passwordKey = new Rfc2898DeriveBytes(password, Encoding.UTF8.GetBytes(salt), 1000, HashAlgorithmName.SHA256);
+#if NETFRAMEWORK && !NET472_OR_GREATER || NETSTANDARD2_0
+            var passwordKey = new Rfc2898DeriveBytes(password, rawSalt);
+#else
+            var passwordKey = new Rfc2898DeriveBytes(password, rawSalt, 1000, HashAlgorithmName.SHA256);
 #endif
 #if !NET35
             using (passwordKey)
 #endif
             {
-                return Encrypt(bytes, algorithm, passwordKey.GetBytes(algorithm.KeySize >> 3), passwordKey.GetBytes(algorithm.BlockSize >> 3));
+                return Encrypt(bytes, algorithm, passwordKey.GetBytes(keyBytes), passwordKey.GetBytes(blockBytes));
             }
+#endif
         }
 
         /// <summary>
@@ -397,9 +419,10 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="bytes">Source bytes to encrypt.</param>
         /// <param name="password">Password of encryption.</param>
-        /// <param name="salt">A salt value to be used for encryption. If <see langword="null"/> or is empty, a default salt will be used.</param>
+        /// <param name="salt">A salt value to be used to derive the key and initialization vector bytes.
+        /// It is recommended to be unique for each case the same <paramref name="password"/> is used.</param>
         /// <returns>The encrypted result of <paramref name="bytes"/>.</returns>
-        public static byte[] Encrypt(this byte[] bytes, string password, string? salt)
+        public static byte[] Encrypt(this byte[] bytes, string password, string salt)
         {
 #if NETFRAMEWORK
             using SymmetricAlgorithm alg = new AesManaged();
@@ -407,6 +430,64 @@ namespace KGySoft.CoreLibraries
             using SymmetricAlgorithm alg = Aes.Create();
 #endif
             return Encrypt(bytes, alg, password, salt);
+        }
+
+        /// <summary>
+        /// Encrypts a byte array by the provided symmetric <paramref name="algorithm"/> and <paramref name="password"/>, using a randomly generated <paramref name="salt"/>.
+        /// </summary>
+        /// <param name="bytes">Source bytes to encrypt.</param>
+        /// <param name="algorithm">A <see cref="SymmetricAlgorithm"/> instance to be used for encryption.</param>
+        /// <param name="password">Password of encryption.</param>
+        /// <param name="salt">When this method returns, contains the randomly generated salt bytes used to derive the key and initialization vector bytes. This parameter is passed uninitialized.</param>
+        /// <returns>The encrypted result of <paramref name="bytes"/>.</returns>
+#if NETFRAMEWORK && !NET472_OR_GREATER || NETSTANDARD2_0
+        [SuppressMessage("Security", "CA5379:Do Not Use Weak Key Derivation Function Algorithm", Justification = "The overload with a stronger algorithm requires at least .NET 4.7.2")]
+#endif
+        public static byte[] Encrypt(this byte[] bytes, SymmetricAlgorithm algorithm, string password, out byte[] salt)
+        {
+            if (password == null!)
+                Throw.ArgumentNullException(Argument.password);
+            if (algorithm == null!)
+                Throw.ArgumentNullException(Argument.algorithm);
+
+            salt = SecureRandom.Instance.NextBytes(8);
+            int keyBytes = algorithm.KeySize >> 3;
+            int blockBytes = algorithm.BlockSize >> 3;
+
+#if NET6_0_OR_GREATER
+            Span<byte> dest = stackalloc byte[keyBytes + blockBytes];
+            Rfc2898DeriveBytes.Pbkdf2(password, salt, dest, 1000, HashAlgorithmName.SHA256);
+            return Encrypt(bytes, algorithm, dest.Slice(0, keyBytes).ToArray(), dest.Slice(keyBytes).ToArray());
+#else
+#if NETFRAMEWORK && !NET472_OR_GREATER || NETSTANDARD2_0
+            var passwordKey = new Rfc2898DeriveBytes(password, salt);
+#else
+            var passwordKey = new Rfc2898DeriveBytes(password, salt, 1000, HashAlgorithmName.SHA256);
+#endif
+#if !NET35
+            using (passwordKey)
+#endif
+            {
+                return Encrypt(bytes, algorithm, passwordKey.GetBytes(keyBytes), passwordKey.GetBytes(blockBytes));
+            }
+#endif
+        }
+
+        /// <summary>
+        /// Encrypts a byte array by the <see cref="Aes"/> algorithm using the provided <paramref name="password"/> and a randomly generated <paramref name="salt"/>.
+        /// </summary>
+        /// <param name="bytes">Source bytes to encrypt.</param>
+        /// <param name="password">Password of encryption.</param>
+        /// <param name="salt">When this method returns, contains the randomly generated salt bytes used to derive the key and initialization vector bytes. This parameter is passed uninitialized.</param>
+        /// <returns>The encrypted result of <paramref name="bytes"/>.</returns>
+        public static byte[] Encrypt(this byte[] bytes, string password, out byte[] salt)
+        {
+#if NETFRAMEWORK
+            using SymmetricAlgorithm alg = new AesManaged();
+#else
+            using SymmetricAlgorithm alg = Aes.Create();
+#endif
+            return Encrypt(bytes, alg, password, out salt);
         }
 
         /// <summary>
@@ -471,19 +552,11 @@ namespace KGySoft.CoreLibraries
             algorithm.Key = key;
             algorithm.IV = iv;
 
-            ICryptoTransform decryptor = algorithm.CreateDecryptor();
+            using ICryptoTransform decryptor = algorithm.CreateDecryptor();
+            using var decryptedResult = new MemoryStream(bytes.Length);
             using (CryptoStream encryptStream = new CryptoStream(new MemoryStream(bytes), decryptor, CryptoStreamMode.Read))
-            {
-                // result is never longer than source
-                byte[] decryptedResult = new byte[bytes.Length];
-                int readBytes = encryptStream.Read(decryptedResult, 0, decryptedResult.Length);
-
-                // if result is shorter, trimming the array
-                if (readBytes != decryptedResult.Length)
-                    Array.Resize(ref decryptedResult, readBytes);
-
-                return decryptedResult;
-            }
+                encryptStream.CopyTo(decryptedResult);
+            return decryptedResult.Length == bytes.Length ? decryptedResult.GetBuffer() : decryptedResult.ToArray();
         }
 
         /// <summary>
@@ -509,8 +582,8 @@ namespace KGySoft.CoreLibraries
         /// <param name="bytes">Source bytes to decrypt.</param>
         /// <param name="algorithm">A <see cref="SymmetricAlgorithm"/> instance to use for decryption.</param>
         /// <param name="password">Password of decryption.</param>
-        /// <param name="salt">A salt value to be used for decryption. If <see langword="null"/> or is empty, a default salt will be used.</param>
-        /// <returns>The decrypted result of <paramref name="bytes"/>.</returns>
+        /// <param name="salt">A salt value to be used to derive the key and initialization vector bytes. If <see langword="null"/> or is empty, a default salt will be used.
+        /// It should be the same as the one used for the <see cref="Encrypt(byte[],SymmetricAlgorithm,string,string)"/> method.</param>
 #if NETFRAMEWORK && !NET472_OR_GREATER || NETSTANDARD2_0
         [SuppressMessage("Security", "CA5379:Do Not Use Weak Key Derivation Function Algorithm", Justification = "The overload with a stronger algorithm requires at least .NET 4.7.2")]
 #endif
@@ -520,19 +593,31 @@ namespace KGySoft.CoreLibraries
                 Throw.ArgumentNullException(Argument.algorithm);
             if (password == null!)
                 Throw.ArgumentNullException(Argument.password);
+            if (salt == null!)
+                Throw.ArgumentNullException(Argument.salt);
 
             CheckSalt(ref salt);
-#if NETFRAMEWORK && !NET472_OR_GREATER || NETSTANDARD2_0
-            var passwordKey = new Rfc2898DeriveBytes(password, Encoding.UTF8.GetBytes(salt));
+            byte[] rawSalt = Encoding.UTF8.GetBytes(salt);
+            int keyBytes = algorithm.KeySize >> 3;
+            int blockBytes = algorithm.BlockSize >> 3;
+#if NET6_0_OR_GREATER
+            Span<byte> dest = stackalloc byte[keyBytes + blockBytes];
+            Rfc2898DeriveBytes.Pbkdf2(password, rawSalt, dest, 1000, HashAlgorithmName.SHA256);
+            return Decrypt(bytes, algorithm, dest.Slice(0, keyBytes).ToArray(), dest.Slice(keyBytes).ToArray());
 #else
-            var passwordKey = new Rfc2898DeriveBytes(password, Encoding.UTF8.GetBytes(salt), 1000, HashAlgorithmName.SHA256);
+
+#if NETFRAMEWORK && !NET472_OR_GREATER || NETSTANDARD2_0
+            var passwordKey = new Rfc2898DeriveBytes(password, rawSalt);
+#else
+            var passwordKey = new Rfc2898DeriveBytes(password, rawSalt, 1000, HashAlgorithmName.SHA256);
 #endif
 #if !NET35
             using (passwordKey)
 #endif
             {
-                return Decrypt(bytes, algorithm, passwordKey.GetBytes(algorithm.KeySize >> 3), passwordKey.GetBytes(algorithm.BlockSize >> 3));
+                return Decrypt(bytes, algorithm, passwordKey.GetBytes(keyBytes), passwordKey.GetBytes(blockBytes));
             }
+#endif
         }
 
         /// <summary>
@@ -540,9 +625,68 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="bytes">Source bytes to decrypt.</param>
         /// <param name="password">Password of decryption.</param>
-        /// <param name="salt">A salt value to be used for decryption. If <see langword="null"/> or is empty, a default salt will be used.</param>
-        /// <returns>The decrypted result of <paramref name="bytes"/>.</returns>
+        /// <param name="salt">A salt value to be used to derive the key and initialization vector bytes. If <see langword="null"/> or is empty, a default salt will be used.
+        /// It should be the same as the one used for the <see cref="Encrypt(byte[],string,string)"/> method.</param>
         public static byte[] Decrypt(this byte[] bytes, string password, string? salt)
+        {
+#if NETFRAMEWORK
+            using SymmetricAlgorithm alg = new AesManaged();
+#else
+            using SymmetricAlgorithm alg = Aes.Create();
+#endif
+            return Decrypt(bytes, alg, password, salt);
+        }
+
+        /// <summary>
+        /// Decrypts a byte array by the provided symmetric <paramref name="algorithm"/>, <paramref name="password"/> and <paramref name="salt"/>.
+        /// </summary>
+        /// <param name="bytes">Source bytes to decrypt.</param>
+        /// <param name="algorithm">A <see cref="SymmetricAlgorithm"/> instance to use for decryption.</param>
+        /// <param name="password">Password of decryption.</param>
+        /// <param name="salt">A salt value to be used to derive the key and initialization vector bytes.
+        /// It should be the same as the one generated by the <see cref="Encrypt(byte[],SymmetricAlgorithm,string,out byte[])"/> method.</param>
+#if NETFRAMEWORK && !NET472_OR_GREATER || NETSTANDARD2_0
+        [SuppressMessage("Security", "CA5379:Do Not Use Weak Key Derivation Function Algorithm", Justification = "The overload with a stronger algorithm requires at least .NET 4.7.2")]
+#endif
+        public static byte[] Decrypt(this byte[] bytes, SymmetricAlgorithm algorithm, string password, byte[] salt)
+        {
+            if (algorithm == null!)
+                Throw.ArgumentNullException(Argument.algorithm);
+            if (password == null!)
+                Throw.ArgumentNullException(Argument.password);
+            if (salt == null!)
+                Throw.ArgumentNullException(Argument.salt);
+
+            int keyBytes = algorithm.KeySize >> 3;
+            int blockBytes = algorithm.BlockSize >> 3;
+#if NET6_0_OR_GREATER
+            Span<byte> dest = stackalloc byte[keyBytes + blockBytes];
+            Rfc2898DeriveBytes.Pbkdf2(password, salt, dest, 1000, HashAlgorithmName.SHA256);
+            return Decrypt(bytes, algorithm, dest.Slice(0, keyBytes).ToArray(), dest.Slice(keyBytes).ToArray());
+#else
+
+#if NETFRAMEWORK && !NET472_OR_GREATER || NETSTANDARD2_0
+            var passwordKey = new Rfc2898DeriveBytes(password, salt);
+#else
+            var passwordKey = new Rfc2898DeriveBytes(password, salt, 1000, HashAlgorithmName.SHA256);
+#endif
+#if !NET35
+            using (passwordKey)
+#endif
+            {
+                return Decrypt(bytes, algorithm, passwordKey.GetBytes(keyBytes), passwordKey.GetBytes(blockBytes));
+            }
+#endif
+        }
+
+        /// <summary>
+        /// Decrypts a byte array by the <see cref="Aes"/> algorithm using the provided <paramref name="password"/> and <paramref name="salt"/>.
+        /// </summary>
+        /// <param name="bytes">Source bytes to decrypt.</param>
+        /// <param name="password">Password of decryption.</param>
+        /// <param name="salt">A salt value to be used to derive the key and initialization vector bytes.
+        /// It should be the same as the one generated by the <see cref="Encrypt(byte[],string,out byte[])"/> method.</param>
+        public static byte[] Decrypt(this byte[] bytes, string password, byte[] salt)
         {
 #if NETFRAMEWORK
             using SymmetricAlgorithm alg = new AesManaged();
@@ -558,15 +702,16 @@ namespace KGySoft.CoreLibraries
 
         #region Private methods
 
-        private static void CheckSalt([NotNull]ref string? salt)
+        private static void CheckSalt(ref string salt)
         {
-            if (String.IsNullOrEmpty(salt))
+            // Older frameworks require the salt to be at least 8 bytes long, so we ensure it is. We cannot use random salt generation here because it would not be reproducible.
+            if (salt.Length == 0)
             {
                 salt = "ABCDEFGH";
                 return;
             }
 
-            if (salt!.Length < 8)
+            if (salt.Length < 8)
                 salt = salt.Repeat((int)Math.Ceiling(8d / salt.Length));
         }
 

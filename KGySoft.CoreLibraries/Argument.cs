@@ -125,6 +125,7 @@ namespace KGySoft
         reader,
         resx,
         s,
+        salt,
         scale,
         seed,
         separator,

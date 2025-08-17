@@ -19,6 +19,8 @@ using System;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using System.Security.Cryptography;
+using System.Text;
 #if NETFRAMEWORK
 using System.Security;
 using System.Security.Permissions;
@@ -200,6 +202,24 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             result = bytes.ToDecimalValuesString(", ", 1, 2, ' ', true);
             Assert.IsTrue(Char.IsWhiteSpace(result[0]));
             Assert.IsFalse(result.Contains(Environment.NewLine));
+        }
+
+        [Test]
+        public void EncryptDecrypt()
+        {
+            string password = "testPassword";
+            string message = "Hello, World!";
+            byte[] rawMessage = Encoding.UTF8.GetBytes(message);
+
+            // Fix string salt
+            byte[] encrypted = rawMessage.Encrypt(password, String.Empty);
+            Console.WriteLine(encrypted.ToHexValuesString(","));
+            Assert.AreEqual(message, Encoding.UTF8.GetString(encrypted.Decrypt(password, String.Empty)));
+
+            // Random bytes salt
+            encrypted = rawMessage.Encrypt(password, out byte[] saltBytes);
+            Console.WriteLine(encrypted.ToHexValuesString(","));
+            Assert.AreEqual(message, Encoding.UTF8.GetString(encrypted.Decrypt(password, saltBytes)));
         }
 
 #if NETFRAMEWORK
