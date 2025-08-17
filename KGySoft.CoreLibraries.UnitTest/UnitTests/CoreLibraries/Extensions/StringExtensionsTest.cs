@@ -18,6 +18,7 @@
 using System;
 using System.Globalization;
 using System.Linq;
+using System.Text;
 
 #if !NET35
 using System.Numerics;
@@ -54,6 +55,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
                 Assert.IsTrue(EnvironmentHelper.IsPartiallyTrustedDomain);
                 var test = new StringExtensionsTest();
                 test.RepeatTest("Alpha", 3, "AlphaAlphaAlpha");
+                test.EncryptDecrypt();
             }
         }
 #endif
@@ -229,6 +231,23 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Assert.AreEqual(0, s.IndexOfAny("delta", ""));
             Assert.AreEqual(-1, s.IndexOfAny("delta", "epsilon"));
             Assert.AreEqual(13, s.IndexOfAny("delta", "gamma"));
+        }
+
+        [Test]
+        public void EncryptDecrypt()
+        {
+            string password = "testPassword";
+            string message = "Hello, World!";
+
+            // Default encoding
+            string encrypted = message.Encrypt(password, out byte[] salt);
+            Console.WriteLine(encrypted);
+            Assert.AreEqual(message, encrypted.Decrypt(password, salt));
+
+            // UTF-8 encoding
+            encrypted = message.Encrypt(password, out salt, Encoding.UTF8);
+            Console.WriteLine(encrypted);
+            Assert.AreEqual(message, encrypted.Decrypt(password, salt, Encoding.UTF8));
         }
 
 #if NETFRAMEWORK

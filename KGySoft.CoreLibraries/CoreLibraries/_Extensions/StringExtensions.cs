@@ -20,18 +20,20 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 #if !NET35
 using System.Numerics;
 #endif
 using System.Runtime.CompilerServices;
 using System.Security;
-#if NETCOREAPP3_0_OR_GREATER || NETFRAMEWORK || NETSTANDARD2_0
+using System.Security.Cryptography;
 using System.Text;
-#endif
 using System.Text.RegularExpressions;
 
+using KGySoft.IO;
 using KGySoft.Reflection;
+using KGySoft.Security.Cryptography;
 
 #endregion
 
@@ -646,6 +648,274 @@ namespace KGySoft.CoreLibraries
         /// <param name="s">The string to create the <see cref="StringSegment"/> from.</param>
         /// <returns>A <see cref="StringSegment"/> instance for the specified string.</returns>
         public static StringSegment AsSegment(this string? s) => s == null ? default : new StringSegment(s);
+
+        #endregion
+
+        #region Encryption
+
+        /// <summary>
+        /// Encrypts a text by provided symmetric <paramref name="algorithm"/>, <paramref name="key"/> and initialization vector.
+        /// </summary>
+        /// <param name="text">The source plain text to encrypt.</param>
+        /// <param name="algorithm">A <see cref="SymmetricAlgorithm"/> instance to be used for encryption.</param>
+        /// <param name="key">Key to be used for encryption.</param>
+        /// <param name="iv">Initialization vector to be used for encryption.</param>
+        /// <param name="encoding">An optional <see cref="Encoding"/> to transcode the <paramref name="text"/> before encryption.
+        /// If <see langword="null"/>, then the actual UTF-16 encoding will be used, which can be faster and may allocate less memory, but
+        /// the result may be longer if <paramref name="text"/> contains ASCII characters only, for example. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <returns>The encrypted result of <paramref name="text"/> in base64 format.</returns>
+        public static string Encrypt(this string text, SymmetricAlgorithm algorithm, byte[] key, byte[] iv, Encoding? encoding = null)
+        {
+            if (text == null!)
+                Throw.ArgumentNullException(Argument.text);
+            if (algorithm == null!)
+                Throw.ArgumentNullException(Argument.algorithm);
+            if (key == null!)
+                Throw.ArgumentNullException(Argument.key);
+            if (iv == null!)
+                Throw.ArgumentNullException(Argument.iv);
+
+            algorithm.Key = key;
+            algorithm.IV = iv;
+
+            // we have an encoder: creating a byte array from the text first, and then encrypting it
+            if (encoding != null && !Equals(encoding, Encoding.Unicode))
+                return Convert.ToBase64String(encoding.GetBytes(text).Encrypt(algorithm, key, iv));
+
+            // no encoder, or the default Unicode encoding is used: encrypting the text directly, using StringStream, which is a non-copying stream wrapper around the string
+            using Stream sourceStream = new StringStream(text);
+            using var encryptedResult = new MemoryStream();
+            sourceStream.Encrypt(encryptedResult, algorithm, key, iv);
+            return Convert.ToBase64String(encryptedResult.ToArray());
+        }
+
+        /// <summary>
+        /// Encrypts a text by the provided symmetric <paramref name="algorithm"/> and <paramref name="password"/>, using a randomly generated <paramref name="salt"/>.
+        /// </summary>
+        /// <param name="text">The source plain text to encrypt.</param>
+        /// <param name="algorithm">A <see cref="SymmetricAlgorithm"/> instance to be used for encryption.</param>
+        /// <param name="password">Password of encryption.</param>
+        /// <param name="salt">When this method returns, contains the randomly generated salt bytes used to derive the key and initialization vector bytes. This parameter is passed uninitialized.</param>
+        /// <param name="encoding">An optional <see cref="Encoding"/> to transcode the <paramref name="text"/> before encryption.
+        /// If <see langword="null"/>, then the actual UTF-16 encoding will be used, which can be faster and may allocate less memory, but
+        /// the result may be longer if <paramref name="text"/> contains ASCII characters only, for example. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <returns>The encrypted result of <paramref name="text"/>.</returns>
+#if NETFRAMEWORK && !NET472_OR_GREATER || NETSTANDARD2_0
+        [SuppressMessage("Security", "CA5379:Do Not Use Weak Key Derivation Function Algorithm", Justification = "The overload with a stronger algorithm requires at least .NET 4.7.2")]
+#endif
+        public static string Encrypt(this string text, SymmetricAlgorithm algorithm, string password, out byte[] salt, Encoding? encoding = null)
+        {
+            if (password == null!)
+                Throw.ArgumentNullException(Argument.password);
+            if (algorithm == null!)
+                Throw.ArgumentNullException(Argument.algorithm);
+
+            salt = SecureRandom.Instance.NextBytes(8);
+            int keyBytes = algorithm.KeySize >> 3;
+            int blockBytes = algorithm.BlockSize >> 3;
+
+#if NET6_0_OR_GREATER
+            Span<byte> dest = stackalloc byte[keyBytes + blockBytes];
+            Rfc2898DeriveBytes.Pbkdf2(password, salt, dest, 1000, HashAlgorithmName.SHA256);
+            return Encrypt(text, algorithm, dest.Slice(0, keyBytes).ToArray(), dest.Slice(keyBytes).ToArray(), encoding);
+#else
+#if NETFRAMEWORK && !NET472_OR_GREATER || NETSTANDARD2_0
+            var passwordKey = new Rfc2898DeriveBytes(password, salt);
+#else
+            var passwordKey = new Rfc2898DeriveBytes(password, salt, 1000, HashAlgorithmName.SHA256);
+#endif
+#if !NET35
+            using (passwordKey)
+#endif
+            {
+                return Encrypt(text, algorithm, passwordKey.GetBytes(keyBytes), passwordKey.GetBytes(blockBytes), encoding);
+            }
+#endif
+        }
+
+        /// <summary>
+        /// Encrypts a text by the <see cref="Aes"/> algorithm using the provided <paramref name="password"/> and a randomly generated <paramref name="salt"/>.
+        /// </summary>
+        /// <param name="text">The source plain text to encrypt.</param>
+        /// <param name="password">Password of encryption.</param>
+        /// <param name="salt">When this method returns, contains the randomly generated salt bytes used to derive the key and initialization vector bytes. This parameter is passed uninitialized.</param>
+        /// <param name="encoding">An optional <see cref="Encoding"/> to transcode the <paramref name="text"/> before encryption.
+        /// If <see langword="null"/>, then the actual UTF-16 encoding will be used, which can be faster and may allocate less memory, but
+        /// the result may be longer if <paramref name="text"/> contains ASCII characters only, for example. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <returns>The encrypted result of <paramref name="text"/>.</returns>
+        public static string Encrypt(this string text, string password, out byte[] salt, Encoding? encoding = null)
+        {
+#if NETFRAMEWORK
+            using SymmetricAlgorithm alg = new AesManaged();
+#else
+            using SymmetricAlgorithm alg = Aes.Create();
+#endif
+            return Encrypt(text, alg, password, out salt, encoding);
+        }
+
+        /// <summary>
+        /// Encrypts a text by the provided symmetric <paramref name="algorithm"/>, using a randomly generated key and initialization vector, which are
+        /// returned in <paramref name="key"/> and <paramref name="iv"/> parameters, respectively.
+        /// </summary>
+        /// <param name="text">The source plain text to encrypt.</param>
+        /// <param name="algorithm">A <see cref="SymmetricAlgorithm"/> instance to be used for encryption.</param>
+        /// <param name="key">Returns the automatically generated key used for encryption.</param>
+        /// <param name="iv">Returns the automatically generated initialization vector used for encryption.</param>
+        /// <param name="encoding">An optional <see cref="Encoding"/> to transcode the <paramref name="text"/> before encryption.
+        /// If <see langword="null"/>, then the actual UTF-16 encoding will be used, which can be faster and may allocate less memory, but
+        /// the result may be longer if <paramref name="text"/> contains ASCII characters only, for example. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <returns>The encrypted result of <paramref name="text"/>.</returns>
+        [CLSCompliant(false)]
+        public static string Encrypt(this string text, SymmetricAlgorithm algorithm, out byte[] key, out byte[] iv, Encoding? encoding = null)
+        {
+            if (algorithm == null!)
+                Throw.ArgumentNullException(Argument.algorithm);
+
+            algorithm.GenerateKey();
+            algorithm.GenerateIV();
+            key = algorithm.Key;
+            iv = algorithm.IV;
+            return Encrypt(text, algorithm, key, iv, encoding);
+        }
+
+        /// <summary>
+        /// Encrypts a text by the <see cref="Aes"/> algorithm using a randomly generated key and initialization vector, which are
+        /// returned in <paramref name="key"/> and <paramref name="iv"/> parameters, respectively.
+        /// </summary>
+        /// <param name="text">The source plain text to encrypt.</param>
+        /// <param name="key">Returns the automatically generated key used for encryption.</param>
+        /// <param name="iv">Returns the automatically generated initialization vector used for encryption.</param>
+        /// <param name="encoding">An optional <see cref="Encoding"/> to transcode the <paramref name="text"/> before encryption.
+        /// If <see langword="null"/>, then the actual UTF-16 encoding will be used, which can be faster and may allocate less memory, but
+        /// the result may be longer if <paramref name="text"/> contains ASCII characters only, for example. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <returns>The encrypted result of <paramref name="text"/>.</returns>
+        public static string Encrypt(this string text, out byte[] key, out byte[] iv, Encoding? encoding = null)
+        {
+#if NETFRAMEWORK
+            using SymmetricAlgorithm alg = new AesManaged();
+#else
+            using SymmetricAlgorithm alg = Aes.Create();
+#endif
+            return Encrypt(text, alg, out key, out iv, encoding);
+        }
+
+        /// <summary>
+        /// Decrypts an encrypted base64 string <paramref name="data"/> by the provided symmetric <paramref name="algorithm"/>, <paramref name="key"/> and initialization vector.
+        /// </summary>
+        /// <param name="data">The encrypted text in base64 format.</param>
+        /// <param name="algorithm">A <see cref="SymmetricAlgorithm"/> instance to use for decryption.</param>
+        /// <param name="key">Key of decryption.</param>
+        /// <param name="iv">The initialization vector to be used for decryption.</param>
+        /// <param name="encoding">The <see cref="Encoding"/> of the decrypted plain text.
+        /// If <see langword="null"/>, then the native UTF-16 encoding of the <see cref="string">string</see> type is assumed. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <returns>The decrypted plain text.</returns>
+        public static string Decrypt(this string data, SymmetricAlgorithm algorithm, byte[] key, byte[] iv, Encoding? encoding = null)
+        {
+            if (data == null!)
+                Throw.ArgumentNullException(Argument.data);
+            if (algorithm == null!)
+                Throw.ArgumentNullException(Argument.algorithm);
+            if (key == null!)
+                Throw.ArgumentNullException(Argument.key);
+            if (iv == null!)
+                Throw.ArgumentNullException(Argument.iv);
+
+            byte[] bytes = Convert.FromBase64String(data).Decrypt(algorithm, key, iv);
+            return (encoding ?? Encoding.Unicode).GetString(bytes);
+        }
+
+        /// <summary>
+        /// Decrypts an encrypted base64 string <paramref name="data"/> by the <see cref="Aes"/> algorithm using the provided <paramref name="key"/> and initialization vector.
+        /// </summary>
+        /// <param name="data">The encrypted text in base64 format.</param>
+        /// <param name="key">Key of decryption.</param>
+        /// <param name="iv">The initialization vector to be used for decryption.</param>
+        /// <param name="encoding">The <see cref="Encoding"/> of the decrypted plain text.
+        /// If <see langword="null"/>, then the native UTF-16 encoding of the <see cref="string">string</see> type is assumed. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <returns>The decrypted plain text.</returns>
+        public static string Decrypt(this string data, byte[] key, byte[] iv, Encoding? encoding = null)
+        {
+#if NETFRAMEWORK
+            using SymmetricAlgorithm alg = new AesManaged();
+#else
+            using SymmetricAlgorithm alg = Aes.Create();
+#endif
+            return Decrypt(data, alg, key, iv, encoding);
+        }
+
+        /// <summary>
+        /// Decrypts an encrypted base64 string <paramref name="data"/> by the provided symmetric <paramref name="algorithm"/>, <paramref name="password"/> and <paramref name="salt"/>.
+        /// </summary>
+        /// <param name="data">The encrypted text in base64 format.</param>
+        /// <param name="algorithm">A <see cref="SymmetricAlgorithm"/> instance to use for decryption.</param>
+        /// <param name="password">Password of decryption.</param>
+        /// <param name="salt">A salt value to be used to derive the key and initialization vector bytes.
+        /// It should be the same as the one generated by the <see cref="Encrypt(byte[],SymmetricAlgorithm,string,out byte[])"/> method.</param>
+        /// <param name="encoding">The <see cref="Encoding"/> of the decrypted plain text.
+        /// If <see langword="null"/>, then the native UTF-16 encoding of the <see cref="string">string</see> type is assumed. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <returns>The decrypted plain text.</returns>
+#if NETFRAMEWORK && !NET472_OR_GREATER || NETSTANDARD2_0
+        [SuppressMessage("Security", "CA5379:Do Not Use Weak Key Derivation Function Algorithm", Justification = "The overload with a stronger algorithm requires at least .NET 4.7.2")]
+#endif
+        public static string Decrypt(this string data, SymmetricAlgorithm algorithm, string password, byte[] salt, Encoding? encoding = null)
+        {
+            if (algorithm == null!)
+                Throw.ArgumentNullException(Argument.algorithm);
+            if (password == null!)
+                Throw.ArgumentNullException(Argument.password);
+            if (salt == null!)
+                Throw.ArgumentNullException(Argument.salt);
+
+            int keyBytes = algorithm.KeySize >> 3;
+            int blockBytes = algorithm.BlockSize >> 3;
+#if NET6_0_OR_GREATER
+            Span<byte> dest = stackalloc byte[keyBytes + blockBytes];
+            Rfc2898DeriveBytes.Pbkdf2(password, salt, dest, 1000, HashAlgorithmName.SHA256);
+            return Decrypt(data, algorithm, dest.Slice(0, keyBytes).ToArray(), dest.Slice(keyBytes).ToArray(), encoding);
+#else
+
+#if NETFRAMEWORK && !NET472_OR_GREATER || NETSTANDARD2_0
+            var passwordKey = new Rfc2898DeriveBytes(password, salt);
+#else
+            var passwordKey = new Rfc2898DeriveBytes(password, salt, 1000, HashAlgorithmName.SHA256);
+#endif
+#if !NET35
+            using (passwordKey)
+#endif
+            {
+                return Decrypt(data, algorithm, passwordKey.GetBytes(keyBytes), passwordKey.GetBytes(blockBytes), encoding);
+            }
+#endif
+        }
+
+        /// <summary>
+        /// Decrypts an encrypted base64 string <paramref name="data"/> by the <see cref="Aes"/> algorithm using the provided <paramref name="password"/> and <paramref name="salt"/>.
+        /// </summary>
+        /// <param name="data">The encrypted text in base64 format.</param>
+        /// <param name="password">Password of decryption.</param>
+        /// <param name="salt">A salt value to be used to derive the key and initialization vector bytes.
+        /// It should be the same as the one generated by the <see cref="Encrypt(byte[],string,out byte[])"/> method.</param>
+        /// <param name="encoding">The <see cref="Encoding"/> of the decrypted plain text.
+        /// If <see langword="null"/>, then the native UTF-16 encoding of the <see cref="string">string</see> type is assumed. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <returns>The decrypted plain text.</returns>
+        public static string Decrypt(this string data, string password, byte[] salt, Encoding? encoding = null)
+        {
+#if NETFRAMEWORK
+            using SymmetricAlgorithm alg = new AesManaged();
+#else
+            using SymmetricAlgorithm alg = Aes.Create();
+#endif
+            return Decrypt(data, alg, password, salt, encoding);
+        }
 
         #endregion
 

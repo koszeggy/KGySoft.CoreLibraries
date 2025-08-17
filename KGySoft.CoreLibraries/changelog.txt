@@ -36,6 +36,7 @@
   + New Encrypt/Decrypt methods
 + StringExtensions
   + New IsValidUnicode method: To check whether a string or a span contains only valid Unicode codepoints.
+  + New Encrypt/Decrypt methods
 * StringSegment struct:
   + New IndexOf and LastIndexOf overloads
   + New Contains methods
