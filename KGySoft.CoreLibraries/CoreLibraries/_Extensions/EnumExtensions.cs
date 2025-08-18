@@ -213,6 +213,76 @@ namespace KGySoft.CoreLibraries
             return Enum<TEnum>.GetFlagsCount(value);
         }
 
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+        /// <summary>
+        /// Tries to format the <paramref name="value"/> of the current <typeparamref name="TEnum"/> instance into the provided span of characters.
+        /// </summary>
+        /// <typeparam name="TEnum">The type of the <see langword="enum"/>&#160;<paramref name="value"/>.</typeparam>
+        /// <param name="value">A <typeparamref name="TEnum"/> value to be formatted.</param>
+        /// <param name="destination">The target span of characters of the formatted value.</param>
+        /// <param name="charsWritten">When this method returns, the number of characters that were written in <paramref name="destination"/>.</param>
+        /// <param name="format">The formatting options. This parameter is optional.
+        /// <br/>Default value: <see cref="EnumFormattingOptions.Auto"/>.</param>
+        /// <param name="separator">A span containing the separator in case of flags formatting. If empty, then comma-space (<c>, </c>) separator is used. This parameter is optional.
+        /// <br/>Default value: <see cref="Span{T}.Empty"><![CDATA[Span<char>.Empty]]></see>.</param>
+        /// <returns><see langword="true"/>, if the formatting was successful; otherwise, <see langword="false"/>.</returns>
+        public static bool TryFormat<TEnum>(this TEnum value, Span<char> destination, out int charsWritten, EnumFormattingOptions format = EnumFormattingOptions.Auto, ReadOnlySpan<char> separator = default)
+            where TEnum : struct, Enum
+        {
+            return Enum<TEnum>.TryFormat(value, destination, out charsWritten, format, separator);
+        }
+
+        /// <summary>
+        /// Tries to format the <paramref name="value"/> of the current <typeparamref name="TEnum"/> instance
+        /// into the provided span of characters using <see cref="EnumFormattingOptions.Auto"/> formatting options.
+        /// </summary>
+        /// <typeparam name="TEnum">The type of the <see langword="enum"/>&#160;<paramref name="value"/>.</typeparam>
+        /// <param name="value">A <typeparamref name="TEnum"/> value to be formatted.</param>
+        /// <param name="destination">The target span of characters of the formatted value.</param>
+        /// <param name="charsWritten">When this method returns, the number of characters that were written in <paramref name="destination"/>.</param>
+        /// <param name="separator">A span containing the separator in case of flags formatting. If empty, then comma-space (<c>, </c>) separator is used.</param>
+        /// <returns><see langword="true"/>, if the formatting was successful; otherwise, <see langword="false"/>.</returns>
+        public static bool TryFormat<TEnum>(this TEnum value, Span<char> destination, out int charsWritten, ReadOnlySpan<char> separator)
+            where TEnum : struct, Enum
+        {
+            return Enum<TEnum>.TryFormat(value, destination, out charsWritten, separator);
+        }
+
+        /// <summary>
+        /// Tries to format the <paramref name="value"/> of the current <typeparamref name="TEnum"/> instance into the provided span of UTF-8 bytes.
+        /// </summary>
+        /// <typeparam name="TEnum">The type of the <see langword="enum"/>&#160;<paramref name="value"/>.</typeparam>
+        /// <param name="value">A <typeparamref name="TEnum"/> value to be formatted.</param>
+        /// <param name="utf8Destination">The target span of UTF-8 bytes of the formatted value.</param>
+        /// <param name="bytesWritten">When this method returns, the number of bytes that were written in <paramref name="utf8Destination"/>.</param>
+        /// <param name="format">The formatting options. This parameter is optional.
+        /// <br/>Default value: <see cref="EnumFormattingOptions.Auto"/>.</param>
+        /// <param name="separator">A span containing the separator in case of flags formatting. If empty, then comma-space (<c>, </c>) separator is used. This parameter is optional.
+        /// <br/>Default value: <see cref="Span{T}.Empty"><![CDATA[Span<byte>.Empty]]></see>.</param>
+        /// <returns><see langword="true"/>, if the formatting was successful; otherwise, <see langword="false"/>.</returns>
+        public static bool TryFormat<TEnum>(this TEnum value, Span<byte> utf8Destination, out int bytesWritten, EnumFormattingOptions format = EnumFormattingOptions.Auto, ReadOnlySpan<byte> separator = default)
+            where TEnum : struct, Enum
+        {
+            return Enum<TEnum>.TryFormat(value, utf8Destination, out bytesWritten, format, separator);
+        }
+
+        /// <summary>
+        /// Tries to format the <paramref name="value"/> of the current <typeparamref name="TEnum"/> instance
+        /// into the provided span of UTF-8 bytes using <see cref="EnumFormattingOptions.Auto"/> formatting options.
+        /// </summary>
+        /// <typeparam name="TEnum">The type of the <see langword="enum"/>&#160;<paramref name="value"/>.</typeparam>
+        /// <param name="value">A <typeparamref name="TEnum"/> value to be formatted.</param>
+        /// <param name="utf8Destination">The target span of UTF-8 bytes of the formatted value.</param>
+        /// <param name="bytesWritten">When this method returns, the number of bytes that were written in <paramref name="utf8Destination"/>.</param>
+        /// <param name="separator">A span containing the separator in case of flags formatting. If empty, then comma-space (<c>, </c>) separator is used.</param>
+        /// <returns><see langword="true"/>, if the formatting was successful; otherwise, <see langword="false"/>.</returns>
+        public static bool TryFormat<TEnum>(this TEnum value, Span<byte> utf8Destination, out int bytesWritten, ReadOnlySpan<byte> separator)
+            where TEnum : struct, Enum
+        {
+            return Enum<TEnum>.TryFormat(value, utf8Destination, out bytesWritten, separator);
+        }
+#endif
+
         /// <summary>
         /// Gets whether every single bit value in <paramref name="flags"/> are defined in the <see langword="enum"/> type of <paramref name="flags"/>,
         /// or when <paramref name="flags"/> is zero, it is checked whether zero is defined in the <see langword="enum"/> type of <paramref name="flags"/>.
