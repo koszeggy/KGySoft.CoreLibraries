@@ -35,7 +35,7 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// Dynamic delegate way. This option uses cached <see cref="MemberAccessor"/> instances for reflection.
-        /// In this case first access of a member is slower than accessing it via system reflection but further accesses are much more faster.
+        /// In this case first access of a member is slower than accessing it via system reflection but further accesses are much more fast.
         /// </summary>
         DynamicDelegate,
 

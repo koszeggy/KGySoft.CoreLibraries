@@ -127,9 +127,6 @@ namespace KGySoft.Reflection
                 Throw.ArgumentNullException(Argument.member);
             MemberInfo = member;
             ParameterTypes = parameterTypes ?? Type.EmptyTypes;
-            Type? pointerType = ParameterTypes.FirstOrDefault(p => p.IsPointer);
-            if (pointerType != null)
-                Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(pointerType));
         }
 
         #endregion
@@ -173,7 +170,21 @@ namespace KGySoft.Reflection
             }
         }
 
-        private protected static IEnumerable<Type> StripByRefTypes(IEnumerable<Type> types) => types.Select(t => t.IsByRef ? t.GetElementType()! : t);
+        private protected static IEnumerable<Type> GetGenericArguments(IEnumerable<Type> types)
+        {
+            #region Local Methods
+            
+            static Type GetArgumentType(Type t)
+            {
+                if (t.IsByRef)
+                    t = t.GetElementType()!;
+                return t.IsPointer ? typeof(IntPtr) : t;
+            }
+
+            #endregion
+
+            return types.Select(GetArgumentType);
+        }
 
         #endregion
 
@@ -237,7 +248,13 @@ namespace KGySoft.Reflection
 
         #region Private Protected Methods
 
-#if !NETSTANDARD2_0
+#if NETSTANDARD2_0
+        private protected void ThrowIfNotSupportedParameters()
+        {
+            if (ParameterTypes.FirstOrDefault(p => p.IsByRef && p.GetElementType()!.IsPointer) is Type t)
+                Throw.PlatformNotSupportedException(Res.ReflectionRefPointerTypeNotSupportedNetStandard20(t));
+        }
+#else
         /// <summary>
         /// Gets a <see cref="DynamicMethod"/> that invokes the referred <paramref name="methodBase"/> (method or constructor).
         /// An overridden class may use this to create a delegate optionally.
@@ -274,10 +291,15 @@ namespace KGySoft.Reflection
             bool stronglyTyped = options.HasFlag<DynamicMethodOptions>(DynamicMethodOptions.StronglyTyped);
             bool treatAsPropertySetter = options.HasFlag<DynamicMethodOptions>(DynamicMethodOptions.TreatAsPropertySetter);
             bool exactParameters = options.HasFlag<DynamicMethodOptions>(DynamicMethodOptions.ExactParameters);
-            Type returnType = method != null ? method.ReturnType : treatCtorAsMethod ? Reflector.VoidType : declaringType!;
+            Type returnType = method != null ? method.ReturnType.IsPointer ? typeof(IntPtr) : method.ReturnType
+                : treatCtorAsMethod ? Reflector.VoidType
+                : declaringType!;
             bool isRefReturn = returnType.IsByRef;
             if (isRefReturn)
-                returnType = returnType.GetElementType()!;
+            {
+                var returnElementType = returnType.GetElementType()!;
+                returnType = returnElementType.IsPointer ? typeof(IntPtr) : returnElementType;
+            }
 
             Type dmReturnType = returnType == Reflector.VoidType ? returnNullForVoid ? Reflector.ObjectType : Reflector.VoidType
                 : stronglyTyped ? returnType
@@ -380,7 +402,7 @@ namespace KGySoft.Reflection
                 {
                     Debug.Assert(ParameterTypes.Length <= 4, "More than 4 parameters are not expected for separate parameters");
                     if (stronglyTyped)
-                        parameters.AddRange(StripByRefTypes(ParameterTypes));
+                        parameters.AddRange(GetGenericArguments(ParameterTypes));
                     else
                         for (int i = 0; i < ParameterTypes.Length; i++)
                             parameters.Add(Reflector.ObjectType);
@@ -421,7 +443,7 @@ namespace KGySoft.Reflection
                             EmitLdarg(il, paramsOffset + i); // loading parameter
 
                         if (!stronglyTyped)
-                            il.Emit(paramType.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, paramType);
+                            il.Emit(paramType.IsValueType || paramType.IsPointer ? OpCodes.Unbox_Any : OpCodes.Castclass, paramType.IsPointer ? typeof(IntPtr) : paramType);
                         il.Emit(OpCodes.Stloc, localsIndex); // storing value in local variable
                     }
 
@@ -438,8 +460,10 @@ namespace KGySoft.Reflection
 
                 for (int i = 0, localsIndex = 0; i < ParameterTypes.Length; i++)
                 {
+                    Type paramType = ParameterTypes[i];
+
                     // ref/out parameters: by the address of the local variables or parameters
-                    if (ParameterTypes[i].IsByRef)
+                    if (paramType.IsByRef)
                     {
                         if (stronglyTyped)
                             il.Emit(OpCodes.Ldarga, i + paramsOffset);
@@ -461,7 +485,7 @@ namespace KGySoft.Reflection
                         EmitLdarg(il, paramsOffset + i); // loading parameter
 
                     if (!stronglyTyped)
-                        il.Emit(ParameterTypes[i].IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, ParameterTypes[i]);
+                        il.Emit(paramType.IsValueType || paramType.IsPointer ? OpCodes.Unbox_Any : OpCodes.Castclass, paramType.IsPointer ? typeof(IntPtr) : paramType);
                 }
             }
 
@@ -484,8 +508,8 @@ namespace KGySoft.Reflection
                     ++localsIndex;
 
                     // ReSharper disable once PossibleNullReferenceException - not null because of the if above
-                    if (paramType.IsValueType)
-                        il.Emit(OpCodes.Box, paramType); // boxing value type into object
+                    if (paramType.IsValueType || paramType.IsPointer)
+                        il.Emit(OpCodes.Box, paramType.IsPointer ? typeof(IntPtr) : paramType); // boxing value type into object
                     il.Emit(OpCodes.Stelem_Ref); // storing the variable into the pointed array index
                 }
             }

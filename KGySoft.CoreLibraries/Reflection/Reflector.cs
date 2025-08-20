@@ -1410,9 +1410,7 @@ namespace KGySoft.Reflection
         /// <param name="parameters">The parameters to be used for invoking the method.</param>
         /// <returns>The return value of the method.</returns>
         /// <remarks>
-        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then the <see cref="ReflectionWays.DynamicDelegate"/> way will be used,
-        /// except when the .NET Standard 2.0 version of the <c>KGySoft.CoreLibraries</c> assembly is referenced and the method is an instance member of a value type (<see langword="struct"/>) or has ref/out parameters,
-        /// in which case the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then the <see cref="ReflectionWays.DynamicDelegate"/> way will be used.</para>
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// <note>To invoke the method explicitly by dynamically created delegates use the <see cref="MethodAccessor"/> class.</note>
         /// </remarks>
@@ -1444,12 +1442,6 @@ namespace KGySoft.Reflection
             switch (way)
             {
                 case ReflectionWays.Auto:
-#if NETSTANDARD2_0
-                    if (!method.IsStatic && method.DeclaringType?.IsValueType == true || method.GetParameters().Any(p => p.ParameterType.IsByRef))
-                        goto case ReflectionWays.SystemReflection;
-                    else
-                        goto case ReflectionWays.DynamicDelegate;
-#endif
                 case ReflectionWays.DynamicDelegate:
                     return MethodAccessor.GetAccessor(method).Invoke(instance, parameters);
                 case ReflectionWays.SystemReflection:

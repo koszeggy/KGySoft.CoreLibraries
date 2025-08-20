@@ -42,7 +42,7 @@ namespace KGySoft.Reflection
         None = 0,
 
         /// <summary>
-        /// Does not emit the object[] parameter but the exact number of object parameters (0..4) for method arguments. Also for for simple property getters or indexers.
+        /// Does not emit the object[] parameter but the exact number of object parameters (0..4) for method arguments. Also for simple property getters or indexers.
         /// Possible ref parameters are handled only as input parameters. Can be used together with <see cref="StronglyTyped"/>.
         /// </summary>
         ExactParameters = 1,

@@ -47,6 +47,15 @@
   + Implementing IUtf8SpanParsable<T> interface (.NET 8.0 and above)
   - Fixing LastIndexOf(char, int, int): It could throw an ArgumentOutOfRangeException even with valid parameters
 
++ KGySoft.Reflection namespace:
+===============================
++ MethodAccessor class:
+  + Invoke/InvokeInstanceAction/InvokeInstanceFunction/InvokeStaticAction/InvokeStaticFunction methods:
+    + Supporting pointer parameters and pointer return values. You need to use the IntPtr type for pointers.
++ Reflector class:
+  + InvokeMethod/TryInvokeMethod methods: Supporting pointer parameters and pointer return values even by the
+    DynamicDelegate way. You need to use the IntPtr type for pointers.
+
 
 ~~~~~~~~~
 ! v9.0.0:

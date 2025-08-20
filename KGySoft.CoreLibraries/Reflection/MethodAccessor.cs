@@ -1105,12 +1105,13 @@ namespace KGySoft.Reflection
 
                 for (int i = 0; i < ParameterTypes.Length; i++)
                 {
-                    if (!ParameterTypes[i].CanAcceptValue(parameters[i]))
+                    Type paramType = ParameterTypes[i].IsPointer ? typeof(IntPtr) : ParameterTypes[i];
+                    if (!paramType.CanAcceptValue(parameters[i]))
                     {
                         if (anyParams)
-                            Throw.ArgumentException(Argument.parameters, Res.ElementNotAnInstanceOfType(i, ParameterTypes[i]));
+                            Throw.ArgumentException(Argument.parameters, Res.ElementNotAnInstanceOfType(i, paramType));
                         else
-                            Throw.ArgumentException($"param{(ParameterTypes.Length > 1 ? i + 1 : null)}", Res.NotAnInstanceOfType(ParameterTypes[i]));
+                            Throw.ArgumentException($"param{(ParameterTypes.Length > 1 ? i + 1 : null)}", Res.NotAnInstanceOfType(paramType));
                     }
                 }
             }

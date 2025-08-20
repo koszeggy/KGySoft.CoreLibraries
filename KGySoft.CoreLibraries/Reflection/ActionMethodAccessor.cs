@@ -58,14 +58,16 @@ namespace KGySoft.Reflection
                 Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
 
 #if NETSTANDARD2_0
-            // Constructor, non-readonly value type or has ref/out parameters: using reflection as fallback so
+            // Constructor, non-readonly value type or has ref/out/pointer parameters: using reflection as fallback so
             // - Constructor can be executed as a method
             // - Mutations are preserved
             // - ref/out parameters are assigned back
+            // - IntPtr values are accepted for pointer parameters
             if (methodBase is not MethodInfo method
                 || !method.IsStatic && declaringType!.IsValueType && !(declaringType.IsReadOnly() || method.IsReadOnly())
-                || methodBase.GetParameters().Any(p => p.ParameterType.IsByRef && (!p.IsIn || p.IsOut)))
+                || methodBase.GetParameters().Any(p => p.ParameterType.IsByRef && (!p.IsIn || p.IsOut) || p.ParameterType.IsPointer))
             {
+                ThrowIfNotSupportedParameters();
                 return methodBase.Invoke;
             }
 
@@ -119,8 +121,6 @@ namespace KGySoft.Reflection
                 Throw.NotSupportedException(); // will be handled in PostValidate
             if (method.ReturnType.IsPointer)
                 Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(method.ReturnType));
-            if (ParameterTypes.FirstOrDefault(p => p.IsPointer) is Type pointerParam)
-                Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(pointerParam));
 
             Type delegateType = ParameterTypes.Length switch
             {
@@ -133,17 +133,21 @@ namespace KGySoft.Reflection
             };
 
 #if NETSTANDARD2_0
-            // For non-readonly value types using reflection as fallback so mutations are preserved
-            if (!method.IsStatic && declaringType!.IsValueType && !(declaringType.IsReadOnly() || method.IsReadOnly()))
+            // For non-readonly value types using reflection as fallback so mutations are preserved. Likewise, defaulting to reflection if pointer parameters are used.
+            if (!method.IsStatic && declaringType!.IsValueType && !(declaringType.IsReadOnly() || method.IsReadOnly())
+                || ParameterTypes.Any(p => p.IsPointer))
+            {
+                ThrowIfNotSupportedParameters();
                 return ParameterTypes.Length switch
                 {
                     0 => new Func<object?, object?>(o => method.Invoke(o, null)),
-                    1 => new Func<object?, object?, object?>((o, p) => method.Invoke(o, new[] { p })),
-                    2 => new Func<object?, object?, object?, object?>((o, p1, p2) => method.Invoke(o, new[] { p1, p2 })),
-                    3 => new Func<object?, object?, object?, object?, object?>((o, p1, p2, p3) => method.Invoke(o, new[] { p1, p2, p3 })),
-                    4 => new Func<object?, object?, object?, object?, object?, object?>((o, p1, p2, p3, p4) => method.Invoke(o, new[] { p1, p2, p3, p4 })),
+                    1 => new Func<object?, object?, object?>((o, p) => method.Invoke(o, [p])),
+                    2 => new Func<object?, object?, object?, object?>((o, p1, p2) => method.Invoke(o, [p1, p2])),
+                    3 => new Func<object?, object?, object?, object?, object?>((o, p1, p2, p3) => method.Invoke(o, [p1, p2, p3])),
+                    4 => new Func<object?, object?, object?, object?, object?, object?>((o, p1, p2, p3, p4) => method.Invoke(o, [p1, p2, p3, p4])),
                     _ => Throw.InternalError<Delegate>("Unexpected number of parameters")
                 };
+            }
 
             var parameters = new ParameterExpression[ParameterTypes.Length + 1];
             parameters[0] = Expression.Parameter(Reflector.ObjectType, "instance");
@@ -195,8 +199,6 @@ namespace KGySoft.Reflection
                 Throw.NotSupportedException(Res.ReflectionMethodGenericNotSupported);
             if (method.ReturnType.IsPointer)
                 Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(method.ReturnType));
-            if (ParameterTypes.FirstOrDefault(p => p.IsPointer) is Type pointerParam)
-                Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(pointerParam));
 
             Type delegateType;
             if (isStatic)
@@ -212,7 +214,7 @@ namespace KGySoft.Reflection
                 };
 
                 if (delegateType.IsGenericTypeDefinition)
-                    delegateType = delegateType.GetGenericType(StripByRefTypes(ParameterTypes).ToArray());
+                    delegateType = delegateType.GetGenericType(GetGenericArguments(ParameterTypes).ToArray());
             }
             else
             {
@@ -243,14 +245,47 @@ namespace KGySoft.Reflection
                 }
 
                 delegateType = delegateType.GetGenericType(new[] { declaringType! }
-                    .Concat(StripByRefTypes(ParameterTypes))
+                    .Concat(GetGenericArguments(ParameterTypes))
                     .ToArray());
             }
 
 #if NETSTANDARD2_0
             ParameterExpression[] parameters;
+            Expression[] methodParameters;
             MethodCallExpression methodCall;
             LambdaExpression lambda;
+
+            // Method has a pointer parameter: fallback to MethodInfo.Invoke(object,object[]), which supports pointer parameters as IntPtr...
+            if (ParameterTypes.Any(p => p.IsPointer))
+            {
+                ThrowIfNotSupportedParameters(); // ...except ref pointers
+
+                // value types: though we can call Invoke(object, object[]), the ref instance parameter gets boxed in a new object, losing all mutations
+                if (isValueType && !isStatic && !declaringType!.IsReadOnly() && !method.IsReadOnly())
+                    Throw.PlatformNotSupportedException(Res.ReflectionValueTypeWithPointersGenericNetStandard20);
+                int offset = isStatic ? 0 : 1;
+                parameters = new ParameterExpression[ParameterTypes.Length + offset];
+                if (!isStatic)
+                    parameters[0] = Expression.Parameter(isValueType ? declaringType!.MakeByRefType() : declaringType!, "instance");
+
+                Type[] genericArgs = delegateType.GetGenericArguments();
+                for (int i = offset; i < parameters.Length; i++)
+                    parameters[i] = Expression.Parameter(genericArgs[i], $"param{i + 1}");
+
+                methodParameters = new Expression[2];
+                methodParameters[0] = isStatic
+                    ? Expression.Constant(null, typeof(object))
+                    : Expression.Convert(parameters[0], typeof(object));
+
+                methodParameters[1] = Expression.NewArrayInit(typeof(object), parameters.Skip(isStatic ? 0 : 1).Select(p => Expression.Convert(p, typeof(object))));
+                methodCall = Expression.Call(
+                    Expression.Constant(method), // the instance is the MethodInfo itself
+                    method.GetType().GetMethod(nameof(MethodInfo.Invoke), [typeof(object), typeof(object[])])!, // Invoke(object, object[])
+                    methodParameters);
+
+                lambda = Expression.Lambda(delegateType, methodCall, parameters);
+                return lambda.Compile();
+            }
 
             // Static methods
             if (method.IsStatic)
@@ -268,13 +303,13 @@ namespace KGySoft.Reflection
                 }
 
                 methodCall = Expression.Call(null, method, parameters);
-
                 lambda = Expression.Lambda(delegateType, methodCall, parameters);
                 return lambda.Compile();
             }
 
             // Instance methods
             parameters = new ParameterExpression[ParameterTypes.Length + 1];
+            methodParameters = new Expression[ParameterTypes.Length];
 
             if (!isValueType)
                 parameters[0] = Expression.Parameter(declaringType!, "instance");
@@ -284,15 +319,15 @@ namespace KGySoft.Reflection
             for (int i = 0; i < ParameterTypes.Length; i++)
             {
                 Type parameterType = ParameterTypes[i];
-
-                // This just avoids error when ref parameters are used but does not assign results back
-                if (parameterType.IsByRef)
-                    parameterType = parameterType.GetElementType()!;
-
-                parameters[i + 1] = Expression.Parameter(parameterType, $"param{i + 1}");
+                Type methodParameterType = parameterType.IsByRef
+                    ? parameterType.GetElementType()! // This just avoids error when ref parameters are used but does not assign results back
+                    : parameterType;
+                
+                parameters[i + 1] = Expression.Parameter(methodParameterType, $"param{i + 1}");
+                methodParameters[i] = parameters[i + 1];
             }
 
-            methodCall = Expression.Call(parameters[0], method, parameters.Skip(1)); 
+            methodCall = Expression.Call(parameters[0], method, methodParameters); 
             lambda = Expression.Lambda(delegateType, methodCall, parameters);
             return lambda.Compile();
 #else

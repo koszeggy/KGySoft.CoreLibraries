@@ -158,7 +158,7 @@ namespace KGySoft.Reflection
                 3 => typeof(Func<,,,>),
                 4 => typeof(Func<,,,,>),
                 _ => Throw.InternalError<Type>("Unexpected number of parameters")
-            }).GetGenericType(StripByRefTypes(ParameterTypes).Append(ctor.DeclaringType!).ToArray());
+            }).GetGenericType(GetGenericArguments(ParameterTypes).Append(ctor.DeclaringType!).ToArray());
 
 #if NETSTANDARD2_0
             var parameters = new ParameterExpression[ParameterTypes.Length];

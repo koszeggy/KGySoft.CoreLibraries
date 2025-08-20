@@ -425,6 +425,9 @@ namespace KGySoft
         /// <summary>Type or member with open generic arguments cannot be reflected.</summary>
         internal static string ReflectionGenericMember => Get("Reflection_GenericMember");
 
+        /// <summary>Generic access of potentially mutating value type members with pointer parameters is not supported in the .NET Standard 2.0 version of this library. Use the non-generic access instead.</summary>
+        internal static string ReflectionValueTypeWithPointersGenericNetStandard20 => Get("Reflection_ValueTypeWithPointersGenericNetStandard20");
+
         #endregion
 
         #region Resources
@@ -977,6 +980,9 @@ namespace KGySoft
 
         /// <summary>Pointer type '{0}' is not supported.</summary>
         internal static string ReflectionPointerTypeNotSupported(Type type) => Get("Reflection_PointerTypeNotSupportedFormat", type.GetName(TypeNameKind.LongName));
+
+        /// <summary>Ref pointer type '{0}' is not supported in the .NET Standard 2.0 version of this library. If possible, try to use the .NET Standard 2.1 version or any .NET Core/Framework versions instead.</summary>
+        internal static string ReflectionRefPointerTypeNotSupportedNetStandard20(Type type) => Get("Reflection_RefPointerTypeNotSupportedNetStandard20Format", type.GetName(TypeNameKind.LongName));
 
         /// <summary>Reflecting pointer type '{0}' is not supported on the Mono platform.</summary>
         internal static string ReflectionPointerTypeMonoNotSupported(Type type) => Get("Reflection_PointerTypeMonoNotSupportedFormat", type.GetName(TypeNameKind.LongName));
