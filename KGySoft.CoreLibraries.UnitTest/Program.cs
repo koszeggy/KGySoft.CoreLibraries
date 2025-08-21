@@ -19,8 +19,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
-using KGySoft.CoreLibraries.UnitTests.Reflection;
-
 using NUnit.Framework.Api;
 using NUnit.Framework.Interfaces;
 using NUnit.Framework.Internal;
@@ -119,9 +117,6 @@ namespace KGySoft.CoreLibraries
             // or just calling the method to debug directly
             Console.ForegroundColor = ConsoleColor.Gray;
             Console.WriteLine(FrameworkVersion);
-
-            new ReflectorTest().StructComplexConstructionByCtorInfoUnsafe();
-            return;
 
             var runner = new NUnitTestAssemblyRunner(new DefaultTestAssemblyBuilder());
             runner.Load(typeof(Program).Assembly, new Dictionary<string, object>());
