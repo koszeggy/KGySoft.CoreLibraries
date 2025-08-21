@@ -6837,112 +6837,99 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         #region Class construction (unsafe)
 
         [Test]
-        public unsafe void ClassConstructionByTypeUnsafe()
-        {
-            throw null;
-            //Type testType = typeof(UnsafeTestClass);
-            //var accessor = CreateInstanceAccessor.GetAccessor(testType);
-
-            //Console.Write("System Activator...");
-            //UnsafeTestClass result = (UnsafeTestClass)Activator.CreateInstance(testType);
-            //Assert.AreEqual(1, result.IntProp);
-
-            //Console.Write("CreateInstanceAccessor General...");
-            //result = (UnsafeTestClass)accessor.CreateInstance(Reflector.EmptyObjects);
-            //Assert.AreEqual(1, result.IntProp);
-
-            //Console.Write("CreateInstanceAccessor NonGeneric...");
-            //result = (UnsafeTestClass)accessor.CreateInstance();
-            //Assert.AreEqual(1, result.IntProp);
-
-            //Console.Write("CreateInstanceAccessor Generic...");
-            //result = accessor.CreateInstance<UnsafeTestClass>();
-            //Assert.AreEqual(1, result.IntProp);
-            //Throws<ArgumentException>(() => accessor.CreateInstance<TestStruct>(), Res.ReflectionCannotCreateInstanceGeneric(testType));
-            //Throws<ArgumentException>(() => accessor.CreateInstance<UnsafeTestClass, int>(1), Res.ReflectionCannotCreateInstanceGeneric(testType));
-
-            //Console.Write("Reflector...");
-            //result = (UnsafeTestClass)Reflector.CreateInstance(testType);
-            //Assert.AreEqual(1, result.IntProp);
-        }
-
-        [Test]
         public unsafe void ClassConstructionByCtorInfoUnsafe()
         {
-            throw null;
-            //Type testType = typeof(UnsafeTestClass);
-            //ConstructorInfo ci = testType.GetConstructor(new[] { typeof(int) });
-            //CreateInstanceAccessor accessor = CreateInstanceAccessor.GetAccessor(ci);
-            //int arg = 1;
-            //object[] args = { arg };
+            Type testType = typeof(UnsafeTestClass);
+            ConstructorInfo ci = testType.GetConstructor([typeof(void*)]);
+            CreateInstanceAccessor accessor = CreateInstanceAccessor.GetAccessor(ci);
+            var arg = new IntPtr(1);
+            object[] args = [arg];
+            object[] parameters;
+            UnsafeTestClass result;
 
-            //Console.Write("System Reflection...");
-            //object[] parameters = (object[])args.Clone();
-            //UnsafeTestClass result = (UnsafeTestClass)ci.Invoke(parameters);
-            //Assert.AreEqual(arg, result.IntProp);
+            Console.Write("System Reflection...");
+            parameters = (object[])args.Clone();
+            result = (UnsafeTestClass)ci.Invoke(parameters);
+            Assert.AreEqual(arg, (IntPtr)result.InstanceProperty);
 
-            //Console.Write("CreateInstanceAccessor General...");
-            //parameters = (object[])args.Clone();
-            //result = (UnsafeTestClass)accessor.CreateInstance(parameters);
-            //Assert.AreEqual(arg, result.IntProp);
-            //Throws<ArgumentNullException>(() => accessor.CreateInstance(null), Res.ArgumentNull);
-            //Throws<ArgumentException>(() => accessor.CreateInstance(Reflector.EmptyObjects), Res.ReflectionParamsLengthMismatch(1, 0));
-            //Throws<ArgumentException>(() => accessor.CreateInstance(new object[] { "x" }), Res.ElementNotAnInstanceOfType(0, typeof(int)));
+            Console.Write("CreateInstanceAccessor General...");
+            parameters = (object[])args.Clone();
+            result = (UnsafeTestClass)accessor.CreateInstance(parameters);
+            Assert.AreEqual(arg, (IntPtr)result.InstanceProperty);
+            Throws<ArgumentException>(() => accessor.CreateInstance([1]), Res.ElementNotAnInstanceOfType(0, typeof(IntPtr)));
 
-            //Console.Write("CreateInstanceAccessor NonGeneric...");
-            //result = (UnsafeTestClass)accessor.CreateInstance(arg);
-            //Assert.AreEqual(arg, result.IntProp);
-            //Throws<ArgumentException>(() => accessor.CreateInstance(), Res.ReflectionParamsLengthMismatch(1, 0));
-            //Throws<ArgumentException>(() => accessor.CreateInstance("x"), Res.NotAnInstanceOfType(typeof(int)));
+            Console.Write("CreateInstanceAccessor NonGeneric...");
+            result = (UnsafeTestClass)accessor.CreateInstance(arg);
+            Assert.AreEqual(arg, (IntPtr)result.InstanceProperty);
+            Throws<ArgumentException>(() => accessor.CreateInstance(1), Res.NotAnInstanceOfType(typeof(IntPtr)));
 
-            //Console.Write("CreateInstanceAccessor Generic...");
-            //result = accessor.CreateInstance<UnsafeTestClass, int>(arg);
-            //Assert.AreEqual(arg, result.IntProp);
-            //Throws<ArgumentException>(() => accessor.CreateInstance<TestStruct, int>(arg), Res.ReflectionCannotCreateInstanceGeneric(testType));
-            //Throws<ArgumentException>(() => accessor.CreateInstance<UnsafeTestClass, string>(null), Res.ReflectionCannotCreateInstanceGeneric(testType));
+            Console.Write("CreateInstanceAccessor Generic...");
+            result = accessor.CreateInstance<UnsafeTestClass, IntPtr>(arg);
+            Assert.AreEqual(arg, (IntPtr)result.InstanceProperty);
+            Throws<ArgumentException>(() => accessor.CreateInstance<UnsafeTestClass, int>(1), Res.ReflectionCannotCreateInstanceGeneric(testType));
 
-            //Console.Write("Reflector...");
-            //parameters = (object[])args.Clone();
-            //result = (UnsafeTestClass)Reflector.CreateInstance(ci, parameters);
-            //Assert.AreEqual(arg, result.IntProp);
+            Console.Write("Reflector...");
+            parameters = (object[])args.Clone();
+            result = (UnsafeTestClass)Reflector.CreateInstance(ci, parameters);
+            Assert.AreEqual(arg, (IntPtr)result.InstanceProperty);
         }
 
         [Test]
         public unsafe void ClassComplexConstructionByCtorInfoUnsafe()
         {
-            throw null;
-            //Type testType = typeof(UnsafeTestClass);
-            //ConstructorInfo ci = testType.GetConstructor(new[] { typeof(int), typeof(string), typeof(bool).MakeByRefType(), typeof(string).MakeByRefType() });
-            //CreateInstanceAccessor accessor = CreateInstanceAccessor.GetAccessor(ci);
-            //object[] args = { 1, "dummy", false, null };
+            Type testType = typeof(UnsafeTestClass);
+            ConstructorInfo ci = testType.GetConstructor([typeof(void*), typeof(int*), typeof(int*).MakeByRefType(), typeof(void*).MakeByRefType()]);
+            CreateInstanceAccessor accessor = CreateInstanceAccessor.GetAccessor(ci);
+            object[] args = [new IntPtr(1), new IntPtr(2), null, new IntPtr(4)];
+            object[] parameters;
+            UnsafeTestClass result;
 
-            //Console.Write("System Reflection...");
-            //object[] parameters = (object[])args.Clone();
-            //UnsafeTestClass result = (UnsafeTestClass)ci.Invoke(parameters);
-            //Assert.AreEqual(args[0], result.IntProp);
-            //Assert.AreNotEqual(args[2], parameters[2]);
+            // System Reflection does not support initializing the ref pointer parameter and crashes when attempts to set back the out pointer parameter
+#if NET11_0_OR_GREATER // increase version number if it's not fixed
+            Console.Write("System Reflection...");
+            parameters = (object[])args.Clone();
+            result = (UnsafeTestClass)ci.Invoke(parameters);
+            Assert.AreEqual(args[0], (IntPtr)result.InstanceField);
+            Assert.AreNotEqual(args[2], parameters[2]);
+#endif
 
-            //Console.Write("CreateInstanceAccessor General...");
-            //parameters = (object[])args.Clone();
-            //result = (UnsafeTestClass)accessor.CreateInstance(parameters);
-            //Assert.AreEqual(args[0], result.IntProp);
-            //Assert.AreNotEqual(args[2], parameters[2]);
+            Console.Write("CreateInstanceAccessor General...");
+            parameters = (object[])args.Clone();
+#if NETCOREAPP2_0 && NETSTANDARD_TEST
+            Throws<PlatformNotSupportedException>(() => accessor.CreateInstance(parameters));
+#else
+            result = (UnsafeTestClass)accessor.CreateInstance(parameters);
+            Assert.AreEqual(args[0], (IntPtr)result.InstanceField);
+            Assert.AreNotEqual(args[2], parameters[2]);
+#endif
 
-            //Console.Write("CreateInstanceAccessor NonGeneric...");
-            //parameters = (object[])args.Clone();
-            //result = (UnsafeTestClass)accessor.CreateInstance(parameters[0], parameters[1], parameters[2], parameters[3]);
-            //Assert.AreEqual(args[0], result.IntProp);
+            Console.Write("CreateInstanceAccessor NonGeneric...");
+            parameters = (object[])args.Clone();
+#if NETCOREAPP2_0 && NETSTANDARD_TEST
+            Throws<PlatformNotSupportedException>(() => accessor.CreateInstance(parameters[0], parameters[1], parameters[2], parameters[3]));
+#else
+            result = (UnsafeTestClass)accessor.CreateInstance(parameters[0], parameters[1], parameters[2], parameters[3]);
+            Assert.AreEqual(args[0], (IntPtr)result.InstanceField);
+#endif
 
-            //Console.Write("CreateInstanceAccessor Generic...");
-            //parameters = (object[])args.Clone();
-            //result = accessor.CreateInstance<UnsafeTestClass, int, string, bool, string>((int)parameters[0], (string)parameters[1], (bool)parameters[2], (string)parameters[3]);
-            //Assert.AreEqual(args[0], result.IntProp);
+            Console.Write("CreateInstanceAccessor Generic...");
+            parameters = (object[])args.Clone();
+#if NETCOREAPP2_0 && NETSTANDARD_TEST
+            Throws<PlatformNotSupportedException>(() => accessor.CreateInstance<UnsafeTestClass, IntPtr, IntPtr, IntPtr, IntPtr>((IntPtr)parameters[0], (IntPtr)parameters[1], default, (IntPtr)parameters[3]));
+#else
+            result = accessor.CreateInstance<UnsafeTestClass, IntPtr, IntPtr, IntPtr, IntPtr>((IntPtr)parameters[0], (IntPtr)parameters[1], default, (IntPtr)parameters[3]);
+            Assert.AreEqual(args[0], (IntPtr)result.InstanceField);
+#endif
 
-            //Console.Write("Reflector...");
-            //parameters = (object[])args.Clone();
-            //result = (UnsafeTestClass)Reflector.CreateInstance(ci, parameters);
-            //Assert.AreEqual(args[0], result.IntProp);
-            //Assert.AreNotEqual(args[2], parameters[2]);
+            Console.Write("Reflector...");
+            parameters = (object[])args.Clone();
+#if NETCOREAPP2_0 && NETSTANDARD_TEST
+            Throws<PlatformNotSupportedException>(() => Reflector.CreateInstance(ci, parameters));
+#else
+            result = (UnsafeTestClass)Reflector.CreateInstance(ci, parameters);
+            Assert.AreEqual(args[0], (IntPtr)result.InstanceField);
+            Assert.AreNotEqual(args[2], parameters[2]);
+#endif
         }
 
         #endregion
@@ -7127,181 +7114,99 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         #region Struct construction (unsafe)
 
         [Test]
-        public unsafe void StructConstructionByTypeUnsafe()
-        {
-            throw null;
-            //Type testType = typeof(UnsafeTestStruct);
-            //var accessor = CreateInstanceAccessor.GetAccessor(testType);
-
-            //Console.Write("System Activator...");
-            //object result = Activator.CreateInstance(testType);
-            //Assert.AreEqual(default(UnsafeTestStruct), result);
-
-            //Console.Write("CreateInstanceAccessor General...");
-            //result = accessor.CreateInstance(Reflector.EmptyObjects);
-            //Assert.AreEqual(default(UnsafeTestStruct), result);
-
-            //Console.Write("CreateInstanceAccessor NonGeneric...");
-            //result = accessor.CreateInstance();
-            //Assert.AreEqual(default(UnsafeTestStruct), result);
-
-            //Console.Write("CreateInstanceAccessor Generic...");
-            //result = accessor.CreateInstance<UnsafeTestStruct>();
-            //Assert.AreEqual(default(UnsafeTestStruct), result);
-            //Throws<ArgumentException>(() => accessor.CreateInstance<TestClass>(), Res.ReflectionCannotCreateInstanceGeneric(testType));
-            //Throws<ArgumentException>(() => accessor.CreateInstance<UnsafeTestStruct, int>(1), Res.ReflectionCannotCreateInstanceGeneric(testType));
-
-            //Console.Write("Reflector...");
-            //result = Reflector.CreateInstance(testType);
-            //Assert.AreEqual(default(UnsafeTestStruct), result);
-        }
-
-        [Test]
         public unsafe void StructConstructionByCtorInfoUnsafe()
         {
-            throw null;
-            //Type testType = typeof(UnsafeTestStruct);
-            //ConstructorInfo ci = testType.GetConstructor(new[] { typeof(int) });
-            //CreateInstanceAccessor accessor = CreateInstanceAccessor.GetAccessor(ci);
-            //int arg = 1;
-            //object[] args = { arg };
+            Type testType = typeof(UnsafeTestStruct);
+            ConstructorInfo ci = testType.GetConstructor([typeof(int*)]);
+            CreateInstanceAccessor accessor = CreateInstanceAccessor.GetAccessor(ci);
+            var arg = new IntPtr(1);
+            object[] args = [arg];
+            object[] parameters;
+            UnsafeTestStruct result;
 
-            //Console.Write("System Reflection...");
-            //object[] parameters = (object[])args.Clone();
-            //UnsafeTestStruct result = (UnsafeTestStruct)ci.Invoke(parameters);
-            //Assert.AreEqual(args[0], result.IntProp);
+            Console.Write("System Reflection...");
+            parameters = (object[])args.Clone();
+            result = (UnsafeTestStruct)ci.Invoke(parameters);
+            Assert.AreEqual(args[0], (IntPtr)result.InstanceProperty);
 
-            //Console.Write("CreateInstanceAccessor General...");
-            //parameters = (object[])args.Clone();
-            //result = (UnsafeTestStruct)accessor.CreateInstance(parameters);
-            //Assert.AreEqual(args[0], result.IntProp);
-            //Throws<ArgumentNullException>(() => accessor.CreateInstance(null), Res.ArgumentNull);
-            //Throws<ArgumentException>(() => accessor.CreateInstance(Reflector.EmptyObjects), Res.ReflectionParamsLengthMismatch(1, 0));
-            //Throws<ArgumentException>(() => accessor.CreateInstance(new object[] { "x" }), Res.ElementNotAnInstanceOfType(0, typeof(int)));
+            Console.Write("CreateInstanceAccessor General...");
+            parameters = (object[])args.Clone();
+            result = (UnsafeTestStruct)accessor.CreateInstance(parameters);
+            Assert.AreEqual(args[0], (IntPtr)result.InstanceProperty);
+            Throws<ArgumentException>(() => accessor.CreateInstance([1]), Res.ElementNotAnInstanceOfType(0, typeof(IntPtr)));
 
-            //Console.Write("CreateInstanceAccessor NonGeneric...");
-            //result = (UnsafeTestStruct)accessor.CreateInstance(arg);
-            //Assert.AreEqual(args[0], result.IntProp);
-            //Throws<ArgumentException>(() => accessor.CreateInstance(), Res.ReflectionParamsLengthMismatch(1, 0));
-            //Throws<ArgumentException>(() => accessor.CreateInstance("x"), Res.NotAnInstanceOfType(typeof(int)));
+            Console.Write("CreateInstanceAccessor NonGeneric...");
+            result = (UnsafeTestStruct)accessor.CreateInstance(arg);
+            Assert.AreEqual(args[0], (IntPtr)result.InstanceProperty);
+            Throws<ArgumentException>(() => accessor.CreateInstance(1), Res.NotAnInstanceOfType(typeof(IntPtr)));
 
-            //Console.Write("CreateInstanceAccessor Generic...");
-            //result = accessor.CreateInstance<UnsafeTestStruct, int>(arg);
-            //Assert.AreEqual(arg, result.IntProp);
-            //Throws<ArgumentException>(() => accessor.CreateInstance<TestClass, int>(arg), Res.ReflectionCannotCreateInstanceGeneric(testType));
-            //Throws<ArgumentException>(() => accessor.CreateInstance<UnsafeTestStruct, string>(null), Res.ReflectionCannotCreateInstanceGeneric(testType));
+            Console.Write("CreateInstanceAccessor Generic...");
+            result = accessor.CreateInstance<UnsafeTestStruct, IntPtr>(arg);
+            Assert.AreEqual(arg, (IntPtr)result.InstanceProperty);
+            Throws<ArgumentException>(() => accessor.CreateInstance<UnsafeTestStruct, int>(1), Res.ReflectionCannotCreateInstanceGeneric(testType));
 
-            //Console.Write("Reflector...");
-            //parameters = (object[])args.Clone();
-            //result = (UnsafeTestStruct)Reflector.CreateInstance(ci, parameters);
-            //Assert.AreEqual(args[0], result.IntProp);
+            Console.Write("Reflector...");
+            parameters = (object[])args.Clone();
+            result = (UnsafeTestStruct)Reflector.CreateInstance(ci, parameters);
+            Assert.AreEqual(args[0], (IntPtr)result.InstanceProperty);
         }
 
         [Test]
         public unsafe void StructComplexConstructionByCtorInfoUnsafe()
         {
-            throw null;
-            //Type testType = typeof(UnsafeTestStruct);
-            //ConstructorInfo ci = testType.GetConstructor(new[] { typeof(int), typeof(string), typeof(bool).MakeByRefType(), typeof(string).MakeByRefType() })!;
-            //CreateInstanceAccessor accessor = CreateInstanceAccessor.GetAccessor(ci);
-            //object[] args = { 1, "dummy", false, null };
+            Type testType = typeof(UnsafeTestStruct);
+            ConstructorInfo ci = testType.GetConstructor([typeof(void*), typeof(int*), typeof(int*).MakeByRefType(), typeof(void*).MakeByRefType()]);
+            CreateInstanceAccessor accessor = CreateInstanceAccessor.GetAccessor(ci);
+            object[] args = [new IntPtr(1), new IntPtr(2), null, new IntPtr(4)];
+            object[] parameters;
+            UnsafeTestStruct result;
 
-            //Console.Write("System Reflection...");
-            //object[] parameters = (object[])args.Clone();
-            //UnsafeTestStruct result = (UnsafeTestStruct)ci.Invoke(parameters);
-            //Assert.AreEqual(args[0], result.IntProp);
-            //Assert.AreNotEqual(args[2], parameters[2]);
+            // System Reflection does not support initializing the ref pointer parameter and crashes when attempts to set back the out pointer parameter
+#if NET11_0_OR_GREATER // increase version number if it's not fixed
+            Console.Write("System Reflection...");
+            parameters = (object[])args.Clone();
+            result = (UnsafeTestStruct)ci.Invoke(parameters);
+            Assert.AreEqual(args[0], (IntPtr)result.ReadOnlyField);
+            Assert.AreNotEqual(args[2], parameters[2]);
+#endif
 
-            //Console.Write("CreateInstanceAccessor General...");
-            //parameters = (object[])args.Clone();
-            //result = (UnsafeTestStruct)accessor.CreateInstance(parameters);
-            //Assert.AreEqual(args[0], result.IntProp);
-            //Assert.AreNotEqual(args[2], parameters[2]);
+            Console.Write("CreateInstanceAccessor General...");
+            parameters = (object[])args.Clone();
+#if NETCOREAPP2_0 && NETSTANDARD_TEST
+            Throws<PlatformNotSupportedException>(() => accessor.CreateInstance(parameters));
+#else
+            result = (UnsafeTestStruct)accessor.CreateInstance(parameters);
+            Assert.AreEqual(args[0], (IntPtr)result.ReadOnlyField);
+            Assert.AreNotEqual(args[2], parameters[2]);
+#endif
 
-            //Console.Write("CreateInstanceAccessor NonGeneric...");
-            //parameters = (object[])args.Clone();
-            //result = (UnsafeTestStruct)accessor.CreateInstance(parameters[0], parameters[1], parameters[2], parameters[3]);
-            //Assert.AreEqual(args[0], result.IntProp);
+            Console.Write("CreateInstanceAccessor NonGeneric...");
+            parameters = (object[])args.Clone();
+#if NETCOREAPP2_0 && NETSTANDARD_TEST
+            Throws<PlatformNotSupportedException>(() => accessor.CreateInstance(parameters[0], parameters[1], parameters[2], parameters[3]));
+#else
+            result = (UnsafeTestStruct)accessor.CreateInstance(parameters[0], parameters[1], parameters[2], parameters[3]);
+            Assert.AreEqual(args[0], (IntPtr)result.ReadOnlyField);
+#endif
 
-            //Console.Write("CreateInstanceAccessor Generic...");
-            //parameters = (object[])args.Clone();
-            //result = accessor.CreateInstance<UnsafeTestStruct, int, string, bool, string>((int)parameters[0], (string)parameters[1], (bool)parameters[2], (string)parameters[3]);
-            //Assert.AreEqual(args[0], result.IntProp);
+            Console.Write("CreateInstanceAccessor Generic...");
+            parameters = (object[])args.Clone();
+#if NETCOREAPP2_0 && NETSTANDARD_TEST
+            Throws<PlatformNotSupportedException>(() => accessor.CreateInstance<UnsafeTestStruct, IntPtr, IntPtr, IntPtr, IntPtr>((IntPtr)parameters[0], (IntPtr)parameters[1], default, (IntPtr)parameters[3]));
+#else
+            result = accessor.CreateInstance<UnsafeTestStruct, IntPtr, IntPtr, IntPtr, IntPtr>((IntPtr)parameters[0], (IntPtr)parameters[1], default, (IntPtr)parameters[3]);
+            Assert.AreEqual(args[0], (IntPtr)result.ReadOnlyField);
+#endif
 
-            //Console.Write("Reflector...");
-            //parameters = (object[])args.Clone();
-            //result = (UnsafeTestStruct)Reflector.CreateInstance(ci, parameters);
-            //Assert.AreEqual(args[0], result.IntProp);
-            //Assert.AreNotEqual(args[2], parameters[2]);
-        }
-
-        [Test]
-        public unsafe void StructConstructionWithDefaultCtorByTypeUnsafe()
-        {
-            throw null;
-//            Type testType = typeof(UnsafeTestStructWithParameterlessCtor);
-//            CreateInstanceAccessor accessor = CreateInstanceAccessor.GetAccessor(testType);
-
-//            Console.Write("System Activator...");
-//            var result = (UnsafeTestStructWithParameterlessCtor)Activator.CreateInstance(testType);
-//            Assert.IsTrue(result.Initialized);
-
-//            Console.Write("System Activator for the 2nd time...");
-//            result = (UnsafeTestStructWithParameterlessCtor)Activator.CreateInstance(testType);
-//            if (!result.Initialized)
-//                Console.WriteLine("Constructor was not invoked!");
-//#if !NETFRAMEWORK // Activator.CreateInstance does not execute the default struct constructor for the 2nd time
-//            Assert.IsTrue(result.Initialized);
-//#endif
-
-//            Console.Write("Type Descriptor...");
-//            result = (UnsafeTestStructWithParameterlessCtor)TypeDescriptor.CreateInstance(null, testType, null, null);
-//            Assert.IsTrue(result.Initialized);
-
-//            Console.Write("CreateInstanceAccessor General...");
-//            result = (UnsafeTestStructWithParameterlessCtor)accessor.CreateInstance(Reflector.EmptyObjects);
-//            Assert.IsTrue(result.Initialized);
-
-//            Console.Write("CreateInstanceAccessor NonGeneric...");
-//            result = (UnsafeTestStructWithParameterlessCtor)accessor.CreateInstance();
-//            Assert.IsTrue(result.Initialized);
-
-//            Console.Write("CreateInstanceAccessor Generic...");
-//            result = accessor.CreateInstance<UnsafeTestStructWithParameterlessCtor>();
-//            Assert.IsTrue(result.Initialized);
-
-//            Console.Write("Reflector...");
-//            result = (UnsafeTestStructWithParameterlessCtor)Reflector.CreateInstance(testType);
-//            Assert.IsTrue(result.Initialized);
-        }
-
-        [Test]
-        public unsafe void StructConstructionWithDefaultCtorByCtorInfoUnsafe()
-        {
-            throw null;
-            //Type testType = typeof(UnsafeTestStructWithParameterlessCtor);
-            //ConstructorInfo ci = testType.GetConstructor(Type.EmptyTypes);
-            //CreateInstanceAccessor accessor = CreateInstanceAccessor.GetAccessor(ci);
-
-            //Console.Write("System Reflection...");
-            //UnsafeTestStructWithParameterlessCtor result = (UnsafeTestStructWithParameterlessCtor)ci.Invoke(null);
-            //Assert.IsTrue(result.Initialized);
-
-            //Console.Write("CreateInstanceAccessor General...");
-            //result = (UnsafeTestStructWithParameterlessCtor)accessor.CreateInstance(Reflector.EmptyObjects);
-            //Assert.IsTrue(result.Initialized);
-
-            //Console.Write("CreateInstanceAccessor NonGeneric...");
-            //result = (UnsafeTestStructWithParameterlessCtor)accessor.CreateInstance();
-            //Assert.IsTrue(result.Initialized);
-
-            //Console.Write("CreateInstanceAccessor Generic...");
-            //result = accessor.CreateInstance<UnsafeTestStructWithParameterlessCtor>();
-            //Assert.IsTrue(result.Initialized);
-
-            //Console.Write("Reflector...");
-            //result = (UnsafeTestStructWithParameterlessCtor)Reflector.CreateInstance(ci);
-            //Assert.IsTrue(result.Initialized);
+            Console.Write("Reflector...");
+            parameters = (object[])args.Clone();
+#if NETCOREAPP2_0 && NETSTANDARD_TEST
+            Throws<PlatformNotSupportedException>(() => Reflector.CreateInstance(ci, parameters));
+#else
+            result = (UnsafeTestStruct)Reflector.CreateInstance(ci, parameters);
+            Assert.AreEqual(args[0], (IntPtr)result.ReadOnlyField);
+            Assert.AreNotEqual(args[2], parameters[2]);
+#endif
         }
 
         #endregion

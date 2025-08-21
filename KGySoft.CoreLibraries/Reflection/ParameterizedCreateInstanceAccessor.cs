@@ -57,9 +57,13 @@ namespace KGySoft.Reflection
                 Throw.InvalidOperationException(Res.ReflectionCannotCreateInstanceOfType(ctor.DeclaringType));
 
 #if NETSTANDARD2_0
-            // Has ref/out parameters: using reflection as fallback so they will be assigned back
-            if (ctor.GetParameters().Any(p => p.ParameterType.IsByRef && (!p.IsIn || p.IsOut)))
+            // Has ref/out parameters: using reflection as fallback so they will be assigned back.
+            // Doing so also for pointers, as they are not supported by Expression trees.
+            if (ctor.GetParameters().Any(p => p.ParameterType.IsByRef && (!p.IsIn || p.IsOut) || p.ParameterType.IsPointer))
+            {
+                ThrowIfNotSupportedParameters();
                 return ctor.Invoke;
+            }
 
             ParameterExpression argumentsParameter = Expression.Parameter(typeof(object[]), "arguments");
             var ctorParameters = new Expression[ParameterTypes.Length];
@@ -109,6 +113,21 @@ namespace KGySoft.Reflection
             };
 
 #if NETSTANDARD2_0
+            // For pointer parameter types using reflection as fallback because Expression trees do not support pointers.
+            if (ParameterTypes.Any(p => p.IsPointer))
+            {
+                ThrowIfNotSupportedParameters();
+                return ParameterTypes.Length switch
+                {
+                    0 => new Func<object?>(() => ctor.Invoke(null)),
+                    1 => new Func<object?, object?>(p => ctor.Invoke([p])),
+                    2 => new Func<object?, object?, object?>((p1, p2) => ctor.Invoke([p1, p2])),
+                    3 => new Func<object?, object?, object?, object?>((p1, p2, p3) => ctor.Invoke([p1, p2, p3])),
+                    4 => new Func<object?, object?, object?, object?, object?>((p1, p2, p3, p4) => ctor.Invoke([p1, p2, p3, p4])),
+                    _ => Throw.InternalError<Delegate>("Unexpected number of parameters")
+                };
+            }
+
             var parameters = new ParameterExpression[ParameterTypes.Length];
             var ctorParameters = new Expression[ParameterTypes.Length];
             for (int i = 0; i < ParameterTypes.Length; i++)
@@ -147,8 +166,6 @@ namespace KGySoft.Reflection
                 Throw.InvalidOperationException(Res.ReflectionCannotCreateInstanceOfType(ctor.DeclaringType!));
             if (ParameterTypes.Length > 4)
                 Throw.NotSupportedException(Res.ReflectionCtorGenericNotSupported);
-            if (ParameterTypes.FirstOrDefault(p => p.IsPointer) is Type pointerParam)
-                Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(pointerParam));
 
             Type delegateType = (ParameterTypes.Length switch
             {
@@ -161,7 +178,7 @@ namespace KGySoft.Reflection
             }).GetGenericType(GetGenericArguments(ParameterTypes).Append(ctor.DeclaringType!).ToArray());
 
 #if NETSTANDARD2_0
-            var parameters = new ParameterExpression[ParameterTypes.Length];
+            ParameterExpression[] parameters = new ParameterExpression[ParameterTypes.Length];
             for (int i = 0; i < parameters.Length; i++)
             {
                 Type parameterType = ParameterTypes[i];
@@ -169,12 +186,31 @@ namespace KGySoft.Reflection
                 // This just avoids error when ref parameters are used but does not assign results back
                 if (parameterType.IsByRef)
                     parameterType = parameterType.GetElementType()!;
+                if (parameterType.IsPointer)
+                    parameterType = typeof(IntPtr);
 
                 parameters[i] = Expression.Parameter(parameterType, $"param{i + 1}");
             }
 
+            LambdaExpression lambda;
+
+            // The constructor has pointer parameters: fallback to ConstructorInfo.Invoke(object[]), which supports pointer parameters as IntPtr...
+            if (ParameterTypes.Any(p => p.IsPointer))
+            {
+                ThrowIfNotSupportedParameters(); // ...except ref pointers
+
+                Expression[] methodParameters = [Expression.NewArrayInit(typeof(object), parameters.Select(p => Expression.Convert(p, typeof(object))))];
+                MethodCallExpression methodCall = Expression.Call(
+                    Expression.Constant(ctor), // the instance is the ConstructorInfo itself
+                    ctor.GetType().GetMethod(nameof(ConstructorInfo.Invoke), [typeof(object[])])!, // Invoke(object[])
+                    methodParameters);
+
+                lambda = Expression.Lambda(delegateType, Expression.Convert(methodCall, ctor.DeclaringType!), parameters);
+                return lambda.Compile();
+            }
+
             NewExpression construct = Expression.New(ctor, parameters);
-            LambdaExpression lambda = Expression.Lambda(delegateType, construct, parameters);
+            lambda = Expression.Lambda(delegateType, construct, parameters);
             return lambda.Compile();
 #else
             DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(ctor, DynamicMethodOptions.ExactParameters | DynamicMethodOptions.StronglyTyped);
