@@ -286,7 +286,7 @@ namespace KGySoft.Reflection
         /// The parameters passed by reference will be assigned back to the corresponding array elements.</para>
         /// <note type="tip">If the constructor has no more than four parameters, then you can use the generic
         /// <see cref="O:KGySoft.Reflection.CreateInstanceAccessor.CreateInstance">CreateInstance</see> overloads for better performance if the types are known at compile time.</note>
-        /// <note type="caller">If the constructor has <see langword="ref"/>/<see langword="out"/> parameters, then the .NET Standard 2.0 version of this method defaults
+        /// <note type="caller">If the constructor has <see langword="ref"/>/<see langword="out"/> or pointer parameters, then the .NET Standard 2.0 version of this method defaults
         /// to use regular reflection to be able to assign the parameter values back to the <paramref name="parameters"/> array.
         /// To experience the best performance try to target .NET Standard 2.1 or any .NET Framework or .NET Core/.NET platforms instead.</note>
         /// </remarks>

@@ -226,7 +226,7 @@ namespace KGySoft.Reflection
         /// <see cref="O:KGySoft.Reflection.MethodAccessor.InvokeStaticAction">InvokeStaticAction</see>, <see cref="O:KGySoft.Reflection.MethodAccessor.InvokeStaticFunction">InvokeStaticFunction</see>,
         /// <see cref="O:KGySoft.Reflection.MethodAccessor.InvokeInstanceAction">InvokeInstanceAction</see> or <see cref="O:KGySoft.Reflection.MethodAccessor.InvokeInstanceFunction">InvokeInstanceFunction</see>
         /// methods for better performance if the types are known at compile time.</note>
-        /// <note type="caller">If the method is a non-<see langword="readonly"/> instance method of a value type or has <see langword="ref"/>/<see langword="out"/> parameters,
+        /// <note type="caller">If the method is a non-<see langword="readonly"/> instance method of a value type or has <see langword="ref"/>/<see langword="out"/> or pointer parameters/return value,
         /// then the .NET Standard 2.0 version of this method defaults to use regular reflection to preserve possible mutations and be able to assign the parameter values back to
         /// the <paramref name="parameters"/> array. To experience the best performance try to target .NET Standard 2.1 or any .NET Framework or .NET Core/.NET platforms instead.</note>
         /// </remarks>

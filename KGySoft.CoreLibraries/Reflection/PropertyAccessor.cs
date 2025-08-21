@@ -276,7 +276,8 @@ namespace KGySoft.Reflection
         /// <note type="tip">If the property has no more than one index parameters and you know the type of the property at compile time
         /// (and also the declaring type for instance properties), then you can use the generic <see cref="SetStaticValue{TProperty}">SetStaticValue</see>
         /// or <see cref="O:KGySoft.Reflection.PropertyAccessor.SetInstanceValue">SetInstanceValue</see> methods for better performance.</note>
-        /// <note type="caller">If the property is an instance property of a value type, then the .NET Standard 2.0 version of this method defaults to use regular reflection
+        /// <note type="caller">If the property is an instance property of a value type or has a pointer type or pointer index parameter,
+        /// then the .NET Standard 2.0 version of this method defaults to use regular reflection
         /// to preserve mutations. To experience the best performance try to target .NET Standard 2.1 or any .NET Framework or .NET Core/.NET platforms instead.</note>
         /// </remarks>
         /// <exception cref="ArgumentNullException">This <see cref="PropertyAccessor"/> represents an instance property and <paramref name="instance"/> is <see langword="null"/>
@@ -400,7 +401,8 @@ namespace KGySoft.Reflection
         /// <note type="tip">If the property has no more than one index parameters and you know the type of the property at compile time
         /// (and also the declaring type for instance properties), then you can use the generic <see cref="GetStaticValue{TProperty}">GetStaticValue</see>
         /// or <see cref="O:KGySoft.Reflection.PropertyAccessor.GetInstanceValue">GetInstanceValue</see> methods for better performance.</note>
-        /// <note type="caller">If the property is a a non-<see langword="readonly"/> instance property of a value type, then the .NET Standard 2.0 version of this method defaults to use regular reflection
+        /// <note type="caller">If the property is a non-<see langword="readonly"/> instance property of a value type, or has a pointer type or pointer index parameter,
+        /// then the .NET Standard 2.0 version of this method defaults to use regular reflection
         /// to preserve possible mutations. To experience the best performance try to target .NET Standard 2.1 or any .NET Framework or .NET Core/.NET platforms instead.</note>
         /// </remarks>
         /// <exception cref="ArgumentNullException">This <see cref="PropertyAccessor"/> represents an instance property and <paramref name="instance"/> is <see langword="null"/>

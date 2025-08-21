@@ -1206,7 +1206,7 @@ namespace KGySoft.CoreLibraries
             {
                 fixed (byte* _ = &Reflector.GetRawData(instance))
                 {
-                    // Now we can access the address of the fields safely. MakeTypedReference works here because primitive types are handled in hte caller
+                    // Now we can access the address of the fields safely. MakeTypedReference works here because primitive types are handled in the caller
                     TypedReference refItem1 = TypedReference.MakeTypedReference(instance, new[] { helperType.GetField(nameof(SizeOfHelper<_>.Item1))! });
                     TypedReference refItem2 = TypedReference.MakeTypedReference(instance, new[] { helperType.GetField(nameof(SizeOfHelper<_>.Item2))! });
                     Debug.Assert(__reftype(refItem1) == type && __reftype(refItem2) == type);
