@@ -657,9 +657,6 @@ You can try to enable the RecursiveSerializationAsFallback flag, though the seri
   <data name="Reflection_InvalidAssemblyNameFormat" xml:space="preserve">
     <value>Assembly name is invalid: "{0}".</value>
   </data>
-  <data name="Reflection_PointerTypeNotSupportedFormat" xml:space="preserve">
-    <value>Pointer type '{0}' is not supported.</value>
-  </data>
   <data name="Reflection_RefPointerTypeNotSupportedNetStandard20Format" xml:space="preserve">
     <value>Ref pointer type '{0}' is not supported in the .NET Standard 2.0 version of this library. If possible, try to use the .NET Standard 2.1 version or any .NET Core/Framework versions instead.</value>
   </data>

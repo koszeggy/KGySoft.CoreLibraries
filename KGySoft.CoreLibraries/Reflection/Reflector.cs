@@ -2912,12 +2912,6 @@ namespace KGySoft.Reflection
             switch (way)
             {
                 case ReflectionWays.Auto:
-#if NETSTANDARD2_0
-                    if (field.IsInitOnly || !isStatic && field.DeclaringType?.IsValueType == true)
-                        goto case ReflectionWays.SystemReflection;
-                    else
-                        goto case ReflectionWays.DynamicDelegate;
-#endif
                 case ReflectionWays.DynamicDelegate:
                     FieldAccessor.GetAccessor(field).Set(instance, value);
                     break;

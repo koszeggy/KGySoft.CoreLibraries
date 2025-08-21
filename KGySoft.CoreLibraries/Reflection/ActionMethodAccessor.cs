@@ -119,8 +119,6 @@ namespace KGySoft.Reflection
                 Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
             if (ParameterTypes.Length > 4)
                 Throw.NotSupportedException(); // will be handled in PostValidate
-            if (method.ReturnType.IsPointer)
-                Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(method.ReturnType));
 
             Type delegateType = ParameterTypes.Length switch
             {
@@ -197,8 +195,6 @@ namespace KGySoft.Reflection
                 Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
             if (ParameterTypes.Length > 4)
                 Throw.NotSupportedException(Res.ReflectionMethodGenericNotSupported);
-            if (method.ReturnType.IsPointer)
-                Throw.NotSupportedException(Res.ReflectionPointerTypeNotSupported(method.ReturnType));
 
             Type delegateType;
             if (isStatic)
