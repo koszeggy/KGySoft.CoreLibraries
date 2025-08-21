@@ -218,9 +218,7 @@ namespace KGySoft.Reflection
         /// <param name="indexParameters">Index parameters if <paramref name="property"/> is an indexer. This parameter is ignored for non-indexed properties.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable here.</param>
         /// <remarks>
-        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then the <see cref="ReflectionWays.DynamicDelegate"/> way will be used,
-        /// except when the .NET Standard 2.0 build of the <c>KGySoft.CoreLibraries</c> assembly is referenced and the property is an instance member of a value type (<see langword="struct"/>),
-        /// in which case the <see cref="ReflectionWays.SystemReflection"/> way will be used.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then the <see cref="ReflectionWays.DynamicDelegate"/> way will be used.</para>
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// <note>To set the property explicitly by dynamically created delegates use the <see cref="PropertyAccessor"/> class.</note>
         /// </remarks>
@@ -238,12 +236,6 @@ namespace KGySoft.Reflection
             switch (way)
             {
                 case ReflectionWays.Auto:
-#if NETSTANDARD2_0
-                    if (!isStatic && property.DeclaringType?.IsValueType == true)
-                        goto case ReflectionWays.SystemReflection;
-                    else
-                        goto case ReflectionWays.DynamicDelegate;
-#endif
                 case ReflectionWays.DynamicDelegate:
                     PropertyAccessor.GetAccessor(property).Set(instance, value, indexParameters);
                     break;

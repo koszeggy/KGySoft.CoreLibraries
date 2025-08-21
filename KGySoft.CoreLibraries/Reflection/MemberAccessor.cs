@@ -340,7 +340,7 @@ namespace KGySoft.Reflection
                 il.Emit(stronglyTyped && isStatic ? OpCodes.Ldarg_0 : OpCodes.Ldarg_1);
 
                 if (!stronglyTyped)
-                    il.Emit(pi.PropertyType.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, pi.PropertyType);
+                    il.Emit(pi.PropertyType.IsValueType || pi.PropertyType.IsPointer ? OpCodes.Unbox_Any : OpCodes.Castclass, pi.PropertyType.IsPointer ? typeof(IntPtr) : pi.PropertyType);
             }
 
             if (ctor != null)
@@ -393,7 +393,15 @@ namespace KGySoft.Reflection
 
                 // property setter: value
                 if (treatAsPropertySetter)
-                    parameters.Add(stronglyTyped ? ((PropertyInfo)MemberInfo).PropertyType : Reflector.ObjectType);
+                {
+                    if (!stronglyTyped)
+                        parameters.Add(Reflector.ObjectType);
+                    else
+                    {
+                        PropertyInfo pi = (PropertyInfo)MemberInfo!;
+                        parameters.Add(pi.PropertyType.IsPointer ? typeof(IntPtr) : pi.PropertyType);
+                    }
+                }
 
                 // parameters
                 if (!exactParameters)

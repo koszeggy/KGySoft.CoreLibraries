@@ -411,7 +411,7 @@ Hit rate: {8:P2}</value>
     <value>Type or member with open generic arguments cannot be reflected.</value>
   </data>
   <data name="Reflection_ValueTypeWithPointersGenericNetStandard20" xml:space="preserve">
-    <value>Generic access of potentially mutating value type members with pointer parameters is not supported in the .NET Standard 2.0 version of this library. Use the non-generic access instead.</value>
+    <value>Generic access of potentially mutating value type members with pointer parameters or pointer return value is not supported in the .NET Standard 2.0 version of this library. Use the non-generic access instead.</value>
   </data>
   <data name="ArraySection_Null" xml:space="preserve">
     <value>The underlying array is null.</value>

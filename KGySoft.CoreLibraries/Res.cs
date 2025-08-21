@@ -425,7 +425,7 @@ namespace KGySoft
         /// <summary>Type or member with open generic arguments cannot be reflected.</summary>
         internal static string ReflectionGenericMember => Get("Reflection_GenericMember");
 
-        /// <summary>Generic access of potentially mutating value type members with pointer parameters is not supported in the .NET Standard 2.0 version of this library. Use the non-generic access instead.</summary>
+        /// <summary>Generic access of potentially mutating value type members with pointer parameters or pointer return value is not supported in the .NET Standard 2.0 version of this library. Use the non-generic access instead.</summary>
         internal static string ReflectionValueTypeWithPointersGenericNetStandard20 => Get("Reflection_ValueTypeWithPointersGenericNetStandard20");
 
         #endregion
