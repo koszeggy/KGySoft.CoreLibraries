@@ -279,7 +279,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="value">A <typeparamref name="TEnum"/> value.</param>
         /// <param name="defaultValue">A <typeparamref name="TEnum"/> value to return if <paramref name="value"/>
-        /// is not defined in <typeparamref name="TEnum"/>. It does not needed to be a defined value. This parameter is optional.
+        /// is not defined in <typeparamref name="TEnum"/>. It is not needed to be a defined value. This parameter is optional.
         /// <br/>Default value: The bitwise zero value of <typeparamref name="TEnum"/>.</param>
         /// <returns><paramref name="value"/> if it is defined in <typeparamref name="TEnum"/>;
         /// otherwise, <paramref name="defaultValue"/>, even if it is undefined.</returns>
@@ -291,7 +291,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="value">A <see cref="string">string</see> value representing a field name in the enumeration.</param>
         /// <param name="defaultValue">A <typeparamref name="TEnum"/> value to return if <paramref name="value"/>
-        /// is not defined in <typeparamref name="TEnum"/>. It does not needed to be a defined value. This parameter is optional.
+        /// is not defined in <typeparamref name="TEnum"/>. It is not needed to be a defined value. This parameter is optional.
         /// <br/>Default value: The bitwise zero value of <typeparamref name="TEnum"/>.</param>
         /// <returns>The <typeparamref name="TEnum"/> value associated with <paramref name="value"/> if it is defined in <typeparamref name="TEnum"/>;
         /// otherwise, <paramref name="defaultValue"/>, even if it is undefined.</returns>
@@ -309,7 +309,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="value">A <see cref="StringSegment"/> value representing a field name in the enumeration.</param>
         /// <param name="defaultValue">A <typeparamref name="TEnum"/> value to return if <paramref name="value"/>
-        /// is not defined in <typeparamref name="TEnum"/>. It does not needed to be a defined value. This parameter is optional.
+        /// is not defined in <typeparamref name="TEnum"/>. It is not needed to be a defined value. This parameter is optional.
         /// <br/>Default value: The bitwise zero value of <typeparamref name="TEnum"/>.</param>
         /// <returns>The <typeparamref name="TEnum"/> value associated with <paramref name="value"/> if it is defined in <typeparamref name="TEnum"/>;
         /// otherwise, <paramref name="defaultValue"/>, even if it is undefined.</returns>
@@ -328,7 +328,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="value">A <see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see> value representing a field name in the enumeration.</param>
         /// <param name="defaultValue">A <typeparamref name="TEnum"/> value to return if <paramref name="value"/>
-        /// is not defined in <typeparamref name="TEnum"/>. It does not needed to be a defined value. This parameter is optional.
+        /// is not defined in <typeparamref name="TEnum"/>. It is not needed to be a defined value. This parameter is optional.
         /// <br/>Default value: The bitwise zero value of <typeparamref name="TEnum"/>.</param>
         /// <returns>The <typeparamref name="TEnum"/> value associated with <paramref name="value"/> if it is defined in <typeparamref name="TEnum"/>;
         /// otherwise, <paramref name="defaultValue"/>, even if it is undefined.</returns>
@@ -341,7 +341,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="value">A numeric value representing a field value in the enumeration.</param>
         /// <param name="defaultValue">A <typeparamref name="TEnum"/> value to return if <paramref name="value"/>
-        /// is not defined in <typeparamref name="TEnum"/>. It does not needed to be a defined value. This parameter is optional.
+        /// is not defined in <typeparamref name="TEnum"/>. It is not needed to be a defined value. This parameter is optional.
         /// <br/>Default value: The bitwise zero value of <typeparamref name="TEnum"/>.</param>
         /// <returns>The <typeparamref name="TEnum"/> value associated with <paramref name="value"/> if it is defined in <typeparamref name="TEnum"/>;
         /// otherwise, <paramref name="defaultValue"/>, even if it is undefined.</returns>
@@ -353,7 +353,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="value">A numeric value representing a field value in the enumeration.</param>
         /// <param name="defaultValue">A <typeparamref name="TEnum"/> value to return if <paramref name="value"/>
-        /// is not defined in <typeparamref name="TEnum"/>. It does not needed to be a defined value. This parameter is optional.
+        /// is not defined in <typeparamref name="TEnum"/>. It is not needed to be a defined value. This parameter is optional.
         /// <br/>Default value: The bitwise zero value of <typeparamref name="TEnum"/>.</param>
         /// <returns>The <typeparamref name="TEnum"/> value associated with <paramref name="value"/> if it is defined in <typeparamref name="TEnum"/>;
         /// otherwise, <paramref name="defaultValue"/>, even if it is undefined.</returns>
@@ -599,7 +599,7 @@ namespace KGySoft.CoreLibraries
         public static TEnum GetFlagsMask() => converter.ToEnum(FlagsMask);
 
         /// <summary>
-        /// Gets the defined flags in <typeparamref name="TEnum"/>, where each flags are returned as distinct values.
+        /// Gets the defined flags in <typeparamref name="TEnum"/>, where all flags are returned as distinct values.
         /// </summary>
         /// <returns>A lazy-enumerated <see cref="IEnumerable{TEnum}"/> instance containing each flags of <typeparamref name="TEnum"/> as distinct values.</returns>
         /// <remarks>
@@ -616,7 +616,7 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Gets an <see cref="IEnumerable{TEnum}"/> enumeration of <paramref name="flags"/>,
-        /// where each flags are returned as distinct values.
+        /// where all flags are returned as distinct values.
         /// </summary>
         /// <param name="flags">A flags <see langword="enum"/> value, whose flags should be returned. It is not checked whether <typeparamref name="TEnum"/>
         /// is really marked by <see cref="FlagsAttribute"/>.</param>
@@ -742,8 +742,11 @@ namespace KGySoft.CoreLibraries
 #if NET7_0_OR_GREATER
                 return underlyingValues = Enum.GetValuesAsUnderlyingType(typeof(TEnum));
 #else
-                EnsureRawValueNamePairs();
-                ulong[] rawValues = rawValueNamePairs.RawValues!;
+                TEnum[] nativeValues = Values;
+                ulong[] rawValues = new ulong[nativeValues.Length];
+                for (int i = 0; i < rawValues.Length; i++)
+                    rawValues[i] = converter.ToUInt64(nativeValues[i]);
+
                 switch (underlyingInfo.TypeCode)
                 {
                     case TypeCode.SByte:
