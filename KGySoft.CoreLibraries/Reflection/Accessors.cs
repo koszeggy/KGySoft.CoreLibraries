@@ -1066,16 +1066,10 @@ namespace KGySoft.Reflection
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static object? Get(this FieldInfo field, object? instance)
         {
-            if (field.FieldType.IsPointer)
-            {
-#if NETFRAMEWORK || NETSTANDARD2_0
-                if (EnvironmentHelper.IsMono)
-                    Throw.PlatformNotSupportedException<object>(Res.ReflectionPointerTypeMonoNotSupported(field.FieldType));
-                if (EnvironmentHelper.IsPartiallyTrustedDomain)
-                    return GetPointerFieldPartiallyTrusted(field, instance);
-#endif
-                return GetPointerField(field, instance);
-            }
+//#if NETFRAMEWORK || NETSTANDARD2_0
+//            if (field.FieldType.IsPointer && EnvironmentHelper.IsMono)
+//                Throw.PlatformNotSupportedException<object>(Res.ReflectionPointerTypeMonoNotSupported(field.FieldType));
+//#endif
 
             return FieldAccessor.GetAccessor(field).Get(instance);
         }
@@ -1085,27 +1079,13 @@ namespace KGySoft.Reflection
         {
             Debug.Assert(!field.IsLiteral);
 
-            if (field.FieldType.IsPointer)
-            {
-                SetPointerField(field, instance, value);
-                return;
-            }
-
-#if NETFRAMEWORK
-            if (EnvironmentHelper.IsMono)
-            {
-                field.SetValue(instance, value);
-                return;
-            }
-#endif
-
-#if NETSTANDARD2_0
-            if (field.IsInitOnly || !field.IsStatic && field.DeclaringType?.IsValueType == true)
-            {
-                field.SetValue(instance, value);
-                return;
-            }
-#endif
+//#if NETFRAMEWORK
+//            if (EnvironmentHelper.IsMono)
+//            {
+//                field.SetValue(instance, value);
+//                return;
+//            }
+//#endif
 
             FieldAccessor.GetAccessor(field).Set(instance, value);
         }
@@ -1115,20 +1095,6 @@ namespace KGySoft.Reflection
         internal static object? Get(this PropertyInfo property, object? instance)
         {
             Debug.Assert(property.CanRead);
-
-            if (property.PropertyType.IsPointer)
-            {
-#if NETFRAMEWORK || NETSTANDARD2_0
-                if (EnvironmentHelper.IsPartiallyTrustedDomain)
-                    return GetPointerPropertyPartiallyTrusted(property, instance);
-#endif
-                return GetPointerProperty(property, instance);
-            }
-
-#if NETSTANDARD2_0
-            if (!property.GetGetMethod(true).IsStatic && property.DeclaringType?.IsValueType == true)
-                return property.GetValue(instance);
-#endif
             return PropertyAccessor.GetAccessor(property).Get(instance);
         }
 
@@ -1137,24 +1103,6 @@ namespace KGySoft.Reflection
         internal static void Set(this PropertyInfo property, object? instance, object? value, params object?[] indexerParams)
         {
             Debug.Assert(property.CanWrite || property.PropertyType.IsByRef);
-
-            if (property.PropertyType.IsPointer)
-            {
-                SetPointerProperty(property, instance, value);
-                return;
-            }
-
-#if NETSTANDARD2_0
-            if (property.PropertyType.IsByRef)
-                Throw.PlatformNotSupportedException(Res.ReflectionRefReturnTypeNetStandard20(property.PropertyType));
-
-            if (!property.GetSetMethod(true).IsStatic && property.DeclaringType?.IsValueType == true)
-            {
-                property.SetValue(instance, value, indexerParams);
-                return;
-            }
-#endif
-
             PropertyAccessor.GetAccessor(property).Set(instance, value, indexerParams);
         }
 
@@ -1285,23 +1233,6 @@ namespace KGySoft.Reflection
             return true;
 #endif
         }
-
-        [SecuritySafeCritical]
-        private static unsafe object GetPointerField(FieldInfo field, object? instance)
-            => new IntPtr(Pointer.Unbox((Pointer)field.GetValue(instance)!));
-
-#if NETFRAMEWORK || NETSTANDARD2_0
-        private static object? GetPointerFieldPartiallyTrusted(FieldInfo field, object? instance)
-            => GetMethodByName(typeof(Pointer), "GetPointerValue")?.InvokeInstanceFunction<Pointer, object>((Pointer)field.GetValue(instance));
-#endif
-
-        [SecuritySafeCritical]
-        private static unsafe void SetPointerField(FieldInfo field, object? instance, object? value)
-            => field.SetValue(instance, Pointer.Box(((IntPtr)value!).ToPointer(), field.FieldType));
-
-        [SecurityCritical]
-        private static unsafe object GetPointerProperty(PropertyInfo property, object? instance)
-            => new IntPtr(Pointer.Unbox((Pointer)property.GetValue(instance, null)!));
 
 #if NETFRAMEWORK || NETSTANDARD2_0
         private static object GetPointerPropertyPartiallyTrusted(PropertyInfo property, object? instance)

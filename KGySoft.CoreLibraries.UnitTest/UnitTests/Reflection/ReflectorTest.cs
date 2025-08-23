@@ -20,6 +20,8 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Reflection;
+
+using KGySoft.Annotations;
 #if NETFRAMEWORK
 using System.Security;
 using System.Security.Permissions;
@@ -425,6 +427,24 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
         #endregion
 
+        #region TestConstants
+
+        public static class TestConstants
+        {
+            #region Constants
+
+            public const bool BoolValue = true;
+            public const string StringValue = "value";
+            public const nint IntPtrValue = -1;
+            public const nuint UIntPtrValue = 1;
+            [CanBeNull] public const string NullValue = null;
+            public const ConsoleColor EnumValue = ConsoleColor.Blue;
+
+            #endregion
+        }
+
+        #endregion
+
         #region Sandbox class
 
 #if NETFRAMEWORK
@@ -438,6 +458,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
                 var test = new ReflectorTest();
                 test.ClassStaticFieldAccess();
                 test.StructInstancePropertyAccess();
+                test.StructInstanceComplexFunctionMethodInvoke();
 
                 // this invokes the dynamic method creation
                 Console.WriteLine(Reflector<KeyValuePair<int, string>>.SizeOf);
@@ -6484,6 +6505,68 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Reflector.SetField(testType, nameof(UnsafeTestStruct.StaticField).ToLowerInvariant(), true, value);
             result = Reflector.GetField(testType, nameof(UnsafeTestStruct.StaticField).ToLowerInvariant(), true);
             Assert.AreEqual(value, result);
+        }
+
+        #endregion
+
+        #region Constant fields access
+
+        [TestCase(typeof(Byte), nameof(Byte.MaxValue), Byte.MaxValue)]
+        [TestCase(typeof(SByte), nameof(SByte.MinValue), SByte.MinValue)]
+        [TestCase(typeof(Int16), nameof(Int16.MinValue), Int16.MinValue)]
+        [TestCase(typeof(Int32), nameof(Int32.MinValue), Int32.MinValue)]
+        [TestCase(typeof(Int64), nameof(Int64.MinValue), Int64.MinValue)]
+        [TestCase(typeof(UInt16), nameof(UInt16.MaxValue), UInt16.MaxValue)]
+        [TestCase(typeof(UInt32), nameof(UInt32.MaxValue), UInt32.MaxValue)]
+        [TestCase(typeof(UInt64), nameof(UInt64.MaxValue), UInt64.MaxValue)]
+        [TestCase(typeof(Char), nameof(Char.MaxValue), Char.MaxValue)]
+        [TestCase(typeof(Single), nameof(Single.Epsilon), Single.Epsilon)]
+        [TestCase(typeof(Double), nameof(Double.Epsilon), Double.Epsilon)]
+        [TestCase(typeof(TestConstants), nameof(TestConstants.BoolValue), TestConstants.BoolValue)]
+        [TestCase(typeof(TestConstants), nameof(TestConstants.StringValue), TestConstants.StringValue)]
+        [TestCase(typeof(TestConstants), nameof(TestConstants.EnumValue), TestConstants.EnumValue)]
+        [TestCaseGeneric(typeof(TestConstants), nameof(TestConstants.NullValue), TestConstants.NullValue, TypeArguments = [typeof(string)])]
+        [TestCaseGeneric(typeof(TestConstants), nameof(TestConstants.IntPtrValue), null, TypeArguments = [typeof(IntPtr)])] // null: to avoid CS1082
+        [TestCaseGeneric(typeof(TestConstants), nameof(TestConstants.UIntPtrValue), null, TypeArguments = [typeof(UIntPtr)])] // null: to avoid CS1082
+        public void ConstantFieldAccess<T>(Type type, string member, T expectedValue)
+        {
+            // workaround for CS1082: An attribute argument must be a constant expression, typeof expression or array creation expression of an attribute parameter type
+            if (typeof(T) == typeof(IntPtr))
+                expectedValue = (T)(object)TestConstants.IntPtrValue;
+            else if (typeof(T) == typeof(UIntPtr))
+                expectedValue = (T)(object)TestConstants.UIntPtrValue;
+
+            FieldInfo fi = type.GetField(member);
+            FieldAccessor accessor = FieldAccessor.GetAccessor(fi);
+            object result;
+
+            Console.Write("System Reflection...");
+            result = fi.GetValue(null);
+            if (expectedValue is not (IntPtr or UIntPtr)) // System.Reflection returns simple integers for IntPtr constants
+                Assert.AreEqual(expectedValue, result);
+
+            Console.Write("Field Accessor...");
+            result = accessor.Get(null);
+            Assert.AreEqual(expectedValue, result);
+            Throws<InvalidOperationException>(() => accessor.Set(null, result), Res.ReflectionCannotSetConstantField(type, member));
+
+            Console.Write("Field Accessor Generic...");
+            result = accessor.GetStaticValue<T>();
+            Assert.AreEqual(expectedValue, result);
+            Throws<InvalidOperationException>(() => accessor.SetStaticValue(expectedValue), Res.ReflectionCannotSetConstantField(type, member));
+
+            Console.Write("Reflector (by FieldInfo)...");
+            result = Reflector.GetField(null, fi);
+            Assert.AreEqual(expectedValue, result);
+            Throws<InvalidOperationException>(() => Reflector.SetField(null, fi, result), Res.ReflectionCannotSetConstantField(type, member));
+
+            Console.Write("Reflector (by name)...");
+            result = Reflector.GetField(type, member);
+            Assert.AreEqual(expectedValue, result);
+            Throws<InvalidOperationException>(() => Reflector.SetField(type, member, result), Res.ReflectionCannotSetConstantField(type, member));
+            result = Reflector.GetField(type, member.ToLowerInvariant(), true);
+            Assert.AreEqual(expectedValue, result);
+            Throws<InvalidOperationException>(() => Reflector.SetField(type, member.ToLowerInvariant(), true, result), Res.ReflectionCannotSetConstantField(type, member));
         }
 
         #endregion
