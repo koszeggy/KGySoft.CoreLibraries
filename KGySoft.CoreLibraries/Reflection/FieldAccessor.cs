@@ -193,12 +193,12 @@ namespace KGySoft.Reflection
         /// except if the .NET Standard 2.0 build of the <c>KGySoft.CoreLibraries</c> assembly is used and the field is an instance field of a value type,
         /// in which case doing so throws a <see cref="PlatformNotSupportedException"/>.</note>
         /// </remarks>
-        public bool IsReadOnly => ((FieldInfo)MemberInfo).IsInitOnly;
+        public bool IsReadOnly => Field.IsInitOnly;
 
         /// <summary>
         /// Gets whether the field is a constant. Constant fields cannot be set.
         /// </summary>
-        public bool IsConstant => ((FieldInfo)MemberInfo).IsLiteral;
+        public bool IsConstant => Field.IsLiteral;
 
         #endregion
 
@@ -465,7 +465,7 @@ namespace KGySoft.Reflection
 
 #if NETSTANDARD2_0 // DynamicMethod and ILGenerator is not available in .NET Standard 2.0
             // Read-only/pointer field or value type: using reflection as fallback
-            if (Field.IsInitOnly || isValueType && !Field.IsStatic || Field.FieldType.IsPointer)
+            if (IsReadOnly || isValueType && !Field.IsStatic || Field.FieldType.IsPointer)
             {
                 // pointer field: explicitly casting to IntPtr; otherwise, even a string could be passed without an error
                 return Field.FieldType.IsPointer
@@ -525,13 +525,30 @@ namespace KGySoft.Reflection
                 unsafe { return instance => (IntPtr)Pointer.Unbox(Field.GetValue(instance)); }
 
             ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
-            MemberExpression member = Expression.Field(
-                    // ReSharper disable once AssignNullToNotNullAttribute - the check above prevents null
+            
+            Expression getField;
+            if (IsConstant)
+            {
+                // Special handling for [U]IntPtr constants, because there is no IConvertible implementation so Convert does not work.
+                // [U]IntPtr constants are always represented as int/uint by FieldInfo.GetRawConstantValue as they cannot be larger.
+                object? rawConstant = Field.GetRawConstantValue();
+                // ReSharper disable once ConditionalAccessQualifierIsNonNullableAccordingToAPIContract
+                Type? rawType = rawConstant?.GetType();
+                ConstantExpression constant = Expression.Constant(rawConstant, rawType ?? Field.FieldType);
+                getField = rawConstant is null || rawType == Field.FieldType ? constant
+                    : Field.FieldType == typeof(IntPtr) && rawType == typeof(int) ? Expression.New(typeof(IntPtr).GetConstructor([typeof(int)])!, constant)
+                    : Field.FieldType == typeof(UIntPtr) && rawType == typeof(uint) ? Expression.New(typeof(UIntPtr).GetConstructor([typeof(uint)])!, constant)
+                    : Expression.Convert(constant, Field.FieldType);
+            }
+            else
+            {
+                getField = Expression.Field(
                     Field.IsStatic ? null : Expression.Convert(instanceParameter, declaringType!), // (TInstance)instance
                     Field);
+            }
 
             var lambda = Expression.Lambda<Func<object?, object?>>(
-                    Expression.Convert(member, Reflector.ObjectType), // object return type
+                    Expression.Convert(getField, Reflector.ObjectType), // object return type
                     instanceParameter); // instance (object)
             return lambda.Compile();
 #else
@@ -541,7 +558,10 @@ namespace KGySoft.Reflection
             ILGenerator il = dm.GetILGenerator();
             bool isValueType = declaringType?.IsValueType == true;
 
-            if (Field.IsStatic)
+            // constant field: OpCodes.Ldsfld would not work because FieldInfo.FieldHandle throws a NotSupportedException
+            if (IsConstant)
+                EmitLoadConstant(il);
+            else if (Field.IsStatic)
                 il.Emit(OpCodes.Ldsfld, Field); // loading static field
             else
             {
@@ -578,7 +598,7 @@ namespace KGySoft.Reflection
             LambdaExpression lambda;
 
             // Read-only field or value type: using reflection as fallback
-            if (Field.IsInitOnly || Field.FieldType.IsPointer)
+            if (IsReadOnly || Field.FieldType.IsPointer)
             {
                 // value types: the ref instance parameter would be boxed, losing the mutability
                 if (isValueType && !isStatic)
@@ -702,6 +722,23 @@ namespace KGySoft.Reflection
                 return lambda.Compile();
             }
 
+            // Constant field
+            if (IsConstant)
+            {
+                // Special handling for [U]IntPtr constants, because there is no IConvertible implementation so Convert does not work.
+                // [U]IntPtr constants are always represented as int/uint by FieldInfo.GetRawConstantValue as they cannot be larger.
+                object? rawConstant = Field.GetRawConstantValue();
+                // ReSharper disable once ConditionalAccessQualifierIsNonNullableAccordingToAPIContract
+                Type? rawType = rawConstant?.GetType();
+                ConstantExpression constant = Expression.Constant(rawConstant, rawType ?? Field.FieldType);
+                Expression getValue = rawConstant is null || rawType == Field.FieldType ? constant
+                    : Field.FieldType == typeof(IntPtr) && rawType == typeof(int) ? Expression.New(typeof(IntPtr).GetConstructor([typeof(int)])!, constant)
+                    : Field.FieldType == typeof(UIntPtr) && rawType == typeof(uint) ? Expression.New(typeof(UIntPtr).GetConstructor([typeof(uint)])!, constant)
+                    : Expression.Convert(constant, Field.FieldType);
+                lambda = Expression.Lambda(delegateType, getValue);
+                return lambda.Compile();
+            }
+
             // Static field
             if (isStatic)
             {
@@ -734,19 +771,70 @@ namespace KGySoft.Reflection
                 parameterTypes,
                 declaringType ?? Reflector.ObjectType, true);
             ILGenerator il = dm.GetILGenerator();
-            if (isStatic)
-            {
+            if (IsConstant)
+                EmitLoadConstant(il);
+            else if (isStatic)
                 il.Emit(OpCodes.Ldsfld, Field); // loading static field
-                il.Emit(OpCodes.Ret); // returning field value
-                return dm.CreateDelegate(delegateType);
+            else
+            {
+                il.Emit(OpCodes.Ldarg_0); // loading 0th argument: instance
+                il.Emit(OpCodes.Ldfld, Field); // loading field
             }
 
-            il.Emit(OpCodes.Ldarg_0); // loading 0th argument: instance
-            il.Emit(OpCodes.Ldfld, Field); // loading field
             il.Emit(OpCodes.Ret); // returning field value
             return dm.CreateDelegate(delegateType);
 #endif
         }
+
+#if !NETSTANDARD2_0
+        private void EmitLoadConstant(ILGenerator il)
+        {
+            // NOTE: [U]IntPtr constants are always represented as int/uint by FieldInfo.GetRawConstantValue as they cannot be larger.
+            switch (Field.GetRawConstantValue())
+            {
+                case int value:
+                    il.Emit(OpCodes.Ldc_I4, value);
+                    if (Field.FieldType == typeof(IntPtr))
+                        il.Emit(OpCodes.Conv_I);
+                    break;
+                case uint value:
+                    il.Emit(OpCodes.Ldc_I4, (int)value);
+                    if (Field.FieldType == typeof(UIntPtr))
+                        il.Emit(OpCodes.Conv_U);
+                    break;
+                case long value:
+                    il.Emit(OpCodes.Ldc_I8, value);
+                    break;
+                case ulong value:
+                    il.Emit(OpCodes.Ldc_I8, (long)value);
+                    break;
+                case sbyte value:
+                    il.Emit(OpCodes.Ldc_I4_S, value);
+                    break;
+                case IConvertible value and (byte or short or ushort or char):
+                    il.Emit(OpCodes.Ldc_I4, value.ToInt32(null));
+                    break;
+                case float value:
+                    il.Emit(OpCodes.Ldc_R4, value);
+                    break;
+                case double value:
+                    il.Emit(OpCodes.Ldc_R8, value);
+                    break;
+                case string value:
+                    il.Emit(OpCodes.Ldstr, value);
+                    break;
+                case true:
+                    il.Emit(OpCodes.Ldc_I4_1);
+                    break;
+                case false:
+                    il.Emit(OpCodes.Ldc_I4_0);
+                    break;
+                case null:
+                    il.Emit(OpCodes.Ldnull);
+                    break;
+            }
+        }
+#endif
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         [ContractAnnotation("=> halt"), DoesNotReturn]

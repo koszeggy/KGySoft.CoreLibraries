@@ -107,6 +107,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 test.SerializationSurrogateTest(false); // Setting read-only field in StringSegment
                 test.SerializeRemoteObjects();
                 test.SerializationBinderTest(false);
+                test.SerializePointers();
             }
         }
 #endif
@@ -2831,7 +2832,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             SystemSerializeObject(referenceObjects, safeCompare: true);
             SystemSerializeObjects(referenceObjects, safeCompare: true);
 #endif
-
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
