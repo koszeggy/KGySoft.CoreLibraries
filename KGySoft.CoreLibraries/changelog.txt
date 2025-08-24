@@ -80,6 +80,9 @@
 + AsyncHelper class:
   + The non-generic EndOperation method accepts IAsyncResult instances created by the generic BeginOperation and
     FromResult methods. Earlier it threw an InvalidOperationException in such case.
++ ParallelHelper class:
+  + The CoreCount property has been made public. When targeting .NET 5.0 or below on Windows, it may return a
+    different value than Environment.ProcessorCount if the CPU affinity of the current process is limited.
 
 
 ~~~~~~~~~

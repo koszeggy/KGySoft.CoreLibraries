@@ -83,8 +83,25 @@ namespace KGySoft.Threading
 
         #region Properties
 
-        internal static int CoreCount { get; } = GetCoreCount();
+        #region Public Properties
+
+        /// <summary>
+        /// Gets the number of processor cores available for the current process.
+        /// </summary>
+        /// <remarks>
+        /// <para>Then targeting .NET 6.0 or later this property returns the same value as the <see cref="Environment.ProcessorCount">Environment.ProcessorCount</see> property.
+        /// On earlier .NET versions the <see cref="Environment.ProcessorCount">Environment.ProcessorCount</see> property may return an incorrect value on Windows,
+        /// because it does not respect the configured processor affinity of the current process.</para>
+        /// </remarks>
+        public static int CoreCount { get; } = GetCoreCount();
+
+        #endregion
+
+        #region Internal Properties
+        
         internal static bool IsSingleCoreCpu => CoreCount == 1;
+
+        #endregion
 
         #endregion
 
