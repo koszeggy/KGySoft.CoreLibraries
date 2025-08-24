@@ -27,7 +27,7 @@ namespace KGySoft.CoreLibraries
 {
     /// <summary>
     /// Represents a high resolution timer that allows precise timing even with sub-milliseconds intervals.
-    /// The timer executes on a separated high priority thread.
+    /// The timer executes on a separate high priority thread.
     /// </summary>
     public class HiResTimer
     {
@@ -47,6 +47,7 @@ namespace KGySoft.CoreLibraries
         private volatile float interval;
         private volatile float ignoreElapsedThreshold = Single.PositiveInfinity;
         private volatile bool isRunning;
+        private volatile float spinWaitThreshold = 16f;
 
         #endregion
 
@@ -73,7 +74,8 @@ namespace KGySoft.CoreLibraries
         /// </value>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="value"/> is negative or <see cref="Single.NaN"/>.</exception>
         /// <remarks>
-        /// <note>Please note that if <see cref="Interval"/> is smaller than <c>16</c>, then the timer may consume much CPU when running.</note>
+        /// <note>Please note that if <see cref="Interval"/> is smaller than the value of the <see cref="SpinWaitThreshold"/> property,
+        /// then the timer may consume much CPU when running.</note>
         /// </remarks>
         public float Interval
         {
@@ -125,6 +127,36 @@ namespace KGySoft.CoreLibraries
                     Start();
                 else
                     Stop();
+            }
+        }
+
+        // NOTE: The idea of this property emerged in an issue discussion in the https://github.com/Uight/QuickTick repository. See more details at https://github.com/Uight/QuickTick/issues/10
+        /// <summary>
+        /// Gets or sets the threshold value, in milliseconds, determining when to transition from sleeping to spinning
+        /// while waiting for the next <see cref="Elapsed"/> event.
+        /// <br/>Default value: <c>16</c>.
+        /// </summary>
+        /// <remarks>
+        /// <note type="caution">For advanced users only. When the value of this property is too high, the timer thread may never sleep,
+        /// causing high CPU usage unnecessarily. When the value is too low, the timer may not be able to achieve high precision.
+        /// On Windows, <see cref="Thread.Sleep(int)">Thread.Sleep</see> lasts at least about 15.5 ms by default, unless configured otherwise
+        /// by WinMM or other means. The default value of this property is adjusted to this behavior.
+        /// </note>
+        /// <para>On non-Windows platforms it's usually safe to lower the value of this property to 2.</para>
+        /// <para>On Windows you can use the native <a href="https://learn.microsoft.com/en-us/windows/win32/api/timeapi/nf-timeapi-timebeginperiod" target="_blank">timeBeginPeriod</a>
+        /// Windows API function to set the system timer resolution. Please note though, that this setting may affect the whole system and may increase power consumption.
+        /// Even when running on Windows 10 20H1 or later, where the function is a process-wide setting rather than a system-wide setting, it may affect the timers of the whole application.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="value"/> is zero or negative.</exception>
+        public int SpinWaitThreshold
+        {
+            // The property is int, because neither Thread.Sleep nor winmm.timeBeginPeriod accept fractional values. But the underlying field is float to avoid repeated conversions in the timer loop.
+            get => (int)spinWaitThreshold;
+            set
+            {
+                if (value < 1)
+                    Throw.ArgumentOutOfRangeException(Argument.value, Res.ArgumentMustBeGreaterThanOrEqualTo(1));
+                spinWaitThreshold = value;
             }
         }
 
@@ -213,10 +245,11 @@ namespace KGySoft.CoreLibraries
                     if (diff <= 0f)
                         break;
 
-                    if (diff >= 16f)
+                    // By default Sleep(1) lasts about 15.5 ms (if not configured otherwise for the application by WinMM, for example)
+                    // so by default, not allowing sleeping under 16 ms, which is the default value of SpinWaitThreshold
+                    if (diff >= spinWaitThreshold)
                     {
-                        // By default Sleep(1) lasts about 15.5 ms (if not configured otherwise for the application by WinMM, for example)
-                        // so not allowing sleeping under 16 ms. Not sleeping for more than 50 ms so interval changes/stopping can be detected.
+                        // Not sleeping for more than 50 ms so interval changes/stopping can be detected.
                         Thread.Sleep(diff >= 100f ? 50 : 1);
                     }
                     else
