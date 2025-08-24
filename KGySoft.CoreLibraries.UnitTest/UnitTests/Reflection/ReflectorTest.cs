@@ -4191,8 +4191,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             Console.Write("System Reflection...");
             pi.SetValue(test, value, null);
-            result = (IntPtr)Pointer.Unbox(pi.GetValue(test, null));
-            Assert.AreEqual(value, result);
+            if (!EnvironmentHelper.IsMono) // System.ArgumentException : The type 'System.Void*' may not be used as a type argument
+            {
+                result = (IntPtr)Pointer.Unbox(pi.GetValue(test, null));
+                Assert.AreEqual(value, result);
+            }
 
             test = new UnsafeTestClass(null);
             Console.Write("Property Accessor General...");
@@ -4325,18 +4328,21 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             object result;
             var value = new IntPtr(1);
 
-            Console.Write("System Reflection...");
+            if (!EnvironmentHelper.IsMono) // (IntPtr)((UnsafeTestClass)test).RefReadonlyProperty returns some random value on Mono
+            {
+                Console.Write("System Reflection...");
 #if NET11_0_OR_GREATER // ArgumentException : Property set method not found.
-            pi.SetValue(test, value, null);
+                pi.SetValue(test, value, null);
 #else
-            typeof(UnsafeTestClass).GetField(nameof(UnsafeTestClass.ReadOnlyInstanceField))!.SetValue(test, value);
+                typeof(UnsafeTestClass).GetField(nameof(UnsafeTestClass.ReadOnlyInstanceField))!.SetValue(test, value);
 #endif
 #if NETCOREAPP3_0_OR_GREATER // NotSupportedException : ByRef return value not supported in reflection invocation.
-            result = (IntPtr)Pointer.Unbox(pi.GetValue(test, null));
+                result = (IntPtr)Pointer.Unbox(pi.GetValue(test, null));
 #else
-            result = (IntPtr)((UnsafeTestClass)test).RefReadonlyProperty;
+                result = (IntPtr)((UnsafeTestClass)test).RefReadonlyProperty;
 #endif
-            Assert.AreEqual(value, result);
+                Assert.AreEqual(value, result);
+            }
 
             test = new UnsafeTestClass(null);
             Console.Write("Property Accessor General...");
@@ -4408,8 +4414,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             Console.Write("System Reflection...");
             pi.SetValue(null, value, null);
-            result = (IntPtr)Pointer.Unbox(pi.GetValue(null, null));
-            Assert.AreEqual(value, result);
+            if (!EnvironmentHelper.IsMono) // System.ArgumentException : The type 'System.Void*' may not be used as a type argument
+            {
+                result = (IntPtr)Pointer.Unbox(pi.GetValue(null, null));
+                Assert.AreEqual(value, result);
+            }
 
             UnsafeTestClass.StaticProperty = null;
             Console.Write("Property Accessor General...");
@@ -5517,18 +5526,21 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             PropertyAccessor accessor = PropertyAccessor.GetAccessor(pi);
             object result, value = new IntPtr(1);
 
-            Console.Write("System Reflection...");
+            if (!EnvironmentHelper.IsMono) // (IntPtr)((UnsafeTestStruct)test).RefReadonlyProperty returns some random value on Mono
+            {
+                Console.Write("System Reflection...");
 #if NET11_0_OR_GREATER // ArgumentException : Property set method not found.
-            pi.SetValue(test, value, null);
+                pi.SetValue(test, value, null);
 #else
-            typeof(UnsafeTestStruct).GetField(nameof(UnsafeTestStruct.StaticField))!.SetValue(null, value);
+                typeof(UnsafeTestStruct).GetField(nameof(UnsafeTestStruct.StaticField))!.SetValue(null, value);
 #endif
 #if NETCOREAPP3_0_OR_GREATER // NotSupportedException : ByRef return value not supported in reflection invocation.
-            result = (IntPtr)Pointer.Unbox(pi.GetValue(test, null));
+                result = (IntPtr)Pointer.Unbox(pi.GetValue(test, null));
 #else
-            result = (IntPtr)((UnsafeTestStruct)test).RefReadonlyProperty;
+                result = (IntPtr)((UnsafeTestStruct)test).RefReadonlyProperty;
 #endif
-            Assert.AreEqual(value, result);
+                Assert.AreEqual(value, result);
+            }
 
             test = new UnsafeTestStruct(null);
             UnsafeTestStruct.StaticField = null;

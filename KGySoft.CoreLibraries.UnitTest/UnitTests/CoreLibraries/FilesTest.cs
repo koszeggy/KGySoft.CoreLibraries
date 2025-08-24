@@ -15,9 +15,7 @@
 
 #region Usings
 
-#if NETFRAMEWORK
 using System;
-#endif
 using System.IO;
 #if NETFRAMEWORK
 using System.Reflection;
@@ -80,6 +78,8 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
         {
             if (Path.DirectorySeparatorChar != '\\')
             {
+                if (EnvironmentHelper.IsMono && target.Contains(":", StringComparison.Ordinal))
+                    Assert.Inconclusive("Test built on Windows is executed on Linux with rooted path: skipping test case");
                 target = target.Replace('\\', Path.DirectorySeparatorChar);
                 baseDir = baseDir.Replace('\\', Path.DirectorySeparatorChar);
                 expected = expected.Replace('\\', Path.DirectorySeparatorChar);
