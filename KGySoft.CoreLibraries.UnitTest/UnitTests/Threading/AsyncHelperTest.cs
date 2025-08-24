@@ -341,6 +341,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Threading
             Assert.That(result, cancel == true ? (throwIfCanceled ? Is.Null : Is.EqualTo(-42)) : Is.EqualTo(42));
         }
 
+        [Test]
+        public void EndOperationOmitResultTest()
+        {
+            var startedSignal = new ManualResetEvent(false);
+            IAsyncResult asyncResult = AsyncHelper.BeginOperation(ctx => TestFunc(ctx, startedSignal, null), null);
+            Assert.DoesNotThrow(() => AsyncHelper.EndOperation/*<int>*/(asyncResult, nameof(EndOperationOmitResultTest)));
+        }
+
         ///////////////////////////////////////
 
 #if !(NET35 || NET40)

@@ -1005,7 +1005,7 @@ namespace KGySoft.Threading
                 Throw.ArgumentNullException<string>(Argument.asyncResult);
             if (beginMethodName == null!)
                 Throw.ArgumentNullException<string>(Argument.beginMethodName);
-            if (asyncResult is not AsyncResultContext result || result.GetType() != typeof(AsyncResultContext) || result.BeginMethodName != beginMethodName || result.IsDisposed)
+            if (asyncResult is not AsyncResultContext result || result.BeginMethodName != beginMethodName || result.IsDisposed)
             {
                 Throw.InvalidOperationException(Res.InvalidAsyncResult(beginMethodName));
                 return;
