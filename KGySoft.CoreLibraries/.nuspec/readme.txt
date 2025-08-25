@@ -1,4 +1,4 @@
-Thank you for installing KGy SOFT Core Libraries 9.0.0
+Thank you for installing KGy SOFT Core Libraries 10.0.0
 
 KGy SOFT Core Libraries offer high-performance and handy general libraries (see some highlights at the bottom).
 
@@ -13,10 +13,8 @@ Release Notes: https://github.com/koszeggy/KGySoft.CoreLibraries/blob/master/KGy
 
                                                  ~~*~~
 
-Project Home Page: https://kgysoft.net/corelibraries
 GitHub: https://github.com/koszeggy/KGySoft.CoreLibraries
-
-Online Documentation: https://docs.kgysoft.net/corelibraries
+Online Documentation: https://koszeggy.github.io/docs/corelibraries
 
                                                  ~~*~~
 

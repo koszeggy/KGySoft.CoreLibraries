@@ -2,12 +2,12 @@
 <package >
   <metadata>
     <id>KGySoft.CoreLibraries</id>
-    <version>9.0.0</version>
+    <version>10.0.0</version>
     <title>KGy SOFT Core Libraries</title>
     <authors>György Kőszeg</authors>
     <owners>György Kőszeg</owners>
     <license type="file">LICENSE</license>
-    <projectUrl>https://kgysoft.net/corelibraries</projectUrl>
+    <!--<projectUrl>https://kgysoft.net/corelibraries</projectUrl>-->
     <readme>readme.md</readme>
     <icon>Icon64.png</icon>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
@@ -31,7 +31,7 @@ Just the most fundamental framework .dlls are referenced. No dependencies to any
 
 Demo App: https://github.com/koszeggy/KGySoft.ComponentModelDemo
 Online Live Examples: https://dotnetfiddle.net/Authors/84474/koszeggy
-Online Documentation: https://docs.kgysoft.net/corelibraries
+Online Documentation: https://koszeggy.github.io/docs/corelibraries
 Change Log: https://github.com/koszeggy/KGySoft.CoreLibraries/blob/master/KGySoft.CoreLibraries/changelog.txt</description>
     <releaseNotes>See the detailed release notes here: https://github.com/koszeggy/KGySoft.CoreLibraries/blob/master/KGySoft.CoreLibraries/changelog.txt</releaseNotes>
     <copyright>Copyright © KGy SOFT</copyright>
