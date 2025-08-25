@@ -54,6 +54,10 @@ using KGySoft.CoreLibraries;
 // ReSharper disable RedundantSuppressNullableWarningExpression - TypeDescriptor.CreateInstance return value
 #endif
 
+#if NET6_0 || NET7_0
+#pragma warning disable CS8620 // nullability of TypeDescriptor.CreateInstance is detected incorrectly in .NET 6/7
+#endif
+
 #endregion
 
 namespace KGySoft.Reflection

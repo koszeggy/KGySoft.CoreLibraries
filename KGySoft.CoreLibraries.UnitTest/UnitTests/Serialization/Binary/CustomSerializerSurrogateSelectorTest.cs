@@ -32,6 +32,14 @@ using NUnit.Framework.Internal;
 
 #endregion
 
+#region Suppressions
+
+#if NET5_0 || NET6_0 || NET7_0
+#pragma warning disable SYSLIB0011 // Type or member is obsolete - Using BinaryFormatter for .NET 5-7 only for comparison tests
+#endif
+
+#endregion
+
 namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 {
     [TestFixture]

@@ -18,8 +18,6 @@
 using System;
 using System.Globalization;
 using System.Linq;
-using System.Text;
-
 #if !NET35
 using System.Numerics;
 #endif
@@ -28,9 +26,7 @@ using System.Reflection;
 using System.Security;
 using System.Security.Permissions;
 #endif
-#if NETCOREAPP3_0_OR_GREATER
 using System.Text;
-#endif
 
 #if !NETCOREAPP3_0_OR_GREATER
 using KGySoft.ComponentModel;

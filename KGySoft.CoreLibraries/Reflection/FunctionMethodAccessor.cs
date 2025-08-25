@@ -182,6 +182,7 @@ namespace KGySoft.Reflection
         }
 
         [SuppressMessage("ReSharper", "CoVariantArrayConversion", Justification = "Expression.Call does not write the parameters")]
+        [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Many simple switches for the generic delegate types.")]
         private protected override Delegate CreateGenericInvoker()
         {
             var method = (MethodInfo)Method;
