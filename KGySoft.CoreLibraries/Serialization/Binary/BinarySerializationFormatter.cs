@@ -143,7 +143,7 @@ namespace KGySoft.Serialization.Binary
 {
     /// <summary>
     /// Serializes and deserializes objects in binary format.
-    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Serialization_Binary_BinarySerializationFormatter.htm">online help</a> for a more detailed description with examples.</div>
+    /// <div style="display: none;"><br/>See the <a href="https://koszeggy.github.io/docs/corelibraries/html/T_KGySoft_Serialization_Binary_BinarySerializationFormatter.htm">online help</a> for a more detailed description with examples.</div>
     /// </summary>
     /// <seealso cref="BinarySerializer"/>
     /// <seealso cref="BinarySerializationOptions"/>

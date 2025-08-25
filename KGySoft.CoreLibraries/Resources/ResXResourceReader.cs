@@ -45,7 +45,7 @@ namespace KGySoft.Resources
 {
     /// <summary>
     /// Enumerates XML resource (.resx) files and streams, and reads the sequential resource name and value pairs.
-    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Resources_ResXResourceReader.htm">online help</a> for a more detailed description with examples.</div>
+    /// <div style="display: none;"><br/>See the <a href="https://koszeggy.github.io/docs/corelibraries/html/T_KGySoft_Resources_ResXResourceReader.htm">online help</a> for a more detailed description with examples.</div>
     /// </summary>
     /// <remarks>
     /// <note>This class is similar to <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a>

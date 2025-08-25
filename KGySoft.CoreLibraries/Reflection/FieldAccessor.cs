@@ -47,7 +47,7 @@ namespace KGySoft.Reflection
 {
     /// <summary>
     /// Provides an efficient way for setting and getting field values via dynamically created delegates.
-    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Reflection_FieldAccessor.htm">online help</a> for an example.</div>
+    /// <div style="display: none;"><br/>See the <a href="https://koszeggy.github.io/docs/corelibraries/html/T_KGySoft_Reflection_FieldAccessor.htm">online help</a> for an example.</div>
     /// </summary>
     /// <remarks>
     /// <para>You can obtain a <see cref="FieldAccessor"/> instance by the static <see cref="GetAccessor">GetAccessor</see> method.</para>

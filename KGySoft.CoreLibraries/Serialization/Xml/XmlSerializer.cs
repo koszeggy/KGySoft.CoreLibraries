@@ -54,7 +54,7 @@ namespace KGySoft.Serialization.Xml
     /// <summary>
     /// <see cref="XmlSerializer"/> makes possible serializing and deserializing objects into/from XML content. The class contains various overloads to support serializing directly into file or by
     /// <see cref="XElement"/>, <see cref="XmlWriter"/>, any <see cref="TextWriter"/> and any <see cref="Stream"/> implementations.
-    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Serialization_Xml_XmlSerializer.htm">online help</a> for a more detailed description with examples.</div>
+    /// <div style="display: none;"><br/>See the <a href="https://koszeggy.github.io/docs/corelibraries/html/T_KGySoft_Serialization_Xml_XmlSerializer.htm">online help</a> for a more detailed description with examples.</div>
     /// </summary>
     /// <remarks>
     /// <note type="security">The <see cref="XmlSerializer"/> supports polymorphism and stores type information whenever the type of a member or collection element differs from the

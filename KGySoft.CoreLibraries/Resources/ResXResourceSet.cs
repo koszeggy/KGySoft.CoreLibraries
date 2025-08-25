@@ -36,7 +36,7 @@ namespace KGySoft.Resources
 {
     /// <summary>
     /// Represents the complete content of an XML resource (.resx) file including resources, metadata and aliases.
-    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Resources_ResXResourceSet.htm">online help</a> for a more detailed description with examples.</div>
+    /// <div style="display: none;"><br/>See the <a href="https://koszeggy.github.io/docs/corelibraries/html/T_KGySoft_Resources_ResXResourceSet.htm">online help</a> for a more detailed description with examples.</div>
     /// </summary>
     /// <remarks>
     /// <note>This class is similar to <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxresourceset" target="_blank">System.Resources.ResXResourceSet</a>

@@ -51,7 +51,7 @@ namespace KGySoft.Collections
     /// <summary>
     /// Implements a thread-safe dictionary, which can be a good alternative for <see cref="ConcurrentDictionary{TKey,TValue}"/> where it is not available (.NET Framework 3.5),
     /// or where <see cref="ConcurrentDictionary{TKey,TValue}"/> has a poorer performance.
-    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Collections_ThreadSafeDictionary_2.htm">online help</a> for a more detailed description.</div>
+    /// <div style="display: none;"><br/>See the <a href="https://koszeggy.github.io/docs/corelibraries/html/T_KGySoft_Collections_ThreadSafeDictionary_2.htm">online help</a> for a more detailed description.</div>
     /// </summary>
     /// <typeparam name="TKey">Type of the keys stored in the dictionary.</typeparam>
     /// <typeparam name="TValue">Type of the values stored in the dictionary.</typeparam>

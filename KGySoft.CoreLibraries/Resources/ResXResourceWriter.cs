@@ -49,7 +49,7 @@ namespace KGySoft.Resources
 {
     /// <summary>
     /// Writes resources in an XML resource (.resx) file or an output stream.
-    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Resources_ResXResourceWriter.htm">online help</a> for a more detailed description with an example.</div>
+    /// <div style="display: none;"><br/>See the <a href="https://koszeggy.github.io/docs/corelibraries/html/T_KGySoft_Resources_ResXResourceWriter.htm">online help</a> for a more detailed description with an example.</div>
     /// </summary>
     /// <remarks>
     /// <note>This class is similar to <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxresourcewriter" target="_blank">System.Resources.ResXResourceWriter</a>
@@ -124,7 +124,7 @@ namespace KGySoft.Resources
     /// <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxfileref" target="_blank">System.Resources.ResXFileRef</a> and <strong>System.Resources.ResXNullRef</strong> types.</note>
     /// <para><strong>Incompatibility</strong> with <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxresourcewriter" target="_blank">System.Resources.ResXResourceWriter</a>:
     /// <list type="bullet">
-    /// <item>The System version has several public string fields, which are not intended to be accessed by a consumer code. Therefore the following fields are missing (they are not public) in this version:
+    /// <item>The System version has several public string fields, which are not intended to be accessed by a consumer code. Therefore, the following fields are missing (they are not public) in this version:
     /// <list type="bullet">
     /// <item><c>BinSerializedObjectMimeType</c></item>
     /// <item><c>ByteArraySerializedObjectMimeType</c></item>
@@ -151,7 +151,7 @@ namespace KGySoft.Resources
     /// <item><term>Compactness</term>
     /// <description>The more compact output is achieved in multiple ways:
     /// <list type="bullet">
-    /// <item>If <see cref="OmitHeader"/> is <see langword="true"/>, the header and the schema is not dumped into the resulting .resx file. If <see cref="CompatibleFormat"/> is <see langword="true"/>, then only
+    /// <item>If <see cref="OmitHeader"/> is <see langword="true"/>, the header and the schema are not dumped into the resulting .resx file. If <see cref="CompatibleFormat"/> is <see langword="true"/>, then only
     /// the header comment can be omitted.</item>
     /// <item>Whitespace preserving to string values is applied only if it is really necessary (even if <see cref="CompatibleFormat"/> is <see langword="true"/>).</item>
     /// <item>If an object can only be binary serialized, then instead of using <see cref="BinaryFormatter"/> it is serialized by <see cref="BinarySerializationFormatter"/>, which produces a much more compact result (only if <see cref="CompatibleFormat"/> is <see langword="false"/>).

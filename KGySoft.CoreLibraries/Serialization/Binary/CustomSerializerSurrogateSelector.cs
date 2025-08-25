@@ -39,7 +39,7 @@ namespace KGySoft.Serialization.Binary
     /// including non-serializable ones by an <see cref="IFormatter"/> such as <see cref="BinarySerializationFormatter"/>
     /// or the legacy <see cref="BinaryFormatter"/>.
     /// <br/>When targeting .NET 8 or later this class is marked as obsolete.
-    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Serialization_Binary_CustomSerializerSurrogateSelector.htm">online help</a> for a more detailed description with examples.</div>
+    /// <div style="display: none;"><br/>See the <a href="https://koszeggy.github.io/docs/corelibraries/html/T_KGySoft_Serialization_Binary_CustomSerializerSurrogateSelector.htm">online help</a> for a more detailed description with examples.</div>
     /// </summary>
     /// <remarks>
     /// <note type="security"><para>Do not use the <see cref="CustomSerializerSurrogateSelector"/> class to be able to deserialize any type

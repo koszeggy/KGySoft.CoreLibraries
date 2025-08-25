@@ -51,7 +51,7 @@ namespace KGySoft.Collections
     /// This type is very similar to <see cref="ArraySegment{T}"/>/<see cref="Memory{T}"><![CDATA[Memory<T>]]></see> types but can be used on every platform in the same way,
     /// allows span-like operations such as slicing, and it is faster than <see cref="Memory{T}"><![CDATA[Memory<T>]]></see> in most cases.
     /// Depending on the used platform it supports <see cref="ArrayPool{T}"/> allocation.
-    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Collections_ArraySection_1.htm">online help</a> for examples.</div>
+    /// <div style="display: none;"><br/>See the <a href="https://koszeggy.github.io/docs/corelibraries/html/T_KGySoft_Collections_ArraySection_1.htm">online help</a> for examples.</div>
     /// </summary>
     /// <typeparam name="T">The type of the elements in the collection.</typeparam>
     /// <remarks>

@@ -40,7 +40,7 @@ namespace KGySoft.Resources
     /// <c>.exe</c> files, and XML resources from <c>.resx</c> files at the same time. Based on the selected strategies when a resource
     /// is not found in a language it can automatically add the missing resource from a base culture or even create completely new resource sets
     /// and save them into <c>.resx</c> files. For text entries the untranslated elements will be marked so they can be found easily for translation.
-    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Resources_DynamicResourceManager.htm">online help</a> for examples with images.</div>
+    /// <div style="display: none;"><br/>See the <a href="https://koszeggy.github.io/docs/corelibraries/html/T_KGySoft_Resources_DynamicResourceManager.htm">online help</a> for examples with images.</div>
     /// </summary>
     /// <remarks>
     /// <para><see cref="DynamicResourceManager"/> class is derived from <see cref="HybridResourceManager"/> and adds the functionality

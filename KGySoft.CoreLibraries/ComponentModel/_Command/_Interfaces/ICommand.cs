@@ -22,7 +22,7 @@ namespace KGySoft.ComponentModel
     /// <summary>
     /// Represents a command, which can be used to create a binding between an event of one or more sources and zero or more target objects. Can be used easily to bind
     /// events with targets with any technology.
-    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_ComponentModel_ICommand.htm">online help</a> for examples.</div>
+    /// <div style="display: none;"><br/>See the <a href="https://koszeggy.github.io/docs/corelibraries/html/T_KGySoft_ComponentModel_ICommand.htm">online help</a> for examples.</div>
     /// </summary>
     /// <remarks>
     /// <para>Unlike the <see cref="System.Windows.Input.ICommand">System.Windows.Input.ICommand</see> type, this <see cref="ICommand"/> represents a stateless
@@ -40,7 +40,7 @@ namespace KGySoft.ComponentModel
     /// <note type="tip"><list type="bullet">
     /// <item>Try also <a href="https://dotnetfiddle.net/7b0lFq" target="_blank">online</a>.</item>
     /// <item>For a more detailed step-by-step guide see the <strong>Command Binding</strong> section at
-    /// the <a href="https://kgysoft.net/corelibraries#command-binding" target="_blank">Project Site</a>.</item>
+    /// the <a href="https://github.com/koszeggy/KGySoft.CoreLibraries#command-binding" target="_blank">Project Site</a>.</item>
     /// </list></note>
     /// <para>The following examples demonstrate how to define different kind of commands:
     /// <code lang="C#"><![CDATA[

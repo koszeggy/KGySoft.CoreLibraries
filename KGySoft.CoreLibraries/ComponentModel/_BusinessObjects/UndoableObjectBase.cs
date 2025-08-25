@@ -28,7 +28,7 @@ namespace KGySoft.ComponentModel
     /// <summary>
     /// Represents an object with step-by-step undo/redo capabilities by adding <see cref="ICanUndoRedo"/> implementation to the <see cref="PersistableObjectBase"/> class.
     /// Undoing and redoing works for properties set through the <see cref="IPersistableObject"/> implementation and the <see cref="ObservableObjectBase.Set">ObservableObjectBase.Set</see> method.
-    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_ComponentModel_UndoableObjectBase.htm">online help</a> for the image in the description.</div>
+    /// <div style="display: none;"><br/>See the <a href="https://koszeggy.github.io/docs/corelibraries/html/T_KGySoft_ComponentModel_UndoableObjectBase.htm">online help</a> for the image in the description.</div>
     /// </summary>
     /// <remarks>
     /// <para>An object derived from <see cref="UndoableObjectBase"/> continuously tracks the property changes of properties, which are set through the <see cref="IPersistableObject"/> implementation

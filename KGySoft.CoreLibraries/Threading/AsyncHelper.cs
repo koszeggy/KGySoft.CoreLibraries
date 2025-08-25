@@ -43,7 +43,7 @@ namespace KGySoft.Threading
     /// A helper class to implement CPU-bound operations with adjustable parallelization, cancellation and progress reporting,
     /// allowing a single shared implementation for both sync and async overloads where the latter can be
     /// either <see cref="IAsyncResult"/> or <see cref="Task"/> (.NET Framework 4.0 and later) returning methods.
-    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Threading_AsyncHelper.htm">online help</a> for an example.</div>
+    /// <div style="display: none;"><br/>See the <a href="https://koszeggy.github.io/docs/corelibraries/html/T_KGySoft_Threading_AsyncHelper.htm">online help</a> for an example.</div>
     /// </summary>
     /// <example>
     /// The following example demonstrates how to use the <see cref="AsyncHelper"/> class to create sync/async versions of a method

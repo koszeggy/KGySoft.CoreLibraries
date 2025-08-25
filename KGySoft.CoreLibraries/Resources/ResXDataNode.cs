@@ -52,7 +52,7 @@ namespace KGySoft.Resources
 {
     /// <summary>
     /// Represents a resource or metadata element in an XML resource (.resx) file.
-    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Resources_ResXDataNode.htm">online help</a> for a more detailed description with an example.</div>
+    /// <div style="display: none;"><br/>See the <a href="https://koszeggy.github.io/docs/corelibraries/html/T_KGySoft_Resources_ResXDataNode.htm">online help</a> for a more detailed description with an example.</div>
     /// </summary>
     /// <remarks>
     /// <note>This class is similar to <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxdatanode" target="_blank">System.Resources.ResXDataNode</a>

@@ -37,7 +37,7 @@ namespace KGySoft.ComponentModel
     /// <summary>
     /// Provides a class that combines the features of an <see cref="ObservableCollection{T}"/> and <see cref="BindingList{T}"/>. Unlike <see cref="ObservableCollection{T}"/>, can raise the <see cref="CollectionChanged"/> event also when a property
     /// of a contained element changes.
-    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_ComponentModel_ObservableBindingList_1.htm">online help</a> for a more detailed description.</div>
+    /// <div style="display: none;"><br/>See the <a href="https://koszeggy.github.io/docs/corelibraries/html/T_KGySoft_ComponentModel_ObservableBindingList_1.htm">online help</a> for a more detailed description.</div>
     /// </summary>
     /// <typeparam name="T">The type of elements in the collection.</typeparam>
     /// <seealso cref="ObservableCollection{T}" />

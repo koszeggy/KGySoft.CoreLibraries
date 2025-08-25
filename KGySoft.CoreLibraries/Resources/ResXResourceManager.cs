@@ -42,7 +42,7 @@ namespace KGySoft.Resources
     /// <summary>
     /// Represents a resource manager that provides convenient access to culture-specific XML resources (.resx files) at run time.
     /// New elements can be added as well, which can be saved into the <c>.resx</c> files.
-    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Resources_ResXResourceManager.htm">online help</a> for examples with images.</div>
+    /// <div style="display: none;"><br/>See the <a href="https://koszeggy.github.io/docs/corelibraries/html/T_KGySoft_Resources_ResXResourceManager.htm">online help</a> for examples with images.</div>
     /// </summary>
     /// <remarks>
     /// <para><see cref="ResXResourceManager"/> class is derived from <see cref="ResourceManager"/> so it can be used the same way.

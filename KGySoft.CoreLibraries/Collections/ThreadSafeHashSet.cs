@@ -49,7 +49,7 @@ namespace KGySoft.Collections
     /// Implements a thread-safe hash set, which has similar characteristics to <see cref="ThreadSafeDictionary{TKey,TValue}"/>.
     /// It can be a good alternative for <see cref="HashSet{T}"/>, <see cref="LockingCollection{T}"/>, or when one would use
     /// a <see cref="ConcurrentDictionary{TKey,TValue}"/> with ignored values.
-    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Collections_ThreadSafeHashSet_1.htm">online help</a> for a more detailed description.</div>
+    /// <div style="display: none;"><br/>See the <a href="https://koszeggy.github.io/docs/corelibraries/html/T_KGySoft_Collections_ThreadSafeHashSet_1.htm">online help</a> for a more detailed description.</div>
     /// </summary>
     /// <typeparam name="T">Type of the items stored in the <see cref="ThreadSafeHashSet{T}"/>.</typeparam>
     /// <remarks>

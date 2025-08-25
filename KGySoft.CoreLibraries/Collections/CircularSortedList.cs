@@ -41,7 +41,7 @@ namespace KGySoft.Collections
     /// Represents a dictionary of key/value pairs that are sorted by key based on the associated <see cref="IComparer{T}"/> implementation.
     /// The dictionary behaves as list as well, as it has a direct indexed access to the elements through <see cref="Keys"/> and <see cref="Values"/> properties or by the <see cref="ElementAt">ElementAt</see> method.
     /// <see cref="CircularSortedList{TKey,TValue}"/> is fully compatible with <see cref="SortedList{TKey,TValue}"/>, but is generally faster than that.
-    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Collections_CircularSortedList_2.htm">online help</a> for a more detailed description.</div>
+    /// <div style="display: none;"><br/>See the <a href="https://koszeggy.github.io/docs/corelibraries/html/T_KGySoft_Collections_CircularSortedList_2.htm">online help</a> for a more detailed description.</div>
     /// </summary>
     /// <typeparam name="TKey">Type of the keys stored in the sorted list.</typeparam>
     /// <typeparam name="TValue">Type of the values stored in the sorted list.</typeparam>

@@ -39,7 +39,7 @@ namespace KGySoft.Collections
     /// <summary>
     /// Provides a simple wrapper for an <see cref="IDictionary{TKey,TValue}"/> where all members are thread-safe.
     /// This only means that the inner state of the wrapped dictionary remains always consistent and not that all the multi-threading concerns can be ignored.
-    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Collections_LockingDictionary_2.htm">online help</a> for a more detailed description with examples.</div>
+    /// <div style="display: none;"><br/>See the <a href="https://koszeggy.github.io/docs/corelibraries/html/T_KGySoft_Collections_LockingDictionary_2.htm">online help</a> for a more detailed description with examples.</div>
     /// </summary>
     /// <typeparam name="TKey">The type of the keys in the dictionary.</typeparam>
     /// <typeparam name="TValue">The type of the values in the dictionary.</typeparam>

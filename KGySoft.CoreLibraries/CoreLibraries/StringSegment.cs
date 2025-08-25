@@ -45,7 +45,7 @@ namespace KGySoft.CoreLibraries
     /// Represents a segment of a <see cref="string">string</see>. This type is similar to <see cref="ReadOnlyMemory{T}"><![CDATA[ReadOnlyMemory<char>]]></see>/<see cref="ReadOnlySpan{T}"><![CDATA[ReadOnlySpan<char>]]></see>
     /// but <see cref="StringSegment"/> can be used on all platforms in the same way and is optimized for some dedicated string operations.
     /// <br/>To create an instance use the <see cref="O:KGySoft.CoreLibraries.StringExtensions.AsSegment">AsSegment</see> extension method overloads or just cast a string instance to <see cref="StringSegment"/>.
-    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_CoreLibraries_StringSegment.htm">online help</a> for a more detailed description with examples.</div>
+    /// <div style="display: none;"><br/>See the <a href="https://koszeggy.github.io/docs/corelibraries/html/T_KGySoft_CoreLibraries_StringSegment.htm">online help</a> for a more detailed description with examples.</div>
     /// </summary>
     /// <remarks>
     /// <para>To create a <see cref="StringSegment"/> instance from a string you can use the implicit conversion, or the <see cref="O:KGySoft.CoreLibraries.StringExtensions.AsSegment">AsSegment</see> extension methods.</para>

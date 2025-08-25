@@ -38,7 +38,7 @@ namespace KGySoft.Resources
     /// Represents a resource manager that provides convenient access to culture-specific resources at run time.
     /// It can handle both compiled resources from <c>.dll</c> and <c>.exe</c> files, and <c>.resx</c> files at
     /// the same time. New elements can be added as well, which can be saved into <c>.resx</c> files.
-    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Resources_HybridResourceManager.htm">online help</a> for examples with images.</div>
+    /// <div style="display: none;"><br/>See the <a href="https://koszeggy.github.io/docs/corelibraries/html/T_KGySoft_Resources_HybridResourceManager.htm">online help</a> for examples with images.</div>
     /// </summary>
     /// <remarks>
     /// <para><see cref="HybridResourceManager"/> class is derived from <see cref="ResourceManager"/> and uses a <see cref="ResXResourceManager"/> internally.

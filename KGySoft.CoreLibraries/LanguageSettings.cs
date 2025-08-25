@@ -38,7 +38,7 @@ namespace KGySoft
     /// Represents the language settings of the current thread. Use this class also when you want to be notified on
     /// language changes and to control the behavior of those <see cref="DynamicResourceManager"/> instances,
     /// which are configured to use centralized settings.
-    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_LanguageSettings.htm">online help</a> for examples.</div>
+    /// <div style="display: none;"><br/>See the <a href="https://koszeggy.github.io/docs/corelibraries/html/T_KGySoft_LanguageSettings.htm">online help</a> for examples.</div>
     /// </summary>
     /// <seealso cref="PublicResources"/>
     /// <seealso cref="DynamicResourceManager.UseLanguageSettings"/>

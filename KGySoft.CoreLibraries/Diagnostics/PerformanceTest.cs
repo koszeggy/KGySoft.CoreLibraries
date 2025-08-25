@@ -23,7 +23,7 @@ namespace KGySoft.Diagnostics
 {
     /// <summary>
     /// Provides a class for performance tests of <see cref="Action"/> delegate test cases.
-    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_Diagnostics_PerformanceTest.htm">online help</a> for a more detailed description with examples.</div>
+    /// <div style="display: none;"><br/>See the <a href="https://koszeggy.github.io/docs/corelibraries/html/T_KGySoft_Diagnostics_PerformanceTest.htm">online help</a> for a more detailed description with examples.</div>
     /// </summary>
     /// <example>
     /// <para>The following example shows the simplest usage for timed tests.

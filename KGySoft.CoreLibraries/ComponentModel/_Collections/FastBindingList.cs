@@ -42,7 +42,7 @@ namespace KGySoft.ComponentModel
 {
     /// <summary>
     /// Provides a generic list that is able to notify its consumer about changes and supports data binding.
-    /// <div style="display: none;"><br/>See the <a href="https://docs.kgysoft.net/corelibraries/html/T_KGySoft_ComponentModel_FastBindingList_1.htm">online help</a> for a more detailed description.</div>
+    /// <div style="display: none;"><br/>See the <a href="https://koszeggy.github.io/docs/corelibraries/html/T_KGySoft_ComponentModel_FastBindingList_1.htm">online help</a> for a more detailed description.</div>
     /// </summary>
     /// <typeparam name="T">The type of elements in the list.</typeparam>
     /// <remarks>
