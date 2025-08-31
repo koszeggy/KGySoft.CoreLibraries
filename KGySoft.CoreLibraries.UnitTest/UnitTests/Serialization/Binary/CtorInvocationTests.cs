@@ -24,6 +24,22 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         }
 
         [Test]
+        public void DoNotInvokeIBinarySerializableCtorWithoutInterface()
+        {
+            TestClassWithIBinarySerializableCtor.CtorInvocationCounter = 0;
+
+            var obj = new TestClassWithIBinarySerializableCtor(BinarySerializationOptions.None, new byte[0]);
+
+            var data = KGySoft.Serialization.Binary.BinarySerializer
+                .Serialize(obj, BinarySerializationOptions.RecursiveSerializationAsFallback);
+
+            var result = KGySoft.Serialization.Binary.BinarySerializer.Deserialize<TestClassWithIBinarySerializableCtor>(data, 0,
+                BinarySerializationOptions.AlwaysTryInvokeCtorWhenDeserializing);
+
+            Assert.AreEqual(1, TestClassWithIBinarySerializableCtor.CtorInvocationCounter);
+        }
+
+        [Test]
         public void DoNotInvokeCtor()
         {
             TestClass.CtorInvocationCounter = 0;
@@ -68,7 +84,19 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         class TestCalssWithBadCtor
         {
             public static int CtorInvocationCounter = 0;
+
             public TestCalssWithBadCtor(string foo, int bar)
+            {
+                CtorInvocationCounter++;
+            }
+        }
+
+        // NOT an IBinarySerializable, but with matching ctor
+        class TestClassWithIBinarySerializableCtor
+        {
+            public static int CtorInvocationCounter = 0;
+
+            public TestClassWithIBinarySerializableCtor(BinarySerializationOptions options, byte[] serData)
             {
                 CtorInvocationCounter++;
             }
