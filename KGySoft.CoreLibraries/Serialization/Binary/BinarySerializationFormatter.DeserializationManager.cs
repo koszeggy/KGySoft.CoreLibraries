@@ -692,7 +692,8 @@ namespace KGySoft.Serialization.Binary
                         | BinarySerializationOptions.IgnoreISerializable 
                         | BinarySerializationOptions.IgnoreIObjectReference
                         | BinarySerializationOptions.SafeMode
-                        | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes),
+                        | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes
+                        | BinarySerializationOptions.AlwaysTryInvokeCtorWhenDeserializing),
                     binder, surrogateSelector)
             {
                 this.rootType = rootType == Reflector.ObjectType ? null : rootType;
@@ -2273,7 +2274,8 @@ namespace KGySoft.Serialization.Binary
                         Throw.SerializationException(Res.BinarySerializationCannotCreateSerializableObjectSafe(type));
                 }
 
-                if (!Reflector.TryCreateEmptyObject(type, false, true, out object? obj))
+                bool tryInvokeCtor = base.Options.HasFlag(BinarySerializationOptions.AlwaysTryInvokeCtorWhenDeserializing);
+                if (!Reflector.TryCreateEmptyObject(type, tryInvokeCtor, true, out object? obj))
                     Throw.SerializationException(Res.BinarySerializationCannotCreateUninitializedObject(type));
                 return obj;
             }

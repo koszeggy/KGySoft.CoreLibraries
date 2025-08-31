@@ -192,5 +192,12 @@ namespace KGySoft.Serialization.Binary
         /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
         /// </summary>
         AllowNonSerializableExpectedCustomTypes = 1 << 13,
+
+        /// <summary>
+        /// Enable ctor invocation during deserialization.
+        /// By default objects are created without ctor invocation, unless they are IBinarySerializable.
+        /// This flag will ensure that parameterless ctor, or one accepting IBinarySerializable inputs, will be invoked if found.
+        /// </summary>
+        AlwaysTryInvokeCtorWhenDeserializing = 1 << 14,
     }
 }
