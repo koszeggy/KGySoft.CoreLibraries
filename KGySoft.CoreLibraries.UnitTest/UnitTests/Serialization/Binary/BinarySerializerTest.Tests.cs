@@ -3169,6 +3169,24 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
         }
 
+        [Test]
+        public void NeedsDefaultCtorTest()
+        {
+            object referenceObject = new NeedsDefaultCtor("Test");
+
+            // BinarySerializationOptions.None: Equality check will fail because the delegate is initialized only in the default constructor
+            Throws<AssertionException>(() => KGySerializeObject(referenceObject, BinarySerializationOptions.None), "Equality check failed at type NeedsDefaultCtor");
+
+            // Preferring default ctor call: The default constructor initializes not just the delegate also generates a random ID.
+            // The equality check still passes because the fields (even read-only ones) are set after the constructor call
+            KGySerializeObject(referenceObject, BinarySerializationOptions.PreferInvokingDefaultConstructor);
+
+            // The same applies for custom object graphs, now forced by a surrogate selector
+            var surrogate = new CustomSerializerSurrogateSelector();
+            Throws<AssertionException>(() => KGySerializeObject(referenceObject, BinarySerializationOptions.None, surrogateSelector: surrogate), "Equality check failed at type NeedsDefaultCtor");
+            KGySerializeObject(referenceObject, BinarySerializationOptions.PreferInvokingDefaultConstructor, surrogateSelector: surrogate);
+        }
+
 #if NETFRAMEWORK // starting with .NET Core it is not part of the core framework anymore
         [Test]
         public void SafeModeDeleteAttackTest()

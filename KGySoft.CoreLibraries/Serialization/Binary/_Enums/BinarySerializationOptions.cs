@@ -192,5 +192,19 @@ namespace KGySoft.Serialization.Binary
         /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
         /// </summary>
         AllowNonSerializableExpectedCustomTypes = 1 << 13,
+
+        /// <summary>
+        /// <para>Indicates that the default constructor should be called when it exists and no other constructor would be called on deserialization otherwise.</para>
+        /// <para>This flag is considered on deserialization.</para>
+        /// <para>This flag does not affect <see cref="IBinarySerializable"/> types, as their default constructor is called anyway if the special constructor does not exist.</para>
+        /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
+        /// <note type="caution">The conventional formatter-based way for custom initialization is using serialization methods marked by the <see cref="OnDeserializingAttribute"/>
+        /// or <see cref="OnDeserializedAttribute"/> attributes, or implementing the <see cref="IDeserializationCallback"/> interface. Using this flag may interfere with such custom initialization,
+        /// as the serialization methods are still executed along with the regular initialization in the default constructor, unless the <see cref="IgnoreSerializationMethods"/> flags is also set.
+        /// Also, the serialization method marked by <see cref="OnDeserializingAttribute"/> is still executed before the constructor call (if exists),
+        /// maintaining the same initialization order as in case of using the special constructor. Please also note that the default constructor will not be called for types that implement <see cref="ISerializable"/>,
+        /// unless <see cref="BinarySerializationFormatter.SurrogateSelector"/> is set, which prevents the special constructor to be called.</note>
+        /// </summary>
+        PreferInvokingDefaultConstructor = 1 << 14
     }
 }

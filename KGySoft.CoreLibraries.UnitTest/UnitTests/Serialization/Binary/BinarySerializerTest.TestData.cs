@@ -1855,6 +1855,58 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
         #endregion
 
+        #region NeedsDefaultCtor class
+
+        [Serializable]
+        private class NeedsDefaultCtor
+        {
+            #region Fields
+
+            // Not serializing this field, because delegates are not serializable on .NET Core+. The field is set in the default constructor.
+            // NOTE: Normally it should be initialized in an [OnDeserializing] during deserialization, which could also avoid the double initialization of the Id property.
+            [NonSerialized]
+            private readonly Action<string> logger;
+
+            #endregion
+
+            #region Properties
+
+            public Guid Id { get; }
+            public string Name { get; }
+
+            #endregion
+
+            #region Constructors
+
+            public NeedsDefaultCtor()
+            {
+                Id = Guid.NewGuid();
+                logger = Console.WriteLine;
+            }
+
+            public NeedsDefaultCtor(string name) : this() => Name = name;
+
+            #endregion
+
+            #region Methods
+
+            public override bool Equals(object obj)
+            {
+                logger.Invoke($"Equals({obj}) invoked");
+                if (obj is not NeedsDefaultCtor other)
+                    return base.Equals(obj);
+                return Id == other.Id
+                    && Name == other.Name
+                    && logger == other.logger;
+            }
+
+            public override string ToString() => $"{Name ?? Id.ToString()}";
+
+            #endregion
+        }
+
+        #endregion
+
         #region ClassRecord record class
 
         [Serializable]

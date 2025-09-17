@@ -209,6 +209,7 @@ namespace KGySoft.Serialization.Binary
             private protected bool IgnoreTypeForwardedFromAttribute => (Options & BinarySerializationOptions.IgnoreTypeForwardedFromAttribute) != BinarySerializationOptions.None;
             private protected bool SafeMode => (Options & BinarySerializationOptions.SafeMode) != BinarySerializationOptions.None;
             private protected bool AllowNonSerializableExpectedCustomTypes => (Options & BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes) != BinarySerializationOptions.None;
+            private protected bool PreferInvokingDefaultCtor => (Options & BinarySerializationOptions.PreferInvokingDefaultConstructor) != BinarySerializationOptions.None;
 
             private protected Dictionary<TypeIdentity, TypeAttributes> TypeAttributesCache => typeAttributes ??= new Dictionary<TypeIdentity, TypeAttributes>();
 

@@ -6,6 +6,20 @@
 ===============================================================================
 
 ~~~~~~~~~~
++ v10.1.0:
+~~~~~~~~~~
+
++ KGySoft.Serialization.Binary namespace:
+=========================================
++ New BinarySerializationFormatter class:
+  + BinarySerializationOptions enumeration:
+    + New PreferInvokingDefaultConstructor flag: When enabled, the default constructor of a type is invoked during
+      deserialization if it has one, and no other constructor would be called.
+  + BinarySerializer/BinarySerializationFormatter classes:
+    + Supporting types whose proper initialization requires a default constructor even during deserialization.
+
+
+~~~~~~~~~~
 ! v10.0.0:
 ~~~~~~~~~~
 

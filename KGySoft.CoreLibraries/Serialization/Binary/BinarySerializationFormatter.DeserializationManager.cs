@@ -692,7 +692,8 @@ namespace KGySoft.Serialization.Binary
                         | BinarySerializationOptions.IgnoreISerializable 
                         | BinarySerializationOptions.IgnoreIObjectReference
                         | BinarySerializationOptions.SafeMode
-                        | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes),
+                        | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes
+                        | BinarySerializationOptions.PreferInvokingDefaultConstructor),
                     binder, surrogateSelector)
             {
                 this.rootType = rootType == Reflector.ObjectType ? null : rootType;
@@ -2056,6 +2057,9 @@ namespace KGySoft.Serialization.Binary
             [SecurityCritical]
             private void ReadDefaultObjectGraph(BinaryReader br, object obj)
             {
+                if (PreferInvokingDefaultCtor)
+                    Accessors.TryInvokeCtor(obj);
+
                 Type type = obj.GetType();
 
                 // iterating through self and base types
@@ -2138,6 +2142,8 @@ namespace KGySoft.Serialization.Binary
                 }
 
                 CheckReferences(si);
+
+                // No surrogate: Invoking the mandatory serialization constructor
                 if (surrogate == null)
                 {
                     if (!Accessors.TryInvokeCtor(obj, si, Context))
@@ -2145,7 +2151,10 @@ namespace KGySoft.Serialization.Binary
                     return obj;
                 }
 
-                // Using surrogate
+                // Using surrogate: invoking the default constructor if requested and exists, and then executing the surrogate initialization
+                if (PreferInvokingDefaultCtor)
+                    Accessors.TryInvokeCtor(obj);
+
 #if NETFRAMEWORK || NETSTANDARD2_0
                 return surrogate.SetObjectDataSafe(obj, si, Context, selector);
 #else
@@ -2195,20 +2204,23 @@ namespace KGySoft.Serialization.Binary
                         si.AddValue(name, value);
                     }
 
-                    // end level is marked with empty string
+                    // end of level is marked by an empty string
                     currentTypeName = ReadName(br);
                 } while (currentTypeName.Length != 0);
 
                 CheckReferences(si);
                 if (surrogate == null)
                 {
-                    // As ISerializable: Invoking serialization constructor
+                    // As ISerializable: Invoking the mandatory serialization constructor
                     if (!Accessors.TryInvokeCtor(obj, si, Context))
                         Throw.SerializationException(Res.BinarySerializationMissingISerializableCtor(type));
                     return obj;
                 }
 
-                // Using surrogate
+                // Using surrogate: invoking the default constructor if requested and exists, and then executing the surrogate initialization
+                if (PreferInvokingDefaultCtor)
+                    Accessors.TryInvokeCtor(obj);
+
 #if NETFRAMEWORK || NETSTANDARD2_0
                 return surrogate.SetObjectDataSafe(obj, si, Context, selector);
 #else
@@ -2219,6 +2231,9 @@ namespace KGySoft.Serialization.Binary
             [SecurityCritical]
             private void ReadCustomObjectGraphAsDefault(BinaryReader br, object obj)
             {
+                if (PreferInvokingDefaultCtor)
+                    Accessors.TryInvokeCtor(obj);
+
                 // Default object graph allows duplicate names but custom doesn't. We handle possible duplicates the
                 // same way as in ReadDefaultObjectGraphAsCustom. Though it is not a guarantee for anything.
                 StringKeyedDictionary<FieldInfo> fields = SerializationHelper.GetFieldsWithUniqueNames(obj.GetType(), false);
