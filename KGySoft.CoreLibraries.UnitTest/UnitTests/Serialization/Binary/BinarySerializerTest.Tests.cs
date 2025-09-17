@@ -3177,7 +3177,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             // BinarySerializationOptions.None: Equality check will fail because the delegate is initialized only in the default constructor
             Throws<AssertionException>(() => KGySerializeObject(referenceObject, BinarySerializationOptions.None), "Equality check failed at type NeedsDefaultCtor");
 
-            // Preferring default ctor call: The default constructor initializes not just the delegate also generates a random ID.
+            // Preferring default ctor call: The default constructor initializes not just the delegate, but also generates a random ID.
             // The equality check still passes because the fields (even read-only ones) are set after the constructor call
             KGySerializeObject(referenceObject, BinarySerializationOptions.PreferInvokingDefaultConstructor);
 
