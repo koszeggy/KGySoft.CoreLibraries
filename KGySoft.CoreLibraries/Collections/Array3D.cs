@@ -356,9 +356,9 @@ namespace KGySoft.Collections
                 Throw.ArgumentOutOfRangeException(Argument.width);
             if (width < 0)
                 Throw.ArgumentOutOfRangeException(Argument.height);
-            planeSize = height * width;
-            int size = depth * planeSize;
-            if (buffer.Length < size)
+            long size = (long)height * width;
+            planeSize = (int)size; // no need to be checked, the following check fails if it would overflow
+            if (buffer.Length < size * depth)
                 Throw.ArgumentException(Argument.buffer, Res.ArraySectionInsufficientCapacity);
 
             this.depth = depth;
@@ -366,7 +366,7 @@ namespace KGySoft.Collections
             this.width = width;
 
             // slicing even if length matches size to prevent Dispose returning the backing array to the pool
-            this.buffer = buffer.Slice(0, size);
+            this.buffer = buffer.Slice(0, (int)size);
         }
 
         #endregion

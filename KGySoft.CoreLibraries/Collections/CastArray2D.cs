@@ -317,12 +317,12 @@ namespace KGySoft.Collections
                 Throw.ArgumentOutOfRangeException(Argument.height);
             if (width < 0)
                 Throw.ArgumentOutOfRangeException(Argument.width);
-            int size = height * width;
+            long size = (long)height * width;
             if (buffer.Length < size)
                 Throw.ArgumentException(Argument.buffer, Res.ArraySectionInsufficientCapacity);
 
             // Slicing when capacity was bigger than needed. This must always work because it already starts at TFrom boundary so using the faster constructor.
-            this.buffer = size == buffer.Length ? buffer : new CastArray<TFrom, TTo>(buffer.Buffer, size);
+            this.buffer = size == buffer.Length ? buffer : new CastArray<TFrom, TTo>(buffer.Buffer, (int)size);
             this.height = height;
             this.width = width;
         }

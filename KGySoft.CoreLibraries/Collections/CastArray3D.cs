@@ -328,13 +328,14 @@ namespace KGySoft.Collections
                 Throw.ArgumentOutOfRangeException(Argument.width);
             if (width < 0)
                 Throw.ArgumentOutOfRangeException(Argument.height);
-            planeSize = height * width;
-            int size = depth * planeSize;
-            if (buffer.Length < size)
+            
+            long size = (long)height * width;
+            planeSize = (int)size; // no need to be checked, the following check fails if it would overflow
+            if (buffer.Length < size * depth)
                 Throw.ArgumentException(Argument.buffer, Res.ArraySectionInsufficientCapacity);
 
             // Slicing when capacity was bigger than needed. This must always work because it already starts at TFrom boundary so using the faster constructor.
-            this.buffer = size == buffer.Length ? buffer : new CastArray<TFrom, TTo>(buffer.Buffer, size);
+            this.buffer = size == buffer.Length ? buffer : new CastArray<TFrom, TTo>(buffer.Buffer, (int)size);
             this.depth = depth;
             this.height = height;
             this.width = width;

@@ -6,8 +6,14 @@
 ===============================================================================
 
 ~~~~~~~~~~
-+ v10.1.0:
+* v10.1.0:
 ~~~~~~~~~~
+
+- KGySoft.Collections namespace:
+================================
+- [Cast]Array2D/3D constructors:
+  - Preventing possible overflow when checking the total length of the underlying array for very large dimensions.
+
 
 + KGySoft.Serialization.Binary namespace:
 =========================================

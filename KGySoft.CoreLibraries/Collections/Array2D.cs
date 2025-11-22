@@ -339,7 +339,7 @@ namespace KGySoft.Collections
                 Throw.ArgumentOutOfRangeException(Argument.height);
             if (width < 0)
                 Throw.ArgumentOutOfRangeException(Argument.width);
-            int size = height * width;
+            long size = (long)height * width;
             if (buffer.Length < size)
                 Throw.ArgumentException(Argument.buffer, Res.ArraySectionInsufficientCapacity);
 
@@ -347,7 +347,7 @@ namespace KGySoft.Collections
             this.width = width;
 
             // slicing even if length matches size to prevent Dispose returning the backing array to the pool
-            this.buffer = buffer.Slice(0, size);
+            this.buffer = buffer.Slice(0, (int)size);
         }
 
         #endregion
