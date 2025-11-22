@@ -123,7 +123,7 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Gets the validation results for this instance.
         /// </summary>
-        public ValidationResultsCollection ValidationResults => isValidationUpToDate ? cachedValidationResults! : Validate();
+        public ValidationResultsCollection ValidationResults => isValidationUpToDate ? cachedValidationResults : Validate();
 
         #endregion
 

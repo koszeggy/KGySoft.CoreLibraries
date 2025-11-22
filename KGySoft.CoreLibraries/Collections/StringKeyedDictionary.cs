@@ -1469,7 +1469,7 @@ namespace KGySoft.Collections
         }
 #endif
 
-        private bool InternalRemove(string key, [AllowNull]TValue value, bool checkValue)
+        private bool InternalRemove(string key, TValue? value, bool checkValue)
         {
             if (buckets == null)
                 return false;

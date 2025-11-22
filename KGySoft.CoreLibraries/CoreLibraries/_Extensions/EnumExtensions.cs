@@ -117,7 +117,7 @@ namespace KGySoft.CoreLibraries
         /// <typeparam name="TEnum">The type of the <see langword="enum"/>&#160;<paramref name="value"/>.</typeparam>
         /// <param name="value">A <typeparamref name="TEnum"/> value.</param>
         /// <param name="defaultValue">A <typeparamref name="TEnum"/> value to return if <paramref name="value"/>
-        /// is not defined in <typeparamref name="TEnum"/>. It does not needed to be a defined value. This parameter is optional.
+        /// is not defined in <typeparamref name="TEnum"/>. It is not needed to be a defined value. This parameter is optional.
         /// <br/>Default value: The bitwise zero value of <typeparamref name="TEnum"/>.</param>
         /// <returns><paramref name="value"/> if it is defined in <typeparamref name="TEnum"/>;
         /// otherwise, <paramref name="defaultValue"/>, even if it is undefined.</returns>
@@ -182,7 +182,7 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Gets an <see cref="IEnumerable{TEnum}"/> enumeration of <paramref name="flags"/>,
-        /// where each flags are returned as distinct values.
+        /// where each flag is returned as a distinct value.
         /// </summary>
         /// <typeparam name="TEnum">The type of the <see langword="enum"/>&#160;<paramref name="flags"/>.</typeparam>
         /// <param name="flags">A flags enum value, whose flags should be returned. It is not checked whether <typeparamref name="TEnum"/>

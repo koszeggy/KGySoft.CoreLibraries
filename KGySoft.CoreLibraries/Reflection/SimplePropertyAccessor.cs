@@ -438,11 +438,11 @@ namespace KGySoft.Reflection
 
             Type[] paramTypes = generic switch
             {
-                null => new[] { Reflector.ObjectType, Reflector.ObjectType, typeof(object[]) },
-                false => new[] { Reflector.ObjectType, Reflector.ObjectType },
+                null => [Reflector.ObjectType, Reflector.ObjectType, typeof(object[])],
+                false => [Reflector.ObjectType, Reflector.ObjectType],
                 true => isStatic
-                    ? new[] { valueParameterType }
-                    : new[] { declaringType!.IsValueType ? declaringType.MakeByRefType() : declaringType, valueParameterType }
+                    ? [valueParameterType]
+                    : [declaringType!.IsValueType ? declaringType.MakeByRefType() : declaringType, valueParameterType]
             };
 
             var dm = new DynamicMethod("<SetRefProperty>__" + Property.Name, Reflector.VoidType, paramTypes,

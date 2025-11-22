@@ -265,7 +265,7 @@ namespace KGySoft.CoreLibraries
         /// In such cases the cloning attempt typically throws a <see cref="PlatformNotSupportedException"/>. To clone such objects the <paramref name="ignoreCustomSerialization"/>
         /// parameter should be <see langword="true"/>.</note>
         /// <para>If <paramref name="ignoreCustomSerialization"/> is <see langword="false"/>, then it is not guaranteed that the object can be cloned in all circumstances (see the note above).</para>
-        /// <para>On the other hand, if <paramref name="ignoreCustomSerialization"/> is <see langword="true"/>, then it can happen that even singleton types will be deep cloned.
+        /// <para>On the other hand, if <paramref name="ignoreCustomSerialization"/> is <see langword="true"/>, then it can happen that even singleton types will be deep-cloned.
         /// The cloning is performed by the <see cref="BinarySerializationFormatter"/> class, which supports some singleton types natively (such as <see cref="Type"/> and <see cref="DBNull"/>),
         /// which will always be cloned correctly.</para>
         /// <para>In .NET Framework remote objects are cloned in a special way and the result is always a local object.
@@ -292,16 +292,15 @@ namespace KGySoft.CoreLibraries
             }
 
             formatter.SurrogateSelector = surrogate;
-            using (var stream = new MemoryStream())
-            {
-                formatter.SerializeToStream(stream, obj);
-                stream.Position = 0L;
+
+            using var stream = new MemoryStream();
+            formatter.SerializeToStream(stream, obj);
+            stream.Position = 0L;
 #if NETFRAMEWORK
-                if (surrogate is RemotingSurrogateSelector)
-                    formatter.SurrogateSelector = null;
+            if (surrogate is RemotingSurrogateSelector)
+                formatter.SurrogateSelector = null;
 #endif
-                return formatter.DeserializeFromStream<T>(stream)!;
-            }
+            return formatter.DeserializeFromStream<T>(stream)!;
         }
 
         /// <summary>

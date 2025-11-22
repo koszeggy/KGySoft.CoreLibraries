@@ -304,7 +304,7 @@ namespace KGySoft.CoreLibraries
         #region Constants
 
 #if NET7_0_OR_GREATER
-        private const int maxLength = 0x3FFFFFDF;
+        private const int maximumLength = 0x3FFFFFDF;
 #endif
 
         #endregion
@@ -523,7 +523,7 @@ namespace KGySoft.CoreLibraries
             // just calling String.ISpanParsable<string>.Parse, which will handle the length check
             return ISpanParsableParse<string>(s, provider);
 #else // .NET 7: manual check as string does not implement ISpanParsable<string>
-            if (s.Length > maxLength)
+            if (s.Length > maximumLength)
                 Throw.FormatException();
             return s.ToString();
 #endif
@@ -546,7 +546,7 @@ namespace KGySoft.CoreLibraries
             result = str;
             return success;
 #else // .NET 7: manual check as string does not implement ISpanParsable<string>
-            if (s.Length <= maxLength)
+            if (s.Length <= maximumLength)
             {
                 result = s.ToString();
                 return true;
@@ -580,7 +580,7 @@ namespace KGySoft.CoreLibraries
         {
             try
             {
-                if (!Utf8.IsValid(utf8Text) || Encoding.UTF8.GetCharCount(utf8Text) > maxLength)
+                if (!Utf8.IsValid(utf8Text) || Encoding.UTF8.GetCharCount(utf8Text) > maximumLength)
                 {
                     result = Null;
                     return false;

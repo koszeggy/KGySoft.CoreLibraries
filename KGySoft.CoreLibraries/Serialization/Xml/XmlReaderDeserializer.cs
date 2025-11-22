@@ -25,7 +25,6 @@ using System.Reflection;
 using System.Security;
 using System.Text;
 using System.Xml;
-using System.Xml.Linq;
 using System.Xml.Serialization;
 
 using KGySoft.CoreLibraries;
@@ -346,7 +345,7 @@ namespace KGySoft.Serialization.Xml
                         case XmlNodeType.Element:
                             switch (ctx.Reader.Name)
                             {
-                                case nameof(KeyValuePair<_, _>.Key):
+                                case nameof(KeyValuePair<,>.Key):
                                     if (keyRead)
                                         Throw.ArgumentException(Res.XmlSerializationMultipleKeys);
 
@@ -357,7 +356,7 @@ namespace KGySoft.Serialization.Xml
                                         Throw.NotSupportedException(Res.XmlSerializationDeserializingTypeNotSupported(keyType));
                                     break;
 
-                                case nameof(KeyValuePair<_, _>.Value):
+                                case nameof(KeyValuePair<,>.Value):
                                     if (valueRead)
                                         Throw.ArgumentException(Res.XmlSerializationMultipleValues);
 
@@ -486,7 +485,7 @@ namespace KGySoft.Serialization.Xml
                     return true;
                 }
 
-                // Here parsing runtime type. Parse would handle also runtime type but we need to consider expected types.
+                // Here parsing runtime type. Parse would handle also runtime type, but we need to consider expected types.
                 result = value == null ? null : ResolveType(value);
                 return true;
             }
@@ -603,8 +602,7 @@ namespace KGySoft.Serialization.Xml
                             string? attrType = reader[XmlSerializer.AttributeType];
                             if (attrType != null)
                                 itemType = ResolveType(attrType);
-                            if (itemType == null)
-                                itemType = builder.ElementType;
+                            itemType ??= builder.ElementType;
 
                             if (TryDeserializeObject(itemType, reader, null, out var value))
                             {

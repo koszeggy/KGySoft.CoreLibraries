@@ -398,7 +398,7 @@ namespace KGySoft.Reflection
                         parameters.Add(Reflector.ObjectType);
                     else
                     {
-                        PropertyInfo pi = (PropertyInfo)MemberInfo!;
+                        PropertyInfo pi = (PropertyInfo)MemberInfo;
                         parameters.Add(pi.PropertyType.IsPointer ? typeof(IntPtr) : pi.PropertyType);
                     }
                 }
@@ -515,7 +515,6 @@ namespace KGySoft.Reflection
                     il.Emit(OpCodes.Ldloc, (short)localsIndex); // loading local variable
                     ++localsIndex;
 
-                    // ReSharper disable once PossibleNullReferenceException - not null because of the if above
                     if (paramType.IsValueType || paramType.IsPointer)
                         il.Emit(OpCodes.Box, paramType.IsPointer ? typeof(IntPtr) : paramType); // boxing value type into object
                     il.Emit(OpCodes.Stelem_Ref); // storing the variable into the pointed array index

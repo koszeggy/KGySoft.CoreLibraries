@@ -269,7 +269,7 @@ namespace KGySoft.ComponentModel
             info.Binding = this;
 
             // subscribing the event by info.Execute
-            info.Delegate = Delegate.CreateDelegate(eventInfo.EventHandlerType!, info, nameof(SubscriptionInfo<EventArgs>.Execute));
+            info.Delegate = Delegate.CreateDelegate(eventInfo.EventHandlerType!, info, nameof(SubscriptionInfo<>.Execute));
             Reflector.InvokeMethod(isStatic ? null : source, addMethod, info.Delegate);
 
             if (subscriptions == null)

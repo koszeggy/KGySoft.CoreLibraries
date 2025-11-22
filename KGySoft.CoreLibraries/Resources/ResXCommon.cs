@@ -30,6 +30,14 @@ using KGySoft.Reflection;
 
 #endregion
 
+#region Suppressions
+
+#if !(NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER)
+#pragma warning disable CS8825 // Return value must be non-null because parameter is non-null.
+#endif
+
+#endregion
+
 namespace KGySoft.Resources
 {
     internal static class ResXCommon
@@ -101,10 +109,10 @@ namespace KGySoft.Resources
 
         #region Internal Fields
 
-        internal static readonly string[] BinSerializedMimeTypes = { BinSerializedObjectMimeType, beta2CompatSerializedObjectMimeType, compatBinSerializedObjectMimeType };
+        internal static readonly string[] BinSerializedMimeTypes = [BinSerializedObjectMimeType, beta2CompatSerializedObjectMimeType, compatBinSerializedObjectMimeType];
 
 #if NETFRAMEWORK
-        internal static readonly string[] SoapSerializedMimeTypes = { soapSerializedObjectMimeType, compatSoapSerializedObjectMimeType };
+        internal static readonly string[] SoapSerializedMimeTypes = [soapSerializedObjectMimeType, compatSoapSerializedObjectMimeType];
 #endif
 
         #endregion
@@ -166,7 +174,7 @@ namespace KGySoft.Resources
                 result ??= type.GetName(TypeNameKind.AssemblyQualifiedName, GetAssemblyName, null);
             }
 
-            return result!;
+            return result;
         }
 
         internal static string ToBase64(byte[] value)

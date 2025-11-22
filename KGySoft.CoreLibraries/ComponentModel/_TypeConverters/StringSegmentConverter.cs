@@ -43,7 +43,7 @@ namespace KGySoft.ComponentModel
         #region Properties
 
         private static MethodInfo AsSegmentMethod
-            => asSegmentMethod ??= typeof(StringExtensions).GetMethod(nameof(StringExtensions.AsSegment), new[] { Reflector.StringType })!;
+            => asSegmentMethod ??= typeof(StringExtensions).GetMethod(nameof(StringExtensions.AsSegment), [Reflector.StringType])!;
 
         #endregion
 
@@ -94,7 +94,7 @@ namespace KGySoft.ComponentModel
         /// <param name="value">The <see cref="object" /> to convert.
         /// This type converter supports <see cref="string"/> type only.</param>
         /// <returns>A <see cref="StringSegment" /> instance that represents the converted value.</returns>
-        public override object? ConvertFrom(ITypeDescriptorContext? context, CultureInfo? culture, object? value)
+        public override object ConvertFrom(ITypeDescriptorContext? context, CultureInfo? culture, object? value)
             => value switch
             {
                 string str => str.AsSegment(),

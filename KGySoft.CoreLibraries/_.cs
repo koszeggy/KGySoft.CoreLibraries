@@ -16,9 +16,7 @@
 namespace KGySoft
 {
     /// <summary>
-    /// Just a dummy type for generic nameof() expressions until the issue is fixed by the C# compiler.
+    /// A placeholder type for generic types when the type argument is irrelevant.
     /// </summary>
-    internal struct _
-    {
-    }
+    internal struct _;
 }

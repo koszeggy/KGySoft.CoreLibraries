@@ -19,7 +19,9 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
+#if NETFRAMEWORK || NETSTANDARD2_0
 using System.Linq;
+#endif
 using System.Reflection;
 #if NET9_0_OR_GREATER
 using System.Reflection.Metadata;
@@ -80,7 +82,7 @@ namespace KGySoft.Reflection
 
         private static readonly string[] coreLibNames =
         {
-            CoreLibrariesAssembly.FullName!.Split(new[] { ',' }, 2)[0], // could be by GetName but that requires FileIOPermission
+            CoreLibrariesAssembly.FullName!.Split([','], 2)[0], // could be by GetName but that requires FileIOPermission
 #if !NETFRAMEWORK
             mscorlibName
 #endif

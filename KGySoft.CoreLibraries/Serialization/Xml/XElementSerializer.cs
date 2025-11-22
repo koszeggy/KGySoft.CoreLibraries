@@ -294,10 +294,10 @@ namespace KGySoft.Serialization.Xml
                     if (ctx.TypeNeeded)
                         ctx.Parent.Add(new XAttribute(XmlSerializer.AttributeType, GetTypeString(ctx.Type)));
 
-                    object? key = Accessors.GetPropertyValue(ctx.Object, nameof(KeyValuePair<_,_>.Key));
-                    object? value = Accessors.GetPropertyValue(ctx.Object, nameof(KeyValuePair<_,_>.Value));
-                    XElement xKey = new XElement(nameof(KeyValuePair<_,_>.Key));
-                    XElement xValue = new XElement(nameof(KeyValuePair<_,_>.Value));
+                    object? key = Accessors.GetPropertyValue(ctx.Object, nameof(KeyValuePair<,>.Key));
+                    object? value = Accessors.GetPropertyValue(ctx.Object, nameof(KeyValuePair<,>.Value));
+                    XElement xKey = new XElement(nameof(KeyValuePair<,>.Key));
+                    XElement xValue = new XElement(nameof(KeyValuePair<,>.Value));
                     ctx.Parent.Add(xKey, xValue);
                     Type[] genericArgs = ctx.Type.GetGenericArguments();
                     if (key != null)
@@ -320,7 +320,7 @@ namespace KGySoft.Serialization.Xml
                     Type? elementType = null;
                     ComparerType? comparer = ComparerType.None;
 
-                    // if can be trusted in all circumstances
+                    // if it can be trusted in all circumstances
                     if (IsTrustedCollection(ctx.Type)
                         // or deserialization can only use the pre-created known collection (so the comparer can be ignored)
                         || ctx.IsReadOnlyProperty && IsKnownCollection(ctx.Type)
@@ -472,13 +472,13 @@ namespace KGySoft.Serialization.Xml
                     memberElement.Add(new XAttribute(XmlSerializer.AttributeDeclaringType, GetTypeString(member.MemberInfo.DeclaringType!)));
                 Type actualType = value?.GetType() ?? memberType;
 
-                // a.) Using explicitly defined type converter if can convert to and from string
+                // a.) Using explicitly defined type converter if it can convert to and from string
                 // Note: ResolveType can load assemblies here. When serializing, it is not a problem since the serialized object tree is always under the consumer's control.
                 Attribute[] attrs = Reflector.GetAttributes(member.MemberInfo, typeof(TypeConverterAttribute), true);
                 if (attrs.Length > 0 && attrs[0] is TypeConverterAttribute convAttr && Reflector.ResolveType(convAttr.ConverterTypeName) is Type convType)
                 {
-                    ConstructorInfo? ctor = convType.GetConstructor(new Type[] { Reflector.Type });
-                    object[] ctorParams = { memberType };
+                    ConstructorInfo? ctor = convType.GetConstructor([Reflector.Type]);
+                    object[] ctorParams = [memberType];
                     if (ctor == null)
                     {
                         ctor = convType.GetDefaultConstructor();

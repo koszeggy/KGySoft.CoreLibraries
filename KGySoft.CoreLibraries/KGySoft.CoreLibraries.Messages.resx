@@ -898,7 +898,7 @@ To force the recursive serialization of the collection enable both RecursiveSeri
     <value>Cannot set null to non-null property "{0}" in type "{1}" because it has no setter.</value>
   </data>
   <data name="XmlSerialization_PropertyHasNoSetterGetsNullFormat" xml:space="preserve">
-    <value>Cannot restore property "{0}" in type "{1}" because it has no setter and it returned null.</value>
+    <value>Cannot restore property "{0}" in type "{1}" because it has no setter, and it returned null.</value>
   </data>
   <data name="XmlSerialization_RootObjectExpectedFormat" xml:space="preserve">
     <value>Root named "object" expected but "{0}" found.</value>

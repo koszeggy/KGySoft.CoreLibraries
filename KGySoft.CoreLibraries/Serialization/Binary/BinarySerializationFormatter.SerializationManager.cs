@@ -520,7 +520,7 @@ namespace KGySoft.Serialization.Binary
                     if (!IgnoreIBinarySerializable && binarySerializableType.IsAssignableFrom(t))
                         return DataTypes.BinarySerializable;
 
-                    // Any struct if can be serialized
+                    // Any struct, if can be serialized
                     if (CompactSerializationOfStructures && !t.IsManaged())
                         return DataTypes.RawStruct;
 
@@ -1194,7 +1194,7 @@ namespace KGySoft.Serialization.Binary
 
                 // element type
                 if (IsElementType(dataType))
-                    return new CircularList<DataTypes> { dataType };
+                    return [dataType];
 
                 CollectionSerializationInfo serInfo = serializationInfo[GetUnderlyingCollectionDataType(dataType)];
 
@@ -1206,7 +1206,7 @@ namespace KGySoft.Serialization.Binary
                 Debug.Assert(IsCollectionType(dataType), $"Unexpected non-element type: {dataType}");
 
                 // note: not encoding key/value separately even for dictionaries because they are the same
-                return new() { dataType | (serInfo.HasStringItemsOrKeys ? DataTypes.String : DataTypes.Object) };
+                return [dataType | (serInfo.HasStringItemsOrKeys ? DataTypes.String : DataTypes.Object)];
             }
 
             [SecurityCritical]
@@ -1214,7 +1214,7 @@ namespace KGySoft.Serialization.Binary
             {
                 Type elementType = type.GetElementType()!;
                 if (elementType.IsGenericParameter || elementType.IsGenericTypeDefinition)
-                    return new CircularList<DataTypes> { DataTypes.Array | DataTypes.RecursiveObjectGraph };
+                    return [DataTypes.Array | DataTypes.RecursiveObjectGraph];
 
                 DataTypes elementDataType = GetDataType(elementType);
 
@@ -1229,7 +1229,7 @@ namespace KGySoft.Serialization.Binary
                         return nestedTypes;
                     }
 
-                    return new CircularList<DataTypes> { DataTypes.Array | elementDataType };
+                    return [DataTypes.Array | elementDataType];
                 }
 
                 Debug.Assert(IsCollectionType(elementDataType), $"Not a collection data type: {elementDataType}");
@@ -1242,7 +1242,7 @@ namespace KGySoft.Serialization.Binary
             private CircularList<DataTypes> EncodeGenericCollection(Type type, DataTypes collectionType)
             {
                 if (type.IsGenericTypeDefinition || type.ContainsGenericParameters)
-                    return new CircularList<DataTypes> { IsCollectionType(collectionType) ? collectionType | DataTypes.GenericTypeDefinition : DataTypes.RecursiveObjectGraph };
+                    return [IsCollectionType(collectionType) ? collectionType | DataTypes.GenericTypeDefinition : DataTypes.RecursiveObjectGraph];
 
                 Debug.Assert(GetCollectionDataType(collectionType) == collectionType, "Plain collection type expected");
 
@@ -1255,7 +1255,7 @@ namespace KGySoft.Serialization.Binary
                     CircularList<DataTypes> itemTypes;
 
                     if (IsElementType(itemDataType))
-                        itemTypes = new CircularList<DataTypes> { i == 0 ? itemDataType | collectionType : itemDataType };
+                        itemTypes = [i == 0 ? itemDataType | collectionType : itemDataType];
                     else
                     {
                         Debug.Assert(IsCollectionType(itemDataType), $"Not a collection data type: {itemDataType}");
@@ -1551,8 +1551,8 @@ namespace KGySoft.Serialization.Binary
                 foreach (object element in collection)
                 {
                     keyValueCollectionDataTypes.Save();
-                    WriteElement(bw, Accessors.GetPropertyValue(element!, nameof(KeyValuePair<_,_>.Key)), dictionaryInfo.GetKeyDataTypes(keyValueCollectionDataTypes), collectionKeyType);
-                    WriteElement(bw, Accessors.GetPropertyValue(element!, nameof(KeyValuePair<_,_>.Value)), dictionaryInfo.GetValueDataTypes(keyValueCollectionDataTypes), collectionValueType);
+                    WriteElement(bw, Accessors.GetPropertyValue(element!, nameof(KeyValuePair<,>.Key)), dictionaryInfo.GetKeyDataTypes(keyValueCollectionDataTypes), collectionKeyType);
+                    WriteElement(bw, Accessors.GetPropertyValue(element!, nameof(KeyValuePair<,>.Value)), dictionaryInfo.GetValueDataTypes(keyValueCollectionDataTypes), collectionValueType);
                     keyValueCollectionDataTypes.Restore();
                 }
             }
@@ -1601,7 +1601,7 @@ namespace KGySoft.Serialization.Binary
                 // Pure simple types
                 Debug.Assert(IsPureType(elementDataType), $"Pure types are expected here but {DataTypeToString(elementDataType)} found");
 
-                // Writing Id for reference types. Nullables were already checked above.
+                // Writing the id for reference types. Nullables were already checked above.
                 if (element == null || !element.GetType().IsValueType)
                 {
                     if (WriteId(bw, element))
@@ -1728,7 +1728,7 @@ namespace KGySoft.Serialization.Binary
                         ? Reflector.ResolveType(explicitTypeName + ", " + explicitAsmName, ResolveTypeOptions.None) // not allowing partial match or loading assemblies
                         : null;
 
-                    // If the string name could be resolved but it has a different name, then we can go on with string name because there will be no conflict
+                    // If the string name could be resolved, but it has a different name, then we can go on with string name because there will be no conflict
                     if (typeToWrite != null && (typeToWrite.Assembly.FullName != explicitAsmName || typeToWrite.FullName != explicitTypeName))
                         typeToWrite = null;
                 }

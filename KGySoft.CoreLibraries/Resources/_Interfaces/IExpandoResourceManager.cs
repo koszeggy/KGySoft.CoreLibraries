@@ -68,7 +68,7 @@ namespace KGySoft.Resources
         /// </summary>
         /// <remarks>
         /// <para>To be compatible with <see cref="ResourceManager">System.Resources.ResourceManager</see> this
-        /// property is <see langword="true"/> by default. If this <see cref="IExpandoResourceManager"/> instance contains no mutable values or it is known that modifying values is not
+        /// property is <see langword="true"/> by default. If this <see cref="IExpandoResourceManager"/> instance contains no mutable values, or it is known that modifying values is not
         /// an issue, then this property can be set to <see langword="false"/> for better performance.</para>
         /// <para>String values are not cloned.</para>
         /// <para>The value of this property affects only the objects returned from .resx sources. Non-string values from compiled sources are always cloned.</para>
@@ -107,7 +107,7 @@ namespace KGySoft.Resources
         /// </summary>
         /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceManager"/> is already disposed.</exception>
         /// <remarks>
-        /// <note type="caution">By calling this method all of the unsaved changes will be lost.</note>
+        /// <note type="caution">By calling this method all the unsaved changes will be lost.</note>
         /// <para>By the <see cref="IsModified"/> property you can check whether there are unsaved changes.</para>
         /// <para>To save the changes you can call the <see cref="SaveAllResources">SaveAllResources</see> method.</para>
         /// </remarks>
@@ -150,7 +150,7 @@ namespace KGySoft.Resources
         /// <remarks>
         /// <para>Depending on the value of the <see cref="CloneValues"/> property, the <see cref="GetObject">GetObject</see> method returns either
         /// a full copy of the specified resource, or always the same instance. For memory streams none of them are ideal because a full copy duplicates the inner buffer of a possibly large
-        /// array of bytes, whereas returning the same stream instance can cause issues with conflicting positions or disposed state. Therefore the <see cref="GetStream">GetStream</see> method
+        /// array of bytes, whereas returning the same stream instance can cause issues with conflicting positions or disposed state. Therefore, the <see cref="GetStream">GetStream</see> method
         /// can be used to obtain a new read-only <see cref="MemoryStream"/> wrapper around the same internal buffer, regardless the current value of the <see cref="CloneValues"/> property.</para>
         /// <para><see cref="GetStream">GetStream</see> can be used also for byte array resources. However, if the value is returned from compiled resources, then always a new copy of the byte array will be wrapped.</para>
         /// <para>If <see cref="SafeMode"/> is <see langword="true"/> and <paramref name="name"/> is neither a <see cref="MemoryStream"/> nor a byte array resource, then
@@ -179,7 +179,7 @@ namespace KGySoft.Resources
         /// <remarks>
         /// <para>Depending on the value of the <see cref="CloneValues"/> property, the <see cref="GetObject">GetObject</see> method returns either
         /// a full copy of the specified resource, or always the same instance. For memory streams and byte arrays none of them are ideal because a full copy duplicates the inner buffer of a possibly large
-        /// array of bytes, whereas returning the same stream instance can cause issues with conflicting positions or disposed state. Therefore the <see cref="GetStream">GetStream</see> method
+        /// array of bytes, whereas returning the same stream instance can cause issues with conflicting positions or disposed state. Therefore, the <see cref="GetStream">GetStream</see> method
         /// can be used to obtain a new read-only <see cref="MemoryStream"/> wrapper around the same internal buffer, regardless the current value of the <see cref="CloneValues"/> property.</para>
         /// <para><see cref="string"/> values are not duplicated in memory, regardless the value of the <see cref="CloneValues"/> property.</para>
         /// </remarks>
@@ -275,7 +275,7 @@ namespace KGySoft.Resources
         /// <remarks>
         /// <para>Depending on the value of the <see cref="CloneValues"/> property, the <see cref="GetMetaObject">GetMetaObject</see> method returns either
         /// a full copy of the specified metadata, or always the same instance. For memory streams none of them are ideal because a full copy duplicates the inner buffer of a possibly large
-        /// array of bytes, whereas returning the same stream instance can cause issues with conflicting positions or disposed state. Therefore the <see cref="GetMetaStream">GetMetaStream</see> method
+        /// array of bytes, whereas returning the same stream instance can cause issues with conflicting positions or disposed state. Therefore, the <see cref="GetMetaStream">GetMetaStream</see> method
         /// can be used to obtain a new read-only <see cref="MemoryStream"/> wrapper around the same internal buffer, regardless the current value of the <see cref="CloneValues"/> property.</para>
         /// <para><see cref="GetMetaStream">GetMetaStream</see> can be used also for byte array metadata.</para>
         /// <para>If <see cref="SafeMode"/> is <see langword="true"/> and <paramref name="name"/> is neither a <see cref="MemoryStream"/> nor a byte array metadata, then
@@ -305,7 +305,7 @@ namespace KGySoft.Resources
         /// <remarks>
         /// <para>Depending on the value of the <see cref="CloneValues"/> property, the <see cref="GetMetaObject">GetMetaObject</see> method returns either
         /// a full copy of the specified metadata, or always the same instance. For memory streams and byte arrays none of them are ideal because a full copy duplicates the inner buffer of a possibly large
-        /// array of bytes, whereas returning the same stream instance can cause issues with conflicting positions or disposed state. Therefore the <see cref="GetMetaStream">GetMetaStream</see> method
+        /// array of bytes, whereas returning the same stream instance can cause issues with conflicting positions or disposed state. Therefore, the <see cref="GetMetaStream">GetMetaStream</see> method
         /// can be used to obtain a new read-only <see cref="MemoryStream"/> wrapper around the same internal buffer, regardless the current value of the <see cref="CloneValues"/> property.</para>
         /// <para><see cref="string"/> values are not duplicated in memory, regardless the value of the <see cref="CloneValues"/> property.</para>
         /// </remarks>
@@ -375,7 +375,7 @@ namespace KGySoft.Resources
         /// <summary>
         /// Saves all already loaded resources.
         /// </summary>
-        /// <param name="force"><see langword="true"/> to save all of the already loaded resource sets regardless if they have been modified; <see langword="false"/> to save only the modified resource sets. This parameter is optional.
+        /// <param name="force"><see langword="true"/> to save all the already loaded resource sets regardless if they have been modified; <see langword="false"/> to save only the modified resource sets. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <param name="compatibleFormat">If set to <see langword="true"/>, the result .resx files can be read by a <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a> instance
         /// and the Visual Studio Resource Editor. If set to <see langword="false"/>, the result .resx files are often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter" />),

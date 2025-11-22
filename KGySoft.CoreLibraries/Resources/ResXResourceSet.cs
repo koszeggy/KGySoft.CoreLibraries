@@ -871,7 +871,7 @@ namespace KGySoft.Resources
         /// <remarks>
         /// <para>If <paramref name="value"/> is <see langword="null"/>, a null reference will be explicitly stored.
         /// Its effect is similar to the <see cref="RemoveObject">RemoveObject</see> method (<see cref="O:KGySoft.Resources.ResXResourceSet.GetObject">GetObject</see> will return <see langword="null"/> in both cases),
-        /// but if <see langword="null"/> has been set, it will returned among the results of the <see cref="GetEnumerator">GetEnumerator</see> method.</para>
+        /// but if <see langword="null"/> has been set, it will be returned among the results of the <see cref="GetEnumerator">GetEnumerator</see> method.</para>
         /// <para><paramref name="value"/> can be a <see cref="ResXDataNode"/> as well, its value will be interpreted correctly and added to the <see cref="ResXResourceSet"/> with the specified <paramref name="name"/>.</para>
         /// <para>If <paramref name="value"/> is a <see cref="ResXFileRef"/>, then a file reference will be added to the <see cref="ResXResourceSet"/>.
         /// On saving its path will be made relative to the specified <c>basePath</c> argument of the <see cref="O:KGySoft.Resources.ResXResourceSet.Save">Save</see> methods.
@@ -892,7 +892,7 @@ namespace KGySoft.Resources
         /// <remarks>
         /// <para>If <paramref name="value"/> is <see langword="null"/>, a null reference will be explicitly stored.
         /// Its effect is similar to the <see cref="RemoveMetaObject">RemoveMetaObject</see> method (<see cref="GetMetaObject">GetMetaObject</see> will return <see langword="null"/> in both cases),
-        /// but if <see langword="null"/> has been set, it will returned among the results of the <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> method.</para>
+        /// but if <see langword="null"/> has been set, it will be returned among the results of the <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> method.</para>
         /// <para><paramref name="value"/> can be a <see cref="ResXDataNode"/> as well, its value will be interpreted correctly and added to the <see cref="ResXResourceSet"/> with the specified <paramref name="name"/>.</para>
         /// <para>If <paramref name="value"/> is a <see cref="ResXFileRef"/>, then a file reference will be added to the <see cref="ResXResourceSet"/>.
         /// On saving its path will be made relative to the specified <c>basePath</c> argument of the <see cref="O:KGySoft.Resources.ResXResourceSet.Save">Save</see> methods.
@@ -940,7 +940,7 @@ namespace KGySoft.Resources
         /// <summary>
         /// Removes a resource object from the current <see cref="ResXResourceSet"/> with the specified <paramref name="name"/>.
         /// </summary>
-        /// <param name="name">Name of the resource value to remove. Name is treated case sensitive.</param>
+        /// <param name="name">Name of the resource value to remove. Name is treated case-sensitive.</param>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceSet"/> is already disposed.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="name" /> is <see langword="null" />.</exception>
         public void RemoveObject(string name) => RemoveValueInternal(name, resources, ref resourcesIgnoreCase);
@@ -948,7 +948,7 @@ namespace KGySoft.Resources
         /// <summary>
         /// Removes a metadata object from the current <see cref="ResXResourceSet"/> with the specified <paramref name="name"/>.
         /// </summary>
-        /// <param name="name">Name of the metadata value to remove. Name is treated case sensitive.</param>
+        /// <param name="name">Name of the metadata value to remove. Name is treated case-sensitive.</param>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceSet"/> is already disposed.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="name" /> is <see langword="null" />.</exception>
         public void RemoveMetaObject(string name) => RemoveValueInternal(name, metadata, ref metadataIgnoreCase);
@@ -970,10 +970,8 @@ namespace KGySoft.Resources
 
             lock (dict)
             {
-                if (!dict.ContainsKey(alias))
+                if (!dict.Remove(alias))
                     return;
-
-                dict.Remove(alias);
                 isModified = true;
             }
         }
@@ -996,8 +994,8 @@ namespace KGySoft.Resources
         public void Save(string fileName, bool compatibleFormat = false, bool forceEmbeddedResources = false, string? newBasePath = null)
         {
             // ReSharper disable once UsingStatementResourceInitialization - these properties never throw exception on initialization
-            using (var writer = new ResXResourceWriter(fileName) { BasePath = newBasePath ?? basePath, CompatibleFormat = compatibleFormat })
-                Save(writer, forceEmbeddedResources);
+            using var writer = new ResXResourceWriter(fileName) { BasePath = newBasePath ?? basePath, CompatibleFormat = compatibleFormat };
+            Save(writer, forceEmbeddedResources);
         }
 
         /// <summary>
@@ -1018,8 +1016,8 @@ namespace KGySoft.Resources
         public void Save(Stream stream, bool compatibleFormat = false, bool forceEmbeddedResources = false, string? newBasePath = null)
         {
             // ReSharper disable once UsingStatementResourceInitialization - these properties never throw exception on initialization
-            using (var writer = new ResXResourceWriter(stream) { BasePath = newBasePath ?? basePath, CompatibleFormat = compatibleFormat })
-                Save(writer, forceEmbeddedResources);
+            using var writer = new ResXResourceWriter(stream) { BasePath = newBasePath ?? basePath, CompatibleFormat = compatibleFormat };
+            Save(writer, forceEmbeddedResources);
         }
 
         /// <summary>
@@ -1040,8 +1038,8 @@ namespace KGySoft.Resources
         public void Save(TextWriter textWriter, bool compatibleFormat = false, bool forceEmbeddedResources = false, string? newBasePath = null)
         {
             // ReSharper disable once UsingStatementResourceInitialization - these properties never throw exception on initialization
-            using (var writer = new ResXResourceWriter(textWriter) { BasePath = newBasePath ?? basePath, CompatibleFormat = compatibleFormat })
-                Save(writer, forceEmbeddedResources);
+            using var writer = new ResXResourceWriter(textWriter) { BasePath = newBasePath ?? basePath, CompatibleFormat = compatibleFormat };
+            Save(writer, forceEmbeddedResources);
         }
 
         /// <summary>
@@ -1123,7 +1121,7 @@ namespace KGySoft.Resources
             if ((resourcesLocal ?? metadataLocal ?? (object?)aliasesLocal) == null)
                 Throw.ObjectDisposedException();
 
-            // 1. Adding existing aliases (writing them on-demand) - non existing ones will be auto-generated
+            // 1. Adding existing aliases (writing them on-demand) - non-existing ones will be auto-generated
             lock (aliasesLocal!)
             {
                 foreach (KeyValuePair<string, string> alias in aliasesLocal)
@@ -1233,11 +1231,10 @@ namespace KGySoft.Resources
 
             lock (data)
             {
-                if (!data.ContainsKey(name))
+                if (!data.Remove(name))
                     return;
 
                 // clearing the whole ignoreCase dictionary, because cannot tell whether the element should be removed.
-                data.Remove(name);
                 dataIgnoreCase = null;
                 isModified = true;
             }

@@ -67,7 +67,7 @@ namespace KGySoft.Collections
     /// <para>To avoid confusion, the non-generic <see cref="ICollection"/> interface is not implemented by the <see cref="LockingCollection{T}"/> class because it uses a different aspect of synchronization.</para>
     /// <para>The <see cref="GetEnumerator">GetEnumerator</see> method creates a snapshot of the underlying collection so obtaining the enumerator has an O(n) cost on this class.</para>
     /// <para><note>Starting with .NET 4 a sort of concurrent collections appeared. While they provide good scalability for multiple concurrent readers by using separate locks for entries or for a set of entries,
-    /// in many situations they perform worse than a simple locking collection, especially if the collection to lock uses a fast accessible storage (e.g. an array) internally. It also may worth to mention that some members
+    /// in many situations they perform worse than a simple locking collection, especially if the collection to lock uses a fast accessible storage (e.g. an array) internally. It also may be worth mentioning that some members
     /// (such as the <c>Count</c> property) are surprisingly expensive operations on most concurrent collections as they traverse the inner storage and in the meantime they lock all entries while counting the elements.
     /// So it always depends on the concrete scenario whether a simple locking collection or a concurrent collection is more beneficial to use.</note>
     /// <note type="tip">To use a thread-safe hash set without wrapping any <see cref="ICollection{T}"/> instance consider to use the <see cref="ThreadSafeHashSet{T}"/> class instead.</note>
@@ -157,7 +157,7 @@ namespace KGySoft.Collections
 
         /// <summary>
         /// Locks the access of the underlying collection from other threads until <see cref="Unlock">Unlock</see> is called as many times as this method was called. Needed to be called if
-        /// multiple calls to the wrapped collection have to be combined without releasing the lock between each calls.
+        /// multiple calls to the wrapped collection have to be combined without releasing the lock between each call.
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="LockingCollection{T}"/> class for details and some examples.
         /// </summary>
         public void Lock() => Monitor.Enter(syncRoot);

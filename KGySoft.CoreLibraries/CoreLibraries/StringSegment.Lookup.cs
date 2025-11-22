@@ -1086,7 +1086,7 @@ namespace KGySoft.CoreLibraries
                 }
 
                 // Here we have full match. As single char patterns are not handled here we could have
-                // check this into the inner loop to avoid goto but that requires an extra condition.
+                // checked this in the inner loop to avoid goto but that requires an extra condition.
                 return i - offset;
 
             continueOuter:;

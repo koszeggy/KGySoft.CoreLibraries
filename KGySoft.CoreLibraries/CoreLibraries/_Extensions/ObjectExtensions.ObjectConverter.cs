@@ -107,13 +107,7 @@ namespace KGySoft.CoreLibraries
                 internal void SetCachedResult(object instance, Type sourceType, Type targetType, object? result)
                 {
                     var key = (instance, sourceType, targetType);
-                    if (resultsCache == null)
-                    {
-                        resultsCache = new Cache<(object, Type, Type), StrongBox<object?>?> { Capacity = cacheCapacity };
-                        resultsCache[key] = new StrongBox<object?>(result);
-                        return;
-                    }
-
+                    resultsCache ??= new Cache<(object, Type, Type), StrongBox<object?>?> { Capacity = cacheCapacity };
                     resultsCache[key] = new StrongBox<object?>(result);
                 }
 
@@ -171,8 +165,8 @@ namespace KGySoft.CoreLibraries
                 }
 
                 Type[] types = targetType.GetGenericArguments();
-                if (!Accessors.GetPropertyValue(obj, nameof(KeyValuePair<_, _>.Key)).TryConvert(types[0], culture, out object? key)
-                    || !Accessors.GetPropertyValue(obj, nameof(KeyValuePair<_, _>.Value)).TryConvert(types[1], culture, out object? value))
+                if (!Accessors.GetPropertyValue(obj, nameof(KeyValuePair<,>.Key)).TryConvert(types[0], culture, out object? key)
+                    || !Accessors.GetPropertyValue(obj, nameof(KeyValuePair<,>.Value)).TryConvert(types[1], culture, out object? value))
                 {
                     result = null;
                     return false;
@@ -199,7 +193,7 @@ namespace KGySoft.CoreLibraries
             }
 
             private static object ConvertKeyValuePairToDictionaryEntry(object obj, Type targetType, CultureInfo? culture)
-                => new DictionaryEntry(Accessors.GetPropertyValue(obj, nameof(KeyValuePair<_, _>.Key))!, Accessors.GetPropertyValue(obj, nameof(KeyValuePair<_, _>.Value)));
+                => new DictionaryEntry(Accessors.GetPropertyValue(obj, nameof(KeyValuePair<,>.Key))!, Accessors.GetPropertyValue(obj, nameof(KeyValuePair<,>.Value)));
 
             private static bool DoConvert(ref ConversionContext context, object? obj, Type targetType, out object? value, bool isRoot = false)
             {
@@ -220,7 +214,7 @@ namespace KGySoft.CoreLibraries
 
                 Type sourceType = obj.GetType();
 
-                // Trying to obtain a previous result first. If the box is null, then a previous attempt failed or we are in a recursion.
+                // Trying to obtain a previous result first. If the box is null, then a previous attempt failed, or we are in a recursion.
                 if (!isRoot && context.TryGetCachedResult(obj, sourceType, targetType, out StrongBox<object?>? cachedResult))
                 {
                     value = cachedResult?.Value;

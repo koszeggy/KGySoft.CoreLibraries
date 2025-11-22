@@ -89,7 +89,7 @@ namespace KGySoft.ComponentModel
         }
 
         private static MethodInfo GetEncodingMethod
-            => getEncodingMethod ??= typeof(Encoding).GetMethod(nameof(Encoding.GetEncoding), new[] { Reflector.IntType })!;
+            => getEncodingMethod ??= typeof(Encoding).GetMethod(nameof(Encoding.GetEncoding), [Reflector.IntType])!;
 
         #endregion
 

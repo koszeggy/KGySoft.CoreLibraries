@@ -30,7 +30,7 @@ namespace KGySoft.CoreLibraries
     public enum TypeNameKind
     {
         /// <summary>
-        /// <para>Represents the short name of a <see cref="Type"/> without namespaces, eg.:
+        /// <para>Represents the short name of a <see cref="Type"/> without namespaces, e.g.:
         /// <br/><c>SomeGenericType`2[String,SomeType]</c></para>
         /// <para>
         /// Differences from <see cref="MemberInfo.Name">Type.Name</see>:
@@ -42,7 +42,7 @@ namespace KGySoft.CoreLibraries
         ShortName,
 
         /// <summary>
-        /// <para>Represents the long name of a <see cref="Type"/> along with namespaces, eg.:
+        /// <para>Represents the long name of a <see cref="Type"/> along with namespaces, e.g.:
         /// <br/><c>SomeNamespace.SomeGenericType`2[System.String,SomeNamespace.SomeType]</c></para>
         /// <para>If this name is unique in the loaded assemblies, then the name can be successfully parsed by
         /// the <see cref="Reflector.ResolveType(string,ResolveTypeOptions)">Reflector.ResolveType</see> method.</para>
@@ -58,7 +58,7 @@ namespace KGySoft.CoreLibraries
         LongName,
 
         /// <summary>
-        /// <para>Represents the full name of a <see cref="Type"/> with assembly qualified names for generic arguments of non-core types, eg.:
+        /// <para>Represents the full name of a <see cref="Type"/> with assembly qualified names for generic arguments of non-core types, e.g.:
         /// <br/><c>SomeNamespace.SomeGenericType`2[System.String,[SomeNamespace.SomeType, SomeAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]</c></para>
         /// <para>If this name is unique in the loaded assemblies, then the name can be successfully parsed by
         /// the <see cref="Reflector.ResolveType(string,ResolveTypeOptions)">Reflector.ResolveType</see> method.</para>
@@ -74,7 +74,7 @@ namespace KGySoft.CoreLibraries
         FullName,
 
         /// <summary>
-        /// <para>Represents the full name of a <see cref="Type"/> with assembly qualified names for all generic arguments, eg.:
+        /// <para>Represents the full name of a <see cref="Type"/> with assembly qualified names for all generic arguments, e.g.:
         /// <br/><c>SomeNamespace.SomeGenericType`2[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[SomeNamespace.SomeType, SomeAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]</c></para>
         /// <para>If this name is unique in the loaded assemblies, then the name can be successfully parsed by
         /// the <see cref="Reflector.ResolveType(string,ResolveTypeOptions)">Reflector.ResolveType</see> method.</para>
@@ -89,7 +89,7 @@ namespace KGySoft.CoreLibraries
         ForcedFullName,
 
         /// <summary>
-        /// <para>Represents the assembly qualified name of a <see cref="Type"/> omitting assembly names for core types, eg.:
+        /// <para>Represents the assembly qualified name of a <see cref="Type"/> omitting assembly names for core types, e.g.:
         /// <br/><c>SomeNamespace.SomeGenericType`2[System.String,[SomeNamespace.SomeType, SomeAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]], SomeAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null</c></para>
         /// <para>If all needed assemblies are available, then the name can be successfully parsed by
         /// the <see cref="Reflector.ResolveType(string,ResolveTypeOptions)">Reflector.ResolveType</see> method.</para>
@@ -108,7 +108,7 @@ namespace KGySoft.CoreLibraries
         AssemblyQualifiedName,
 
         /// <summary>
-        /// <para>Represents the assembly qualified name of a <see cref="Type"/> forcing assembly names for core types, eg.:
+        /// <para>Represents the assembly qualified name of a <see cref="Type"/> forcing assembly names for core types, e.g.:
         /// <br/><c>SomeNamespace.SomeGenericType`2[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[SomeNamespace.SomeType, SomeAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]], SomeAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null</c></para>
         /// <para>If all needed assemblies are available, then the name can be successfully parsed by
         /// the <see cref="Reflector.ResolveType(string,ResolveTypeOptions)">Reflector.ResolveType</see> method.</para>

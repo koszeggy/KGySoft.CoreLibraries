@@ -273,7 +273,7 @@ namespace KGySoft.Reflection
         /// <para>Setting the property for the first time is slower than the <see cref="PropertyInfo.SetValue(object,object,object[])">System.Reflection.PropertyInfo.SetValue</see>
         /// method but further calls are much faster.</para>
         /// <para>The method can be use also for <see langword="ref"/> properties.</para>
-        /// <note type="tip">If the property has no more than one index parameters and you know the type of the property at compile time
+        /// <note type="tip">If the property has no more than one index parameters, and you know the type of the property at compile time
         /// (and also the declaring type for instance properties), then you can use the generic <see cref="SetStaticValue{TProperty}">SetStaticValue</see>
         /// or <see cref="O:KGySoft.Reflection.PropertyAccessor.SetInstanceValue">SetInstanceValue</see> methods for better performance.</note>
         /// <note type="caller">If the property is an instance property of a value type or has a pointer type or pointer index parameter,
@@ -383,7 +383,7 @@ namespace KGySoft.Reflection
             catch (Exception e)
             {
                 // Post-validation if there was any exception
-                PostValidate(instance, value, new[] { index }, e, true, false);
+                PostValidate(instance, value, [index], e, true, false);
             }
         }
 
@@ -398,7 +398,7 @@ namespace KGySoft.Reflection
         /// <remarks>
         /// <para>Getting the property for the first time is slower than the <see cref="PropertyInfo.GetValue(object,object[])">System.Reflection.PropertyInfo.GetValue</see>
         /// method but further calls are much faster.</para>
-        /// <note type="tip">If the property has no more than one index parameters and you know the type of the property at compile time
+        /// <note type="tip">If the property has no more than one index parameters, and you know the type of the property at compile time
         /// (and also the declaring type for instance properties), then you can use the generic <see cref="GetStaticValue{TProperty}">GetStaticValue</see>
         /// or <see cref="O:KGySoft.Reflection.PropertyAccessor.GetInstanceValue">GetInstanceValue</see> methods for better performance.</note>
         /// <note type="caller">If the property is a non-<see langword="readonly"/> instance property of a value type, or has a pointer type or pointer index parameter,
@@ -504,7 +504,7 @@ namespace KGySoft.Reflection
             catch (Exception e)
             {
                 // Post-validation if there was any exception. We do this for better performance on the happy path.
-                PostValidate(instance, null, new[] { index }, e, false, false);
+                PostValidate(instance, null, [index], e, false, false);
                 return null; // actually never reached, just to satisfy the compiler
             }
         }

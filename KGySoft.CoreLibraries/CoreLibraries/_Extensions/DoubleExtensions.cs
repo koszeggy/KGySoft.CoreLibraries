@@ -80,7 +80,7 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Gets whether the specified <paramref name="value"/> can be considered zero using a specific <paramref name="tolerance"/>.
         /// </summary>
-        /// <param name="value">The value to be check.</param>
+        /// <param name="value">The value to be checked.</param>
         /// <param name="tolerance">The tolerance to be used. For the best performance its value is not checked but the reasonable value is between 0 and 0.5. This parameter is optional.
         /// <br/>Default value: <c>0.000001</c> (10<sup>-6</sup>).</param>
         /// <returns><see langword="true"/> if <paramref name="value"/> can be considered zero using the specified <paramref name="tolerance"/>; otherwise, <see langword="false"/>.</returns>
@@ -92,7 +92,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="value">The value to be compared to another one.</param>
         /// <param name="other">The other value compared to the self <paramref name="value"/>.</param>
-        /// <param name="tolerance">The tolerance to be used. For the best performance its value is not checked but it should be some low positive value to get a reasonable result. This parameter is optional.
+        /// <param name="tolerance">The tolerance to be used. For the best performance its value is not checked, but it should be some low positive value to get a reasonable result. This parameter is optional.
         /// <br/>Default value: <c>0.000001</c> (10<sup>-6</sup>).</param>
         /// <returns><see langword="true"/>, if the values are equal considering the specified <paramref name="tolerance"/>; otherwise, <see langword="false"/>.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -104,7 +104,7 @@ namespace KGySoft.CoreLibraries
         /// That is the closest integral number to <paramref name="value"/> if the difference from that is not larger than <paramref name="tolerance"/>;
         /// otherwise, the smallest integral value that is greater than <paramref name="value"/>.
         /// </summary>
-        /// <param name="value">The value, whose ceiling is abut to be retrieved.</param>
+        /// <param name="value">The value, whose ceiling is about to be retrieved.</param>
         /// <param name="tolerance">The tolerance to be used. For the best performance its value is not checked but the reasonable value is between 0 and 0.5. This parameter is optional.
         /// <br/>Default value: <c>0.000001</c> (10<sup>-6</sup>).</param>
         /// <returns>The ceiling of the specified <paramref name="value"/> using the specified <paramref name="tolerance"/>.</returns>

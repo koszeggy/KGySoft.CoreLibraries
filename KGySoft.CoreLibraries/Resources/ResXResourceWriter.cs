@@ -916,13 +916,11 @@ namespace KGySoft.Resources
             writer.WriteStartElement("root");
             if (compatibleFormat || !omitHeader)
             {
-                using (XmlReader reader = XmlReader.Create(new StringReader(compatibleFormat
+                using XmlReader reader = XmlReader.Create(new StringReader(compatibleFormat
                         ? (omitHeader ? resourceSchema : resourceHeader + resourceSchema)
                         : resourceSchema),
-                    new XmlReaderSettings { CloseInput = true, IgnoreWhitespace = true }))
-                {
-                    writer.WriteNode(reader, true);
-                }
+                    new XmlReaderSettings { CloseInput = true, IgnoreWhitespace = true });
+                writer.WriteNode(reader, true);
             }
 
             if (!compatibleFormat && omitHeader)

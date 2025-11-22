@@ -914,7 +914,7 @@ namespace KGySoft.Threading
 
                 try
                 {
-                    // Due to the recursive binary branching the allowed subtask count is logarithmic, eg. 3 if there are 8 cores.
+                    // Due to the recursive binary branching the allowed subtask count is logarithmic, e.g. 3 if there are 8 cores.
                     DoSort(context, list, startIndex, count, comparer ?? ComparerHelper<T>.Comparer, Log2(maxTasks));
                 }
                 catch (Exception e)
@@ -933,7 +933,7 @@ namespace KGySoft.Threading
 
                 try
                 {
-                    // Due to the recursive binary branching the allowed subtask count is logarithmic, eg. 3 if there are 8 cores.
+                    // Due to the recursive binary branching the allowed subtask count is logarithmic, e.g. 3 if there are 8 cores.
                     DoSort(context, array, startIndex, count, comparer ?? ComparerHelper<T>.Comparer, Log2(maxTasks));
                 }
                 catch (Exception e)
@@ -952,7 +952,7 @@ namespace KGySoft.Threading
 
                 try
                 {
-                    // Due to the recursive binary branching the allowed subtask count is logarithmic, eg. 3 if there are 8 cores.
+                    // Due to the recursive binary branching the allowed subtask count is logarithmic, e.g. 3 if there are 8 cores.
                     DoSort(context, list, startIndex, count, comparer ?? ComparerHelper<T>.Comparer, Log2(maxTasks));
                 }
                 catch (Exception e)
@@ -973,7 +973,7 @@ namespace KGySoft.Threading
 
                 try
                 {
-                    // Due to the recursive binary branching the allowed subtask array.Length is logarithmic, eg. 3 if there are 8 cores.
+                    // Due to the recursive binary branching the allowed subtask array.Length is logarithmic, e.g. 3 if there are 8 cores.
                     DoSort(context, list, comparer ?? ComparerHelper<TTo>.Comparer, Log2(maxTasks));
                 }
                 catch (Exception e)
@@ -2084,7 +2084,7 @@ namespace KGySoft.Threading
 
                 try
                 {
-                    // Due to the recursive binary branching the allowed subtask count is logarithmic, eg. 3 if there are 8 cores.
+                    // Due to the recursive binary branching the allowed subtask count is logarithmic, e.g. 3 if there are 8 cores.
                     DoSort(context, keys, values, startIndex, count, comparer ?? ComparerHelper<TKey>.Comparer, Log2(maxTasks));
                 }
                 catch (Exception e)
@@ -2103,7 +2103,7 @@ namespace KGySoft.Threading
 
                 try
                 {
-                    // Due to the recursive binary branching the allowed subtask count is logarithmic, eg. 3 if there are 8 cores.
+                    // Due to the recursive binary branching the allowed subtask count is logarithmic, e.g. 3 if there are 8 cores.
                     DoSort(context, keys, values, startIndex, count, comparer ?? ComparerHelper<TKey>.Comparer, Log2(maxTasks));
                 }
                 catch (Exception e)
@@ -2122,7 +2122,7 @@ namespace KGySoft.Threading
 
                 try
                 {
-                    // Due to the recursive binary branching the allowed subtask count is logarithmic, eg. 3 if there are 8 cores.
+                    // Due to the recursive binary branching the allowed subtask count is logarithmic, e.g. 3 if there are 8 cores.
                     DoSort(context, keys, values, startIndex, count, comparer ?? ComparerHelper<TKey>.Comparer, Log2(maxTasks));
                 }
                 catch (Exception e)
@@ -2142,7 +2142,7 @@ namespace KGySoft.Threading
 
                 try
                 {
-                    // Due to the recursive binary branching the allowed subtask array.Length is logarithmic, eg. 3 if there are 8 cores.
+                    // Due to the recursive binary branching the allowed subtask array.Length is logarithmic, e.g. 3 if there are 8 cores.
                     DoSort(context, keys, values, comparer ?? ComparerHelper<TKey>.Comparer, Log2(maxTasks));
                 }
                 catch (Exception e)
@@ -2166,7 +2166,7 @@ namespace KGySoft.Threading
 
                 try
                 {
-                    // Due to the recursive binary branching the allowed subtask array.Length is logarithmic, eg. 3 if there are 8 cores.
+                    // Due to the recursive binary branching the allowed subtask array.Length is logarithmic, e.g. 3 if there are 8 cores.
                     DoSort(context, keys, values, comparer ?? ComparerHelper<TKeyTo>.Comparer, Log2(maxTasks));
                 }
                 catch (Exception e)
@@ -3018,7 +3018,7 @@ namespace KGySoft.Threading
                     }
                 }
 
-                // Due to the recursive binary branching the allowed subtask count is logarithmic, eg. 3 if there are 8 cores.
+                // Due to the recursive binary branching the allowed subtask count is logarithmic, e.g. 3 if there are 8 cores.
                 DoSort(context, list, startIndex, count, Log2(maxTasks));
             }
 
@@ -3043,7 +3043,7 @@ namespace KGySoft.Threading
                     }
                 }
 
-                // Due to the recursive binary branching the allowed subtask count is logarithmic, eg. 3 if there are 8 cores.
+                // Due to the recursive binary branching the allowed subtask count is logarithmic, e.g. 3 if there are 8 cores.
                 DoSort(context, array, startIndex, count, Log2(maxTasks));
             }
 
@@ -3068,7 +3068,7 @@ namespace KGySoft.Threading
                     }
                 }
 
-                // Due to the recursive binary branching the allowed subtask count is logarithmic, eg. 3 if there are 8 cores.
+                // Due to the recursive binary branching the allowed subtask count is logarithmic, e.g. 3 if there are 8 cores.
                 DoSort(context, list, startIndex, count, Log2(maxTasks));
             }
 
@@ -3095,7 +3095,7 @@ namespace KGySoft.Threading
                     }
                 }
 
-                // Due to the recursive binary branching the allowed subtask array.Length is logarithmic, eg. 3 if there are 8 cores.
+                // Due to the recursive binary branching the allowed subtask array.Length is logarithmic, e.g. 3 if there are 8 cores.
                 DoSort(context, list, Log2(maxTasks));
             }
 
@@ -4198,7 +4198,7 @@ namespace KGySoft.Threading
                     }
                 }
 
-                // Due to the recursive binary branching the allowed subtask count is logarithmic, eg. 3 if there are 8 cores.
+                // Due to the recursive binary branching the allowed subtask count is logarithmic, e.g. 3 if there are 8 cores.
                 DoSort(context, keys, values, startIndex, count, Log2(maxTasks));
             }
 
@@ -4223,7 +4223,7 @@ namespace KGySoft.Threading
                     }
                 }
 
-                // Due to the recursive binary branching the allowed subtask count is logarithmic, eg. 3 if there are 8 cores.
+                // Due to the recursive binary branching the allowed subtask count is logarithmic, e.g. 3 if there are 8 cores.
                 DoSort(context, keys, values, startIndex, count, Log2(maxTasks));
             }
 
@@ -4248,7 +4248,7 @@ namespace KGySoft.Threading
                     }
                 }
 
-                // Due to the recursive binary branching the allowed subtask count is logarithmic, eg. 3 if there are 8 cores.
+                // Due to the recursive binary branching the allowed subtask count is logarithmic, e.g. 3 if there are 8 cores.
                 DoSort(context, keys, values, startIndex, count, Log2(maxTasks));
             }
 
@@ -4274,7 +4274,7 @@ namespace KGySoft.Threading
                     }
                 }
 
-                // Due to the recursive binary branching the allowed subtask array.Length is logarithmic, eg. 3 if there are 8 cores.
+                // Due to the recursive binary branching the allowed subtask array.Length is logarithmic, e.g. 3 if there are 8 cores.
                 DoSort(context, keys, values, Log2(maxTasks));
             }
 
@@ -4304,7 +4304,7 @@ namespace KGySoft.Threading
                     }
                 }
 
-                // Due to the recursive binary branching the allowed subtask array.Length is logarithmic, eg. 3 if there are 8 cores.
+                // Due to the recursive binary branching the allowed subtask array.Length is logarithmic, e.g. 3 if there are 8 cores.
                 DoSort(context, keys, values, Log2(maxTasks));
             }
 

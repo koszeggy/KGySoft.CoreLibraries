@@ -1206,7 +1206,7 @@ namespace KGySoft
         /// <summary>Cannot set null to non-null property "{0}" in type "{1}" because it has no setter.</summary>
         internal static string XmlSerializationPropertyHasNoSetterCantSetNull(string propertyName, Type type) => Get("XmlSerialization_PropertyHasNoSetterCantSetNullFormat", propertyName, type.GetName(TypeNameKind.LongName));
 
-        /// <summary>Cannot restore property "{0}" in type "{1}" because it has no setter and it returned null.</summary>
+        /// <summary>Cannot restore property "{0}" in type "{1}" because it has no setter, and it returned null.</summary>
         internal static string XmlSerializationPropertyHasNoSetterGetsNull(string propertyName, Type type) => Get("XmlSerialization_PropertyHasNoSetterGetsNullFormat", propertyName, type.GetName(TypeNameKind.LongName));
 
         /// <summary>Collection item expected but "{0}" found.</summary>
@@ -1294,10 +1294,7 @@ namespace KGySoft
                 {
                     string nullRef = Null;
                     for (; i < args.Length; i++)
-                    {
-                        if (args[i] == null)
-                            args[i] = nullRef;
-                    }
+                        args[i] ??= nullRef;
                 }
 
                 return String.Format(LanguageSettings.FormattingLanguage, format, args);

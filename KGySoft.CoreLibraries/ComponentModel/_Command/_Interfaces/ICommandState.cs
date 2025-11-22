@@ -23,7 +23,7 @@ using System.ComponentModel;
 namespace KGySoft.ComponentModel
 {
     /// <summary>
-    /// Represents the states of a command for a specific command binding. When a state value is set (e.g. <see cref="Enabled"/>) it can be applied for all of the
+    /// Represents the states of a command for a specific command binding. When a state value is set (e.g. <see cref="Enabled"/>) it can be applied for all the
     /// command sources. By default, no application occurs but this can be overridden if an <see cref="ICommandStateUpdater"/> is added to the binding by the
     /// <see cref="ICommandBinding.AddStateUpdater">ICommandBinding.AddStateUpdater</see> method.
     /// For example, if the command sources are UI elements (e.g. a button and a menu item), then the <see cref="Enabled"/>

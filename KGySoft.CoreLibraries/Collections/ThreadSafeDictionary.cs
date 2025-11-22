@@ -114,7 +114,7 @@ namespace KGySoft.Collections
     /// <note type="tip">If <typeparamref name="TKey"/> is <see cref="string">string</see> and it is safe to use a non-randomized string comparer,
     /// then you can pass <see cref="StringSegmentComparer.Ordinal">StringSegmentComparer.Ordinal</see> to the constructor for even better performance.
     /// Or, you can use <see cref="StringSegmentComparer.OrdinalRandomized">StringSegmentComparer.OrdinalRandomized</see> to use a comparer with randomized hash also on
-    /// platforms where default string hashing is not randomized (e.g. .NET Framework 3.5).</note></para>
+    /// platforms where default string hashing is not randomized (e.g. in .NET Framework 3.5).</note></para>
     /// <para><strong>Incompatibilities</strong> with <see cref="ConcurrentDictionary{TKey,TValue}"/>:
     /// <list type="bullet">
     /// <item>Constructor signatures are different</item>
@@ -1010,7 +1010,7 @@ namespace KGySoft.Collections
         /// Uses the specified delegates to add a key/value pair to the <see cref="ThreadSafeDictionary{TKey,TValue}"/> if the <paramref name="key"/> does not already exist,
         /// or to update a key/value pair in the <see cref="ThreadSafeDictionary{TKey,TValue}"/> if the <paramref name="key"/> already exists.
         /// </summary>
-        /// <typeparam name="TArg">The type of an argument to pass into <paramref name="addValueFactory"/> and <paramref name="updateValueFactory"/>.</typeparam>
+        /// <typeparam name="TArg">The type of the argument to pass into <paramref name="addValueFactory"/> and <paramref name="updateValueFactory"/>.</typeparam>
         /// <param name="key">The key to be added or whose value should be updated.</param>
         /// <param name="addValueFactory">A delegate used to generate a value for an absent key.</param>
         /// <param name="updateValueFactory">A delegate used to generate a new value for an existing key based on the key's existing value.</param>
@@ -1137,7 +1137,7 @@ namespace KGySoft.Collections
         /// Adds a key/value pair to the <see cref="ThreadSafeDictionary{TKey,TValue}"/> by using the specified <paramref name="addValueFactory"/>
         /// if the key does not already exist, and returns either the added or the existing value.
         /// </summary>
-        /// <typeparam name="TArg">The type of an argument to pass into <paramref name="addValueFactory"/>.</typeparam>
+        /// <typeparam name="TArg">The type of the argument to pass into <paramref name="addValueFactory"/>.</typeparam>
         /// <param name="key">The key of the element to add or whose value should be returned.</param>
         /// <param name="addValueFactory">The delegate to be used to generate the value, if the key does not already exist.</param>
         /// <param name="factoryArgument">An argument to pass into <paramref name="addValueFactory"/>.</param>
@@ -1456,7 +1456,7 @@ namespace KGySoft.Collections
 
         /// <summary>
         /// Checks if the lock free storage is still up-to-date. If returns false, the <see cref="fixedSizeStorage"/> field must be re-checked.
-        /// Should be used outside of a lock. If a merge operation is in progress, it blocks the current thread without locking until the merge is finished.
+        /// Should be used outside a lock. If a merge operation is in progress, it blocks the current thread without locking until the merge is finished.
         /// </summary>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         private bool IsUpToDate(FixedSizeStorage lockFreeValues)

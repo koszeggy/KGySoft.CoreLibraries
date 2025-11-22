@@ -1568,7 +1568,7 @@ namespace KGySoft.CoreLibraries
 
             // if linear scaling is forced...
             if (scale == FloatScale.ForceLinear
-                // or we use auto scaling and maximum is UInt16
+                // or we use auto-scaling and maximum is UInt16
                 || (scale == FloatScale.Auto && maxValue <= UInt16.MaxValue))
             {
                 return random.NextDecimal() * maxValue;
@@ -1631,7 +1631,7 @@ namespace KGySoft.CoreLibraries
 
             // if linear scaling is forced...
             if (scale == FloatScale.ForceLinear
-                // or we use auto scaling and maximum is UInt16 or when the difference of order of magnitude is smaller than 4
+                // or we use auto-scaling and maximum is UInt16 or when the difference of order of magnitude is smaller than 4
                 || (scale == FloatScale.Auto && (maxAbs <= UInt16.MaxValue || !posAndNeg && maxAbs / 16m < minAbs)))
             {
                 return NextDecimalLinear(random, minValue, maxValue);
@@ -1651,7 +1651,7 @@ namespace KGySoft.CoreLibraries
                     : rate / 2m < sample;
                 sign = isNeg ? -1 : 1;
 
-                // now adjusting the limits for 0..[selected range]
+                // now adjusting the limits for 0...[selected range]
                 minAbs = 0m;
                 maxAbs = isNeg ? absMinValue : Math.Abs(maxValue);
             }
@@ -1702,7 +1702,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="random">The <see cref="Random"/> instance to use.</param>
         /// <param name="length">The desired length of the result.</param>
-        /// <param name="allowedCharacters">An string containing the allowed characters. Recurring characters may appear in the result more frequently than others.</param>
+        /// <param name="allowedCharacters">A string containing the allowed characters. Recurring characters may appear in the result more frequently than others.</param>
         /// <returns>An array of random characters that has the specified <paramref name="length"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> or <paramref name="allowedCharacters"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="length"/> is less than 0.</exception>
@@ -2515,8 +2515,8 @@ namespace KGySoft.CoreLibraries
         /// <list type="bullet">
         /// <item><term><see cref="StringBuilder"/></term><description>The same behavior as for strings.</description></item>
         /// <item><term><see cref="Uri"/></term><description>The result will match the following pattern: <c>http://&lt;lowercase word-like string of length between 4 and 10&gt;.&lt;3 lower case letters&gt;</c></description></item>
-        /// <item><term><see cref="IntPtr"/></term><description>The same behavior as for 32 or 64 bit signed integers, based on the used platform.</description></item>
-        /// <item><term><see cref="UIntPtr"/></term><description>The same behavior as for 32 or 64 bit unsigned integers, based on the used platform.</description></item>
+        /// <item><term><see cref="IntPtr"/></term><description>The same behavior as for 32 or 64-bit signed integers, based on the used platform.</description></item>
+        /// <item><term><see cref="UIntPtr"/></term><description>The same behavior as for 32 or 64-bit unsigned integers, based on the used platform.</description></item>
         /// <item><term><see cref="KeyValuePair{TKey,TValue}"/></term><description>Using its parameterized constructor to create an instance.</description></item>
         /// <item><term><see cref="Assembly"/></term><description>A random loaded assembly will be picked.</description></item>
         /// <item><term><see cref="Type"/></term><description>A random type will be picked from one of the loaded assemblies.</description></item>
@@ -2776,13 +2776,13 @@ namespace KGySoft.CoreLibraries
         {
             // if linear scaling is forced...
             if (scale == FloatScale.ForceLinear
-                // or we use auto scaling and maximum is UInt16
+                // or we use auto-scaling and maximum is UInt16
                 || (scale == FloatScale.Auto && maxValue <= UInt16.MaxValue))
             {
                 return random.NextDouble() * maxValue;
             }
 
-            // Possible double exponents are -1022..1023 but we don't generate too small exponents for big ranges because
+            // Possible double exponents are -1022..1023, but we don't generate too small exponents for big ranges because
             // that would cause too many almost zero results, which are much smaller than the original NextDouble values.
             double minExponent = -16d;
             double maxExponent = Math.Log(maxValue, 2d);
@@ -2809,7 +2809,7 @@ namespace KGySoft.CoreLibraries
 
             // if linear scaling is forced...
             if (scale == FloatScale.ForceLinear
-                // or we use auto scaling and maximum is UInt16 or when the difference of order of magnitude is smaller than 4
+                // or we use auto-scaling and maximum is UInt16 or when the difference of order of magnitude is smaller than 4
                 || (scale == FloatScale.Auto && (maxAbs <= UInt16.MaxValue || !posAndNeg && maxAbs < minAbs * 16)))
             {
                 return NextDoubleLinear(random, minValue, maxValue);
@@ -2829,12 +2829,12 @@ namespace KGySoft.CoreLibraries
                     : rate / 2d < sample;
                 sign = isNeg ? -1 : 1;
 
-                // now adjusting the limits for 0..[selected range]
+                // now adjusting the limits for 0...[selected range]
                 minAbs = 0d;
                 maxAbs = isNeg ? absMinValue : Math.Abs(maxValue);
             }
 
-            // Possible double exponents are -1022..1023 but we don't generate too small exponents for big ranges because
+            // Possible double exponents are -1022..1023, but we don't generate too small exponents for big ranges because
             // that would cause too many almost zero results, which are much smaller than the original NextDouble values.
             double minExponent = minAbs == 0d ? -16d : Math.Log(minAbs, 2d);
             double maxExponent = Math.Log(maxAbs, 2d);
@@ -2866,13 +2866,13 @@ namespace KGySoft.CoreLibraries
         {
             // if linear scaling is forced...
             if (scale == FloatScale.ForceLinear
-                // or we use auto scaling and maximum is UInt16
+                // or we use auto-scaling and maximum is UInt16
                 || (scale == FloatScale.Auto && maxValue <= UInt16.MaxValue))
             {
                 return random.NextSingle() * maxValue;
             }
 
-            // Possible float exponents are -126..127 but we don't generate too small exponents for big ranges because
+            // Possible float exponents are -126..127, but we don't generate too small exponents for big ranges because
             // that would cause too many almost zero results, which are much smaller than the original NextSingle values.
             float minExponent = -16f;
             float maxExponent = MathF.Log(maxValue, 2f);
@@ -2899,7 +2899,7 @@ namespace KGySoft.CoreLibraries
 
             // if linear scaling is forced...
             if (scale == FloatScale.ForceLinear
-                // or we use auto scaling and maximum is UInt16 or when the difference of order of magnitude is smaller than 4
+                // or we use auto-scaling and maximum is UInt16 or when the difference of order of magnitude is smaller than 4
                 || (scale == FloatScale.Auto && (maxAbs <= UInt16.MaxValue || !posAndNeg && maxAbs < minAbs * 16)))
             {
                 return NextSingleLinear(random, minValue, maxValue);
@@ -2919,12 +2919,12 @@ namespace KGySoft.CoreLibraries
                     : rate / 2f < sample;
                 sign = isNeg ? -1 : 1;
 
-                // now adjusting the limits for 0..[selected range]
+                // now adjusting the limits for 0...[selected range]
                 minAbs = 0f;
                 maxAbs = isNeg ? absMinValue : Math.Abs(maxValue);
             }
 
-            // Possible float exponents are -126..127 but we don't generate too small exponents for big ranges because
+            // Possible float exponents are -126..127, but we don't generate too small exponents for big ranges because
             // that would cause too many almost zero results, which are much smaller than the original NextSingle values.
             float minExponent = minAbs == 0f ? -16f : MathF.Log(minAbs, 2f);
             float maxExponent = MathF.Log(maxAbs, 2f);

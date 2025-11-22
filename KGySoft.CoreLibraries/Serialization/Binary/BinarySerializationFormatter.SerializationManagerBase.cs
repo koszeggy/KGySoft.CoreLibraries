@@ -105,22 +105,22 @@ namespace KGySoft.Serialization.Binary
             #region Private Protected Fields
 
             private protected static readonly Assembly[] KnownAssemblies =
-    {
+            [
                 // Do not add more assemblies. We must stay consistent on different platforms.
                 AssemblyResolver.CoreLibrariesAssembly, // and for compatibility, mscorlib maps also here on every platform
                 AssemblyResolver.KGySoftCoreLibrariesAssembly
-            };
+            ];
 
             /// <summary>
             /// These types are always dumped by index and are never passed to a binder.
             /// </summary>
             private protected static readonly Type[] KnownTypes =
-            {
+            [
                 Reflector.NullableType,
                 //Reflector.ObjectType,
 
                 // These types are just added for sparing 1 byte when they are stored for the fist time.
-                // Other primitives (U/IntPtr) are also protected from binder but they are stored as new type first
+                // Other primitives (U/IntPtr) are also protected from binder, but they are stored as new type first
                 Reflector.BoolType,
                 Reflector.SByteType,
                 Reflector.ByteType,
@@ -147,10 +147,10 @@ namespace KGySoft.Serialization.Binary
                 // Technical helper types for special cases, must not be passed to binders
                 compressibleType,
                 genericMethodDefinitionPlaceholderType
-            };
+            ];
 
             /// <summary>
-            /// A cache for types that have special support on the current platform and it has some cost to determine this.
+            /// A cache for types that have special support on the current platform, and it has some cost to determine this.
             /// The result is <see cref="DataTypes.Null"/> if the type is ignored or the special support is disabled for it
             /// so it must be determined by the regular ways if it can be serialized.
             /// </summary>
@@ -330,20 +330,20 @@ namespace KGySoft.Serialization.Binary
 
                 // EqualityComparer<T>.Default. As anyone can create custom derived types, this is similar to StringComparer
                 if (type.IsSubclassOfGeneric(typeof(EqualityComparer<>), out Type? comparerType))
-                    return type == comparerType || type == comparerType.GetPropertyValue(nameof(EqualityComparer<_>.Default))!.GetType()
+                    return type == comparerType || type == comparerType.GetPropertyValue(nameof(EqualityComparer<>.Default))!.GetType()
                         ? DataTypes.GenericEqualityComparerDefault
                         : DataTypes.Null;
 
                 // Comparer<T>.Default. Like above.
                 if (type.IsSubclassOfGeneric(typeof(Comparer<>), out comparerType))
-                    return type == comparerType || type == comparerType.GetPropertyValue(nameof(Comparer<_>.Default))!.GetType()
+                    return type == comparerType || type == comparerType.GetPropertyValue(nameof(Comparer<>.Default))!.GetType()
                         ? DataTypes.GenericComparerDefault
                         : DataTypes.Null;
 
                 // EnumComparer<T>.Comparer. It also cannot be IsImplementationOfGenericType because the constructor must be protected
                 // so the dynamic builder (which is technically a 3rd party assembly) can derive it, meaning that anyone else can derive it, too.
                 if (type.IsSubclassOfGeneric(typeof(EnumComparer<>), out comparerType))
-                    return type == comparerType || type == comparerType.GetPropertyValue(nameof(EnumComparer<_>.Comparer))!.GetType()
+                    return type == comparerType || type == comparerType.GetPropertyValue(nameof(EnumComparer<>.Comparer))!.GetType()
                         ? DataTypes.EnumComparer
                         : DataTypes.Null;
 

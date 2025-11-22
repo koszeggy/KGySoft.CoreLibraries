@@ -174,8 +174,9 @@ namespace KGySoft.IO
                 Throw.ObjectDisposedException();
             if (stream == null!)
                 Throw.ArgumentNullException(Argument.stream);
-            using (var ss = new StringStream(str))
-                ss.CopyTo(stream);
+
+            using var ss = new StringStream(str);
+            ss.CopyTo(stream);
         }
 
         public override void SetLength(long value) => Throw.NotSupportedException(Res.NotSupported);

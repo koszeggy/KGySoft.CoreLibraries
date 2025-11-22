@@ -68,7 +68,7 @@ namespace KGySoft.ComponentModel
 
         #region Static Fields
 
-        private static readonly string[] ignoreModifiedProperties = { nameof(EditLevel), nameof(UndoCapacity), nameof(CanRedo), nameof(CanUndo) };
+        private static readonly string[] ignoreModifiedProperties = [nameof(EditLevel), nameof(UndoCapacity), nameof(CanRedo), nameof(CanUndo)];
 
         #endregion
 
@@ -205,7 +205,7 @@ namespace KGySoft.ComponentModel
             base.AffectsModifiedState(propertyName) && !propertyName.In(ignoreModifiedProperties);
 
         /// <inheritdoc />
-        protected override ValidationResultsCollection DoValidation() => new ValidationResultsCollection();
+        protected override ValidationResultsCollection DoValidation() => [];
 
         #endregion
 

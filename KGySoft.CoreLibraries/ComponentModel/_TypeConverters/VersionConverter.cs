@@ -36,7 +36,7 @@ namespace KGySoft.ComponentModel
     {
         #region Fields
 
-        private static readonly Type[] supportedTypes = { Reflector.StringType, typeof(Version), typeof(InstanceDescriptor) };
+        private static readonly Type[] supportedTypes = [Reflector.StringType, typeof(Version), typeof(InstanceDescriptor)];
 
         private static MemberInfo? versionFactory;
 
@@ -48,7 +48,7 @@ namespace KGySoft.ComponentModel
 #if NET35
             typeof(Version).GetConstructor(new[] { Reflector.StringType })!;
 #else
-            typeof(Version).GetMethod(nameof(Version.Parse), new[] { Reflector.StringType })!;
+            typeof(Version).GetMethod(nameof(Version.Parse), [Reflector.StringType])!;
 #endif
 
         #endregion

@@ -45,7 +45,7 @@ namespace KGySoft.CoreLibraries
 
         #region Properties
 
-        internal static char[] IllegalPathChars => illegalPathChars ??= Path.GetInvalidPathChars().Concat(new[] { '*', '?' }).ToArray();
+        internal static char[] IllegalPathChars => illegalPathChars ??= Path.GetInvalidPathChars().Concat(['*', '?']).ToArray();
 
         #endregion
 
@@ -65,7 +65,7 @@ namespace KGySoft.CoreLibraries
 
             string? dir = Path.GetDirectoryName(path);
             if (!String.IsNullOrEmpty(dir) && !Directory.Exists(dir))
-                Directory.CreateDirectory(dir!);
+                Directory.CreateDirectory(dir);
             return File.Create(path);
         }
 
@@ -220,7 +220,7 @@ namespace KGySoft.CoreLibraries
 
             int baseOnlyCount = basePathParts.Count - commonPathDepth;
             int targetPathCount = targetPathParts.Count;
-            len = baseOnlyCount > 0 ? baseOnlyCount * 2 + (baseOnlyCount - 1) : 0; // .. and path separators
+            len = baseOnlyCount > 0 ? baseOnlyCount * 2 + (baseOnlyCount - 1) : 0; // ".." and path separators
             for (int i = commonPathDepth; i < targetPathCount; i++)
             {
                 if (len > 0)
@@ -277,7 +277,7 @@ namespace KGySoft.CoreLibraries
 
         /// <summary>
         /// Gets the relative path to <paramref name="target" /> from the <paramref name="baseDirectory" />.
-        /// This overload performs a case insensitive comparison.
+        /// This overload performs a case-insensitive comparison.
         /// </summary>
         /// <param name="target">The target file or directory name. Can be either an absolute path or a relative one to current directory.</param>
         /// <param name="baseDirectory">The base directory to which the relative <paramref name="target" /> path should be determined.</param>
@@ -313,7 +313,7 @@ namespace KGySoft.CoreLibraries
             try
             {
                 // We keep this code for compatibility reason. It may differ from AppDomain.BaseDirectory in special cases
-                // (e.g. when an the code is executed from a sandbox domain using a subdirectory).
+                // (e.g. when the code is executed from a sandbox domain using a subdirectory).
                 // Example: for debugger visualizers GetExecutingPath returns the location of the deployed visualizer (e.g. Documents/VS version/Visualizers
                 // instead of the path of the Visual Studio installation).
                 return Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!;

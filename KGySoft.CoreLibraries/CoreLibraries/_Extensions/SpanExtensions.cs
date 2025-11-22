@@ -44,7 +44,7 @@ namespace KGySoft.CoreLibraries
     {
         #region Fields
 
-        private static readonly char[] newLineSeparators = { '\r', '\n' };
+        private static readonly char[] newLineSeparators = ['\r', '\n'];
 
         #endregion
 
@@ -369,7 +369,7 @@ namespace KGySoft.CoreLibraries
             if (!Enum<TEnum>.TryParse(s, out TEnum value))
                 return null;
 
-            return !definedOnly || Enum<TEnum>.IsDefined(value) ? value : (TEnum?)null;
+            return !definedOnly || Enum<TEnum>.IsDefined(value) ? value : null;
         }
 
         /// <summary>
@@ -557,7 +557,7 @@ namespace KGySoft.CoreLibraries
                 if (value == 0)
                     return true;
 
-                // for negative values the MaxValue of the appropriate range is expected (eg 127 for SByte)
+                // for negative values the MaxValue of the appropriate range is expected (e.g. 127 for SByte)
                 if (!allowNegative || value > max + 1)
                     return false;
 

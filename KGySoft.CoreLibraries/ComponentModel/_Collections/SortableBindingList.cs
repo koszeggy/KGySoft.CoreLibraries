@@ -73,7 +73,7 @@ namespace KGySoft.ComponentModel
             private readonly CircularList<(int Index, object? Value)> mapReference;
 
             private int index;
-            [AllowNull]private T current = default!;
+            [AllowNull]private T current;
 
             #endregion
 

@@ -18,7 +18,6 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
 
 #endregion
 
@@ -60,7 +59,7 @@ namespace KGySoft.ComponentModel
         bool CanSetProperty(string propertyName, object? value);
 
         /// <summary>
-        /// Gets the specified property if it exists in the inner storage and has a compatibly type with <typeparamref name="T"/>; otherwise, returns <paramref name="defaultValue"/>.
+        /// Gets the specified property if it exists in the inner storage and has a compatible type with <typeparamref name="T"/>; otherwise, returns <paramref name="defaultValue"/>.
         /// </summary>
         /// <typeparam name="T">Type of the property to return.</typeparam>
         /// <param name="propertyName">The name of the property to get.</param>
@@ -107,7 +106,7 @@ namespace KGySoft.ComponentModel
         void SetProperties(IDictionary<string, object?> properties, bool triggerChangedEvent = true);
 
         /// <summary>
-        /// Replaces the properties of the <see cref="IPersistableObject"/> with the provided new <paramref name="properties"/>. If contains less entries than the actually stored entries, then the difference will be removed from the <see cref="IPersistableObject"/>.
+        /// Replaces the properties of the <see cref="IPersistableObject"/> with the provided new <paramref name="properties"/>. If contains fewer entries than the actually stored entries, then the difference will be removed from the <see cref="IPersistableObject"/>.
         /// </summary>
         /// <param name="properties">The new properties to set.</param>
         /// <param name="triggerChangedEvent"><see langword="true"/> to allow raising the <see cref="INotifyPropertyChanged.PropertyChanged"/> event; otherwise, <see langword="false"/>. This parameter is optional.
@@ -116,7 +115,7 @@ namespace KGySoft.ComponentModel
         void ReplaceProperties(IDictionary<string, object?> properties, bool triggerChangedEvent = true);
 
         /// <summary>
-        /// Tries to the replace a property value. The replacement will succeed if the currently stored value equals to <paramref name="originalValue"/>.
+        /// Tries to replace a property value. The replacement will succeed if the currently stored value equals to <paramref name="originalValue"/>.
         /// Non-existing value can be represented by <see cref="ObservableObjectBase.MissingProperty"/> so the method supports also "try remove" and "try add" functionality.
         /// </summary>
         /// <param name="propertyName">The name of the property.</param>

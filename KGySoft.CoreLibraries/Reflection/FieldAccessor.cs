@@ -491,7 +491,7 @@ namespace KGySoft.Reflection
             // Expressions would not work for value types and read-only fields so using always dynamic methods
             DynamicMethod dm = new DynamicMethod(setterPrefix + Field.Name, // setter method name
                 Reflector.VoidType, // return type
-                new[] { Reflector.ObjectType, Reflector.ObjectType }, declaringType ?? Reflector.ObjectType, true); // instance and value parameters
+                [Reflector.ObjectType, Reflector.ObjectType], declaringType ?? Reflector.ObjectType, true); // instance and value parameters
 
             ILGenerator il = dm.GetILGenerator();
 
@@ -554,7 +554,7 @@ namespace KGySoft.Reflection
 #else
             DynamicMethod dm = new DynamicMethod(getterPrefix + Field.Name, // getter method name
                 Reflector.ObjectType, // return type
-                new[] { Reflector.ObjectType }, declaringType ?? Reflector.ObjectType, true); // instance parameter
+                [Reflector.ObjectType], declaringType ?? Reflector.ObjectType, true); // instance parameter
             ILGenerator il = dm.GetILGenerator();
             bool isValueType = declaringType?.IsValueType == true;
 

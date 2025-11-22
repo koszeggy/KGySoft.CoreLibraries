@@ -51,7 +51,7 @@ namespace KGySoft
 #else
             SystemDebug.WriteLine("Debug failure occurred - " + (message ?? "No message"));
 
-            // preventing the attach dialog come up if already attached it once
+            // preventing the "Attach Dialog" from coming up if already attached it once
             if (!everAttached)
                 everAttached = Debugger.IsAttached;
             if (!everAttached)

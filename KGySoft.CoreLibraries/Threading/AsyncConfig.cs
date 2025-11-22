@@ -18,7 +18,6 @@
 using System;
 #if !NET35
 using System.Threading;
-using System.Threading.Tasks;
 #endif
 
 #endregion
@@ -53,7 +52,7 @@ namespace KGySoft.Threading
         /// <summary>
         /// Initializes a new instance of the <see cref="AsyncConfig"/> class.
         /// </summary>
-        /// <param name="completedCallback">A callback that will be invoked when the operation is completed..</param>
+        /// <param name="completedCallback">A callback that will be invoked when the operation is completed.</param>
         /// <param name="isCancelRequestedCallback">A callback that can return whether cancellation has been requested.</param>
         public AsyncConfig(AsyncCallback? completedCallback, Func<bool>? isCancelRequestedCallback = null)
         {

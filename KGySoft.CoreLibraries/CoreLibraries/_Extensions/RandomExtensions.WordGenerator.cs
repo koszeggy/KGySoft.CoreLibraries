@@ -190,7 +190,7 @@ namespace KGySoft.CoreLibraries
             
             #region Fields
 
-            private static readonly string[] consonantsNotCombined = { "bcdgkpt", "fv", "jy" };
+            private static readonly string[] consonantsNotCombined = ["bcdgkpt", "fv", "jy"];
 
             #endregion
 
@@ -364,7 +364,7 @@ namespace KGySoft.CoreLibraries
                 // Up to remaining length - 1, max 10. 1 char must be left to close the sentence.
                 int wordLength = context.Random.Next(1, Math.Min(context.RemainingSentenceLength, 11));
 
-                // Length - 2 is not good because the will be no more place for another word. 1 or at least 3 must be left.
+                // Length - 2 is not good because there will be no more place for another word. 1 or at least 3 must be left.
                 if (wordLength == context.RemainingSentenceLength - 2)
                     wordLength += wordLength > 5 ? -1 : 1;
 
@@ -910,7 +910,7 @@ namespace KGySoft.CoreLibraries
                 // Up to remaining length - 1, max 10. 1 char must be left to close the sentence.
                 int wordLength = context.Random.Next(1, Math.Min(context.RemainingSentenceLength, 11));
 
-                // Length - 2 is not good because the will be no more place for another word. 1 or at least 3 must be left.
+                // Length - 2 is not good because there will be no more place for another word. 1 or at least 3 must be left.
                 if (wordLength == context.RemainingSentenceLength - 2)
                     wordLength += wordLength > 5 ? -1 : 1;
 

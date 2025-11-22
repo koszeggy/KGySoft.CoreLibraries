@@ -138,7 +138,7 @@ namespace KGySoft.Serialization.Binary
     /// <note type="tip">If the name of the type changed too, you can use the <see cref="CustomSerializationBinder"/> class.</note></description></item>
     /// </list></para>
     /// <note type="caution">Some of the solutions above are more workarounds for situations arose rather than recommended practices.
-    /// If it is known that a type will be deserialized in another environment and it can be completely restored by its public members,
+    /// If it is known that a type will be deserialized in another environment, and it can be completely restored by its public members,
     /// then a text-based serialization (see also <see cref="XmlSerializer"/>) can be a better choice.</note>
     /// </example>
     /// <seealso cref="NameInvariantSurrogateSelector" />
@@ -221,7 +221,7 @@ namespace KGySoft.Serialization.Binary
 
         /// <summary>
         /// Occurs when a field value is about to be set on deserialization.
-        /// You can adjust the associated <see cref="SettingFieldEventArgs.Field"/> and its desired <see cref="SettingFieldEventArgs.Value"/> to be set
+        /// You can adjust the associated <see cref="SettingFieldEventArgs.Field"/> and its desired <see cref="SettingFieldEventArgs.Value"/> to be set,
         /// or you can set the <see cref="HandledEventArgs.Handled"/> property to <see langword="true"/> to prevent setting any field by the default logic.
         /// </summary>
         public event EventHandler<SettingFieldEventArgs>? SettingField
@@ -334,7 +334,7 @@ namespace KGySoft.Serialization.Binary
         [SecurityCritical]
         public ISerializationSurrogate? GetSurrogate(Type type, StreamingContext context, out ISurrogateSelector selector)
         {
-            if (type == null)
+            if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
 
             selector = this;
@@ -462,7 +462,7 @@ namespace KGySoft.Serialization.Binary
                 var e = new SettingFieldEventArgs(obj, context, info, entry)
                 {
                     Value = entry.Value,
-                    Field = fields!.GetValueOrDefault(entry.Name, () => TryGetField(type, entry.Name)!)
+                    Field = fields.GetValueOrDefault(entry.Name, () => TryGetField(type, entry.Name)!)
                 };
 
                 OnSettingField(e);

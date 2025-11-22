@@ -444,7 +444,7 @@ namespace KGySoft.ComponentModel
         /// <para>If the wrapped <paramref name="list"/> implements the <see cref="INotifyCollectionChanged"/> or <see cref="IBindingList"/> interface, then their <see cref="INotifyCollectionChanged.CollectionChanged"/> and
         /// <see cref="IBindingList.ListChanged"/> events will be captured and raised as self <see cref="CollectionChanged"/> and <see cref="ListChanged"/> events.</para>
         /// <note type="tip">In an environment, which supports only the <see cref="IBindingList"/> or <see cref="INotifyCollectionChanged"/> interface but not the other, <see cref="ObservableBindingList{T}"/> can be used as a bridge between the two worlds.
-        /// For example, by passing an <see cref="ObservableCollection{T}"/> to the constructor, it will be able to be accessed as an <see cref="IBindingList"/> implementation, and vice-versa: by wrapping an <see cref="IBindingList"/> instance
+        /// For example, by passing an <see cref="ObservableCollection{T}"/> to the constructor, it will be able to be accessed as an <see cref="IBindingList"/> implementation, and vice versa: by wrapping an <see cref="IBindingList"/> instance
         /// (such as <see cref="FastBindingList{T}"/> or <see cref="SortableBindingList{T}"/>), it can be used as an <see cref="INotifyCollectionChanged"/> implementation by the <see cref="ObservableBindingList{T}"/> class.</note>
         /// </remarks>
         public ObservableBindingList(IList<T> list) : base(list) => Initialize();

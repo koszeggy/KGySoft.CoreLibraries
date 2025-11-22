@@ -44,7 +44,7 @@ namespace KGySoft.ComponentModel
     /// <para>Call the <see cref="RevertLastEdit">RevertLastEdit</see> method to discard the changes since the last <see cref="BeginNewEdit">BeginNewEdit</see> call.</para>
     /// <para>The editing sessions can be nested by calling <see cref="BeginNewEdit">BeginNewEdit</see> method multiple times. The number of the <see cref="BeginNewEdit">BeginNewEdit</see> calls without
     /// a corresponding <see cref="CommitLastEdit">CommitLastEdit</see> or <see cref="RevertLastEdit">RevertLastEdit</see> call is indicated by the <see cref="EditLevel"/> property.</para>
-    /// <para>By calling the <see cref="TryCommitAllEdits">TryCommitAllEdits</see> and <see cref="TryRevertAllEdits">TryRevertAllEdits</see> methods all of the previous <see cref="BeginNewEdit">BeginNewEdit</see>
+    /// <para>By calling the <see cref="TryCommitAllEdits">TryCommitAllEdits</see> and <see cref="TryRevertAllEdits">TryRevertAllEdits</see> methods all the previous <see cref="BeginNewEdit">BeginNewEdit</see>
     /// calls can be applied or discarded, respectively. These methods return a <see cref="bool">bool</see> value indicating whether any action occurred.</para>
     /// <para><note>When it is needed to be determined whether a type has editing capabilities use the <see cref="ICanEdit"/> interface instead the <see cref="EditableObjectBase"/> type
     /// because other editable types, such as the <see cref="ModelBase"/> class are not necessarily derived from the <see cref="EditableObjectBase"/> class.
@@ -55,7 +55,7 @@ namespace KGySoft.ComponentModel
     /// <list type="bullet">
     /// <item>An undoable class (which implements <see cref="ICanUndo"/> or <see cref="ICanUndoRedo"/> interfaces such as <see cref="UndoableObjectBase"/>) is able to undo (or redo) any changes made so far either step-by-step or in a single step.</item>
     /// <item>On the other hand, an editable class (which implements <see cref="ICanEdit"/> such as <see cref="EditableObjectBase"/>) is able to start editing sessions by saving a snapshot of its current state, which states are committable and revertible.</item>
-    /// <item>Undo and editing features are independent from each other and a class is allowed to implement both (like the <see cref="ModelBase"/> class).</item>
+    /// <item>Undo and editing features are independent of each other and a class is allowed to implement both (like the <see cref="ModelBase"/> class).</item>
     /// </list>
     /// </para>
     /// <para><strong><see cref="IEditableObject"/> support</strong>:

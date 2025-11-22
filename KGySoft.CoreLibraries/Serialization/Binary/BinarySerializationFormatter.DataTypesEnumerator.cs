@@ -17,8 +17,6 @@
 
 using System.Collections.Generic;
 
-using KGySoft.Collections;
-
 #endregion
 
 namespace KGySoft.Serialization.Binary
@@ -59,7 +57,7 @@ namespace KGySoft.Serialization.Binary
 
             internal DataTypesEnumerator(DataTypes dataType)
             {
-                dataTypes = new[] { dataType };
+                dataTypes = [dataType];
                 MoveNext();
             }
 

@@ -390,11 +390,10 @@ namespace KGySoft.Serialization.Xml
                 CloseOutput = false,
                 // NewLineHandling = NewLineHandling.Entitize //- entitizes only /r and not /n. Deserialize preserves now not entitized newlines and escaping still can be enabled in options
             };
-            using (XmlWriter xmlWriter = XmlWriter.Create(writer, settings))
-            {
-                Serialize(xmlWriter, obj, options);
-                xmlWriter.Flush();
-            }
+            
+            using XmlWriter xmlWriter = XmlWriter.Create(writer, settings);
+            Serialize(xmlWriter, obj, options);
+            xmlWriter.Flush();
         }
 
         /// <summary>
@@ -422,11 +421,10 @@ namespace KGySoft.Serialization.Xml
                 CloseOutput = false,
                 // NewLineHandling = NewLineHandling.Entitize //- entitizes only /r and not /n. Deserialize preserves now not entitized newlines and escaping still can be enabled in options
             };
-            using (XmlWriter writer = XmlWriter.Create(stream, settings))
-            {
-                Serialize(writer, obj, options);
-                writer.Flush();
-            }
+            
+            using XmlWriter writer = XmlWriter.Create(stream, settings);
+            Serialize(writer, obj, options);
+            writer.Flush();
         }
 
         /// <summary>
@@ -528,8 +526,8 @@ namespace KGySoft.Serialization.Xml
         /// <para>This method works for the results of the <see cref="Serialize(object,XmlSerializationOptions)"/> method.</para>
         /// <para><paramref name="expectedCustomTypes"/> must be specified if <paramref name="content"/> contains names of natively not supported types.</para>
         /// <para><typeparamref name="T"/> is allowed to be an interface or abstract type but if it's different from the actual type of the result,
-        /// then the actual type also might needed to be included in <paramref name="expectedCustomTypes"/>.</para>
-        /// <para>For arrays it is enough to specify the element type and for generic types you can specify the
+        /// then the actual type also might be needed to be included in <paramref name="expectedCustomTypes"/>.</para>
+        /// <para>For arrays, it is enough to specify the element type and for generic types you can specify the
         /// natively not supported generic type definition and generic type arguments separately.
         /// If <paramref name="expectedCustomTypes"/> contains constructed generic types, then the generic type definition and
         /// the type arguments will be treated as expected types in any combination.</para>
@@ -637,8 +635,8 @@ namespace KGySoft.Serialization.Xml
         /// <para>The <paramref name="reader"/> position must be <em>before</em> the content to deserialize.</para>
         /// <para><paramref name="expectedCustomTypes"/> must be specified if the serialization stream contains names of natively not supported types.</para>
         /// <para><typeparamref name="T"/> is allowed to be an interface or abstract type but if it's different from the actual type of the result,
-        /// then the actual type also might needed to be included in <paramref name="expectedCustomTypes"/>.</para>
-        /// <para>For arrays it is enough to specify the element type and for generic types you can specify the
+        /// then the actual type also might be needed to be included in <paramref name="expectedCustomTypes"/>.</para>
+        /// <para>For arrays, it is enough to specify the element type and for generic types you can specify the
         /// natively not supported generic type definition and generic type arguments separately.
         /// If <paramref name="expectedCustomTypes"/> contains constructed generic types, then the generic type definition and
         /// the type arguments will be treated as expected types in any combination.</para>
@@ -834,7 +832,7 @@ namespace KGySoft.Serialization.Xml
                 Throw.ArgumentNullException(Argument.fileName);
 
             // using XmlTextReader instead of XmlReader.Create so we can avoid newlines to be normalized even if they are not entitized
-            using (var xmlReader = new XmlTextReader(fileName)
+            using var xmlReader = new XmlTextReader(fileName)
             {
                 WhitespaceHandling = WhitespaceHandling.Significant,
                 Normalization = false,
@@ -842,10 +840,9 @@ namespace KGySoft.Serialization.Xml
 #if !NET35
                 DtdProcessing = DtdProcessing.Prohibit
 #endif
-            })
-            {
-                return Deserialize(xmlReader);
-            }
+            };
+
+            return Deserialize(xmlReader);
         }
 
         /// <summary>
@@ -938,7 +935,7 @@ namespace KGySoft.Serialization.Xml
                 Throw.ArgumentNullException(Argument.fileName);
 
             // using XmlTextReader instead of XmlReader.Create so we can avoid newlines to be normalized even if they are not entitized
-            using (var xmlReader = new XmlTextReader(fileName)
+            using var xmlReader = new XmlTextReader(fileName)
             {
                 WhitespaceHandling = WhitespaceHandling.Significant,
                 Normalization = false,
@@ -946,10 +943,9 @@ namespace KGySoft.Serialization.Xml
 #if !NET35
                 DtdProcessing = DtdProcessing.Prohibit
 #endif
-            })
-            {
-                return DeserializeSafe<T>(xmlReader, expectedCustomTypes);
-            }
+            };
+
+            return DeserializeSafe<T>(xmlReader, expectedCustomTypes);
         }
 
         /// <summary>
@@ -1134,7 +1130,7 @@ namespace KGySoft.Serialization.Xml
         /// <remarks>
         /// <para>This method works for the results of the <see cref="SerializeContent(XElement,object,XmlSerializationOptions)"/> method.</para>
         /// <para><paramref name="expectedCustomTypes"/> must be specified if <paramref name="content"/> contains names of natively not supported types.</para>
-        /// <para>For arrays it is enough to specify the element type and for generic types you can specify the
+        /// <para>For arrays, it is enough to specify the element type and for generic types you can specify the
         /// natively not supported generic type definition and generic type arguments separately.
         /// If <paramref name="expectedCustomTypes"/> contains constructed generic types, then the generic type definition and
         /// the type arguments will be treated as expected types in any combination.</para>
@@ -1203,7 +1199,7 @@ namespace KGySoft.Serialization.Xml
         /// <remarks>
         /// <para>This method works for the results of the <see cref="SerializeContent(XmlWriter,object,XmlSerializationOptions)"/> method.</para>
         /// <para><paramref name="expectedCustomTypes"/> must be specified if the serialization stream contains names of natively not supported types.</para>
-        /// <para>For arrays it is enough to specify the element type and for generic types you can specify the
+        /// <para>For arrays, it is enough to specify the element type and for generic types you can specify the
         /// natively not supported generic type definition and generic type arguments separately.
         /// If <paramref name="expectedCustomTypes"/> contains constructed generic types, then the generic type definition and
         /// the type arguments will be treated as expected types in any combination.</para>
@@ -1228,7 +1224,7 @@ namespace KGySoft.Serialization.Xml
         /// <remarks>
         /// <para>This method works for the results of the <see cref="SerializeContent(XmlWriter,object,XmlSerializationOptions)"/> method.</para>
         /// <para><paramref name="expectedCustomTypes"/> must be specified if the serialization stream contains names of natively not supported types.</para>
-        /// <para>For arrays it is enough to specify the element type and for generic types you can specify the
+        /// <para>For arrays, it is enough to specify the element type and for generic types you can specify the
         /// natively not supported generic type definition and generic type arguments separately.
         /// If <paramref name="expectedCustomTypes"/> contains constructed generic types, then the generic type definition and
         /// the type arguments will be treated as expected types in any combination.</para>

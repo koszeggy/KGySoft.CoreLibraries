@@ -286,12 +286,9 @@ namespace KGySoft.Security.Cryptography
         /// <returns>
         /// The computed hash code.
         /// </returns>
-        protected override byte[] HashFinal()
-        {
-            return isBigEndian 
-                ? new[] { (byte)(hash >> 24), (byte)(hash >> 16), (byte)(hash >> 8), (byte)hash } 
-                : new[] { (byte)hash, (byte)(hash >> 8), (byte)(hash >> 16), (byte)(hash >> 24) };
-        }
+        protected override byte[] HashFinal() => isBigEndian
+            ? [(byte)(hash >> 24), (byte)(hash >> 16), (byte)(hash >> 8), (byte)hash]
+            : [(byte)hash, (byte)(hash >> 8), (byte)(hash >> 16), (byte)(hash >> 24)];
 
         #endregion
 

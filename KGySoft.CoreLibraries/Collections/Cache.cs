@@ -251,7 +251,7 @@ namespace KGySoft.Collections
     /// <seealso cref="ThreadSafeDictionary{TKey,TValue}"/>
     [Serializable]
     [DebuggerTypeProxy(typeof(DictionaryDebugView<,>))]
-    [DebuggerDisplay("Count = {" + nameof(Count) + "}; TKey = {typeof(" + nameof(TKey) + ").Name}; TValue = {typeof(" + nameof(TValue) + ").Name}; Hit = {" + nameof(Cache<_, _>.GetStatistics) + "()." + nameof(ICacheStatistics.HitRate) + " * 100}%")]
+    [DebuggerDisplay("Count = {" + nameof(Count) + "}; TKey = {typeof(" + nameof(TKey) + ").Name}; TValue = {typeof(" + nameof(TValue) + ").Name}; Hit = {" + nameof(Cache<,>.GetStatistics) + "()." + nameof(ICacheStatistics.HitRate) + " * 100}%")]
     public class Cache<TKey, TValue> : IDictionary<TKey, TValue>, ICache, ISerializable, IDeserializationCallback
 #if !(NET35 || NET40)
         , IReadOnlyDictionary<TKey, TValue>
@@ -1159,7 +1159,7 @@ namespace KGySoft.Collections
         {
             get
             {
-                // For valid keys this means a double cast but we don't want to return null from an InvalidCastException
+                // For valid keys this means a double cast, but we don't want to return null from an InvalidCastException
                 if (!CanAcceptKey(key))
                     return null;
 
@@ -1538,7 +1538,7 @@ namespace KGySoft.Collections
         /// <returns>An <see cref="ICacheStatistics"/> instance that provides statistical information about the <see cref="Cache{TKey,TValue}"/>.</returns>
         /// <remarks>
         /// <para>The returned <see cref="ICacheStatistics"/> instance is a wrapper around the <see cref="Cache{TKey,TValue}"/> and reflects any changes
-        /// happened to the cache immediately. Therefore it is not necessary to call this method again whenever new statistics are required.</para>
+        /// happened to the cache immediately. Therefore, it is not necessary to call this method again whenever new statistics are required.</para>
         /// <para>This method is an O(1) operation.</para>
         /// </remarks>
         public ICacheStatistics GetStatistics() => new CacheStatistics(this);
@@ -1587,7 +1587,7 @@ namespace KGySoft.Collections
         }
 
         /// <summary>
-        /// Tries to gets the value associated with the specified <paramref name="key"/> without using the item loader passed to the <see cref="M:KGySoft.Collections.Cache`2.#ctor(System.Func{`0,`1},System.Int32,System.Collections.Generic.IEqualityComparer{`0})">constructor</see>.
+        /// Tries to get the value associated with the specified <paramref name="key"/> without using the item loader passed to the <see cref="M:KGySoft.Collections.Cache`2.#ctor(System.Func{`0,`1},System.Int32,System.Collections.Generic.IEqualityComparer{`0})">constructor</see>.
         /// </summary>
         /// <returns>
         /// <see langword="true"/>, if cache contains an element with the specified key; otherwise, <see langword="false"/>.
@@ -1678,7 +1678,7 @@ namespace KGySoft.Collections
         /// and the cache will not be accessed by other members but via the returned accessor.
         /// </summary>
         /// <param name="protectItemLoader"><see langword="true"/> to ensure that also the item loader is locked if a new element has to be loaded and
-        /// <see langword="false"/> to allow the item loader to be called concurrently. In latter case the <see cref="Cache{TKey,TValue}"/> is not locked during the time the item loader is being called
+        /// <see langword="false"/> to allow the item loader to be called concurrently. In latter case the <see cref="Cache{TKey,TValue}"/> is not locked during the time the item loader is being called,
         /// but it can happen that values for same key are loaded multiple times and all but one will be discarded. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>An <see cref="IThreadSafeCacheAccessor{TKey,TValue}"/> instance providing a thread-safe readable indexer for this <see cref="Cache{TKey,TValue}"/> instance.</returns>
@@ -2051,7 +2051,7 @@ namespace KGySoft.Collections
 
         object? ICache.GetValueUncached(object key)
         {
-            // For valid keys this means a double cast but we don't want to return null from an InvalidCastException
+            // For valid keys this means a double cast, but we don't want to return null from an InvalidCastException
             if (!CanAcceptKey(key))
                 return null;
 

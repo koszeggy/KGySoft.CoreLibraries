@@ -76,7 +76,7 @@ using KGySoft.Serialization.Xml;
  * ~~~~~~~~~~~~~~~~~~~~~~~
  * When NOT to add:
  * - If contains a delegate
- * - If may contain a pointer or may require unmanaged preallocated memory
+ * - If it may contain a pointer or may require unmanaged preallocated memory
  * When to add with special care and only if really justified
  * - If type is abstract, non-sealed or internal (e.g. object, RuntimeType)
  * - If type has known values but the type in general cannot be supported (e.g. comparer singleton instances vs. general instances)
@@ -90,7 +90,7 @@ using KGySoft.Serialization.Xml;
  * 4. Handle type in DeserializationManager.ReadObject:
  *    - For reference types call TryGetFromCache (or TryGetFromCacheOrAddPlaceholder if ReadXXX also accesses the cache).
  *    - Always set createdResult if addToCache is not handled in ReadXXX (e.g. impure types handle it by themselves).
- *    - If type is value type and it can read nested cached objects the caching condition is different (see StringSegment)
+ *    - If type is value type, and it can read nested cached objects the caching condition is different (see StringSegment)
  * 5. Add type to DataTypeDescriptor.GetElementType.
  *    If type is non-pure and WriteXXX starts with WriteType, then you can put it into the group with ReadType.
  * 6. Add type to unit test:
@@ -104,12 +104,12 @@ using KGySoft.Serialization.Xml;
  * II. Adding a collection type
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  * When NOT to add
- * - If may contain delegate or event subscriptions (e.g. Cache<TKey, TValue>, ObservableCollection<T>)
- * - If may wrap another exposed collection of any type (e.g. Collection<T>, exposed by Items)
- * - If may wrap another collection that is not exposed, though the wrapped collection type may affect the behavior (locking collections, BlockingCollection<T>)
+ * - If it may contain delegate or event subscriptions (e.g. Cache<TKey, TValue>, ObservableCollection<T>)
+ * - If it may wrap another exposed collection of any type (e.g. Collection<T>, exposed by Items)
+ * - If it may wrap another collection that is not exposed, though the wrapped collection type may affect the behavior (locking collections, BlockingCollection<T>)
  * When to add with special care and only if really justified
  * - If type is abstract, non-sealed or internal (e.g. frozen collections)
- * - If may contain a dependency that can be extracted legally (e.g. underlying array/string/manager of Memory<T> can be extracted by MemoryMarshal)
+ * - If it may contain a dependency that can be extracted legally (e.g. underlying array/string/manager of Memory<T> can be extracted by MemoryMarshal)
  * 1. Add type to DataTypes 8..13 bits (adjust free places in comments) or to bits 24..30 (Extended)
  *    - 1..15 << 8: Generic collections
  *    - 16..31 << 8: Non-generic collections or special collections
@@ -152,7 +152,7 @@ namespace KGySoft.Serialization.Binary
     /// <note type="warning">The fundamental goal of binary serialization is to store the bitwise content of an object, hence in general case (when custom types
     /// are involved) it relies on field values, including private ones that can change from version to version. Therefore, binary serialization is recommended
     /// only if your serialized objects purely consist of natively supported types (see them below). If you need to serialize custom types, then it is recommended
-    /// to do it for in-process purposes only, such as deep cloning or undo/redo, etc. If it is known that a type will be deserialized in another environment and
+    /// to do it for in-process purposes only, such as deep cloning or undo/redo, etc. If it is known that a type will be deserialized in another environment, and
     /// it can be completely restored by its public members, then a text-based serialization (see also <see cref="XmlSerializer"/>) can be a better choice.</note>
     /// <note type="security"><para>If the serialization stream may come from an untrusted source (e.g. remote service, file or database) make sure you enable
     /// the <see cref="BinarySerializationOptions.SafeMode"/> option. It prevents loading assemblies during the deserialization, denies resolving unexpected natively not supported types by name,
@@ -361,7 +361,7 @@ namespace KGySoft.Serialization.Binary
     /// <para>There are three ways to serialize/deserialize an object. To serialize into a byte array use the <see cref="Serialize">Serialize</see> method.
     /// Its result can be deserialized by the <see cref="O:KGySoft.Serialization.Binary.BinarySerializationFormatter.Deserialize">Deserialize</see> methods.
     /// Additionally, you can use the <see cref="SerializeToStream">SerializeToStream</see>/<see cref="O:KGySoft.Serialization.Binary.BinarySerializationFormatter.DeserializeFromStream">DeserializeFromStream</see> methods to dump/read the result
-    /// to and from a <see cref="Stream"/>, and the the <see cref="SerializeByWriter">SerializeByWriter</see>/<see cref="O:KGySoft.Serialization.Binary.BinarySerializationFormatter.DeserializeByReader">DeserializeByReader</see>
+    /// to and from a <see cref="Stream"/>, and the <see cref="SerializeByWriter">SerializeByWriter</see>/<see cref="O:KGySoft.Serialization.Binary.BinarySerializationFormatter.DeserializeByReader">DeserializeByReader</see>
     /// methods to use specific <see cref="BinaryWriter"/> and <see cref="BinaryReader"/> instances for serialization and deserialization, respectively.</para>
     /// <note type="warning">In .NET Framework almost every type was serializable by <see cref="BinaryFormatter"/>. In .NET Core this principle has been
     /// radically changed. Many types are just simply not marked by the <see cref="SerializableAttribute"/> anymore (e.g. <see cref="MemoryStream"/>,
@@ -440,7 +440,7 @@ namespace KGySoft.Serialization.Binary
     /// <item>Serializing <see cref="Enum"/> types will end up in a longer result raw data than serializing their numeric value, though the result will be still shorter than the one produced by <see cref="BinaryFormatter"/>.
     /// Please note that when deserializing in safe mode enums must be specified among the expected custom types. It's because though enums themselves are harmless, their type must be resolved just like any other type
     /// so a manipulated serialization stream may contain some altered type identity that could be resolved to a harmful type.</item>
-    /// <item>If a <see cref="KeyValuePair{TKey,TValue}"/> contains natively not supported type arguments or <see cref="DictionaryEntry"/> has natively not supported keys an values,
+    /// <item>If a <see cref="KeyValuePair{TKey,TValue}"/> contains natively not supported type arguments or <see cref="DictionaryEntry"/> has natively not supported keys and values,
     /// then for them recursive serialization may occur. If they contain non-serializable types, then the <see cref="BinarySerializationOptions.RecursiveSerializationAsFallback"/> option should be enabled.
     /// The same applies also for <see cref="Tuple"/> and <see cref="ValueTuple"/> types.</item>
     /// </list>
@@ -1102,14 +1102,14 @@ namespace KGySoft.Serialization.Binary
                 DataTypes.List, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.HasCapacity,
-                    CtorArguments = new[] { CollectionCtorArguments.Capacity }
+                    CtorArguments = [CollectionCtorArguments.Capacity]
                 }
             },
             {
                 DataTypes.LinkedList, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric,
-                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(LinkedList<_>.AddLast), new[] { t.GetGenericArguments()[0] })!),
+                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(LinkedList<>.AddLast), [t.GetGenericArguments()[0]])!),
                 }
             },
             {
@@ -1119,49 +1119,49 @@ namespace KGySoft.Serialization.Binary
 #if NET35 || NET40 || NET45 || NETSTANDARD2_0
                     CtorArguments = new[] { CollectionCtorArguments.Comparer },
 #else
-                    CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer },
+                    CtorArguments = [CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer],
 #endif
-                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(HashSet<_>.Add))!),
+                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(HashSet<>.Add))!),
                 }
             },
             {
                 DataTypes.Queue, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric,
-                    CtorArguments = new[] { CollectionCtorArguments.Capacity },
-                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(Queue<_>.Enqueue))!),
+                    CtorArguments = [CollectionCtorArguments.Capacity],
+                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(Queue<>.Enqueue))!),
                 }
             },
             {
                 DataTypes.Stack, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.ReverseElements,
-                    CtorArguments = new[] { CollectionCtorArguments.Capacity },
-                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(Stack<_>.Push))!),
+                    CtorArguments = [CollectionCtorArguments.Capacity],
+                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(Stack<>.Push))!),
                 }
             },
             {
                 DataTypes.CircularList, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.HasCapacity,
-                    CtorArguments = new[] { CollectionCtorArguments.Capacity }
+                    CtorArguments = [CollectionCtorArguments.Capacity]
                 }
             },
             {
                 DataTypes.ThreadSafeHashSet, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.HasEqualityComparer | CollectionInfo.UsesComparerHelper | CollectionInfo.HasBitwiseAndHash,
-                    CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer, CollectionCtorArguments.HashingStrategy },
-                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(ThreadSafeHashSet<_>.Add))!),
+                    CtorArguments = [CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer, CollectionCtorArguments.HashingStrategy],
+                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(ThreadSafeHashSet<>.Add))!),
                     WriteSpecificPropertiesCallback = (bw, o) =>
                     {
-                        bw.Write((bool)Accessors.GetPropertyValue(o, nameof(ThreadSafeHashSet<_>.PreserveMergedItems))!);
-                        Write7BitLong(bw, (ulong)((TimeSpan)Accessors.GetPropertyValue(o, nameof(ThreadSafeHashSet<_>.MergeInterval))!).Ticks);
+                        bw.Write((bool)Accessors.GetPropertyValue(o, nameof(ThreadSafeHashSet<>.PreserveMergedItems))!);
+                        Write7BitLong(bw, (ulong)((TimeSpan)Accessors.GetPropertyValue(o, nameof(ThreadSafeHashSet<>.MergeInterval))!).Ticks);
                     },
                     RestoreSpecificPropertiesCallback = (br, o) =>
                     {
-                        Accessors.SetPropertyValue(o, nameof(ThreadSafeHashSet<_>.PreserveMergedItems), br.ReadBoolean());
-                        Accessors.SetPropertyValue(o, nameof(ThreadSafeHashSet<_>.MergeInterval), TimeSpan.FromTicks(Read7BitLong(br)));
+                        Accessors.SetPropertyValue(o, nameof(ThreadSafeHashSet<>.PreserveMergedItems), br.ReadBoolean());
+                        Accessors.SetPropertyValue(o, nameof(ThreadSafeHashSet<>.MergeInterval), TimeSpan.FromTicks(Read7BitLong(br)));
                     }
                 }
             },
@@ -1170,29 +1170,29 @@ namespace KGySoft.Serialization.Binary
                 DataTypes.SortedSet, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.HasComparer,
-                    CtorArguments = new[] { CollectionCtorArguments.Comparer },
-                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(SortedSet<_>.Add))!),
+                    CtorArguments = [CollectionCtorArguments.Comparer],
+                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(SortedSet<>.Add))!),
                 }
             },
             {
                 DataTypes.ConcurrentBag, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric,
-                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(ConcurrentBag<_>.Add))!),
+                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(ConcurrentBag<>.Add))!),
                 }
             },
             {
                 DataTypes.ConcurrentQueue, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric,
-                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(ConcurrentQueue<_>.Enqueue))!),
+                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(ConcurrentQueue<>.Enqueue))!),
                 }
             },
             {
                 DataTypes.ConcurrentStack, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.ReverseElements,
-                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(ConcurrentStack<_>.Push))!),
+                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(ConcurrentStack<>.Push))!),
                 }
             },
 #endif
@@ -1201,7 +1201,7 @@ namespace KGySoft.Serialization.Binary
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsComparer,
                     ReferenceAbstractGenericType = typeof(EqualityComparer<>),
-                    CreateInstanceCallback = (t, _) => t.GetPropertyValue(nameof(EqualityComparer<_>.Default))!
+                    CreateInstanceCallback = (t, _) => t.GetPropertyValue(nameof(EqualityComparer<>.Default))!
                 }
             },
             {
@@ -1209,7 +1209,7 @@ namespace KGySoft.Serialization.Binary
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsComparer,
                     ReferenceAbstractGenericType = typeof(Comparer<>),
-                    CreateInstanceCallback = (t, _) => t.GetPropertyValue(nameof(Comparer<_>.Default))!
+                    CreateInstanceCallback = (t, _) => t.GetPropertyValue(nameof(Comparer<>.Default))!
                 }
             },
             {
@@ -1217,7 +1217,7 @@ namespace KGySoft.Serialization.Binary
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsComparer,
                     ReferenceAbstractGenericType = typeof(EnumComparer<>),
-                    CreateInstanceCallback = (t, _) => t.GetPropertyValue(nameof(EnumComparer<_>.Comparer))!
+                    CreateInstanceCallback = (t, _) => t.GetPropertyValue(nameof(EnumComparer<>.Comparer))!
                 }
             },
 
@@ -1229,14 +1229,14 @@ namespace KGySoft.Serialization.Binary
                 DataTypes.ArrayList, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.HasCapacity,
-                    CtorArguments = new[] { CollectionCtorArguments.Capacity }
+                    CtorArguments = [CollectionCtorArguments.Capacity]
                 }
             },
             {
                 DataTypes.QueueNonGeneric, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.None,
-                    CtorArguments = new[] { CollectionCtorArguments.Capacity },
+                    CtorArguments = [CollectionCtorArguments.Capacity],
                     GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(Queue.Enqueue))!),
                 }
             },
@@ -1244,7 +1244,7 @@ namespace KGySoft.Serialization.Binary
                 DataTypes.StackNonGeneric, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.ReverseElements,
-                    CtorArguments = new[] { CollectionCtorArguments.Capacity },
+                    CtorArguments = [CollectionCtorArguments.Capacity],
                     GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(Stack.Push))!),
                 }
             },
@@ -1269,21 +1269,21 @@ namespace KGySoft.Serialization.Binary
                 DataTypes.Dictionary, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer, // NOTE: HasCapacity could be added in .NET 9+ but that would break compatibility
-                    CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer }
+                    CtorArguments = [CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer]
                 }
             },
             {
                 DataTypes.SortedList, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.HasCapacity | CollectionInfo.IsDictionary | CollectionInfo.HasComparer,
-                    CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer }
+                    CtorArguments = [CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer]
                 }
             },
             {
                 DataTypes.SortedDictionary, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasComparer,
-                    CtorArguments = new[] { CollectionCtorArguments.Comparer }
+                    CtorArguments = [CollectionCtorArguments.Comparer]
                 }
             },
             { DataTypes.KeyValuePair, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.IsSingleElement } },
@@ -1292,7 +1292,7 @@ namespace KGySoft.Serialization.Binary
                 DataTypes.CircularSortedList, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasCapacity | CollectionInfo.HasComparer | CollectionInfo.UsesComparerHelper,
-                    CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer }
+                    CtorArguments = [CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer]
                 }
             },
 #if !NET35
@@ -1304,7 +1304,7 @@ namespace KGySoft.Serialization.Binary
                         | CollectionInfo.NonNullDefaultComparer
 #endif
                     ,
-                    CtorArguments = new[] { CollectionCtorArguments.Comparer }
+                    CtorArguments = [CollectionCtorArguments.Comparer]
                 }
             },
 #endif
@@ -1312,16 +1312,16 @@ namespace KGySoft.Serialization.Binary
                 DataTypes.ThreadSafeDictionary, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer | CollectionInfo.UsesComparerHelper | CollectionInfo.HasBitwiseAndHash,
-                    CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer, CollectionCtorArguments.HashingStrategy },
+                    CtorArguments = [CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer, CollectionCtorArguments.HashingStrategy],
                     WriteSpecificPropertiesCallback = (bw, o) =>
                     {
-                        bw.Write((bool)Accessors.GetPropertyValue(o, nameof(ThreadSafeDictionary<_,_>.PreserveMergedKeys))!);
-                        Write7BitLong(bw, (ulong)((TimeSpan)Accessors.GetPropertyValue(o, nameof(ThreadSafeDictionary<_,_>.MergeInterval))!).Ticks);
+                        bw.Write((bool)Accessors.GetPropertyValue(o, nameof(ThreadSafeDictionary<,>.PreserveMergedKeys))!);
+                        Write7BitLong(bw, (ulong)((TimeSpan)Accessors.GetPropertyValue(o, nameof(ThreadSafeDictionary<,>.MergeInterval))!).Ticks);
                     },
                     RestoreSpecificPropertiesCallback = (br, o) =>
                     {
-                        Accessors.SetPropertyValue(o, nameof(ThreadSafeDictionary<_,_>.PreserveMergedKeys), br.ReadBoolean());
-                        Accessors.SetPropertyValue(o, nameof(ThreadSafeDictionary<_,_>.MergeInterval), TimeSpan.FromTicks(Read7BitLong(br)));
+                        Accessors.SetPropertyValue(o, nameof(ThreadSafeDictionary<,>.PreserveMergedKeys), br.ReadBoolean());
+                        Accessors.SetPropertyValue(o, nameof(ThreadSafeDictionary<,>.MergeInterval), TimeSpan.FromTicks(Read7BitLong(br)));
                     }
                 }
             },
@@ -1337,8 +1337,8 @@ namespace KGySoft.Serialization.Binary
                 DataTypes.OrderedDictionaryGeneric, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.IsOrdered | CollectionInfo.HasEqualityComparer | CollectionInfo.HasCapacity,
-                    CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer },
-                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(OrderedDictionary<_,_>.Insert))!),
+                    CtorArguments = [CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer],
+                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(OrderedDictionary<,>.Insert))!),
                 }
             },
 #endif
@@ -1351,35 +1351,35 @@ namespace KGySoft.Serialization.Binary
                 DataTypes.Hashtable, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer,
-                    CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer }
+                    CtorArguments = [CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer]
                 }
             },
             {
                 DataTypes.SortedListNonGeneric, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.HasCapacity | CollectionInfo.IsDictionary | CollectionInfo.HasComparer,
-                    CtorArguments = new[] { CollectionCtorArguments.Comparer, CollectionCtorArguments.Capacity }
+                    CtorArguments = [CollectionCtorArguments.Comparer, CollectionCtorArguments.Capacity]
                 }
             },
             {
                 DataTypes.ListDictionary, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsDictionary | CollectionInfo.HasComparer, // yes, it uses Comparer and not EqualityComparer
-                    CtorArguments = new[] { CollectionCtorArguments.Comparer }
+                    CtorArguments = [CollectionCtorArguments.Comparer]
                 }
             },
             {
                 DataTypes.HybridDictionary, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsDictionary | CollectionInfo.HasCaseInsensitivity,
-                    CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.CaseInsensitivity }
+                    CtorArguments = [CollectionCtorArguments.Capacity, CollectionCtorArguments.CaseInsensitivity]
                 }
             },
             {
                 DataTypes.OrderedDictionary, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsDictionary | CollectionInfo.IsOrdered | CollectionInfo.HasEqualityComparer | CollectionInfo.HasReadOnly,
-                    CtorArguments = new[] { CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer }
+                    CtorArguments = [CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer]
                 }
             },
             {
@@ -1393,7 +1393,7 @@ namespace KGySoft.Serialization.Binary
                 DataTypes.StringKeyedDictionary, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasStringSegmentComparer | CollectionInfo.HasStringItemsOrKeys,
-                    CtorArguments = new [] { CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer  }
+                    CtorArguments = [CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer]
                 }
             },
             { DataTypes.DictionaryEntry, new CollectionSerializationInfo { Info = CollectionInfo.IsDictionary | CollectionInfo.IsSingleElement } },
@@ -1417,15 +1417,15 @@ namespace KGySoft.Serialization.Binary
                 DataTypes.ArraySegment, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsBackingArrayActuallyStored,
-                    GetBackingArray = o => (Array?)Accessors.GetPropertyValue(o, nameof(ArraySegment<_>.Array)),
+                    GetBackingArray = o => (Array?)Accessors.GetPropertyValue(o, nameof(ArraySegment<>.Array)),
                     WriteSpecificPropertiesCallback = (bw, o) =>
                     {
-                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(ArraySegment<_>.Offset))!);
-                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(ArraySegment<_>.Count))!);
+                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(ArraySegment<>.Offset))!);
+                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(ArraySegment<>.Count))!);
                     },
                     CreateArrayBackedCollectionInstanceFromArray = (br, t, a) =>
                     {
-                        Type[] args = { a.GetType(), Reflector.IntType, Reflector.IntType };
+                        Type[] args = [a.GetType(), Reflector.IntType, Reflector.IntType];
                         ConstructorInfo ctor = t.GetConstructor(args)!;
                         return CreateInstanceAccessor.GetAccessor(ctor).CreateInstance(a, Read7BitInt(br), Read7BitInt(br));
                     }
@@ -1435,32 +1435,32 @@ namespace KGySoft.Serialization.Binary
                 DataTypes.ArraySection, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsBackingArrayActuallyStored,
-                    GetBackingArray = o => (Array?)Accessors.GetPropertyValue(o, nameof(ArraySection<_>.UnderlyingArray)),
+                    GetBackingArray = o => (Array?)Accessors.GetPropertyValue(o, nameof(ArraySection<>.UnderlyingArray)),
                     WriteSpecificPropertiesCallback = (bw, o) =>
                     {
-                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(ArraySection<_>.Offset))!);
-                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(ArraySection<_>.Length))!);
+                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(ArraySection<>.Offset))!);
+                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(ArraySection<>.Length))!);
                     },
                     CreateArrayBackedCollectionInstanceFromArray = (br, t, a)
-                        => t.CreateInstance(new[] { a.GetType(), Reflector.IntType, Reflector.IntType }, a, Read7BitInt(br), Read7BitInt(br)),
+                        => t.CreateInstance([a.GetType(), Reflector.IntType, Reflector.IntType], a, Read7BitInt(br), Read7BitInt(br)),
                 }
             },
             {
                 DataTypes.Array2D, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsBackingArrayActuallyStored,
-                    GetBackingArray = o => (Array?)Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(Array2D<_>.Buffer))!, nameof(ArraySection<_>.UnderlyingArray)),
+                    GetBackingArray = o => (Array?)Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(Array2D<>.Buffer))!, nameof(ArraySection<>.UnderlyingArray)),
                     WriteSpecificPropertiesCallback = (bw, o) =>
                     {
-                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(Array2D<_>.Buffer))!, nameof(ArraySection<_>.Offset))!);
-                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(Array2D<_>.Height))!);
-                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(Array2D<_>.Width))!);
+                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(Array2D<>.Buffer))!, nameof(ArraySection<>.Offset))!);
+                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(Array2D<>.Height))!);
+                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(Array2D<>.Width))!);
                     },
                     CreateArrayBackedCollectionInstanceFromArray = (br, t, a) =>
                     {
                         Type bufferType = typeof(ArraySection<>).GetGenericType(t.GetGenericArguments()[0]);
                         var buffer = bufferType.CreateInstance(a, Read7BitInt(br));
-                        return t.CreateInstance(new[] { bufferType, Reflector.IntType, Reflector.IntType }, buffer, Read7BitInt(br), Read7BitInt(br));
+                        return t.CreateInstance([bufferType, Reflector.IntType, Reflector.IntType], buffer, Read7BitInt(br), Read7BitInt(br));
                     }
                 }
             },
@@ -1468,19 +1468,19 @@ namespace KGySoft.Serialization.Binary
                 DataTypes.Array3D, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsBackingArrayActuallyStored,
-                    GetBackingArray = o => (Array?)Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(Array3D<_>.Buffer))!, nameof(ArraySection<_>.UnderlyingArray)),
+                    GetBackingArray = o => (Array?)Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(Array3D<>.Buffer))!, nameof(ArraySection<>.UnderlyingArray)),
                     WriteSpecificPropertiesCallback = (bw, o) =>
                     {
-                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(Array3D<_>.Buffer))!, nameof(ArraySection<_>.Offset))!);
-                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(Array3D<_>.Depth))!);
-                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(Array3D<_>.Height))!);
-                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(Array3D<_>.Width))!);
+                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(Array3D<>.Buffer))!, nameof(ArraySection<>.Offset))!);
+                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(Array3D<>.Depth))!);
+                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(Array3D<>.Height))!);
+                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(Array3D<>.Width))!);
                     },
                     CreateArrayBackedCollectionInstanceFromArray = (br, t, a) =>
                     {
                         Type bufferType = typeof(ArraySection<>).GetGenericType(t.GetGenericArguments()[0]);
                         var buffer = bufferType.CreateInstance(a, Read7BitInt(br));
-                        return t.CreateInstance(new[] { bufferType, Reflector.IntType, Reflector.IntType, Reflector.IntType }, buffer, Read7BitInt(br), Read7BitInt(br), Read7BitInt(br));
+                        return t.CreateInstance([bufferType, Reflector.IntType, Reflector.IntType, Reflector.IntType], buffer, Read7BitInt(br), Read7BitInt(br), Read7BitInt(br));
                     }
                 }
             },
@@ -1501,7 +1501,7 @@ namespace KGySoft.Serialization.Binary
                 DataTypes.ImmutableArray, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsBackingArrayActuallyStored,
-                    GetBackingArray = o => (bool)Accessors.GetPropertyValue(o, nameof(ImmutableArray<_>.IsDefault))! ? null : (Array)typeof(Enumerable).InvokeMethod(nameof(Enumerable.ToArray), o.GetType().GetGenericArguments()[0], o)!,
+                    GetBackingArray = o => (bool)Accessors.GetPropertyValue(o, nameof(ImmutableArray<>.IsDefault))! ? null : (Array)typeof(Enumerable).InvokeMethod(nameof(Enumerable.ToArray), o.GetType().GetGenericArguments()[0], o)!,
                     CreateArrayBackedCollectionInstanceFromArray = (_, t, a) => t.CreateInstance(a),
                 }
             },
@@ -1509,10 +1509,10 @@ namespace KGySoft.Serialization.Binary
                 DataTypes.ImmutableArrayBuilder, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.HasCapacity,
-                    CtorArguments = new[] { CollectionCtorArguments.Capacity },
+                    CtorArguments = [CollectionCtorArguments.Capacity],
                     CreateInstanceCallback = (t, args)
                         => typeof(ImmutableArray).InvokeMethod(nameof(ImmutableArray.CreateBuilder), t.GetGenericArguments()[0], Reflector.IntType, args)!,
-                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(ImmutableArray<_>.Builder.Add))!),
+                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(ImmutableArray<>.Builder.Add))!),
                 }
             },
             {
@@ -1521,7 +1521,7 @@ namespace KGySoft.Serialization.Binary
                     Info = CollectionInfo.IsGeneric,
                     CreateInstanceCallback = (t, _)
                         => typeof(ImmutableList).InvokeMethod(nameof(ImmutableList.CreateBuilder), t.GetGenericArguments()[0])!,
-                    CreateFinalCollectionCallback = o => Accessors.InvokeMethod(o, nameof(ImmutableList<_>.Builder.ToImmutable))!,
+                    CreateFinalCollectionCallback = o => Accessors.InvokeMethod(o, nameof(ImmutableList<>.Builder.ToImmutable))!,
                 }
             },
             {
@@ -1536,58 +1536,58 @@ namespace KGySoft.Serialization.Binary
                 DataTypes.ImmutableHashSet, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.HasEqualityComparer,
-                    CtorArguments = new[] { CollectionCtorArguments.Comparer },
+                    CtorArguments = [CollectionCtorArguments.Comparer],
                     CreateInstanceCallback = (t, args) =>
                     {
                         Type genericArg = t.GetGenericArguments()[0];
                         return typeof(ImmutableHashSet).InvokeMethod(nameof(ImmutableHashSet.CreateBuilder), genericArg, typeof(IEqualityComparer<>).GetGenericType(genericArg), args)!;
                     },
-                    CreateFinalCollectionCallback = o => Accessors.InvokeMethod(o, nameof(ImmutableHashSet<_>.Builder.ToImmutable))!,
-                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(ImmutableHashSet<_>.Builder.Add))!),
+                    CreateFinalCollectionCallback = o => Accessors.InvokeMethod(o, nameof(ImmutableHashSet<>.Builder.ToImmutable))!,
+                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(ImmutableHashSet<>.Builder.Add))!),
                 }
             },
             {
                 DataTypes.ImmutableHashSetBuilder, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.HasEqualityComparer,
-                    CtorArguments = new[] { CollectionCtorArguments.Comparer },
+                    CtorArguments = [CollectionCtorArguments.Comparer],
                     CreateInstanceCallback = (t, args) =>
                     {
                         Type genericArg = t.GetGenericArguments()[0];
                         return typeof(ImmutableHashSet).InvokeMethod(nameof(ImmutableHashSet.CreateBuilder), genericArg, typeof(IEqualityComparer<>).GetGenericType(genericArg), args)!;
                     },
-                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(ImmutableHashSet<_>.Builder.Add))!),
+                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(ImmutableHashSet<>.Builder.Add))!),
                 }
             },
             {
                 DataTypes.ImmutableSortedSet, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.HasComparer,
-                    CtorArguments = new[] { CollectionCtorArguments.Comparer },
+                    CtorArguments = [CollectionCtorArguments.Comparer],
                     CreateInstanceCallback = (t, args) =>
                     {
                         Type genericArg = t.GetGenericArguments()[0];
                         return typeof(ImmutableSortedSet).InvokeMethod(nameof(ImmutableSortedSet.CreateBuilder), genericArg, typeof(IComparer<>).GetGenericType(genericArg), args)!;
                     },
-                    CreateFinalCollectionCallback = o => Accessors.InvokeMethod(o, nameof(ImmutableSortedSet<_>.Builder.ToImmutable))!,
-                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(ImmutableSortedSet<_>.Builder.Add))!),
+                    CreateFinalCollectionCallback = o => Accessors.InvokeMethod(o, nameof(ImmutableSortedSet<>.Builder.ToImmutable))!,
+                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(ImmutableSortedSet<>.Builder.Add))!),
                 }
             },
             {
                 DataTypes.ImmutableSortedSetBuilder, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.HasComparer,
-                    CtorArguments = new[] { CollectionCtorArguments.Comparer },
+                    CtorArguments = [CollectionCtorArguments.Comparer],
                     CreateInstanceCallback = (t, args) =>
                     {
                         Type genericArg = t.GetGenericArguments()[0];
                         return typeof(ImmutableSortedSet).InvokeMethod(nameof(ImmutableSortedSet.CreateBuilder), genericArg, typeof(IComparer<>).GetGenericType(genericArg), args)!;
                     },
-                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(ImmutableSortedSet<_>.Builder.Add))!),
+                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(ImmutableSortedSet<>.Builder.Add))!),
                 }
             },
             {
-                // Trick: Serializing as array (because ImmutableQueue has no Count and we want to avoid double enumeration of the queue)
+                // Trick: Serializing as array (because ImmutableQueue has no Count, and we want to avoid double enumeration of the queue)
                 //        but deserializing from List (because CreateArrayBackedCollectionInstanceFromArray would allow resolving circular references
                 //        to the backing array itself, which should not be allowed as ImmutableQueue does not actually wrap the array)
                 DataTypes.ImmutableQueue, new CollectionSerializationInfo
@@ -1598,7 +1598,7 @@ namespace KGySoft.Serialization.Binary
                         Type genericArg = o.GetType().GetGenericArguments()[0];
                         return (Array)typeof(Enumerable).InvokeMethod(nameof(Enumerable.ToArray), genericArg, Reflector.IEnumerableGenType.GetGenericType(genericArg), o)!;
                     },
-                    CtorArguments = new[] { CollectionCtorArguments.Capacity },
+                    CtorArguments = [CollectionCtorArguments.Capacity],
                     CreateInstanceCallback = (t, args) => Reflector.ListGenType.GetGenericType(t.GetGenericArguments()[0]).CreateInstance(args!),
                     CreateFinalCollectionCallback = o =>
                     {
@@ -1608,7 +1608,7 @@ namespace KGySoft.Serialization.Binary
                 }
             },
             {
-                // Trick: Serializing as array (because ImmutableStack has no Count and we want to avoid double enumeration of the stack)
+                // Trick: Serializing as array (because ImmutableStack has no Count, and we want to avoid double enumeration of the stack)
                 //        but deserializing from List after reserving elements (because CreateArrayBackedCollectionInstanceFromArray would allow resolving circular references
                 //        to the backing array itself, which should not be allowed as ImmutableStack does not actually wrap the array)
                 DataTypes.ImmutableStack, new CollectionSerializationInfo
@@ -1619,11 +1619,11 @@ namespace KGySoft.Serialization.Binary
                         Type genericArg = o.GetType().GetGenericArguments()[0];
                         return (Array)typeof(Enumerable).InvokeMethod(nameof(Enumerable.ToArray), genericArg, Reflector.IEnumerableGenType.GetGenericType(genericArg), o)!;
                     },
-                    CtorArguments = new[] { CollectionCtorArguments.Capacity },
+                    CtorArguments = [CollectionCtorArguments.Capacity],
                     CreateInstanceCallback = (t, args) => Reflector.ListGenType.GetGenericType(t.GetGenericArguments()[0]).CreateInstance(args!),
                     CreateFinalCollectionCallback = o =>
                     {
-                        Accessors.InvokeMethod(o, nameof(List<_>.Reverse), Type.EmptyTypes);
+                        Accessors.InvokeMethod(o, nameof(List<>.Reverse), Type.EmptyTypes);
                         Type genericArg = o.GetType().GetGenericArguments()[0];
                         return typeof(ImmutableStack).InvokeMethod(nameof(ImmutableStack.CreateRange), genericArg, Reflector.IEnumerableGenType.GetGenericType(genericArg), o)!;
                     },
@@ -1641,7 +1641,7 @@ namespace KGySoft.Serialization.Binary
 #else
                     CtorArguments = [CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer],
 #endif
-                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(HashSet<_>.Add))!),
+                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(HashSet<>.Add))!),
                     CreateInstanceCallback = (t, args) =>
                     {
                         // Using a HashSet<T> as a builder with the actual comparer
@@ -1649,7 +1649,7 @@ namespace KGySoft.Serialization.Binary
 #if NET35 || NET40 || NET45 || NETSTANDARD2_0
                         return typeof(HashSet<>).GetGenericType(genericArg).CreateInstance(new[] { typeof(IEqualityComparer<>).GetGenericType(genericArg) }, args);
 #else
-                        return typeof(HashSet<>).GetGenericType(genericArg).CreateInstance(new[] { Reflector.IntType, typeof(IEqualityComparer<>).GetGenericType(genericArg) }, args);
+                        return typeof(HashSet<>).GetGenericType(genericArg).CreateInstance([Reflector.IntType, typeof(IEqualityComparer<>).GetGenericType(genericArg)], args);
 #endif
                     },
                     CreateFinalCollectionCallback = o =>
@@ -1667,12 +1667,12 @@ namespace KGySoft.Serialization.Binary
                 DataTypes.CastArray, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsBackingArrayActuallyStored,
-                    GetBackingArray = o => (Array?)Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(CastArray<_,_>.Buffer))!, nameof(ArraySection<_>.UnderlyingArray)),
+                    GetBackingArray = o => (Array?)Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(CastArray<,>.Buffer))!, nameof(ArraySection<>.UnderlyingArray)),
                     WriteSpecificPropertiesCallback = (bw, o) =>
                     {
-                        var buffer = Accessors.GetPropertyValue(o, nameof(CastArray<_,_>.Buffer))!;
-                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(buffer, nameof(ArraySection<_>.Offset))!);
-                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(buffer, nameof(ArraySection<_>.Length))!);
+                        var buffer = Accessors.GetPropertyValue(o, nameof(CastArray<,>.Buffer))!;
+                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(buffer, nameof(ArraySection<>.Offset))!);
+                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(buffer, nameof(ArraySection<>.Length))!);
                     },
                     CreateArrayBackedCollectionInstanceFromArray = (br, t, a) =>
                     {
@@ -1686,12 +1686,12 @@ namespace KGySoft.Serialization.Binary
                 DataTypes.CastArray2D, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsBackingArrayActuallyStored,
-                    GetBackingArray = o => (Array?)Accessors.GetPropertyValue(Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(CastArray2D<_,_>.Buffer))!, nameof(CastArray<_,_>.Buffer))!, nameof(ArraySection<_>.UnderlyingArray)),
+                    GetBackingArray = o => (Array?)Accessors.GetPropertyValue(Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(CastArray2D<,>.Buffer))!, nameof(CastArray<,>.Buffer))!, nameof(ArraySection<>.UnderlyingArray)),
                     WriteSpecificPropertiesCallback = (bw, o) =>
                     {
-                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(CastArray2D<_,_>.Buffer))!, nameof(CastArray<_,_>.Buffer))!, nameof(ArraySection<_>.Offset))!);
-                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(CastArray2D<_,_>.Height))!);
-                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(CastArray2D<_,_>.Width))!);
+                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(CastArray2D<,>.Buffer))!, nameof(CastArray<,>.Buffer))!, nameof(ArraySection<>.Offset))!);
+                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(CastArray2D<,>.Height))!);
+                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(CastArray2D<,>.Width))!);
                     },
                     CreateArrayBackedCollectionInstanceFromArray = (br, t, a) =>
                     {
@@ -1705,13 +1705,13 @@ namespace KGySoft.Serialization.Binary
                 DataTypes.CastArray3D, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsBackingArrayActuallyStored,
-                    GetBackingArray = o => (Array?)Accessors.GetPropertyValue(Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(CastArray3D<_,_>.Buffer))!, nameof(CastArray<_,_>.Buffer))!, nameof(ArraySection<_>.UnderlyingArray)),
+                    GetBackingArray = o => (Array?)Accessors.GetPropertyValue(Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(CastArray3D<,>.Buffer))!, nameof(CastArray<,>.Buffer))!, nameof(ArraySection<>.UnderlyingArray)),
                     WriteSpecificPropertiesCallback = (bw, o) =>
                     {
-                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(CastArray3D<_,_>.Buffer))!, nameof(CastArray<_,_>.Buffer))!, nameof(ArraySection<_>.Offset))!);
-                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(CastArray3D<_,_>.Depth))!);
-                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(CastArray3D<_,_>.Height))!);
-                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(CastArray3D<_,_>.Width))!);
+                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(CastArray3D<,>.Buffer))!, nameof(CastArray<,>.Buffer))!, nameof(ArraySection<>.Offset))!);
+                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(CastArray3D<,>.Depth))!);
+                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(CastArray3D<,>.Height))!);
+                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(CastArray3D<,>.Width))!);
                     },
                     CreateArrayBackedCollectionInstanceFromArray = (br, t, a) =>
                     {
@@ -1735,26 +1735,26 @@ namespace KGySoft.Serialization.Binary
                 DataTypes.ImmutableDictionary, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer | CollectionInfo.HasValueComparer,
-                    CtorArguments = new[] { CollectionCtorArguments.Comparer, CollectionCtorArguments.ValueComparer },
+                    CtorArguments = [CollectionCtorArguments.Comparer, CollectionCtorArguments.ValueComparer],
                     CreateInstanceCallback = (t, args) =>
                     {
                         Type[] genericArgs = t.GetGenericArguments();
                         return typeof(ImmutableDictionary).InvokeMethod(nameof(ImmutableDictionary.CreateBuilder), genericArgs,
-                            new[] { typeof(IEqualityComparer<>).GetGenericType(genericArgs[0]), typeof(IEqualityComparer<>).GetGenericType(genericArgs[1]) }, args)!;
+                            [typeof(IEqualityComparer<>).GetGenericType(genericArgs[0]), typeof(IEqualityComparer<>).GetGenericType(genericArgs[1])], args)!;
                     },
-                    CreateFinalCollectionCallback = o => Accessors.InvokeMethod(o, nameof(ImmutableDictionary<_,_>.Builder.ToImmutable))!,
+                    CreateFinalCollectionCallback = o => Accessors.InvokeMethod(o, nameof(ImmutableDictionary<,>.Builder.ToImmutable))!,
                 }
             },
             {
                 DataTypes.ImmutableDictionaryBuilder, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer | CollectionInfo.HasValueComparer,
-                    CtorArguments = new[] { CollectionCtorArguments.Comparer, CollectionCtorArguments.ValueComparer },
+                    CtorArguments = [CollectionCtorArguments.Comparer, CollectionCtorArguments.ValueComparer],
                     CreateInstanceCallback = (t, args) =>
                     {
                         Type[] genericArgs = t.GetGenericArguments();
                         return typeof(ImmutableDictionary).InvokeMethod(nameof(ImmutableDictionary.CreateBuilder), genericArgs,
-                            new[] { typeof(IEqualityComparer<>).GetGenericType(genericArgs[0]), typeof(IEqualityComparer<>).GetGenericType(genericArgs[1]) }, args)!;
+                            [typeof(IEqualityComparer<>).GetGenericType(genericArgs[0]), typeof(IEqualityComparer<>).GetGenericType(genericArgs[1])], args)!;
                     },
                 }
             },
@@ -1762,26 +1762,26 @@ namespace KGySoft.Serialization.Binary
                 DataTypes.ImmutableSortedDictionary, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasComparer | CollectionInfo.HasValueComparer,
-                    CtorArguments = new[] { CollectionCtorArguments.Comparer, CollectionCtorArguments.ValueComparer },
+                    CtorArguments = [CollectionCtorArguments.Comparer, CollectionCtorArguments.ValueComparer],
                     CreateInstanceCallback = (t, args) =>
                     {
                         Type[] genericArgs = t.GetGenericArguments();
                         return typeof(ImmutableSortedDictionary).InvokeMethod(nameof(ImmutableSortedDictionary.CreateBuilder), genericArgs,
-                            new[] { typeof(IComparer<>).GetGenericType(genericArgs[0]), typeof(IEqualityComparer<>).GetGenericType(genericArgs[1]) }, args)!;
+                            [typeof(IComparer<>).GetGenericType(genericArgs[0]), typeof(IEqualityComparer<>).GetGenericType(genericArgs[1])], args)!;
                     },
-                    CreateFinalCollectionCallback = o => Accessors.InvokeMethod(o, nameof(ImmutableSortedDictionary<_,_>.Builder.ToImmutable))!,
+                    CreateFinalCollectionCallback = o => Accessors.InvokeMethod(o, nameof(ImmutableSortedDictionary<,>.Builder.ToImmutable))!,
                 }
             },
             {
                 DataTypes.ImmutableSortedDictionaryBuilder, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasComparer | CollectionInfo.HasValueComparer,
-                    CtorArguments = new[] { CollectionCtorArguments.Comparer, CollectionCtorArguments.ValueComparer },
+                    CtorArguments = [CollectionCtorArguments.Comparer, CollectionCtorArguments.ValueComparer],
                     CreateInstanceCallback = (t, args) =>
                     {
                         Type[] genericArgs = t.GetGenericArguments();
                         return typeof(ImmutableSortedDictionary).InvokeMethod(nameof(ImmutableSortedDictionary.CreateBuilder), genericArgs,
-                            new[] { typeof(IComparer<>).GetGenericType(genericArgs[0]), typeof(IEqualityComparer<>).GetGenericType(genericArgs[1]) }, args)!;
+                            [typeof(IComparer<>).GetGenericType(genericArgs[0]), typeof(IEqualityComparer<>).GetGenericType(genericArgs[1])], args)!;
                     },
                 }
             },
@@ -2426,14 +2426,14 @@ namespace KGySoft.Serialization.Binary
         /// and <paramref name="rawData"/> contains types encoded by their names. Natively supported types are not needed to be included
         /// unless the original object was serialized with the <see cref="BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes"/> option enabled.</para>
         /// <para><typeparamref name="T"/> is allowed to be an interface or abstract type but if it's different from the actual type of the result,
-        /// then the actual type also might needed to be included in <paramref name="expectedCustomTypes"/>.</para>
+        /// then the actual type also might be needed to be included in <paramref name="expectedCustomTypes"/>.</para>
         /// <para>You can specify <paramref name="expectedCustomTypes"/> even if <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <see cref="Options"/>
         /// as it may improve the performance of type resolving and can help avoiding possible ambiguities if types were not serialized with full assembly identity
         /// (e.g. if <see cref="BinarySerializationOptions.OmitAssemblyQualifiedNames"/> was enabled on serialization).</para>
         /// <para>If a type in <paramref name="expectedCustomTypes"/> has a different assembly identity in the deserialization stream, and it is not indicated
         /// by a <see cref="TypeForwardedFromAttribute"/> declared on the type, then you should set the <see cref="Binder"/> property to
         /// a <see cref="ForwardedTypesSerializationBinder"/> instance to specify the expected types.</para>
-        /// <para>For arrays it is enough to specify the element type and for generic types you can specify the
+        /// <para>For arrays, it is enough to specify the element type and for generic types you can specify the
         /// natively not supported generic type definition and generic type arguments separately.
         /// If <paramref name="expectedCustomTypes"/> contains constructed generic types, then the generic type definition and
         /// the type arguments will be treated as expected types in any combination.</para>
@@ -2554,14 +2554,14 @@ namespace KGySoft.Serialization.Binary
         /// and the serialization <paramref name="stream"/> contains types encoded by their names. Natively supported types are not needed to be included
         /// unless the original object was serialized with the <see cref="BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes"/> option enabled.</para>
         /// <para><typeparamref name="T"/> is allowed to be an interface or abstract type but if it's different from the actual type of the result,
-        /// then the actual type also might needed to be included in <paramref name="expectedCustomTypes"/>.</para>
+        /// then the actual type also might be needed to be included in <paramref name="expectedCustomTypes"/>.</para>
         /// <para>You can specify <paramref name="expectedCustomTypes"/> even if <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <see cref="Options"/>
         /// as it may improve the performance of type resolving and can help avoiding possible ambiguities if types were not serialized with full assembly identity
         /// (e.g. if <see cref="BinarySerializationOptions.OmitAssemblyQualifiedNames"/> was enabled on serialization).</para>
         /// <para>If a type in <paramref name="expectedCustomTypes"/> has a different assembly identity in the deserialization stream, and it is not indicated
         /// by a <see cref="TypeForwardedFromAttribute"/> declared on the type, then you should set the <see cref="Binder"/> property to
         /// a <see cref="ForwardedTypesSerializationBinder"/> instance to specify the expected types.</para>
-        /// <para>For arrays it is enough to specify the element type and for generic types you can specify the
+        /// <para>For arrays, it is enough to specify the element type and for generic types you can specify the
         /// natively not supported generic type definition and generic type arguments separately.
         /// If <paramref name="expectedCustomTypes"/> contains constructed generic types, then the generic type definition and
         /// the type arguments will be treated as expected types in any combination.</para>
@@ -2602,7 +2602,7 @@ namespace KGySoft.Serialization.Binary
         /// and <see cref="SerializeToStream">SerializeToStream</see> methods only when encoding of the writer is UTF-8.
         /// Otherwise, you must use <see cref="O:KGySoft.Serialization.Binary.BinarySerializationFormatter.DeserializeByReader">DeserializeByReader</see> with the same encoding as here.</note>
         /// </remarks>
-        /// <param name="writer">The writer that will used to serialize data. The writer will remain opened after serialization.</param>
+        /// <param name="writer">The writer that will be used to serialize data. The writer will remain opened after serialization.</param>
         /// <param name="data">The data that will be written by the writer.</param>
         [SecuritySafeCritical]
         public void SerializeByWriter(BinaryWriter writer, object? data)
@@ -2654,14 +2654,14 @@ namespace KGySoft.Serialization.Binary
         /// and the serialization stream contains types encoded by their names. Natively supported types are not needed to be included
         /// unless the original object was serialized with the <see cref="BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes"/> option enabled.</para>
         /// <para><typeparamref name="T"/> is allowed to be an interface or abstract type but if it's different from the actual type of the result,
-        /// then the actual type also might needed to be included in <paramref name="expectedCustomTypes"/>.</para>
+        /// then the actual type also might be needed to be included in <paramref name="expectedCustomTypes"/>.</para>
         /// <para>You can specify <paramref name="expectedCustomTypes"/> even if <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <see cref="Options"/>
         /// as it may improve the performance of type resolving and can help avoiding possible ambiguities if types were not serialized with full assembly identity
         /// (e.g. if <see cref="BinarySerializationOptions.OmitAssemblyQualifiedNames"/> was enabled on serialization).</para>
         /// <para>If a type in <paramref name="expectedCustomTypes"/> has a different assembly identity in the deserialization stream, and it is not indicated
         /// by a <see cref="TypeForwardedFromAttribute"/> declared on the type, then you should set the <see cref="Binder"/> property to
         /// a <see cref="ForwardedTypesSerializationBinder"/> instance to specify the expected types.</para>
-        /// <para>For arrays it is enough to specify the element type and for generic types you can specify the
+        /// <para>For arrays, it is enough to specify the element type and for generic types you can specify the
         /// natively not supported generic type definition and generic type arguments separately.
         /// If <paramref name="expectedCustomTypes"/> contains constructed generic types, then the generic type definition and
         /// the type arguments will be treated as expected types in any combination.</para>

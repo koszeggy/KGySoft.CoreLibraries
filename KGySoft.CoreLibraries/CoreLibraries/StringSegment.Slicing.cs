@@ -24,6 +24,15 @@ using KGySoft.Reflection;
 
 #endregion
 
+#region Suppressions
+
+#if !(NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER)
+#pragma warning disable CS8602 // Dereference of a possibly null reference
+#pragma warning disable CS8604 // Possible null reference argument.
+#endif
+
+#endregion
+
 namespace KGySoft.CoreLibraries
 {
     partial struct StringSegment
@@ -575,7 +584,7 @@ namespace KGySoft.CoreLibraries
                 if (trim && rest.length != 0)
                     rest = rest.Trim();
 
-                // if we reached limit but we are before a separator we remove it if empty segments are not allowed
+                // if we reached limit, but we are before a separator we remove it if empty segments are not allowed
                 // (this is how String.Split also works)
                 if (removeEmptyEntries && result.Count == limit && rest.length > 0 && Char.IsWhiteSpace(rest[0]))
                     rest = rest.SubstringInternal(1);
@@ -636,7 +645,7 @@ namespace KGySoft.CoreLibraries
                 if (trim && rest.length != 0)
                     rest = rest.Trim();
 
-                // if we reached limit but we are before a separator we remove it if empty segments are not allowed
+                // if we reached limit, but we are before a separator we remove it if empty segments are not allowed
                 // (this is how String.Split also works)
                 if (removeEmptyEntries && result.Count == limit && rest.length != 0 && rest[0] == separator)
                     rest = rest.SubstringInternal(1);
@@ -705,7 +714,7 @@ namespace KGySoft.CoreLibraries
                 if (trim && rest.length != 0)
                     rest = rest.Trim();
 
-                // if we reached limit but we are before a separator we remove it if empty segments are not allowed
+                // if we reached limit, but we are before a separator we remove it if empty segments are not allowed
                 // (this is how String.Split also works)
                 if (removeEmptyEntries && result.Count == limit && rest.length != 0)
                 {
@@ -771,7 +780,7 @@ namespace KGySoft.CoreLibraries
                 return result;
 
             if (separator.length == 0)
-                return new[] { options.IsTrim ? Trim() : this };
+                return [options.IsTrim ? Trim() : this];
 
             int limit = maxLength.GetValueOrDefault(Int32.MaxValue);
             result = new List<StringSegment>(Math.Min(limit, 16));
@@ -794,7 +803,7 @@ namespace KGySoft.CoreLibraries
                 if (trim && rest.length != 0)
                     rest = rest.Trim();
 
-                // if we reached limit but we are before a separator we remove it if empty segments are not allowed
+                // if we reached limit, but we are before a separator we remove it if empty segments are not allowed
                 // (this is how String.Split also works)
                 if (removeEmptyEntries && result.Count == limit && rest.length >= separator.length && rest.StartsWith(separator))
                     rest = rest.SubstringInternal(separator.length);
@@ -863,7 +872,7 @@ namespace KGySoft.CoreLibraries
                 if (trim && rest.length != 0)
                     rest = rest.Trim();
 
-                // if we reached limit but we are before a separator we remove it if empty segments are not allowed
+                // if we reached limit, but we are before a separator we remove it if empty segments are not allowed
                 // (this is how String.Split also works)
                 if (removeEmptyEntries && result.Count == limit && rest.length != 0)
                 {
@@ -931,7 +940,7 @@ namespace KGySoft.CoreLibraries
                 return result;
 
             if (String.IsNullOrEmpty(separator))
-                return new[] { options.IsTrim ? Trim() : this };
+                return [options.IsTrim ? Trim() : this];
 
             int limit = maxLength.GetValueOrDefault(Int32.MaxValue);
             result = new List<StringSegment>(Math.Min(limit, 16));
@@ -942,7 +951,7 @@ namespace KGySoft.CoreLibraries
 
             while (!rest.IsNull && result.Count < limit)
             {
-                StringSegment segment = GetNextSegment(ref rest, separator!);
+                StringSegment segment = GetNextSegment(ref rest, separator);
                 if (trim && segment.length != 0)
                     segment = segment.Trim();
                 if (segment.length != 0 || !removeEmptyEntries)
@@ -954,9 +963,9 @@ namespace KGySoft.CoreLibraries
                 if (trim && rest.length != 0)
                     rest = rest.Trim();
 
-                // if we reached limit but we are before a separator we remove it if empty segments are not allowed
+                // if we reached limit, but we are before a separator we remove it if empty segments are not allowed
                 // (this is how String.Split also works)
-                if (removeEmptyEntries && result.Count == limit && rest.length >= separator!.Length && rest.StartsWithInternal(separator))
+                if (removeEmptyEntries && result.Count == limit && rest.length >= separator.Length && rest.StartsWithInternal(separator))
                     rest = rest.SubstringInternal(separator.Length);
 
                 if (rest.length != 0 || !removeEmptyEntries)
@@ -1023,13 +1032,13 @@ namespace KGySoft.CoreLibraries
                 if (trim)
                     rest = rest.Trim();
 
-                // if we reached limit but we are before a separator we remove it if empty segments are not allowed
+                // if we reached limit, but we are before a separator we remove it if empty segments are not allowed
                 // (this is how String.Split also works)
                 if (removeEmptyEntries && result.Count == limit && rest.length > 0)
                 {
                     foreach (string? sep in separators)
                     {
-                        if (String.IsNullOrEmpty(sep) || sep!.Length > rest.length)
+                        if (String.IsNullOrEmpty(sep) || sep.Length > rest.length)
                             continue;
                         if (rest.StartsWithInternal(sep))
                         {
@@ -1092,7 +1101,7 @@ namespace KGySoft.CoreLibraries
                 return result;
 
             if (separator.IsEmpty)
-                return new[] { options.IsTrim ? Trim() : this };
+                return [options.IsTrim ? Trim() : this];
 
             int limit = maxLength.GetValueOrDefault(Int32.MaxValue);
             result = new List<StringSegment>(Math.Min(limit, 16));
@@ -1115,7 +1124,7 @@ namespace KGySoft.CoreLibraries
                 if (trim && rest.length != 0)
                     rest = rest.Trim();
 
-                // if we reached limit but we are before a separator we remove it if empty segments are not allowed
+                // if we reached limit, but we are before a separator we remove it if empty segments are not allowed
                 // (this is how String.Split also works)
                 if (removeEmptyEntries && result.Count == limit && rest.length >= separator.Length && rest.StartsWith(separator))
                     rest = rest.SubstringInternal(separator.Length);
@@ -1170,11 +1179,11 @@ namespace KGySoft.CoreLibraries
                 if (maxLength < 0)
                     Throw.ArgumentOutOfRangeException(Argument.maxLength, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
                 return maxLength == 0 ? Reflector.EmptyArray<StringSegment>()
-                    : new[] { options.IsTrim ? Trim() : this };
+                    : [options.IsTrim ? Trim() : this];
             }
 
             if (length == 0)
-                return options.IsRemoveEmpty ? Reflector.EmptyArray<StringSegment>() : new[] { Empty };
+                return options.IsRemoveEmpty ? Reflector.EmptyArray<StringSegment>() : [Empty];
 
             return null;
         }

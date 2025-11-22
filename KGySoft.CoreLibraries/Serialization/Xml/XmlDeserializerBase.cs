@@ -222,8 +222,8 @@ namespace KGySoft.Serialization.Xml
         private static readonly StringKeyedDictionary<ICollection<Type>> unsafeMembers = new StringKeyedDictionary<ICollection<Type>>(2)
         {
             ["Capacity"] = new HashSet<Type> { Reflector.ListGenType, typeof(CircularList<>), typeof(ArrayList), typeof(SortedList), typeof(SortedList<,>), typeof(CircularSortedList<,>) },
-            [nameof(Cache<_,_>.EnsureCapacity)] = new[] { typeof(Cache<,>) },
-            [nameof(BitArray.Length)] = new[] { typeof(BitArray) },
+            [nameof(Cache<,>.EnsureCapacity)] = [typeof(Cache<,>)],
+            [nameof(BitArray.Length)] = [typeof(BitArray)],
         };
 
         private static readonly Dictionary<Type, Func<Type, ComparerType, object>> knownCollectionWithComparerFactory = new()
@@ -649,7 +649,7 @@ namespace KGySoft.Serialization.Xml
                 return;
             }
 
-            // 2.) non-array: every fields (here we don't know how was the instance serialized but we have a deserialized source)
+            // 2.) non-array: every field (here we don't know how was the instance serialized, but we have a deserialized source)
             SerializationHelper.CopyFields(source, target);
         }
 
@@ -658,8 +658,8 @@ namespace KGySoft.Serialization.Xml
             Type t = type.GetGenericArguments()[0];
             object? comparer = comparerType switch
             {
-                ComparerType.Default => typeof(EqualityComparer<>).GetPropertyValue(t, nameof(EqualityComparer<_>.Default)),
-                ComparerType.EnumComparer => typeof(EnumComparer<>).GetPropertyValue(t, nameof(EnumComparer<_>.Comparer)),
+                ComparerType.Default => typeof(EqualityComparer<>).GetPropertyValue(t, nameof(EqualityComparer<>.Default)),
+                ComparerType.EnumComparer => typeof(EnumComparer<>).GetPropertyValue(t, nameof(EnumComparer<>.Comparer)),
                 _ => ToComparer(comparerType)
             };
 
@@ -671,12 +671,12 @@ namespace KGySoft.Serialization.Xml
             Type t = type.GetGenericArguments()[0];
             object? comparer = comparerType switch
             {
-                ComparerType.Default => typeof(EqualityComparer<>).GetPropertyValue(t, nameof(EqualityComparer<_>.Default)),
-                ComparerType.EnumComparer => typeof(EnumComparer<>).GetPropertyValue(t, nameof(EnumComparer<_>.Comparer)),
+                ComparerType.Default => typeof(EqualityComparer<>).GetPropertyValue(t, nameof(EqualityComparer<>.Default)),
+                ComparerType.EnumComparer => typeof(EnumComparer<>).GetPropertyValue(t, nameof(EnumComparer<>.Comparer)),
                 _ => ToComparer(comparerType)
             };
 
-            return type.CreateInstance(new[] { typeof(IEqualityComparer<>).GetGenericType(t), typeof(HashingStrategy) }, comparer, HashingStrategy.Auto);
+            return type.CreateInstance([typeof(IEqualityComparer<>).GetGenericType(t), typeof(HashingStrategy)], comparer, HashingStrategy.Auto);
         }
 
         private static object CreateCollectionWithGenericComparer(Type type, ComparerType comparerType)
@@ -684,8 +684,8 @@ namespace KGySoft.Serialization.Xml
             Type t = type.GetGenericArguments()[0];
             object? comparer = comparerType switch
             {
-                ComparerType.Default => typeof(Comparer<>).GetPropertyValue(t, nameof(Comparer<_>.Default)),
-                ComparerType.EnumComparer => typeof(EnumComparer<>).GetPropertyValue(t, nameof(EnumComparer<_>.Comparer)),
+                ComparerType.Default => typeof(Comparer<>).GetPropertyValue(t, nameof(Comparer<>.Default)),
+                ComparerType.EnumComparer => typeof(EnumComparer<>).GetPropertyValue(t, nameof(EnumComparer<>.Comparer)),
                 _ => ToComparer(comparerType)
             };
 
@@ -761,14 +761,14 @@ namespace KGySoft.Serialization.Xml
         {
             TypeConverter? converter = null; 
             
-            // Explicitly defined type converter if can convert from string.
+            // Explicitly defined type converter if it can convert from string.
             // Here allowing Reflector.ResolveType because type converters cannot be misused by an input stream. Still, allowing assembly loading in non-safe mode only.
             Attribute[] attrs = Reflector.GetAttributes(member, typeof(TypeConverterAttribute), true);
             if (attrs.Length > 0 && attrs[0] is TypeConverterAttribute convAttr
                 && Reflector.ResolveType(convAttr.ConverterTypeName, SafeMode ? ResolveTypeOptions.AllowPartialAssemblyMatch : ResolveTypeOptions.AllowPartialAssemblyMatch | ResolveTypeOptions.TryToLoadAssemblies) is Type convType)
             {
-                ConstructorInfo? ctor = convType.GetConstructor(new Type[] { Reflector.Type });
-                object[] ctorParams = { memberType };
+                ConstructorInfo? ctor = convType.GetConstructor([Reflector.Type]);
+                object[] ctorParams = [memberType];
                 if (ctor == null)
                 {
                     ctor = convType.GetDefaultConstructor();

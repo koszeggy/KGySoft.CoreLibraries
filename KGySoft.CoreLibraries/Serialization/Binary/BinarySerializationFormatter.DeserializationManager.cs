@@ -255,8 +255,8 @@ namespace KGySoft.Serialization.Binary
 
                 internal override void SetValue(object value)
                 {
-                    Accessors.InvokeMethod(target, nameof(LinkedList<_>.AddAfter), new[] { referenceNode.GetType(), genericArg }, referenceNode, value);
-                    Accessors.InvokeMethod(target, nameof(LinkedList<_>.Remove), referenceNode);
+                    Accessors.InvokeMethod(target, nameof(LinkedList<>.AddAfter), [referenceNode.GetType(), genericArg], referenceNode, value);
+                    Accessors.InvokeMethod(target, nameof(LinkedList<>.Remove), referenceNode);
                 }
 
                 #endregion
@@ -425,13 +425,13 @@ namespace KGySoft.Serialization.Binary
                 #region Internal Fields
                 
                 internal readonly int TotalLength;
-                internal Array? Array;
                 internal Dictionary<object, UsageReferences>? ObjectsBeingDeserialized;
 
                 #endregion
 
                 #region Private Fields
                 
+                private Array? array;
                 private readonly BinaryReader reader;
                 private readonly DataTypeDescriptor descriptor;
                 private readonly int[] lengths;
@@ -447,7 +447,7 @@ namespace KGySoft.Serialization.Binary
 
                 #region Properties
                 
-                internal object ArrayProxy => (Array ?? builder)!;
+                internal object ArrayProxy => (array ?? builder)!;
 
                 #endregion
 
@@ -487,7 +487,7 @@ namespace KGySoft.Serialization.Binary
                     int elementSize;
                     if (!safeMode || ((elementSize = elementType.SizeOf()) * (long)TotalLength) <= ArrayAllocationThreshold)
                     {
-                        Array = Array.CreateInstance(elementType, lengths, lowerBounds);
+                        array = Array.CreateInstance(elementType, lengths, lowerBounds);
                         if (rank > 1)
                             arrayIndexer = new ArrayIndexer(lengths, lowerBounds);
                         return;
@@ -519,7 +519,7 @@ namespace KGySoft.Serialization.Binary
                 
                 internal bool TryReadPrimitive()
                 {
-                    if (Array == null || !descriptor.GetElementDescriptor().Type!.IsPrimitive)
+                    if (array == null || !descriptor.GetElementDescriptor().Type!.IsPrimitive)
                     {
                         if (!descriptor.CreateResultFromByteArray)
                             return false;
@@ -531,40 +531,40 @@ namespace KGySoft.Serialization.Binary
                         return true;
                     }
 
-                    int byteLength = Buffer.ByteLength(Array);
+                    int byteLength = Buffer.ByteLength(array);
 #if NET6_0_OR_GREATER
                     // reinterpreting the primitive array as Span<byte>
-                    if (reader.Read(MemoryMarshal.CreateSpan(ref MemoryMarshal.GetArrayDataReference(Array), byteLength)) < byteLength)
+                    if (reader.Read(MemoryMarshal.CreateSpan(ref MemoryMarshal.GetArrayDataReference(array), byteLength)) < byteLength)
                         Throw.SerializationException(Res.BinarySerializationDataLengthTooSmall);
                     return true;
 #else
                     // preventing an allocation and copying if the result is a byte array anyway
-                    if (Array is byte[] byteArray) // or sbyte[] but in this case it's ok to handle that, too
+                    if (array is byte[] byteArray) // or sbyte[] but in this case it's ok to handle that, too
                     {
                         if (reader.Read(byteArray, 0, byteLength) < byteLength)
                             Throw.SerializationException(Res.BinarySerializationDataLengthTooSmall);
                         return true;
                     }
 
-                    Buffer.BlockCopy(reader.ReadBytes(byteLength), 0, Array, 0, byteLength);
+                    Buffer.BlockCopy(reader.ReadBytes(byteLength), 0, array, 0, byteLength);
                     return true;
 #endif
                 }
 
                 internal Array ToArray()
                 {
-                    if (Array != null)
-                        return Array;
+                    if (array != null)
+                        return array;
 
                     Debug.Assert(builder!.Count == TotalLength);
                     if (descriptor.CreateResultFromByteArray)
                     {
-                        Array = new byte[TotalLength];
-                        builder.CopyTo(Array, 0);
-                        return Array;
+                        array = new byte[TotalLength];
+                        builder.CopyTo(array, 0);
+                        return array;
                     }
 
-                    Array = Array.CreateInstance(descriptor.GetElementDescriptor().Type!, lengths, lowerBounds);
+                    array = Array.CreateInstance(descriptor.GetElementDescriptor().Type!, lengths, lowerBounds);
 
                     // 1D array
                     if (lengths.Length == 1)
@@ -574,7 +574,7 @@ namespace KGySoft.Serialization.Binary
                             SetArrayElement(builder![i], i + offset);
 
                         builder = null;
-                        return Array;
+                        return array;
                     }
 
                     // multidimensional array
@@ -583,13 +583,13 @@ namespace KGySoft.Serialization.Binary
                         SetArrayElement(builder![i], arrayIndexer.Current);
 
                     builder = null;
-                    return Array;
+                    return array;
                 }
 
                 internal void Add(object? value)
                 {
                     // adding to the final array
-                    if (Array != null)
+                    if (array != null)
                     {
                         // 1D array
                         if (arrayIndexer == null)
@@ -618,11 +618,11 @@ namespace KGySoft.Serialization.Binary
                     UsageReferences? trackedUsages = value == null ? null : ObjectsBeingDeserialized?.GetValueOrDefault(value);
                     if (trackedUsages == null)
                     {
-                        Array!.SetValue(value, indices);
+                        array!.SetValue(value, indices);
                         return;
                     }
 
-                    trackedUsages.Add(new ArrayUsage(Array!, indices));
+                    trackedUsages.Add(new ArrayUsage(array!, indices));
                 }
 
                 private void SetArrayElement(object? value, int index)
@@ -630,11 +630,11 @@ namespace KGySoft.Serialization.Binary
                     UsageReferences? trackedUsages = value == null ? null : ObjectsBeingDeserialized?.GetValueOrDefault(value);
                     if (trackedUsages == null)
                     {
-                        Array!.SetValue(value, index);
+                        array!.SetValue(value, index);
                         return;
                     }
 
-                    trackedUsages.Add(new ListUsage(Array!, index));
+                    trackedUsages.Add(new ListUsage(array!, index));
                 }
 
                 #endregion
@@ -666,10 +666,10 @@ namespace KGySoft.Serialization.Binary
             private Dictionary<int, object?> IdCache => idCache ??= new Dictionary<int, object?> { { 0, null } };
 
             private List<(Assembly? Assembly, string? StoredName)> CachedAssemblies
-                => cachedAssemblies ??= new List<(Assembly?, string?)>(KnownAssemblies.Select(a => ((Assembly?)a, a == AssemblyResolver.CoreLibrariesAssembly ? null : a.FullName)));
+                => cachedAssemblies ??= [..KnownAssemblies.Select(a => ((Assembly?)a, a == AssemblyResolver.CoreLibrariesAssembly ? null : a.FullName))];
 
             private List<DataTypeDescriptor> CachedTypes
-                => cachedTypes ??= new List<DataTypeDescriptor>(KnownTypes.Select(t => new DataTypeDescriptor(t)));
+                => cachedTypes ??= [..KnownTypes.Select(t => new DataTypeDescriptor(t))];
 
             private Dictionary<object, UsageReferences> ObjectsBeingDeserialized => objectsBeingDeserialized
                 ??= new Dictionary<object, UsageReferences>(1, ReferenceEqualityComparer.Comparer);
@@ -985,7 +985,7 @@ namespace KGySoft.Serialization.Binary
 
             private string ReadName(BinaryReader br)
             {
-                var names = cachedNames ??= new List<string>();
+                var names = cachedNames ??= [];
                 int id = Read7BitInt(br);
                 if ((uint)id > names.Count)
                     Throw.SerializationException(Res.BinarySerializationInvalidStreamData);
@@ -1119,12 +1119,6 @@ namespace KGySoft.Serialization.Binary
                 return result;
             }
 
-            internal void AddObjectToCache(object obj)
-            {
-                Dictionary<int, object?> cache = IdCache;
-                cache.Add(cache.Count, obj);
-            }
-
             internal void AddObjectToCache(object? obj, out int id)
             {
                 Dictionary<int, object?> cache = IdCache;
@@ -1235,7 +1229,7 @@ namespace KGySoft.Serialization.Binary
                 bool trackUsages = addToCache && arrayProxy is not Array && descriptor.CanHaveRecursion;
                 UsageReferences? usages = null;
                 if (trackUsages)
-                    ObjectsBeingDeserialized.Add(arrayProxy, usages = new UsageReferences());
+                    ObjectsBeingDeserialized.Add(arrayProxy, usages = []);
                 builder.ObjectsBeingDeserialized = objectsBeingDeserialized; // using the field here is intended so no unnecessary instance is created
 
                 int id = 0;
@@ -1333,11 +1327,12 @@ namespace KGySoft.Serialization.Binary
 
                 // Unlike in CreateArray we always use a new object as a proxy here because the array is not the final object
                 // and if the builder returns a real array its reference could mean both the final object and its backing array.
-                // CanHaveRecursion is expected to return false if the backing array is just used to create the final object but does it not wrap the array (ie if can be an object[] it must be an actual backing array in the result)
+                // CanHaveRecursion is expected to return false if the backing array is just used to create the final object but does it not wrap the array
+                // (i.e. if it can be an object[] it must be an actual backing array in the result)
                 bool trackUsages = addToCache && descriptor.CanHaveRecursion;
                 UsageReferences? usages = null;
                 if (trackUsages)
-                    ObjectsBeingDeserialized.Add(resultProxy!, usages = new UsageReferences());
+                    ObjectsBeingDeserialized.Add(resultProxy!, usages = []);
                 
                 backingArray = CreateArray(br, addArrayToCache, descriptor);
 
@@ -1417,7 +1412,7 @@ namespace KGySoft.Serialization.Binary
                 if (serInfo.IsSingleElement)
                 {
                     if (descriptor.IsStrongBox)
-                        SetField(descriptor.Type!.GetField(nameof(StrongBox<_>.Value))!, result, ReadElement(br, descriptor.GetElementDescriptor()));
+                        SetField(descriptor.Type!.GetField(nameof(StrongBox<>.Value))!, result, ReadElement(br, descriptor.GetElementDescriptor()));
                     else
                     {
                         object? key = ReadElement(br, descriptor.GetKeyDescriptor());
@@ -1437,7 +1432,7 @@ namespace KGySoft.Serialization.Binary
                 UsageReferences? usages = null;
                 object resultProxy = collection;
                 if (trackUsages)
-                    ObjectsBeingDeserialized.Add(resultProxy, usages = new UsageReferences());
+                    ObjectsBeingDeserialized.Add(resultProxy, usages = []);
 
                 MethodAccessor? addMethod = serInfo.GetSpecificAddMethod?.Invoke(result.GetType()); // result.GetType because of possible proxy builder
                 if (descriptor.IsDictionary)
@@ -1688,7 +1683,7 @@ namespace KGySoft.Serialization.Binary
                             return createdResult = new BitVector32(br.ReadInt32());
                         case DataTypes.BitVector32Section:
                             return createdResult = ReadSection(br);
-                        case DataTypes.StringSegment: // inner string is cached even if the result isn't but it's a collection element (ie. whenever it's not root)
+                        case DataTypes.StringSegment: // inner string is cached even if the result isn't, but it's a collection element (i.e. whenever it's not root)
                             AddPlaceholder();
                             return createdResult = ReadStringSegment(br, addToCache.Value || dataTypeDescriptor.ParentDescriptor != null);
                         case DataTypes.StringBuilder:
@@ -2008,7 +2003,7 @@ namespace KGySoft.Serialization.Binary
 
                 // if the object can be possibly changed, then we prepare tracking its usage
                 if (trackUsages)
-                    ObjectsBeingDeserialized.Add(obj, usages = new UsageReferences());
+                    ObjectsBeingDeserialized.Add(obj, usages = []);
 
                 if (addToCache)
                     AddObjectToCache(obj, out id);
@@ -2308,7 +2303,7 @@ namespace KGySoft.Serialization.Binary
                 if (obj == null)
                     return;
 
-                deserializationRegObjects ??= new List<IDeserializationCallback>();
+                deserializationRegObjects ??= [];
                 deserializationRegObjects.Add(obj);
             }
 
@@ -2320,6 +2315,12 @@ namespace KGySoft.Serialization.Binary
                 for (int i = deserializationRegObjects.Count - 1; i >= 0; i--)
                     deserializationRegObjects[i].OnDeserialization(this);
                 deserializationRegObjects = null;
+            }
+
+            private void AddObjectToCache(object obj)
+            {
+                Dictionary<int, object?> cache = IdCache;
+                cache.Add(cache.Count, obj);
             }
 
             private bool TryGetCachedObject(BinaryReader br, out object? result)
@@ -2404,7 +2405,7 @@ namespace KGySoft.Serialization.Binary
                     Type genericArg = type.GetGenericArguments()[0];
                     Type nodeType = typeof(LinkedListNode<>).GetGenericType(genericArg);
                     object node = nodeType.CreateInstance(genericArg, GetPlaceholderValue(value, collection));
-                    Accessors.InvokeMethod(collection, nameof(LinkedList<_>.AddLast), new[] { nodeType }, node);
+                    Accessors.InvokeMethod(collection, nameof(LinkedList<>.AddLast), [nodeType], node);
                     trackedUsages.Add(new LinkedListUsage(collection, node));
                     return;
                 }
@@ -2668,7 +2669,7 @@ namespace KGySoft.Serialization.Binary
                         // This affects performance a LOT but omitting assembly names is not recommended in safe mode anyway so not using a cache
                         // for the lookup itself (and the result is mapped to a new type index so will be cached anyway).
 
-                        // NOTE: The following line would be somewhat faster but it does not work if the same type name is added with multiple assembly identities
+                        // NOTE: The following line would be somewhat faster, but it does not work if the same type name is added with multiple assembly identities
                         //if (expectedTypes.Where(t => t.Key.TypeName == typeName).Take(2).Select(t => t.Value).SingleOrDefault() is Type type)
                         //    return type;
                         Type[] types = expectedTypes.Where(t => t.Key.TypeName == typeName).Select(t => t.Value).Distinct().Take(2).ToArray();

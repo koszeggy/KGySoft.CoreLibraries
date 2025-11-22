@@ -434,7 +434,7 @@ namespace KGySoft.Reflection
             Type valueParameterType = isPointer ? typeof(IntPtr) : propertyType;
 
             Type[] parameterTypes =
-            {
+            [
                 generic == true ? (declaringType!.IsValueType ? declaringType.MakeByRefType() : declaringType) : Reflector.ObjectType, // instance
                 generic == true ? valueParameterType : Reflector.ObjectType, // value
                 generic switch // indices/index
@@ -443,7 +443,7 @@ namespace KGySoft.Reflection
                     true => ParameterTypes[0].IsPointer ? typeof(IntPtr) : ParameterTypes[0],
                     null => typeof(object[])
                 }
-            };
+            ];
 
             var dm = new DynamicMethod("<SetRefIndexer>__" + Property.Name, Reflector.VoidType, parameterTypes, GetOwner(), true);
 

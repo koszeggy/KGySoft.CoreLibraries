@@ -276,7 +276,7 @@ namespace KGySoft.Collections.ObjectModel
         {
             // NOTE: this method actually no longer means an actual index rebuild. It might also be called after detecting an inconsistency,
             // but without rebuilding the index map (which is nullable now). It is still called OnMapRebuilt to remain compatible.
-            // From outside it is actually transparent whether there is an up-to-date internal map.
+            // From outside, it is actually transparent whether there is an up-to-date internal map.
         }
 
         #endregion

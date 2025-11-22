@@ -368,7 +368,7 @@ namespace KGySoft.Reflection
             catch (Exception e)
             {
                 // Post-validation if there was any exception. We do this for better performance on the happy path.
-                PostValidate(new [] { param }, e, false);
+                PostValidate([param], e, false);
                 return null; // actually never reached, just to satisfy the compiler
             }
         }
@@ -398,7 +398,7 @@ namespace KGySoft.Reflection
             catch (Exception e)
             {
                 // Post-validation if there was any exception. We do this for better performance on the happy path.
-                PostValidate(new [] { param1, param2 }, e, false);
+                PostValidate([param1, param2], e, false);
                 return null; // actually never reached, just to satisfy the compiler
             }
         }
@@ -429,7 +429,7 @@ namespace KGySoft.Reflection
             catch (Exception e)
             {
                 // Post-validation if there was any exception. We do this for better performance on the happy path.
-                PostValidate(new [] { param1, param2, param3 }, e, false);
+                PostValidate([param1, param2, param3], e, false);
                 return null; // actually never reached, just to satisfy the compiler
             }
         }
@@ -461,7 +461,7 @@ namespace KGySoft.Reflection
             catch (Exception e)
             {
                 // Post-validation if there was any exception. We do this for better performance on the happy path.
-                PostValidate(new [] { param1, param2, param3, param4 }, e, false);
+                PostValidate([param1, param2, param3, param4], e, false);
                 return null; // actually never reached, just to satisfy the compiler
             }
         }
@@ -562,7 +562,7 @@ namespace KGySoft.Reflection
         [ContractAnnotation("=> halt"), DoesNotReturn]
         private void PostValidate(object?[]? parameters, Exception exception, bool anyParams)
         {
-            // These could be just re-thrown at the end but we want to avoid parameter checks for them
+            // These could be just re-thrown at the end, but we want to avoid parameter checks for them
             Type? type = MemberInfo as Type ?? (MemberInfo as ConstructorInfo)?.DeclaringType;
             if (type is null || MemberInfo is ConstructorInfo { IsStatic: true })
                 Throw.InvalidOperationException(Res.ReflectionInstanceCtorExpected);

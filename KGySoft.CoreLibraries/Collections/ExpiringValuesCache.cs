@@ -68,8 +68,8 @@ namespace KGySoft.Collections
                             }
 
                             // There was an expired old value before the load.
-                            // Note: as loading is outside of the lock, it can happen that the originally expired value has been disposed by the cache itself
-                            // and TryGetValue returns another instance now but we don't differentiate these cases.
+                            // Note: as loading is outside the lock, it can happen that the originally expired value has been disposed by the cache itself
+                            // and TryGetValue returns another instance now, but we don't differentiate these cases.
                             if (cache.DisposeDroppedValues && result.Value is IDisposable disposableOldItem)
                                 disposableOldItem.Dispose();
                         }

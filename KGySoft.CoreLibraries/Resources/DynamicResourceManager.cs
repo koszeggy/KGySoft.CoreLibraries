@@ -55,7 +55,7 @@ namespace KGySoft.Resources
     /// <para><see cref="DynamicResourceManager"/> combines the functionality of <see cref="ResourceManager"/>, <see cref="ResXResourceManager"/>, <see cref="HybridResourceManager"/>
     /// and extends these with the feature of auto expansion. It can be an ideal choice to use it as a resource manager of an application or a class library
     /// because it gives you freedom (or to the consumer of your library) to choose the strategy. If <see cref="AutoAppend"/> and <see cref="AutoSave"/> functionalities
-    /// are completely disabled, then it is equivalent to a <see cref="HybridResourceManager"/>, which can handle resources both from compiled and XML sources but you must
+    /// are completely disabled, then it is equivalent to a <see cref="HybridResourceManager"/>, which can handle resources both from compiled and XML sources, but you must
     /// explicitly add new content and save it (see the example of the <see cref="HybridResourceManager"/> base class).
     /// If you restrict even the source of the resources, then you can get the functionality of the <see cref="ResXResourceManager"/> class (<see cref="Source"/> is <see cref="ResourceManagerSources.ResXOnly"/>),
     /// or the <see cref="ResourceManager"/> class (<see cref="Source"/> is <see cref="ResourceManagerSources.CompiledOnly"/>).</para>
@@ -82,7 +82,7 @@ namespace KGySoft.Resources
     /// <list type="bullet">
     /// <item>Unlike the <see cref="Source"/> property, <see cref="LanguageSettings.DynamicResourceManagersSource">LanguageSettings.DynamicResourceManagersSource</see> property is
     /// <see cref="ResourceManagerSources.CompiledOnly"/> by default, ensuring that centralized <see cref="DynamicResourceManager"/> instances work the same way as regular <see cref="ResourceManager"/>
-    /// classes by default, so the application can opt-in dynamic creation of .resx files, for example in its <c>Main</c> method.</item>
+    /// classes by default, so the application can opt in dynamic creation of .resx files, for example in its <c>Main</c> method.</item>
     /// <item>Turning on the <see cref="UseLanguageSettings"/> property makes the <see cref="DynamicResourceManager"/> to subscribe multiple events. If such a <see cref="DynamicResourceManager"/>
     /// is used in a non-static or short-living context make sure to dispose it to prevent leaking resources.</item>
     /// </list></note></para>
@@ -143,13 +143,13 @@ namespace KGySoft.Resources
     /// will append the neutral cultures (e.g. <c>en</c>) if a requested resource is found in the invariant culture.</item>
     /// <item><see cref="AutoAppendOptions.AppendFirstSpecificCulture"/> and <see cref="AutoAppendOptions.AppendSpecificCultures"/> options
     /// will append the specific cultures (e.g. <c>en-US</c>) if a requested resource is found in any parent culture. <see cref="AutoAppendOptions.AppendLastSpecificCulture"/> does the same,
-    /// except that the found resource must be in the resource set of a non-specific culture..</item>
+    /// except that the found resource must be in the resource set of a non-specific culture.</item>
     /// </list>
     /// If the merged resource is a <see cref="string"/>, then the value of the existing resource will be prefixed by the
     /// <see cref="LanguageSettings.UntranslatedResourcePrefix">LanguageSettings.UntranslatedResourcePrefix</see> property, and
     /// this prefixed string will be saved in the target resource; otherwise, the original value will be duplicated in the target resource.
-    /// <note>"First" and "last" terms above refer the first and last neutral/specific cultures in the order from
-    /// most specific to least specific one as in the examples above. See the descriptions of the referred <see cref="AutoAppendOptions"/> options for more details and for examples
+    /// <note>"First" and "last" terms above refer the first and last neutral/specific cultures in the order from the
+    /// most specific to the least specific one as in the examples above. See the descriptions of the referred <see cref="AutoAppendOptions"/> options for more details and for examples
     /// with a fully artificial culture hierarchy with multiple neutral and specific cultures.</note>
     /// <code lang="C#"><![CDATA[
     /// using System;
@@ -208,7 +208,7 @@ namespace KGySoft.Resources
     /// <item><term>Merging complete resource sets</term>
     /// <description>The example above demonstrates how the untranslated entries will be applied to the target language files. However, in that example only the
     /// actually requested entries will be copied on demand. It is possible that we want to generate a full language file in order to be able to make complete translations.
-    /// If that is what we need we can use the <see cref="AutoAppendOptions.AppendOnLoad"/> option. This option should be used together with at least one of the options from
+    /// If that is what we need, we can use the <see cref="AutoAppendOptions.AppendOnLoad"/> option. This option should be used together with at least one of the options from
     /// the previous point to have any effect.
     /// <code lang="C#"><![CDATA[
     /// using System;
@@ -409,7 +409,7 @@ namespace KGySoft.Resources
     /// <item>In Solution Explorer right click on <c>ClassLibrary1 (unavailable)</c>, Reload ClassLibrary1.csproj</item>
     /// </list>
     /// </item>
-    /// <item>In Solution Explorer right click on the new resource file (<c>Resource1.resx</c>) and select Properties</item>
+    /// <item>In Solution Explorer right-click on the new resource file (<c>Resource1.resx</c>) and select Properties</item>
     /// <item>Clear the default <c>Custom Tool</c> value because the generated file uses a <see cref="ResourceManager"/> class internally, which cannot handle the dynamic expansions.
     /// It means also, that instead of the generated <c>Resources</c> class we will use our <c>Res</c> class.
     /// Leave the <c>Build Action</c> so its value is <c>Embedded Resource</c>, which means that the resource will be compiled into the assembly.
@@ -417,7 +417,7 @@ namespace KGySoft.Resources
     /// <see cref="LanguageSettings.DynamicResourceManagersSource">LanguageSettings.DynamicResourceManagersSource</see> property to <see cref="ResourceManagerSources.CompiledAndResX"/>,
     /// then for the different languages the .resx files will be automatically created containing the resource set of our class library, ready to translate.
     /// <br/><img src="../Help/Images/ResourceFileProperties_DynamicResourceManager.png" alt="Resources1.resx properties"/></item>
-    /// <item>In Solution Explorer double click on <c>Resource1.resx</c> and add any resource entries you want to use in your library.
+    /// <item>In Solution Explorer double-click on <c>Resource1.resx</c> and add any resource entries you want to use in your library.
     /// Add <c>NullReference</c> key as well as it is used by the default <c>Res</c> implementation.
     /// <br/><img src="../Help/Images/DynamicResourceManager_ExampleResources.png" alt="Example resources"/></item>
     /// <item>Define a property for all of your simple resources and a method for the format strings with placeholders in the <c>Res</c> class. For example:
@@ -582,7 +582,7 @@ namespace KGySoft.Resources
         /// Occurs when an exception is thrown on auto saving. If this event is not subscribed, the following exception types are automatically suppressed,
         /// as they can occur on save: <see cref="IOException"/>, <see cref="SecurityException"/>, <see cref="UnauthorizedAccessException"/>. If such an
         /// exception is suppressed some resources might remain unsaved. Though the event is a static one, the sender of the handler is the corresponding <see cref="DynamicResourceManager"/> instance.
-        /// Thus the save failures of the non public <see cref="DynamicResourceManager"/> instances (e.g. resource managers of an assembly) can be tracked, too.
+        /// Thus, the save failures of the non-public <see cref="DynamicResourceManager"/> instances (e.g. resource managers of an assembly) can be tracked, too.
         /// </summary>
         /// <seealso cref="AutoSave"/>
         public static event EventHandler<AutoSaveErrorEventArgs>? AutoSaveError;
@@ -781,6 +781,7 @@ namespace KGySoft.Resources
 
         #region Static Methods
 
+        [SuppressMessage("ReSharper", "GenericEnumeratorNotDisposed", Justification = "False alarm, IDictionaryEnumerator is not a generic enumerator and is not expected to be disposable")]
         private static void ToDictionary(ResourceSet source, StringKeyedDictionary<object?> target)
         {
             IDictionaryEnumerator enumerator = source.GetEnumerator();
@@ -887,7 +888,7 @@ namespace KGySoft.Resources
         /// <remarks>
         /// <para>Depending on the value of the <see cref="HybridResourceManager.CloneValues"/> property, the <see cref="O:KGySoft.Resources.DynamicResourceManager.GetObject">GetObject</see> methods return either
         /// a full copy of the specified resource, or always the same instance. For memory streams and byte arrays none of them are ideal because a full copy duplicates the inner buffer of a possibly large
-        /// array of bytes, whereas returning the same stream instance can cause issues with conflicting positions or disposed state. Therefore the <see cref="O:KGySoft.Resources.DynamicResourceManager.GetStream">GetStream</see> methods
+        /// array of bytes, whereas returning the same stream instance can cause issues with conflicting positions or disposed state. Therefore, the <see cref="O:KGySoft.Resources.DynamicResourceManager.GetStream">GetStream</see> methods
         /// can be used to obtain a new read-only <see cref="MemoryStream"/> wrapper around the same internal buffer, regardless the current value of the <see cref="HybridResourceManager.CloneValues"/> property.</para>
         /// <para><see cref="string"/> values are not duplicated in memory, regardless the value of the <see cref="HybridResourceManager.CloneValues"/> property.</para>
         /// <para>Depending on the value of the <see cref="AutoAppend"/> property, dynamic expansion of the resource sets of different cultures may occur when calling this method.</para>
@@ -910,7 +911,7 @@ namespace KGySoft.Resources
         /// <remarks>
         /// <para>Depending on the value of the <see cref="HybridResourceManager.CloneValues"/> property, the <see cref="O:KGySoft.Resources.DynamicResourceManager.GetObject">GetObject</see> methods return either
         /// a full copy of the specified resource, or always the same instance. For memory streams and byte arrays none of them are ideal because a full copy duplicates the inner buffer of a possibly large
-        /// array of bytes, whereas returning the same stream instance can cause issues with conflicting positions or disposed state. Therefore the <see cref="O:KGySoft.Resources.DynamicResourceManager.GetStream">GetStream</see> methods
+        /// array of bytes, whereas returning the same stream instance can cause issues with conflicting positions or disposed state. Therefore, the <see cref="O:KGySoft.Resources.DynamicResourceManager.GetStream">GetStream</see> methods
         /// can be used to obtain a new read-only <see cref="MemoryStream"/> wrapper around the same internal buffer, regardless the current value of the <see cref="HybridResourceManager.CloneValues"/> property.</para>
         /// <para><see cref="string"/> values are not duplicated in memory, regardless the value of the <see cref="HybridResourceManager.CloneValues"/> property.</para>
         /// <para>Depending on the value of the <see cref="AutoAppend"/> property, dynamic expansion of the resource sets of different cultures may occur when calling this method.</para>
@@ -986,7 +987,7 @@ namespace KGySoft.Resources
         /// <remarks>
         /// <para>Depending on the value of the <see cref="HybridResourceManager.CloneValues"/> property, the <see cref="O:KGySoft.Resources.DynamicResourceManager.GetObject">GetObject</see> methods return either
         /// a full copy of the specified resource, or always the same instance. For memory streams none of them are ideal because a full copy duplicates the inner buffer of a possibly large
-        /// array of bytes, whereas returning the same stream instance can cause issues with conflicting positions or disposed state. Therefore the <see cref="O:KGySoft.Resources.DynamicResourceManager.GetStream">GetStream</see> methods
+        /// array of bytes, whereas returning the same stream instance can cause issues with conflicting positions or disposed state. Therefore, the <see cref="O:KGySoft.Resources.DynamicResourceManager.GetStream">GetStream</see> methods
         /// can be used to obtain a new read-only <see cref="MemoryStream"/> wrapper around the same internal buffer, regardless the current value of the <see cref="HybridResourceManager.CloneValues"/> property.</para>
         /// <para><see cref="O:KGySoft.Resources.DynamicResourceManager.GetStream">GetStream</see> can be used also for byte array resources. However, if the value is returned from compiled resources, then always a new copy of the byte array will be wrapped.</para>
         /// <para>If <see cref="HybridResourceManager.SafeMode"/> is <see langword="true"/> and <paramref name="name"/> is neither a <see cref="MemoryStream"/> nor a byte array resource, then
@@ -1011,7 +1012,7 @@ namespace KGySoft.Resources
         /// <remarks>
         /// <para>Depending on the value of the <see cref="HybridResourceManager.CloneValues"/> property, the <see cref="O:KGySoft.Resources.HybridResourceManager.GetObject">GetObject</see> methods return either
         /// a full copy of the specified resource, or always the same instance. For memory streams none of them are ideal because a full copy duplicates the inner buffer of a possibly large
-        /// array of bytes, whereas returning the same stream instance can cause issues with conflicting positions or disposed state. Therefore the <see cref="O:KGySoft.Resources.HybridResourceManager.GetStream">GetStream</see> methods
+        /// array of bytes, whereas returning the same stream instance can cause issues with conflicting positions or disposed state. Therefore, the <see cref="O:KGySoft.Resources.HybridResourceManager.GetStream">GetStream</see> methods
         /// can be used to obtain a new read-only <see cref="MemoryStream"/> wrapper around the same internal buffer, regardless the current value of the <see cref="HybridResourceManager.CloneValues"/> property.</para>
         /// <para><see cref="O:KGySoft.Resources.HybridResourceManager.GetStream">GetStream</see> can be used also for byte array resources. However, if the value is returned from compiled resources, then always a new copy of the byte array will be wrapped.</para>
         /// <para>If <see cref="HybridResourceManager.SafeMode"/> is <see langword="true"/> and <paramref name="name"/> is neither a <see cref="MemoryStream"/> nor a byte array resource, then
@@ -1144,6 +1145,7 @@ namespace KGySoft.Resources
         /// <note>This method has no effect if <see cref="Source"/> is <see cref="ResourceManagerSources.CompiledOnly"/>,
         /// or when there are no append options enabled in the <see cref="AutoAppend"/> property.</note>
         /// </remarks>
+        [SuppressMessage("ReSharper", "GenericEnumeratorNotDisposed", Justification = "False alarm, IDictionaryEnumerator is not a generic enumerator and is not expected to be disposable")]
         public void EnsureInvariantResourcesMerged(CultureInfo culture)
         {
             if (culture == null!)
@@ -1168,7 +1170,7 @@ namespace KGySoft.Resources
         /// All unsaved resources will be lost.
         /// </summary>
         /// <remarks>
-        /// <note type="caution">By calling this method all of the unsaved changes will be lost.</note>
+        /// <note type="caution">By calling this method all the unsaved changes will be lost.</note>
         /// <para>By the <see cref="HybridResourceManager.IsModified"/> property you can check whether there are unsaved changes.</para>
         /// <para>To save the changes you can call the <see cref="HybridResourceManager.SaveAllResources">SaveAllResources</see> method.</para>
         /// </remarks>
@@ -1380,7 +1382,7 @@ namespace KGySoft.Resources
                     var rsExpando = rs as IExpandoResourceSet;
 
                     // Proxies are considered only at TryGetFromCachedResourceSet.
-                    // When traversing, proxies are skipped because we must track the exact levels at merging and we don't know what is between the current and proxied levels.
+                    // When traversing, proxies are skipped because we must track the exact levels at merging, and we don't know what is between the current and proxied levels.
                     if (rs != null && rs != ctx.CheckedResource && !IsProxy(rs))
                     {
                         ctx.Result = GetResourceFromAny(rs, ctx.Name, ctx.IsString, ctx.CloneValue || ctx.ToMerge.Count > 0 || isMergeNeeded && !currentCulture.Equals(ctx.Culture), ctx.SafeMode);

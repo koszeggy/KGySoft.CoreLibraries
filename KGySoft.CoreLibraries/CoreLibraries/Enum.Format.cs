@@ -227,7 +227,7 @@ namespace KGySoft.CoreLibraries
 
             ulong value = origRawValue;
 
-            // Unlike in FormatCompoundFlags we use it as a queue and we may use every position:
+            // Unlike in FormatCompoundFlags we use it as a queue, and we may use every position:
             // MinValue: Flag is unset; <0: Flag has no name (digits size are stored); >=0: Name index
             int* resultsQueue = stackalloc int[underlyingInfo.BitSize];
 
@@ -313,7 +313,7 @@ namespace KGySoft.CoreLibraries
 
             ulong value = origRawValue;
 
-            // Unlike in FormatCompoundFlags we use it as a queue and we may use every position:
+            // Unlike in FormatCompoundFlags we use it as a queue, and we may use every position:
             // MinValue: Flag is unset; <0: Flag has no name (digits size are stored); >=0: Name index
             int[] resultsQueue = new int[underlyingInfo.BitSize];
 
@@ -394,7 +394,7 @@ namespace KGySoft.CoreLibraries
 
             ulong value = origRawValue;
 
-            // Unlike in TryFormatCompoundFlags we use it as a queue and we may use every position:
+            // Unlike in TryFormatCompoundFlags we use it as a queue, and we may use every position:
             // MinValue: Flag is unset; -1: Flag has no name; >=0: Name index
             Span<int> resultsQueue = stackalloc int[underlyingInfo.BitSize];
 
@@ -478,7 +478,7 @@ namespace KGySoft.CoreLibraries
 
             ulong value = origRawValue;
 
-            // Unlike in TryFormatCompoundFlags we use it as a queue and we may use every position:
+            // Unlike in TryFormatCompoundFlags we use it as a queue, and we may use every position:
             // MinValue: Flag is unset; -1: Flag has no name; >=0: Name index
             Span<int> resultsQueue = stackalloc int[underlyingInfo.BitSize];
 

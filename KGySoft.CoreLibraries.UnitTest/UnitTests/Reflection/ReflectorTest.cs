@@ -1504,7 +1504,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Assert.AreEqual(1, accessor.InvokeInstanceFunction<Stream, byte[], int, int, int>(new MemoryStream(new byte[1]), new byte[1], 0, 1));
 
             // interface: pass
-            mi = typeof(ICollection<int>).GetMethod(nameof(ICollection<_>.Contains))!;
+            mi = typeof(ICollection<int>).GetMethod(nameof(ICollection<>.Contains))!;
             accessor = MethodAccessor.GetAccessor(mi);
             Assert.IsTrue(mi.DeclaringType!.IsInterface);
             Assert.IsFalse((bool)accessor.Invoke(Reflector.EmptyArray<int>(), [42])!);
@@ -1512,7 +1512,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Assert.IsFalse(accessor.InvokeInstanceFunction<int[], int, bool>(Reflector.EmptyArray<int>(), 42));
 
             // generic: fail
-            mi = typeof(List<>).GetMethod(nameof(List<_>.Contains))!;
+            mi = typeof(List<>).GetMethod(nameof(List<>.Contains))!;
             accessor = MethodAccessor.GetAccessor(mi);
             Assert.IsTrue(mi.DeclaringType!.IsGenericTypeDefinition);
             Throws<InvalidOperationException>(() => accessor.Invoke(new List<int>(), [42]), Res.ReflectionGenericMember);
@@ -7161,7 +7161,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Assert.AreEqual(typeof(string).GetProperty(nameof(String.Length)), propertyLength);
 
             MethodInfo methodAdd = Reflector.MemberOf(() => default(List<int>).Add(default(int))); // MethodInfo: List<int>.Add()
-            Assert.AreEqual(typeof(List<int>).GetMethod(nameof(List<int>.Add)), methodAdd);
+            Assert.AreEqual(typeof(List<int>).GetMethod(nameof(List<>.Add)), methodAdd);
         }
 
         #endregion

@@ -20,6 +20,14 @@ using System.Runtime.CompilerServices;
 
 #endregion
 
+#region Suppressions
+
+#if !(NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER)
+#pragma warning disable CS8604 // Possible null reference argument.
+#endif
+
+#endregion
+
 namespace KGySoft.CoreLibraries
 {
     /// <summary>
@@ -29,7 +37,7 @@ namespace KGySoft.CoreLibraries
     {
         #region Fields
 
-        private static readonly char[] newLineSeparators = { '\r', '\n' };
+        private static readonly char[] newLineSeparators = ['\r', '\n'];
 
         #endregion
 
@@ -169,7 +177,7 @@ namespace KGySoft.CoreLibraries
                 {
                     string? separator = separators[0];
                     if (!String.IsNullOrEmpty(separator))
-                        return StringSegment.GetNextSegment(ref rest, separator!);
+                        return StringSegment.GetNextSegment(ref rest, separator);
                 }
 
                 StringSegment result = rest;
@@ -301,7 +309,7 @@ namespace KGySoft.CoreLibraries
         #region Misc Tools
         
         /// <summary>
-        /// Extracts content of a single or double quoted string.
+        /// Extracts content of a single or double-quoted string.
         /// </summary>
         /// <param name="segment">The span to be extracted from quotes.</param>
         /// <returns>If <paramref name="segment"/> was surrounded by single or double quotes, returns a new string without the quotes; otherwise, returns <paramref name="segment"/>.</returns>

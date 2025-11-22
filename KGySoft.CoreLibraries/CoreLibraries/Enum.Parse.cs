@@ -21,6 +21,14 @@ using KGySoft.Collections;
 
 #endregion
 
+#region Suppressions
+
+#if !(NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER)
+#pragma warning disable CS8604 // Possible null reference argument.
+#endif
+
+#endregion
+
 namespace KGySoft.CoreLibraries
 {
     public static partial class Enum<TEnum>
@@ -56,7 +64,7 @@ namespace KGySoft.CoreLibraries
 
             // simple numeric value
             char c = s[0];
-            if (((c >= '0' && c <= '9') || c == '-' || c == '+') && s.TryParseIntQuick(underlyingInfo.IsSigned, underlyingInfo.MaxValue, out ulong numericValue))
+            if (c is >= '0' and <= '9' or '-' or '+' && s.TryParseIntQuick(underlyingInfo.IsSigned, underlyingInfo.MaxValue, out ulong numericValue))
             {
                 result = converter.ToEnum(numericValue);
                 return true;
@@ -68,7 +76,7 @@ namespace KGySoft.CoreLibraries
 
             ulong acc = 0UL;
             StringKeyedDictionary<ulong> dict = ignoreCase ? NameRawValuePairsIgnoreCase : NameRawValuePairs;
-            while (s.TryGetNextSegment(separator!, out StringSegmentInternal token))
+            while (s.TryGetNextSegment(separator, out StringSegmentInternal token))
             {
                 token.Trim();
                 if (token.Length == 0)
@@ -83,7 +91,7 @@ namespace KGySoft.CoreLibraries
 
                 // checking if is numeric token
                 c = token[0];
-                if (((c >= '0' && c <= '9') || c == '-' || c == '+') && token.TryParseIntQuick(underlyingInfo.IsSigned, underlyingInfo.MaxValue, out numericValue))
+                if (c is >= '0' and <= '9' or '-' or '+' && token.TryParseIntQuick(underlyingInfo.IsSigned, underlyingInfo.MaxValue, out numericValue))
                 {
                     acc |= numericValue;
                     continue;
@@ -193,7 +201,7 @@ namespace KGySoft.CoreLibraries
 
             // simple numeric value
             char c = s[0];
-            if (((c >= '0' && c <= '9') || c == '-' || c == '+') && s.TryParseIntQuick(underlyingInfo.IsSigned, underlyingInfo.MaxValue, out ulong numericValue))
+            if (c is >= '0' and <= '9' or '-' or '+' && s.TryParseIntQuick(underlyingInfo.IsSigned, underlyingInfo.MaxValue, out ulong numericValue))
             {
                 result = converter.ToEnum(numericValue);
                 return true;
@@ -220,7 +228,7 @@ namespace KGySoft.CoreLibraries
 
                 // checking if is numeric token
                 c = token[0];
-                if (((c >= '0' && c <= '9') || c == '-' || c == '+') && token.TryParseIntQuick(underlyingInfo.IsSigned, underlyingInfo.MaxValue, out numericValue))
+                if (c is >= '0' and <= '9' or '-' or '+' && token.TryParseIntQuick(underlyingInfo.IsSigned, underlyingInfo.MaxValue, out numericValue))
                 {
                     acc |= numericValue;
                     continue;
@@ -326,7 +334,7 @@ namespace KGySoft.CoreLibraries
 
             // simple numeric value
             char c = s[0];
-            if (((c >= '0' && c <= '9') || c == '-' || c == '+') && s.TryParseIntQuick(underlyingInfo.IsSigned, underlyingInfo.MaxValue, out ulong numericValue))
+            if (c is >= '0' and <= '9' or '-' or '+' && s.TryParseIntQuick(underlyingInfo.IsSigned, underlyingInfo.MaxValue, out ulong numericValue))
             {
                 result = converter.ToEnum(numericValue);
                 return true;
@@ -353,7 +361,7 @@ namespace KGySoft.CoreLibraries
 
                 // checking if is numeric token
                 c = token[0];
-                if (((c >= '0' && c <= '9') || c == '-' || c == '+') && token.TryParseIntQuick(underlyingInfo.IsSigned, underlyingInfo.MaxValue, out numericValue))
+                if (c is >= '0' and <= '9' or '-' or '+' && token.TryParseIntQuick(underlyingInfo.IsSigned, underlyingInfo.MaxValue, out numericValue))
                 {
                     acc |= numericValue;
                     continue;

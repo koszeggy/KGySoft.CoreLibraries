@@ -78,7 +78,7 @@ namespace KGySoft.Serialization.Binary
         /// can be omitted even when using <see cref="BinaryFormatter"/> or other <see cref="IFormatter"/> implementations.</para>
         /// <para>When the value of this property is <see langword="true"/>, the serialized stream will be shorter; however,
         /// deserialization might be slower, and type will be searched only in already loaded assemblies. When multiple
-        /// assemblies have types with the same name the retrieved type cannot determined.</para>
+        /// assemblies have types with the same name the retrieved type cannot be determined.</para>
         /// </remarks>
         public bool OmitAssemblyNameOnSerialize { get; set; }
 

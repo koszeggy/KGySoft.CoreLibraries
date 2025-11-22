@@ -320,13 +320,13 @@ namespace KGySoft.CoreLibraries
                 // getting the enumerator throws an exception for default immutable arrays so performing some pre-checks before examining the items
                 if (typeRef.IsGenericTypeOf(typeof(ImmutableArray<>)))
                 {
-                    bool isDefaultRef = (bool)Accessors.GetPropertyValue(reference, nameof(ImmutableArray<_>.IsDefault))!;
-                    bool isDefaultCheck = (bool)Accessors.GetPropertyValue(check, nameof(ImmutableArray<_>.IsDefault))!;
+                    bool isDefaultRef = (bool)Accessors.GetPropertyValue(reference, nameof(ImmutableArray<>.IsDefault))!;
+                    bool isDefaultCheck = (bool)Accessors.GetPropertyValue(check, nameof(ImmutableArray<>.IsDefault))!;
                     if (isDefaultRef && isDefaultCheck)
                         return true;
                     if (isDefaultRef || isDefaultCheck)
                     {
-                        Fail($"{typeRef.GetName(TypeNameKind.ShortName)}.{nameof(ImmutableArray<_>.IsDefault)} {isDefaultRef} <-> {isDefaultCheck}", errors);
+                        Fail($"{typeRef.GetName(TypeNameKind.ShortName)}.{nameof(ImmutableArray<>.IsDefault)} {isDefaultRef} <-> {isDefaultCheck}", errors);
                         return false;
                     }
                 }

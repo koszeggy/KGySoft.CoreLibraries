@@ -156,13 +156,13 @@ namespace KGySoft.CoreLibraries
 
 #if !NETSTANDARD2_0
             /// <summary>
-            /// Must be a separate instance because dynamic method references will never freed.
+            /// Must be a separate instance because dynamic method references will never be freed.
             /// Other problem if the original Random is a disposable secure random: invoking the delegate would throw an exception.
             /// </summary>
             private static readonly Random randomForDelegates = new FastRandom();
 
             private static readonly FieldInfo randomField = (FieldInfo)Reflector.MemberOf(() => randomForDelegates); 
-            private static readonly MethodInfo nextObjectGenMethod = typeof(RandomExtensions).GetMethod(nameof(NextObject), new[] { typeof(Random), typeof(GenerateObjectSettings) })!;
+            private static readonly MethodInfo nextObjectGenMethod = typeof(RandomExtensions).GetMethod(nameof(NextObject), [typeof(Random), typeof(GenerateObjectSettings)])!;
 #endif
 
             private static readonly Dictionary<Type, GenerateKnownType> knownTypes =
@@ -338,7 +338,7 @@ namespace KGySoft.CoreLibraries
                             continue;
                         }
 
-                        // Skipping if the requested type was non generic and is not compatible with current type (e.g. EventArgs -> List<>)
+                        // Skipping if the requested type was non-generic and is not compatible with current type (e.g. EventArgs -> List<>)
                         // Explanation: for example, IList is assignable from List<> definition but IList<int> is not assignable from List<> but only from List<int>
                         if (!type.IsGenericType && !type.IsAssignableFrom(t))
                             continue;
@@ -382,7 +382,7 @@ namespace KGySoft.CoreLibraries
                     constraints[i] = argDef.GetGenericParameterConstraints();
                     Type? arg = suggestedArguments.Length == argumentsToCreate.Length ? suggestedArguments[i] : null;
 
-                    // If we could not get the argument from provided type or it is not compatible with first constraint we put either first constraint or int/object
+                    // If we could not get the argument from provided type, or it is not compatible with first constraint we put either first constraint or int/object
                     if (arg == null || constraints[i].Length > 0 && !constraints[i][0].IsAssignableFrom(arg))
                         arg = constraints[i].Length >= 1 ? constraints[i][0] : valueTypeConstraint ? Reflector.IntType : Reflector.ObjectType;
 
@@ -400,7 +400,7 @@ namespace KGySoft.CoreLibraries
                 }
 
                 // Cleaning up arguments: due to substituting constraints arguments still can have generic argument definitions.
-                // This is another cycle because now every arguments are substituted.
+                // This is another cycle because now every argument is substituted.
                 for (int i = 0; i < argumentsToCreate.Length; i++)
                 {
                     Type? arg = argumentsToCreate[i];
@@ -650,7 +650,7 @@ namespace KGySoft.CoreLibraries
 
                 if (types.Length == 0)
                 {
-                    foreach (Assembly candidate in assemblies.Except(new[] { asm }).Shuffle(context.Random))
+                    foreach (Assembly candidate in assemblies.Except([asm]).Shuffle(context.Random))
                     {
                         types = AssemblyTypesCache[candidate];
                         if (types.Length != 0)
@@ -697,7 +697,7 @@ namespace KGySoft.CoreLibraries
                 else if (type == memberInfoType)
                     memberTypes = MemberTypes.All;
                 else
-                    // others (such as builders, etc): returning null to falling back default object creation
+                    // others (such as builders, etc.): returning null to falling back default object creation
                     return null;
 
                 Assembly[] assemblies = Reflector.GetLoadedAssemblies();
@@ -708,7 +708,7 @@ namespace KGySoft.CoreLibraries
                     return result;
 
                 // low performance fallback: shuffling
-                foreach (Assembly assembly in assemblies.Except(new[] { asm }).Shuffle(context.Random))
+                foreach (Assembly assembly in assemblies.Except([asm]).Shuffle(context.Random))
                 {
                     foreach (Type t in AssemblyTypesCache[assembly].Shuffle(context.Random))
                     {
@@ -851,7 +851,7 @@ namespace KGySoft.CoreLibraries
                 object result = Activator.CreateInstance(type)!;
 
                 // if key or value cannot be created just returning a default instance (by Activator, which is fast for value types)
-                context.PushMember(nameof(KeyValuePair<_, _>.Key));
+                context.PushMember(nameof(KeyValuePair<,>.Key));
                 try
                 {
                     if (!TryGenerateObject(args[0], ref context, out key))
@@ -862,7 +862,7 @@ namespace KGySoft.CoreLibraries
                     context.PopMember();
                 }
 
-                context.PushMember(nameof(KeyValuePair<_, _>.Value));
+                context.PushMember(nameof(KeyValuePair<,>.Value));
                 try
                 {
                     if (!TryGenerateObject(args[1], ref context, out value))
@@ -954,11 +954,11 @@ namespace KGySoft.CoreLibraries
                 if (!resolveType)
                     return false;
 
-                // We check all of the compatible types in random order.
-                // The try above could be in this foreach below but we try to avoid the shuffling if possible
+                // We check all the compatible types in random order.
+                // The try above could be in this foreach below, but we try to avoid the shuffling if possible
                 if (!type.IsSealed && (context.Settings.TryResolveInterfacesAndAbstractTypes || context.Settings.AllowDerivedTypesForNonSealedClasses))
                 {
-                    foreach (Type candidateType in typeCandidates!.Except(new[] { typeToCreate }).Shuffle(context.Random))
+                    foreach (Type candidateType in typeCandidates!.Except([typeToCreate]).Shuffle(context.Random))
                     {
                         if (candidateType == type && TryCreateConcreteObject(candidateType, ref context, out result)
                             || candidateType != type && TryGenerateObject(candidateType, ref context, out result, true))
@@ -1198,7 +1198,7 @@ namespace KGySoft.CoreLibraries
             }
 
             private static Type[] GetKeyValueTypes(Type elementType)
-                => elementType.IsGenericType ? elementType.GetGenericArguments() : new[] { Reflector.ObjectType, Reflector.ObjectType };
+                => elementType.IsGenericType ? elementType.GetGenericArguments() : [Reflector.ObjectType, Reflector.ObjectType];
 
 #if !NET35
             private static object GenerateBigInteger(ref GeneratorContext context)

@@ -480,7 +480,7 @@ namespace KGySoft.Collections
         /// <see cref="Count"/> is the number of elements that are actually in the <see cref="CircularList{T}"/>.</para>
         /// <para>Capacity is always greater than or equal to <see cref="Count"/>. If <see cref="Count"/> exceeds <see cref="Capacity"/> while adding elements,
         /// the capacity is increased by automatically reallocating the internal array before copying the old elements and adding the new elements.</para>
-        /// <para>If the capacity is significantly larger than the count and you want to reduce the memory used by the <see cref="CircularList{T}"/>,
+        /// <para>If the capacity is significantly larger than the count, and you want to reduce the memory used by the <see cref="CircularList{T}"/>,
         /// you can decrease capacity by calling the <see cref="TrimExcess">TrimExcess</see> method or by setting the <see cref="Capacity"/> property explicitly.
         /// When the value of <see cref="Capacity"/> is set explicitly, the internal array is also reallocated to accommodate the specified capacity,
         /// and all the elements are copied.</para>
@@ -1160,35 +1160,34 @@ namespace KGySoft.Collections
             if (collection == null!)
                 Throw.ArgumentNullException(Argument.collection);
 
-            using (IEnumerator<T> enumerator = collection.GetEnumerator())
+            using IEnumerator<T> enumerator = collection.GetEnumerator();
+            
+            // Copying elements while possible
+            int elementsCopied = 0;
+            while (count > 0 && enumerator.MoveNext())
             {
-                // Copying elements while possible
-                int elementsCopied = 0;
-                while (count > 0 && enumerator.MoveNext())
-                {
-                    SetElementAt(index + elementsCopied, enumerator.Current);
-                    elementsCopied += 1;
-                    count -= 1;
-                }
-
-                // all inserted, removing the rest
-                if (count > 0)
-                {
-                    RemoveRange(index + elementsCopied, count);
-                    return;
-                }
-
-                // all removed (overwritten), inserting the rest
-                IList<T> rest = collection is IList<T> list ? new ListSegment<T>(list, elementsCopied) : enumerator.RestToList();
-                if (rest.Count > 0)
-                {
-                    InsertRange(index + elementsCopied, rest);
-                    return;
-                }
-
-                // elements to replace had the same size
-                version += 1;
+                SetElementAt(index + elementsCopied, enumerator.Current);
+                elementsCopied += 1;
+                count -= 1;
             }
+
+            // all inserted, removing the rest
+            if (count > 0)
+            {
+                RemoveRange(index + elementsCopied, count);
+                return;
+            }
+
+            // all removed (overwritten), inserting the rest
+            IList<T> rest = collection is IList<T> list ? new ListSegment<T>(list, elementsCopied) : enumerator.RestToList();
+            if (rest.Count > 0)
+            {
+                InsertRange(index + elementsCopied, rest);
+                return;
+            }
+
+            // elements to replace had the same size
+            version += 1;
         }
 
         #endregion
@@ -2228,12 +2227,9 @@ namespace KGySoft.Collections
             // as simple enumerable
             if (asArray == null && asCollection == null)
             {
-                using (var enumerator = collection.GetEnumerator())
-                {
-                    while (enumerator.MoveNext())
-                        AddLast(enumerator.Current);
-                }
-
+                using var enumerator = collection.GetEnumerator();
+                while (enumerator.MoveNext())
+                    AddLast(enumerator.Current);
                 return;
             }
 

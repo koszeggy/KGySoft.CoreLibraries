@@ -231,7 +231,7 @@ namespace KGySoft.Resources
         /// <remarks>
         /// <para>If <paramref name="value"/> is <see langword="null"/>, and this <see cref="IExpandoResourceSet"/> instance
         /// is a hybrid resource set, <see cref="GetObject">GetObject</see> will always return <see langword="null"/>, even if <paramref name="name"/> is
-        /// defined in the original binary resource set. Thus you can force to take the parent resource set for example in case of a <see cref="HybridResourceManager"/>.</para>
+        /// defined in the original binary resource set. Thus, you can force to take the parent resource set for example in case of a <see cref="HybridResourceManager"/>.</para>
         /// <para>To remove the user-defined content and reset the original resource defined in the binary resource set (if any), use
         /// the <see cref="RemoveObject">RemoveObject</see> method.</para>
         /// <para><paramref name="value"/> can be a <see cref="ResXDataNode"/> as well, its value will be interpreted correctly and added to the <see cref="IExpandoResourceSet"/> with the specified <paramref name="name"/>.</para>
@@ -281,7 +281,7 @@ namespace KGySoft.Resources
         /// If this <see cref="IExpandoResourceSet"/> represents a hybrid resource set, then the original value of <paramref name="name"/>
         /// will be restored (if existed).
         /// </summary>
-        /// <param name="name">Name of the resource value to remove. Name is treated case sensitive.</param>
+        /// <param name="name">Name of the resource value to remove. Name is treated case-sensitive.</param>
         /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceSet"/> is already disposed.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="name" /> is <see langword="null" />.</exception>
         /// <remarks>
@@ -294,7 +294,7 @@ namespace KGySoft.Resources
         /// <summary>
         /// Removes a metadata object in the current <see cref="IExpandoResourceSet"/> with the specified <paramref name="name"/>.
         /// </summary>
-        /// <param name="name">Name of the metadata value to remove. Name is treated case sensitive.</param>
+        /// <param name="name">Name of the metadata value to remove. Name is treated case-sensitive.</param>
         /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceSet"/> is already disposed.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="name" /> is <see langword="null" />.</exception>
         void RemoveMetaObject(string name);

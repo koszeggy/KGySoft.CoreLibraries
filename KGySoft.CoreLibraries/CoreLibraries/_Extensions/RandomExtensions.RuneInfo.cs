@@ -163,7 +163,7 @@ namespace KGySoft.CoreLibraries
                         if (dict.TryGetValue(lastCategory.Value, out var list))
                             list.Add((currentStart, currentLength));
                         else
-                            dict.Add(lastCategory.Value, new List<(int, int)> { (currentStart, currentLength) });
+                            dict.Add(lastCategory.Value, [(currentStart, currentLength)]);
                     }
 
                     lastCategory = category;
@@ -175,7 +175,7 @@ namespace KGySoft.CoreLibraries
                 if (dict.TryGetValue(lastCategory!.Value, out var set))
                     set.Add((currentStart, currentLength));
                 else
-                    dict.Add(lastCategory.Value, new List<(int, int)> { (currentStart, currentLength) });
+                    dict.Add(lastCategory.Value, [(currentStart, currentLength)]);
 
                 var result = new Dictionary<UnicodeCategory, RuneSet>(dict.Count, ComparerHelper<UnicodeCategory>.EqualityComparer);
                 foreach (KeyValuePair<UnicodeCategory, List<(int, int)>> item in dict)

@@ -411,7 +411,7 @@ namespace KGySoft.Resources
         {
             #region Fields
 
-            internal static MemoryStreamConverter? singletonInstance;
+            private static MemoryStreamConverter? singletonInstance;
 
             #endregion
 
@@ -444,7 +444,7 @@ namespace KGySoft.Resources
 
         #region Static Fields
 
-        private static readonly char[] specialChars = { ' ', '\r', '\n' };
+        private static readonly char[] specialChars = [' ', '\r', '\n'];
         private static readonly Type[] nonCompatibleModeNativeTypes =
         {
             Reflector.IntPtrType,
@@ -494,7 +494,7 @@ namespace KGySoft.Resources
 
         /// <summary>
         /// For file references may contain an in-memory cached serialized value of <see cref="cachedValue"/>.
-        /// NOTE: This used to be a simple binary serialized byte[] field but after obsoleting the IFormatter infrastructure it wouldn't be too future proof even
+        /// NOTE: This used to be a simple binary-serialized byte[] field but after obsoleting the IFormatter infrastructure it wouldn't be too future-proof even
         /// when serializing by the safe BinarySerializationFormatter if ISerializable implementation will throw PlatformNotSupportedException in the future.
         /// </summary>
         private DataNodeInfo? cloneData;
@@ -1036,7 +1036,7 @@ namespace KGySoft.Resources
         /// <note type="security">When using this method it is guaranteed that no new assembly is loaded during the deserialization.
         /// To allow loading assemblies or to use a custom <see cref="ITypeResolutionService"/> use the <see cref="GetValue">GetValue</see> method instead.</note>
         /// <para>If the stored value currently exists in memory, it is returned directly.</para>
-        /// <para>If the resource is a file reference and is has not been deserialized yet, then this method throws a <see cref="NotSupportedException"/>.
+        /// <para>If the resource is a file reference, and it has not been deserialized yet, then this method throws a <see cref="NotSupportedException"/>.
         /// You can only use the <see cref="GetValue">GetValue</see> method to deserialize a file reference.</para>
         /// </remarks>
         public object? GetValueSafe(bool cleanupRawData = false)
@@ -1061,7 +1061,7 @@ namespace KGySoft.Resources
         /// <note type="security">When using this method it is guaranteed that no new assembly is loaded during the deserialization.
         /// To allow loading assemblies or to use a custom <see cref="ITypeResolutionService"/> use the <see cref="GetValue">GetValue</see> method instead.</note>
         /// <para>If the stored value currently exists in memory, it is returned directly.</para>
-        /// <para>If the resource is a file reference and is has not been deserialized yet, then this method throws a <see cref="NotSupportedException"/>.
+        /// <para>If the resource is a file reference, and it has not been deserialized yet, then this method throws a <see cref="NotSupportedException"/>.
         /// You can only use the <see cref="GetValue">GetValue</see> method to deserialize a file reference.</para>
         /// </remarks>
         public object? GetValueSafe(Type? expectedType, bool cleanupRawData = false)
@@ -1087,7 +1087,7 @@ namespace KGySoft.Resources
         /// <note type="security">When using this method it is guaranteed that no new assembly is loaded during the deserialization.
         /// To allow loading assemblies or to use a custom <see cref="ITypeResolutionService"/> use the <see cref="GetValue">GetValue</see> method instead.</note>
         /// <para>If the stored value currently exists in memory, it is returned directly.</para>
-        /// <para>If the resource is a file reference and is has not been deserialized yet, then this method throws a <see cref="NotSupportedException"/>.
+        /// <para>If the resource is a file reference, and it has not been deserialized yet, then this method throws a <see cref="NotSupportedException"/>.
         /// You can only use the <see cref="GetValue">GetValue</see> method to deserialize a file reference.</para>
         /// </remarks>
         public T? GetValueSafe<T>(bool cleanupRawData = false)
@@ -1317,7 +1317,7 @@ namespace KGySoft.Resources
             {
                 // Special handling for non-derived MemoryStream in compatible format by BinaryFormatter, which used to be serializable so we must provide compatibility for it
                 // because the designer may produce embedded MemoryStreams in .resx files: https://github.com/dotnet/runtime/issues/13349#issuecomment-528112760
-                // So we just skip skip non-primitive or non-array fields (as of now there is only a Task<int>/CachedCompletedInt32Task field to skip).
+                // So we just skip non-primitive or non-array fields (as of now there is only a Task<int>/CachedCompletedInt32Task field to skip).
                 // Note: In .NET Core 2.x MemoryStream was already non-serializable but the Task field still had the [NonSerialized] property
                 Debug.Assert(e.Object.GetType() == typeof(MemoryStream));
                 Type fieldType = e.Field.FieldType;
@@ -1562,7 +1562,7 @@ namespace KGySoft.Resources
                 if (type != Reflector.RuntimeType)
                     return valueData.Parse(type) ?? ResXNullRef.Value;
 
-                // Here parsing runtime type. Parse would handle also runtime type but we need a different behavior.
+                // Here parsing runtime type. Parse would handle also runtime type, but we need a different behavior.
                 // Passing null as expectedType so in safe mode only known types are accepted, whereas in unsafe mode even assembly loading is allowed
                 object? result = valueData == null ? ResXNullRef.Value : ResolveType(valueData, typeResolver, safeMode, null);
 
@@ -1581,7 +1581,7 @@ namespace KGySoft.Resources
                 return valueData == null ? ResXNullRef.Value : FromBase64WrappedString(valueData);
 
 #if !NETFRAMEWORK
-            // 4.) CultureInfo - There is no CultureInfoConverter in .NET Core but we handle it in InitNodeInfo
+            // 4.) CultureInfo - There is no CultureInfoConverter in .NET Core, but we handle it in InitNodeInfo
             if (type == typeof(CultureInfo))
                 return valueData == null ? ResXNullRef.Value : new CultureInfo(valueData);
 #endif
@@ -1754,7 +1754,7 @@ namespace KGySoft.Resources
                 return DeserializeFromBinarySerializationFormatter(dataNodeInfo, typeResolver, safeMode, expectedType);
             }
 
-            // 4.) SoapFormatter. We do not reference it explicitly. If cannot be loaded, NotSupportedException will be thrown.
+            // 4.) SoapFormatter. We do not reference it explicitly. If it cannot be loaded, NotSupportedException will be thrown.
 #if NETFRAMEWORK
             if (!safeMode && mimeType.In(ResXCommon.SoapSerializedMimeTypes) && TryDeserializeBySoapFormatter(dataNodeInfo, out object? value))
                 return value;

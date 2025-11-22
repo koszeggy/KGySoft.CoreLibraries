@@ -43,14 +43,14 @@ namespace KGySoft.Resources
     /// That means the .resx content is read on demand as you enumerate the contents (the contents are cached so if you retrieve an enumerator for the second time it will not process the .resx file again). It can be useful
     /// if you are looking for one specific key, after which you break the enumeration or if you want to process an incomplete or corrupted .resx file up to the point it can be parsed correctly.</item>
     /// <item>A .resx file may contain a key more than once (though it is somewhat incorrect). If <see cref="ResXResourceReader.AllowDuplicatedKeys">ResXResourceReader.AllowDuplicatedKeys</see> is <see langword="true"/>,
-    /// you can retrieve all of the redefined values.</item>
+    /// you can retrieve all the redefined values.</item>
     /// <item><see cref="ResXResourceReader"/> allows you to handle type names in a customized way (how names are mapped to a <see cref="Type"/>). To use custom name resolution pass an <see cref="ITypeResolutionService"/> instance to one of the constructors.</item>
     /// </list>
     /// </term></item>
     /// <item><term><see cref="ResXResourceWriter"/></term>
     /// <term>Using <see cref="ResXResourceWriter"/> is the most low-level option to write the content of a .resx file. Use this if at least one of the following points are applicable for you:
     /// <list type="bullet">
-    /// <item>You want to have full control over the order of the dumped resources, metadata and aliases or you want to re-use a key or redefine an alias during the dump (though it is not recommended).</item>
+    /// <item>You want to have full control over the order of the dumped resources, metadata and aliases, or you want to re-use a key or redefine an alias during the dump (though it is not recommended).</item>
     /// <item>You want to dump the full .resx header including the comments dumped also by Visual Studio when you create a resource file (see <see cref="ResXResourceWriter.OmitHeader">ResXResourceWriter.OmitHeader</see> property).</item>
     /// <item>You want to use customized type names when non-string resources are added. You can achieve this by passing a <see cref="Func{T,TResult}">Func&lt;Type, string&gt;</see> delegate to one of the constructors.</item>
     /// </list></term></item>
@@ -74,7 +74,7 @@ namespace KGySoft.Resources
     /// <term>The <see cref="ResXResourceManager"/> handles resources in the same manner as <see cref="ResourceManager"/> does but instead of working with binary compiled resources it uses XML resources (.resx files) directly.
     /// It takes the culture hierarchy into account so querying a resource by a specific <see cref="CultureInfo"/> may end up loading multiple resource files.
     /// It stores <see cref="ResXResourceSet"/> instances internally to store the resources of the different cultures.
-    /// As an <see cref="IExpandoResourceManager"/> implementation it is able to add/replace/remove entries in the resource sets belonging to specified cultures and it can save the changed contents.
+    /// As an <see cref="IExpandoResourceManager"/> implementation it is able to add/replace/remove entries in the resource sets belonging to specified cultures, and it can save the changed contents.
     /// <br/>Specialization compared to <see cref="ResXResourceSet"/>:
     /// <list type="bullet">
     /// <item>The <see cref="ResXResourceManager"/> loads/saves the resource sets always from/into files.

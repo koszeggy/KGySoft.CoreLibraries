@@ -21,8 +21,15 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
 
-using KGySoft.Collections;
 using KGySoft.Reflection;
+
+#endregion
+
+#region Suppressions
+
+#if NETCOREAPP3_0_OR_GREATER && !NET7_0_OR_GREATER
+#pragma warning disable CS8603 // Possible null reference return.
+#endif
 
 #endregion
 
@@ -128,7 +135,7 @@ namespace KGySoft.CoreLibraries
             GenerateToUInt64(builder, underlyingType, tEnum);
             GenerateToInt64(builder, underlyingType, tEnum);
 
-            return builder.CreateType()!;
+            return builder.CreateType();
         }
 
         /// <summary><![CDATA[
@@ -152,7 +159,7 @@ namespace KGySoft.CoreLibraries
         /// ]]></summary>
         private static void GenerateEquals(TypeBuilder type, Type tEnum)
         {
-            MethodBuilder methodEquals = type.DefineMethod(nameof(EnumComparer<_>.Equals), MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.HideBySig);
+            MethodBuilder methodEquals = type.DefineMethod(nameof(EnumComparer<>.Equals), MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.HideBySig);
             methodEquals.SetReturnType(Reflector.BoolType);
             methodEquals.SetParameters(tEnum, tEnum);
             methodEquals.DefineParameter(1, ParameterAttributes.None, "x");
@@ -174,7 +181,7 @@ namespace KGySoft.CoreLibraries
         /// ]]></summary>
         private static void GenerateGetHashCode(TypeBuilder type, Type underlyingType, Type tEnum)
         {
-            MethodBuilder methodGetHashCode = type.DefineMethod(nameof(EnumComparer<_>.GetHashCode), MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.HideBySig);
+            MethodBuilder methodGetHashCode = type.DefineMethod(nameof(EnumComparer<>.GetHashCode), MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.HideBySig);
             methodGetHashCode.SetReturnType(Reflector.IntType);
             methodGetHashCode.SetParameters(tEnum);
             methodGetHashCode.DefineParameter(1, ParameterAttributes.None, "obj");
@@ -217,8 +224,8 @@ namespace KGySoft.CoreLibraries
         /// ]]></summary>
         private static void GenerateCompare(TypeBuilder type, Type underlyingType, Type tEnum)
         {
-            MethodBuilder methodCompare = type.DefineMethod(nameof(EnumComparer<_>.Compare), MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.HideBySig);
-            MethodInfo underlyingCompareTo = underlyingType.GetMethod(nameof(IComparable<_>.CompareTo), new[] { underlyingType })!;
+            MethodBuilder methodCompare = type.DefineMethod(nameof(EnumComparer<>.Compare), MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.HideBySig);
+            MethodInfo underlyingCompareTo = underlyingType.GetMethod(nameof(IComparable<>.CompareTo), [underlyingType])!;
             methodCompare.SetReturnType(Reflector.IntType);
             methodCompare.SetParameters(tEnum, tEnum);
             methodCompare.DefineParameter(1, ParameterAttributes.None, "x");
@@ -240,7 +247,7 @@ namespace KGySoft.CoreLibraries
         /// ]]></summary>
         private static void GenerateToEnum(TypeBuilder type, Type underlyingType, Type tEnum)
         {
-            MethodBuilder methodToEnum = type.DefineMethod(nameof(EnumComparer<_>.ToEnum), MethodAttributes.Family | MethodAttributes.Virtual | MethodAttributes.HideBySig);
+            MethodBuilder methodToEnum = type.DefineMethod(nameof(EnumComparer<>.ToEnum), MethodAttributes.Family | MethodAttributes.Virtual | MethodAttributes.HideBySig);
             methodToEnum.SetReturnType(tEnum);
             methodToEnum.SetParameters(Reflector.ULongType);
             methodToEnum.DefineParameter(1, ParameterAttributes.None, "value");
@@ -256,7 +263,7 @@ namespace KGySoft.CoreLibraries
         /// ]]></summary>
         private static void GenerateToUInt64(TypeBuilder type, Type underlyingType, Type tEnum)
         {
-            MethodBuilder methodToUInt64 = type.DefineMethod(nameof(EnumComparer<_>.ToUInt64), MethodAttributes.Family | MethodAttributes.Virtual | MethodAttributes.HideBySig);
+            MethodBuilder methodToUInt64 = type.DefineMethod(nameof(EnumComparer<>.ToUInt64), MethodAttributes.Family | MethodAttributes.Virtual | MethodAttributes.HideBySig);
             methodToUInt64.SetReturnType(Reflector.ULongType);
             methodToUInt64.SetParameters(tEnum);
             methodToUInt64.DefineParameter(1, ParameterAttributes.None, "value");
@@ -281,7 +288,7 @@ namespace KGySoft.CoreLibraries
         /// ]]></summary>
         private static void GenerateToInt64(TypeBuilder type, Type underlyingType, Type tEnum)
         {
-            MethodBuilder methodToUInt64 = type.DefineMethod(nameof(EnumComparer<_>.ToInt64), MethodAttributes.Family | MethodAttributes.Virtual | MethodAttributes.HideBySig);
+            MethodBuilder methodToUInt64 = type.DefineMethod(nameof(EnumComparer<>.ToInt64), MethodAttributes.Family | MethodAttributes.Virtual | MethodAttributes.HideBySig);
             methodToUInt64.SetReturnType(Reflector.LongType);
             methodToUInt64.SetParameters(tEnum);
             methodToUInt64.DefineParameter(1, ParameterAttributes.None, "value");

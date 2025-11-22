@@ -20,7 +20,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+#if !NET10_0_OR_GREATER
 using System.Linq;
+#endif
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Security;
@@ -441,13 +443,13 @@ namespace KGySoft.Serialization.Binary
                 Type elementType = GetElementType(type);
                 if (UsesComparerHelper)
                     return HasEqualityComparer
-                        ? typeof(ComparerHelper<>).GetPropertyValue(elementType, nameof(ComparerHelper<_>.EqualityComparer))
-                        : typeof(ComparerHelper<>).GetPropertyValue(elementType, nameof(ComparerHelper<_>.Comparer));
+                        ? typeof(ComparerHelper<>).GetPropertyValue(elementType, nameof(ComparerHelper<>.EqualityComparer))
+                        : typeof(ComparerHelper<>).GetPropertyValue(elementType, nameof(ComparerHelper<>.Comparer));
                 if (HasStringSegmentComparer)
                     return StringSegmentComparer.Ordinal;
                 return HasEqualityComparer
-                    ? typeof(EqualityComparer<>).GetPropertyValue(elementType, nameof(EqualityComparer<_>.Default))
-                    : typeof(Comparer<>).GetPropertyValue(elementType, nameof(Comparer<_>.Default));
+                    ? typeof(EqualityComparer<>).GetPropertyValue(elementType, nameof(EqualityComparer<>.Default))
+                    : typeof(Comparer<>).GetPropertyValue(elementType, nameof(Comparer<>.Default));
             }
 
             private object? GetDefaultValueComparer(Type type)
@@ -455,7 +457,7 @@ namespace KGySoft.Serialization.Binary
                 Debug.Assert(IsGeneric && IsDictionary && !UsesComparerHelper && !HasStringSegmentComparer);
 
                 Type valueType = type.GetGenericArguments()[1];
-                return typeof(EqualityComparer<>).GetPropertyValue(valueType, nameof(EqualityComparer<_>.Default));
+                return typeof(EqualityComparer<>).GetPropertyValue(valueType, nameof(EqualityComparer<>.Default));
             }
 
             private object CreateCollection(DataTypeDescriptor descriptor, int capacity, bool isCaseInsensitive, bool isAndHash, object? comparer, object? valueComparer)

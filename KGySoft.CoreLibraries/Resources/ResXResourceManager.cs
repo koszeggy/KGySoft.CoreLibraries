@@ -47,8 +47,8 @@ namespace KGySoft.Resources
     /// <remarks>
     /// <para><see cref="ResXResourceManager"/> class is derived from <see cref="ResourceManager"/> so it can be used the same way.
     /// The main difference is that instead of working with binary compiled resources the <see cref="ResXResourceManager"/> class uses XML resources (.resx files) directly.
-    /// As an <see cref="IExpandoResourceManager"/> implementation it is able to add/replace/remove entries in the resource sets belonging to specified cultures and it can save the changed contents.</para>
-    /// <para>See the <a href="#comparison">Comparison with ResourceManager</a> section to see all of the differences.</para>
+    /// As an <see cref="IExpandoResourceManager"/> implementation it is able to add/replace/remove entries in the resource sets belonging to specified cultures, and it can save the changed contents.</para>
+    /// <para>See the <a href="#comparison">Comparison with ResourceManager</a> section to see all the differences.</para>
     /// <note type="tip">To see when to use the <see cref="ResXResourceReader"/>, <see cref="ResXResourceWriter"/>, <see cref="ResXResourceSet"/>, <see cref="ResXResourceManager"/>, <see cref="HybridResourceManager"/> and <see cref="DynamicResourceManager"/>
     /// classes see the documentation of the <see cref="N:KGySoft.Resources">KGySoft.Resources</see> namespace.</note>
     /// </remarks>
@@ -61,7 +61,7 @@ namespace KGySoft.Resources
     /// <item>In Solution Explorer right click on <c>ConsoleApp1</c>, Add, New Folder, name it <c>Resources</c>.</item>
     /// <item>In Solution Explorer right click on <c>Resources</c>, Add, New Item, Resources File.
     /// <br/><img src="../Help/Images/NewResourcesFile.png" alt="New Resources file"/></item>
-    /// <item>In Solution Explorer right click on the new resource file (<c>Resource1.resx</c> if not named otherwise) and select Properties</item>
+    /// <item>In Solution Explorer right-click on the new resource file (<c>Resource1.resx</c> if not named otherwise) and select Properties</item>
     /// <item>The default value of <c>Build Action</c> is <c>Embedded Resource</c>, which means that the resource will be compiled into the assembly and will be able to be read by the <see cref="ResourceManager"/> class.
     /// To be able to handle it by the <see cref="ResXResourceManager"/> we might want to deploy the .resx file with the application. To do so, select <c>Copy if newer</c> at <c>Copy to Output directory</c>.
     /// If we want to use purely the .resx file, then we can change the <c>Build Action</c> to <c>None</c> and we can clear the default <c>Custom Tool</c> value because we do not need the generated file.
@@ -215,10 +215,10 @@ namespace KGySoft.Resources
     /// <item><see cref="ResXResourceManager(string,CultureInfo)">ResXResourceManager(baseName string, CultureInfo neutralResourcesLanguage = null)</see>
     /// looks up resources in <c>baseName.cultureName.resx</c> files, where <c>baseName.resx</c> contains the resource set of the ultimate fallback culture (also known as default or invariant or neutral resources culture).
     /// If <c>neutralResourcesLanguage</c> is specified, then <see cref="ResXResourceManager"/> will use the <c>baseName.resx</c> file when the culture to be used equals to the <c>neutralResourcesLanguage</c>.
-    /// If <c>neutralResourcesLanguage</c> is not specified, then the default culture is auto detected by the current application's <see cref="NeutralResourcesLanguageAttribute"/>.
+    /// If <c>neutralResourcesLanguage</c> is not specified, then the default culture is auto-detected by the current application's <see cref="NeutralResourcesLanguageAttribute"/>.
     /// If it is not defined, then <see cref="CultureInfo.InvariantCulture">CultureInfo.InvariantCulture</see> will be used as default culture.
     /// <code lang="C#">var manager = new ResXResourceManager("MyResources", CultureInfo.GetCultureInfo("en-US"));</code></item>
-    /// <item><see cref="ResXResourceManager(string,Assembly)">ResXResourceManager(baseName string, Assembly assembly)</see> is similar to the previous one, except that
+    /// <item><see cref="ResXResourceManager(string,Assembly)"><![CDATA[ResXResourceManager(baseName string, Assembly assembly)]]></see> is similar to the previous one, except that
     /// it does not set the default culture explicitly but tries to detect it from the provided <see cref="Assembly"/>. If it has a <see cref="NeutralResourcesLanguageAttribute"/> defined,
     /// then it will be used; otherwise, the <see cref="CultureInfo.InvariantCulture">CultureInfo.InvariantCulture</see> will be used as the default culture.
     /// <code lang="C#">var manager = new ResXResourceManager("MyResources", typeof(Example).Assembly);</code></item>
@@ -420,7 +420,7 @@ namespace KGySoft.Resources
 
         /// <summary>
         /// The lastly used resource set. Unlike in base, this is not necessarily the resource set in which a result
-        /// has been found but the resource set was requested last time. In cases it means difference this way performs usually better (no unneeded traversal again and again).
+        /// has been found, but the resource set was requested last time. This way it usually performs better (no unneeded traversal again and again).
         /// </summary>
         [NonSerialized]private KeyValuePair<string, ResXResourceSet> lastUsedResourceSet;
 
@@ -610,7 +610,7 @@ namespace KGySoft.Resources
         /// </summary>
         /// <param name="baseName">A base name that is the prefix of the resource files.
         /// For example, the prefix for the resource file named <c>Resource1.en-US.resx</c> is <c>Resource1</c>.</param>
-        /// <param name="assembly">The assembly, from which the language of the neutral resources is tried to be auto detected. See the <strong>Remarks</strong> section for details.</param>
+        /// <param name="assembly">The assembly, from which the language of the neutral resources is tried to be auto-detected. See the <strong>Remarks</strong> section for details.</param>
         /// <remarks>
         /// <para>The <see cref="ResXResourceManager"/> looks up resources in <c>baseName.cultureName.resx</c> files, where <c>baseName.resx</c> contains the resource set of the
         /// ultimate fallback culture (also known as default or invariant or neutral resources culture).</para>
@@ -643,7 +643,7 @@ namespace KGySoft.Resources
         /// <remarks>
         /// <para>The <see cref="ResXResourceManager"/> looks up resources in <c>baseName.cultureName.resx</c> files, where <c>baseName.resx</c> contains the resource set of the
         /// ultimate fallback culture (also known as default or invariant or neutral resources culture).</para>
-        /// <para>If <paramref name="neutralResourcesLanguage"/> is <see langword="null"/>, then the default culture is auto detected by the current application's <see cref="NeutralResourcesLanguageAttribute"/>.
+        /// <para>If <paramref name="neutralResourcesLanguage"/> is <see langword="null"/>, then the default culture is auto-detected by the current application's <see cref="NeutralResourcesLanguageAttribute"/>.
         /// If it is not defined, then <see cref="CultureInfo.InvariantCulture">CultureInfo.InvariantCulture</see> will be used as default culture.</para>
         /// </remarks>
         public ResXResourceManager(string baseName, CultureInfo? neutralResourcesLanguage = null)
@@ -780,6 +780,7 @@ namespace KGySoft.Resources
                 ? null
                 : rs as ResXResourceSet ?? ((ProxyResourceSet)rs).ResXResourceSet;
 
+        [SuppressMessage("ReSharper", "GenericEnumeratorNotDisposed", Justification = "False alarm, IDictionaryEnumerator is not a generic enumerator and is not expected to be disposable")]
         private static void ReleaseResourceSets(IDictionary resourceSets)
         {
             // this enumerates both Hashtable and StringKeyedDictionary the same way.
@@ -850,7 +851,7 @@ namespace KGySoft.Resources
         /// <remarks>
         /// <para>Depending on the value of the <see cref="CloneValues"/> property, the <see cref="O:KGySoft.Resources.ResXResourceManager.GetObject">GetObject</see> methods return either
         /// a full copy of the specified resource, or always the same instance. For memory streams none of them are ideal because a full copy duplicates the inner buffer of a possibly large
-        /// array of bytes, whereas returning the same stream instance can cause issues with conflicting positions or disposed state. Therefore the <see cref="O:KGySoft.Resources.ResXResourceManager.GetStream">GetStream</see> methods
+        /// array of bytes, whereas returning the same stream instance can cause issues with conflicting positions or disposed state. Therefore, the <see cref="O:KGySoft.Resources.ResXResourceManager.GetStream">GetStream</see> methods
         /// can be used to obtain a new read-only <see cref="MemoryStream"/> wrapper around the same internal buffer, regardless the current value of the <see cref="CloneValues"/> property.</para>
         /// <para><see cref="O:KGySoft.Resources.ResXResourceManager.GetStream">GetStream</see> can be used also for byte array resources. However, if the value is returned from compiled resources, then always a new copy of the byte array will be wrapped.</para>
         /// <para>If <see cref="SafeMode"/> is <see langword="true"/> and <paramref name="name"/> is neither a <see cref="MemoryStream"/> nor a byte array resource, then
@@ -878,7 +879,7 @@ namespace KGySoft.Resources
         /// <remarks>
         /// <para>Depending on the value of the <see cref="CloneValues"/> property, the <see cref="O:KGySoft.Resources.ResXResourceManager.GetObject">GetObject</see> methods return either
         /// a full copy of the specified resource, or always the same instance. For memory streams none of them are ideal because a full copy duplicates the inner buffer of a possibly large
-        /// array of bytes, whereas returning the same stream instance can cause issues with conflicting positions or disposed state. Therefore the <see cref="O:KGySoft.Resources.ResXResourceManager.GetStream">GetStream</see> methods
+        /// array of bytes, whereas returning the same stream instance can cause issues with conflicting positions or disposed state. Therefore, the <see cref="O:KGySoft.Resources.ResXResourceManager.GetStream">GetStream</see> methods
         /// can be used to obtain a new read-only <see cref="MemoryStream"/> wrapper around the same internal buffer, regardless the current value of the <see cref="CloneValues"/> property.</para>
         /// <para><see cref="O:KGySoft.Resources.ResXResourceManager.GetStream">GetStream</see> can be used also for byte array resources. However, if the value is returned from compiled resources, then always a new copy of the byte array will be wrapped.</para>
         /// <para>If <see cref="SafeMode"/> is <see langword="true"/> and <paramref name="name"/> is neither a <see cref="MemoryStream"/> nor a byte array resource, then
@@ -909,7 +910,7 @@ namespace KGySoft.Resources
         /// <remarks>
         /// <para>Depending on the value of the <see cref="CloneValues"/> property, the <see cref="O:KGySoft.Resources.ResXResourceManager.GetObject">GetObject</see> methods return either
         /// a full copy of the specified resource, or always the same instance. For memory streams and byte arrays none of them are ideal because a full copy duplicates the inner buffer of a possibly large
-        /// array of bytes, whereas returning the same stream instance can cause issues with conflicting positions or disposed state. Therefore the <see cref="O:KGySoft.Resources.ResXResourceManager.GetStream">GetStream</see> methods
+        /// array of bytes, whereas returning the same stream instance can cause issues with conflicting positions or disposed state. Therefore, the <see cref="O:KGySoft.Resources.ResXResourceManager.GetStream">GetStream</see> methods
         /// can be used to obtain a new read-only <see cref="MemoryStream"/> wrapper around the same internal buffer, regardless the current value of the <see cref="CloneValues"/> property.</para>
         /// <para><see cref="string"/> values are not duplicated in memory, regardless the value of the <see cref="CloneValues"/> property.</para>
         /// </remarks>
@@ -934,7 +935,7 @@ namespace KGySoft.Resources
         /// <remarks>
         /// <para>Depending on the value of the <see cref="CloneValues"/> property, the <see cref="O:KGySoft.Resources.ResXResourceManager.GetObject">GetObject</see> methods return either
         /// a full copy of the specified resource, or always the same instance. For memory streams and byte arrays none of them are ideal because a full copy duplicates the inner buffer of a possibly large
-        /// array of bytes, whereas returning the same stream instance can cause issues with conflicting positions or disposed state. Therefore the <see cref="O:KGySoft.Resources.ResXResourceManager.GetStream">GetStream</see> methods
+        /// array of bytes, whereas returning the same stream instance can cause issues with conflicting positions or disposed state. Therefore, the <see cref="O:KGySoft.Resources.ResXResourceManager.GetStream">GetStream</see> methods
         /// can be used to obtain a new read-only <see cref="MemoryStream"/> wrapper around the same internal buffer, regardless the current value of the <see cref="CloneValues"/> property.</para>
         /// <para><see cref="string"/> values are not duplicated in memory, regardless the value of the <see cref="CloneValues"/> property.</para>
         /// </remarks>
@@ -982,7 +983,7 @@ namespace KGySoft.Resources
         /// <remarks>
         /// <para>Depending on the value of the <see cref="CloneValues"/> property, the <see cref="GetMetaObject">GetMetaObject</see> method returns either
         /// a full copy of the specified metadata, or always the same instance. For memory streams none of them are ideal because a full copy duplicates the inner buffer of a possibly large
-        /// array of bytes, whereas returning the same stream instance can cause issues with conflicting positions or disposed state. Therefore the <see cref="GetMetaStream">GetMetaStream</see> method
+        /// array of bytes, whereas returning the same stream instance can cause issues with conflicting positions or disposed state. Therefore, the <see cref="GetMetaStream">GetMetaStream</see> method
         /// can be used to obtain a new read-only <see cref="MemoryStream"/> wrapper around the same internal buffer, regardless the current value of the <see cref="CloneValues"/> property.</para>
         /// <para><see cref="GetMetaStream">GetMetaStream</see> can be used also for byte array metadata.</para>
         /// <para>If <see cref="SafeMode"/> is <see langword="true"/> and <paramref name="name"/> is neither a <see cref="MemoryStream"/> nor a byte array metadata, then
@@ -1148,7 +1149,7 @@ namespace KGySoft.Resources
         /// <summary>
         /// Saves all already loaded resources.
         /// </summary>
-        /// <param name="force"><see langword="true"/> to save all of the already loaded resource sets regardless if they have been modified; <see langword="false"/> to save only the modified resource sets. This parameter is optional.
+        /// <param name="force"><see langword="true"/> to save all the already loaded resource sets regardless if they have been modified; <see langword="false"/> to save only the modified resource sets. This parameter is optional.
         /// <br />Default value: <see langword="false"/>.</param>
         /// <param name="compatibleFormat">If set to <see langword="true"/>, the result .resx files can be read by a <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a> instance
         /// and the Visual Studio Resource Editor. If set to <see langword="false"/>, the result .resx files are often shorter, and the values can be deserialized with better accuracy (see the remarks at <see cref="ResXResourceWriter" />),
@@ -1159,6 +1160,7 @@ namespace KGySoft.Resources
         /// </returns>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
         /// <exception cref="IOException">A resource set could not be saved.</exception>
+        [SuppressMessage("ReSharper", "GenericEnumeratorNotDisposed", Justification = "False alarm, IDictionaryEnumerator is not a generic enumerator and is not expected to be disposable")]
         public bool SaveAllResources(bool force = false, bool compatibleFormat = false)
         {
             IDictionary localResourceSets = ResourceSets; // type is Hashtable in .NET 3.5 and is StringKeyedDictionary above
@@ -1191,11 +1193,11 @@ namespace KGySoft.Resources
         }
 
         /// <summary>
-        /// Disposes all of the cached <see cref="ResXResourceSet"/> instances and releases all resources.
+        /// Disposes all the cached <see cref="ResXResourceSet"/> instances and releases all resources.
         /// </summary>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
         /// <remarks>
-        /// <note type="caution">By calling this method all of the unsaved changes will be lost.</note>
+        /// <note type="caution">By calling this method all the unsaved changes will be lost.</note>
         /// <para>By the <see cref="IsModified"/> property you can check whether there are unsaved changes.</para>
         /// <para>To save the changes you can call the <see cref="SaveAllResources">SaveAllResources</see> method.</para>
         /// </remarks>
@@ -1321,7 +1323,7 @@ namespace KGySoft.Resources
                         Debug.Assert(ctx.FoundProxyCulture == null || Equals(ctx.FoundProxyCulture, ctx.Proxy.WrappedCulture), "Proxied cultures are different in the hierarchy.");
                         ctx.FoundProxyCulture ??= ctx.Proxy.WrappedCulture;
 
-                        // if we traversing here because last time the proxy has been loaded by
+                        // if we traverse here because last time the proxy has been loaded by
                         // ResourceSetRetrieval.GetIfAlreadyLoaded, but now we load the possible parents, we clear the
                         // CanHaveLoadableParent flag in the hierarchy. Unless no new proxy is created (and thus the descendant proxies are deleted),
                         // this will prevent the redundant traversal next time.

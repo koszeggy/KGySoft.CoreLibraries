@@ -101,7 +101,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="dictionary">The dictionary.</param>
         /// <param name="key">The key whose value to get.</param>
-        /// <param name="defaultValueFactory">A delegate that can be invoked to return a default value if <paramref name="key"/> was not found..</param>
+        /// <param name="defaultValueFactory">A delegate that can be invoked to return a default value if <paramref name="key"/> was not found.</param>
         /// <typeparam name="TKey">The type of the stored keys in the <paramref name="dictionary"/>.</typeparam>
         /// <typeparam name="TValue">Type of the stored values in the <paramref name="dictionary"/>.</typeparam>
         /// <returns>The found value or the result of <paramref name="defaultValueFactory"/> if <paramref name="key"/> was not found in the <paramref name="dictionary"/>.</returns>
@@ -884,7 +884,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <typeparam name="TKey">The type of the keys in the <paramref name="dictionary"/>.</typeparam>
         /// <typeparam name="TValue">The type of the values in the <paramref name="dictionary"/>.</typeparam>
-        /// <typeparam name="TArg">The type of an argument to pass into <paramref name="addValueFactory"/> and <paramref name="updateValueFactory"/>.</typeparam>
+        /// <typeparam name="TArg">The type of the argument to pass into <paramref name="addValueFactory"/> and <paramref name="updateValueFactory"/>.</typeparam>
         /// <param name="dictionary">The target dictionary.</param>
         /// <param name="key">The key to be added or whose value should be updated.</param>
         /// <param name="addValueFactory">A delegate used to generate a value for an absent key.</param>
@@ -1086,7 +1086,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <typeparam name="TKey">The type of the keys in the <paramref name="dictionary"/>.</typeparam>
         /// <typeparam name="TValue">The type of the values in the <paramref name="dictionary"/>.</typeparam>
-        /// <typeparam name="TArg">The type of an argument to pass into <paramref name="addValueFactory"/>.</typeparam>
+        /// <typeparam name="TArg">The type of the argument to pass into <paramref name="addValueFactory"/>.</typeparam>
         /// <param name="dictionary">The target dictionary.</param>
         /// <param name="key">The key of the element to add or whose value should be returned.</param>
         /// <param name="addValueFactory">The delegate to be used to generate the value, if the key does not already exist.</param>

@@ -18,6 +18,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Resources;
 
@@ -93,7 +94,7 @@ namespace KGySoft.Resources
                         case State.EnumeratingResX:
                             return resxEnumerator.Key;
                         case State.EnumeratingCompiled:
-                            return compiledEnumerator.Key!;
+                            return compiledEnumerator.Key;
                         default:
                             Throw.InvalidOperationException(Res.IEnumeratorEnumerationNotStartedOrFinished);
                             return default;
@@ -164,7 +165,7 @@ namespace KGySoft.Resources
 
                         while (compiledEnumerator.MoveNext())
                         {
-                            string key = compiledEnumerator.Key!.ToString()!;
+                            string key = compiledEnumerator.Key.ToString()!;
                             compiledKeys!.Add(key);
                             if (resxKeys!.Contains(key))
                                 continue;
@@ -305,6 +306,7 @@ namespace KGySoft.Resources
             return typeof(ResXResourceWriter);
         }
 
+        [SuppressMessage("ReSharper", "GenericEnumeratorNotDisposed", Justification = "False alarm, IDictionaryEnumerator is not a generic enumerator and is not expected to be disposable")]
         public override IDictionaryEnumerator GetEnumerator()
         {
             ResXResourceSet? resx = resxResourceSet;
@@ -398,6 +400,7 @@ namespace KGySoft.Resources
             return resx.GetAliasEnumerator();
         }
 
+        [SuppressMessage("ReSharper", "GenericEnumeratorNotDisposed", Justification = "False alarm, IDictionaryEnumerator is not a generic enumerator and is not expected to be disposable")]
         public bool ContainsResource(string name, bool ignoreCase)
         {
             ResXResourceSet? resx = resxResourceSet;
@@ -415,7 +418,7 @@ namespace KGySoft.Resources
                 binKeys = new HashSet<string>();
                 IDictionaryEnumerator compiledEnumerator = compiled.GetEnumerator();
                 while (compiledEnumerator.MoveNext())
-                    binKeys.Add(compiledEnumerator.Key!.ToString()!);
+                    binKeys.Add(compiledEnumerator.Key.ToString()!);
 
                 compiledKeys = binKeys;
             }

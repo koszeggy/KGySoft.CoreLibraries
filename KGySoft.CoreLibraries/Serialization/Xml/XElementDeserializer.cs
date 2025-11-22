@@ -18,7 +18,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
@@ -79,18 +78,16 @@ namespace KGySoft.Serialization.Xml
             XElement? content = parent.Elements().FirstOrDefault();
             if (content == null)
                 Throw.ArgumentException(Res.XmlSerializationNoContent(xmlSerializable.GetType()));
-            using (XmlReader xr = XmlReader.Create(new StringReader(content.ToString()), new XmlReaderSettings
+            using XmlReader xr = XmlReader.Create(new StringReader(content.ToString()), new XmlReaderSettings
             {
                 ConformanceLevel = ConformanceLevel.Fragment,
                 IgnoreWhitespace = true,
                 CloseInput = true
-            }))
-            {
-                xr.Read();
+            });
+            xr.Read();
 
-                // passing the reader to the object to read itself
-                xmlSerializable.ReadXml(xr);
-            }
+            // passing the reader to the object to read itself
+            xmlSerializable.ReadXml(xr);
         }
 
         private static string? ReadStringValue(XElement element)
@@ -293,16 +290,16 @@ namespace KGySoft.Serialization.Xml
                 if (ctx.Type?.IsGenericTypeOf(Reflector.KeyValuePairType) == true)
                 {
                     // key
-                    XElement? xItem = ctx.Element.Element(nameof(KeyValuePair<_,_>.Key));
+                    XElement? xItem = ctx.Element.Element(nameof(KeyValuePair<,>.Key));
                     if (xItem == null)
                         Throw.ArgumentException(Res.XmlSerializationKeyValueMissingKey);
-                    XAttribute? xType = xItem.Attribute(XmlSerializer.AttributeType!);
+                    XAttribute? xType = xItem.Attribute(XmlSerializer.AttributeType);
                     Type keyType = xType != null ? ResolveType(xType.Value) : ctx.Type.GetGenericArguments()[0];
                     if (!TryDeserializeObject(keyType, xItem, null, out object? key))
                         Throw.NotSupportedException(Res.XmlSerializationDeserializingTypeNotSupported(keyType));
 
                     // value
-                    xItem = ctx.Element.Element(nameof(KeyValuePair<_,_>.Value));
+                    xItem = ctx.Element.Element(nameof(KeyValuePair<,>.Value));
                     if (xItem == null)
                         Throw.ArgumentException(Res.XmlSerializationKeyValueMissingValue);
                     xType = xItem.Attribute(XmlSerializer.AttributeType);
@@ -414,7 +411,7 @@ namespace KGySoft.Serialization.Xml
                     return true;
                 }
 
-                // Here parsing runtime type. Parse would handle also runtime type but we need to consider expected types.
+                // Here parsing runtime type. Parse would handle also runtime type, but we need to consider expected types.
                 result = value == null ? null : ResolveType(value);
                 return true;
             }
@@ -523,8 +520,7 @@ namespace KGySoft.Serialization.Xml
                 XAttribute? attrType = item.Attribute(XmlSerializer.AttributeType);
                 if (attrType != null)
                     itemType = ResolveType(attrType.Value);
-                if (itemType == null)
-                    itemType = builder.ElementType;
+                itemType ??= builder.ElementType;
 
                 if (TryDeserializeObject(itemType, item, null, out var value))
                 {

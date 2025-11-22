@@ -284,11 +284,11 @@ namespace KGySoft.Serialization.Xml
                     if (ctx.TypeNeeded)
                         ctx.Writer.WriteAttributeString(XmlSerializer.AttributeType, GetTypeString(ctx.Type));
 
-                    object? key = Accessors.GetPropertyValue(ctx.Object, nameof(KeyValuePair<_, _>.Key));
-                    object? value = Accessors.GetPropertyValue(ctx.Object, nameof(KeyValuePair<_, _>.Value));
+                    object? key = Accessors.GetPropertyValue(ctx.Object, nameof(KeyValuePair<,>.Key));
+                    object? value = Accessors.GetPropertyValue(ctx.Object, nameof(KeyValuePair<,>.Value));
                     Type[] genericArgs = ctx.Type.GetGenericArguments();
 
-                    ctx.Writer.WriteStartElement(nameof(KeyValuePair<_,_>.Key));
+                    ctx.Writer.WriteStartElement(nameof(KeyValuePair<,>.Key));
                     if (key == null)
                         ctx.Writer.WriteEndElement();
                     else
@@ -297,7 +297,7 @@ namespace KGySoft.Serialization.Xml
                         ctx.Writer.WriteFullEndElement();
                     }
 
-                    ctx.Writer.WriteStartElement(nameof(KeyValuePair<_,_>.Value));
+                    ctx.Writer.WriteStartElement(nameof(KeyValuePair<,>.Value));
                     if (value == null)
                         ctx.Writer.WriteEndElement();
                     else
@@ -314,13 +314,13 @@ namespace KGySoft.Serialization.Xml
 
             bool TrySerializeComplexObject(ref SerializeObjectContext ctx)
             {
-                // 1.) collection: if can be trusted in all circumstances
+                // 1.) collection: if it can be trusted in all circumstances
                 if (ctx.Object is IEnumerable enumerable)
                 {
                     Type? elementType = null;
                     ComparerType? comparer = ComparerType.None;
 
-                    // if can be trusted in all circumstances
+                    // if it can be trusted in all circumstances
                     if (IsTrustedCollection(ctx.Type)
                         // or deserialization can only use the pre-created known collection (so the comparer can be ignored)
                         || ctx.IsReadOnlyProperty && IsKnownCollection(ctx.Type)
@@ -465,13 +465,13 @@ namespace KGySoft.Serialization.Xml
 
                 Type actualType = value?.GetType() ?? memberType;
 
-                // a.) Using explicitly defined type converter if can convert to and from string
+                // a.) Using explicitly defined type converter if it can convert to and from string
                 // Note: ResolveType can load assemblies here. When serializing, it is not a problem since the serialized object tree is always under the consumer's control.
                 Attribute[] attrs = Reflector.GetAttributes(member.MemberInfo, typeof(TypeConverterAttribute), true);
                 if (attrs.Length > 0 && attrs[0] is TypeConverterAttribute convAttr && Reflector.ResolveType(convAttr.ConverterTypeName) is Type convType)
                 {
-                    ConstructorInfo? ctor = convType.GetConstructor(new Type[] { Reflector.Type });
-                    object[] ctorParams = { memberType };
+                    ConstructorInfo? ctor = convType.GetConstructor([Reflector.Type]);
+                    object[] ctorParams = [memberType];
                     if (ctor == null)
                     {
                         ctor = convType.GetDefaultConstructor();

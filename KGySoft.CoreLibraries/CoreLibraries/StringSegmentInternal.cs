@@ -29,7 +29,7 @@ namespace KGySoft.CoreLibraries
     /// for quite a few special operations.
     /// NOTE: This struct is actually the same as the <see cref="StringSegment"/> struct before making it public.
     /// The original file history belongs to the <see cref="StringSegment"/> struct.
-    /// The reintroduction occurred because this has a better performance but it cannot be readonly, which could be confusing as a public API
+    /// The reintroduction occurred because this has a better performance, but it cannot be readonly, which could be confusing as a public API
     /// </summary>
     internal struct StringSegmentInternal : IEquatable<StringSegmentInternal>
     {
@@ -244,7 +244,7 @@ namespace KGySoft.CoreLibraries
                 if (value == 0)
                     return true;
 
-                // For negative values the MaxValue of the appropriate range is expected (eg 127 for SByte) but actually -128 should be accepted, too
+                // For negative values the MaxValue of the appropriate range is expected (e.g. 127 for SByte) but actually -128 should be accepted, too
                 if (!allowNegative || value > max + 1)
                     return false;
 
@@ -474,7 +474,7 @@ namespace KGySoft.CoreLibraries
                 }
 
                 // Here we have full match. As single char separators are not handled here we could have
-                // check this into the inner loop to avoid goto but that requires an extra condition.
+                // checked this in the inner loop to avoid goto but that requires an extra condition.
                 return i - Offset;
 
                 continueOuter:;

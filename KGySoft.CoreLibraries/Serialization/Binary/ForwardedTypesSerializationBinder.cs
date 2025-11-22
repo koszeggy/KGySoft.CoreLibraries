@@ -116,7 +116,7 @@ namespace KGySoft.Serialization.Binary
     /// formatter.Serialize(serializationStream, obj);
     /// ]]></code>
     /// </para>
-    /// <note type="tip">If not only the assembly name but also the inner content of a type (ie. field names) changed, then you can use
+    /// <note type="tip">If not only the assembly name but also the inner content of a type (i.e. field names) changed, then you can use
     /// the <see cref="CustomSerializerSurrogateSelector"/> class.</note>
     /// </example>
     /// <seealso cref="WeakAssemblySerializationBinder"/>
@@ -154,7 +154,7 @@ namespace KGySoft.Serialization.Binary
         public bool WriteLegacyIdentity { get; set; }
 
         /// <summary>
-        /// Gets or sets whether all of the type names that occur in the serialization stream must have a defined mapping to a type.
+        /// Gets or sets whether all the type names that occur in the serialization stream must have a defined mapping to a type.
         /// <br/>Default value: <see langword="false"/>.
         /// </summary>
         /// <remarks>

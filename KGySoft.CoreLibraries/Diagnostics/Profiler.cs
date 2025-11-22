@@ -31,6 +31,15 @@ using KGySoft.CoreLibraries;
 
 #endregion
 
+#region Suppressions
+
+#if !(NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER)
+#pragma warning disable CS8601 // Possible null reference assignment.
+#pragma warning disable CS8604 // Possible null reference argument.
+#endif
+
+#endregion
+
 namespace KGySoft.Diagnostics
 {
     /// <summary>
@@ -156,7 +165,7 @@ namespace KGySoft.Diagnostics
         public static string ProfilerDirectory
         {
             get => profilerDir;
-            set => profilerDir = String.IsNullOrEmpty(value) ? GetDefaultDir() : value!;
+            set => profilerDir = String.IsNullOrEmpty(value) ? GetDefaultDir() : value;
         }
 
         #endregion
@@ -277,7 +286,7 @@ namespace KGySoft.Diagnostics
             {
                 if (!items.TryGetValue(key, out item))
                 {
-                    item = new MeasureItem(category!, operation);
+                    item = new MeasureItem(category, operation);
                     items.Add(key, item);
                 }
             }

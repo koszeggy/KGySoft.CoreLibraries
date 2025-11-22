@@ -31,7 +31,7 @@ namespace KGySoft.ComponentModel
     /// which can store variable elements (see <see cref="ICommandState"/>), and has sources and targets, which can be added and removed
     /// during the lifetime of the binding.</para>
     /// <para>The binding should be disposed when it is not used anymore so it releases the events it used internally. If more bindings are used it is recommended
-    /// to create them by a <see cref="CommandBindingsCollection"/> instance so when it is disposed it releases all of the added bindings at once.</para>
+    /// to create them by a <see cref="CommandBindingsCollection"/> instance so when it is disposed it releases all the added bindings at once.</para>
     /// <note type="tip">See the <strong>Remarks</strong> section of the <see cref="ICommand"/> interface for details and examples about commands.</note>
     /// </remarks>
     /// <seealso cref="ICommand" />
@@ -68,7 +68,7 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Gets the managed set of states of this <see cref="ICommandBinding"/> instance. Whenever a new source is added or an entry of
         /// the returned <see cref="ICommandState"/> is changed, and at least one <see cref="ICommandStateUpdater"/> is added to this <see cref="ICommandBinding"/>,
-        /// then the entries are applied for all of the sources of the binding.
+        /// then the entries are applied for all the sources of the binding.
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="ICommandState"/> interface for details.
         /// </summary>
         /// <value>

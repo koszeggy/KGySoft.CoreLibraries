@@ -42,7 +42,7 @@ namespace KGySoft.ComponentModel
     /// <list type="bullet">
     /// <item>An undoable class (which implements <see cref="ICanUndo"/> or <see cref="ICanUndoRedo"/> interfaces such as <see cref="UndoableObjectBase"/>) is able to undo (or redo) any changes made so far either step-by-step or in a single step.</item>
     /// <item>On the other hand, an editable class (which implements <see cref="ICanEdit"/> such as <see cref="EditableObjectBase"/>) is able to start editing sessions by saving a snapshot of its current state, which states are committable and revertible.</item>
-    /// <item>Undo and editing features are independent from each other and a class is allowed to implement both (like the <see cref="ModelBase"/> class).</item>
+    /// <item>Undo and editing features are independent of each other and a class is allowed to implement both (like the <see cref="ModelBase"/> class).</item>
     /// </list>
     /// </para>
     /// <para><strong><see cref="IRevertibleChangeTracking"/> support</strong>:
@@ -79,7 +79,7 @@ namespace KGySoft.ComponentModel
 
         #region Static Fields
 
-        private static readonly string[] ignoreModifiedProperties = { nameof(UndoCapacity), nameof(CanRedo), nameof(CanUndo) };
+        private static readonly string[] ignoreModifiedProperties = [nameof(UndoCapacity), nameof(CanRedo), nameof(CanUndo)];
 
         #endregion
 

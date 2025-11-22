@@ -97,7 +97,7 @@ namespace KGySoft.Diagnostics
             internal readonly List<Repetition> Repetitions = new List<Repetition>();
 
             internal TestCase Case = default!;
-            [AllowNull]internal TResult Result = default!;
+            [AllowNull]internal TResult Result;
             internal int IndexBest;
             internal int IndexWorst;
             internal Exception? Error;
@@ -300,7 +300,7 @@ namespace KGySoft.Diagnostics
 
         private IntPtr origAffinity;
         private ProcessPriorityClass origPriority;
-        private ThreadPriority origThreadPrio;
+        private ThreadPriority origThreadPriority;
 
         #endregion
 
@@ -518,7 +518,7 @@ namespace KGySoft.Diagnostics
             process.ProcessorAffinity = new IntPtr(CpuAffinity.GetValueOrDefault());
             origPriority = process.PriorityClass;
             process.PriorityClass = ProcessPriorityClass.High;
-            origThreadPrio = Thread.CurrentThread.Priority;
+            origThreadPriority = Thread.CurrentThread.Priority;
             Thread.CurrentThread.Priority = ThreadPriority.Highest;
         }
 
@@ -540,7 +540,7 @@ namespace KGySoft.Diagnostics
             Process process = Process.GetCurrentProcess();
             process.ProcessorAffinity = origAffinity;
             process.PriorityClass = origPriority;
-            Thread.CurrentThread.Priority = origThreadPrio;
+            Thread.CurrentThread.Priority = origThreadPriority;
         }
 
         private void DoWarmUp(TDelegate testCase, TestResult testResult)

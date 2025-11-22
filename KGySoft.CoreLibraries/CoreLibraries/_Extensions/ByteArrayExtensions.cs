@@ -181,7 +181,7 @@ namespace KGySoft.CoreLibraries
             if (separator == null!)
                 Throw.ArgumentNullException(Argument.separator);
 
-            if (separator.Length == 0 || separator.Any(c => c >= '0' && c <= '9'))
+            if (separator.Length == 0 || separator.Any(c => c is >= '0' and <= '9'))
                 Throw.ArgumentException(Argument.separator, Res.ByteArrayExtensionsSeparatorInvalidDec);
 
             if (bytes.Length == 0)
@@ -300,16 +300,14 @@ namespace KGySoft.CoreLibraries
             if (bytes == null!)
                 Throw.ArgumentNullException(Argument.bytes);
 
-            using (MemoryStream encStream = new MemoryStream())
+            using MemoryStream encStream = new MemoryStream();
+            using (DeflateStream compStream = new DeflateStream(encStream, CompressionMode.Compress, true))
             {
-                using (DeflateStream compStream = new DeflateStream(encStream, CompressionMode.Compress, true))
-                {
-                    compStream.Write(bytes, 0, bytes.Length);
-                    // stream must be closed here, otherwise, data would loss in encStream (simple Flush does not help!)
-                }
-
-                return encStream.ToArray();
+                compStream.Write(bytes, 0, bytes.Length);
+                // stream must be closed here, otherwise, data would be lost in encStream (simple Flush does not help!)
             }
+
+            return encStream.ToArray();
         }
 
         /// <summary>
@@ -322,17 +320,15 @@ namespace KGySoft.CoreLibraries
             if (bytes == null!)
                 Throw.ArgumentNullException(Argument.bytes);
 
-            using (MemoryStream result = new MemoryStream(), encStream = new MemoryStream(bytes))
+            using MemoryStream result = new MemoryStream(), encStream = new MemoryStream(bytes);
+            using (DeflateStream compStream = new DeflateStream(encStream, CompressionMode.Decompress, true))
             {
-                using (DeflateStream compStream = new DeflateStream(encStream, CompressionMode.Decompress, true))
-                {
-                    int b;
-                    while ((b = compStream.ReadByte()) != -1)
-                        result.WriteByte((byte)b);
-                }
-
-                return result.ToArray();
+                int b;
+                while ((b = compStream.ReadByte()) != -1)
+                    result.WriteByte((byte)b);
             }
+
+            return result.ToArray();
         }
 
         #endregion

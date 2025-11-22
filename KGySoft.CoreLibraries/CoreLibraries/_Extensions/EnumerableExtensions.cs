@@ -1237,29 +1237,28 @@ namespace KGySoft.CoreLibraries
                 return false;
             }
 
-            using (IEnumerator<T> enumerator = collection.GetEnumerator())
+            using IEnumerator<T> enumerator = collection.GetEnumerator();
+
+            // Copying elements while possible
+            int elementsCopied = 0;
+            while (count > 0 && enumerator.MoveNext())
             {
-                // Copying elements while possible
-                int elementsCopied = 0;
-                while (count > 0 && enumerator.MoveNext())
-                {
-                    if (!target.TrySetElementAt(index + elementsCopied++, enumerator.Current, checkReadOnlyAndBounds, throwError))
-                        return false;
-                    count -= 1;
-                }
-
-                // all inserted, removing the rest
-                if (count > 0)
-                    return target.TryRemoveRange(index + elementsCopied, count, checkReadOnlyAndBounds, throwError);
-
-                // all removed (overwritten), inserting the rest
-                IList<T> rest = collection is IList<T> list ? new ListSegment<T>(list, elementsCopied) : enumerator.RestToList();
-                if (rest.Count > 0)
-                    return target.TryInsertRange(index + elementsCopied, rest, checkReadOnlyAndBounds, throwError);
-
-                // elements to replace had the same size
-                return true;
+                if (!target.TrySetElementAt(index + elementsCopied++, enumerator.Current, checkReadOnlyAndBounds, throwError))
+                    return false;
+                count -= 1;
             }
+
+            // all inserted, removing the rest
+            if (count > 0)
+                return target.TryRemoveRange(index + elementsCopied, count, checkReadOnlyAndBounds, throwError);
+
+            // all removed (overwritten), inserting the rest
+            IList<T> rest = collection is IList<T> list ? new ListSegment<T>(list, elementsCopied) : enumerator.RestToList();
+            if (rest.Count > 0)
+                return target.TryInsertRange(index + elementsCopied, rest, checkReadOnlyAndBounds, throwError);
+
+            // elements to replace had the same size
+            return true;
         }
 
         /// <summary>
@@ -1393,7 +1392,7 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Searches for an element in the <paramref name="source"/> enumeration where the specified <paramref name="predicate"/> returns <see langword="true"/>.
         /// </summary>
-        /// <typeparam name="T">The type of the elements in the enumeration..</typeparam>
+        /// <typeparam name="T">The type of the elements in the enumeration.</typeparam>
         /// <param name="source">The source enumeration to search.</param>
         /// <param name="predicate">The predicate to use for the search.</param>
         /// <returns>The index of the found element, or -1 if there was no match.</returns>
@@ -1743,12 +1742,9 @@ namespace KGySoft.CoreLibraries
                     }
 
 #if NET9_0_OR_GREATER
-                    // Iterator<T>.GetCount()
-                    int? result = source.GetIteratorCount();
+                    // Iterator<T>.GetCount() (IIListProvider<T>)
+                    int? result = source.GetIteratorCount() ?? source.GetListProviderCount();
 
-                    // IIListProvider<T>
-                    if (result == null)
-                        result = source.GetListProviderCount();
 #else
                     // IIListProvider<T>
                     int? result = source.GetListProviderCount();
@@ -1791,7 +1787,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="comparer">A <see cref="StringSegmentComparer"/> to compare keys. If <see langword="null"/>, then ordinal comparison will be used. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <returns>A <see cref="StringKeyedDictionary{TValue}"/> that contains values of type <typeparamref name="TValue"/> created by the specified <paramref name="valueSelector"/>
-        /// for each elements in the <paramref name="source"/> collection.</returns>
+        /// for each element in the <paramref name="source"/> collection.</returns>
         public static StringKeyedDictionary<TValue> ToStringKeyedDictionary<TSource, TValue>(this IEnumerable<TSource> source, Func<TSource, string> keySelector, Func<TSource, TValue> valueSelector, StringSegmentComparer? comparer = null)
         {
             if (source == null!)
@@ -1920,7 +1916,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="seed">The seed to use for the shuffling.</param>
         /// <returns>An <see cref="IEnumerable{T}"/> that can enumerate the items of <paramref name="source"/> in a randomized order.</returns>
         /// <remarks>
-        /// <note>Subsequent enumerations of the returned collection shuffles the order of the items again an again.</note>
+        /// <note>Subsequent enumerations of the returned collection shuffles the order of the items again and again.</note>
         /// <note>The enumerator of the returned collection does not support the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
         public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> source, int seed)
@@ -1934,7 +1930,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="seed">A non-<see cref="Guid.Empty"/> seed to use for the shuffling.</param>
         /// <returns>An <see cref="IEnumerable{T}"/> that can enumerate the items of <paramref name="source"/> in a randomized order.</returns>
         /// <remarks>
-        /// <note>Subsequent enumerations of the returned collection shuffles the order of the items again an again.</note>
+        /// <note>Subsequent enumerations of the returned collection shuffles the order of the items again and again.</note>
         /// <note>The enumerator of the returned collection does not support the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
         /// <exception cref="ArgumentException"><paramref name="seed"/> is <see cref="Guid.Empty"/>.</exception>
@@ -1948,7 +1944,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="source">The <see cref="IEnumerable{T}"/> to shuffle its elements.</param>
         /// <returns>An <see cref="IEnumerable{T}"/> that can enumerate the items of <paramref name="source"/> in a randomized order.</returns>
         /// <remarks>
-        /// <note>Subsequent enumerations of the returned collection shuffles the order of the items again an again.</note>
+        /// <note>Subsequent enumerations of the returned collection shuffles the order of the items again and again.</note>
         /// <note>The enumerator of the returned collection does not support the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
         public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> source)
@@ -1963,7 +1959,7 @@ namespace KGySoft.CoreLibraries
         /// <returns>An <see cref="IEnumerable{T}"/> that can enumerate the items of <paramref name="source"/> in a randomized order.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> or <paramref name="source"/> is <see langword="null"/>.</exception>
         /// <remarks>
-        /// <note>Subsequent enumerations of the returned collection shuffles the order of the items again an again.</note>
+        /// <note>Subsequent enumerations of the returned collection shuffles the order of the items again and again.</note>
         /// <note>The enumerator of the returned collection does not support the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
         public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> source, Random random)
@@ -2083,11 +2079,7 @@ namespace KGySoft.CoreLibraries
                 int length = list.Count;
                 int to = length / 2;
                 for (int i = 0; i < to; i++)
-                {
-                    object? temp = list[i];
-                    list[i] = list[length - i - 1];
-                    list[length - i - 1] = temp;
-                }
+                    (list[i], list[length - i - 1]) = (list[length - i - 1], list[i]);
             }
 
             // Converting to array for array ctor parameter
@@ -2107,7 +2099,7 @@ namespace KGySoft.CoreLibraries
         // just to prevent MissingMethodException if the assembly for an older target is forcibly used for newer targets
         internal static IEnumerable<T> Append<T>(IEnumerable<T> source, T item)
 #endif
-            => source.Concat(new[] { item });
+            => source.Concat([item]);
 
         #endregion
 
@@ -2123,7 +2115,7 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Tries to remove <paramref name="count"/> amount of items from the <paramref name="target"/> at the specified <paramref name="index"/>, and
         /// to insert the specified <paramref name="collection"/> at the same position. The number of elements in <paramref name="collection"/> can be different from the amount of removed items.
-        /// This method performs the replace one by one.
+        /// This method performs the replacement one by one.
         /// </summary>
         private static bool TryReplaceRangeDefault(IEnumerable target, int index, int count, IEnumerable collection, bool checkReadOnlyAndBounds, bool throwError)
         {

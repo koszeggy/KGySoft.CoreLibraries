@@ -17,7 +17,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 
 using KGySoft.Collections;
 
@@ -26,13 +25,13 @@ using KGySoft.Collections;
 namespace KGySoft.ComponentModel
 {
     /// <summary>
-    /// Provides a base class for component model classes, which provide a public access to their internal property storage located in the <see cref="ObservableObjectBase"/> base class
+    /// Provides a base class for component model classes, which provide public access to their internal property storage located in the <see cref="ObservableObjectBase"/> base class
     /// by implementing also the <see cref="IPersistableObject"/> interface.
     /// <br/>For details see the <strong>Remarks</strong> section.
     /// </summary>
     /// <remarks>
     /// <para>The class should be cast to <see cref="IPersistableObject"/> to access the property storage and allow to manipulate the properties by name.
-    /// All of the actually stored values can be read and restored by the <see cref="IPersistableObject.GetProperties">GetProperties</see> and
+    /// All the actually stored values can be read and restored by the <see cref="IPersistableObject.GetProperties">GetProperties</see> and
     /// <see cref="IPersistableObject.SetProperties">SetProperties</see> methods.</para>
     /// <para>The <see cref="IPersistableObject"/> also provides some concurrent-proof operations if the instance is accessed from multiple threads. See the <see cref="IPersistableObject.TryGetPropertyValue">TryGetPropertyValue</see>,
     /// <see cref="IPersistableObject.GetPropertyOrDefault{T}">GetPropertyOrDefault</see> and <see cref="IPersistableObject.TryReplaceProperty">TryReplaceProperty</see> methods.</para>

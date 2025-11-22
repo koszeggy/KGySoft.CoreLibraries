@@ -121,7 +121,7 @@ namespace KGySoft.ComponentModel
     ///     }
     /// }]]></code></para>
     /// <para>
-    /// Commands can also have parameter, which is evaluated whenever the command is triggered:
+    /// Commands can also have a parameter, which is evaluated whenever the command is triggered:
     /// <code lang="C#"><![CDATA[
     /// // A parameterized and targeted command:
     /// public static ICommand SetBackColorCommand =>

@@ -34,7 +34,7 @@ namespace KGySoft.ComponentModel
 
         /// <summary>
         /// <see cref="IEditableObject.EndEdit">IEditableObject.EndEdit</see> and <see cref="IEditableObject.CancelEdit">IEditableObject.CancelEdit</see> calls ignore possible multiple
-        /// <see cref="IEditableObject.BeginEdit">IEditableObject.BeginEdit</see> calls and commit/revert all of the previous changes.
+        /// <see cref="IEditableObject.BeginEdit">IEditableObject.BeginEdit</see> calls and commit/revert all the previous changes.
         /// <see cref="ICanEdit.EditLevel"/> will be 0 after an <see cref="IEditableObject.EndEdit">IEditableObject.EndEdit</see> or <see cref="IEditableObject.CancelEdit">IEditableObject.CancelEdit</see> call.
         /// </summary>
         DisableNesting,

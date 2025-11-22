@@ -180,7 +180,7 @@ namespace KGySoft.CoreLibraries
         /// <remarks>
         /// <para>Similarly to the <see cref="Next()">Next</see> and <see cref="NextInt32">NextInt32</see> methods this one returns an <see cref="int"/> value; however, the result can be negative and
         /// the maximum possible value can be <see cref="Int32.MaxValue">Int32.MaxValue</see>.</para>
-        /// <para>The <see cref="RandomExtensions.SampleInt32(Random)">RandomExtensions.SampleInt32(Random)</see> extension method has the same functionality
+        /// <para>The <see cref="RandomExtensions.SampleInt32(Random)">RandomExtensions.SampleInt32(Random)</see> extension method has the same functionality,
         /// but it is faster to call this one directly.</para>
         /// </remarks>
         public int SampleInt32() => (int)SampleUInt64(ref state);
@@ -282,7 +282,7 @@ namespace KGySoft.CoreLibraries
         /// <remarks>
         /// <para>Similarly to the <see cref="NextInt64()">NextInt64</see> method this one returns an <see cref="long"/> value; however, the result can be negative and
         /// the maximum possible value can be <see cref="Int64.MaxValue">Int64.MaxValue</see>.</para>
-        /// <para>The <see cref="RandomExtensions.SampleInt64(Random)">RandomExtensions.SampleInt64(Random)</see> extension method has the same functionality
+        /// <para>The <see cref="RandomExtensions.SampleInt64(Random)">RandomExtensions.SampleInt64(Random)</see> extension method has the same functionality,
         /// but it is faster to call this one directly.</para>
         /// </remarks>
         public long SampleInt64() => (long)SampleUInt64(ref state);

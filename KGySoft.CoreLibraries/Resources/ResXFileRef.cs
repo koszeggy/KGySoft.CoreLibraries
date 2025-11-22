@@ -114,11 +114,11 @@ namespace KGySoft.Resources
                 string[] parts = remainingString.Split(';');
                 string[] result;
                 if (parts.Length > 1)
-                    result = new[] { fileName, parts[0], parts[1] };
+                    result = [fileName, parts[0], parts[1]];
                 else if (parts.Length > 0)
-                    result = new[] { fileName, parts[0] };
+                    result = [fileName, parts[0]];
                 else
-                    result = new[] { fileName };
+                    result = [fileName];
 
                 return result;
             }
@@ -132,7 +132,7 @@ namespace KGySoft.Resources
                     Throw.ArgumentException(Argument.stringValue, Res.ArgumentInvalidString);
                 string fileName = parts[0];
                 if (!String.IsNullOrEmpty(basePath) && !Path.IsPathRooted(fileName))
-                    fileName = Path.Combine(basePath!, fileName);
+                    fileName = Path.Combine(basePath, fileName);
 
                 // Security note: the TryToLoadAssemblies flag makes possible to load any (potentially harmful) assemblies,
                 // but it does not affect any public access via the ResXDataNode, which resolves the type in a safe or unsafe way,

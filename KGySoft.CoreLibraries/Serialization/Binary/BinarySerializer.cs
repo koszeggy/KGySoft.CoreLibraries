@@ -135,7 +135,7 @@ namespace KGySoft.Serialization.Binary
         /// and <paramref name="rawData"/> contains types encoded by their names. Natively supported types are not needed to be included
         /// unless the original object was serialized with the <see cref="BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes"/> option enabled.</para>
         /// <para><typeparamref name="T"/> is allowed to be an interface or abstract type but if it's different from the actual type of the result,
-        /// then the actual type also might needed to be included in <paramref name="expectedCustomTypes"/>.</para>
+        /// then the actual type also might be needed to be included in <paramref name="expectedCustomTypes"/>.</para>
         /// <para>You can specify <paramref name="expectedCustomTypes"/> even if <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <paramref name="options"/>
         /// as it may improve the performance of type resolving and can help avoiding possible ambiguities if types were not serialized with full assembly identity
         /// (e.g. if <see cref="BinarySerializationOptions.OmitAssemblyQualifiedNames"/> was enabled on serialization).</para>
@@ -143,7 +143,7 @@ namespace KGySoft.Serialization.Binary
         /// it is not indicated by a <see cref="TypeForwardedFromAttribute"/> declared on the type, then you should instantiate a <see cref="BinarySerializationFormatter"/> class
         /// manually and set its <see cref="BinarySerializationFormatter.Binder"/> property to a <see cref="ForwardedTypesSerializationBinder"/> instance
         /// to specify the expected types.</para>
-        /// <para>For arrays it is enough to specify the element type and for generic types you can specify the
+        /// <para>For arrays, it is enough to specify the element type and for generic types you can specify the
         /// natively not supported generic type definition and generic type arguments separately.
         /// If <paramref name="expectedCustomTypes"/> contains constructed generic types, then the generic type definition and
         /// the type arguments will be treated as expected types in any combination.</para>
@@ -284,7 +284,7 @@ namespace KGySoft.Serialization.Binary
         /// and the serialization <paramref name="stream"/> contains types encoded by their names. Natively supported types are not needed to be included
         /// unless the original object was serialized with the <see cref="BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes"/> option enabled.</para>
         /// <para><typeparamref name="T"/> is allowed to be an interface or abstract type but if it's different from the actual type of the result,
-        /// then the actual type also might needed to be included in <paramref name="expectedCustomTypes"/>.</para>
+        /// then the actual type also might be needed to be included in <paramref name="expectedCustomTypes"/>.</para>
         /// <para>You can specify <paramref name="expectedCustomTypes"/> even if <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <paramref name="options"/>
         /// as it may improve the performance of type resolving and can help avoiding possible ambiguities if types were not serialized with full assembly identity
         /// (e.g. if <see cref="BinarySerializationOptions.OmitAssemblyQualifiedNames"/> was enabled on serialization).</para>
@@ -292,7 +292,7 @@ namespace KGySoft.Serialization.Binary
         /// it is not indicated by a <see cref="TypeForwardedFromAttribute"/> declared on the type, then you should instantiate a <see cref="BinarySerializationFormatter"/> class
         /// manually and set its <see cref="BinarySerializationFormatter.Binder"/> property to a <see cref="ForwardedTypesSerializationBinder"/> instance
         /// to specify the expected types.</para>
-        /// <para>For arrays it is enough to specify the element type and for generic types you can specify the
+        /// <para>For arrays, it is enough to specify the element type and for generic types you can specify the
         /// natively not supported generic type definition and generic type arguments separately.
         /// If <paramref name="expectedCustomTypes"/> contains constructed generic types, then the generic type definition and
         /// the type arguments will be treated as expected types in any combination.</para>
@@ -373,7 +373,7 @@ namespace KGySoft.Serialization.Binary
         /// and <see cref="SerializeToStream">SerializeToStream</see> methods only when encoding of the writer is UTF-8.
         /// Otherwise, you must use <see cref="O:KGySoft.Serialization.Binary.BinarySerializationFormatter.DeserializeByReader">DeserializeByReader</see> with the same encoding as here.</note>
         /// </remarks>
-        /// <param name="writer">The writer that will used to serialize data. The writer will remain opened after serialization.</param>
+        /// <param name="writer">The writer that will be used to serialize data. The writer will remain opened after serialization.</param>
         /// <param name="data">The data that will be written by the writer.</param>
         /// <param name="options">Options of the serialization. This parameter is optional.
         /// <br/>Default value: <see cref="BinarySerializationOptions.CompactSerializationOfStructures"/>.</param>
@@ -436,7 +436,7 @@ namespace KGySoft.Serialization.Binary
         /// and the serialization stream contains types encoded by their names. Natively supported types are not needed to be included
         /// unless the original object was serialized with the <see cref="BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes"/> option enabled.</para>
         /// <para><typeparamref name="T"/> is allowed to be an interface or abstract type but if it's different from the actual type of the result,
-        /// then the actual type also might needed to be included in <paramref name="expectedCustomTypes"/>.</para>
+        /// then the actual type also might be needed to be included in <paramref name="expectedCustomTypes"/>.</para>
         /// <para>You can specify <paramref name="expectedCustomTypes"/> even if <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <paramref name="options"/>
         /// as it may improve the performance of type resolving and can help avoiding possible ambiguities if types were not serialized with full assembly identity
         /// (e.g. if <see cref="BinarySerializationOptions.OmitAssemblyQualifiedNames"/> was enabled on serialization).</para>
@@ -444,7 +444,7 @@ namespace KGySoft.Serialization.Binary
         /// it is not indicated by a <see cref="TypeForwardedFromAttribute"/> declared on the type, then you should instantiate a <see cref="BinarySerializationFormatter"/> class
         /// manually and set its <see cref="BinarySerializationFormatter.Binder"/> property to a <see cref="ForwardedTypesSerializationBinder"/> instance
         /// to specify the expected types.</para>
-        /// <para>For arrays it is enough to specify the element type and for generic types you can specify the
+        /// <para>For arrays, it is enough to specify the element type and for generic types you can specify the
         /// natively not supported generic type definition and generic type arguments separately.
         /// If <paramref name="expectedCustomTypes"/> contains constructed generic types, then the generic type definition and
         /// the type arguments will be treated as expected types in any combination.</para>
@@ -537,11 +537,11 @@ namespace KGySoft.Serialization.Binary
         /// You can use the <see cref="TrySerializeValueType"/> method to serialize only pure value types without any references. </note></para>
         /// <para>If the instance cannot be serialized even by the <see cref="Marshal"/> class, then an <see cref="ArgumentException"/> is thrown.</para>
         /// <note type="caution">If packing is not defined on the type of the instance by <see cref="StructLayoutAttribute.Pack">StructLayoutAttribute.Pack</see>,
-        /// or the type contains pointer fields, then the length of the result might be different on 32 and 64 bit systems.
+        /// or the type contains pointer fields, then the length of the result might be different on 32 and 64-bit systems.
         /// The serialized content depends also on the endianness of the executing architecture.</note>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="obj"/> is <see langword="null"/>.</exception>
-        /// <exception cref="ArgumentException"><paramref name="obj"/> contains references and it cannot be serialized even by the <see cref="Marshal"/> class.</exception>
+        /// <exception cref="ArgumentException"><paramref name="obj"/> contains references, and it cannot be serialized even by the <see cref="Marshal"/> class.</exception>
         /// <exception cref="NotSupportedException">The method is called from a restricted <see cref="AppDomain"/> with insufficient permissions.</exception>
         [SecurityCritical]
         public static byte[] SerializeValueType(ValueType obj)
@@ -767,7 +767,7 @@ namespace KGySoft.Serialization.Binary
         /// <br/>-or-
         /// <br/>The length of <paramref name="data"/> is too small.
         /// <br/>-or-
-        /// <br/>The specified <paramref name="type"/> contains references and it cannot be deserialized even by using the <see cref="Marshal"/> class.</exception>
+        /// <br/>The specified <paramref name="type"/> contains references, and it cannot be deserialized even by using the <see cref="Marshal"/> class.</exception>
         public static object DeserializeValueType(Type type, byte[] data) => DeserializeValueType(type, data, 0);
 
         /// <summary>
@@ -784,7 +784,7 @@ namespace KGySoft.Serialization.Binary
         /// <br/>-or-
         /// <br/>The length of <paramref name="data"/> is too small.
         /// <br/>-or-
-        /// <br/>The specified <paramref name="type"/> contains references and it cannot be deserialized even by using the <see cref="Marshal"/> class.</exception>
+        /// <br/>The specified <paramref name="type"/> contains references, and it cannot be deserialized even by using the <see cref="Marshal"/> class.</exception>
         [SecuritySafeCritical]
         public static object DeserializeValueType(Type type, byte[] data, int offset)
         {
@@ -956,10 +956,10 @@ namespace KGySoft.Serialization.Binary
 
             T[] result = new T[count];
 #if NET5_0_OR_GREATER
-            // must use unaligned because data[offset] is not necessarily a pointer aligned address (we could check it but it isn't worth it)
+            // must use unaligned because data[offset] is not necessarily a pointer aligned address (we could check it, but it isn't worth it)
             Unsafe.CopyBlockUnaligned(ref Unsafe.As<T, byte>(ref MemoryMarshal.GetArrayDataReference(result)), ref data[offset], (uint)len);
 #elif NETCOREAPP3_0_OR_GREATER
-            // must use unaligned because data[offset] is not necessarily a pointer aligned address (we could check it but it isn't worth it)
+            // must use unaligned because data[offset] is not necessarily a pointer aligned address (we could check it, but it isn't worth it)
             Unsafe.CopyBlockUnaligned(ref Unsafe.As<T, byte>(ref result[0]), ref data[offset], (uint)len);
 #else
 #if NETFRAMEWORK || NETSTANDARD2_0
@@ -1004,7 +1004,7 @@ namespace KGySoft.Serialization.Binary
         /// uses default serialization and wraps other custom types directly.</para>
         /// <note><list type="bullet"><item>Please note that this method may not able to detect every type if the types of the serialized fields are interfaces or non-sealed classes
         /// and the serialization stream contains implementations or derived types of them. In such cases you may need to append further types to the result before passing it to the deserialization methods.</item>
-        /// <item>Please also note that if <typeparamref name="T"/> or some of its nested types use custom serialization (ie. implement <see cref="ISerializable"/> or <see cref="IBinarySerializable"/>),
+        /// <item>Please also note that if <typeparamref name="T"/> or some of its nested types use custom serialization (i.e. implement <see cref="ISerializable"/> or <see cref="IBinarySerializable"/>),
         /// then their fields are not checked recursively by default, because they are not serialized by fields, and it's impossible to tell what types should be included in the result.
         /// You can force to extract their types by passing <see langword="true"/> to the <paramref name="forceAll"/> parameter though.</item></list></note>
         /// <para>If <paramref name="forceAll"/> is <see langword="false"/>, then natively supported types, as well as fields of <see cref="ISerializable"/> and <see cref="IBinarySerializable"/>
@@ -1243,7 +1243,7 @@ namespace KGySoft.Serialization.Binary
             ref byte src = ref data[offset];
             ref byte dst = ref Reflector.GetRawData(result);
             
-            // must use unaligned because data[offset] is not necessarily a pointer aligned address (we could check it but it isn't worth it)
+            // must use unaligned because data[offset] is not necessarily a pointer aligned address (we could check it, but it isn't worth it)
             Unsafe.CopyBlockUnaligned(ref dst, ref src, (uint)len);
 #else
             unsafe

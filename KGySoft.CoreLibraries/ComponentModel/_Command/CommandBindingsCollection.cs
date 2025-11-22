@@ -221,10 +221,10 @@ namespace KGySoft.ComponentModel
             string? targetPropertyName = null, Func<object?, object?>? format = null, Func<object?, object?>? parse = null)
         {
             ICommandBinding[] result =
-            {
-                Command.CreatePropertyBinding(source, sourcePropertyName, targetPropertyName ?? sourcePropertyName, format, new[] { target }, false, null),
-                Command.CreatePropertyBinding(target, targetPropertyName ?? sourcePropertyName, sourcePropertyName, parse, new[] { source }, false, null)
-            };
+            [
+                Command.CreatePropertyBinding(source, sourcePropertyName, targetPropertyName ?? sourcePropertyName, format, [target], false, null),
+                Command.CreatePropertyBinding(target, targetPropertyName ?? sourcePropertyName, sourcePropertyName, parse, [source], false, null)
+            ];
 
             Add(result[0]);
             Add(result[1]);

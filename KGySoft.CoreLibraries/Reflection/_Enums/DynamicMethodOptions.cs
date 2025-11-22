@@ -61,7 +61,7 @@ namespace KGySoft.Reflection
         TreatAsPropertySetter = 1 << 2,
 
         /// <summary>
-        /// Treats a ConstructorInfo as a regular method, ie. instead of returning a new object adds the instance parameter and executes the constructor for it.
+        /// Treats a ConstructorInfo as a regular method, i.e. instead of returning a new object adds the instance parameter and executes the constructor for it.
         /// </summary>
         TreatCtorAsMethod = 1 << 3,
 

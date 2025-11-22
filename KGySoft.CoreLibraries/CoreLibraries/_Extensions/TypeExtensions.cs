@@ -341,8 +341,8 @@ namespace KGySoft.CoreLibraries
         /// the <see cref="UnregisterTypeConverter{TConverter}">UnregisterTypeConverter</see> method.</para>
         /// <note>If you want to permanently set a custom converter for a type, then it is recommended to register it at the start of your application
         /// or service. It is also possible to register a converter temporarily, and then restore the previous converter by calling
-        /// the <see cref="UnregisterTypeConverter{TConverter}">UnregisterTypeConverter</see> method but then you must make sure there is no
-        /// running concurrent operation on a different thread that expects to use an other converter for the same type.</note>
+        /// the <see cref="UnregisterTypeConverter{TConverter}">UnregisterTypeConverter</see> method, but then you must make sure there is no
+        /// running concurrent operation on a different thread that expects to use another converter for the same type.</note>
         /// </remarks>
         [SecuritySafeCritical]
         public static void RegisterTypeConverter<TConverter>(this Type type) where TConverter : TypeConverter
@@ -440,7 +440,7 @@ namespace KGySoft.CoreLibraries
         /// Registered conversions can be removed in any order but always the lastly set will be the active one.</para>
         /// <note>If you want to permanently set a custom conversion, then it is recommended to register it at the start of your application
         /// or service. It is also possible to register a conversion temporarily, and then restore the previous one by calling
-        /// the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.UnregisterConversion">UnregisterConversion</see> methods but then you must make sure there is no
+        /// the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.UnregisterConversion">UnregisterConversion</see> methods, but then you must make sure there is no
         /// running concurrent operation on a different thread that suppose to use different conversion for the same type.</note>
         /// <list type="bullet">
         /// <item><see cref="KeyValuePair{TKey,TValue}"/> to another <see cref="KeyValuePair{TKey,TValue}"/></item>
@@ -474,7 +474,7 @@ namespace KGySoft.CoreLibraries
         /// Registered conversions can be removed in any order but always the lastly set will be the active one.</para>
         /// <note>If you want to permanently set a custom conversion, then it is recommended to register it at the start of your application
         /// or service. It is also possible to register a conversion temporarily, and then restore the previous one by calling
-        /// the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.UnregisterConversion">UnregisterConversion</see> methods but then you must make sure there is no
+        /// the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.UnregisterConversion">UnregisterConversion</see> methods, but then you must make sure there is no
         /// running concurrent operation on a different thread that suppose to use different conversion for the same type.</note>
         /// <list type="bullet">
         /// <item><see cref="KeyValuePair{TKey,TValue}"/> to another <see cref="KeyValuePair{TKey,TValue}"/></item>
@@ -628,7 +628,7 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// Gets whether given instance of type is a non read-only collection
+        /// Gets whether given instance of type is a non-read-only collection
         /// either by generic or non-generic way.
         /// </summary>
         /// <param name="type">The type to test</param>
@@ -726,7 +726,7 @@ namespace KGySoft.CoreLibraries
                         {
                             exactConversion = conversionsOfSource[conversionsOfSource.Count - 1];
                             if (exactMatch == true)
-                                return new[] { exactConversion };
+                                return [exactConversion];
                         }
                     }
                 }
@@ -1012,12 +1012,12 @@ namespace KGySoft.CoreLibraries
                     if (paramType == Reflector.StringType)
                         continue;
 
-                    // collectionCtor is OK if can accept array or list of element type or dictionary of object or specified key-value element type
+                    // collectionCtor is OK if it can accept array or list of element type or dictionary of object or specified key-value element type
                     if (!result.IsDictionary.Value && (paramType.IsAssignableFrom(result.ElementType.MakeArrayType())
                             || paramType.IsAssignableFrom(Reflector.ListGenType.GetGenericType(result.ElementType)))
                         || result.IsDictionary.Value && paramType.IsAssignableFrom(Reflector.DictionaryGenType.GetGenericType(result.ElementType.IsGenericType
                             ? result.ElementType.GetGenericArguments()
-                            : new[] { Reflector.ObjectType, Reflector.ObjectType })))
+                            : [Reflector.ObjectType, Reflector.ObjectType])))
                     {
                         result.CollectionCtor = ctor;
                         if (result.DefaultCtor is not null)
@@ -1045,7 +1045,7 @@ namespace KGySoft.CoreLibraries
             if (aqn == null)
                 return false;
 
-            // using TypeResolver just to parse the type name for possible generic types but we do the actual resolve by ourselves
+            // using TypeResolver just to parse the type name for possible generic types, but we do the actual resolve by ourselves
             var expectedTypes = new HashSet<Type>();
             AddExpectedTypes(type, expectedTypes);
             return TypeResolver.ResolveType(name, DoResolveType, ResolveTypeOptions.None) == type;
@@ -1112,7 +1112,7 @@ namespace KGySoft.CoreLibraries
                     continue;
                 if (i.IsGenericTypeOf(Reflector.ICollectionGenType))
                 {
-                    PropertyInfo pi = i.GetProperty(nameof(ICollection<_>.IsReadOnly))!;
+                    PropertyInfo pi = i.GetProperty(nameof(ICollection<>.IsReadOnly))!;
                     return !(bool)pi.Get(instance)!;
                 }
             }

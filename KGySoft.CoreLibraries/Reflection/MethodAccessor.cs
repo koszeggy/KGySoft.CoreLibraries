@@ -324,7 +324,7 @@ namespace KGySoft.Reflection
             catch (Exception e)
             {
                 // Post-validation if there was any exception. We do this for better performance on the happy path.
-                PostValidate(instance, new[] { param }, e, false);
+                PostValidate(instance, [param], e, false);
                 return null; // actually never reached, just to satisfy the compiler
             }
         }
@@ -358,7 +358,7 @@ namespace KGySoft.Reflection
             catch (Exception e)
             {
                 // Post-validation if there was any exception. We do this for better performance on the happy path.
-                PostValidate(instance, new[] { param1, param2 }, e, false);
+                PostValidate(instance, [param1, param2], e, false);
                 return null; // actually never reached, just to satisfy the compiler
             }
         }
@@ -393,7 +393,7 @@ namespace KGySoft.Reflection
             catch (Exception e)
             {
                 // Post-validation if there was any exception. We do this for better performance on the happy path.
-                PostValidate(instance, new[] { param1, param2, param3 }, e, false);
+                PostValidate(instance, [param1, param2, param3], e, false);
                 return null; // actually never reached, just to satisfy the compiler
             }
         }
@@ -429,7 +429,7 @@ namespace KGySoft.Reflection
             catch (Exception e)
             {
                 // Post-validation if there was any exception. We do this for better performance on the happy path.
-                PostValidate(instance, new[] { param1, param2, param3, param4 }, e, false);
+                PostValidate(instance, [param1, param2, param3, param4], e, false);
                 return null; // actually never reached, just to satisfy the compiler
             }
         }

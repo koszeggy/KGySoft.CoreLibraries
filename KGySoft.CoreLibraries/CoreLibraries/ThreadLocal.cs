@@ -190,7 +190,7 @@ namespace KGySoft.CoreLibraries
                     }
 
                     // Remove the LinkedSlot from the linked list. Once the FinalizationHelper is done, all back-references to
-                    // the table will be have been removed, and so the table can get GC'd.
+                    // the table will have been removed, and so the table can get GC'd.
                     lock (idManager)
                     {
                         if (linkedSlot.Next != null)

@@ -1020,21 +1020,21 @@ namespace KGySoft.CoreLibraries
 
             private static bool TryParseHexDigit(char c, out int value)
             {
-                if (c >= '0' && c <= '9')
+                if (c is >= '0' and <= '9')
                 {
                     value = c - '0';
                     return true;
                 }
 
                 const int shiftUpper = 'A' - 10;
-                if (c >= 'A' && c <= 'F')
+                if (c is >= 'A' and <= 'F')
                 {
                     value = c - shiftUpper;
                     return true;
                 }
 
                 const int shiftLower = 'a' - 10;
-                if (c >= 'a' && c <= 'f')
+                if (c is >= 'a' and <= 'f')
                 {
                     value = c - shiftLower;
                     return true;

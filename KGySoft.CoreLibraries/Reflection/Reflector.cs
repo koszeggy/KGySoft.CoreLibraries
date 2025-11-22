@@ -285,7 +285,7 @@ namespace KGySoft.Reflection
         /// <param name="indexParameters">Index parameters if <paramref name="propertyName"/> refers to an indexed property. This parameter is ignored for non-indexed properties.</param>
         /// <remarks>
         /// <para><paramref name="propertyName"/> can refer public and non-public properties. To avoid ambiguity (in case of indexers), this method gets
-        /// all of the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
+        /// all the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
         /// <para>If you already have a <see cref="PropertyInfo"/> instance use the <see cref="SetProperty(object,PropertyInfo,object,ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>If you are not sure whether a property with the specified <paramref name="propertyName"/> exists, then you can use the
@@ -314,7 +314,7 @@ namespace KGySoft.Reflection
         /// <param name="indexParameters">Index parameters if <paramref name="propertyName"/> refers to an indexed property. This parameter is ignored for non-indexed properties.</param>
         /// <remarks>
         /// <para><paramref name="propertyName"/> can refer public and non-public properties. To avoid ambiguity (in case of indexers), this method gets
-        /// all of the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
+        /// all the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
         /// <para>If you already have a <see cref="PropertyInfo"/> instance use the <see cref="SetProperty(object,PropertyInfo,object,ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>If you are not sure whether a property with the specified <paramref name="propertyName"/> exists, then you can use the
@@ -336,7 +336,7 @@ namespace KGySoft.Reflection
         /// <param name="indexParameters">Index parameters if <paramref name="propertyName"/> refers to an indexed property. This parameter is ignored for non-indexed properties.</param>
         /// <remarks>
         /// <para><paramref name="propertyName"/> can refer public and non-public properties. To avoid ambiguity (in case of indexers), this method gets
-        /// all of the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
+        /// all the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
         /// <para>If you already have a <see cref="PropertyInfo"/> instance use the <see cref="SetProperty(object,PropertyInfo,object,ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>If you are not sure whether a property with the specified <paramref name="propertyName"/> exists, then you can use the
@@ -357,7 +357,7 @@ namespace KGySoft.Reflection
         /// <param name="indexParameters">Index parameters if <paramref name="propertyName"/> refers to an indexed property. This parameter is ignored for non-indexed properties.</param>
         /// <remarks>
         /// <para><paramref name="propertyName"/> can refer public and non-public properties. To avoid ambiguity (in case of indexers), this method gets
-        /// all of the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
+        /// all the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
         /// <para>If you already have a <see cref="PropertyInfo"/> instance use the <see cref="SetProperty(object,PropertyInfo,object,ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>If you are not sure whether a property with the specified <paramref name="propertyName"/> exists, then you can use the
@@ -428,7 +428,7 @@ namespace KGySoft.Reflection
         /// <remarks>
         /// <note>If a matching property could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
         /// <para><paramref name="propertyName"/> can refer public and non-public properties. To avoid ambiguity (in case of indexers), this method gets
-        /// all of the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
+        /// all the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
         /// <para>If you already have a <see cref="PropertyInfo"/> instance use the <see cref="SetProperty(object,PropertyInfo,object,ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.TypeDescriptor"/> way
@@ -457,7 +457,7 @@ namespace KGySoft.Reflection
         /// <remarks>
         /// <note>If a matching property could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
         /// <para><paramref name="propertyName"/> can refer public and non-public properties. To avoid ambiguity (in case of indexers), this method gets
-        /// all of the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
+        /// all the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
         /// <para>If you already have a <see cref="PropertyInfo"/> instance use the <see cref="SetProperty(object,PropertyInfo,object,ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.TypeDescriptor"/> way
@@ -479,7 +479,7 @@ namespace KGySoft.Reflection
         /// <remarks>
         /// <note>If a matching property could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
         /// <para><paramref name="propertyName"/> can refer public and non-public properties. To avoid ambiguity (in case of indexers), this method gets
-        /// all of the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
+        /// all the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
         /// <para>If you already have a <see cref="PropertyInfo"/> instance use the <see cref="SetProperty(object,PropertyInfo,object,ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>For setting the property this method uses the <see cref="ReflectionWays.TypeDescriptor"/> way
@@ -500,7 +500,7 @@ namespace KGySoft.Reflection
         /// <remarks>
         /// <note>If a matching property could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
         /// <para><paramref name="propertyName"/> can refer public and non-public properties. To avoid ambiguity (in case of indexers), this method gets
-        /// all of the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
+        /// all the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
         /// <para>If you already have a <see cref="PropertyInfo"/> instance use the <see cref="SetProperty(object,PropertyInfo,object,ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>For setting the property this method uses the <see cref="ReflectionWays.TypeDescriptor"/> way
@@ -868,7 +868,7 @@ namespace KGySoft.Reflection
         /// <returns>The value of the property.</returns>
         /// <remarks>
         /// <para><paramref name="propertyName"/> can refer public and non-public properties. To avoid ambiguity (in case of indexers), this method gets
-        /// all of the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
+        /// all the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
         /// <para>If you already have a <see cref="PropertyInfo"/> instance use the <see cref="GetProperty(object,PropertyInfo,ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>If you are not sure whether a property with the specified <paramref name="propertyName"/> exists, then you can use the
@@ -896,7 +896,7 @@ namespace KGySoft.Reflection
         /// <returns>The value of the property.</returns>
         /// <remarks>
         /// <para><paramref name="propertyName"/> can refer public and non-public properties. To avoid ambiguity (in case of indexers), this method gets
-        /// all of the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
+        /// all the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
         /// <para>If you already have a <see cref="PropertyInfo"/> instance use the <see cref="GetProperty(object,PropertyInfo,ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>If you are not sure whether a property with the specified <paramref name="propertyName"/> exists, then you can use the
@@ -917,7 +917,7 @@ namespace KGySoft.Reflection
         /// <returns>The value of the property.</returns>
         /// <remarks>
         /// <para><paramref name="propertyName"/> can refer public and non-public properties. To avoid ambiguity (in case of indexers), this method gets
-        /// all of the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
+        /// all the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
         /// <para>If you already have a <see cref="PropertyInfo"/> instance use the <see cref="GetProperty(object,PropertyInfo,ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>If you are not sure whether a property with the specified <paramref name="propertyName"/> exists, then you can use the
@@ -937,7 +937,7 @@ namespace KGySoft.Reflection
         /// <returns>The value of the property.</returns>
         /// <remarks>
         /// <para><paramref name="propertyName"/> can refer public and non-public properties. To avoid ambiguity (in case of indexers), this method gets
-        /// all of the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
+        /// all the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
         /// <para>If you already have a <see cref="PropertyInfo"/> instance use the <see cref="GetProperty(object,PropertyInfo,ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>If you are not sure whether a property with the specified <paramref name="propertyName"/> exists, then you can use the
@@ -1007,7 +1007,7 @@ namespace KGySoft.Reflection
         /// <remarks>
         /// <note>If a matching property could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
         /// <para><paramref name="propertyName"/> can refer public and non-public properties. To avoid ambiguity (in case of indexers), this method gets
-        /// all of the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
+        /// all the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
         /// <para>If you already have a <see cref="PropertyInfo"/> instance use the <see cref="GetProperty(object,PropertyInfo,ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.TypeDescriptor"/> way
@@ -1035,7 +1035,7 @@ namespace KGySoft.Reflection
         /// <remarks>
         /// <note>If a matching property could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
         /// <para><paramref name="propertyName"/> can refer public and non-public properties. To avoid ambiguity (in case of indexers), this method gets
-        /// all of the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
+        /// all the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
         /// <para>If you already have a <see cref="PropertyInfo"/> instance use the <see cref="GetProperty(object,PropertyInfo,ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.TypeDescriptor"/> way
@@ -1056,7 +1056,7 @@ namespace KGySoft.Reflection
         /// <remarks>
         /// <note>If a matching property could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
         /// <para><paramref name="propertyName"/> can refer public and non-public properties. To avoid ambiguity (in case of indexers), this method gets
-        /// all of the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
+        /// all the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
         /// <para>If you already have a <see cref="PropertyInfo"/> instance use the <see cref="GetProperty(object,PropertyInfo,ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>For getting the property this method uses the <see cref="ReflectionWays.TypeDescriptor"/> way
@@ -1076,7 +1076,7 @@ namespace KGySoft.Reflection
         /// <remarks>
         /// <note>If a matching property could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
         /// <para><paramref name="propertyName"/> can refer public and non-public properties. To avoid ambiguity (in case of indexers), this method gets
-        /// all of the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
+        /// all the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
         /// <para>If you already have a <see cref="PropertyInfo"/> instance use the <see cref="GetProperty(object,PropertyInfo,ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>For getting the property this method uses the <see cref="ReflectionWays.TypeDescriptor"/> way
@@ -1487,7 +1487,7 @@ namespace KGySoft.Reflection
         /// <returns>The return value of the method.</returns>
         /// <remarks>
         /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
-        /// all of the methods of the same name and chooses the first one for which the provided <paramref name="genericParameters"/> and <paramref name="parameters"/> match.</para>
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="genericParameters"/> and <paramref name="parameters"/> match.</para>
         /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>If you are not sure whether a method with the specified <paramref name="methodName"/> exists, then you can use the
@@ -1516,7 +1516,7 @@ namespace KGySoft.Reflection
         /// <returns>The return value of the method.</returns>
         /// <remarks>
         /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
-        /// all of the methods of the same name and chooses the first one for which the provided <paramref name="genericParameters"/> and <paramref name="parameters"/> match.</para>
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="genericParameters"/> and <paramref name="parameters"/> match.</para>
         /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>If you are not sure whether a method with the specified <paramref name="methodName"/> exists, then you can use the
@@ -1538,7 +1538,7 @@ namespace KGySoft.Reflection
         /// <returns>The return value of the method.</returns>
         /// <remarks>
         /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
-        /// all of the methods of the same name and chooses the first one for which the provided <paramref name="genericParameters"/> and <paramref name="parameters"/> match.</para>
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="genericParameters"/> and <paramref name="parameters"/> match.</para>
         /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>If you are not sure whether a method with the specified <paramref name="methodName"/> exists, then you can use the
@@ -1559,7 +1559,7 @@ namespace KGySoft.Reflection
         /// <returns>The return value of the method.</returns>
         /// <remarks>
         /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
-        /// all of the methods of the same name and chooses the first one for which the provided <paramref name="genericParameters"/> and <paramref name="parameters"/> match.</para>
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="genericParameters"/> and <paramref name="parameters"/> match.</para>
         /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>If you are not sure whether a method with the specified <paramref name="methodName"/> exists, then you can use the
@@ -1581,7 +1581,7 @@ namespace KGySoft.Reflection
         /// <returns>The return value of the method.</returns>
         /// <remarks>
         /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
-        /// all of the methods of the same name and chooses the first one for which the provided <paramref name="parameters"/> match.</para>
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="parameters"/> match.</para>
         /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>If you are not sure whether a method with the specified <paramref name="methodName"/> exists, then you can use the
@@ -1602,7 +1602,7 @@ namespace KGySoft.Reflection
         /// <returns>The return value of the method.</returns>
         /// <remarks>
         /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
-        /// all of the methods of the same name and chooses the first one for which the provided <paramref name="parameters"/> match.</para>
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="parameters"/> match.</para>
         /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>If you are not sure whether a method with the specified <paramref name="methodName"/> exists, then you can use the
@@ -1623,7 +1623,7 @@ namespace KGySoft.Reflection
         /// <returns>The return value of the method.</returns>
         /// <remarks>
         /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
-        /// all of the methods of the same name and chooses the first one for which the provided <paramref name="parameters"/> match.</para>
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="parameters"/> match.</para>
         /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>If you are not sure whether a method with the specified <paramref name="methodName"/> exists, then you can use the
@@ -1643,7 +1643,7 @@ namespace KGySoft.Reflection
         /// <returns>The return value of the method.</returns>
         /// <remarks>
         /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
-        /// all of the methods of the same name and chooses the first one for which the provided <paramref name="parameters"/> match.</para>
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="parameters"/> match.</para>
         /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>If you are not sure whether a method with the specified <paramref name="methodName"/> exists, then you can use the
@@ -1666,7 +1666,7 @@ namespace KGySoft.Reflection
         /// <returns>The return value of the method.</returns>
         /// <remarks>
         /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
-        /// all of the methods of the same name and chooses the first one for which the provided <paramref name="genericParameters"/> and <paramref name="parameters"/> match.</para>
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="genericParameters"/> and <paramref name="parameters"/> match.</para>
         /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>If you are not sure whether a method with the specified <paramref name="methodName"/> exists, then you can use the
@@ -1694,7 +1694,7 @@ namespace KGySoft.Reflection
         /// <returns>The return value of the method.</returns>
         /// <remarks>
         /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
-        /// all of the methods of the same name and chooses the first one for which the provided <paramref name="genericParameters"/> and <paramref name="parameters"/> match.</para>
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="genericParameters"/> and <paramref name="parameters"/> match.</para>
         /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>If you are not sure whether a method with the specified <paramref name="methodName"/> exists, then you can use the
@@ -1715,7 +1715,7 @@ namespace KGySoft.Reflection
         /// <returns>The return value of the method.</returns>
         /// <remarks>
         /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
-        /// all of the methods of the same name and chooses the first one for which the provided <paramref name="genericParameters"/> and <paramref name="parameters"/> match.</para>
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="genericParameters"/> and <paramref name="parameters"/> match.</para>
         /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>If you are not sure whether a method with the specified <paramref name="methodName"/> exists, then you can use the
@@ -1735,7 +1735,7 @@ namespace KGySoft.Reflection
         /// <returns>The return value of the method.</returns>
         /// <remarks>
         /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
-        /// all of the methods of the same name and chooses the first one for which the provided <paramref name="genericParameters"/> and <paramref name="parameters"/> match.</para>
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="genericParameters"/> and <paramref name="parameters"/> match.</para>
         /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>If you are not sure whether a method with the specified <paramref name="methodName"/> exists, then you can use the
@@ -1756,7 +1756,7 @@ namespace KGySoft.Reflection
         /// <returns>The return value of the method.</returns>
         /// <remarks>
         /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
-        /// all of the methods of the same name and chooses the first one for which the provided <paramref name="parameters"/> match.</para>
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="parameters"/> match.</para>
         /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>If you are not sure whether a method with the specified <paramref name="methodName"/> exists, then you can use the
@@ -1776,7 +1776,7 @@ namespace KGySoft.Reflection
         /// <returns>The return value of the method.</returns>
         /// <remarks>
         /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
-        /// all of the methods of the same name and chooses the first one for which the provided <paramref name="parameters"/> match.</para>
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="parameters"/> match.</para>
         /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>If you are not sure whether a method with the specified <paramref name="methodName"/> exists, then you can use the
@@ -1796,7 +1796,7 @@ namespace KGySoft.Reflection
         /// <returns>The return value of the method.</returns>
         /// <remarks>
         /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
-        /// all of the methods of the same name and chooses the first one for which the provided <paramref name="parameters"/> match.</para>
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="parameters"/> match.</para>
         /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>If you are not sure whether a method with the specified <paramref name="methodName"/> exists, then you can use the
@@ -1815,7 +1815,7 @@ namespace KGySoft.Reflection
         /// <returns>The return value of the method.</returns>
         /// <remarks>
         /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
-        /// all of the methods of the same name and chooses the first one for which the provided <paramref name="parameters"/> match.</para>
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="parameters"/> match.</para>
         /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>If you are not sure whether a method with the specified <paramref name="methodName"/> exists, then you can use the
@@ -1839,7 +1839,7 @@ namespace KGySoft.Reflection
         /// <remarks>
         /// <note>If a matching method could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
         /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
-        /// all of the methods of the same name and chooses the first one for which the provided <paramref name="genericParameters"/> and <paramref name="parameters"/> match.</para>
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="genericParameters"/> and <paramref name="parameters"/> match.</para>
         /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then the <see cref="ReflectionWays.DynamicDelegate"/> way will be used.</para>
@@ -1868,7 +1868,7 @@ namespace KGySoft.Reflection
         /// <remarks>
         /// <note>If a matching method could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
         /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
-        /// all of the methods of the same name and chooses the first one for which the provided <paramref name="genericParameters"/> and <paramref name="parameters"/> match.</para>
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="genericParameters"/> and <paramref name="parameters"/> match.</para>
         /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then the <see cref="ReflectionWays.DynamicDelegate"/> way will be used.</para>
@@ -1890,7 +1890,7 @@ namespace KGySoft.Reflection
         /// <remarks>
         /// <note>If a matching method could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
         /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
-        /// all of the methods of the same name and chooses the first one for which the provided <paramref name="genericParameters"/> and <paramref name="parameters"/> match.</para>
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="genericParameters"/> and <paramref name="parameters"/> match.</para>
         /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>For invoking the method this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
@@ -1911,7 +1911,7 @@ namespace KGySoft.Reflection
         /// <remarks>
         /// <note>If a matching method could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
         /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
-        /// all of the methods of the same name and chooses the first one for which the provided <paramref name="genericParameters"/> and <paramref name="parameters"/> match.</para>
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="genericParameters"/> and <paramref name="parameters"/> match.</para>
         /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>For invoking the method this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
@@ -1933,7 +1933,7 @@ namespace KGySoft.Reflection
         /// <remarks>
         /// <note>If a matching method could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
         /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
-        /// all of the methods of the same name and chooses the first one for which the provided <paramref name="parameters"/> match.</para>
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="parameters"/> match.</para>
         /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then the <see cref="ReflectionWays.DynamicDelegate"/> way will be used.</para>
@@ -1954,7 +1954,7 @@ namespace KGySoft.Reflection
         /// <remarks>
         /// <note>If a matching method could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
         /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
-        /// all of the methods of the same name and chooses the first one for which the provided <paramref name="parameters"/> match.</para>
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="parameters"/> match.</para>
         /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then the <see cref="ReflectionWays.DynamicDelegate"/> way will be used.</para>
@@ -1975,7 +1975,7 @@ namespace KGySoft.Reflection
         /// <remarks>
         /// <note>If a matching method could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
         /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
-        /// all of the methods of the same name and chooses the first one for which the provided <paramref name="parameters"/> match.</para>
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="parameters"/> match.</para>
         /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>For invoking the method this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
@@ -1995,7 +1995,7 @@ namespace KGySoft.Reflection
         /// <remarks>
         /// <note>If a matching method could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
         /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
-        /// all of the methods of the same name and chooses the first one for which the provided <paramref name="parameters"/> match.</para>
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="parameters"/> match.</para>
         /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>For invoking the method this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
@@ -2018,7 +2018,7 @@ namespace KGySoft.Reflection
         /// <remarks>
         /// <note>If a matching method could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
         /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
-        /// all of the methods of the same name and chooses the first one for which the provided <paramref name="genericParameters"/> and <paramref name="parameters"/> match.</para>
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="genericParameters"/> and <paramref name="parameters"/> match.</para>
         /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then the <see cref="ReflectionWays.DynamicDelegate"/> way will be used.</para>
@@ -2046,7 +2046,7 @@ namespace KGySoft.Reflection
         /// <remarks>
         /// <note>If a matching method could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
         /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
-        /// all of the methods of the same name and chooses the first one for which the provided <paramref name="genericParameters"/> and <paramref name="parameters"/> match.</para>
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="genericParameters"/> and <paramref name="parameters"/> match.</para>
         /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then the <see cref="ReflectionWays.DynamicDelegate"/> way will be used.</para>
@@ -2067,7 +2067,7 @@ namespace KGySoft.Reflection
         /// <remarks>
         /// <note>If a matching method could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
         /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
-        /// all of the methods of the same name and chooses the first one for which the provided <paramref name="genericParameters"/> and <paramref name="parameters"/> match.</para>
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="genericParameters"/> and <paramref name="parameters"/> match.</para>
         /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>For invoking the method this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
@@ -2087,7 +2087,7 @@ namespace KGySoft.Reflection
         /// <remarks>
         /// <note>If a matching method could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
         /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
-        /// all of the methods of the same name and chooses the first one for which the provided <paramref name="genericParameters"/> and <paramref name="parameters"/> match.</para>
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="genericParameters"/> and <paramref name="parameters"/> match.</para>
         /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>For invoking the method this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
@@ -2108,7 +2108,7 @@ namespace KGySoft.Reflection
         /// <remarks>
         /// <note>If a matching method could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
         /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
-        /// all of the methods of the same name and chooses the first one for which the provided <paramref name="parameters"/> match.</para>
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="parameters"/> match.</para>
         /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then the <see cref="ReflectionWays.DynamicDelegate"/> way will be used.</para>
@@ -2128,7 +2128,7 @@ namespace KGySoft.Reflection
         /// <remarks>
         /// <note>If a matching method could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
         /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
-        /// all of the methods of the same name and chooses the first one for which the provided <paramref name="parameters"/> match.</para>
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="parameters"/> match.</para>
         /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then the <see cref="ReflectionWays.DynamicDelegate"/> way will be used.</para>
@@ -2148,7 +2148,7 @@ namespace KGySoft.Reflection
         /// <remarks>
         /// <note>If a matching method could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
         /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
-        /// all of the methods of the same name and chooses the first one for which the provided <paramref name="parameters"/> match.</para>
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="parameters"/> match.</para>
         /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>For invoking the method this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
@@ -2167,7 +2167,7 @@ namespace KGySoft.Reflection
         /// <remarks>
         /// <note>If a matching method could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
         /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
-        /// all of the methods of the same name and chooses the first one for which the provided <paramref name="parameters"/> match.</para>
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="parameters"/> match.</para>
         /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
         /// for better performance.</para>
         /// <para>For invoking the method this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
@@ -2471,7 +2471,7 @@ namespace KGySoft.Reflection
             if (preferCtor && !allowAlternativeWay && type.IsValueType)
                 allowAlternativeWay = true;
 
-            // 1.) By default constructor if preferred (including structs with parameterless constructors)
+            // 1.) By default, constructor if preferred (including structs with parameterless constructors)
             ConstructorInfo? defaultCtor = null;
             if (preferCtor && (defaultCtor = type.GetDefaultConstructor()) != null)
             {
@@ -2500,7 +2500,7 @@ namespace KGySoft.Reflection
             if (defaultCtor != null)
                 return false;
 
-            // 3.) By default constructor as a fallback
+            // 3.) By default, constructor as a fallback
             if ((defaultCtor = type.GetDefaultConstructor()) != null)
             {
                 try
@@ -3492,7 +3492,7 @@ namespace KGySoft.Reflection
         /// <remarks>
         /// <note type="security">The default value of the <paramref name="options"/> parameter allows loading assemblies if <paramref name="typeName"/>
         /// is an assembly qualified name. This behavior is compatible with the <see cref="Type.GetType(string)">Type.GetType</see> method but
-        /// can be a security risk if <paramref name="typeName"/> is from an untrusted source, eg. file, user input, remote service, database, etc.
+        /// can be a security risk if <paramref name="typeName"/> is from an untrusted source, e.g. file, user input, remote service, database, etc.
         /// In such cases do not enable the <see cref="ResolveTypeOptions.TryToLoadAssemblies"/> flag so the type can be resolved from the already loaded assemblies only.</note>
         /// <para><paramref name="typeName"/> can be generic and may contain fully or partially defined assembly names.</para>
         /// <para><paramref name="typeName"/> can contain generic parameter types in the format as they are returned by
@@ -3591,7 +3591,7 @@ namespace KGySoft.Reflection
         /// <remarks>
         /// <note type="security">The default value of the <paramref name="options"/> parameter allows loading assemblies if <paramref name="typeName"/>
         /// is an assembly qualified name. This behavior is compatible with the <see cref="Type.GetType(string)">Type.GetType</see> method but
-        /// can be a security risk if <paramref name="typeName"/> is from an untrusted source, eg. file, user input, remote service, database, etc.
+        /// can be a security risk if <paramref name="typeName"/> is from an untrusted source, e.g. file, user input, remote service, database, etc.
         /// In such cases do not enable the <see cref="ResolveTypeOptions.TryToLoadAssemblies"/> flag so the type can be resolved from the already loaded assemblies only.</note>
         /// <para><paramref name="typeName"/> can be generic and may contain fully or partially defined assembly names.</para>
         /// </remarks>
@@ -3916,7 +3916,7 @@ namespace KGySoft.Reflection
             // Steps:
             // - Firstly typedRef is cast to IntPtr* so can be indexed as an array
             // - As a pointer array, selecting the element, which contains the pointer to the value.
-            //   If it was always the first item, we could just return *(byte**)&typedRef but it wouldn't work on Mono.
+            //   If it was always the first item, we could just return *(byte**)&typedRef, but it wouldn't work on Mono.
             // - And this pointer is the address of the raw data itself, which is simply returned as byte*
 #pragma warning disable CS8500 // This takes the address of, gets the size of, or declares a pointer to a managed type
             return (byte*)((IntPtr*)&typedRef)[typedReferenceValueIndex];

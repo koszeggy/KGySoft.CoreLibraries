@@ -157,7 +157,7 @@ namespace KGySoft.Collections
                 return;
 
             // Indicating that from this point readOnlyStorage will be updated soon and content of growingStorage will be lost
-            // Note: this flag just helps to minimize possible loss in L2 cache but actually it does not prevent it completely.
+            // Note: this flag just helps to minimize possible loss in L2 cache, but actually it does not prevent it completely.
             // In worst case some values will be loaded multiple times but this is acceptable as we don't expect values changing.
             isMerging = true;
 

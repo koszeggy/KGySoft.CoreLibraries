@@ -31,7 +31,7 @@ using KGySoft.Diagnostics;
 namespace KGySoft.Collections.ObjectModel
 {
     /// <summary>
-    /// Similar to <see cref="Collection{T}"/> but provides virtual members not just for writing an setting but also for getting elements
+    /// Similar to <see cref="Collection{T}"/> but provides virtual members not just for writing and setting but also for getting elements
     /// such as <see cref="GetItem">GetItem</see>, <see cref="GetItemIndex">GetItemIndex</see> and allows to override also some properties
     /// such as <see cref="Count"/>, <see cref="IsReadOnly"/> and <see cref="CanSetItem"/>.
     /// </summary>
@@ -462,7 +462,7 @@ namespace KGySoft.Collections.ObjectModel
                 item = default;
             }
 
-            return GetItemIndex(item!);
+            return GetItemIndex(item);
         }
 
         void IList.Insert(int index, object? value)

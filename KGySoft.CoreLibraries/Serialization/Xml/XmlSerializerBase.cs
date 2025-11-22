@@ -248,7 +248,7 @@ namespace KGySoft.Serialization.Xml
             if (!knownCollectionsWithComparer.TryGetValue(isGeneric ? type.GetGenericTypeDefinition() : type, out ComparerType defaultComparer))
                 return null;
 
-            // special handling for HybridDictionary, which has no actual comparer but can be case insensitive
+            // special handling for HybridDictionary, which has no actual comparer but can be case-insensitive
             if (type == typeof(HybridDictionary))
                 return collection.IsCaseInsensitive() ? ComparerType.CaseInsensitive : ComparerType.None;
 
@@ -352,7 +352,7 @@ namespace KGySoft.Serialization.Xml
                 (f.IsPublic
                     // of a non delegate type
                     && !f.FieldType.IsDelegate()
-                    // and must be non read-only unless its type is a trusted collection
+                    // and must be non-read-only unless its type is a trusted collection
                     && (!f.IsInitOnly || IsTrustedCollection(f.FieldType) || IsKnownCollection(f.FieldType)))
                 // or, if it is a compiler-generated field, we just ignore it
                 || Attribute.GetCustomAttribute(f, typeof(CompilerGeneratedAttribute), false) != null)
@@ -450,9 +450,9 @@ namespace KGySoft.Serialization.Xml
                 : ComparerType.Unknown,
 
             _ => collectionGenericArgument is null ? ComparerType.Unknown
-                : Equals(comparer, typeof(EqualityComparer<>).GetPropertyValue(collectionGenericArgument, nameof(EqualityComparer<_>.Default)))
-                    || Equals(comparer, typeof(Comparer<>).GetPropertyValue(collectionGenericArgument, nameof(Comparer<_>.Default))) ? ComparerType.Default
-                : Equals(comparer, typeof(EnumComparer<>).GetPropertyValue(collectionGenericArgument, nameof(EnumComparer<_>.Comparer))) ? ComparerType.EnumComparer
+                : Equals(comparer, typeof(EqualityComparer<>).GetPropertyValue(collectionGenericArgument, nameof(EqualityComparer<>.Default)))
+                    || Equals(comparer, typeof(Comparer<>).GetPropertyValue(collectionGenericArgument, nameof(Comparer<>.Default))) ? ComparerType.Default
+                : Equals(comparer, typeof(EnumComparer<>).GetPropertyValue(collectionGenericArgument, nameof(EnumComparer<>.Comparer))) ? ComparerType.EnumComparer
                 : ComparerType.Unknown
         };
 
@@ -491,7 +491,7 @@ namespace KGySoft.Serialization.Xml
             {
                 MemberInfo mi = candidate.Member;
 
-                // we need to check if we have an actual non read-only instance
+                // we need to check if we have an actual non-read-only instance
                 if (candidate.CheckIfInstanceIsReadWriteCollection)
                 {
                     switch (mi)
@@ -569,7 +569,7 @@ namespace KGySoft.Serialization.Xml
 
         /// <summary>
         /// Registers object to detect circular reference.
-        /// Must be called from inside of try-finally to remove lock in finally if necessary.
+        /// Must be called from inside a try-finally block to remove lock in finally if necessary.
         /// </summary>
         private protected void RegisterSerializedObject(object? obj)
         {

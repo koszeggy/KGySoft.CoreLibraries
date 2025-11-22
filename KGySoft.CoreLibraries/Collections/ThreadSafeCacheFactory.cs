@@ -46,7 +46,7 @@ namespace KGySoft.Collections
         /// <note type="tip">If <typeparamref name="TKey"/> is <see cref="string">string</see> and it is safe to use a non-randomized string comparer,
         /// then you can pass <see cref="StringSegmentComparer.Ordinal">StringSegmentComparer.Ordinal</see> to the <paramref name="comparer"/> parameter for better performance.
         /// Or, you can use <see cref="StringSegmentComparer.OrdinalRandomized">StringSegmentComparer.OrdinalRandomized</see> to use a comparer with randomized hash also on
-        /// platforms where default string hashing is not randomized (e.g. .NET Framework 3.5).</note>
+        /// platforms where default string hashing is not randomized (e.g. in .NET Framework 3.5).</note>
         /// <para>A cache is similar to a dictionary (in terms of using a fast, associative storage) but additionally provides capacity management and transparent access (meaning,
         /// all that is needed is to read the <see cref="IThreadSafeCacheAccessor{TKey,TValue}.this">indexer</see> of the returned <see cref="IThreadSafeCacheAccessor{TKey,TValue}"/> instance, and
         /// it is transparent for the consumer whether the returned item was returned from the cache or it was loaded by invoking the specified <paramref name="itemLoader"/>).</para>
@@ -54,7 +54,7 @@ namespace KGySoft.Collections
         /// <para>In <c>KGy SOFT Core Libraries</c> there are two predefined classes that can be used to create a thread-safe cache instance: <see cref="LockFreeCacheOptions"/> and <see cref="LockingCacheOptions"/>.</para>
         /// <note type="tip">
         /// <list type="bullet">
-        /// <item><see cref="LockFreeCacheOptions"/>: Use this one if you want the fastest, well scalable solution and it is not a problem that the <paramref name="itemLoader"/> delegate might
+        /// <item><see cref="LockFreeCacheOptions"/>: Use this one if you want the fastest, well scalable solution, and it is not a problem that the <paramref name="itemLoader"/> delegate might
         /// be called concurrently, or capacity management is not too strict (when cache is full, about the half of the elements are dropped at once). Though rarely, it may also happen
         /// that <paramref name="itemLoader"/> is invoked multiple times when accessing the same key consecutively and the first call occurred during an internal merge session.</item>
         /// <item><see cref="LockingCacheOptions"/>: Use this one if you need strict capacity management, you want to dispose the dropped-out values, you want to ensure that the oldest

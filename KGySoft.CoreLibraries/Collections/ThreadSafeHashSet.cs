@@ -71,7 +71,7 @@ namespace KGySoft.Collections
     /// <para>This section contains some comparisons with other thread-safe collections.</para>
     /// <para><strong>When to prefer</strong>&#160;<see cref="ThreadSafeHashSet{T}"/> over <see cref="ConcurrentDictionary{TKey,TValue}"/>:
     /// <list type="bullet">
-    /// <item>If you would use only the keys, without any value.</item>
+    /// <item>If you used the keys only, without any value.</item>
     /// <item>If it is known that a fixed number of items will be used, or <see cref="Contains">Contains</see> will be used much more often than <see cref="Add">Add</see>,
     /// in which case <see cref="ThreadSafeHashSet{T}"/> may become mainly lock-free.</item>
     /// <item>If the same set of items are deleted and re-added again and again. In this case consider to set the <see cref="PreserveMergedItems"/>
@@ -84,7 +84,7 @@ namespace KGySoft.Collections
     /// <note type="tip">If <typeparamref name="T"/> is <see cref="string">string</see> and it is safe to use a non-randomized string comparer,
     /// then you can pass <see cref="StringSegmentComparer.Ordinal">StringSegmentComparer.Ordinal</see> to the constructor for even better performance.
     /// Or, you can use <see cref="StringSegmentComparer.OrdinalRandomized">StringSegmentComparer.OrdinalRandomized</see> to use a comparer with randomized hash also on
-    /// platforms where default string hashing is not randomized (e.g. .NET Framework 3.5).</note></para>
+    /// platforms where default string hashing is not randomized (e.g. in .NET Framework 3.5).</note></para>
     /// <para><strong>When to prefer</strong>&#160;<see cref="LockingCollection{T}"/> over <see cref="ThreadSafeHashSet{T}"/>:
     /// <list type="bullet">
     /// <item>If you just need a wrapper for an already existing <see cref="ICollection{T}"/> without copying the actual items.</item>
@@ -930,7 +930,7 @@ namespace KGySoft.Collections
 
         /// <summary>
         /// Checks if the lock free storage is still up-to-date. If returns false, the <see cref="fixedSizeStorage"/> field must be re-checked.
-        /// Should be used outside of a lock. If a merge operation is in progress, it blocks the current thread without locking until the merge is finished.
+        /// Should be used outside a lock. If a merge operation is in progress, it blocks the current thread without locking until the merge is finished.
         /// </summary>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         private bool IsUpToDate(FixedSizeStorage lockFreeValues)

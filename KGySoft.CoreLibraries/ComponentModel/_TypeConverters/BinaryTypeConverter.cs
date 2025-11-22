@@ -57,7 +57,7 @@ namespace KGySoft.ComponentModel
 #endif
         };
 
-        private static readonly Type[] deserializeParameters = { Reflector.ByteArrayType, Reflector.IntType, typeof(BinarySerializationOptions), typeof(Type[]) };
+        private static readonly Type[] deserializeParameters = [Reflector.ByteArrayType, Reflector.IntType, typeof(BinarySerializationOptions), typeof(Type[])];
         
         private static MethodInfo? deserializeMethod;
 

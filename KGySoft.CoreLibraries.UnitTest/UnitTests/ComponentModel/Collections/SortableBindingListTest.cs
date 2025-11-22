@@ -213,14 +213,14 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel.Collections
         public void Find()
         {
             var coll = new SortableBindingList<KeyValuePair<int, string>> { new KeyValuePair<int, string>(1, "1"), new KeyValuePair<int, string>(2, "2") };
-            coll.ApplySort(nameof(KeyValuePair<_, _>.Key), ListSortDirection.Ascending);
+            coll.ApplySort(nameof(KeyValuePair<,>.Key), ListSortDirection.Ascending);
 
             Throws<ArgumentException>(() => coll.Find("X", null), "No property descriptor found for property name 'X' in type 'System.Collections.Generic.KeyValuePair`2[System.Int32,System.String]'.");
-            Assert.IsTrue(coll.Find(nameof(KeyValuePair<_, _>.Key), 0) < 0);
-            Assert.AreEqual(0, coll.Find(nameof(KeyValuePair<_, _>.Key), 1));
+            Assert.IsTrue(coll.Find(nameof(KeyValuePair<,>.Key), 0) < 0);
+            Assert.AreEqual(0, coll.Find(nameof(KeyValuePair<,>.Key), 1));
 
-            coll.ApplySort(nameof(KeyValuePair<_, _>.Key), ListSortDirection.Descending);
-            Assert.AreEqual(1, coll.Find(nameof(KeyValuePair<_, _>.Key), 1));
+            coll.ApplySort(nameof(KeyValuePair<,>.Key), ListSortDirection.Descending);
+            Assert.AreEqual(1, coll.Find(nameof(KeyValuePair<,>.Key), 1));
         }
 
         #endregion

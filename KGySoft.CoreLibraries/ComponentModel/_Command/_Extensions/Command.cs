@@ -339,11 +339,11 @@ namespace KGySoft.ComponentModel
         public static ICommandBinding[] CreateTwoWayPropertyBinding(this INotifyPropertyChanged source, string sourcePropertyName, INotifyPropertyChanged target,
             string? targetPropertyName = null, Func<object?, object?>? format = null, Func<object?, object?>? parse = null)
         {
-            var result = new ICommandBinding[]
-            {
-                CreatePropertyBinding((object)source, sourcePropertyName, targetPropertyName ?? sourcePropertyName, format, new object[] { target }, false, null),
-                CreatePropertyBinding((object)target, targetPropertyName ?? sourcePropertyName, sourcePropertyName, parse, new object[] { source }, false, null)
-            };
+            ICommandBinding[] result =
+            [
+                CreatePropertyBinding(source, sourcePropertyName, targetPropertyName ?? sourcePropertyName, format, [target], false, null),
+                CreatePropertyBinding(target, targetPropertyName ?? sourcePropertyName, sourcePropertyName, parse, [source], false, null)
+            ];
 
             // Syncing only from source to target and only when both bindings could be created successfully
             result[0].InvokeCommand(source, nameof(INotifyPropertyChanged.PropertyChanged), new PropertyChangedEventArgs(sourcePropertyName));
@@ -370,11 +370,11 @@ namespace KGySoft.ComponentModel
         public static ICommandBinding[] CreateTwoWayPropertyBinding(object source, string sourcePropertyName, object target,
             string? targetPropertyName = null, Func<object?, object?>? format = null, Func<object?, object?>? parse = null)
         {
-            var result = new ICommandBinding[]
-            {
-                CreatePropertyBinding(source, sourcePropertyName, targetPropertyName ?? sourcePropertyName, format, new[] { target }, false, null),
-                CreatePropertyBinding(target, targetPropertyName ?? sourcePropertyName, sourcePropertyName, parse, new[] { source }, false, null)
-            };
+            ICommandBinding[] result =
+            [
+                CreatePropertyBinding(source, sourcePropertyName, targetPropertyName ?? sourcePropertyName, format, [target], false, null),
+                CreatePropertyBinding(target, targetPropertyName ?? sourcePropertyName, sourcePropertyName, parse, [source], false, null)
+            ];
 
             // Syncing only from source to target and only when both bindings could be created successfully
             bool isNotifyPropertyChanged = source is INotifyPropertyChanged;

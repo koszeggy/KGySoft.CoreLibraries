@@ -47,7 +47,7 @@ namespace KGySoft.ComponentModel
     /// <remarks>
     /// <para>Implementers can use the <see cref="Get{T}(T,string)">Get</see> and <see cref="Set">Set</see> methods in the property accessors to manage event raising automatically.</para>
     /// <para>Consumers can subscribe the <see cref="PropertyChanged"/> event to get notification about the property changes.</para>
-    /// <para>Accessing properties can be fine tuned by overriding the <see cref="CanGetProperty">CanGetProperty</see> and <see cref="CanSetProperty">CanSetProperty</see> methods. By default they allow
+    /// <para>Accessing properties can be fine-tuned by overriding the <see cref="CanGetProperty">CanGetProperty</see> and <see cref="CanSetProperty">CanSetProperty</see> methods. By default, they allow
     /// accessing the instance properties in the implementer class.
     /// <note type="inherit">Do not use <see cref="CanGetProperty">CanGetProperty</see> and <see cref="CanSetProperty">CanSetProperty</see> methods for property validation.
     /// To be able to validate property values consider to use the <see cref="ValidatingObjectBase"/> or <see cref="ModelBase"/> classes.</note>
@@ -189,7 +189,7 @@ namespace KGySoft.ComponentModel
         /// <para>Properties accessed by the <see cref="Get{T}(T, string)"><![CDATA[Get<T>]]></see> and <see cref="Set">Set</see> methods
         /// throw an <see cref="ObjectDisposedException"/> when this property returns <see langword="true"/>
         /// (but see also the <see cref="AllowReadingDisposedObject"/> property).</para>
-        /// <para>If the <see cref="Dispose(bool)"/> method is overridden and you need to dispose properties accessed by
+        /// <para>If the <see cref="Dispose(bool)"/> method is overridden, and you need to dispose properties accessed by
         /// the <see cref="Get{T}(T, string)"><![CDATA[Get<T>]]></see> and <see cref="Set">Set</see> methods
         /// check this property first to prevent the <see cref="ObjectDisposedException"/>.</para>
         /// <note>The change of this property is not observable. When an <see cref="ObservableObjectBase"/> instance is disposed
@@ -344,7 +344,7 @@ namespace KGySoft.ComponentModel
         internal void ReplaceProperties(IDictionary<string, object?> newProperties, bool invokeChangedEvent)
         {
             // Firstly remove the properties, which are not among the new ones.
-            // We accept that it can raise some unnecessary events but we cannot set the property if we cannot be sure about the default value.
+            // We accept that it can raise some unnecessary events, but we cannot set the property if we cannot be sure about the default value.
             IEnumerable<string> toRemove = Properties.Keys.Except(newProperties.Select(p => p.Key));
             foreach (var propertyName in toRemove)
                 ResetProperty(propertyName, invokeChangedEvent);

@@ -84,7 +84,7 @@ namespace KGySoft.ComponentModel
         #region Fields
 
         private readonly ThreadSafeDictionary<string, object?> stateProperties =
-            new(new[] { new KeyValuePair<string, object?>(nameof(Enabled), true) }, StringSegmentComparer.Ordinal);
+            new([new KeyValuePair<string, object?>(nameof(Enabled), true)], StringSegmentComparer.Ordinal);
 
         #endregion
 

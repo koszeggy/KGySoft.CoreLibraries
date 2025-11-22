@@ -77,7 +77,7 @@ namespace KGySoft.Collections
     /// <para>The <see cref="LockingCollection{T}.GetEnumerator">GetEnumerator</see> method and <see cref="Keys"/> and <see cref="Values"/> properties create a snapshot of the underlying collections so obtaining
     /// these members have an O(n) cost on this class.</para>
     /// <para><note>Starting with .NET 4 a sort of concurrent collections appeared. While they provide good scalability for multiple concurrent readers by using separate locks for entries or for a set of entries,
-    /// in many situations they perform worse than a simple locking collection, especially if the collection to lock uses a fast accessible storage (e.g. an array) internally. It also may worth to mention that some members
+    /// in many situations they perform worse than a simple locking collection, especially if the collection to lock uses a fast accessible storage (e.g. an array) internally. It also may be worth mentioning that some members
     /// (such as the <c>Count</c> property) are surprisingly expensive operations on most concurrent collections as they traverse the inner storage and in the meantime they lock all entries while counting the elements.
     /// So it always depends on the concrete scenario whether a simple locking collection or a concurrent collection is more beneficial to use.</note>
     /// <note type="tip"><list type="bullet">

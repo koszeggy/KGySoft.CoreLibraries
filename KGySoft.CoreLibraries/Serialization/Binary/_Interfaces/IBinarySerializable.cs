@@ -28,7 +28,7 @@ namespace KGySoft.Serialization.Binary
     /// </summary>
     /// <remarks>
     /// <para>By this interface a class can be serialized into a compact byte array. Unlike in case of system serialization and <see cref="ISerializable"/> implementations, saved data
-    /// does not have to contain a name based mapping. Thus the saved content can be more compact but this solution can be discouraged on very large object graphs
+    /// does not have to contain a name based mapping. Thus, the saved content can be more compact but this solution can be discouraged on very large object graphs
     /// because the whole object has to be written into memory. In case of very large object hierarchies you might consider to implement <see cref="ISerializable"/>
     /// interface instead, which is also supported by <see cref="BinarySerializer"/> and <see cref="BinarySerializationFormatter"/>.
     /// </para>

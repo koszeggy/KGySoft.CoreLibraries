@@ -86,7 +86,7 @@ namespace KGySoft.Collections
                 break;
             }
 
-            // Outside of predefined values or difference is too big: brute force
+            // Outside predefined values or difference is too big: brute force
             return GetNextPrime(min);
         }
 

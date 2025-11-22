@@ -270,7 +270,7 @@ namespace KGySoft.Resources
     /// <item>After disposing the <see cref="ResXResourceReader"/> instance or calling the <see cref="Close">Close</see> method the enumerators cannot be obtained: an <see cref="ObjectDisposedException"/> will be thrown
     /// on calling <see cref="GetEnumerator">GetEnumerator</see>, <see cref="GetMetadataEnumerator">GetMetadataEnumerator</see> and <see cref="GetAliasEnumerator">GetAliasEnumerator</see> methods.</item>
     /// <item>After disposing the <see cref="ResXResourceReader"/> instance or calling the <see cref="Close">Close</see> method every source stream will be closed (if any).</item>
-    /// <item>Unlike <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a>, this implementation returns every resources and metadata of the
+    /// <item>Unlike <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a>, this implementation returns every resource and metadata of the
     /// same name by default. This behavior can be adjusted by <see cref="AllowDuplicatedKeys"/> property.</item>
     /// <item><a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxresourcereader" target="_blank">System.Resources.ResXResourceReader</a> often throws <see cref="ArgumentException"/> on getting the enumerator
     /// or on retrieving the value of a <see cref="ResXDataNode"/> instance, which contains invalid data. In contrast, this implementation may throw <see cref="XmlException"/>, <see cref="TypeLoadException"/> or <see cref="NotSupportedException"/> instead.</item>
@@ -472,7 +472,7 @@ namespace KGySoft.Resources
             #region Internal Methods
 
             /// <summary>
-            /// Hasting the enumeration and reading all of the elements into a buffer. Occurs on a second GetEnumerator
+            /// Hasting the enumeration and reading all the elements into a buffer. Occurs on a second GetEnumerator
             /// call while the first enumeration has not been finished.
             /// </summary>
             internal void ReadToEnd()
@@ -1086,7 +1086,7 @@ namespace KGySoft.Resources
                     : reader.Value.Trim();
 
                 if (typeName.IndexOf(',') != -1)
-                    typeName = typeName.Split(new char[] { ',' })[0].Trim();
+                    typeName = typeName.Split([','])[0].Trim();
 
                 if (name == ResXCommon.ReaderStr)
                 {
@@ -1105,7 +1105,7 @@ namespace KGySoft.Resources
         private void ParseAssemblyNode(out string key, out string value)
         {
             key = reader![ResXCommon.AliasStr]!;
-            if (key == null)
+            if (key == null!)
             {
                 int line = GetLineNumber();
                 int col = GetLinePosition();
@@ -1113,7 +1113,7 @@ namespace KGySoft.Resources
             }
 
             value = reader[ResXCommon.NameStr]!;
-            if (value == null)
+            if (value == null!)
             {
                 int line = GetLineNumber();
                 int col = GetLinePosition();
@@ -1178,7 +1178,7 @@ namespace KGySoft.Resources
 
         /// <summary>
         /// Reads the rest of the elements and returns the passed read elements.
-        /// Must not be implemented as an iterator because it must read all of the remaining elements immediately.
+        /// Must not be implemented as an iterator because it must read all the remaining elements immediately.
         /// </summary>
         private IEnumerable<KeyValuePair<string, ResXDataNode>> ReadToEnd(ResXEnumeratorModes mode)
         {

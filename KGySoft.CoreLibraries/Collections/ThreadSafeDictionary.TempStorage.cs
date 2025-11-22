@@ -830,7 +830,7 @@ namespace KGySoft.Collections
                 uint newBucketSize = GetBucketSize(newCapacity);
                 newBuckets = new int[newBucketSize];
                 newEntries = new Entry[newBucketSize];
-                Array.Copy(entries!, 0, newEntries, 0, usedCount);
+                Array.Copy(entries, 0, newEntries, 0, usedCount);
 
                 // re-applying buckets for the new size
                 for (int i = 0; i < usedCount; i++)

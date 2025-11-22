@@ -99,7 +99,7 @@ namespace KGySoft.CoreLibraries
 #if NETFRAMEWORK
             $".NET Framework Runtime {typeof(object).Assembly.ImageRuntimeVersion}";
 #elif NETCOREAPP
-            $".NET Core {Path.GetFileName(Path.GetDirectoryName(typeof(object).Assembly.Location))}";
+            $".NET Core {Path.GetFileName(Path.GetDirectoryName(typeof(object).Assembly.Location))} ({RuntimeInformation.ProcessArchitecture})";
 #else
             $"{RuntimeInformation.FrameworkDescription}";
 #endif

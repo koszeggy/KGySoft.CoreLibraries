@@ -1191,7 +1191,7 @@ namespace KGySoft.Collections
                     // avoiding duplicate keys by the used comparer
                     for (int i = bucketRef - 1; i >= 0; i = items[i].Next)
                     {
-                        if (items![i].Hash != hashCode || !ComparerHelper<TKey>.EqualityComparer.Equals(items[i].Key, item.Key))
+                        if (items[i].Hash != hashCode || !ComparerHelper<TKey>.EqualityComparer.Equals(items[i].Key, item.Key))
                             continue;
 
                         Throw.ArgumentException(Argument.key, Res.IDictionaryDuplicateKey);
@@ -1230,7 +1230,7 @@ namespace KGySoft.Collections
                     // avoiding duplicate keys by the used comparer
                     for (int i = bucketRef - 1; i >= 0; i = items[i].Next)
                     {
-                        if (items![i].Hash != hashCode || !customComparer.Equals(items[i].Key, item.Key))
+                        if (items[i].Hash != hashCode || !customComparer.Equals(items[i].Key, item.Key))
                             continue;
 
                         Throw.ArgumentException(Argument.key, Res.IDictionaryDuplicateKey);

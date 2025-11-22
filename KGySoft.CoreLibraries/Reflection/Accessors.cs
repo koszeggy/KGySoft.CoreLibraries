@@ -144,7 +144,7 @@ namespace KGySoft.Reflection
             if (propertiesICollection_IsReadOnly == null)
             {
                 Interlocked.CompareExchange(ref propertiesICollection_IsReadOnly,
-                    new LockFreeCache<Type, PropertyAccessor>(i => PropertyAccessor.GetAccessor(i.GetProperty(nameof(ICollection<_>.IsReadOnly))!), null, LockFreeCacheOptions.Profile16),
+                    new LockFreeCache<Type, PropertyAccessor>(i => PropertyAccessor.GetAccessor(i.GetProperty(nameof(ICollection<>.IsReadOnly))!), null, LockFreeCacheOptions.Profile16),
                     null);
             }
 
@@ -156,7 +156,7 @@ namespace KGySoft.Reflection
             if (methodsICollection_Add == null)
             {
                 Interlocked.CompareExchange(ref methodsICollection_Add,
-                    new LockFreeCache<Type, MethodAccessor>(i => MethodAccessor.GetAccessor(i.GetMethod(nameof(ICollection<_>.Add))!), null, LockFreeCacheOptions.Profile16),
+                    new LockFreeCache<Type, MethodAccessor>(i => MethodAccessor.GetAccessor(i.GetMethod(nameof(ICollection<>.Add))!), null, LockFreeCacheOptions.Profile16),
                     null);
             }
 
@@ -168,7 +168,7 @@ namespace KGySoft.Reflection
             if (methodsICollection_Clear == null)
             {
                 Interlocked.CompareExchange(ref methodsICollection_Clear,
-                    new LockFreeCache<Type, MethodAccessor>(i => MethodAccessor.GetAccessor(i.GetMethod(nameof(ICollection<_>.Clear))!), null, LockFreeCacheOptions.Profile16),
+                    new LockFreeCache<Type, MethodAccessor>(i => MethodAccessor.GetAccessor(i.GetMethod(nameof(ICollection<>.Clear))!), null, LockFreeCacheOptions.Profile16),
                     null);
             }
 
@@ -180,7 +180,7 @@ namespace KGySoft.Reflection
             if (propertiesICollection_Count == null)
             {
                 Interlocked.CompareExchange(ref propertiesICollection_Count,
-                    new LockFreeCache<Type, PropertyAccessor>(i => PropertyAccessor.GetAccessor(i.GetProperty(nameof(ICollection<_>.Count))!), null, LockFreeCacheOptions.Profile16),
+                    new LockFreeCache<Type, PropertyAccessor>(i => PropertyAccessor.GetAccessor(i.GetProperty(nameof(ICollection<>.Count))!), null, LockFreeCacheOptions.Profile16),
                     null);
             }
 
@@ -192,7 +192,7 @@ namespace KGySoft.Reflection
             if (methodsICollection_Remove == null)
             {
                 Interlocked.CompareExchange(ref methodsICollection_Remove,
-                    new LockFreeCache<Type, MethodAccessor>(i => MethodAccessor.GetAccessor(i.GetMethod(nameof(ICollection<_>.Remove))!), null, LockFreeCacheOptions.Profile16),
+                    new LockFreeCache<Type, MethodAccessor>(i => MethodAccessor.GetAccessor(i.GetMethod(nameof(ICollection<>.Remove))!), null, LockFreeCacheOptions.Profile16),
                     null);
             }
 
@@ -209,7 +209,7 @@ namespace KGySoft.Reflection
             if (methodsIProducerConsumerCollection_TryAdd == null)
             {
                 Interlocked.CompareExchange(ref methodsIProducerConsumerCollection_TryAdd,
-                    new LockFreeCache<Type, MethodAccessor>(i => MethodAccessor.GetAccessor(i.GetMethod(nameof(IProducerConsumerCollection<_>.TryAdd))!), null, LockFreeCacheOptions.Profile16),
+                    new LockFreeCache<Type, MethodAccessor>(i => MethodAccessor.GetAccessor(i.GetMethod(nameof(IProducerConsumerCollection<>.TryAdd))!), null, LockFreeCacheOptions.Profile16),
                     null);
             }
 
@@ -226,7 +226,7 @@ namespace KGySoft.Reflection
             if (methodsIList_Insert == null)
             {
                 Interlocked.CompareExchange(ref methodsIList_Insert,
-                    new LockFreeCache<Type, MethodAccessor>(i => MethodAccessor.GetAccessor(i.GetMethod(nameof(IList<_>.Insert))!), null, LockFreeCacheOptions.Profile16),
+                    new LockFreeCache<Type, MethodAccessor>(i => MethodAccessor.GetAccessor(i.GetMethod(nameof(IList<>.Insert))!), null, LockFreeCacheOptions.Profile16),
                     null);
             }
 
@@ -238,7 +238,7 @@ namespace KGySoft.Reflection
             if (methodsIList_RemoveAt == null)
             {
                 Interlocked.CompareExchange(ref methodsIList_RemoveAt,
-                    new LockFreeCache<Type, MethodAccessor>(i => MethodAccessor.GetAccessor(i.GetMethod(nameof(IList<_>.RemoveAt))!), null, LockFreeCacheOptions.Profile16),
+                    new LockFreeCache<Type, MethodAccessor>(i => MethodAccessor.GetAccessor(i.GetMethod(nameof(IList<>.RemoveAt))!), null, LockFreeCacheOptions.Profile16),
                     null);
             }
 
@@ -548,7 +548,7 @@ namespace KGySoft.Reflection
         {
             static CreateInstanceAccessor GetCreateInstanceAccessor((Type DeclaringType, TypesKey ParameterTypes) key)
             {
-                // Here we accept non public constructors, too. They should be really well-known at least internal members.
+                // Here we accept non-public constructors, too. They should be really well-known at least internal members.
                 ConstructorInfo? ci = key.DeclaringType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, 
                     null, key.ParameterTypes.Types, null);
                 Debug.Assert(ci != null, "Constructor was not found for the specified parameter types");
@@ -951,7 +951,7 @@ namespace KGySoft.Reflection
             if (result != null)
                 return result;
 
-            // we need to restore the array from the bits (should never occur but we must provide a fallback due to private field handling)
+            // we need to restore the array from the bits (should never occur, but we must provide a fallback due to private field handling)
             int len = bitArray.Length;
             result = new int[len > 0 ? ((len - 1) >> 5) + 1 : 0];
             for (int i = 0; i < len; i++)
@@ -1064,29 +1064,12 @@ namespace KGySoft.Reflection
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        internal static object? Get(this FieldInfo field, object? instance)
-        {
-//#if NETFRAMEWORK || NETSTANDARD2_0
-//            if (field.FieldType.IsPointer && EnvironmentHelper.IsMono)
-//                Throw.PlatformNotSupportedException<object>(Res.ReflectionPointerTypeMonoNotSupported(field.FieldType));
-//#endif
-
-            return FieldAccessor.GetAccessor(field).Get(instance);
-        }
+        internal static object? Get(this FieldInfo field, object? instance) => FieldAccessor.GetAccessor(field).Get(instance);
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static void Set(this FieldInfo field, object? instance, object? value)
         {
             Debug.Assert(!field.IsLiteral);
-
-//#if NETFRAMEWORK
-//            if (EnvironmentHelper.IsMono)
-//            {
-//                field.SetValue(instance, value);
-//                return;
-//            }
-//#endif
-
             FieldAccessor.GetAccessor(field).Set(instance, value);
         }
 
@@ -1139,7 +1122,7 @@ namespace KGySoft.Reflection
         /// </summary>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static object? InvokeMethod(object instance, string methodName, object parameter)
-            => InvokeMethod(instance, methodName, new[] { parameter.GetType() }, parameter);
+            => InvokeMethod(instance, methodName, [parameter.GetType()], parameter);
 
         /// <summary>
         /// For unambiguous static methods by name.
@@ -1176,14 +1159,14 @@ namespace KGySoft.Reflection
         /// </summary>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static object? InvokeMethod(this Type type, string methodName, Type genericArgument, Type parameterType, params object?[] parameters)
-            => InvokeMethod(type, methodName, new[] { genericArgument }, new[] { parameterType }, parameters);
+            => InvokeMethod(type, methodName, [genericArgument], [parameterType], parameters);
 
         /// <summary>
         /// For static methods by name and parameter types.
         /// </summary>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static object? InvokeMethod(this Type type, string methodName, Type genericArgument, Type[] parameterTypes, params object?[] parameters)
-            => InvokeMethod(type, methodName, new[] { genericArgument }, parameterTypes, parameters);
+            => InvokeMethod(type, methodName, [genericArgument], parameterTypes, parameters);
 
         /// <summary>
         /// For constructors by exact parameter types.
@@ -1200,14 +1183,14 @@ namespace KGySoft.Reflection
         /// </summary>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static object CreateInstance(this Type type, Type parameterType, object? parameter)
-            => CreateInstance(type, new[] { parameterType }, parameter);
+            => CreateInstance(type, [parameterType], parameter);
 
         /// <summary>
         /// For constructors with exactly one non-derived parameter.
         /// </summary>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static object CreateInstance(this Type type, object parameter)
-            => CreateInstance(type, new[] { parameter.GetType() }, parameter);
+            => CreateInstance(type, [parameter.GetType()], parameter);
 
         /// <summary>
         /// For constructors with non-derived parameters.
@@ -1238,10 +1221,6 @@ namespace KGySoft.Reflection
         private static object GetPointerPropertyPartiallyTrusted(PropertyInfo property, object? instance)
             => GetMethodByName(typeof(Pointer), "GetPointerValue")?.InvokeInstanceFunction<Pointer, object>((Pointer)property.GetValue(instance, null))!;
 #endif
-
-        [SecurityCritical]
-        private static unsafe void SetPointerProperty(PropertyInfo property, object? instance, object? value)
-            => property.SetValue(instance, Pointer.Box(((IntPtr)value!).ToPointer(), property.PropertyType), null);
 
         private static TypesKey ToTypesKey(this Type[] types) => new TypesKey(types);
 

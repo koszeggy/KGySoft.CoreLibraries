@@ -46,7 +46,7 @@ namespace KGySoft.Serialization.Binary
 
         /// <summary>
         /// <para>Apart from primitive types, strings and arrays forces to serialize every type recursively. If <see cref="BinarySerializationFormatter.SurrogateSelector"/> is set,
-        /// then the surrogate selectors will be tried to used even for the supported types (as if <see cref="TryUseSurrogateSelectorForAnyType"/> was also enabled).
+        /// then the surrogate selectors will be tried to be used even for the supported types (as if <see cref="TryUseSurrogateSelectorForAnyType"/> was also enabled).
         /// <note>Even if this flag is enabled, non-serializable types will not be serialized automatically. Use the <see cref="RecursiveSerializationAsFallback"/> to
         /// enable serialization of such types.</note></para>
         /// <para>This flag is considered on serialization.</para>
@@ -166,7 +166,7 @@ namespace KGySoft.Serialization.Binary
         TryUseSurrogateSelectorForAnyType = 1 << 11,
 
         /// <summary>
-        /// <para>If this flag is enabled, then it is ensured that no assembly loading is allowed during deserialization. All of the assemblies that are referred
+        /// <para>If this flag is enabled, then it is ensured that no assembly loading is allowed during deserialization. All the assemblies that are referred
         /// by the serialization stream must be preloaded before starting the deserialization. Non-natively supported types, whose assembly qualified names are
         /// stored in the serialization stream must be explicitly declared as expected types in the deserialization methods, including <see langword="enum"/>s.</para>
         /// <para>Additionally, safe mode ensures that during the deserialization natively supported collections are allocated with limited capacity to prevent

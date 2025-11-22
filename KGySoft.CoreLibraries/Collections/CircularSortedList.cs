@@ -658,7 +658,7 @@ namespace KGySoft.Collections
         /// <see cref="Count"/> is the number of elements that are actually in the <see cref="CircularSortedList{TKey,TValue}"/>.</para>
         /// <para>Capacity is always greater than or equal to <see cref="Count"/>. If <see cref="Count"/> exceeds <see cref="Capacity"/> while adding elements,
         /// the capacity is increased by automatically reallocating the internal <see cref="CircularList{T}"/> before copying the old elements and adding the new elements.</para>
-        /// <para>If the capacity is significantly larger than the count and you want to reduce the memory used by the <see cref="CircularSortedList{TKey,TValue}"/>,
+        /// <para>If the capacity is significantly larger than the count, and you want to reduce the memory used by the <see cref="CircularSortedList{TKey,TValue}"/>,
         /// you can decrease capacity by calling the <see cref="TrimExcess">TrimExcess</see> method or by setting the <see cref="Capacity"/> property explicitly.
         /// When the value of <see cref="Capacity"/> is set explicitly, the array in the internal <see cref="CircularList{T}"/> is also reallocated to accommodate the specified capacity,
         /// and all the elements are copied.</para>
@@ -842,7 +842,7 @@ namespace KGySoft.Collections
         {
             get
             {
-                // For valid keys this means a double cast but we don't want to return null from an InvalidCastException
+                // For valid keys this means a double cast, but we don't want to return null from an InvalidCastException
                 if (!CanAcceptKey(key))
                     return null;
 

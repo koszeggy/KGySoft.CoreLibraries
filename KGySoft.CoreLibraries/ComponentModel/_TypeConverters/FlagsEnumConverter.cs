@@ -54,7 +54,7 @@ namespace KGySoft.ComponentModel
             /// <summary>
             /// Gets the collection of attributes for this member.
             /// </summary>
-            public override AttributeCollection Attributes => new AttributeCollection(attributes.Union(new Attribute[] { RefreshPropertiesAttribute.Repaint }).ToArray());
+            public override AttributeCollection Attributes => new AttributeCollection(attributes.Union([RefreshPropertiesAttribute.Repaint]).ToArray());
 
             #endregion
 
