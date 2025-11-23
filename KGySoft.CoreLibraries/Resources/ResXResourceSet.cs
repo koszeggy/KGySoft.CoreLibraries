@@ -645,7 +645,7 @@ namespace KGySoft.Resources
             if (data == null)
                 Throw.ObjectDisposedException();
 
-            lock (data)
+            lock (data.SyncRootInternal)
             {
                 if (data.ContainsKey(name))
                     return true;
@@ -857,7 +857,7 @@ namespace KGySoft.Resources
             if (dict == null)
                 Throw.ObjectDisposedException();
 
-            lock (dict)
+            lock (dict.SyncRootInternal)
                 return dict.GetValueOrDefault(alias);
         }
 
@@ -925,7 +925,7 @@ namespace KGySoft.Resources
             if (assemblyName == null!)
                 Throw.ArgumentNullException(Argument.assemblyName);
 
-            lock (dict)
+            lock (dict.SyncRootInternal)
             {
                 if (dict.TryGetValue(alias, out string? asmName) && asmName == assemblyName)
                     return;
@@ -968,7 +968,7 @@ namespace KGySoft.Resources
             if (alias == null!)
                 Throw.ArgumentNullException(Argument.alias);
 
-            lock (dict)
+            lock (dict.SyncRootInternal)
             {
                 if (!dict.Remove(alias))
                     return;
@@ -1104,11 +1104,11 @@ namespace KGySoft.Resources
 
         private IDictionaryEnumerator GetEnumeratorInternal(ResXEnumeratorModes mode)
         {
-            StringKeyedDictionary<ResXDataNode>? syncObj = resources;
-            if (syncObj == null)
+            StringKeyedDictionary<ResXDataNode>? res = resources;
+            if (res == null)
                 Throw.ObjectDisposedException();
 
-            lock (syncObj)
+            lock (res.SyncRootInternal)
                 return new ResXResourceEnumerator(this, mode, version);
         }
 
@@ -1122,7 +1122,7 @@ namespace KGySoft.Resources
                 Throw.ObjectDisposedException();
 
             // 1. Adding existing aliases (writing them on-demand) - non-existing ones will be auto-generated
-            lock (aliasesLocal!)
+            lock (aliasesLocal!.SyncRootInternal)
             {
                 foreach (KeyValuePair<string, string> alias in aliasesLocal)
                     writer.AddAlias(alias.Key, alias.Value);
@@ -1130,14 +1130,14 @@ namespace KGySoft.Resources
 
             // 2. Adding resources (not freeing xml data during saving)
             bool adjustPath = basePath != null && basePath != writer.BasePath;
-            lock (resourcesLocal!)
+            lock (resourcesLocal!.SyncRootInternal)
             {
                 foreach (KeyValuePair<string, ResXDataNode> resource in resourcesLocal)
                     writer.AddResource(GetNodeToSave(resource.Value, forceEmbeddedResources, adjustPath));
             }
 
             // 3. Adding metadata
-            lock (metadataLocal!)
+            lock (metadataLocal!.SyncRootInternal)
             {
                 foreach (KeyValuePair<string, ResXDataNode> meta in metadataLocal)
                     writer.AddMetadata(GetNodeToSave(meta.Value, forceEmbeddedResources, adjustPath));
@@ -1174,7 +1174,7 @@ namespace KGySoft.Resources
             if (name == null!)
                 Throw.ArgumentNullException(Argument.name);
 
-            lock (data)
+            lock (data.SyncRootInternal)
             {
                 if (data.TryGetValue(name, out ResXDataNode? result))
                 {
@@ -1205,7 +1205,7 @@ namespace KGySoft.Resources
             if (name == null!)
                 Throw.ArgumentNullException(Argument.name);
 
-            lock (data)
+            lock (data.SyncRootInternal)
             {
                 // optimization: if the deserialized value is the same reference, which is about to be added, returning
                 if (data.TryGetValue(name, out ResXDataNode? valueNode) && valueNode.ValueInternal == (value ?? ResXNullRef.Value))
@@ -1229,7 +1229,7 @@ namespace KGySoft.Resources
             if (name == null!)
                 Throw.ArgumentNullException(Argument.name);
 
-            lock (data)
+            lock (data.SyncRootInternal)
             {
                 if (!data.Remove(name))
                     return;

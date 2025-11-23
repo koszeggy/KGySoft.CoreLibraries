@@ -54,6 +54,7 @@ namespace KGySoft.ComponentModel
         private readonly CircularList<KeyValuePair<string, UndoEntry>> undoSteps = new CircularList<KeyValuePair<string, UndoEntry>>();
         private readonly CircularList<KeyValuePair<string, UndoEntry>> redoSteps = new CircularList<KeyValuePair<string, UndoEntry>>();
         private readonly ObservableObjectBase owner;
+        private readonly Lock syncRoot = new Lock();
 
         private int undoCapacity = defaultUndoCapacity;
         private int suspendCounter;
@@ -85,7 +86,7 @@ namespace KGySoft.ComponentModel
                 bool raiseUndoChange = value == 0 && undoSteps.Count > 0;
                 bool raiseRedoChange = value == 0 && redoSteps.Count > 0;
 
-                lock (undoSteps)
+                lock (syncRoot)
                 {
                     if (undoSteps.Count > value)
                         undoSteps.RemoveRange(0, undoSteps.Count - value);
@@ -154,7 +155,7 @@ namespace KGySoft.ComponentModel
             if (storage.Count == 0)
                 return;
 
-            lock (undoSteps)
+            lock (syncRoot)
                 storage.Reset();
             owner.OnPropertyChanged(new PropertyChangedExtendedEventArgs(true, false, canUndoRedoName));
         }
@@ -163,7 +164,7 @@ namespace KGySoft.ComponentModel
         {
             CircularList<KeyValuePair<string, UndoEntry>> storage = undoSteps;
             bool raiseChangedEvent = storage.Count == 0;
-            lock (undoSteps)
+            lock (syncRoot)
             {
                 if (storage.Count > 0 && storage.Count + 1 == undoCapacity)
                     storage.RemoveFirst();
@@ -184,9 +185,9 @@ namespace KGySoft.ComponentModel
 
             bool raiseSource = source.Count == 1;
             bool success, raiseTarget;
-            lock (undoSteps)
+            lock (syncRoot)
             {
-                var step = source[source.Count - 1];
+                KeyValuePair<string, UndoEntry> step = source[source.Count - 1];
                 source.RemoveLast();
 
                 SuspendUndo();
@@ -225,7 +226,7 @@ namespace KGySoft.ComponentModel
             SuspendUndo();
             try
             {
-                lock (undoSteps)
+                lock (syncRoot)
                 {
                     while (source.Count > 0)
                         ApplyStep(source, sourceName, target, targetName);

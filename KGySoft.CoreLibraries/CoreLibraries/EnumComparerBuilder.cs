@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Threading;
 
 using KGySoft.Reflection;
 
@@ -48,6 +49,7 @@ namespace KGySoft.CoreLibraries
         /// Value: A <![CDATA[DynamicEnumComparer<TEnum>]]> generic type definition using the matching size and sign.
         /// </summary>
         private static readonly Dictionary<Type, Type> comparers = new Dictionary<Type, Type>();
+        private static readonly Lock syncRoot = new Lock();
 
         private static ModuleBuilder? moduleBuilder;
 
@@ -95,7 +97,7 @@ namespace KGySoft.CoreLibraries
 
             // Locking the whole generating process to prevent building the same type concurrently
             // Locking is alright because this will be executed once per enum type at the first EnumComparer<TEnum>.Comparer access.
-            lock (comparers)
+            lock (syncRoot)
             {
                 if (!comparers.TryGetValue(underlyingType, out comparerDefinition))
                 {

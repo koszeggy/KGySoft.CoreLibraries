@@ -123,16 +123,9 @@ namespace KGySoft.Collections
         {
             get
             {
-                Lock();
-                try
-                {
-                    // returning an array because it is read-only as an ICollection<T>
+                // returning an array because it is read-only as an ICollection<T>
+                lock (SyncRootInternal)
                     return ((IDictionary<TKey, TValue>)InnerCollection).Keys.ToArray();
-                }
-                finally
-                {
-                    Unlock();
-                }
             }
         }
 
@@ -149,16 +142,9 @@ namespace KGySoft.Collections
         {
             get
             {
-                Lock();
-                try
-                {
-                    // returning an array because it is read-only as an ICollection<T>
+                // returning an array because it is read-only as an ICollection<T>
+                lock (SyncRootInternal)
                     return ((IDictionary<TKey, TValue>)InnerCollection).Values.ToArray();
-                }
-                finally
-                {
-                    Unlock();
-                }
             }
         }
 
@@ -186,27 +172,13 @@ namespace KGySoft.Collections
         {
             get
             {
-                Lock();
-                try
-                {
+                lock (SyncRootInternal)
                     return ((IDictionary<TKey, TValue>)InnerCollection)[key];
-                }
-                finally
-                {
-                    Unlock();
-                }
             }
             set
             {
-                Lock();
-                try
-                {
+                lock (SyncRootInternal)
                     ((IDictionary<TKey, TValue>)InnerCollection)[key] = value;
-                }
-                finally
-                {
-                    Unlock();
-                }
             }
         }
 
@@ -242,15 +214,8 @@ namespace KGySoft.Collections
         /// <returns><see langword="true" /> if the <see cref="LockingDictionary{TKey,TValue}" /> contains an element with the key; otherwise, <see langword="false" />.</returns>
         public bool ContainsKey(TKey key)
         {
-            Lock();
-            try
-            {
+            lock (SyncRootInternal)
                 return ((IDictionary<TKey, TValue>)InnerCollection).ContainsKey(key);
-            }
-            finally
-            {
-                Unlock();
-            }
         }
 
         /// <summary>
@@ -260,15 +225,8 @@ namespace KGySoft.Collections
         /// <param name="value">The object to use as the value of the element to add.</param>
         public void Add(TKey key, TValue value)
         {
-            Lock();
-            try
-            {
+            lock (SyncRootInternal)
                 ((IDictionary<TKey, TValue>)InnerCollection).Add(key, value);
-            }
-            finally
-            {
-                Unlock();
-            }
         }
 
         /// <summary>
@@ -280,15 +238,8 @@ namespace KGySoft.Collections
         /// </returns>
         public bool Remove(TKey key)
         {
-            Lock();
-            try
-            {
+            lock (SyncRootInternal)
                 return ((IDictionary<TKey, TValue>)InnerCollection).Remove(key);
-            }
-            finally
-            {
-                Unlock();
-            }
         }
 
         /// <summary>
@@ -300,15 +251,8 @@ namespace KGySoft.Collections
         /// <returns><see langword="true" /> if the <see cref="LockingDictionary{TKey,TValue}" /> contains an element with the specified key; otherwise, <see langword="false" />.</returns>
         public bool TryGetValue(TKey key, [MaybeNullWhen(false)]out TValue value)
         {
-            Lock();
-            try
-            {
+            lock (SyncRootInternal)
                 return ((IDictionary<TKey, TValue>)InnerCollection).TryGetValue(key, out value);
-            }
-            finally
-            {
-                Unlock();
-            }
         }
 
         #endregion

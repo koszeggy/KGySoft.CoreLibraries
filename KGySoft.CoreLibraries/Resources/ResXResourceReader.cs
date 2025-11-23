@@ -25,6 +25,7 @@ using System.Linq;
 using System.Reflection;
 using System.Resources;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Threading;
 using System.Xml;
 
 using KGySoft.Collections;
@@ -37,6 +38,7 @@ using KGySoft.Serialization.Binary;
 
 #if !(NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER)
 #pragma warning disable CS8602 // Dereference of a possibly null reference
+#pragma warning disable CS8604 // Possible null reference argument.
 #endif
 
 #endregion
@@ -590,7 +592,7 @@ namespace KGySoft.Resources
 
         #region Fields
 
-        private readonly object syncRoot = new object();
+        private readonly Lock syncRoot = new Lock();
         private readonly ITypeResolutionService? typeResolver;
 
         /// <summary>

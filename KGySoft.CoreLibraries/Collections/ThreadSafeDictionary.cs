@@ -155,7 +155,7 @@ namespace KGySoft.Collections
 
         #region Fields
 
-        private readonly object syncRoot = new object();
+        private readonly Lock syncRoot = new Lock();
 
         private IEqualityComparer<TKey>? comparer;
         private int initialLockingCapacity;

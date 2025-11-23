@@ -19,6 +19,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 
@@ -89,7 +90,7 @@ namespace KGySoft.Collections
         #region Fields
 
         private readonly ICollection<T> collection;
-        private readonly object syncRoot = new object();
+        private readonly Lock syncRoot = new Lock();
 
         #endregion
 
@@ -128,7 +129,10 @@ namespace KGySoft.Collections
         /// <summary>
         /// Gets the inner collection.
         /// </summary>
+        [SuppressMessage("ReSharper", "InconsistentlySynchronizedField", Justification = "False alarm, this one actually returns the field, instead of using it internally.")]
         private protected ICollection<T> InnerCollection => collection;
+
+        private protected Lock SyncRootInternal => syncRoot;
 
         #endregion
 
@@ -160,12 +164,12 @@ namespace KGySoft.Collections
         /// multiple calls to the wrapped collection have to be combined without releasing the lock between each call.
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="LockingCollection{T}"/> class for details and some examples.
         /// </summary>
-        public void Lock() => Monitor.Enter(syncRoot);
+        public void Lock() => syncRoot.Enter();
 
         /// <summary>
         /// When called as many times as <see cref="Lock">Lock</see> was called previously, then unlocks the access of the underlying collection so other threads also can access it.
         /// </summary>
-        public void Unlock() => Monitor.Exit(syncRoot);
+        public void Unlock() => syncRoot.Exit();
 
         /// <summary>
         /// Returns an enumerator that iterates through the collection.

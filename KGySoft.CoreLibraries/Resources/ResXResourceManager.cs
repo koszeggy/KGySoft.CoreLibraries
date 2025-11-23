@@ -305,7 +305,7 @@ namespace KGySoft.Resources
         {
             #region Fields
 
-            private bool canHaveLoadableParent;
+            private volatile bool canHaveLoadableParent;
 
             #endregion
 
@@ -321,23 +321,14 @@ namespace KGySoft.Resources
             /// </summary>
             internal CultureInfo WrappedCulture { get; }
 
-
             /// <summary>
             /// Gets whether this proxy has been loaded by <see cref="ResourceSetRetrieval.GetIfAlreadyLoaded"/> and trying parents.
             /// In this case there might be unloaded parents for this resource set.
             /// </summary>
             internal bool CanHaveLoadableParent
             {
-                get
-                {
-                    lock (this)
-                        return canHaveLoadableParent;
-                }
-                set
-                {
-                    lock (this)
-                        canHaveLoadableParent = value;
-                }
+                get => canHaveLoadableParent;
+                set => canHaveLoadableParent = value;
             }
 
             /// <summary>
@@ -416,7 +407,7 @@ namespace KGySoft.Resources
 
         private string resxResourcesDir = "Resources";
         [NonSerialized]private string? resxDirFullPath;
-        [NonSerialized]private object? syncRoot;
+        [NonSerialized]private Lock? syncRoot;
 
         /// <summary>
         /// The lastly used resource set. Unlike in base, this is not necessarily the resource set in which a result
@@ -548,6 +539,16 @@ namespace KGySoft.Resources
 
         internal string ResourceFileName => GetResourceFileName(CultureInfo.InvariantCulture);
 
+        internal Lock SyncRoot
+        {
+            get
+            {
+                if (syncRoot == null)
+                    Interlocked.CompareExchange(ref syncRoot, new Lock(), null);
+                return syncRoot;
+            }
+        }
+
         #endregion
 
         #region Private Properties
@@ -587,16 +588,6 @@ namespace KGySoft.Resources
             set => resourceSets = value;
         }
 #endif
-
-        private object SyncRoot
-        {
-            get
-            {
-                if (syncRoot == null)
-                    Interlocked.CompareExchange(ref syncRoot, new object(), null);
-                return syncRoot;
-            }
-        }
 
         #endregion
 
@@ -702,37 +693,30 @@ namespace KGySoft.Resources
 
         private static void AddResourceSet(Hashtable localResourceSets, string cultureName, ref ResourceSet rs)
         {
-            // GetResXResourceSet is both recursive and reentrant -
-            // assembly load callbacks in particular are a way we can call
-            // back into the ResourceManager in unexpectedly on the same thread.
-            lock (localResourceSets)
+            // The caller is already in a lock. Here we check again if another thread added this culture.
+            ResourceSet? lostRace = (ResourceSet?)localResourceSets[cultureName];
+            if (lostRace == null)
             {
-                // If another thread added this culture, return that.
-                ResourceSet? lostRace = (ResourceSet?)localResourceSets[cultureName];
-                if (lostRace != null)
-                {
-                    if (!ReferenceEquals(lostRace, rs))
-                    {
-                        // Note: In certain cases, we can be trying to add a ResourceSet for multiple
-                        // cultures on one thread, while a second thread added another ResourceSet for one
-                        // of those cultures.  So when we lose the race, we must make sure our ResourceSet
-                        // isn't in our dictionary before closing it.
-                        // But if a proxy is already in the cache, we replace that.
-                        if (!(lostRace is ProxyResourceSet && rs is ResXResourceSet))
-                        {
-                            if (!localResourceSets.ContainsValue(rs))
-                                rs.Dispose();
-                            rs = lostRace;
-                        }
-                        else
-                            localResourceSets[cultureName] = rs;
-                    }
-                }
-                else
-                {
-                    localResourceSets.Add(cultureName, rs);
-                }
+                localResourceSets.Add(cultureName, rs);
+                return;
             }
+
+            if (ReferenceEquals(lostRace, rs))
+                return;
+
+            // Note: In certain cases, we can be trying to add a ResourceSet for multiple
+            // cultures on one thread, while a second thread added another ResourceSet for one
+            // of those cultures. So when we lose the race, we must make sure our ResourceSet
+            // isn't in our dictionary before closing it.
+            // But if a proxy is already in the cache, we replace that.
+            if (!(lostRace is ProxyResourceSet && rs is ResXResourceSet))
+            {
+                if (!localResourceSets.ContainsValue(rs))
+                    rs.Dispose();
+                rs = lostRace;
+            }
+            else
+                localResourceSets[cultureName] = rs;
         }
 #else
         [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -741,35 +725,28 @@ namespace KGySoft.Resources
 
         private static void AddResourceSet(StringKeyedDictionary<ResourceSet> localResourceSets, string cultureName, ref ResourceSet rs)
         {
-            // GetResXResourceSet is both recursive and reentrant -
-            // assembly load callbacks in particular are a way we can call
-            // back into the ResourceManager in unexpectedly on the same thread.
-            lock (localResourceSets)
+            // The caller is already in a lock. Here we check again if another thread added this culture.
+            if (!TryGetResource(localResourceSets, cultureName, out ResourceSet? lostRace))
             {
-                // If another thread added this culture, return that.
-                if (TryGetResource(localResourceSets, cultureName, out ResourceSet? lostRace))
-                {
-                    if (!ReferenceEquals(lostRace, rs))
-                    {
-                        // Note: In certain cases, we can be trying to add a ResourceSet for multiple
-                        // cultures on one thread, while a second thread added another ResourceSet for one
-                        // of those cultures.  So when we lose the race, we must make sure our ResourceSet
-                        // isn't in our dictionary before closing it.
-                        // But if a proxy is already in the cache, we replace that.
-                        if (lostRace is ProxyResourceSet && rs is ResXResourceSet)
-                            localResourceSets[cultureName] = rs;
-                        else
-                        {
-                            if (!localResourceSets.ContainsValue(rs))
-                                rs.Dispose();
-                            rs = lostRace;
-                        }
-                    }
-                }
-                else
-                {
-                    localResourceSets.Add(cultureName, rs);
-                }
+                localResourceSets.Add(cultureName, rs);
+                return;
+            }
+
+            if (ReferenceEquals(lostRace, rs))
+                return;
+
+            // Note: In certain cases, we can be trying to add a ResourceSet for multiple
+            // cultures on one thread, while a second thread added another ResourceSet for one
+            // of those cultures.  So when we lose the race, we must make sure our ResourceSet
+            // isn't in our dictionary before closing it.
+            // But if a proxy is already in the cache, we replace that.
+            if (lostRace is ProxyResourceSet && rs is ResXResourceSet)
+                localResourceSets[cultureName] = rs;
+            else
+            {
+                if (!localResourceSets.ContainsValue(rs))
+                    rs.Dispose();
+                rs = lostRace;
             }
         }
 #endif
@@ -1203,10 +1180,13 @@ namespace KGySoft.Resources
         /// </remarks>
         public override void ReleaseAllResources()
         {
-            ReleaseResourceSets(ResourceSets);
-            base.ReleaseAllResources();
-            ResetResourceSets();
-            lastUsedResourceSet = default;
+            lock (SyncRoot)
+            {
+                ReleaseResourceSets(ResourceSets);
+                base.ReleaseAllResources();
+                ResetResourceSets();
+                lastUsedResourceSet = default; 
+            }
         }
 
         /// <summary>

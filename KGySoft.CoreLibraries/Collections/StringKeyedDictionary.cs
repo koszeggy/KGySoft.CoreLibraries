@@ -756,6 +756,7 @@ namespace KGySoft.Collections
         private int version;
 
         private object? syncRoot;
+        private Lock? syncRootInternal;
         private KeysCollection? keysCollection;
         private ValuesCollection? valuesCollection;
         private SerializationInfo? deserializationInfo;
@@ -801,6 +802,20 @@ namespace KGySoft.Collections
         /// <note>The enumerator of the returned collection does not support the <see cref="IEnumerator.Reset">IEnumerator.Reset</see> method.</note>
         /// </remarks>
         public ICollection<TValue> Values => valuesCollection ??= new ValuesCollection(this);
+
+        #endregion
+
+        #region Internal Properties
+
+        internal Lock SyncRootInternal
+        {
+            get
+            {
+                if (syncRootInternal == null)
+                    Interlocked.CompareExchange(ref syncRootInternal, new Lock(), null);
+                return syncRootInternal;
+            }
+        }
 
         #endregion
 

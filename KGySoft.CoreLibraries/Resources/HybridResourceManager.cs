@@ -25,6 +25,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Resources;
+using System.Threading;
 
 using KGySoft.Collections;
 using KGySoft.CoreLibraries;
@@ -252,7 +253,7 @@ namespace KGySoft.Resources
 
             #region Fields
 
-            private bool hierarchyLoaded;
+            private volatile bool hierarchyLoaded;
 
             #endregion
 
@@ -270,16 +271,8 @@ namespace KGySoft.Resources
 
             internal bool HierarchyLoaded
             {
-                get
-                {
-                    lock (this)
-                        return hierarchyLoaded;
-                }
-                set
-                {
-                    lock (this)
-                        hierarchyLoaded = value;
-                }
+                get => hierarchyLoaded;
+                set => hierarchyLoaded = value;
             }
 
             #endregion
@@ -335,7 +328,7 @@ namespace KGySoft.Resources
 
         #region Fields
 
-        private readonly ResXResourceManager resxResources; // used as sync obj as well because this reference lives along with parent lifetime and is invisible from outside
+        private readonly ResXResourceManager resxResources;
         private readonly CultureInfo neutralResourcesCulture;
 
         private ResourceManagerSources source = ResourceManagerSources.CompiledAndResX;
@@ -504,7 +497,7 @@ namespace KGySoft.Resources
 
         #region Internal Properties
 
-        internal object SyncRoot => resxResources;
+        internal Lock SyncRoot => resxResources.SyncRoot;
 
         #endregion
 

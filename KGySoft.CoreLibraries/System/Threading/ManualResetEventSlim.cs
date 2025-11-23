@@ -32,7 +32,7 @@ namespace System.Threading
     {
         #region Fields
 
-        private readonly object lockObject = new object();
+        private readonly object syncRoot = new object();
 
         private bool isDisposed;
         private ManualResetEvent? nativeHandle;
@@ -82,13 +82,13 @@ namespace System.Threading
 
         public void Dispose()
         {
-            lock (lockObject)
+            lock (syncRoot)
             {
                 if (isDisposed)
                     return;
                 isDisposed = true;
                 DoSignal();
-                Monitor.PulseAll(lockObject);
+                Monitor.PulseAll(syncRoot);
                 nativeHandle?.Close();
                 nativeHandle = null;
             }
@@ -100,23 +100,23 @@ namespace System.Threading
 
         internal void Set()
         {
-            lock (lockObject)
+            lock (syncRoot)
             {
                 if (isDisposed)
                     return;
                 DoSignal();
-                Monitor.PulseAll(lockObject);
+                Monitor.PulseAll(syncRoot);
             }
         }
 
         internal void Wait()
         {
-            lock (lockObject)
+            lock (syncRoot)
             {
                 if (isDisposed)
                     return;
                 while (!IsSet)
-                    Monitor.Wait(lockObject);
+                    Monitor.Wait(syncRoot);
             }
         }
 

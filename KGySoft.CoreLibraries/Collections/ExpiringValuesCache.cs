@@ -20,6 +20,7 @@ using System.Collections.Generic;
 
 using KGySoft.CoreLibraries;
 using System.Diagnostics;
+using System.Threading;
 
 #endregion
 
@@ -42,7 +43,7 @@ namespace KGySoft.Collections
                 {
                     bool expired = false;
 
-                    lock (cache)
+                    lock (SyncRoot)
                     {
                         if (cache.TryGetValue(key, out ValueHolder result))
                         {
@@ -55,7 +56,7 @@ namespace KGySoft.Collections
                     // Here item is either expired or does not exist. We are out of lock so parallel loading is possible.
                     TValue newItem = itemLoader.Invoke(key);
 
-                    lock (cache)
+                    lock (SyncRoot)
                     {
                         if (cache.TryGetValue(key, out ValueHolder result))
                         {
@@ -129,6 +130,15 @@ namespace KGySoft.Collections
         private readonly Cache<TKey, ValueHolder> cache;
         private readonly Func<TKey, TValue> itemLoader;
         private readonly long expiration;
+        private readonly Lock syncRoot = new Lock();
+
+        #endregion
+
+        #region Properties Indexers
+
+        #region Properties
+
+        protected Lock SyncRoot => syncRoot;
 
         #endregion
 
@@ -138,7 +148,7 @@ namespace KGySoft.Collections
         {
             get
             {
-                lock (cache)
+                lock (syncRoot)
                 {
                     if (cache.TryGetValue(key, out ValueHolder result))
                     {
@@ -162,6 +172,8 @@ namespace KGySoft.Collections
                 }
             }
         }
+
+        #endregion
 
         #endregion
 

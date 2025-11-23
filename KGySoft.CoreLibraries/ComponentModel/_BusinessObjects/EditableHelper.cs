@@ -17,6 +17,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading;
 
 using KGySoft.Collections;
 
@@ -31,6 +32,7 @@ namespace KGySoft.ComponentModel
 
         private readonly ObservableObjectBase owner;
         private readonly List<IDictionary<string, object?>> snapshots = new List<IDictionary<string, object?>>();
+        private readonly Lock syncRoot = new Lock();
 
         #endregion
 
@@ -54,7 +56,7 @@ namespace KGySoft.ComponentModel
         {
             int oldLevel = EditLevel;
             ThreadSafeDictionary<string, object?> clone = owner.CloneProperties();
-            lock (snapshots)
+            lock (syncRoot)
                 snapshots.Add(clone);
             owner.OnPropertyChanged(new PropertyChangedExtendedEventArgs(oldLevel, oldLevel + 1, nameof(EditLevel)));
         }
@@ -62,7 +64,7 @@ namespace KGySoft.ComponentModel
         public void CommitLastEdit()
         {
             int currentLevel;
-            lock (snapshots)
+            lock (syncRoot)
             {
                 currentLevel = EditLevel;
                 if (currentLevel == 0)
@@ -76,7 +78,7 @@ namespace KGySoft.ComponentModel
         public void RevertLastEdit()
         {
             int currentLevel;
-            lock (snapshots)
+            lock (syncRoot)
             {
                 currentLevel = EditLevel;
                 if (currentLevel == 0)
@@ -102,7 +104,7 @@ namespace KGySoft.ComponentModel
         public bool TryCommitAllEdits()
         {
             int currentLevel;
-            lock (snapshots)
+            lock (syncRoot)
             {
                 currentLevel = EditLevel;
                 if (currentLevel == 0)
@@ -117,7 +119,7 @@ namespace KGySoft.ComponentModel
         public bool TryRevertAllEdits()
         {
             int currentLevel;
-            lock (snapshots)
+            lock (syncRoot)
             {
                 currentLevel = EditLevel;
                 if (currentLevel == 0)

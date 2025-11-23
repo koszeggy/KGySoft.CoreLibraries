@@ -24,6 +24,7 @@ using System.Runtime.CompilerServices;
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
 using System.Text;
 #endif
+using System.Threading;
 
 using KGySoft.Collections;
 
@@ -49,7 +50,7 @@ namespace KGySoft.CoreLibraries
         // For the best performance, locks are used only on initialization. This may lead to concurrent initializations
         // but that is alright. Once a field is set no more locks will be requested for it again.
         // Note: it is important that this is the first field
-        private static readonly object syncRoot = new object();
+        private static readonly Lock syncRoot = new Lock();
 
         private static readonly bool isFlags = typeof(TEnum).IsFlagsEnum();
 

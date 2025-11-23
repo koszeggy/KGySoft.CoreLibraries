@@ -109,6 +109,7 @@ namespace KGySoft.Collections
             #region Fields
 
             private readonly CastArray<TFrom, TTo> castArray;
+            private readonly Lock syncRoot = new Lock();
 
             private GCHandle pinnedHandle;
             private int pinCount;
@@ -132,8 +133,7 @@ namespace KGySoft.Collections
                 // This must be before mutating anything because the index validation can throw an exception.
                 ref TTo refResult = ref castArray.GetElementReference(elementIndex);
 
-                // It's alright to lock on this, this instance is not exposed publicly.
-                lock (this)
+                lock (syncRoot)
                 {
                     if (!pinnedHandle.IsAllocated)
                         pinnedHandle = GCHandle.Alloc(castArray.buffer.UnderlyingArray, GCHandleType.Pinned);
@@ -146,7 +146,7 @@ namespace KGySoft.Collections
 #if NETCOREAPP3_0_OR_GREATER
                 return new MemoryHandle(Unsafe.AsPointer(ref refResult), default, this);
 #else
-                // Actually fixed is not needed to pin the reference here, but the cast does not without it...
+                // Actually fixed is not needed to pin the reference here, but the cast does work not without it...
                 fixed (void* ptr = &refResult)
                     return new MemoryHandle(ptr, default, this);
 #endif

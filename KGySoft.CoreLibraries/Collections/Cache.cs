@@ -443,7 +443,7 @@ namespace KGySoft.Collections
             #region Fields
 
             private readonly Cache<TKey, TValue> owner;
-            [NonSerialized] private object? syncRoot;
+            [NonSerialized]private object? syncRoot;
 
             #endregion
 
@@ -581,7 +581,7 @@ namespace KGySoft.Collections
             #region Fields
 
             private readonly Cache<TKey, TValue> owner;
-            [NonSerialized] private object? syncRoot;
+            [NonSerialized]private object? syncRoot;
 
             #endregion
 
@@ -710,6 +710,7 @@ namespace KGySoft.Collections
             #region Fields
 
             private readonly Cache<TKey, TValue> cache;
+            private readonly Lock syncRoot = new Lock();
 
             #endregion
 
@@ -719,7 +720,7 @@ namespace KGySoft.Collections
             {
                 get
                 {
-                    lock (cache.syncRootForThreadSafeAccessor!)
+                    lock (syncRoot)
                         return cache[key];
                 }
             }
@@ -742,6 +743,7 @@ namespace KGySoft.Collections
             #region Fields
 
             private readonly Cache<TKey, TValue> cache;
+            private readonly Lock syncRoot = new Lock();
 
             #endregion
 
@@ -751,14 +753,15 @@ namespace KGySoft.Collections
             {
                 get
                 {
-                    lock (cache.syncRootForThreadSafeAccessor!)
+                    lock (syncRoot)
                     {
                         if (cache.TryGetValue(key, out TValue? result))
                             return result;
                     }
 
+                    // ReSharper disable once InconsistentlySynchronizedField - intended, this accessor does not protect the loader
                     TValue newItem = cache.itemLoader.Invoke(key);
-                    lock (cache.syncRootForThreadSafeAccessor)
+                    lock (syncRoot)
                     {
                         if (cache.TryGetValue(key, out TValue? result))
                         {
@@ -881,7 +884,6 @@ namespace KGySoft.Collections
         private int cacheWrites;
 
         private object? syncRoot;
-        private object? syncRootForThreadSafeAccessor;
         private KeysCollection? keysCollection;
         private ValuesCollection? valuesCollection;
         private bool ensureCapacity;
@@ -1690,11 +1692,7 @@ namespace KGySoft.Collections
         /// </list></note>
         /// </remarks>
         public IThreadSafeCacheAccessor<TKey, TValue> GetThreadSafeAccessor(bool protectItemLoader = false)
-        {
-            if (syncRootForThreadSafeAccessor == null)
-                Interlocked.CompareExchange(ref syncRootForThreadSafeAccessor, new object(), null);
-            return protectItemLoader ? new ThreadSafeAccessorProtectLoader(this) : new ThreadSafeAccessor(this);
-        }
+            => protectItemLoader ? new ThreadSafeAccessorProtectLoader(this) : new ThreadSafeAccessor(this);
 
         #endregion
 

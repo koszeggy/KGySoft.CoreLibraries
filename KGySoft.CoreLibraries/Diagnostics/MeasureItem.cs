@@ -17,6 +17,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Threading;
 
 #endregion
 
@@ -36,7 +37,7 @@ namespace KGySoft.Diagnostics
         private readonly string operation;
         private long calls;
 
-        private readonly object syncRoot = new object();
+        private readonly Lock syncRoot = new Lock();
         private TimeSpan firstCall;
         private TimeSpan totalElapsed;
 

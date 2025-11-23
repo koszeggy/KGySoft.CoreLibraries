@@ -64,7 +64,7 @@ namespace KGySoft.Threading
     ///     // You can add an event if you don't want to miss any tiny progress change.
     ///     private class ProgressTracker : IAsyncProgress
     ///     {
-    ///         private readonly object syncRoot = new object();
+    ///         private readonly object syncRoot = new object(); // or Lock in .NET 9+
     ///         private string? currentOperation;
     ///         private int maximumValue;
     ///         private int currentValue;

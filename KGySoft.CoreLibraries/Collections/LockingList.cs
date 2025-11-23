@@ -89,27 +89,13 @@ namespace KGySoft.Collections
         {
             get
             {
-                Lock();
-                try
-                {
+                lock (SyncRootInternal)
                     return ((IList<T>)InnerCollection)[index];
-                }
-                finally
-                {
-                    Unlock();
-                }
             }
             set
             {
-                Lock();
-                try
-                {
+                lock (SyncRootInternal)
                     ((IList<T>)InnerCollection)[index] = value;
-                }
-                finally
-                {
-                    Unlock();
-                }
             }
         }
 
@@ -145,15 +131,8 @@ namespace KGySoft.Collections
         /// </returns>
         public int IndexOf(T item)
         {
-            Lock();
-            try
-            {
+            lock (SyncRootInternal)
                 return ((IList<T>)InnerCollection).IndexOf(item);
-            }
-            finally
-            {
-                Unlock();
-            }
         }
 
         /// <summary>
@@ -163,15 +142,8 @@ namespace KGySoft.Collections
         /// <param name="item">The object to insert into the <see cref="LockingList{T}" />.</param>
         public void Insert(int index, T item)
         {
-            Lock();
-            try
-            {
+            lock (SyncRootInternal)
                 ((IList<T>)InnerCollection).Insert(index, item);
-            }
-            finally
-            {
-                Unlock();
-            }
         }
 
         /// <summary>
@@ -180,15 +152,8 @@ namespace KGySoft.Collections
         /// <param name="index">The zero-based index of the item to remove.</param>
         public void RemoveAt(int index)
         {
-            Lock();
-            try
-            {
+            lock (SyncRootInternal)
                 ((IList<T>)InnerCollection).RemoveAt(index);
-            }
-            finally
-            {
-                Unlock();
-            }
         }
 
         #endregion

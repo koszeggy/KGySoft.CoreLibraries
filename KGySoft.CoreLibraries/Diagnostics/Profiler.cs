@@ -126,6 +126,7 @@ namespace KGySoft.Diagnostics
         #region Fields
 
         private static readonly StringKeyedDictionary<MeasureItem> items;
+
         private static string profilerDir;
 
         #endregion
@@ -249,7 +250,7 @@ namespace KGySoft.Diagnostics
                 category = Res.ProfilerUncategorized;
 
             string key = category + ":" + operation;
-            lock (items)
+            lock (items.SyncRootInternal)
             {
                 if (items.TryGetValue(key, out MeasureItem? item))
                     return item;
@@ -282,7 +283,7 @@ namespace KGySoft.Diagnostics
 
             string key = category + ":" + operation;
             MeasureItem? item;
-            lock (items)
+            lock (items.SyncRootInternal)
             {
                 if (!items.TryGetValue(key, out item))
                 {
@@ -299,10 +300,8 @@ namespace KGySoft.Diagnostics
         /// </summary>
         public static void Reset()
         {
-            lock (items)
-            {
+            lock (items.SyncRootInternal)
                 items.Clear();
-            }
         }
 
         #endregion
@@ -328,7 +327,7 @@ namespace KGySoft.Diagnostics
         private static void DumpResults()
         {
             var result = new XElement("ProfilerResult");
-            lock (items)
+            lock (items.SyncRootInternal)
             {
                 if (!Enabled || !AutoSaveResults || items.Count == 0)
                     return;
