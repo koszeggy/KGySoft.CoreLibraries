@@ -288,23 +288,24 @@ namespace KGySoft.Serialization.Binary
 #endif
 
 #if NET5_0_OR_GREATER
-            private static void WriteHalf(BinaryWriter bw, Half value) => bw.Write(Unsafe.As<Half, ushort>(ref value));
+            [SecuritySafeCritical]
+            private static void WriteHalf(BinaryWriter bw, Half value) => bw.Write(value.As<Half, ushort>());
 #endif
 
 #if NET7_0_OR_GREATER
-            [SecurityCritical]
+            [SecuritySafeCritical]
             private unsafe static void WriteInt128(BinaryWriter bw, in Int128 value)
             {
                 Span<byte> bytes = stackalloc byte[sizeof(Int128)];
-                Unsafe.As<byte, Int128>(ref MemoryMarshal.GetReference(bytes)) = value;
+                MemoryMarshal.GetReference(bytes).As<byte, Int128>() = value;
                 bw.Write(bytes);
             }
 
-            [SecurityCritical]
+            [SecuritySafeCritical]
             private unsafe static void WriteUInt128(BinaryWriter bw, in UInt128 value)
             {
                 Span<byte> bytes = stackalloc byte[sizeof(UInt128)];
-                Unsafe.As<byte, UInt128>(ref MemoryMarshal.GetReference(bytes)) = value;
+                MemoryMarshal.GetReference(bytes).As<byte, UInt128>() = value;
                 bw.Write(bytes);
             }
 #endif

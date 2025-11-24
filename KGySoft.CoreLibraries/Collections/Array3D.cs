@@ -358,7 +358,7 @@ namespace KGySoft.Collections
                 Throw.ArgumentOutOfRangeException(Argument.height);
             long size = (long)height * width;
             planeSize = (int)size; // no need to be checked, the following check fails if it would overflow
-            if (buffer.Length < size * depth)
+            if (buffer.Length < (size *= depth))
                 Throw.ArgumentException(Argument.buffer, Res.ArraySectionInsufficientCapacity);
 
             this.depth = depth;

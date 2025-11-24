@@ -663,11 +663,7 @@ namespace KGySoft.Collections
             where TTo : unmanaged
 #endif
         {
-#if NETCOREAPP3_0_OR_GREATER
-            return new CastArray<TFrom, TTo>(Unsafe.As<ArraySection<T>, ArraySection<TFrom>>(ref Unsafe.AsRef(in this)));
-#else
-            return new CastArray<TFrom, TTo>((ArraySection<TFrom>)(object)this);
-#endif
+            return new CastArray<TFrom, TTo>(RefExtensions.AsRef(in this).As<ArraySection<T>, ArraySection<TFrom>>());
         }
 
         /// <summary>
@@ -689,11 +685,7 @@ namespace KGySoft.Collections
             where TTo : unmanaged
 #endif
         {
-#if NETCOREAPP3_0_OR_GREATER
-            return new CastArray2D<TFrom, TTo>(Unsafe.As<ArraySection<T>, ArraySection<TFrom>>(ref Unsafe.AsRef(in this)), height, width);
-#else
-            return new CastArray2D<TFrom, TTo>((ArraySection<TFrom>)(object)this, height, width);
-#endif
+            return new CastArray2D<TFrom, TTo>(RefExtensions.AsRef(in this).As<ArraySection<T>, ArraySection<TFrom>>(), height, width);
         }
 
         /// <summary>
@@ -716,11 +708,7 @@ namespace KGySoft.Collections
             where TTo : unmanaged
 #endif
         {
-#if NETCOREAPP3_0_OR_GREATER
-            return new CastArray3D<TFrom, TTo>(Unsafe.As<ArraySection<T>, ArraySection<TFrom>>(ref Unsafe.AsRef(in this)), depth, height, width);
-#else
-            return new CastArray3D<TFrom, TTo>((ArraySection<TFrom>)(object)this, depth, height, width);
-#endif
+            return new CastArray3D<TFrom, TTo>(RefExtensions.AsRef(in this).As<ArraySection<T>, ArraySection<TFrom>>(), depth, height, width);
         }
 
         /// <summary>

@@ -627,14 +627,15 @@ namespace KGySoft.Serialization.Binary
         {
             byte[] result = new byte[sizeof(T)];
 #if NET5_0_OR_GREATER
-            Unsafe.As<byte, T>(ref MemoryMarshal.GetArrayDataReference(result)) = value;
+            MemoryMarshal.GetArrayDataReference(result).As<byte, T>() = value;
 #elif NETCOREAPP3_0_OR_GREATER
-            Unsafe.As<byte, T>(ref result[0]) = value;
+            result[0].As<byte, T>() = value;
 #else
 #if NETFRAMEWORK || NETSTANDARD2_0
             try
 #endif
             {
+                // the body is the same as for .NET Core 3.0, but embedded into another method so we can reach the try block in case of a VerificationException
                 DoSerializeValueType(value, result);
             }
 #if NETFRAMEWORK || NETSTANDARD2_0
@@ -705,9 +706,9 @@ namespace KGySoft.Serialization.Binary
             int len = sizeof(T) * array.Length;
             byte[] result = new byte[len];
 #if NET5_0_OR_GREATER
-            Unsafe.CopyBlock(ref MemoryMarshal.GetArrayDataReference(result), ref Unsafe.As<T, byte>(ref MemoryMarshal.GetArrayDataReference(array)), (uint)len);
+            Unsafe.CopyBlock(ref MemoryMarshal.GetArrayDataReference(result), ref MemoryMarshal.GetArrayDataReference(array).As<T, byte>(), (uint)len);
 #elif NETCOREAPP3_0_OR_GREATER
-            Unsafe.CopyBlock(ref result[0], ref Unsafe.As<T, byte>(ref array[0]), (uint)len);
+            Unsafe.CopyBlock(ref result[0], ref array[0].As<T, byte>(), (uint)len);
 #else
 #if NETFRAMEWORK || NETSTANDARD2_0
             try
@@ -849,14 +850,15 @@ namespace KGySoft.Serialization.Binary
                 Throw.ArgumentException(Argument.data, Res.BinarySerializationDataLengthTooSmall);
 
 #if NET5_0_OR_GREATER
-            return Unsafe.As<byte, T>(ref MemoryMarshal.GetArrayDataReference(data));
+            return MemoryMarshal.GetArrayDataReference(data).As<byte, T>();
 #elif NETCOREAPP3_0_OR_GREATER
-            return Unsafe.As<byte, T>(ref data[0]);
+            return data[0].As<byte, T>();
 #else
 #if NETFRAMEWORK || NETSTANDARD2_0
             try
 #endif
             {
+                // the body is the same as for .NET Core 3.0, but embedded into another method so we can reach the try block in case of a VerificationException
                 return DoDeserializeValueType<T>(data, 0);
             }
 #if NETFRAMEWORK || NETSTANDARD2_0
@@ -902,13 +904,14 @@ namespace KGySoft.Serialization.Binary
                 Throw.ArgumentException(Argument.data, Res.BinarySerializationDataLengthTooSmall);
 
 #if NETCOREAPP3_0_OR_GREATER
-            return Unsafe.As<byte, T>(ref data[offset]);
+            return data[offset].As<byte, T>();
 #else
 
 #if NETFRAMEWORK || NETSTANDARD2_0
             try
 #endif
             {
+                // the body is the same as for .NET Core 3.0, but embedded into another method so we can reach the try block in case of a VerificationException
                 return DoDeserializeValueType<T>(data, offset);
             }
 #if NETFRAMEWORK || NETSTANDARD2_0
@@ -957,10 +960,10 @@ namespace KGySoft.Serialization.Binary
             T[] result = new T[count];
 #if NET5_0_OR_GREATER
             // must use unaligned because data[offset] is not necessarily a pointer aligned address (we could check it, but it isn't worth it)
-            Unsafe.CopyBlockUnaligned(ref Unsafe.As<T, byte>(ref MemoryMarshal.GetArrayDataReference(result)), ref data[offset], (uint)len);
+            Unsafe.CopyBlockUnaligned(ref MemoryMarshal.GetArrayDataReference(result).As<T, byte>(), ref data[offset], (uint)len);
 #elif NETCOREAPP3_0_OR_GREATER
             // must use unaligned because data[offset] is not necessarily a pointer aligned address (we could check it, but it isn't worth it)
-            Unsafe.CopyBlockUnaligned(ref Unsafe.As<T, byte>(ref result[0]), ref data[offset], (uint)len);
+            Unsafe.CopyBlockUnaligned(ref result[0].As<T, byte>(), ref data[offset], (uint)len);
 #else
 #if NETFRAMEWORK || NETSTANDARD2_0
             try
@@ -1132,27 +1135,25 @@ namespace KGySoft.Serialization.Binary
 
 #if !NETCOREAPP3_0_OR_GREATER
         [SecurityCritical]
-        private static unsafe void DoSerializeValueType<T>(T value, byte[] result)
+        private static void DoSerializeValueType<T>(T value, byte[] result)
 #if NETFRAMEWORK
             where T : struct
 #else
             where T : unmanaged
 #endif
         {
-            fixed (byte* dst = result)
-                *(T*)dst = value;
+            result[0].As<byte, T>() = value;
         }
 
         [SecuritySafeCritical]
-        private static unsafe T DoDeserializeValueType<T>(byte[] data, int offset)
+        private static T DoDeserializeValueType<T>(byte[] data, int offset)
 #if NETFRAMEWORK
             where T : struct
 #else
             where T : unmanaged
 #endif
         {
-            fixed (byte* src = &data[offset])
-                return *(T*)src;
+            return data[offset].As<byte, T>();
         }
 
         [SecurityCritical]

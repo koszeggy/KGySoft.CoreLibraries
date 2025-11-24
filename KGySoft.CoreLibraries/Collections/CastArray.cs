@@ -128,6 +128,7 @@ namespace KGySoft.Collections
 
             public override Span<TTo> GetSpan() => castArray.AsSpan;
 
+            [SecuritySafeCritical]
             public override unsafe MemoryHandle Pin(int elementIndex = 0)
             {
                 // This must be before mutating anything because the index validation can throw an exception.
@@ -143,13 +144,7 @@ namespace KGySoft.Collections
 
                 // Not returning the GCHandle in the result because if there are concurrent pinners, they could unpin the memory too early.
                 // Passing only this instance so Unpin will be called that handles everything correctly.
-#if NETCOREAPP3_0_OR_GREATER
-                return new MemoryHandle(Unsafe.AsPointer(ref refResult), default, this);
-#else
-                // Actually fixed is not needed to pin the reference here, but the cast does work not without it...
-                fixed (void* ptr = &refResult)
-                    return new MemoryHandle(ptr, default, this);
-#endif
+                return new MemoryHandle(refResult.AsPointer(), default, this);
             }
 
             public override void Unpin()
@@ -849,21 +844,19 @@ namespace KGySoft.Collections
         [SecuritySafeCritical]
         public int IndexOf(TTo item)
         {
-            // TODO: AsSpan.IndexOf, when TTo is IEquatable will be available: https://github.com/dotnet/csharplang/discussions/6308#discussioncomment-3212915
-            //if (TTo is IComparable TComparable)
-            //    return AsSpan.IndexOf<TComparable>(item);
-
             // Needed explicitly if we use GetPinnableReference or GetElementReferenceInternal
             if (IsNullOrEmpty)
                 return -1;
 
-#if NET5_0_OR_GREATER
+#if NET10_0_OR_GREATER
+            return AsSpan.IndexOf(item);
+#elif NET5_0_OR_GREATER                  
             // Using the EqualityComparer<T>.Default intrinsic directly, which gets devirtualized
             // See https://github.com/dotnet/runtime/issues/10050
             ref TTo current = ref GetStartElementReferenceInternal();
             for (int i = 0; i < length; i++)
             {
-                if (EqualityComparer<TTo>.Default.Equals(Unsafe.Add(ref current, i), item))
+                if (EqualityComparer<TTo>.Default.Equals(current.At(i), item))
                     return i;
             }
 
@@ -873,7 +866,7 @@ namespace KGySoft.Collections
             ref TTo current = ref GetStartElementReferenceInternal();
             for (int i = 0; i < length; i++)
             {
-                if (comparer.Equals(Unsafe.Add(ref current, i), item))
+                if (comparer.Equals(current.At(i), item))
                     return i;
             }
 
@@ -881,13 +874,15 @@ namespace KGySoft.Collections
 #elif NETFRAMEWORK || NETSTANDARD2_0
             try
             {
+                // We could use the same block as for .NET Core 3.0+, but this way we can avoid a fixed statement for each iteration
                 return DoIndexOfUnsafe(item);
             }
             catch (VerificationException e) when (EnvironmentHelper.IsPartiallyTrustedDomain)
             {
                 return Throw.NotSupportedException<int>(Res.UnsafeSecuritySettingsConflict, e);
             }
-#else
+#else 
+            // We could use the same block as for .NET Core 3.0+, but this way we can avoid a fixed statement for each iteration
             return DoIndexOfUnsafe(item);
 #endif
         }
@@ -1021,35 +1016,20 @@ namespace KGySoft.Collections
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal ref TTo GetElementReferenceInternal(int index)
         {
-#if NETCOREAPP3_0_OR_GREATER
-            return ref Unsafe.Add(ref GetStartElementReferenceInternal(), index);
-#else
-            unsafe
-            {
-                // we could use this.GetStartElementReferenceInternal like in the > .NET Core 3.0 case but that would mean two fixed statements.
-                fixed (TFrom* pBuf = &buffer.GetStartElementReferenceInternal())
-                    return ref ((TTo*)pBuf)[index];
-            }
-#endif
+            // we could use ref this.GetStartElementReferenceInternal().At(index), but that would mean two fixed statements in .NET Framework/Standard
+            return ref buffer.GetStartElementReferenceInternal().At<TFrom, TTo>(index);
         }
 
         #endregion
 
         #region Private Methods
 
+        [SecurityCritical]
         private ref TTo GetStartElementReferenceInternal()
         {
-#if NETCOREAPP3_0_OR_GREATER
-            return ref Unsafe.As<TFrom, TTo>(ref buffer.GetStartElementReferenceInternal());
-#else
-            // There is no point in putting the try...catch (VerificationException) here. When it's thrown, it's already for this method as it has a ref return.
+            // There is no point in putting the try...catch (VerificationException) for .NET Framework here. When it's thrown, it's already for this method as it has a ref return.
             // Besides, this method is to use this instance in a fixed statement, which cannot be used in such a partially trusted domain anyway.
-            unsafe
-            {
-                fixed (TFrom* pBuf = &buffer.GetStartElementReferenceInternal())
-                    return ref *((TTo*)pBuf);
-            }
-#endif
+            return ref buffer.GetStartElementReferenceInternal().As<TFrom, TTo>();
         }
 
 #if !(NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER)

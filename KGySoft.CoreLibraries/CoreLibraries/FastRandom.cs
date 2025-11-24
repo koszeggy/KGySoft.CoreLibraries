@@ -62,7 +62,7 @@ namespace KGySoft.CoreLibraries
 
         #region Constants
 
-        private const float normalizationFactorFloat = 1f / (1L << 24);
+        private const float normalizationFactorFloat = 1f / (1 << 24);
         private const double normalizationFactorDouble = 1d / (1L << 53);
 
         #endregion
@@ -137,11 +137,12 @@ namespace KGySoft.CoreLibraries
         /// <param name="seed">A number used to calculate a starting value for the pseudo-random number sequence.</param>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="seed"/> must not be zero.</exception>
         [CLSCompliant(false)]
+        [SecuritySafeCritical]
         public FastRandom(UInt128 seed)
         {
             if (seed == default)
                 Throw.ArgumentOutOfRangeException(Argument.seed, Res.PropertyMustBeGreaterThan(nameof(seed), default(UInt128)));
-            state = Unsafe.As<UInt128, State>(ref seed);
+            state = seed.As<UInt128, State>();
         }
 #endif
 

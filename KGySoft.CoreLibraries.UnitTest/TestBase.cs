@@ -357,11 +357,12 @@ namespace KGySoft.CoreLibraries
 
 #if NET5_0_OR_GREATER
                 if (reference is Half halfRef && check is Half halfCheck)
-                    return Check(Unsafe.As<Half, ushort>(ref halfRef)  == Unsafe.As<Half, ushort>(ref halfCheck), $"Half equality failed: {halfRef:R} <-> {halfCheck:R}. Binary representation: 0x{Unsafe.As<Half, ushort>(ref halfRef):X4} <-> 0x{Unsafe.As<Half, ushort>(ref halfCheck):X4}", errors);
+                    return Check(halfRef.As<Half, ushort>() == halfCheck.As<Half, ushort>(), $"Half equality failed: {halfRef:R} <-> {halfCheck:R}. Binary representation: 0x{halfRef.As<Half, ushort>():X4} <-> 0x{halfCheck.As<Half, ushort>():X4}", errors);
 #endif
 
                 if (reference is decimal decimalRef && check is decimal decimalCheck)
-                    return Check(Decimal.GetBits(decimalRef).SequenceEqual(Decimal.GetBits(decimalCheck)), $"Decimal equality failed: {decimalRef.ToRoundtripString()} <-> {decimalCheck.ToRoundtripString()}. Binary representation: 0x{Decimal.GetBits(decimalRef).Select(i => $"{i:X8}").Join(String.Empty)} <-> 0x{Decimal.GetBits(decimalCheck).Select(i => $"{i:X8}").Join(String.Empty)}", errors);
+                    // .AsEnumerable(): to force using the Enumerable.SequenceEqual instead of MemoryExtensions.SequenceEqual, because the latter causes VerificationException (Operation could destabilize the runtime) from a partially trusted domain in .NET Framework 4.x.
+                    return Check(Decimal.GetBits(decimalRef).AsEnumerable().SequenceEqual(Decimal.GetBits(decimalCheck)), $"Decimal equality failed: {decimalRef.ToRoundtripString()} <-> {decimalCheck.ToRoundtripString()}. Binary representation: 0x{Decimal.GetBits(decimalRef).Select(i => $"{i:X8}").Join(String.Empty)} <-> 0x{Decimal.GetBits(decimalCheck).Select(i => $"{i:X8}").Join(String.Empty)}", errors);
 
                 if (typeRef == typeof(StringBuilder))
                 {

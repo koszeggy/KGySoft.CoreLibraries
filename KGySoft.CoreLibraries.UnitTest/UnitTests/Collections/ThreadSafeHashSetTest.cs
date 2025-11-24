@@ -237,7 +237,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             var tSet = new ThreadSafeHashSet<string>(set);
 
             Assert.IsTrue(set.SequenceEqual(tSet));
-            Assert.IsTrue(set.ToArray().SequenceEqual(tSet.ToArray()));
+            // AsEnumerable: to force using Enumerable.SequenceEqual instead of MemoryExtensions.SequenceEqual - https://github.com/dotnet/csharplang/discussions/9841
+            Assert.IsTrue(set.ToArray().AsEnumerable().SequenceEqual(tSet.ToArray()));
 
             tSet.Remove("alpha");
             Assert.AreEqual(3, tSet.Count);

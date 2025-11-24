@@ -852,28 +852,29 @@ namespace KGySoft.Serialization.Binary
 #endif
 
 #if NET5_0_OR_GREATER
+            [SecuritySafeCritical]
             private static Half ReadHalf(BinaryReader br)
             {
                 ushort value = br.ReadUInt16();
-                return Unsafe.As<ushort, Half>(ref value);
+                return value.As<ushort, Half>();
             }
 #endif
 
 #if NET7_0_OR_GREATER
-            [SecurityCritical]
+            [SecuritySafeCritical]
             private unsafe static Int128 ReadInt128(BinaryReader br)
             {
                 Span<byte> bytes = stackalloc byte[sizeof(Int128)];
                 br.BaseStream.ReadExactly(bytes);
-                return Unsafe.As<byte, Int128>(ref MemoryMarshal.GetReference(bytes));
+                return MemoryMarshal.GetReference(bytes).As<byte, Int128>();
             }
 
-            [SecurityCritical]
+            [SecuritySafeCritical]
             private unsafe static UInt128 ReadUInt128(BinaryReader br)
             {
                 Span<byte> bytes = stackalloc byte[sizeof(UInt128)];
                 br.BaseStream.ReadExactly(bytes);
-                return Unsafe.As<byte, UInt128>(ref MemoryMarshal.GetReference(bytes));
+                return MemoryMarshal.GetReference(bytes).As<byte, UInt128>();
             }
 #endif
 

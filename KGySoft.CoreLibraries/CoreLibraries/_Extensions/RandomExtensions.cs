@@ -23,7 +23,7 @@ using System.Globalization;
 #endif
 using System.Reflection;
 using System.Runtime.CompilerServices;
-#if NETCOREAPP3_0_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
 using System.Runtime.InteropServices;
 #endif
 #if !NET35
@@ -2567,17 +2567,12 @@ namespace KGySoft.CoreLibraries
 
         [SecuritySafeCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        private static unsafe uint GenerateSampleUInt32(Random random)
+        private static uint GenerateSampleUInt32(Random random)
         {
-#if NETCOREAPP3_0_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             Span<byte> bytes = stackalloc byte[4];
             random.NextBytes(bytes);
-            return Unsafe.As<byte, uint>(ref MemoryMarshal.GetReference(bytes));
-#elif NETCOREAPP2_1 || NETSTANDARD2_1_OR_GREATER
-            Span<byte> bytes = stackalloc byte[4];
-            random.NextBytes(bytes);
-            fixed (byte* p = bytes)
-                return *(uint*)p;
+            return MemoryMarshal.GetReference(bytes).As<byte, uint>();
 #else
             byte[] bytes = new byte[4];
             random.NextBytes(bytes);
@@ -2585,24 +2580,18 @@ namespace KGySoft.CoreLibraries
             if (EnvironmentHelper.IsPartiallyTrustedDomain)
                 return BitConverter.ToUInt32(bytes, 0);
 #endif
-            fixed (byte* p = bytes)
-                return *(uint*)p;
+            return bytes[0].As<byte, uint>();
 #endif
         }
 
         [SecuritySafeCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        private static unsafe ulong GenerateSampleUInt64(Random random)
+        private static ulong GenerateSampleUInt64(Random random)
         {
-#if NETCOREAPP3_0_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             Span<byte> bytes = stackalloc byte[8];
             random.NextBytes(bytes);
-            return Unsafe.As<byte, ulong>(ref MemoryMarshal.GetReference(bytes));
-#elif NETCOREAPP2_1 || NETSTANDARD2_1_OR_GREATER
-            Span<byte> bytes = stackalloc byte[8];
-            random.NextBytes(bytes);
-            fixed (byte* p = bytes)
-                return *(ulong*)p;
+            return MemoryMarshal.GetReference(bytes).As<byte, ulong>();
 #else
             byte[] bytes = new byte[8];
             random.NextBytes(bytes);
@@ -2610,8 +2599,7 @@ namespace KGySoft.CoreLibraries
             if (EnvironmentHelper.IsPartiallyTrustedDomain)
                 return BitConverter.ToUInt64(bytes, 0);
 #endif
-            fixed (byte* p = bytes)
-                return *(ulong*)p;
+            return bytes[0].As<byte, ulong>();
 #endif
         }
 
@@ -2622,7 +2610,7 @@ namespace KGySoft.CoreLibraries
         {
             Span<byte> bytes = stackalloc byte[16];
             random.NextBytes(bytes);
-            return Unsafe.As<byte, UInt128>(ref MemoryMarshal.GetReference(bytes));
+            return MemoryMarshal.GetReference(bytes).As<byte, UInt128>();
         }
 #endif
 

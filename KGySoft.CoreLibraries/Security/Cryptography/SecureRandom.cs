@@ -17,7 +17,7 @@
 
 using System;
 using System.Runtime.CompilerServices;
-#if NETCOREAPP3_0_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
 using System.Runtime.InteropServices;
 #endif
 using System.Security; 
@@ -101,7 +101,7 @@ namespace KGySoft.Security.Cryptography
         #region Constants
 
 #if NET6_0_OR_GREATER
-        private const float normalizationFactorFloat = 1f / (1L << 24);
+        private const float normalizationFactorFloat = 1f / (1 << 24);
 #endif
         private const double normalizationFactorDouble = 1d / (1L << 53);
 
@@ -371,17 +371,12 @@ namespace KGySoft.Security.Cryptography
 
         [SecuritySafeCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        private unsafe uint SampleUInt32()
+        private uint SampleUInt32()
         {
-#if NETCOREAPP3_0_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             Span<byte> bytes = stackalloc byte[4];
             provider.GetBytes(bytes);
-            return Unsafe.As<byte, uint>(ref MemoryMarshal.GetReference(bytes)); 
-#elif NETCOREAPP2_1 || NETSTANDARD2_1_OR_GREATER
-            Span<byte> bytes = stackalloc byte[4];
-            provider.GetBytes(bytes);
-            fixed (byte* p = bytes)
-                return *(uint*)p;
+            return MemoryMarshal.GetReference(bytes).As<byte, uint>();
 #else
             byte[] bytes = new byte[4];
             provider.GetBytes(bytes);
@@ -389,24 +384,18 @@ namespace KGySoft.Security.Cryptography
             if (EnvironmentHelper.IsPartiallyTrustedDomain)
                 return BitConverter.ToUInt32(bytes, 0);
 #endif
-            fixed (byte* p = bytes)
-                return *(uint*)p;
+            return bytes[0].As<byte, uint>();
 #endif
         }
 
         [SecuritySafeCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        private unsafe ulong SampleUInt64()
+        private ulong SampleUInt64()
         {
-#if NETCOREAPP3_0_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             Span<byte> bytes = stackalloc byte[8];
             provider.GetBytes(bytes);
-            return Unsafe.As<byte, ulong>(ref MemoryMarshal.GetReference(bytes));
-#elif NETCOREAPP2_1 || NETSTANDARD2_1_OR_GREATER
-            Span<byte> bytes = stackalloc byte[8];
-            provider.GetBytes(bytes);
-            fixed (byte* p = bytes)
-                return *(ulong*)p;
+            return MemoryMarshal.GetReference(bytes).As<byte, ulong>();
 #else
             byte[] bytes = new byte[8];
             provider.GetBytes(bytes);
@@ -414,8 +403,7 @@ namespace KGySoft.Security.Cryptography
             if (EnvironmentHelper.IsPartiallyTrustedDomain)
                 return BitConverter.ToUInt64(bytes, 0);
 #endif
-            fixed (byte* p = bytes)
-                return *(ulong*)p;
+            return bytes[0].As<byte, ulong>();
 #endif
         }
 

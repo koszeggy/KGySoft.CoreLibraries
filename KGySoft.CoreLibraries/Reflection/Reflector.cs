@@ -161,10 +161,6 @@ namespace KGySoft.Reflection
         private static int typedReferenceValueIndex;
 #endif
 
-#if !(NETSTANDARD2_0 || NETCOREAPP3_0_OR_GREATER)
-        private static Func<object, StrongBox<byte>>? reinterpretAsBoxedByte;
-#endif
-
         private static LockFreeCache<(MemberInfo Member, Type Attribute, bool Inherit), Attribute[]>? attributesCache;
 
         #endregion
@@ -3892,14 +3888,7 @@ namespace KGySoft.Reflection
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SecurityCritical]
-        internal static ref byte GetRawData(object obj)
-        {
-#if NETCOREAPP3_0_OR_GREATER
-            return ref Unsafe.As<StrongBox<byte>>(obj).Value;
-#else
-            return ref (reinterpretAsBoxedByte ??= GenerateReinterpretCast<byte>()).Invoke(obj).Value;
-#endif
-        }
+        internal static ref byte GetRawData(object obj) => ref obj.As<StrongBox<byte>>().Value;
 
         /// <summary>
         /// Gets a pointer to the actual value (first field if the struct has fields) of a reference created from a value type.
@@ -3922,18 +3911,6 @@ namespace KGySoft.Reflection
             return (byte*)((IntPtr*)&typedRef)[typedReferenceValueIndex];
 #pragma warning restore CS8500 // This takes the address of, gets the size of, or declares a pointer to a managed type
         }
-
-#if !NETCOREAPP3_0_OR_GREATER
-        [SecurityCritical]
-        internal static Func<object, StrongBox<T>> GenerateReinterpretCast<T>()
-        {
-            var dm = new DynamicMethod("ReinterpretCast", typeof(StrongBox<T>), [ObjectType], typeof(Reflector), true);
-            ILGenerator il = dm.GetILGenerator();
-            il.Emit(OpCodes.Ldarg_0);
-            il.Emit(OpCodes.Ret);
-            return (Func<object, StrongBox<T>>)dm.CreateDelegate(typeof(Func<object, StrongBox<T>>));
-        }
-#endif
 
         [SecurityCritical]
         private unsafe static bool InitTypedReferenceUsage()

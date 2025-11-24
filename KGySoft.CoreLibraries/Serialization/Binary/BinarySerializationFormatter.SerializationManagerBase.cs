@@ -102,8 +102,6 @@ namespace KGySoft.Serialization.Binary
 
             #region Static Fields
 
-            #region Private Protected Fields
-
             private protected static readonly Assembly[] KnownAssemblies =
             [
                 // Do not add more assemblies. We must stay consistent on different platforms.
@@ -156,16 +154,6 @@ namespace KGySoft.Serialization.Binary
             /// </summary>
             private protected static readonly LockFreeCache<Type, DataTypes> SpecialSupportCache
                 = new(DetermineSpecialSupport, null, LockFreeCacheOptions.Profile256);
-
-            #endregion
-
-            #region Private Fields
-
-#if NETCOREAPP2_1 || NETSTANDARD2_1_OR_GREATER
-        private static Func<object, StrongBox<MemoryData>>? reinterpretAsMemoryData;
-#endif
-
-            #endregion
 
             #endregion
 
@@ -238,15 +226,7 @@ namespace KGySoft.Serialization.Binary
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             [MethodImpl(MethodImpl.AggressiveInlining)]
             [SecurityCritical]
-            private protected static ref MemoryData GetMemoryData(object obj)
-            {
-                Debug.Assert(obj.GetType().IsGenericTypeOf(typeof(Memory<>)) || obj.GetType().IsGenericTypeOf(typeof(ReadOnlyMemory<>)));
-#if NETCOREAPP3_0_OR_GREATER
-                return ref Unsafe.As<StrongBox<MemoryData>>(obj).Value;
-#else
-                return ref (reinterpretAsMemoryData ??= Reflector.GenerateReinterpretCast<MemoryData>()).Invoke(obj).Value;
-#endif
-            }
+            private protected static ref MemoryData GetMemoryData(object obj) => ref obj.As<StrongBox<MemoryData>>().Value;
 #endif
 
             #endregion
