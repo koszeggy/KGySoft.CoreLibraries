@@ -77,7 +77,7 @@ namespace KGySoft.Reflection
                 if (!typeof(T).IsValueType)
                     return IntPtr.Size;
 
-                if (typeof(T).IsPrimitive)
+                if (IsPrimitive)
                     return Buffer.ByteLength(new T[1]);
 
                 // We can't use stackalloc because T is not constrained here so we need to create an array
@@ -104,6 +104,34 @@ namespace KGySoft.Reflection
             #region Fields
 
             internal static readonly bool Value = typeof(T).IsManaged();
+
+            #endregion
+        }
+
+#endif
+        #endregion
+
+        #region ArrayInfoCache
+
+        private static class ArrayElementSizeExponentCache
+        {
+            #region Fields
+
+            internal static readonly int Value = IsPrimitive ? (int)Math.Log(SizeOf, 2) : 0;
+
+            #endregion
+        }
+
+        #endregion
+
+        #region IsPrimitiveCache
+#if !NET9_0_OR_GREATER
+
+        private static class IsPrimitiveCache
+        {
+            #region Fields
+
+            internal static readonly bool Value = typeof(T).IsPrimitive;
 
             #endregion
         }
@@ -140,7 +168,15 @@ namespace KGySoft.Reflection
         internal static int MaxArrayLength => Array.MaxLength;
 #else
         // Based on the internal Array.MaxArrayLength and MaxByteArrayLength constants
-        internal static int MaxArrayLength { get; } = typeof(T) == Reflector.ByteType ? 0x7FFFFFC7 : 0x7FEFFFFF;
+        internal static int MaxArrayLength => typeof(T) == typeof(byte) ? 0x7FFFFFC7 : 0x7FEFFFFF;
+#endif
+
+        internal static int ArrayElementSizeExponent => ArrayElementSizeExponentCache.Value;
+
+#if NET9_0_OR_GREATER
+        internal static bool IsPrimitive => typeof(T).IsPrimitive; // intrinsic in .NET 9+
+#else
+        internal static bool IsPrimitive => IsPrimitiveCache.Value;
 #endif
 
         #endregion

@@ -72,9 +72,14 @@ namespace KGySoft.Collections
     /// <para>Unlike <see cref="ArraySection{T}"/>, <see cref="CastArray{TFrom,TTo}"/> has no self-allocating constructors. But you can pass
     /// an <see cref="ArraySection{T}"/> instance to the constructor that allocated a buffer by itself. In such case it's the caller's responsibility to
     /// call the <see cref="ArraySection{T}.Release">Release</see> method in the end to return the possibly rented array to the pool.</para>
+    /// <note type="caution">When <typeparamref name="TTo"/> is a primitive type of size greater than 1 byte (for example <see cref="int">int</see>, <see cref="float">float</see>, etc.),
+    /// then the address of the elements are recommended to be aligned to the size of <typeparamref name="TTo"/>. On most platforms misalignment affects only performance,
+    /// but depending on the architecture, dereferencing misaligned references may provide an unexpected result, or can even throw a <see cref="DataMisalignedException"/>.
+    /// If the reinterpreted elements may not be aligned, it is recommended to access the items by the <see cref="GetElementUnaligned">GetElementUnaligned</see>/<see cref="SetElementUnaligned">SetElementUnaligned</see> methods.</note>
     /// <para>Though this type also supports slicing, it requires that the address of the start element (in terms of <typeparamref name="TTo"/>) must be aligned
     /// to an element in the underlying array of <typeparamref name="TFrom"/> elements. It's not an issue for any start index if the size of <typeparamref name="TFrom"/> is 1
-    /// or equal to the size of <typeparamref name="TTo"/>. Otherwise, the <see cref="O:KGySoft.Collections.CastArray`2.Slice">Slice</see> methods may throw an <see cref="ArgumentException"/>.</para>
+    /// (but see also the caution above), or when the size of <typeparamref name="TFrom"/> and <typeparamref name="TTo"/> are the same.
+    /// Otherwise, the <see cref="O:KGySoft.Collections.CastArray`2.Slice">Slice</see> methods may throw an <see cref="ArgumentException"/>.</para>
     /// <note type="warning">.NET Framework 4.x only: When this type is used in a partially trusted domain that does not allow executing unverifiable code, then the indexers and some methods may throw
     /// a <see cref="NotSupportedException"/>. You can avoid it by enabling the <see cref="SecurityPermissionFlag.SkipVerification"/> flag at the security permissions when creating the <see cref="AppDomain"/>.</note>
     /// <note type="tip">See more details and some examples about KGy SOFT's span-like types at the <strong>Remarks</strong> section of the <see cref="ArraySection{T}"/> type.</note>
@@ -307,9 +312,13 @@ namespace KGySoft.Collections
         /// <para>This member validates <paramref name="index"/> against <see cref="Length"/>. To allow getting/setting any item in the actual underlying array use
         /// the <see cref="GetElementUnsafe">GetElementUnsafe</see>/<see cref="SetElementUnsafe">SetElementUnsafe</see> methods instead.</para>
         /// <para>If the compiler you use supports members that return a value by reference, you can also use the <see cref="GetElementReference">GetElementReference</see> method.</para>
+        /// <note type="tip">If <typeparamref name="TTo"/> is a primitive type of size larger than 1 byte, and unaligned memory access is not supported by the executing architecture (e.g. ARM),
+        /// consider to use the <see cref="GetElementUnaligned">GetElementUnaligned</see>/<see cref="SetElementUnaligned">SetElementUnaligned</see> methods to avoid a possible <see cref="DataMisalignedException"/>.</note>
         /// </remarks>
         /// <exception cref="IndexOutOfRangeException"><paramref name="index"/> is less than zero or greater or equal to <see cref="Length"/>.</exception>
         /// <exception cref="NotSupportedException">.NET Framework only: you access this member in a partially trusted <see cref="AppDomain"/> that does not allow executing unverifiable code.</exception>
+        /// <exception cref="DataMisalignedException"><typeparamref name="TTo"/> is a primitive type of size larger than 1 byte, the address of the result
+        /// is not properly aligned at the specified <paramref name="index"/>, and the executing architecture does not support misaligned memory access (e.g. ARM).</exception>
         public TTo this[int index]
         {
             // NOTE: We could simply use just a ref returning indexer and implement IList<TTo>.this[int] explicitly,
@@ -652,9 +661,10 @@ namespace KGySoft.Collections
         /// <param name="index">The index of the element to get the reference for.</param>
         /// <returns>The reference to the element at the specified index.</returns>
         /// <remarks>
-        /// <para>This method validates <paramref name="index"/> against <see cref="Length"/>.
-        /// To allow getting any reference from the actual underlying array
+        /// <para>This method validates <paramref name="index"/> against <see cref="Length"/>. To allow getting any reference from the actual underlying array
         /// use the <see cref="GetElementReferenceUnsafe">GetElementReferenceUnsafe</see> method instead.</para>
+        /// <note type="caution">If <typeparamref name="TTo"/> is a primitive type of size larger than 1 byte, and the executing architecture does not support misaligned memory access,
+        /// a <see cref="DataMisalignedException"/> can be thrown in the moment of dereferencing the result if it its address is not properly aligned.</note>
         /// <note>This method returns a value by reference. If this library is used by an older compiler that does not support such members,
         /// use the <see cref="this">indexer</see> instead.</note>
         /// </remarks>
@@ -675,17 +685,20 @@ namespace KGySoft.Collections
         /// Gets the element at the specified <paramref name="index"/> without any range check or validation.
         /// This method can even throw a <see cref="NullReferenceException"/> if the <see cref="IsNull"/> property returns <see langword="true"/>.
         /// To validate <paramref name="index"/> against <see cref="Length"/> use the <see cref="this">indexer</see> instead.
+        /// If <typeparamref name="TTo"/> is a primitive type with misalignment, consider to use the <see cref="GetElementUnaligned">GetElementUnaligned</see> method instead.
         /// </summary>
         /// <param name="index">The index of the element to get.</param>
         /// <returns>The element at the specified index.</returns>
+        /// <remarks>
+        /// <note type="caution">You must ensure that <paramref name="index"/> falls within <see cref="Length"/>, or at least in the bounds of the actual underlying array. Attempting to access protected memory may crash the runtime.</note>
+        /// <para>If the compiler you use supports members that return a value by reference, you can also use the <see cref="GetElementReferenceUnsafe">GetElementReferenceUnsafe</see> method.</para>
+        /// <note>If <typeparamref name="TTo"/> is a primitive type of size larger than 1 byte, and unaligned memory access is not supported by the executing architecture (e.g. ARM),
+        /// consider to call the <see cref="GetElementUnaligned">GetElementUnaligned</see> method instead to avoid a possible <see cref="DataMisalignedException"/>.</note>
+        /// </remarks>
         /// <exception cref="NotSupportedException">.NET Framework only: you execute this method in a partially trusted <see cref="AppDomain"/> that does not allow executing unverifiable code.</exception>
         /// <exception cref="NullReferenceException">The <see cref="IsNull"/> property returns <see langword="true"/>.</exception>
-        /// <remarks>
-        /// <note type="caution">You must ensure that <paramref name="index"/> falls within <see cref="Length"/>, or at least in the bounds
-        /// of the actual underlying array. Attempting to access protected memory may crash the runtime.</note>
-        /// <para>If the compiler you use supports members that return a value by reference, you can also use
-        /// the <see cref="GetElementReferenceUnsafe">GetElementReferenceUnsafe</see> method.</para>
-        /// </remarks>
+        /// <exception cref="DataMisalignedException"><typeparamref name="TTo"/> is a primitive type of size larger than 1 byte, the address of the result
+        /// is not properly aligned at the specified <paramref name="index"/>, and the executing architecture does not support misaligned memory access (e.g. ARM).</exception>
         [SecurityCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public TTo GetElementUnsafe(int index)
@@ -713,11 +726,13 @@ namespace KGySoft.Collections
         /// <param name="value">The value to set.</param>
         /// <exception cref="NotSupportedException">.NET Framework only: you execute this method in a partially trusted <see cref="AppDomain"/> that does not allow executing unverifiable code.</exception>
         /// <exception cref="NullReferenceException">The <see cref="IsNull"/> property returns <see langword="true"/>.</exception>
+        /// <exception cref="DataMisalignedException"><typeparamref name="TTo"/> is a primitive type of size larger than 1 byte, the address of the element
+        /// at the specified <paramref name="index"/> is not properly aligned, and the executing architecture does not support misaligned memory access (e.g. ARM).</exception>
         /// <remarks>
-        /// <note type="caution">You must ensure that <paramref name="index"/> falls within <see cref="Length"/>, or at least in the bounds
-        /// of the actual underlying array. Attempting to access protected memory may crash the runtime.</note>
-        /// <para>If the compiler you use supports members that return a value by reference, you can also use
-        /// the <see cref="GetElementReferenceUnsafe">GetElementReferenceUnsafe</see> method.</para>
+        /// <note type="caution">You must ensure that <paramref name="index"/> falls within <see cref="Length"/>, or at least in the bounds of the actual underlying array. Attempting to access protected memory may crash the runtime.</note>
+        /// <para>If the compiler you use supports members that return a value by reference, you can also use the <see cref="GetElementReferenceUnsafe">GetElementReferenceUnsafe</see> method.</para>
+        /// <note>If <typeparamref name="TTo"/> is a primitive type of size larger than 1 byte, and unaligned memory access is not supported by the executing architecture (e.g. ARM),
+        /// consider to call the <see cref="SetElementUnaligned">SetElementUnaligned</see> method instead to avoid a possible <see cref="DataMisalignedException"/>.</note>
         /// </remarks>
         [SecurityCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -738,6 +753,72 @@ namespace KGySoft.Collections
         }
 
         /// <summary>
+        /// Gets the element at the specified <paramref name="index"/> with assuming misalignment for primitive <typeparamref name="TTo"/> types.
+        /// </summary>
+        /// <param name="index">The index of the element to get.</param>
+        /// <returns>The element at the specified index.</returns>
+        /// <remarks>
+        /// <para>This method assumes misaligned address for primitive <typeparamref name="TTo"/> items, and also validates <paramref name="index"/> against <see cref="Length"/>.
+        /// To omit range validation and still reading the elements assuming misalignment, use the <see cref="GetElementReferenceUnsafe">GetElementReferenceUnsafe</see> method with a compiler that
+        /// supports members that return values by reference, and make sure you cast the type of the reference properly before dereferencing it.</para>
+        /// </remarks>
+        /// <exception cref="IndexOutOfRangeException"><paramref name="index"/> is less than zero or greater or equal to <see cref="Length"/>.</exception>
+        /// <exception cref="NotSupportedException">.NET Framework only: you access this member in a partially trusted <see cref="AppDomain"/> that does not allow executing unverifiable code.</exception>
+        [SecuritySafeCritical]
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public TTo GetElementUnaligned(int index)
+        {
+            if ((uint)index >= (uint)length)
+                Throw.IndexOutOfRangeException();
+
+#if NETFRAMEWORK || NETSTANDARD2_0
+            try
+            {
+                return buffer.GetStartElementReferenceInternal().ReadUnalignedAt<TFrom, TTo>(index);
+            }
+            catch (VerificationException e) when (EnvironmentHelper.IsPartiallyTrustedDomain)
+            {
+                return Throw.NotSupportedException<TTo>(Res.UnsafeSecuritySettingsConflict, e);
+            }
+#else
+            return buffer.GetStartElementReferenceInternal().ReadUnalignedAt<TFrom, TTo>(index);
+#endif
+        }
+
+        /// <summary>
+        /// Sets the element at the specified <paramref name="index"/> with assuming misalignment for primitive <typeparamref name="TTo"/> types.
+        /// </summary>
+        /// <param name="index">The index of the element to set.</param>
+        /// <param name="value">The value to set.</param>
+        /// <remarks>
+        /// <para>This method assumes misaligned address for primitive <typeparamref name="TTo"/> items, and also validates <paramref name="index"/> against <see cref="Length"/>.
+        /// To omit range validation and still writing the elements assuming misalignment, use the <see cref="GetElementReferenceUnsafe">GetElementReferenceUnsafe</see> method with a compiler that
+        /// supports members that return values by reference, and make sure you cast the type of the reference properly before dereferencing it.</para>
+        /// </remarks>
+        /// <exception cref="IndexOutOfRangeException"><paramref name="index"/> is less than zero or greater or equal to <see cref="Length"/>.</exception>
+        /// <exception cref="NotSupportedException">.NET Framework only: you access this member in a partially trusted <see cref="AppDomain"/> that does not allow executing unverifiable code.</exception>
+        [SecuritySafeCritical]
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public void SetElementUnaligned(int index, TTo value)
+        {
+            if ((uint)index >= (uint)length)
+                Throw.IndexOutOfRangeException();
+
+#if NETFRAMEWORK || NETSTANDARD2_0
+            try
+            {
+                buffer.GetStartElementReferenceInternal().WriteUnalignedAt(index, value);
+            }
+            catch (VerificationException e) when (EnvironmentHelper.IsPartiallyTrustedDomain)
+            {
+                Throw.NotSupportedException<TTo>(Res.UnsafeSecuritySettingsConflict, e);
+            }
+#else
+            buffer.GetStartElementReferenceInternal().WriteUnalignedAt(index, value);
+#endif
+        }
+
+        /// <summary>
         /// Gets the reference to the element at the specified <paramref name="index"/> without any range check or validation.
         /// This method can even throw a <see cref="NullReferenceException"/> if the <see cref="IsNull"/> property returns <see langword="true"/>.
         /// To validate <paramref name="index"/> against <see cref="Length"/> use the <see cref="GetElementReference">GetElementReference</see> method instead.
@@ -748,7 +829,9 @@ namespace KGySoft.Collections
         /// <exception cref="NullReferenceException">The <see cref="IsNull"/> property returns <see langword="true"/>.</exception>
         /// <remarks>
         /// <note type="caution">You must ensure that <paramref name="index"/> falls within <see cref="Length"/>, or at least in the bounds
-        /// of the actual underlying array. Attempting to access protected memory may crash the runtime.</note>
+        /// of the actual underlying array. Attempting to access protected memory may crash the runtime.
+        /// Also, if <typeparamref name="TTo"/> is a primitive type of size larger than 1 byte, and the executing architecture does not support misaligned memory access,
+        /// a <see cref="DataMisalignedException"/> can be thrown in the moment of dereferencing the result if its address is not properly aligned.</note>
         /// <note>This method returns a value by reference. If this library is used by an older compiler that does not support such members,
         /// use the <see cref="GetElementUnsafe">GetElementUnsafe</see>/<see cref="SetElementUnsafe">SetElementUnsafe</see> methods instead.</note>
         /// </remarks>

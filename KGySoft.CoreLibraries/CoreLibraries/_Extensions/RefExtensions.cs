@@ -16,10 +16,9 @@
 #region Usings
 
 using System.Runtime.CompilerServices;
-#if !NETCOREAPP3_0_OR_GREATER
-using System.Runtime.InteropServices;
-#endif
 using System.Security;
+
+using KGySoft.Reflection;
 
 #endregion
 
@@ -142,6 +141,104 @@ namespace KGySoft.CoreLibraries
             {
                 fixed (TSource* p = &source)
                     return ref ((TTarget*)p)[targetIndex];
+            }
+#endif
+        }
+
+        [SecurityCritical]
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        internal static T ReadUnaligned<T>(this ref byte source)
+            where T : struct
+        {
+#if NETCOREAPP3_0_OR_GREATER
+            return Unsafe.ReadUnaligned<T>(ref source);
+#else
+            unsafe
+            {
+                fixed (byte* p = &source)
+                {
+                    // Happy path: source is properly aligned for T (in release build the false branches will be eliminated)
+                    if (sizeof(T) == 1 || !Reflector<T>.IsPrimitive
+                        || sizeof(T) == 2 && ((nint)p & 1) == 0
+                        || sizeof(T) == 4 && ((nint)p & 3) == 0
+                        || sizeof(T) == 8 && ((nint)p & MemoryHelper.PointerSizeMask) == 0)
+                    {
+                        return *(T*)p;
+                    }
+
+                    // T is an unaligned primitive type here. Primitive types have to be properly aligned to avoid possible DataMisalignedException on some architectures (e.g. ARM)
+                    // See also ECMA-335 I.12.6.2 at https://github.com/stakx/ecma-335/blob/master/docs/i.12.6.2-alignment.md
+                    byte* result = stackalloc byte[sizeof(T)]; // up to 8 bytes
+                    for (int i = 0; i < sizeof(T); i++) // we could use MemoryHelper.CopyMemory(p, result, sizeof(T)); but for up to 8 bytes it would just be slower, and we already know that the data is misaligned here
+                        result[i] = p[i];
+                    return *(T*)result;
+                }
+            }
+#endif
+        }
+
+        [SecurityCritical]
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        internal static TTarget ReadUnalignedAt<TSource, TTarget>(this ref TSource source, int targetIndex)
+            where TSource : struct
+            where TTarget : struct
+        {
+#if NETCOREAPP3_0_OR_GREATER
+            // Same as return source.At<TSource, TTarget>(targetIndex).As<TTarget, byte>().ReadUnaligned<TTarget>() inlined:
+            return Unsafe.ReadUnaligned<TTarget>(ref Unsafe.As<TTarget, byte>(ref Unsafe.Add(ref Unsafe.As<TSource, TTarget>(ref source), targetIndex)));
+#else
+            // We could just use return source.At<TSource, TTarget>(targetIndex).As<TTarget, byte>().ReadUnaligned<TTarget>(), but this way we use only one pinning instead of three:
+            unsafe
+            {
+                fixed (TSource* pSrc = &source)
+                {
+                    // Happy path: the target address is properly aligned for TTarget (in release build the false branches will be eliminated)
+                    byte* addr = (byte*)(((TTarget*)pSrc) + targetIndex);
+                    if (sizeof(TTarget) == 1 || !Reflector<TTarget>.IsPrimitive
+                        || sizeof(TTarget) == 2 && ((nint)addr & 1) == 0
+                        || sizeof(TTarget) == 4 && ((nint)addr & 3) == 0
+                        || sizeof(TTarget) == 8 && ((nint)addr & MemoryHelper.PointerSizeMask) == 0)
+                    {
+                        return *(TTarget*)addr;
+                    }
+
+                    byte* result = stackalloc byte[sizeof(TTarget)]; // up to 8 bytes
+                    for (int i = 0; i < sizeof(TTarget); i++) // we could use MemoryHelper.CopyMemory(addr, result, sizeof(TTarget)); but for up to 8 bytes it would just be slower, and we already know that the data is misaligned here
+                        result[i] = addr[i];
+                    return *(TTarget*)result;
+                }
+            }
+#endif
+        }
+
+        [SecurityCritical]
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        internal static void WriteUnalignedAt<TSource, TTarget>(this ref TSource source, int targetIndex, TTarget value)
+            where TSource : struct
+            where TTarget : struct
+        {
+#if NETCOREAPP3_0_OR_GREATER
+            // Same as Unsafe.WriteUnaligned(source.At<TSource, TTarget>(targetIndex).As<TTarget, byte>(), value) inlined:
+            Unsafe.WriteUnaligned(ref Unsafe.As<TTarget, byte>(ref Unsafe.Add(ref Unsafe.As<TSource, TTarget>(ref source), targetIndex)), value);
+#else
+            unsafe
+            {
+                fixed (TSource* pSrc = &source)
+                {
+                    // Happy path: the target address is properly aligned for TTarget (in release build the false branches will be eliminated)
+                    byte* addr = (byte*)(((TTarget*)pSrc) + targetIndex);
+                    if (sizeof(TTarget) == 1 || !Reflector<TTarget>.IsPrimitive
+                        || sizeof(TTarget) == 2 && ((nint)addr & 1) == 0
+                        || sizeof(TTarget) == 4 && ((nint)addr & 3) == 0
+                        || sizeof(TTarget) == 8 && ((nint)addr & MemoryHelper.PointerSizeMask) == 0)
+                    {
+                        *(TTarget*)addr = value;
+                    }
+
+                    byte* pValue = (byte*)&value;
+                    for (int i = 0; i < sizeof(TTarget); i++) // we could use MemoryHelper.CopyMemory(pValue, addr, sizeof(TTarget)); but for up to 8 bytes it would just be slower, and we already know that the data is misaligned here
+                        addr[i] = pValue[i];
+                }
             }
 #endif
         }

@@ -31,20 +31,6 @@ namespace KGySoft.CoreLibraries
 
     public static class ArrayExtensions
     {
-        #region Nested classes
-
-        private static class ElementInfo<T>
-        {
-            #region Fields
-
-            internal static readonly bool IsPrimitive = typeof(T).IsPrimitive;
-            internal static readonly int ElementSizeExponent = IsPrimitive ? (int)Math.Log(Reflector<T>.SizeOf, 2) : 0;
-
-            #endregion
-        }
-
-        #endregion
-
         #region Methods
 
         #region Public Methods
@@ -293,9 +279,9 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static void CopyElements<T>(this T[] source, int sourceIndex, T[] dest, int destIndex, int count)
         {
-            if (ElementInfo<T>.IsPrimitive)
+            if (Reflector<T>.IsPrimitive)
             {
-                Buffer.BlockCopy(source, sourceIndex << ElementInfo<T>.ElementSizeExponent, dest, destIndex << ElementInfo<T>.ElementSizeExponent, count << ElementInfo<T>.ElementSizeExponent);
+                Buffer.BlockCopy(source, sourceIndex << Reflector<T>.ArrayElementSizeExponent, dest, destIndex << Reflector<T>.ArrayElementSizeExponent, count << Reflector<T>.ArrayElementSizeExponent);
                 return;
             }
 

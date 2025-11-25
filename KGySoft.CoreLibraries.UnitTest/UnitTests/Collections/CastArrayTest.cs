@@ -3,7 +3,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 //  File: CastArrayTest.cs
 ///////////////////////////////////////////////////////////////////////////////
-//  Copyright (C) KGy SOFT, 2005-2024 - All Rights Reserved
+//  Copyright (C) KGy SOFT, 2005-2025 - All Rights Reserved
 //
 //  You should have received a copy of the LICENSE file at the top-level
 //  directory of this distribution.
@@ -19,9 +19,11 @@ using System;
 using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+#if NETFRAMEWORK
 using System.Reflection;
 using System.Security.Permissions;
 using System.Security;
+#endif
 
 using KGySoft.Collections;
 using KGySoft.Reflection;
@@ -195,6 +197,51 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             {
                 wordAsByte.CopyTo(buf, i);
                 CollectionAssert.AreEqual(wordAsByte, buf.AsSection(i, wordAsByte.Length));
+            }
+        }
+
+        [Test]
+        public void UnalignedAccessTest()
+        {
+            byte[] buf = new byte[13];
+            CastArray<byte, int> unalignedInts = buf.AsSection(1).Cast<byte, int>();
+            for (int i = 0; i < unalignedInts.Length; i++)
+            {
+                int expected = ThreadSafeRandom.Instance.SampleInt32();
+                unalignedInts.SetElementUnaligned(i, expected);
+                Assert.AreEqual(expected, unalignedInts.GetElementUnaligned(i));
+                Assert.AreEqual(expected, BitConverter.ToInt32(buf, (i * 4) + 1));
+            }
+        }
+
+        [Test]
+        public void UnalignedAccessTest2D()
+        {
+            byte[] buf = new byte[25];
+            CastArray2D<byte, int> unalignedArr2D = buf.AsSection(1).Cast2D<byte, int>(2, 3);
+            for (int y = 0; y < unalignedArr2D.Height; y++)
+            for (int x = 0; x < unalignedArr2D.Width; x++)
+            {
+                int expected = ThreadSafeRandom.Instance.SampleInt32();
+                unalignedArr2D.SetElementUnaligned(y, x, expected);
+                Assert.AreEqual(expected, unalignedArr2D.GetElementUnaligned(y, x));
+                Assert.AreEqual(expected, BitConverter.ToInt32(buf, (y * unalignedArr2D.Width + x) * 4 + 1));
+            }
+        }
+
+        [Test]
+        public void UnalignedAccessTest3D()
+        {
+            byte[] buf = new byte[97];
+            CastArray3D<byte, int> unalignedArr3D = buf.AsSection(1).Cast3D<byte, int>(2, 3, 4);
+            for (int z = 0; z < unalignedArr3D.Depth; z++)
+            for (int y = 0; y < unalignedArr3D.Height; y++)
+            for (int x = 0; x < unalignedArr3D.Width; x++)
+            {
+                int expected = ThreadSafeRandom.Instance.SampleInt32();
+                unalignedArr3D.SetElementUnaligned(z, y, x, expected);
+                Assert.AreEqual(expected, unalignedArr3D.GetElementUnaligned(z, y, x));
+                Assert.AreEqual(expected, BitConverter.ToInt32(buf, (z * unalignedArr3D.Width * unalignedArr3D.Height + y * unalignedArr3D.Width + x) * 4 + 1));
             }
         }
 

@@ -904,7 +904,7 @@ namespace KGySoft.Serialization.Binary
                 Throw.ArgumentException(Argument.data, Res.BinarySerializationDataLengthTooSmall);
 
 #if NETCOREAPP3_0_OR_GREATER
-            return data[offset].As<byte, T>();
+            return data[offset].ReadUnaligned<T>();
 #else
 
 #if NETFRAMEWORK || NETSTANDARD2_0
@@ -1153,7 +1153,7 @@ namespace KGySoft.Serialization.Binary
             where T : unmanaged
 #endif
         {
-            return data[offset].As<byte, T>();
+            return data[offset].ReadUnaligned<T>();
         }
 
         [SecurityCritical]
