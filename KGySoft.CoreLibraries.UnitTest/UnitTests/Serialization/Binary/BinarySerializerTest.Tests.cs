@@ -32,6 +32,7 @@ using System.Collections.Immutable;
 #endif
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Data;
 using System.Drawing;
 using System.Globalization;
 using System.IO;
@@ -3364,6 +3365,33 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             // in SafeMode the capacity is not preallocated and the deserialization fails when the stream ends unexpectedly
             bsf.Options = BinarySerializationOptions.SafeMode;
             Throws<SerializationException>(() => DeserializeObject(manipulatedData, bsf), "Invalid stream data.");
+        }
+
+        [Test]
+        public void SafeModeDataSetTest()
+        {
+            // Leaving RemotingFormat XML, because compare would fail otherwise: deserialized DataSet/DataTable always has Xml format
+            var dataTable = new DataTable("TestTable");
+            dataTable.Columns.Add(new DataColumn("ID", typeof(int)));
+            dataTable.Columns.Add(new DataColumn("Name", typeof(string)));
+            var row = dataTable.NewRow();
+            row["ID"] = dataTable.Rows.Count;
+            row["Name"] = $"Name_{dataTable.Rows.Count}";
+            dataTable.Rows.Add(row);
+            row = dataTable.NewRow();
+            row["ID"] = dataTable.Rows.Count;
+            row["Name"] = $"Name_{dataTable.Rows.Count}";
+            dataTable.Rows.Add(row);
+            
+            var dataSet = new DataSet("TestDataSet");
+            dataSet.Tables.Add(dataTable);
+
+            SystemSerializeObject(dataSet);
+            KGySerializeObject(dataSet, BinarySerializationOptions.None);
+
+            // But throws an exception in SafeMode, even when expected types are specified
+            var expectedTypes = new[] { typeof(DataSet), typeof(DataTable) };
+            Throws<SerializationException>(() => KGySerializeObject(dataSet, BinarySerializationOptions.SafeMode, expectedTypes: expectedTypes), "In safe mode it is not supported to deserialize type");
         }
 
 #if NETCOREAPP3_0_OR_GREATER

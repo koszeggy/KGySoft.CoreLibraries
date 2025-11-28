@@ -15,6 +15,9 @@
 
 #region Usings
 
+using System.Collections.Generic;
+using System.Data;
+
 #region Used Namespaces
 
 using System;
@@ -22,6 +25,7 @@ using System.Diagnostics.CodeAnalysis;
 #if NETFRAMEWORK
 using System.CodeDom.Compiler;
 #endif
+using System.IO;
 #if !NET35
 using System.Collections;
 #endif
@@ -62,16 +66,21 @@ namespace KGySoft.Serialization
                 .Where(f => !f.IsNotSerialized)
                 .OrderBy(f => f.MetadataToken).ToArray(), null, LockFreeCacheOptions.Profile1K);
 
-        private static readonly Type[] unsafeTypes =
-        {
+        private static readonly HashSet<Type> unsafeTypes =
+        [
 #if NETFRAMEWORK
-            typeof(TempFileCollection),
+            typeof(TempFileCollection), // can be used to delete files
 #endif
 #if !NET35
-            StructuralComparisons.StructuralComparer.GetType(),
-            StructuralComparisons.StructuralEqualityComparer.GetType(),
+            StructuralComparisons.StructuralComparer.GetType(), // can be used for DoS attacks
+            StructuralComparisons.StructuralEqualityComparer.GetType(), // can be used for DoS attacks
 #endif
-        };
+            // these are non-sealed types with overridable constructors, so their derived types should be handled explicitly as well
+            typeof(Delegate), // even when an actual delegate is specified as an expected type, it can be mapped to any unverifiable code
+            typeof(FileSystemInfo), // can be used to generate SMB requests with prepared short network paths
+            typeof(DataSet), // if RemotingFormat is Binary, it uses a nested BinaryFormatter internally, and we cannot check its content
+            typeof(DataTable), // DataSet/DataTable: even if RemotingFormat is Xml, the payload can be prepared to produce a DoS attack - https://learn.microsoft.com/en-us/dotnet/framework/data/adonet/dataset-datatable-dataview/security-guidance
+        ];
 
         private static StringKeyedDictionary<Type>? knownSimpleTypes;
 
@@ -161,16 +170,25 @@ namespace KGySoft.Serialization
 
         internal static bool IsSafeType(Type type)
         {
-#if NETFRAMEWORK
-            // unsafeTypes are serializable in the .NET Framework but still we must not support them
-            // in SafeMode because they can be used for known attacks
-            return !type.In(unsafeTypes) && type.IsSerializable;
-#else
-            return type.IsSerializable || type.CanBeParsedNatively();
-#endif
+            if (type.CanBeParsedNatively())
+                return true;
+
+            if (IsUnsafeType(type))
+                return false;
+
+            return type.IsSerializable;
         }
 
-        internal static bool IsUnsafeType(Type type) => type.In(unsafeTypes);
+        internal static bool IsUnsafeType(Type type)
+        {
+            // unsafeTypes are serializable in the .NET Framework (some even in .NET Core) but still we must deny their deserialization
+            // in SafeMode because they can be used for known attacks.
+            return unsafeTypes.Contains(type)
+                || type.IsSubclassOf(typeof(FileSystemInfo))
+                || type.IsSubclassOf(typeof(DataSet))
+                || type.IsSubclassOf(typeof(DataTable))
+                || type.IsDelegate();
+        }
 
         internal static bool TryGetKnownSimpleType(string typeName, [MaybeNullWhen(false)]out Type result)
         {

@@ -76,6 +76,9 @@ namespace KGySoft.Serialization.Xml
             StringBuilder sb = new StringBuilder();
             using (XmlWriter xw = XmlWriter.Create(sb, new XmlWriterSettings { ConformanceLevel = ConformanceLevel.Fragment }))
             {
+                // Writing an empty comment, because some types (e.g. DataSet/DataTable) explicitly call WriteStartDocument if XmlWriter.WriteState is Start,
+                // which is illegal when conformance level is Fragment. Using ConformanceLevel.Document would not solve the issue, because then it would generate an invalid XML.
+                xw.WriteComment(String.Empty);
                 obj.WriteXml(xw);
                 xw.Flush();
             }
@@ -91,6 +94,9 @@ namespace KGySoft.Serialization.Xml
 
             using (XmlReader xr = XmlReader.Create(new StringReader(sb.ToString()), new XmlReaderSettings { ConformanceLevel = ConformanceLevel.Fragment, CloseInput = true }))
             {
+                // Reading until our empty command first. We could also set IgnoreComments in settings, but this way we can preserve the possible comments written by obj.WriteXml
+                while (xr.NodeType != XmlNodeType.Comment)
+                    xr.Read();
                 if (!xr.Read())
                     return;
 

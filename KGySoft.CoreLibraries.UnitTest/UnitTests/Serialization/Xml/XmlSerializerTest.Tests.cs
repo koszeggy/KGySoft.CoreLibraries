@@ -21,6 +21,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Data;
 using System.Drawing;
 using System.Globalization;
 using System.IO;
@@ -760,7 +761,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 
                 new BinarySerializableStruct?[] { new BinarySerializableStruct { IntProp = 1, StringProp = "alpha" }, null },
                 new SystemSerializableStruct?[] { new SystemSerializableStruct { IntProp = 1, StringProp = "alpha" }, null },
-                new NonSerializableStruct?[] { new NonSerializableStruct { IntProp = 10, Bool = true, Point = new(10, 20) }, null },
             };
 
             // SystemSerializeObject(referenceObjects); - InvalidOperationException: System.Collections.IList cannot be serialized because it does not have a parameterless constructor.
@@ -1668,6 +1668,32 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             using (var reader = XmlReader.Create(new StringReader(xml.ToString()), new XmlReaderSettings { CloseInput = true }))
                 list = XmlSerializer.DeserializeSafe<List<int>>(reader);
             AssertItemsEqual(obj, list);
+        }
+
+        [Test]
+        public void SafeModeDataSetTest()
+        {
+            var dataTable = new DataTable("TestTable");
+            dataTable.Columns.Add(new DataColumn("ID", typeof(int)));
+            dataTable.Columns.Add(new DataColumn("Name", typeof(string)));
+            var row = dataTable.NewRow();
+            row["ID"] = dataTable.Rows.Count;
+            row["Name"] = $"Name_{dataTable.Rows.Count}";
+            dataTable.Rows.Add(row);
+            row = dataTable.NewRow();
+            row["ID"] = dataTable.Rows.Count;
+            row["Name"] = $"Name_{dataTable.Rows.Count}";
+            dataTable.Rows.Add(row);
+
+            var dataSet = new DataSet("TestDataSet");
+            dataSet.Tables.Add(dataTable);
+
+            SystemSerializeObject(dataSet);
+            KGySerializeObject(dataSet, XmlSerializationOptions.None, safeMode: false);
+
+            // But throws an exception in SafeMode, even when expected types are specified
+            var expectedTypes = new[] { typeof(DataSet), typeof(DataTable) };
+            Throws<InvalidOperationException>(() => KGySerializeObject(dataSet, XmlSerializationOptions.None, expectedTypes: expectedTypes), "In safe mode it is not supported to deserialize type");
         }
 
         #endregion

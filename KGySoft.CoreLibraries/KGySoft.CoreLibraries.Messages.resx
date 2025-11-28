@@ -500,6 +500,9 @@ Hit rate: {8:P2}</value>
   <data name="Serialization_UnexpectedTypeSafeFormat" xml:space="preserve">
     <value>Unexpected type name in safe mode: {0}.</value>
   </data>
+  <data name="Serialization_UnsafeTypeFormat" xml:space="preserve">
+    <value>In safe mode it is not supported to deserialize type "{0}".</value>
+  </data>
   <data name="StreamExtensions_StreamCannotRead" xml:space="preserve">
     <value>Source stream cannot be read.</value>
   </data>
@@ -781,9 +784,6 @@ Either try to use the ForceRecursiveSerializationOfSupportedTypes option on seri
   </data>
   <data name="BinarySerialization_CannotCreateUninitializedObjectFormat" xml:space="preserve">
     <value>The current domain has insufficient permissions to create an empty instance of type "{0}" without a default constructor.</value>
-  </data>
-  <data name="BinarySerialization_CannotCreateObjectSafeFormat" xml:space="preserve">
-    <value>In safe mode it is not supported to deserialize type "{0}".</value>
   </data>
   <data name="BinarySerialization_CannotCreateSerializableObjectSafe" xml:space="preserve">
     <value>In safe mode it is not supported to deserialize type "{0}". If it's because it is not marked by the SerializableAttribute you can try to enable the AllowNonSerializableExpectedCustomTypes option.</value>

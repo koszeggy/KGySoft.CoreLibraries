@@ -29,8 +29,9 @@ using System.Collections.Immutable;
 #endif
 using System.Collections.Specialized;
 #if NETFRAMEWORK
-using System.ComponentModel.Design; 
+using System.ComponentModel.Design;
 #endif
+using System.Data;
 using System.Drawing;
 using System.Drawing.Imaging; 
 using System.IO;
@@ -379,6 +380,9 @@ namespace KGySoft.CoreLibraries
 
                 if (reference is Stream stream)
                     return CheckStreams(stream, (Stream)check, errors);
+
+                if (reference is DataRowView row)
+                    return CheckDeepEquals(row.Row, ((DataRowView)check).Row, forceEqualityByMembers, errors, checkedObjects);
 
                 if (typeRef.IsGenericTypeOf(typeof(KeyValuePair<,>))
                     || typeRef == typeof(DictionaryEntry))

@@ -74,6 +74,8 @@ namespace KGySoft.Serialization.Xml
 
         private static void DeserializeXmlSerializable(IXmlSerializable xmlSerializable, XmlReader reader)
         {
+            string parentName = reader.Name;
+
             // to XmlRoot or type name
             ReadToNodeType(reader, XmlNodeType.Element);
 
@@ -81,7 +83,9 @@ namespace KGySoft.Serialization.Xml
             xmlSerializable.ReadXml(reader);
 
             // to end of XmlRoot or type name
-            ReadToNodeType(reader, XmlNodeType.EndElement);
+            // NOTE: some XML serializable types, such as DataSet read beyond their content, already reaching the end of the parent node
+            if (!(reader.NodeType == XmlNodeType.EndElement && reader.Name == parentName))
+                ReadToNodeType(reader, XmlNodeType.EndElement);
         }
 
         /// <summary>
@@ -401,7 +405,7 @@ namespace KGySoft.Serialization.Xml
                         Throw.ArgumentException(Res.XmlSerializationCrcError);
                 }
 
-                ctx.Result = BinarySerializer.Deserialize(data, 0, SafeMode ? BinarySerializationOptions.SafeMode : BinarySerializationOptions.None, ExpectedTypes);
+                ctx.Result = BinarySerializer.Deserialize(data, 0, SafeMode ? BinarySerializationOptions.SafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes : BinarySerializationOptions.None, ExpectedTypes);
                 ReadToNodeType(ctx.Reader, XmlNodeType.EndElement);
             }
 

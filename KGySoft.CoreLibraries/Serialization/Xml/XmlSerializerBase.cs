@@ -467,6 +467,9 @@ namespace KGySoft.Serialization.Xml
             // recursive: always enabled when binary serializing because it causes no problem
             BinarySerializationOptions result = BinarySerializationOptions.RecursiveSerializationAsFallback; // | CompactSerializationOfBoolCollections
 
+            if (CompactSerializationOfStructures)
+                result |= BinarySerializationOptions.CompactSerializationOfStructures;
+
             // no fully qualified names -> omitting even in binary serializer
             if (!FullyQualifiedNames)
                 result |= BinarySerializationOptions.OmitAssemblyQualifiedNames;

@@ -6,7 +6,7 @@
 ===============================================================================
 
 ~~~~~~~~~~
-* v10.1.0:
+! v10.1.0:
 ~~~~~~~~~~
 
 + Assembly changes:
@@ -24,14 +24,16 @@
     dimensions.
   + New GetElementUnaligned and SetElementUnaligned methods
 
-+ KGySoft.Serialization.Binary namespace:
+! KGySoft.Serialization.Binary namespace:
 =========================================
-* BinarySerializationFormatter class:
+! BinarySerializationFormatter class:
+  ! Restricting more types in safe mode, even when they are specified as expected types.
   + Supporting types whose proper initialization requires a default constructor even during deserialization.
   * Options property: The CompactSerializationOfStructures flag is now disabled by default. This may make the
     serialization output larger and the serialization time longer, but improves type compatibility across different
     architectures.
-* BinarySerializer class:
+! BinarySerializer class:
+  ! Restricting more types in safe mode, even when they are specified as expected types.
   * Serialize/SerializeToStream/SerializeByWriter methods:
     * The default value of the options parameter is now None rather than CompactSerializationOfStructures. This may
       make the serialization output larger and the serialization time longer, but improves type compatibility across
@@ -39,6 +41,12 @@
 + BinarySerializationOptions enumeration:
   + New PreferInvokingDefaultConstructor flag: When enabled, the default constructor of a type is invoked during
     deserialization if it has one, and no other constructor would be called.
+
+! KGySoft.Serialization.Xml namespace:
+======================================
+! XmlSerializer class:
+  ! Restricting more types in safe mode, even when they are specified as expected types.
+  - Improving IXmlSerializer compatibility
 
 
 ~~~~~~~~~~

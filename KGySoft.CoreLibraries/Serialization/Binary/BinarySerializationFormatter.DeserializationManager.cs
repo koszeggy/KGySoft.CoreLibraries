@@ -2278,7 +2278,7 @@ namespace KGySoft.Serialization.Binary
                     if (AllowNonSerializableExpectedCustomTypes)
                     {
                         if (SerializationHelper.IsUnsafeType(type))
-                            Throw.SerializationException(Res.BinarySerializationCannotCreateObjectSafe(type));
+                            Throw.SerializationException(Res.SerializationUnsafeType(type));
                     }
                     else if (!SerializationHelper.IsSafeType(type))
                         Throw.SerializationException(Res.BinarySerializationCannotCreateSerializableObjectSafe(type));

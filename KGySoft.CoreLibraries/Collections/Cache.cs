@@ -29,6 +29,7 @@ using KGySoft.Annotations;
 using KGySoft.CoreLibraries;
 using KGySoft.Diagnostics;
 using KGySoft.Reflection;
+using KGySoft.Serialization.Binary;
 
 #endregion
 
@@ -74,9 +75,9 @@ namespace KGySoft.Collections
     /// usually are not necessary, unless we want to manually manage cache content or when cache is initialized without an item loader. Normally after cache is instantiated,
     /// it is needed to be accessed only by the getter accessor of its indexer.</para>
     /// <note type="caution">
-    /// Serializing a cache instance by <see cref="IFormatter"/> implementations involves the serialization of the item loader delegate. To deserialize a cache the assembly of the loader must be accessible. If you need to
-    /// serialize cache instances try to use static methods as data loaders and avoid using anonymous delegates or lambda expressions, otherwise it is not guaranteed that another
-    /// implementations or versions of CLR will be able to deserialize data and resolve the compiler-generated members.
+    /// If a cache instance has been initialized by an item loader delegate, its serialization by <see cref="IFormatter"/> implementations involves the serialization of the delegate.
+    /// Delegates are not serializable in .NET Core and newer platforms, and the binary serializer of this library (the <see cref="BinarySerializationFormatter"/> class) denies
+    /// deserializing delegates in safe mode even on platforms where delegates could be serialized.
     /// </note>
     /// <note type="warning">
     /// .NET Core does not support serializing delegates. If the <see cref="Cache{TKey,TValue}"/> instance was initialized by a loader delegate it is possible that serialization

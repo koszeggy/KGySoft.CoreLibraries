@@ -824,6 +824,10 @@ namespace KGySoft.Serialization.Xml
                     Throw.ReflectionException<Type>(Res.XmlSerializationCannotResolveType(typeName));
             }
 
+            // Some unsafe types are XML-serializable (e.g. DataSet/DataTable), so we must check the result in SafeMode
+            if (SafeMode && SerializationHelper.IsUnsafeType(result))
+                Throw.InvalidOperationException(Res.SerializationUnsafeType(result));
+
             resolvedTypes[typeName] = result;
             return result;
         }

@@ -706,9 +706,6 @@ namespace KGySoft
         /// <summary>The current domain has insufficient permissions to create an empty instance of type "{0}" without a default constructor.</summary>
         internal static string BinarySerializationCannotCreateUninitializedObject(Type type) => Get("BinarySerialization_CannotCreateUninitializedObjectFormat", type.GetName(TypeNameKind.LongName));
 
-        /// <summary>In safe mode it is not supported to deserialize type "{0}".</summary>
-        internal static string BinarySerializationCannotCreateObjectSafe(Type type) => Get("BinarySerialization_CannotCreateObjectSafeFormat", type.GetName(TypeNameKind.LongName));
-
         /// <summary>In safe mode it is not supported to deserialize type "{0}". If it's because it is not marked by the SerializableAttribute you can try to enable the AllowNonSerializableExpectedCustomTypes option.</summary>
         internal static string BinarySerializationCannotCreateSerializableObjectSafe(Type type) => Get("BinarySerialization_CannotCreateSerializableObjectSafe", type.GetName(TypeNameKind.LongName));
 
@@ -1128,6 +1125,9 @@ namespace KGySoft
 
         /// <summary>Unexpected type name in safe mode: {0}.</summary>
         internal static string SerializationUnexpectedTypeSafe(string typeName) => Get("Serialization_UnexpectedTypeSafeFormat", typeName);
+
+        /// <summary>In safe mode it is not supported to deserialize type "{0}".</summary>
+        internal static string SerializationUnsafeType(Type type) => Get("Serialization_UnsafeTypeFormat", type.GetName(TypeNameKind.LongName));
 
         #endregion
 
