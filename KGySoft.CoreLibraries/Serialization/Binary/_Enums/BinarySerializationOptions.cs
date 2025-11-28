@@ -149,11 +149,12 @@ namespace KGySoft.Serialization.Binary
         /// <para>If a <see cref="ValueType"/> (<see langword="struct"/>) contains no references,
         /// then by enabling this option the instance will be serialized in a compact way form if possible.</para>
         /// <para>This flag is considered on serialization.</para>
-        /// <note>
-        /// Note: This option has higher priority than <see cref="RecursiveSerializationAsFallback"/> flag,
-        /// except for natively supported structures. This option affects only instances that have no references at all.
-        /// </note>
-        /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Enabled</strong></para>
+        /// <note>This option has higher priority than <see cref="RecursiveSerializationAsFallback"/> flag,
+        /// except for natively supported structures. This option affects only instances that have no references at all.</note>
+        /// <note type="caution">Enabling this flag makes the serialization architecture-dependent in terms of endianness, auto-packing and native integer sizes.
+        /// If you enable this flag, make sure you perform the serialization and deserialization on the same architecture, preferably in the same process
+        /// (which is the generally recommended usage of binary serialization anyway).</note>
+        /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
         /// </summary>
         CompactSerializationOfStructures = 1 << 10,
 

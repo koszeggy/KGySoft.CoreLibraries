@@ -66,6 +66,9 @@ using KGySoft.Serialization.Xml;
 #pragma warning disable SYSLIB0011 // BinaryFormatter serialization is obsolete and should not be used - false alarm, not using BinaryFormatter but implementing IFormatter in BinarySerializationFormatter, which is a safer replacement of BinaryFormatter
 #pragma warning disable SYSLIB0050 // ISurrogateSelector/StreamingContext/StreamingContextStates is obsolete - needed by IFormatter implementation, which is maintained for compatibility reasons
 #endif
+#if NETFRAMEWORK
+// ReSharper disable RedundantSuppressNullableWarningExpression - ToString() 
+#endif
 
 #endregion
 
@@ -542,7 +545,7 @@ namespace KGySoft.Serialization.Binary
     /// <see cref="OnDeserializingAttribute"/> and <see cref="OnDeserializedAttribute"/> as well as calling <see cref="IDeserializationCallback.OnDeserialization">IDeserializationCallback.OnDeserialization</see> method.
     /// Attributes should be used on methods that have a single <see cref="StreamingContext"/> parameter.
     /// <note>Please note that if a value type was serialized by the <see cref="BinarySerializationOptions.CompactSerializationOfStructures"/> option, then the method of <see cref="OnDeserializingAttribute"/> can be invoked
-    /// only after restoring the whole content so fields will be already restored.</note>
+    /// only after restoring the whole content so fields will already be restored.</note>
     /// </para>
     /// </example>
     /// <seealso cref="BinarySerializer"/>
@@ -2089,8 +2092,8 @@ namespace KGySoft.Serialization.Binary
         /// Creates a new instance of <see cref="BinarySerializationFormatter"/> class.
         /// </summary>
         /// <param name="options">Options used for serialization or deserialization. This parameter is optional.
-        /// <br/>Default value: <see cref="BinarySerializationOptions.SafeMode"/>, <see cref="BinarySerializationOptions.CompactSerializationOfStructures"/>.</param>
-        public BinarySerializationFormatter(BinarySerializationOptions options = BinarySerializer.DefaultSerializationOptions | BinarySerializer.DefaultDeserializationOptions)
+        /// <br/>Default value: <see cref="BinarySerializationOptions.SafeMode"/>.</param>
+        public BinarySerializationFormatter(BinarySerializationOptions options = BinarySerializer.DefaultDeserializationOptions)
         {
             Context = new StreamingContext(StreamingContextStates.All);
             Options = options;

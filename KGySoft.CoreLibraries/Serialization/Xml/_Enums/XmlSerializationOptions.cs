@@ -123,7 +123,9 @@ namespace KGySoft.Serialization.Xml
         /// then by enabling this option the instance will be serialized in a compact binary form.
         /// <note>This option has higher priority than fallback options (<see cref="BinarySerializationAsFallback"/> and <see cref="RecursiveSerializationAsFallback"/>),
         /// except for <see cref="DictionaryEntry"/> and <see cref="KeyValuePair{TKey,TValue}"/> instances, which are always serialized recursively.
-        /// This option affects only instances, which have no reference fields at all.</note></para>
+        /// This option affects only instances, which have no reference fields at all.</note>
+        /// <note type="caution">Enabling this flag makes the serialization architecture-dependent in terms of endianness, auto-packing and native integer sizes.
+        /// If you enable this flag, make sure you perform the serialization and deserialization on the same architecture, preferably in the same process.</note></para>
         /// <para>Default state at serialization methods: <strong>Disabled</strong></para>
         /// </summary>
         CompactSerializationOfStructures = 1 << 3,

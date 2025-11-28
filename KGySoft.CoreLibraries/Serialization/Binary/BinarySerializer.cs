@@ -59,7 +59,6 @@ namespace KGySoft.Serialization.Binary
     {
         #region Constants
 
-        internal const BinarySerializationOptions DefaultSerializationOptions = BinarySerializationOptions.CompactSerializationOfStructures;
         internal const BinarySerializationOptions DefaultDeserializationOptions = BinarySerializationOptions.SafeMode;
 
         #endregion
@@ -73,9 +72,9 @@ namespace KGySoft.Serialization.Binary
         /// </summary>
         /// <param name="data">The object to serialize</param>
         /// <param name="options">Options of the serialization. This parameter is optional.
-        /// <br/>Default value: <see cref="BinarySerializationOptions.CompactSerializationOfStructures"/>.</param>
+        /// <br/>Default value: <see cref="BinarySerializationOptions.None"/>.</param>
         /// <returns>Serialized raw data of the object</returns>
-        public static byte[] Serialize(object? data, BinarySerializationOptions options = DefaultSerializationOptions)
+        public static byte[] Serialize(object? data, BinarySerializationOptions options = BinarySerializationOptions.None)
             => new BinarySerializationFormatter(options).Serialize(data);
 
         /// <summary>
@@ -228,8 +227,8 @@ namespace KGySoft.Serialization.Binary
         /// <param name="stream">The stream, into which the data is written. The stream must support writing and will remain open after serialization.</param>
         /// <param name="data">The data that will be written into the stream.</param>
         /// <param name="options">Options of the serialization. This parameter is optional.
-        /// <br/>Default value: <see cref="BinarySerializationOptions.CompactSerializationOfStructures"/>.</param>
-        public static void SerializeToStream(Stream stream, object? data, BinarySerializationOptions options = DefaultSerializationOptions)
+        /// <br/>Default value: <see cref="BinarySerializationOptions.None"/>.</param>
+        public static void SerializeToStream(Stream stream, object? data, BinarySerializationOptions options = BinarySerializationOptions.None)
             => new BinarySerializationFormatter(options).SerializeToStream(stream, data);
 
         /// <summary>
@@ -376,8 +375,8 @@ namespace KGySoft.Serialization.Binary
         /// <param name="writer">The writer that will be used to serialize data. The writer will remain opened after serialization.</param>
         /// <param name="data">The data that will be written by the writer.</param>
         /// <param name="options">Options of the serialization. This parameter is optional.
-        /// <br/>Default value: <see cref="BinarySerializationOptions.CompactSerializationOfStructures"/>.</param>
-        public static void SerializeByWriter(BinaryWriter writer, object? data, BinarySerializationOptions options = DefaultSerializationOptions)
+        /// <br/>Default value: <see cref="BinarySerializationOptions.None"/>.</param>
+        public static void SerializeByWriter(BinaryWriter writer, object? data, BinarySerializationOptions options = BinarySerializationOptions.None)
             => new BinarySerializationFormatter(options).SerializeByWriter(writer, data);
 
         /// <summary>
@@ -527,7 +526,7 @@ namespace KGySoft.Serialization.Binary
         /// <param name="obj">The <see cref="ValueType"/> object to serialize.</param>
         /// <returns>The byte array representation of the <see cref="ValueType"/> object.</returns>
         /// <remarks>
-        /// <para>If the specified instance does not have any references, then its actual raw data is returned. In this case this method is very fast.</para>
+        /// <para>If the specified instance does not have any references, then its actual raw data is returned, which is completely platform-dependent. In this case this method is very fast.</para>
         /// <para>If the specified instance has reference types, then as a fallback option, it is attempted to be serialized by using the <see cref="Marshal"/> class.
         /// To work properly the string and array fields must be decorated by the <see cref="MarshalAsAttribute"/> using <see cref="UnmanagedType.ByValTStr"/>
         /// or <see cref="UnmanagedType.ByValArray"/> values, and the <see cref="StructLayoutAttribute"/> must be defined on referenced classes.
@@ -537,8 +536,10 @@ namespace KGySoft.Serialization.Binary
         /// You can use the <see cref="TrySerializeValueType"/> method to serialize only pure value types without any references. </note></para>
         /// <para>If the instance cannot be serialized even by the <see cref="Marshal"/> class, then an <see cref="ArgumentException"/> is thrown.</para>
         /// <note type="caution">If packing is not defined on the type of the instance by <see cref="StructLayoutAttribute.Pack">StructLayoutAttribute.Pack</see>,
-        /// or the type contains pointer fields, then the length of the result might be different on 32 and 64-bit systems.
-        /// The serialized content depends also on the endianness of the executing architecture.</note>
+        /// or the type contains pointers or native-sized integer fields, then the length of the result might be different on 32 and 64-bit systems.
+        /// The serialized content depends also on the endianness of the executing architecture, and if there are gaps between the fields,
+        /// the serialized data may contain these gaps. Therefore, it is generally not recommended to deserialize the result in a potentially different environment,
+        /// or to store the serialized data in a file or database, for example.</note>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="obj"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="obj"/> contains references, and it cannot be serialized even by the <see cref="Marshal"/> class.</exception>
@@ -615,6 +616,11 @@ namespace KGySoft.Serialization.Binary
         /// then this is enforced for direct calls; however, by using reflection <typeparamref name="T"/> can be any value type.
         /// For performance reasons this method does not check if <typeparamref name="T"/> has references,
         /// but you can call the <see cref="TrySerializeValueType{T}"/> method that performs the check.</note>
+        /// <note type="caution">If packing is not defined on the type of <typeparamref name="T"/> by <see cref="StructLayoutAttribute.Pack">StructLayoutAttribute.Pack</see>,
+        /// or it contains pointers or native-sized integer fields, then the length of the result might be different on 32 and 64-bit systems.
+        /// The serialized content depends also on the endianness of the executing architecture, and if there are gaps between the fields,
+        /// the serialized data will contain these gaps. Therefore, it is generally not recommended to deserialize the result in a potentially different environment,
+        /// or to store the serialized data in a file or database, for example.</note>
         /// </remarks>
         [SecurityCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -689,6 +695,11 @@ namespace KGySoft.Serialization.Binary
         /// then this is enforced for direct calls; however, by using reflection <typeparamref name="T"/> can be any value type.
         /// For performance reasons this method does not check if <typeparamref name="T"/> has references,
         /// but you can call the <see cref="TrySerializeValueArray{T}"/> method that performs the check.</note>
+        /// <note type="caution">If packing is not defined on the type of <typeparamref name="T"/> by <see cref="StructLayoutAttribute.Pack">StructLayoutAttribute.Pack</see>,
+        /// or it contains pointers or native-sized integer fields, then the length of the result might be different on 32 and 64-bit systems.
+        /// The serialized content depends also on the endianness of the executing architecture, and if there are gaps between the fields,
+        /// the serialized data will contain these gaps. Therefore, it is generally not recommended to deserialize the result in a potentially different environment,
+        /// or to store the serialized data in a file or database, for example.</note>
         /// </remarks>
         [SecurityCritical]
         public static unsafe byte[] SerializeValueArray<T>(T[] array)
@@ -759,6 +770,7 @@ namespace KGySoft.Serialization.Binary
 
         /// <summary>
         /// Deserializes a <see cref="ValueType"/> object from a byte array that was previously serialized by <see cref="SerializeValueType">SerializeValueType</see> method.
+        /// <br/>See also the <strong>Remarks</strong> section of the <see cref="SerializeValueType">SerializeValueType</see> method for details, including security considerations.
         /// </summary>
         /// <param name="type">The type of the target object. Must be a <see cref="ValueType"/>.</param>
         /// <param name="data">The byte array that starts with byte representation of the object.</param>
@@ -774,6 +786,7 @@ namespace KGySoft.Serialization.Binary
         /// <summary>
         /// Deserializes a <see cref="ValueType"/> object from a byte array that was previously serialized by <see cref="SerializeValueType">SerializeValueType</see> method
         /// beginning on a specified <paramref name="offset"/>.
+        /// <br/>See also the <strong>Remarks</strong> section of the <see cref="SerializeValueType">SerializeValueType</see> method for details, including security considerations.
         /// </summary>
         /// <param name="type">The type of the target object. Must be a <see cref="ValueType"/>.</param>
         /// <param name="data">The byte array that contains the byte representation of the object.</param>
@@ -823,6 +836,7 @@ namespace KGySoft.Serialization.Binary
         /// <summary>
         /// Deserializes an instance of <typeparamref name="T"/> from a byte array that was previously serialized
         /// by the <see cref="SerializeValueType{T}"/> method.
+        /// <br/>See also the <strong>Remarks</strong> section of the <see cref="SerializeValueType{T}">SerializeValueType</see> method for details, including security considerations.
         /// </summary>
         /// <typeparam name="T">The type of the result. It must be a value type that does not contain references.</typeparam>
         /// <param name="data">The byte array that starts with byte representation of the object.</param>
@@ -873,6 +887,7 @@ namespace KGySoft.Serialization.Binary
         /// <summary>
         /// Deserializes an instance of <typeparamref name="T"/> from a byte array that was previously serialized
         /// by the <see cref="SerializeValueType{T}"/> method.
+        /// <br/>See also the <strong>Remarks</strong> section of the <see cref="SerializeValueType{T}">SerializeValueType</see> method for details, including security considerations.
         /// </summary>
         /// <typeparam name="T">The type of the result. It must be a value type that does not contain references.</typeparam>
         /// <param name="data">The byte array that starts with byte representation of the object.</param>
@@ -926,6 +941,7 @@ namespace KGySoft.Serialization.Binary
         /// <summary>
         /// Deserializes an array of <see cref="ValueType"/> objects from a byte array
         /// that was previously serialized by <see cref="SerializeValueArray{T}">SerializeValueArray</see> method.
+        /// <br/>See also the <strong>Remarks</strong> section of the <see cref="SerializeValueArray{T}">SerializeValueArray</see> method for details, including security considerations.
         /// </summary>
         /// <typeparam name="T">Type of the elements in the deserialized array. Must be a <see cref="ValueType"/>.</typeparam>
         /// <param name="data">The byte array that contains the byte representation of the structures.</param>
@@ -987,8 +1003,8 @@ namespace KGySoft.Serialization.Binary
         /// </summary>
         /// <returns>A <see cref="BinarySerializationFormatter"/> instance that can be used for serialization and deserialization with given <paramref name="options"/>.</returns>
         /// <param name="options">Options for the created formatter. This parameter is optional.
-        /// <br/>Default value: <see cref="BinarySerializationOptions.CompactSerializationOfStructures"/>.</param>
-        public static BinarySerializationFormatter CreateFormatter(BinarySerializationOptions options = DefaultSerializationOptions) => new BinarySerializationFormatter(options);
+        /// <br/>Default value: <see cref="BinarySerializationOptions.None"/>.</param>
+        public static BinarySerializationFormatter CreateFormatter(BinarySerializationOptions options = BinarySerializationOptions.None) => new BinarySerializationFormatter(options);
 
         /// <summary>
         /// Extracts a flattened collection of expected types from <typeparamref name="T"/> for deserialization.
