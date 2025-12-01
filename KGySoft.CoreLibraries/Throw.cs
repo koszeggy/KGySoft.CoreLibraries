@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Resources;
+using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 
 using KGySoft.Annotations;
@@ -41,88 +42,94 @@ namespace KGySoft
 
         #region Internal Methods
 
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static void ArgumentNullException(Argument arg) => throw CreateArgumentNullException(arg, Res.ArgumentNull);
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static T ArgumentNullException<T>(Argument arg) => throw CreateArgumentNullException(arg, Res.ArgumentNull);
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static void ArgumentNullException(Argument arg, string message) => throw CreateArgumentNullException(arg, message);
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static void ArgumentNullException(string arg) => throw CreateArgumentNullException(arg, Res.ArgumentNull);
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static void ArgumentNullException(Argument arg) => throw CreateArgumentNullException(arg, Res.ArgumentNull);
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static T ArgumentNullException<T>(Argument arg) => throw CreateArgumentNullException(arg, Res.ArgumentNull);
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static void ArgumentNullException(Argument arg, string message) => throw CreateArgumentNullException(arg, message);
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static void ArgumentNullException(string arg) => throw CreateArgumentNullException(arg, Res.ArgumentNull);
 
         internal static void ThrowIfNullIsInvalid<T>(object? value, Argument? arg = null)
         {
             if (value == null && default(T) != null)
-                Throw.ArgumentNullException(arg ?? Argument.value);
+                ArgumentNullException(arg ?? Argument.value);
         }
 
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static void ArgumentException(string message, Exception? inner = null) => throw CreateArgumentException((string?)null, message, inner);
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static void ArgumentException(string? paramName, string message, Exception? inner = null) => throw CreateArgumentException(paramName, message, inner);
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static void ArgumentException(Argument arg, string message) => throw CreateArgumentException(arg, message);
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static void ArgumentException(Argument arg, string message, Exception? inner) => throw CreateArgumentException(arg, message, inner);
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static T ArgumentException<T>(Argument arg, string message) => throw CreateArgumentException(arg, message);
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static T ArgumentException<T>(string message, Exception? inner = null) => throw CreateArgumentException((string?)null, message, inner);
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static void ArgumentException(string message, Exception? inner = null) => throw CreateArgumentException((string?)null, message, inner);
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static void ArgumentException(string? paramName, string message, Exception? inner = null) => throw CreateArgumentException(paramName, message, inner);
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static void ArgumentException(Argument arg, string message) => throw CreateArgumentException(arg, message);
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static void ArgumentException(Argument arg, string message, Exception? inner) => throw CreateArgumentException(arg, message, inner);
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static T ArgumentException<T>(Argument arg, string message) => throw CreateArgumentException(arg, message);
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static T ArgumentException<T>(string message, Exception? inner = null) => throw CreateArgumentException((string?)null, message, inner);
 
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static void ArgumentOutOfRangeException(Argument arg) => throw CreateArgumentOutOfRangeException(arg, Res.ArgumentOutOfRange);
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static void ArgumentOutOfRangeException(Argument arg, string message) => throw CreateArgumentOutOfRangeException(arg, message);
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static void ArgumentOutOfRangeException(string paramName, string message) => throw CreateArgumentOutOfRangeException(paramName, message);
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static void ArgumentOutOfRangeException(Argument arg) => throw CreateArgumentOutOfRangeException(arg, Res.ArgumentOutOfRange);
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static void ArgumentOutOfRangeException(Argument arg, string message) => throw CreateArgumentOutOfRangeException(arg, message);
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static void ArgumentOutOfRangeException(string paramName, string message) => throw CreateArgumentOutOfRangeException(paramName, message);
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static T ArgumentOutOfRangeException<T>(Argument arg) => throw CreateArgumentOutOfRangeException(arg, Res.ArgumentOutOfRange);
 
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static void IndexOutOfRangeException() => throw CreateIndexOutOfRangeException(Res.IndexOutOfRange);
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static void IndexOutOfRangeException() => throw CreateIndexOutOfRangeException(Res.IndexOutOfRange);
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
         [ContractAnnotation("=> halt")]
         [DoesNotReturn]
         internal static TEnum EnumArgumentOutOfRange<TEnum>(Argument arg, TEnum value) where TEnum : struct, Enum 
             => throw CreateArgumentOutOfRangeException(arg, Res.EnumOutOfRange(value));
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
         [ContractAnnotation("=> halt")]
         [DoesNotReturn]
         internal static void EnumArgumentOutOfRangeWithValues<TEnum>(Argument arg, TEnum value) where TEnum : struct, Enum
             => throw CreateArgumentOutOfRangeException(arg, Res.EnumOutOfRangeWithValues(value));
-        
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
         [ContractAnnotation("=> halt")]
         [DoesNotReturn]
         internal static void FlagsEnumArgumentOutOfRange<TEnum>(Argument arg, TEnum value) where TEnum : struct, Enum
             => throw CreateArgumentOutOfRangeException(arg, Res.FlagsEnumOutOfRange(value));
 
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static void KeyNotFoundException() => throw CreateKeyNotFoundException(Res.IDictionaryKeyNotFound);
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static void KeyNotFoundException(string message) => throw CreateKeyNotFoundException(message);
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static T KeyNotFoundException<T>(string message) => throw CreateKeyNotFoundException(message);
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static void KeyNotFoundException() => throw CreateKeyNotFoundException(Res.IDictionaryKeyNotFound);
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static void KeyNotFoundException(string message) => throw CreateKeyNotFoundException(message);
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static T KeyNotFoundException<T>(string message) => throw CreateKeyNotFoundException(message);
 
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static void InvalidOperationException(string? message = null) => throw CreateInvalidOperationException(message);
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static void InvalidOperationException(string message, Exception inner) => throw CreateInvalidOperationException(message, inner);
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static T InvalidOperationException<T>(string message) => throw CreateInvalidOperationException(message);
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static T InvalidOperationException<T>(string message, Exception inner) => throw CreateInvalidOperationException(message, inner);
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static void InvalidOperationException(string? message = null) => throw CreateInvalidOperationException(message);
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static void InvalidOperationException(string message, Exception inner) => throw CreateInvalidOperationException(message, inner);
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static T InvalidOperationException<T>(string message) => throw CreateInvalidOperationException(message);
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static T InvalidOperationException<T>(string message, Exception inner) => throw CreateInvalidOperationException(message, inner);
 
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static void InternalError(string internalError) => throw CreateInvalidOperationException(Res.InternalError(internalError));
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static T InternalError<T>(string internalError) => throw CreateInvalidOperationException(Res.InternalError(internalError));
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static void InternalError(string internalError) => throw CreateInvalidOperationException(Res.InternalError(internalError));
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static T InternalError<T>(string internalError) => throw CreateInvalidOperationException(Res.InternalError(internalError));
 
-        internal static void MissingManifestResourceException(string message) => throw new MissingManifestResourceException(message);
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static void OverflowException() => throw new OverflowException();
 
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static void NotSupportedException() => throw CreateNotSupportedException(Res.NotSupported);
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static T NotSupportedException<T>() => throw CreateNotSupportedException(Res.NotSupported);
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static void NotSupportedException(string message) => throw CreateNotSupportedException(message);
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static T NotSupportedException<T>(string message, Exception? inner = null) => throw CreateNotSupportedException(message, inner);
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static void NotSupportedException(string message, Exception inner) => throw CreateNotSupportedException(message, inner);
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static void MissingManifestResourceException(string message) => throw new MissingManifestResourceException(message);
+        
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static void NotSupportedException() => throw CreateNotSupportedException(Res.NotSupported);
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static T NotSupportedException<T>() => throw CreateNotSupportedException(Res.NotSupported);
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static void NotSupportedException(string message) => throw CreateNotSupportedException(message);
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static T NotSupportedException<T>(string message, Exception? inner = null) => throw CreateNotSupportedException(message, inner);
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static void NotSupportedException(string message, Exception inner) => throw CreateNotSupportedException(message, inner);
 
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static void ObjectDisposedException() => throw CreateObjectDisposedException(Res.ObjectDisposed);
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static T ObjectDisposedException<T>() => throw CreateObjectDisposedException(Res.ObjectDisposed);
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static void ObjectDisposedException(string name) => throw CreateObjectDisposedException(Res.ObjectDisposed, name);
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static void ObjectDisposedException() => throw CreateObjectDisposedException(Res.ObjectDisposed);
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static T ObjectDisposedException<T>() => throw CreateObjectDisposedException(Res.ObjectDisposed);
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static void ObjectDisposedException(string name) => throw CreateObjectDisposedException(Res.ObjectDisposed, name);
 
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static void ReflectionException(string message) => throw CreateReflectionException(message);
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static T ReflectionException<T>(string message) => throw CreateReflectionException(message);
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static void ReflectionException(string message, Exception? inner) => throw CreateReflectionException(message, inner);
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static void ReflectionException(string message) => throw CreateReflectionException(message);
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static T ReflectionException<T>(string message) => throw CreateReflectionException(message);
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static void ReflectionException(string message, Exception? inner) => throw CreateReflectionException(message, inner);
 
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static void TypeLoadException(string message) => throw CreateTypeLoadException(message);
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static void TypeLoadException(string message, Exception inner) => throw CreateTypeLoadException(message, inner);
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static void TypeLoadException(string message) => throw CreateTypeLoadException(message);
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static void TypeLoadException(string message, Exception inner) => throw CreateTypeLoadException(message, inner);
 
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static void FileNotFoundException(string message, string fileName) => throw new FileNotFoundException(message, fileName);
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static void FileNotFoundException(string message, string fileName) => throw new FileNotFoundException(message, fileName);
 
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static void SerializationException(string message) => throw CreateSerializationException(message);
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static T SerializationException<T>(string message, Exception? inner = null) => throw CreateSerializationException(message, inner);
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static void SerializationException(string message, Exception inner) => throw CreateSerializationException(message, inner);
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static void SerializationException(string message) => throw CreateSerializationException(message);
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static T SerializationException<T>(string message, Exception? inner = null) => throw CreateSerializationException(message, inner);
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static void SerializationException(string message, Exception inner) => throw CreateSerializationException(message, inner);
 
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static void PlatformNotSupportedException(string message) => throw CreatePlatformNotSupportedException(message);
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static T PlatformNotSupportedException<T>(string message) => throw CreatePlatformNotSupportedException(message);
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static void PlatformNotSupportedException(string message) => throw CreatePlatformNotSupportedException(message);
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static T PlatformNotSupportedException<T>(string message) => throw CreatePlatformNotSupportedException(message);
 
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static void OperationCanceledException() => throw new OperationCanceledException(Res.OperationCanceled);
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static void OperationCanceledException() => throw new OperationCanceledException(Res.OperationCanceled);
 
-        [ContractAnnotation("=> halt")][DoesNotReturn]internal static void FormatException() => throw new FormatException(Res.ArgumentInvalidString);
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static void FormatException() => throw new FormatException(Res.ArgumentInvalidString);
 
         #endregion
 

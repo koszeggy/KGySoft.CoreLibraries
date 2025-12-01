@@ -24,6 +24,13 @@
     dimensions.
   + New GetElementUnaligned and SetElementUnaligned methods
 
+* KGySoft.CoreLibraries namespace:
+==================================
+* DecimalExtensions class:
+  * Pow(decimal, int) method:
+    * This overload was not an extension method so far.
+    - Fixing the sign of the result when power = Int32.MinValue, value is negative, and the result doesn't overflow.
+
 ! KGySoft.Serialization.Binary namespace:
 =========================================
 ! BinarySerializationFormatter class:

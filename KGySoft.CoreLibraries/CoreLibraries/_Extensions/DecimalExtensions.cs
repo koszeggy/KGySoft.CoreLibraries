@@ -18,6 +18,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 
 #endregion
 
@@ -271,33 +272,34 @@ namespace KGySoft.CoreLibraries
         /// <param name="power">The specified power.</param>
         /// <returns>The specified <paramref name="value"/> raised to the specified <paramref name="power"/>.</returns>
         /// <exception cref="OverflowException"><paramref name="power"/> is too large for the result to fit in a <see cref="decimal"/> value.</exception>
-        public static decimal Pow(decimal value, int power)
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public static decimal Pow(this decimal value, int power)
         {
+            if (power <= 0)
+            {
             if (power == 0)
                 return 1m;
-
-            decimal current = value;
-            if (power < 0)
-            {
-                power = power > Int32.MinValue ? -power : Int32.MaxValue;
-                current = 1m / current;
+                if (value == 0m) // 0^-p would be negative infinity
+                    Throw.OverflowException();
+                value = 1m / value;
+                power = -power; // for MinValue it remains the same, but it's handled correctly below
             }
 
+            decimal current = value;
             decimal result = 1m;
-            while (power > 0)
+            while (true)
             {
                 if ((power & 1) == 1)
                 {
                     result = current * result;
-                    power -= 1;
+                    if (power == 1)
+                        return result;
                 }
 
-                power >>= 1;
-                if (power > 0)
+                power >>>= 1;
+                if (power != 0)
                     current *= current;
             }
-
-            return result;
         }
 
         #endregion

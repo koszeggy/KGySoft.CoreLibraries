@@ -28,11 +28,39 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
     [TestFixture]
     public class DecimalExtensionsTest : TestBase
     {
+        #region Constants
+        
+        private const double diffTolerance = 1e-10d;
+
+        #endregion
+
         #region Fields
 
+        private static readonly object[][] powITestSource =
+        [
+            [0m, 0],
+            [0m, 1],
+            [0m, -1],
+            [1m, 0],
+            [1m, 1],
+            [1m, -1],
+            [-1m, 0],
+            [-1m, 1],
+            [-1m, -1],
+            [1m + DecimalExtensions.Epsilon, Int32.MaxValue],
+            [-1m - DecimalExtensions.Epsilon, Int32.MaxValue],
+            [1m - DecimalExtensions.Epsilon, Int32.MinValue],
+            [-1m + DecimalExtensions.Epsilon, Int32.MinValue],
+            [1m + DecimalExtensions.Epsilon, Int32.MinValue],
+            [-1m - DecimalExtensions.Epsilon, Int32.MinValue],
+            [1m - DecimalExtensions.Epsilon, Int32.MaxValue],
+            [-1m + DecimalExtensions.Epsilon, Int32.MaxValue],
+            [Decimal.MaxValue, Int32.MinValue],
+            [Decimal.MinValue, Int32.MinValue],
+        ];
+
         private static readonly decimal decimalEpsilon = new decimal(1, 0, 0, false, 28);
-        private static readonly double diffTolerance = 1E-10d;
-        private static readonly decimal[] logETestSource = { 1, 1.1m, 0.00000000000001m, 10m, Decimal.MaxValue, decimalEpsilon, 1m / decimalEpsilon, DecimalExtensions.E, DecimalExtensions.PI };
+        private static readonly decimal[] logETestSource = { 1, 0.1m, 1.1m, 0.00000000000001m, 10m, Decimal.MaxValue, decimalEpsilon, 2m * decimalEpsilon, 1m / decimalEpsilon, DecimalExtensions.E, DecimalExtensions.PI };
         private static readonly decimal[] log10TestSource = { 1, 1.1m, 0.00000000000001m, 10m, Decimal.MaxValue, decimalEpsilon, 1m / decimalEpsilon, DecimalExtensions.E, DecimalExtensions.PI };
         private static readonly decimal[] logTestSource = { 1, 2, 3, 4, 8, 9, 10, 27, 128, 256, 1 << 16, 1L << 62, 1.1m, 0.00000000000001m, Decimal.MaxValue, decimalEpsilon, 1m / decimalEpsilon, DecimalExtensions.E, DecimalExtensions.PI };
         private static readonly decimal[] powETestSource = { 0, 1, 2, 10, -1, -10, 0.1m, -0.1m, decimalEpsilon, -decimalEpsilon, Int16.MinValue, Int32.MinValue, Int64.MinValue, 66.500000000000000001m };
@@ -49,12 +77,39 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
         {
             var actual = (double)actualDecimal;
             Console.WriteLine($"{actualDecimal.ToRoundtripString()} (double: {expected.ToRoundtripString()})");
-            Assert.IsTrue(Math.Max(expected, actual) - Math.Min(expected, actual) <= diffTolerance, $"{actual.ToRoundtripString()} <> {expected.ToRoundtripString()}");
+            Assert.IsTrue(expected.TolerantEquals(actual, diffTolerance), $"{actual.ToRoundtripString()} <> {expected.ToRoundtripString()}");
+        }
+
+        [AssertionMethod]
+        private static void AreEqual(string name, double expected, Func<decimal> actualDecimal)
+        {
+            try
+            {
+                decimal actual = actualDecimal.Invoke();
+                Console.Write($"{name} = {actual.ToRoundtripString()}");
+                Assert.IsTrue(expected.TolerantEquals((double)actual, diffTolerance), $"{actual.ToRoundtripString()} <> {expected.ToRoundtripString()}");
+            }
+            catch (Exception e)
+            {
+                Console.Write($"{name}: {e.Message}");
+                Assert.IsTrue(e is OverflowException && (Double.IsNaN(expected) || Double.IsInfinity(expected)), "OverflowException and NaN/Infinity expected");
+            }
+
+            Console.WriteLine();
         }
 
         #endregion
 
         #region Instance Methods
+
+        [TestCaseSource(nameof(powITestSource))]
+        public void PowITest(decimal value, int power)
+        {
+            string name = $"Pow({value.ToRoundtripString()}, (int){power})";
+            double expected = Math.Pow((double)value, power);
+            Console.WriteLine($"Math.{name} = {expected.ToRoundtripString()}");
+            AreEqual($"DecimalExtensions.{name}", expected, () => value.Pow(power));
+        }
 
         [TestCaseSource(nameof(logETestSource))]
         public void LogETest(decimal value)
@@ -94,7 +149,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             }
             catch (Exception e)
             {
-                Console.WriteLine($@"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
+                Console.WriteLine($"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
                 throw;
             }
         }
