@@ -209,26 +209,27 @@ namespace KGySoft.CoreLibraries
         /// </remarks>
         public static decimal Exp(this decimal power)
         {
-            int integerPart = 0;
-            if (power > 1m)
+            int integerPart;
+            if (power >= 1m)
             {
-                decimal diff = Math.Floor(power);
-                power -= diff;
-                integerPart += (int)diff;
+                decimal floor = Math.Floor(power);
+                power -= floor;
+                integerPart = (int)floor; // > Int32.MaxInt is not a problem, an OverflowException would be thrown later anyway
             }
             else if (power < 0m)
             {
-                decimal diff = Math.Floor(Math.Abs(power));
-                if (diff > Int32.MaxValue)
-                {
-                    diff = Int32.MaxValue;
-                    power = 0m;
+                decimal floor = Math.Floor(-power);
+                if (floor >= 66) // e^-66 < epsilon (~ 2.17e-29)
+                    return 0m;
+
+                power += floor;
+                integerPart = -(int)floor;
                 }
                 else
-                    power += diff;
-                integerPart -= (int)diff;
-            }
+                integerPart = 0;
 
+            // Doing the power series for the fractional part of power: exp(p) = 1 + p + (p^2)/2! + (p^3)/3! + ...
+            // see also https://en.wikipedia.org/wiki/Exponential_function#Power_series
             decimal result = 1m;
             decimal acc = 1m;
             for (int i = 1; ; i++)
@@ -240,10 +241,9 @@ namespace KGySoft.CoreLibraries
                     break;
             }
 
-            if (integerPart != 0)
-                result *= Pow(E, integerPart);
-
-            return result;
+            return integerPart == 0
+                ? result
+                : result * E.Pow(integerPart);
         }
 
         /// <summary>

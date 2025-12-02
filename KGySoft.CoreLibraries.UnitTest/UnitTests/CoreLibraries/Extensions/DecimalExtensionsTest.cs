@@ -59,6 +59,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             [Decimal.MinValue, Int32.MinValue],
         ];
 
+        private static readonly decimal[] expTestSource = [1m, 0m, -1m, 0.5m, -0.5m, 3.5m, -3.5m, DecimalExtensions.Epsilon, -DecimalExtensions.Epsilon, Int32.MinValue, Int32.MaxValue, Int32.MinValue - 1.5m, Int32.MaxValue + 1.5m];
         private static readonly decimal decimalEpsilon = new decimal(1, 0, 0, false, 28);
         private static readonly decimal[] logETestSource = { 1, 0.1m, 1.1m, 0.00000000000001m, 10m, Decimal.MaxValue, decimalEpsilon, 2m * decimalEpsilon, 1m / decimalEpsilon, DecimalExtensions.E, DecimalExtensions.PI };
         private static readonly decimal[] log10TestSource = { 1, 1.1m, 0.00000000000001m, 10m, Decimal.MaxValue, decimalEpsilon, 1m / decimalEpsilon, DecimalExtensions.E, DecimalExtensions.PI };
@@ -109,6 +110,15 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             double expected = Math.Pow((double)value, power);
             Console.WriteLine($"Math.{name} = {expected.ToRoundtripString()}");
             AreEqual($"DecimalExtensions.{name}", expected, () => value.Pow(power));
+        }
+
+        [TestCaseSource(nameof(expTestSource))]
+        public void ExpTest(decimal power)
+        {
+            string name = $"Exp({power})";
+            double expected = Math.Exp((double)power);
+            Console.WriteLine($"Math.{name} = {expected.ToRoundtripString()}");
+            AreEqual($"DecimalExtensions.{name}", expected, () => power.Exp());
         }
 
         [TestCaseSource(nameof(logETestSource))]
