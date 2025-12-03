@@ -28,12 +28,6 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
     [TestFixture]
     public class DecimalExtensionsTest : TestBase
     {
-        #region Constants
-        
-        private const double diffTolerance = 1e-10d;
-
-        #endregion
-
         #region Fields
 
         private static readonly object[][] powITestSource =
@@ -96,7 +90,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
 
         private static readonly decimal[] expTestSource = [1m, 0m, -1m, 0.5m, -0.5m, 3.5m, -3.5m, DecimalExtensions.Epsilon, -DecimalExtensions.Epsilon, Int32.MinValue, Int32.MaxValue, Int32.MinValue - 1.5m, Int32.MaxValue + 1.5m];
         private static readonly decimal[] powETestSource = [0, 1, 2, 10, -1, -10, 0.1m, -0.1m, DecimalExtensions.Epsilon, -DecimalExtensions.Epsilon, Int16.MinValue, Int32.MinValue, Int64.MinValue, 66.500000000000000001m];
-        private static readonly decimal[] powTestSource = [0.5m, -0.5m, 2, -2, 3, 10, 16];
+        private static readonly decimal[] powTestSource = [0.5m, -0.5m, 2, -2, 3, 10, 16, DecimalExtensions.Epsilon, -DecimalExtensions.Epsilon, 1m + 1e-15m, 1m - 1e-15m, Decimal.MaxValue, Decimal.MinValue];
 
         #endregion
 
@@ -109,7 +103,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
         {
             var actual = (double)actualDecimal;
             Console.WriteLine($"{actualDecimal.ToRoundtripString()} (double: {expected.ToRoundtripString()})");
-            Assert.IsTrue(expected.TolerantEquals(actual, diffTolerance), $"{actual.ToRoundtripString()} <> {expected.ToRoundtripString()}");
+            Assert.IsTrue(expected.TolerantEquals(actual), $"{actual.ToRoundtripString()} <> {expected.ToRoundtripString()}");
         }
 
         [AssertionMethod]
@@ -119,12 +113,13 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             {
                 decimal actual = actualDecimal.Invoke();
                 Console.Write($"{name} = {actual.ToRoundtripString()}");
-                Assert.IsTrue(expected.TolerantEquals((double)actual, diffTolerance), $"{actual.ToRoundtripString()} <> {expected.ToRoundtripString()}");
+                Assert.IsTrue(expected.TolerantEquals((double)actual), $"{actual.ToRoundtripString()} <> {expected.ToRoundtripString()}");
             }
-            catch (Exception e)
+            catch (Exception e) when (e is not AssertionException)
             {
                 Console.Write($"{name}: {e.Message}");
-                Assert.IsTrue(e is OverflowException && (Double.IsNaN(expected) || Double.IsInfinity(expected)), "OverflowException and NaN/Infinity expected");
+                Assert.IsTrue(e is OverflowException && (Double.IsNaN(expected) || Double.IsInfinity(expected) || expected > (double)Decimal.MaxValue || expected < (double)Decimal.MinValue)
+                    || e is ArgumentOutOfRangeException && Double.IsNaN(expected), "OverflowException/ArgumentOutOfRangeException and NaN/Infinity/very large values are expected");
             }
 
             Console.WriteLine();
@@ -202,37 +197,36 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
         [TestCaseSource(nameof(powTestSource))]
         public void PowTest(decimal value)
         {
-            void TestPow(decimal d, decimal power)
+            static void TestPow(decimal value, decimal power)
             {
-                Console.Write($"{d} raised to {power.ToRoundtripString()}: ");
-                var doubleResult = Math.Pow((double)d, (double)power);
-                try
-                {
-                    AreEqual(doubleResult, d.Pow(power));
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine($@"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
-                    if (d < 0 && power != Math.Round(power))
-                        Assert.IsInstanceOf(typeof(ArgumentOutOfRangeException), e);
-                    else if (doubleResult > (double)decimal.MaxValue || doubleResult < (double)decimal.MinValue)
-                        Assert.IsInstanceOf(typeof(OverflowException), e);
-                    else
-                        throw;
-                }
+                string name = $"Pow({value.ToRoundtripString()}, {power})";
+                double expected = Math.Pow((double)value, (double)power);
+                Console.WriteLine($"Math.{name} = {expected.ToRoundtripString()}");
+                AreEqual($"DecimalExtensions.{name}", expected, () => value.Pow(power));
+                Console.WriteLine();
             }
 
             TestPow(value, 0);
             TestPow(value, 1);
             TestPow(value, -1);
+            TestPow(value, 2);
+            TestPow(value, -2);
             TestPow(value, 0.5m);
             TestPow(value, -0.5m);
+            TestPow(value, 1.5m);
+            TestPow(value, -1.5m);
             TestPow(value, 10);
             TestPow(value, -10);
             TestPow(value, 16);
             TestPow(value, -16);
             TestPow(value, 28);
             TestPow(value, -28);
+            TestPow(value, DecimalExtensions.Epsilon);
+            TestPow(value, -DecimalExtensions.Epsilon);
+            TestPow(value, UInt32.MaxValue);
+            TestPow(value, -UInt32.MaxValue);
+            TestPow(value, UInt32.MaxValue + 0.5m);
+            TestPow(value, -UInt32.MaxValue - 0.5m);
         }
 
         #endregion

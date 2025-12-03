@@ -27,10 +27,12 @@
 * KGySoft.CoreLibraries namespace:
 ==================================
 * DecimalExtensions class:
+  - Log/Log10 methods: Fixing the accuracy for very small, non-powers-of-10 values.
   * Pow(decimal, int) method:
     * This overload was not an extension method so far.
     - Fixing the sign of the result when power = Int32.MinValue, value is negative, and the result doesn't overflow.
-  - Log/Log10 methods: Fixing the accuracy for very small, non-powers-of-10 values.
+  - Pow(decimal, decimal) method:
+    - Fixing result when power in an integer beyond Int32 range, value is negative, and the result doesn't overflow.
 
 ! KGySoft.Serialization.Binary namespace:
 =========================================

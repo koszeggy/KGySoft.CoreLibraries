@@ -146,7 +146,7 @@ namespace KGySoft.CoreLibraries
                 {
                     value = value.ShiftLeft();
                     exp -= 1;
-            }
+                }
             }
 
             decimal result = value == 1m ? 0m : LogE(value);
@@ -188,7 +188,7 @@ namespace KGySoft.CoreLibraries
                 {
                     value = value.ShiftLeft();
                     exp -= 1;
-            }
+                }
             }
 
             if (value == 1m)
@@ -245,8 +245,8 @@ namespace KGySoft.CoreLibraries
 
                 power += floor;
                 integerPart = -(int)floor;
-                }
-                else
+            }
+            else
                 integerPart = 0;
 
             // Doing the power series for the fractional part of power: exp(p) = 1 + p + (p^2)/2! + (p^3)/3! + ...
@@ -278,12 +278,52 @@ namespace KGySoft.CoreLibraries
         /// <remarks>
         /// <para>This member is similar to <see cref="Math.Pow">Math.Pow</see> but uses <see cref="decimal"/> type instead of <see cref="double"/>.</para>
         /// </remarks>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         public static decimal Pow(this decimal value, decimal power)
         {
-            if (power <= Int32.MaxValue && Math.Truncate(power) == power)
-                return Pow(value, (int)power);
+            #region Local Methods
 
-            return RoundInternal(Exp(power * Log(value)));
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            static decimal PowLarge(decimal value, decimal power)
+            {
+                Debug.Assert(power is < Int32.MinValue or > Int32.MaxValue);
+                return value switch
+                {
+                    > 0m => Exp(power * Log(value)),
+                    < 0m => (power % 2m) switch
+                    {
+                        0m => Exp(power * Log(-value)),
+                        1m or -1m => -Exp(power * Log(-value)),
+                        // Fractional power for a negative value: the result would be a complex number.
+                        // NOTE: we throw the exception for the value parameter to be conform with the exception in smaller range (in which case it comes from the Log() method).
+                        _ => Throw.ArgumentOutOfRangeException<decimal>(Argument.value)
+                    },
+                    0m => power switch
+                    {
+                        > 0m => 0m,
+                        < 0m => Throw.OverflowException<decimal>(),
+                        0m => 1m
+                    },
+                };
+            }
+
+            #endregion
+
+            if (power is > Int32.MaxValue or < Int32.MinValue)
+                return PowLarge(value, power);
+
+            // It's faster if we calculate the result for the integer part first, and then for the fractional
+            decimal integerPart = Math.Truncate(power);
+            decimal fracPart = power - integerPart;
+
+            decimal result = Pow(value, (int)integerPart);
+            if (fracPart == 0m)
+                return result;
+
+            result *= Exp(fracPart * Log(value));
+            return Math.Abs(power) > 1e-10m
+                ? RoundInternal(result)
+                : result;
         }
 
         /// <summary>
@@ -298,8 +338,8 @@ namespace KGySoft.CoreLibraries
         {
             if (power <= 0)
             {
-            if (power == 0)
-                return 1m;
+                if (power == 0)
+                    return 1m;
                 if (value == 0m) // 0^-p would be negative infinity
                     Throw.OverflowException();
                 value = 1m / value;
@@ -379,19 +419,19 @@ namespace KGySoft.CoreLibraries
             if (value >= 1.462m)
             {
                 do
-            {
-                value *= eReciprocal;
-                count += 1;
+                {
+                    value *= eReciprocal;
+                    count += 1;
                 } while (value >= 1.462m);
             }
             else
             {
                 // 0.538 * E - 1 = 0.462435623711; 0.538 - 1 = 0.462
                 while (value <= 0.538m)
-            {
-                value *= E;
-                count -= 1;
-            }
+                {
+                    value *= E;
+                    count -= 1;
+                }
             }
 
             value -= 1;
@@ -425,7 +465,7 @@ namespace KGySoft.CoreLibraries
             decimal round25 = Math.Round(value, 25);
             if (Math.Round(value, 5) == round25)
                 return Normalize(round25);
-            return value.Normalize();
+            return value;
         }
 
         #endregion

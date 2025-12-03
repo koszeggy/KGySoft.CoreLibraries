@@ -32,8 +32,6 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
     {
         #region Fields
 
-        private static readonly double diffTolerance = 1E-10d;
-
         private static readonly decimal[] expTestSource = [1m, 0m, -1m, 0.5m, -0.5m, 3.5m, -3.5m, DecimalExtensions.Epsilon, -DecimalExtensions.Epsilon, Int32.MinValue, Int32.MaxValue, Int32.MinValue - 1.5m, Int32.MaxValue + 1.5m];
 
         private static readonly decimal[] logETestSource =
@@ -59,7 +57,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
         {
             var actual = (double)actualDecimal;
             Console.Write($"{name + ':',-35}{actualDecimal.ToRoundtripString()} ");
-            Console.WriteLine($"{(expected.TolerantEquals(actual, diffTolerance) ? "OK" : "X")}");
+            Console.WriteLine($"{(expected.TolerantEquals(actual) ? "OK" : "X")}");
             //Assert.IsTrue(expected.TolerantEquals(actual, diffTolerance), $"{actual.ToRoundtripString()} <> {expected.ToRoundtripString()}");
             Console.WriteLine();
         }
@@ -72,7 +70,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
             {
                 actual = actualDecimal.Invoke();
                 Console.Write($"{name + ':',-35}{actual.ToRoundtripString()} ");
-                Console.WriteLine($"{(expected.TolerantEquals((double)actual, diffTolerance) ? "OK" : "X")}");
+                Console.WriteLine($"{(expected.TolerantEquals((double)actual) ? "OK" : "X")}");
             }
             catch (Exception e)
             {
@@ -313,41 +311,76 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
             //   Worst-Best difference: 1,441.92 (0.47%)
         }
 
-        [Test]
-        public void PowTest()
+        [TestCase(0.5, 2.4)]
+        [TestCase(2.5, 13.5)]
+        public void PowTest(double v, double p)
         {
-            //decimal value = 0.5m;
-            //decimal power = 2.4m;
-            decimal value = -1 - DecimalExtensions.Epsilon;
-            //decimal value = 1 + DecimalExtensions.Epsilon;
-            decimal power = UInt32.MaxValue;
-            //decimal value = -0.5m;
-            //decimal power = -3m;
+            decimal value = (decimal)v;
+            decimal power = (decimal)p;
 
             double expected = Math.Pow((double)value, (double)power);
             double expectedByExpLog = Math.Exp((double)power * Math.Log((double)value));
 
-            decimal actual0 = value.Pow(power);
-            decimal actual2 = value.Pow2(power);
+            decimal actual1 = value.Pow_1_Naive(power);
+            decimal actual2 = value.Pow_2_Optimized(power);
 
             Console.WriteLine($"Expected by Math.Pow: {expected}");
             Console.WriteLine($"Expected by Math.Exp/Log: {expectedByExpLog}");
-            Console.WriteLine($"Pow0: {actual0}");
-            Console.WriteLine($"Pow2: {actual2}");
+            Console.WriteLine($"{nameof(Extensions.Pow_1_Naive)}: {actual1}");
+            Console.WriteLine($"{nameof(Extensions.Pow_2_Optimized)}: {actual2}");
 
-#if DEBUG
-            Assert.Inconclusive("Switch to release build");
-#endif
+            AreEqual("Naive", expected, actual1);
+            AreEqual("Optimized", expected, actual2);
 
             new PerformanceTest<decimal>
                 {
                     TestName = $"PowTest {value}^{power}",
                     Repeat = 3
                 }
-                .AddCase(() => value.Pow(power), nameof(DecimalExtensions.Pow))
-                .AddCase(() => value.Pow2(power), nameof(DecimalExtensions.Pow2))
+                .AddCase(() => value.Pow_1_Naive(power), nameof(Extensions.Pow_1_Naive))
+                .AddCase(() => value.Pow_2_Optimized(power), nameof(Extensions.Pow_2_Optimized))
                 .DoTest()
                 .DumpResults(Console.Out);
+
+            // ==[PowTest 0.5^2.4 (.NET Core 10.0.0) Results]================================================
+            // Test Time: 2,000 ms
+            // Warming up: Yes
+            // Test cases: 2
+            // Repeats: 3
+            // Calling GC.Collect: Yes
+            // Forced CPU Affinity: No
+            // Cases are sorted by fulfilled iterations (the most first)
+            // --------------------------------------------------
+            // 1. Pow_2_Optimized: 1,603,567 iterations in 6,000.01 ms. Adjusted for 2,000 ms: 534,521.42
+            //   #1  534,561 iterations in 2,000.00 ms. Adjusted: 534,560.89
+            //   #2  535,136 iterations in 2,000.01 ms. Adjusted: 535,133.89	 <---- Best
+            //   #3  533,870 iterations in 2,000.00 ms. Adjusted: 533,869.47	 <---- Worst
+            //   Worst-Best difference: 1,264.42 (0.24%)
+            // 2. Pow_1_Naive: 1,501,830 iterations in 6,000.03 ms. Adjusted for 2,000 ms: 500,607.48 (-33,913.93 / 93.66%)
+            //   #1  500,562 iterations in 2,000.03 ms. Adjusted: 500,554.92
+            //   #2  501,274 iterations in 2,000.00 ms. Adjusted: 501,273.82	 <---- Best
+            //   #3  499,994 iterations in 2,000.00 ms. Adjusted: 499,993.70	 <---- Worst
+            //   Worst-Best difference: 1,280.12 (0.26%)
+
+            // ==[PowTest 2.5^13.5 (.NET Core 10.0.0) Results]================================================
+            // Test Time: 2,000 ms
+            // Warming up: Yes
+            // Test cases: 2
+            // Repeats: 3
+            // Calling GC.Collect: Yes
+            // Forced CPU Affinity: No
+            // Cases are sorted by fulfilled iterations (the most first)
+            // --------------------------------------------------
+            // 1. Pow_2_Optimized: 1,587,607 iterations in 6,000.01 ms. Adjusted for 2,000 ms: 529,201.35
+            //   #1  532,629 iterations in 2,000.01 ms. Adjusted: 532,627.40	 <---- Best
+            //   #2  524,607 iterations in 2,000.00 ms. Adjusted: 524,606.21	 <---- Worst
+            //   #3  530,371 iterations in 2,000.00 ms. Adjusted: 530,370.44
+            //   Worst-Best difference: 8,021.19 (1.53%)
+            // 2. Pow_1_Naive: 1,515,217 iterations in 6,000.00 ms. Adjusted for 2,000 ms: 505,071.93 (-24,129.42 / 95.44%)
+            //   #1  505,499 iterations in 2,000.00 ms. Adjusted: 505,498.32
+            //   #2  502,686 iterations in 2,000.00 ms. Adjusted: 502,685.82	 <---- Worst
+            //   #3  507,032 iterations in 2,000.00 ms. Adjusted: 507,031.65	 <---- Best
+            //   Worst-Best difference: 4,345.82 (0.86%)
         }
 
         #endregion
@@ -626,6 +659,78 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
             if (exp != 0)
                 result += exp * logE10;
             return result.Normalize();
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public static decimal Pow_1_Naive(this decimal value, decimal power)
+        {
+            if (Math.Truncate(power) == power && power is >= Int32.MinValue and <= Int32.MaxValue)
+                return value.Pow((int)power);
+
+            return value switch
+            {
+                > 0m => (power * value.Log()).Exp(),
+                < 0m => (power % 2m) switch
+                {
+                    0m => (power * (-value).Log()).Exp(),
+                    1m or -1m => -(power * (-value).Log()).Exp(),
+                    // Fractional power for a negative value: the result would be a complex number.
+                    // NOTE: we throw the exception for the value parameter to be conform with the exception in smaller range (in which case it comes from the Log() method).
+                    _ => Throw.ArgumentOutOfRangeException<decimal>(Argument.value)
+                },
+                0m => power switch
+                {
+                    > 0m => 0m,
+                    < 0m => Throw.OverflowException<decimal>(),
+                    0m => 1m
+                },
+            };
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public static decimal Pow_2_Optimized(this decimal value, decimal power)
+        {
+            #region Local Methods
+
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            static decimal PowLarge(decimal value, decimal power)
+            {
+                Debug.Assert(power is < Int32.MinValue or > Int32.MaxValue);
+                return value switch
+                {
+                    > 0m => (power * value.Log()).Exp(),
+                    < 0m => (power % 2m) switch
+                    {
+                        0m => (power * (-value).Log()).Exp(),
+                        1m or -1m => -(power * (-value).Log()).Exp(),
+                        // Fractional power for a negative value: the result would be a complex number.
+                        // NOTE: we throw the exception for the value parameter to be conform with the exception in smaller range (in which case it comes from the Log() method).
+                        _ => Throw.ArgumentOutOfRangeException<decimal>(Argument.value)
+                    },
+                    0m => power switch
+                    {
+                        > 0m => 0m,
+                        < 0m => Throw.OverflowException<decimal>(),
+                        0m => 1m
+                    },
+                };
+            }
+
+            #endregion
+
+            if (power is > Int32.MaxValue or < Int32.MinValue)
+                return PowLarge(value, power);
+
+            // It's faster if we calculate the result for the integer part first, and then for the fractional
+            decimal integerPart = Math.Truncate(power);
+            decimal fracPart = power - integerPart;
+
+            decimal result = value.Pow((int)integerPart);
+            if (fracPart == 0m)
+                return result;
+
+            result *= (fracPart * value.Log()).Exp();
+            return result;
         }
 
         #endregion

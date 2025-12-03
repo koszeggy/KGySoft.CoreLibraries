@@ -98,6 +98,7 @@ namespace KGySoft
         [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static T InternalError<T>(string internalError) => throw CreateInvalidOperationException(Res.InternalError(internalError));
 
         [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static void OverflowException() => throw new OverflowException();
+        [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static T OverflowException<T>() => throw new OverflowException();
 
         [MethodImpl(MethodImplOptions.NoInlining)][ContractAnnotation("=> halt")][DoesNotReturn]internal static void MissingManifestResourceException(string message) => throw new MissingManifestResourceException(message);
         
