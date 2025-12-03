@@ -16,9 +16,9 @@
 #region Usings
 
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Runtime.CompilerServices;
+using System.Security;
 
 #endregion
 
@@ -78,15 +78,12 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         private const decimal log10E = 0.4342944819032518276511289189m;
 
-        private const int maxTaylorIteration = 100;
+        /// <summary>
+        /// The base e logarithm of 10 = log(10) = 1 / log10E
+        /// </summary>
+        private const decimal logE10 = 2.3025850929940456840179914547m;
 
         #endregion
-
-        #endregion
-
-        #region Fields
-
-        private static readonly Dictionary<decimal, int> powerOf10 = InitPowerOf10();
 
         #endregion
 
@@ -125,25 +122,37 @@ namespace KGySoft.CoreLibraries
         /// <para>This member is similar to <see cref="Math.Log(double)">Math.Log(double)</see> but uses <see cref="decimal"/> type instead of <see cref="double"/>.</para>
         /// </remarks>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="value"/> is less than or equal to 0.</exception>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         public static decimal Log(this decimal value)
         {
             if (value <= 0m)
                 Throw.ArgumentOutOfRangeException(Argument.value);
 
-            int resultLog10;
-            if (value >= 1m)
+            // We could just return LogE(value), but it gets very inaccurate for very small values.
+            // For big values the accuracy would not be a problem, but dividing by 10 is much faster (and converges faster) than dividing by e in LogE.
+            // So normalizing the value between (0.1 and 1], and utilising that Log(123.456) = Log(0.123456 * 10^3) = Log(0.123456) + 3 * Log(10)
+            int exp = 0;
+            if (value > 1m)
             {
-                if (powerOf10.TryGetValue(value, out resultLog10))
-                    return resultLog10 / log10E;
+                do
+                {
+                    value = value.ShiftRight();
+                    exp += 1;
+                } while (value > 1m);
             }
             else
             {
-                decimal reciprocal = 1m / value;
-                if (reciprocal != 0m && powerOf10.TryGetValue(reciprocal, out resultLog10))
-                    return -resultLog10 / log10E;
+                while (value <= 0.1m)
+                {
+                    value = value.ShiftLeft();
+                    exp -= 1;
+            }
             }
 
-            return RoundInternal(LogE(value));
+            decimal result = value == 1m ? 0m : LogE(value);
+            if (exp != 0)
+                result += exp * logE10;
+            return result.Normalize();
         }
 
         /// <summary>
@@ -160,20 +169,32 @@ namespace KGySoft.CoreLibraries
             if (value <= 0m)
                 Throw.ArgumentOutOfRangeException(Argument.value);
 
-            int result;
-            if (value >= 1m)
+            // We could just return LogE(value) * log10E, but it gets very inaccurate for very small values.
+            // For big values the accuracy would not be a problem, but dividing by 10 is much faster (and converges faster) than dividing by e in LogE,
+            // and also it provides very accurate results for powers of 10.
+            // So normalizing the value between (0.1 and 1], and utilising that Log(123.456) = Log(0.123456 * 10^3) = Log(0.123456) + 3 * Log(10)
+            int exp = 0;
+            if (value > 1m)
             {
-                if (powerOf10.TryGetValue(value, out result))
-                    return result;
+                do
+                {
+                    value = value.ShiftRight();
+                    exp += 1;
+                } while (value > 1m);
             }
             else
             {
-                decimal reciprocal = 1m / value;
-                if (reciprocal != 0m && powerOf10.TryGetValue(reciprocal, out result))
-                    return -result;
+                while (value <= 0.1m)
+                {
+                    value = value.ShiftLeft();
+                    exp -= 1;
+            }
             }
 
-            return LogE(value) * log10E;
+            if (value == 1m)
+                return exp;
+
+            return (LogE(value) * log10E + exp).Normalize();
         }
 
         /// <summary>
@@ -194,7 +215,7 @@ namespace KGySoft.CoreLibraries
                 Throw.ArgumentOutOfRangeException(Argument.value);
             if (value == 1m && @base == 0m)
                 return 0m;
-            var result = Log(value) / Log(@base);
+            decimal result = Log(value) / Log(@base);
             return RoundInternal(result);
         }
 
@@ -241,9 +262,9 @@ namespace KGySoft.CoreLibraries
                     break;
             }
 
-            return integerPart == 0
-                ? result
-                : result * E.Pow(integerPart);
+            if (integerPart != 0)
+                result *= E.Pow(integerPart);
+            return result.Normalize();
         }
 
         /// <summary>
@@ -293,7 +314,7 @@ namespace KGySoft.CoreLibraries
                 {
                     result = current * result;
                     if (power == 1)
-                        return result;
+                        return result.Normalize();
                 }
 
                 power >>>= 1;
@@ -312,27 +333,39 @@ namespace KGySoft.CoreLibraries
             return IsNegativeZero(value) ? "-" + result : result;
         }
 
+        [SecuritySafeCritical]
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        internal static unsafe decimal ShiftRight(this decimal value)
+        {
+#if NETFRAMEWORK || NETSTANDARD2_0
+            if (EnvironmentHelper.IsPartiallyTrustedDomain)
+                return value * 0.1m;
+#endif
+            ref byte scale = ref ((byte*)&value)[BitConverter.IsLittleEndian ? 2 : 1];
+            if (scale == 28)
+                return value * 0.1m;
+            scale += 1;
+            return value;
+        }
+
+        [SecuritySafeCritical]
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        internal static unsafe decimal ShiftLeft(this decimal value)
+        {
+#if NETFRAMEWORK || NETSTANDARD2_0
+            if (EnvironmentHelper.IsPartiallyTrustedDomain)
+                return value * 10m;
+#endif
+            ref byte scale = ref ((byte*)&value)[BitConverter.IsLittleEndian ? 2 : 1];
+            if (scale == 0)
+                return value * 10m;
+            scale -= 1;
+            return value;
+        }
+
         #endregion
 
         #region Private Methods
-
-        /// <summary>
-        /// Initialized the power of 10 cache.
-        /// Could be in static constructor but moved here for performance reasons (CA1810)
-        /// </summary>
-        private static Dictionary<decimal, int> InitPowerOf10()
-        {
-            var result = new Dictionary<decimal, int> { [0m] = 1 };
-            decimal value = 1m;
-            for (int i = 0; i <= 28; i++)
-            {
-                result[value] = i;
-                if (i < 28)
-                    value *= 10m;
-            }
-
-            return result;
-        }
 
         /// <summary>
         /// Calculates the natural base logarithm.
@@ -340,26 +373,37 @@ namespace KGySoft.CoreLibraries
         private static decimal LogE(decimal value)
         {
             int count = 0;
-            while (value >= 1m)
+
+            // Constants are chosen so the Taylor-series always start with |value| < 0.4625 for faster converging (up to 79 iterations)
+            // 1.462 / E - 1 = -0.462160257007; 1.462 - 1 = 0.462
+            if (value >= 1.462m)
+            {
+                do
             {
                 value *= eReciprocal;
                 count += 1;
+                } while (value >= 1.462m);
             }
-
-            while (value <= eReciprocal)
+            else
+            {
+                // 0.538 * E - 1 = 0.462435623711; 0.538 - 1 = 0.462
+                while (value <= 0.538m)
             {
                 value *= E;
                 count -= 1;
+            }
             }
 
             value -= 1;
             if (value == 0m)
                 return count;
 
+            Debug.Assert(Math.Abs(value) < 0.5m, $"Suboptimal start value for Taylor-series: {value}");
+
             // going on with Taylor series
             decimal result = 0m;
             decimal acc = 1m;
-            for (int i = 1; i <= maxTaylorIteration; i++)
+            for (int i = 1; ; i++)
             {
                 decimal prevResult = result;
                 acc *= -value;
@@ -372,17 +416,16 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// If the decimal value rounded to 23 places are the same as the rounded value to 4 decimals, then returns the rounded value.
-        /// This helps to correct the results of the Log methods.
+        /// If the decimal value rounded to 25 places are the same as the rounded value to 5 decimals, then returns the rounded value.
+        /// This helps to correct the results of the Log/Pow methods.
         /// </summary>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
         private static decimal RoundInternal(decimal value)
         {
-            decimal round23 = Math.Round(value, 23);
-            if (round23 == 0m)
-                return value;
-            if (Math.Round(value, 5) == round23)
-                return Normalize(round23);
-            return value;
+            decimal round25 = Math.Round(value, 25);
+            if (Math.Round(value, 5) == round25)
+                return Normalize(round25);
+            return value.Normalize();
         }
 
         #endregion

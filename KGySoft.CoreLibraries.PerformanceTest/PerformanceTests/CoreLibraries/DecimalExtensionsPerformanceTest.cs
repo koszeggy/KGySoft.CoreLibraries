@@ -38,26 +38,14 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
 
         private static readonly decimal[] logETestSource =
         [
-            1,
             0.1m,
             1.1m,
-            0.00000000000001m,
+            2m,
             10m,
-            Decimal.MaxValue,
             DecimalExtensions.Epsilon,
             2m * DecimalExtensions.Epsilon,
-            1m / DecimalExtensions.Epsilon,
-            1m / DecimalExtensions.E,
-            DecimalExtensions.E,
-            DecimalExtensions.PI,
-            0.09m,
-            0.11m,
-            0.5m,
-            0.45m,
-            0.55m,
-            0.9m,
-            1.5m,
-            11m
+            5555m,
+            Decimal.MaxValue,
         ];
 
         #endregion
@@ -150,24 +138,179 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
         public void LogETest(decimal value)
         {
             double expected = Math.Log((double)value);
-            Console.WriteLine($"Log({value.ToRoundtripString()}): {expected.ToRoundtripString()}");
+            Console.WriteLine($"Math.Log({value.ToRoundtripString()}): {expected.ToRoundtripString()}");
             Console.WriteLine();
-            AreEqual(nameof(Extensions.Log_0_Orig), expected, value.Log_0_Orig());
-            AreEqual(nameof(Extensions.Log_1_PreciseComputation), expected, value.Log_1_PreciseComputation());
-            AreEqual(nameof(Extensions.Log_2a_HalleyNewtonByTaylor), expected, value.Log_2a_HalleyNewtonByTaylor());
-            AreEqual(nameof(Extensions.Log_2b_HalleyNewtonByEuler), expected, value.Log_2b_HalleyNewtonByEuler());
+            AreEqual(nameof(Extensions.Log_0_Naive), expected, value.Log_0_Naive());
+            AreEqual(nameof(Extensions.Log_1a_TaylorOptimized), expected, value.Log_1a_TaylorOptimized());
+            AreEqual(nameof(Extensions.Log_1b_TaylorSymmetricShift), expected, value.Log_1b_TaylorSymmetricShift());
+            AreEqual(nameof(Extensions.Log_2_HalleyNewton), expected, value.Log_2_HalleyNewton());
 
             new PerformanceTest<decimal>
                 {
                     TestName = $"Log({value})",
                     Repeat = 3
                 }
-                .AddCase(() => value.Log_0_Orig(), nameof(Extensions.Log_0_Orig))
-                .AddCase(() => value.Log_1_PreciseComputation(), nameof(Extensions.Log_1_PreciseComputation))
-                .AddCase(() => value.Log_2a_HalleyNewtonByTaylor(), nameof(Extensions.Log_2a_HalleyNewtonByTaylor))
-                .AddCase(() => value.Log_2b_HalleyNewtonByEuler(), nameof(Extensions.Log_2b_HalleyNewtonByEuler))
+                .AddCase(() => value.Log_0_Naive(), nameof(Extensions.Log_0_Naive))
+                .AddCase(() => value.Log_1a_TaylorOptimized(), nameof(Extensions.Log_1a_TaylorOptimized))
+                .AddCase(() => value.Log_1b_TaylorSymmetricShift(), nameof(Extensions.Log_1b_TaylorSymmetricShift))
+                .AddCase(() => value.Log_2_HalleyNewton(), nameof(Extensions.Log_2_HalleyNewton))
                 .DoTest()
                 .DumpResults(Console.Out);
+
+            // Verdict:
+            // - Naive computation is imprecise for smaller values (except for powers of 10 due to the dictionary), and the iteration count can be more than 100.
+            // - The fixed version multiplies too small numbers by 10, until it is > 0.1 to get a precise result.
+            // - The input for Taylor-series can be optimized between |0.463| so the iteration count is never more than 79 for the decimal type.
+            // - The symmetric shift variant normalizes the big values as well between (0.1 and 1], which does not affect precision, but in average
+            //   it improves performance, because multiplication/division by 10 is very fast (especially when shifting can be used), and converges the
+            //   value faster than doing the same by e (which is still done if needed to optimize the input, but now it requires up to a couple of iterations).
+            //   Also, it provides fast result for powers of 10, even without the dictionary used in the naive implementation.
+            // - The Halley-Newton algorithm promises very fast quick converging, which is true, but it also needs an Exp calculation in every iteration,
+            //   which kills the performance, even when using the faster (but precise) Exp calculation, see ExpTest.
+
+            ///////////////////////////////////////////////////////
+
+            // Example 1: Very small value, which not a power of 10. The naive implementation is very inaccurate: even the first fractional digit is incorrect.
+            //            The optimized version has almost the worst possible iteration count (78 of 79), which is still better than the 107 iterations of the naive version.
+            //            But even in this case, the Taylor-series approach is twice as fast as the Halley-Newton algorithm.
+
+            // Math.Log(0.0000000000000000000000000002): -63.779235423273335
+            // 
+            //   Trace: LogE_0_Orig(0.0000000000000000000000000002)
+            //   The value has been adjusted by e 63 times.
+            //   Starting Taylor series for -0.5672341176325428453560913221
+            //   Taylor series ends at iteration 107
+            // Log_0_Naive:                       -63.837558384576853141779050724 X
+            // 
+            //   The value has been shifted 27 times
+            //   Trace: LogE_1_Taylor(0.2)
+            //   The value has been adjusted by e 1 times.
+            //   Starting Taylor series for -0.4563436343081909529279425057
+            //   Taylor series ends at iteration 78
+            // Log_1a_TaylorOptimized:             -63.77923542327333384308652861 OK
+            // 
+            //   The value has been shifted 27 times
+            //   Trace: LogE_1_Taylor(0.2)
+            //   The value has been adjusted by e 1 times.
+            //   Starting Taylor series for -0.4563436343081909529279425057
+            //   Taylor series ends at iteration 78
+            // Log_1b_TaylorSymmetricShift:       -63.77923542327333384308652861 OK
+            // 
+            //   The value has been shifted 27 times
+            //  Trace: LogE_2_HalleyNewton(0.2000000000000000000000000000)
+            //   Trace: Exp_1_PowerSeries(-0.8000000000000000000000000000)
+            //    Exp approximation ends at iteration 26
+            //   Trace: Exp_1_PowerSeries(-1.5679588556662964808792376554)
+            //    Exp approximation ends at iteration 24
+            //   Trace: Exp_1_PowerSeries(-1.6094319663553655230114113886)
+            //    Exp approximation ends at iteration 24
+            //   Trace: Exp_1_PowerSeries(-1.6094379124341003570817025304)
+            //    Exp approximation ends at iteration 24
+            //   Trace: Exp_1_PowerSeries(-1.6094379124341003746007593334)
+            //    Exp approximation ends at iteration 24
+            //  Halley-Newton algorithm converged in 5 steps
+            // Log_2_HalleyNewton:                -63.77923542327333384308652861 OK
+
+            // ==[Log(0.0000000000000000000000000002) (.NET Core 10.0.0) Results]================================================
+            // Test Time: 2,000 ms
+            // Warming up: Yes
+            // Test cases: 4
+            // Repeats: 3
+            // Calling GC.Collect: Yes
+            // Forced CPU Affinity: No
+            // Cases are sorted by fulfilled iterations (the most first)
+            // --------------------------------------------------
+            // 1. Log_1a_TaylorOptimized: 1,649,021 iterations in 6,000.00 ms. Adjusted for 2,000 ms: 549,673.25
+            //   #1  550,181 iterations in 2,000.00 ms. Adjusted: 550,180.92	 <---- Best
+            //   #2  548,981 iterations in 2,000.00 ms. Adjusted: 548,980.18	 <---- Worst
+            //   #3  549,859 iterations in 2,000.00 ms. Adjusted: 549,858.64
+            //   Worst-Best difference: 1,200.74 (0.22%)
+            // 2. Log_1b_TaylorSymmetricShift: 1,640,072 iterations in 6,000.00 ms. Adjusted for 2,000 ms: 546,690.32 (-2,982.92 / 99.46%)
+            //   #1  547,415 iterations in 2,000.00 ms. Adjusted: 547,414.73
+            //   #2  548,756 iterations in 2,000.00 ms. Adjusted: 548,755.81	 <---- Best
+            //   #3  543,901 iterations in 2,000.00 ms. Adjusted: 543,900.43	 <---- Worst
+            //   Worst-Best difference: 4,855.38 (0.89%)
+            // 3. Log_0_Naive: 884,693 iterations in 6,000.01 ms. Adjusted for 2,000 ms: 294,896.98 (-254,776.26 / 53.65%)
+            //   #1  293,049 iterations in 2,000.00 ms. Adjusted: 293,048.49	 <---- Worst
+            //   #2  295,528 iterations in 2,000.01 ms. Adjusted: 295,527.04
+            //   #3  296,116 iterations in 2,000.00 ms. Adjusted: 296,115.42	 <---- Best
+            //   Worst-Best difference: 3,066.94 (1.05%)
+            // 4. Log_2_HalleyNewton: 829,570 iterations in 6,000.10 ms. Adjusted for 2,000 ms: 276,518.57 (-273,154.67 / 50.31%)
+            //   #1  277,019 iterations in 2,000.09 ms. Adjusted: 277,005.88	 <---- Best
+            //   #2  275,897 iterations in 2,000.00 ms. Adjusted: 275,896.34	 <---- Worst
+            //   #3  276,654 iterations in 2,000.00 ms. Adjusted: 276,653.50
+            //   Worst-Best difference: 1,109.55 (0.40%)
+
+            ///////////////////////////////////////////////////////
+
+            // Example 2: Just by looking at the number of iterations, the simple optimized version should perform better than the symmetric shift version.
+            //            Still, the cost of adjusting by e is so much bigger than dividing by 10, that it's still faster, though it required 23 more iterations.
+
+            // Math.Log(5555): 8.62245370207373
+            // 
+            //   Trace: LogE_0_Orig(5555)
+            //   The value has been adjusted by e 9 times.
+            //   Starting Taylor series for -0.3144585382984951025406281823
+            //   Taylor series ends at iteration 53
+            // Log_0_Naive:                       8.622453702073730369546901179 OK
+            // 
+            //   Trace: LogE_1_Taylor(5555)
+            //   The value has been adjusted by e 9 times.
+            //   Starting Taylor series for -0.3144585382984951025406281823
+            //   Taylor series ends at iteration 53
+            // Log_1a_TaylorOptimized:             8.622453702073730369546901179 OK
+            // 
+            //   The value has been shifted 4 times
+            //   Trace: LogE_1_Taylor(0.5555)
+            //   The value has been adjusted by e 0 times.
+            //   Starting Taylor series for -0.4445
+            //   Taylor series ends at iteration 76
+            // Log_1b_TaylorSymmetricShift:       8.622453702073730369546901179 OK
+            // 
+            //   The value has been shifted 4 times
+            //  Trace: LogE_2_HalleyNewton(0.5555)
+            //   Trace: Exp_1_PowerSeries(-0.4445)
+            //    Exp approximation ends at iteration 22
+            //   Trace: Exp_1_PowerSeries(-0.5876415079169104457780997228)
+            //    Exp approximation ends at iteration 24
+            //   Trace: Exp_1_PowerSeries(-0.5878866699012244237127277110)
+            //    Exp approximation ends at iteration 24
+            //   Trace: Exp_1_PowerSeries(-0.5878866699024523665250646408)
+            //    Exp approximation ends at iteration 24
+            //   Trace: Exp_1_PowerSeries(-0.5878866699024523665250646406)
+            //    Exp approximation ends at iteration 24
+            //  Halley-Newton algorithm converged in 5 steps
+            // Log_2_HalleyNewton:                8.622453702073730369546901178 OK
+            //             
+            // ==[Log(5555) (.NET Core 10.0.0) Results]================================================
+            // Test Time: 2,000 ms
+            // Warming up: Yes
+            // Test cases: 4
+            // Repeats: 3
+            // Calling GC.Collect: Yes
+            // Forced CPU Affinity: No
+            // Cases are sorted by fulfilled iterations (the most first)
+            // --------------------------------------------------
+            // 1. Log_1b_TaylorSymmetricShift: 2,644,560 iterations in 6,000.00 ms. Adjusted for 2,000 ms: 881,519.50
+            //   #1  881,186 iterations in 2,000.00 ms. Adjusted: 881,185.78
+            //   #2  882,362 iterations in 2,000.00 ms. Adjusted: 882,361.38	 <---- Best
+            //   #3  881,012 iterations in 2,000.00 ms. Adjusted: 881,011.34	 <---- Worst
+            //   Worst-Best difference: 1,350.04 (0.15%)
+            // 2. Log_0_Naive: 2,332,291 iterations in 6,000.00 ms. Adjusted for 2,000 ms: 777,429.85 (-104,089.65 / 88.19%)
+            //   #1  770,761 iterations in 2,000.00 ms. Adjusted: 770,760.85	 <---- Worst
+            //   #2  771,253 iterations in 2,000.00 ms. Adjusted: 771,252.19
+            //   #3  790,277 iterations in 2,000.00 ms. Adjusted: 790,276.53	 <---- Best
+            //   Worst-Best difference: 19,515.68 (2.53%)
+            // 3. Log_1a_TaylorOptimized: 2,332,119 iterations in 6,000.00 ms. Adjusted for 2,000 ms: 777,372.62 (-104,146.88 / 88.19%)
+            //   #1  785,548 iterations in 2,000.00 ms. Adjusted: 785,547.76	 <---- Best
+            //   #2  771,650 iterations in 2,000.00 ms. Adjusted: 771,649.58	 <---- Worst
+            //   #3  774,921 iterations in 2,000.00 ms. Adjusted: 774,920.54
+            //   Worst-Best difference: 13,898.19 (1.80%)
+            // 4. Log_2_HalleyNewton: 928,303 iterations in 6,000.01 ms. Adjusted for 2,000 ms: 309,433.90 (-572,085.61 / 35.10%)
+            //   #1  308,501 iterations in 2,000.00 ms. Adjusted: 308,500.43	 <---- Worst
+            //   #2  309,943 iterations in 2,000.00 ms. Adjusted: 309,942.35	 <---- Best
+            //   #3  309,859 iterations in 2,000.00 ms. Adjusted: 309,858.91
+            //   Worst-Best difference: 1,441.92 (0.47%)
         }
 
         [Test]
@@ -216,7 +359,6 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
     {
         #region Constants
 
-        private const int maxTaylorIteration = 100;
         private const decimal log10E = 0.4342944819032518276511289189m;
         private const decimal logE10 = 2.3025850929940456840179914547m;
         private const decimal e = 2.7182818284590452353602874714m;
@@ -368,7 +510,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
 
         public static decimal Normalize(this decimal value) => value / 1.0000000000000000000000000000m;
 
-        public static decimal Log_0_Orig(this decimal value)
+        public static decimal Log_0_Naive(this decimal value)
         {
             if (value <= 0m)
                 Throw.ArgumentOutOfRangeException(Argument.value);
@@ -386,22 +528,48 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
                     return -resultLog10 / log10E;
             }
 
-            return RoundInternal(LogE_0_Orig(value));
+            return LogE_0_Orig(value);
         }
 
-        public static decimal Log_1_PreciseComputation(this decimal value)
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public static decimal Log_1a_TaylorOptimized(this decimal value)
+        {
+            if (value > 0.1m)
+                return LogE_1_Taylor(value).Normalize();
+            if (value <= 0m)
+                Throw.ArgumentOutOfRangeException(Argument.value);
+
+            // We could just return LogE(value), but it gets very inaccurate for small values.
+            // So normalizing the small values between (0.1 and 1], and utilising that Log(0.00123456) = Log(0.123456 * 10^-2) = Log(0.123456) - 3 * Log(10)
+            int exp = 0;
+            do
+            {
+                value = value.ShiftLeft();
+                exp += 1;
+            } while (value <= 0.1m);
+
+#if DEBUG
+            Console.WriteLine($"  The value has been shifted {exp} times");
+#endif
+
+            decimal result = (value == 1m ? 0m : LogE_1_Taylor(value)) - exp * logE10;
+            return result.Normalize();
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public static decimal Log_1b_TaylorSymmetricShift(this decimal value)
         {
             if (value <= 0m)
                 Throw.ArgumentOutOfRangeException(Argument.value);
 
-            // We could just return LogE(value), but it gets very inaccurate for very small values, and also the Taylor-series way have too many iterations.
+            // We could just return LogE(value), but it gets very inaccurate for very small values.
             // So normalizing the value between (0.1 and 1], and utilising that Log(123.456) = Log(0.123456 * 10^3) = Log(0.123456) + 3 * Log(10)
             int exp = 0;
             if (value > 1m)
             {
                 do
                 {
-                    value *= 0.1m;
+                    value = value.ShiftRight();
                     exp += 1;
                 } while (value > 1m);
             }
@@ -409,32 +577,37 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
             {
                 while (value <= 0.1m)
                 {
-                    value *= 10m;
+                    value = value.ShiftLeft();
                     exp -= 1;
                 }
             }
 
-            decimal result = LogE_1_Taylor(value);
+#if DEBUG
+            Console.WriteLine($"  The value has been shifted {Math.Abs(exp)} times");
+#endif
+
+            decimal result = value == 1m ? 0m : LogE_1_Taylor(value);
             if (exp != 0)
                 result += exp * logE10;
             return result.Normalize();
         }
 
-        public static decimal Log_2a_HalleyNewtonByTaylor(this decimal value)
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public static decimal Log_2_HalleyNewton(this decimal value)
         {
             if (value <= 0m)
                 Throw.ArgumentOutOfRangeException(Argument.value);
 
-            // We could just return LogE(value), but it gets very inaccurate for very small values, and also the Taylor-series way have too many iterations.
-            // So normalizing the value between (0.1 and 1], and utilising that Log(123.456) = Log(0.123456 * 10^3) = Log(0.123456) + 3 * Log(10)
+            // The Halley-Newton algorithm requires the value be smaller than 2 to avoid overflow. Too small values would cause some inaccuracy, do doing the same as for Taylor.
+            // So normalizing the value between (0.1 and 2), and utilising that Log(123.456) = Log(0.123456 * 10^3) = Log(0.123456) + 3 * Log(10)
             int exp = 0;
-            if (value > 1m)
+            if (value > 2m)
             {
                 do
                 {
                     value *= 0.1m;
                     exp += 1;
-                } while (value > 1m);
+                } while (value > 2m);
             }
             else
             {
@@ -445,38 +618,11 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
                 }
             }
 
-            decimal result = LogE_2a_HalleyNewtonByTaylor(value);
-            if (exp != 0)
-                result += exp * logE10;
-            return result.Normalize();
-        }
+#if DEBUG
+            Console.WriteLine($"  The value has been shifted {Math.Abs(exp)} times");
+#endif
 
-        public static decimal Log_2b_HalleyNewtonByEuler(this decimal value)
-        {
-            if (value <= 0m)
-                Throw.ArgumentOutOfRangeException(Argument.value);
-
-            // We could just return LogE(value), but it gets very inaccurate for very small values, and also the Taylor-series way have too many iterations.
-            // So normalizing the value between (0.1 and 1], and utilising that Log(123.456) = Log(0.123456 * 10^3) = Log(0.123456) + 3 * Log(10)
-            int exp = 0;
-            if (value > 1m)
-            {
-                do
-                {
-                    value *= 0.1m;
-                    exp += 1;
-                } while (value > 1m);
-            }
-            else
-            {
-                while (value <= 0.1m)
-                {
-                    value *= 10m;
-                    exp -= 1;
-                }
-            }
-
-            decimal result = LogE_2b_HalleyNewtonByEuler(value);
+            decimal result = value == 1m ? 0m : LogE_2_HalleyNewton(value);
             if (exp != 0)
                 result += exp * logE10;
             return result.Normalize();
@@ -518,14 +664,21 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
                 count -= 1;
             }
 
+#if DEBUG
+            Console.WriteLine($"  The value has been adjusted by e {Math.Abs(count)} times.");
+#endif
+
             value -= 1;
             if (value == 0m)
                 return count;
 
             // going on with Taylor series
+#if DEBUG
+            Console.WriteLine($"  Starting Taylor series for {value}");
+#endif
             decimal result = 0m;
             decimal acc = 1m;
-            for (int i = 1; i <= maxTaylorIteration; i++)
+            for (int i = 1; /*i <= maxTaylorIteration*/; i++)
             {
                 decimal prevResult = result;
                 acc *= -value;
@@ -533,7 +686,7 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
                 if (prevResult == result)
                 {
 #if DEBUG
-                    Console.WriteLine($"  Taylor series ends early at iteration {i}");
+                    Console.WriteLine($"  Taylor series ends at iteration {i}");
 #endif
                     break;
                 }
@@ -549,28 +702,38 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
 #endif
             int count = 0;
 
-            if (value > 1m)
+            // Constants are chosen so the Taylor-series always start with |value| < 0.4625 for faster converging (up to 79 iterations)
+            // 1.462 / E - 1 = -0.462160257007; 1.462 - 1 = 0.462
+            if (value >= 1.462m)
             {
                 do
                 {
                     value *= eReciprocal;
                     count += 1;
-                } while (value > 1m);
+                } while (value >= 1.462m);
             }
             else
             {
-                while (value <= eReciprocal)
+                // 0.538 * E - 1 = 0.462435623711; 0.538 - 1 = 0.462
+                while (value <= 0.538m)
                 {
                     value *= e;
                     count -= 1;
                 }
             }
 
+#if DEBUG
+            Console.WriteLine($"  The value has been adjusted by e {Math.Abs(count)} times.");
+#endif
+
             value -= 1;
             if (value == 0m)
                 return count;
 
             // going on with Taylor series
+#if DEBUG
+            Console.WriteLine($"  Starting Taylor series for {value}");
+#endif
             decimal result = 0m;
             decimal acc = 1m;
             for (int i = 1; ; i++)
@@ -590,48 +753,35 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
             return count - result;
         }
 
-        private static decimal LogE_2a_HalleyNewtonByTaylor(decimal value)
+        private static decimal LogE_2_HalleyNewton(decimal value)
         {
+#if DEBUG
+            Console.WriteLine($" Trace: {nameof(LogE_2_HalleyNewton)}({value})");
+#endif
             // based on the formula (see https://en.wikipedia.org/wiki/Natural_logarithm#High_precision),
             // yNext = yPrev + 2 * ((value - Exp(yPrev)) / (value + Exp(yPrev)))
             decimal yNext = value - 1m;
             decimal yPrev = yNext;
+            decimal yPrevPrev = 0m;
 
-            while (true)
+            for (int i = 1; /*i < maxIteration*/; i++)
             {
                 decimal expYPrev = yPrev.Exp_1_PowerSeries();
                 yNext = yPrev + 2m * ((value - expYPrev) / (value + expYPrev));
-                if (yNext == yPrev)
+                if (yNext == yPrev || yNext == yPrevPrev)
+                {
+#if DEBUG
+                    if (yNext == yPrev)
+                        Console.WriteLine($" Halley-Newton algorithm converged in {i} steps");
+                    else
+                        Console.WriteLine($" Halley-Newton algorithm started to oscillate in {i} steps");
+#endif
                     return yNext;
+                }
+
+                yPrevPrev = yPrev;
                 yPrev = yNext;
             }
-        }
-
-        private static decimal LogE_2b_HalleyNewtonByEuler(decimal value)
-        {
-            // based on the formula (see https://en.wikipedia.org/wiki/Natural_logarithm#High_precision),
-            // yNext = yPrev + 2 * ((value - Exp(yPrev)) / (value + Exp(yPrev)))
-            decimal yNext = value - 1m;
-            decimal yPrev = yNext;
-
-            while (true)
-            {
-                decimal expYPrev = yPrev.Exp_2_Euler();
-                yNext = yPrev + 2m * ((value - expYPrev) / (value + expYPrev));
-                if (yNext == yPrev)
-                    return yNext;
-                yPrev = yNext;
-            }
-        }
-
-        private static decimal RoundInternal(decimal value)
-        {
-            decimal round23 = Math.Round(value, 23);
-            if (round23 == 0m)
-                return value;
-            if (Math.Round(value, 5) == round23)
-                return Normalize(round23);
-            return value;
         }
 
         #endregion

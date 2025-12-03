@@ -59,13 +59,44 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             [Decimal.MinValue, Int32.MinValue],
         ];
 
+        private static readonly decimal[] logTestSource =
+        [
+            1m,
+            0.1m,
+            0.00000000000001m,
+            1.1m,
+            2m,
+            3m,
+            4m,
+            8m,
+            9m,
+            10m,
+            27m,
+            128m,
+            256m,
+            1 << 16,
+            1L << 62,
+            DecimalExtensions.Epsilon,
+            2m * DecimalExtensions.Epsilon,
+            1m / DecimalExtensions.Epsilon,
+            5555m,
+            Decimal.MaxValue,
+            DecimalExtensions.E,
+            1m / DecimalExtensions.E,
+            DecimalExtensions.PI,
+            2m + DecimalExtensions.Epsilon,
+            2m - DecimalExtensions.Epsilon,
+            1.462m,
+            1.462m + DecimalExtensions.Epsilon,
+            1.462m - DecimalExtensions.Epsilon,
+            0.538m,
+            0.538m + DecimalExtensions.Epsilon,
+            0.538m - DecimalExtensions.Epsilon,
+        ];
+
         private static readonly decimal[] expTestSource = [1m, 0m, -1m, 0.5m, -0.5m, 3.5m, -3.5m, DecimalExtensions.Epsilon, -DecimalExtensions.Epsilon, Int32.MinValue, Int32.MaxValue, Int32.MinValue - 1.5m, Int32.MaxValue + 1.5m];
-        private static readonly decimal decimalEpsilon = new decimal(1, 0, 0, false, 28);
-        private static readonly decimal[] logETestSource = { 1, 0.1m, 1.1m, 0.00000000000001m, 10m, Decimal.MaxValue, decimalEpsilon, 2m * decimalEpsilon, 1m / decimalEpsilon, DecimalExtensions.E, DecimalExtensions.PI };
-        private static readonly decimal[] log10TestSource = { 1, 1.1m, 0.00000000000001m, 10m, Decimal.MaxValue, decimalEpsilon, 1m / decimalEpsilon, DecimalExtensions.E, DecimalExtensions.PI };
-        private static readonly decimal[] logTestSource = { 1, 2, 3, 4, 8, 9, 10, 27, 128, 256, 1 << 16, 1L << 62, 1.1m, 0.00000000000001m, Decimal.MaxValue, decimalEpsilon, 1m / decimalEpsilon, DecimalExtensions.E, DecimalExtensions.PI };
-        private static readonly decimal[] powETestSource = { 0, 1, 2, 10, -1, -10, 0.1m, -0.1m, decimalEpsilon, -decimalEpsilon, Int16.MinValue, Int32.MinValue, Int64.MinValue, 66.500000000000000001m };
-        private static readonly decimal[] powTestSource = { 0.5m, -0.5m, 2, -2, 3, 10, 16 };
+        private static readonly decimal[] powETestSource = [0, 1, 2, 10, -1, -10, 0.1m, -0.1m, DecimalExtensions.Epsilon, -DecimalExtensions.Epsilon, Int16.MinValue, Int32.MinValue, Int64.MinValue, 66.500000000000000001m];
+        private static readonly decimal[] powTestSource = [0.5m, -0.5m, 2, -2, 3, 10, 16];
 
         #endregion
 
@@ -121,14 +152,14 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             AreEqual($"DecimalExtensions.{name}", expected, () => power.Exp());
         }
 
-        [TestCaseSource(nameof(logETestSource))]
+        [TestCaseSource(nameof(logTestSource))]
         public void LogETest(decimal value)
         {
             Console.Write($"base e log of {value.ToRoundtripString()}: ");
             AreEqual(Math.Log((double)value), value.Log());
         }
 
-        [TestCaseSource(nameof(log10TestSource))]
+        [TestCaseSource(nameof(logTestSource))]
         public void Log10Test(decimal value)
         {
             Console.Write($"base 10 log of {value.ToRoundtripString()}: ");
@@ -146,6 +177,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
 
             TestLog(value, 2);
             TestLog(value, 3);
+            TestLog(value, 10);
             TestLog(value, 16);
         }
 
