@@ -719,6 +719,10 @@ You may try to preload the assembly before deserialization or to disable SafeMod
     <value>Unexpected type name "{0}".
 In safe mode you should specify the expected types in the expectedCustomTypes parameter of the deserialization methods.</value>
   </data>
+  <data name="BinarySerialization_CannotResolveExpectedTypeSafeLegacyFormat" xml:space="preserve">
+    <value>Unexpected type name "{0}".
+If the expectedCustomTypes parameter was specified in the deserialization methods in legacy safe mode, then it should contain every type referred by the serialization stream.</value>
+  </data>
     <data name="BinarySerialization_ExpectedTypeOmittedAssemblyNameSafeFormat" xml:space="preserve">
     <value>Expected type name "{0}" must be unique in SafeMode if the serialization stream has omitted assembly names.</value>
   </data>
@@ -754,10 +758,10 @@ Either try to use the ForceRecursiveSerializationOfSupportedTypes option on seri
     <value>Data length is too small.</value>
   </data>
   <data name="BinarySerialization_SurrogateNotAllowedInSafeMode" xml:space="preserve">
-    <value>In safe mode no serialization surrogate is allowed to be used.</value>
+    <value>In safe mode no serialization surrogate is allowed to be used. To use surrogate selectors in a less secure mode, you can use the LegacySafeMode option instead.</value>
   </data>
   <data name="BinarySerialization_BinderNotAllowedInSafeMode" xml:space="preserve">
-    <value>The specified serialization binder cannot be used in safe mode. Only ForwardedTypesSerializationBinder is allowed if its SafeMode property is set to true.</value>
+    <value>The specified serialization binder cannot be used in safe mode. Only ForwardedTypesSerializationBinder is allowed if its SafeMode property is set to true. To use binders in a less secure mode, you can enable the LegacySafeMode option instead.</value>
   </data>
   <data name="Unsafe_SecuritySettingsConflict" xml:space="preserve">
     <value>This operation is not supported in a partially trusted domain with the current security settings. You can try the following options:

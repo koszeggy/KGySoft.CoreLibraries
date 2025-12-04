@@ -692,19 +692,23 @@ namespace KGySoft.Serialization.Binary
                         | BinarySerializationOptions.IgnoreISerializable 
                         | BinarySerializationOptions.IgnoreIObjectReference
                         | BinarySerializationOptions.SafeMode
+                        | BinarySerializationOptions.LegacySafeMode
                         | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes
                         | BinarySerializationOptions.PreferInvokingDefaultConstructor),
                     binder, surrogateSelector)
             {
                 this.rootType = rootType == Reflector.ObjectType ? null : rootType;
 
-                if (SafeMode)
+                if (SafeModeStrict)
                 {
                     // Further checks in safe mode
                     if (surrogateSelector != null)
                         Throw.SerializationException(Res.BinarySerializationSurrogateNotAllowedInSafeMode);
                     if (binder is not (null or ForwardedTypesSerializationBinder { SafeMode: true }))
                         Throw.SerializationException(Res.BinarySerializationBinderNotAllowedInSafeMode);
+
+                    // If binder is set here, it can be a safe ForwardedTypesSerializationBinder only, which always throws an exception when a type cannot be resolved,
+                    // so we can ignore initializing the expected types here.
                     if (binder != null)
                         return;
                 }
@@ -2597,7 +2601,7 @@ namespace KGySoft.Serialization.Binary
 
                 if (type is not null)
                     CachedAssemblies.Add((null, assemblyName));
-                else if (SafeMode)
+                else if (SafeModeStrict)
                     Throw.SerializationException(Res.BinarySerializationCannotResolveExpectedTypeInAssemblySafe(typeName, assemblyName));
                 else
                 {
@@ -2623,29 +2627,40 @@ namespace KGySoft.Serialization.Binary
 
             private Assembly ResolveAssembly(string name)
             {
-                Debug.Assert(!SafeMode);
+                Debug.Assert(!SafeModeStrict, "In strict safe mode resolving assemblies is not allowed.");
                 if (assemblyByNameCache?.TryGetValue(name, out Assembly? result) == true)
                     return result;
 
-                // 1.) Iterating through loaded assemblies
-                result = Reflector.GetLoadedAssemblies().FirstOrDefault(asm => asm.FullName == name);
-                if (result is not null)
-                    return result;
-
-                // 2.) Trying to load assembly. Not using AssemblyResolver because Assembly.Load allows version mismatch for some System assemblies.
-                try
+                // 1.) Trying to obtain from an already loaded assembly. Allowing partial match for the search, and then checking the actual identity,
+                //     because if name is a forwarded one, it may be different from the actual FullName (e.g. may not contain the culture). We demand a matching version though.
+                var assemblyName = new AssemblyName(name);
+                result = Reflector.ResolveAssembly(assemblyName, ResolveAssemblyOptions.AllowPartialMatch);
+                bool identityMatches = result?.FullName == name || assemblyName.Version is not null && AssemblyResolver.IdentityMatches(assemblyName, result?.GetName(), false);
+                if (result is not null && !identityMatches)
                 {
-                    result = Assembly.Load(new AssemblyName(name));
+                    if (SafeModeLegacy)
+                        Throw.SerializationException(Res.BinarySerializationCannotResolveAssemblySafe(name));
+                    result = null;
                 }
-                catch (Exception e) when (!e.IsCritical())
+
+                // 2.) Trying to load assembly. Not using AssemblyResolver, because Assembly.Load allows version mismatch for some known System assemblies.
+                //     We are totally unsafe here.
+                if (result is null)
                 {
                     try
                     {
-                        result = Assembly.Load(name);
+                        result = Assembly.Load(assemblyName);
                     }
-                    catch (Exception ex) when (!ex.IsCritical())
+                    catch (Exception e) when (!e.IsCritical())
                     {
-                        Throw.SerializationException(Res.ReflectionCannotLoadAssembly(name), ex);
+                        try
+                        {
+                            result = Assembly.Load(name);
+                        }
+                        catch (Exception ex) when (!ex.IsCritical())
+                        {
+                            Throw.SerializationException(Res.ReflectionCannotLoadAssembly(name), ex);
+                        }
                     }
                 }
 
@@ -2678,7 +2693,7 @@ namespace KGySoft.Serialization.Binary
                             return types[0];
 
                         string message = types.Length == 0
-                            ? Res.BinarySerializationCannotResolveExpectedTypeSafe(typeName)
+                            ? SafeModeStrict ? Res.BinarySerializationCannotResolveExpectedTypeSafe(typeName) : Res.BinarySerializationCannotResolveExpectedTypeSafeLegacy(typeName)
                             : Res.BinarySerializationExpectedTypeOmittedAssemblyNameSafe(typeName);
                         Throw.SerializationException(message);
                     }
@@ -2689,10 +2704,10 @@ namespace KGySoft.Serialization.Binary
                         return result;
                 }
 
-                if (SafeMode)
+                if (SafeModeStrict || SafeModeLegacy && expectedTypes != null)
                 {
                     string message = assembly.StoredName == null
-                        ? Res.BinarySerializationCannotResolveExpectedTypeSafe(typeName)
+                        ? SafeModeStrict ? Res.BinarySerializationCannotResolveExpectedTypeSafe(typeName) : Res.BinarySerializationCannotResolveExpectedTypeSafeLegacy(typeName)
                         : Res.BinarySerializationCannotResolveExpectedTypeInAssemblySafe(typeName, assembly.StoredName);
                     Throw.SerializationException(message);
                 }

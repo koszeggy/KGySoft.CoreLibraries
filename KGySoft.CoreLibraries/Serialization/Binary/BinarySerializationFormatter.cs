@@ -180,8 +180,8 @@ namespace KGySoft.Serialization.Binary
     /// (e.g. <see cref="WeakAssemblySerializationBinder"/>, <see cref="CustomSerializerSurrogateSelector"/> or <see cref="NameInvariantSurrogateSelector"/>), still,
     /// not even they are allowed to be used when the <see cref="BinarySerializationOptions.SafeMode"/> option is enabled. It's because their safe mode just provide some not too strict general protection,
     /// instead of being able to filter a specific set of predefined types.</para>
-    /// <para>If you must disable <see cref="BinarySerializationOptions.SafeMode"/> for some reason, then use binary serialization in-process only, or apply some cryptographically secure encryption
-    /// to the serialization stream.</para></note>
+    /// <para>If you must disable <see cref="BinarySerializationOptions.SafeMode"/> for some reason, then consider to use at least the <see cref="BinarySerializationOptions.LegacySafeMode"/>
+    /// option, use binary serialization in-process only, or apply some cryptographically secure encryption to the serialization stream.</para></note>
     /// <para><see cref="BinarySerializationFormatter"/> aims to serialize objects effectively where the serialized data is almost always more compact than the results produced by the <see cref="BinaryFormatter"/> class.</para>
     /// <para><see cref="BinarySerializationFormatter"/> natively supports all the primitive types and a sort of other simple types, arrays, generic and non-generic collections.</para>
     /// </remarks>

@@ -195,10 +195,10 @@ namespace KGySoft
         /// <summary>Data length is too small.</summary>
         internal static string BinarySerializationDataLengthTooSmall => Get("BinarySerialization_DataLengthTooSmall");
 
-        /// <summary>In safe mode no serialization surrogate is allowed to be used.</summary>
+        /// <summary>In safe mode no serialization surrogate is allowed to be used. To use surrogate selectors in a less secure mode, you can use the LegacySafeMode option instead.</summary>
         internal static string BinarySerializationSurrogateNotAllowedInSafeMode => Get("BinarySerialization_SurrogateNotAllowedInSafeMode");
 
-        /// <summary>The specified serialization binder cannot be used in safe mode. Only ForwardedTypesSerializationBinder is allowed if its SafeMode property is set to true.</summary>
+        /// <summary>The specified serialization binder cannot be used in safe mode. Only ForwardedTypesSerializationBinder is allowed if its SafeMode property is set to true. To use binders in a less secure mode, you can enable the LegacySafeMode option instead.</summary>
         internal static string BinarySerializationBinderNotAllowedInSafeMode => Get("BinarySerialization_BinderNotAllowedInSafeMode");
 
         #endregion
@@ -675,6 +675,10 @@ namespace KGySoft
         /// <summary>Unexpected type name "{0}".
         /// In safe mode you should specify the expected types in the expectedCustomTypes parameter of the deserialization methods.</summary>
         internal static string BinarySerializationCannotResolveExpectedTypeSafe(string dataType) => Get("BinarySerialization_CannotResolveExpectedTypeSafeFormat", dataType);
+
+        /// <summary>Unexpected type name "{0}".
+        /// If the expectedCustomTypes parameter was specified in the deserialization methods in legacy safe mode, then it should contain every type referred by the serialization stream.</summary>
+        internal static string BinarySerializationCannotResolveExpectedTypeSafeLegacy(string dataType) => Get("BinarySerialization_CannotResolveExpectedTypeSafeLegacyFormat", dataType);
 
         /// <summary>Expected type name "{0}" must be unique in SafeMode if the serialization stream has omitted assembly names.</summary>
         internal static string BinarySerializationExpectedTypeOmittedAssemblyNameSafe(string dataType) => Get("BinarySerialization_ExpectedTypeOmittedAssemblyNameSafeFormat", dataType);

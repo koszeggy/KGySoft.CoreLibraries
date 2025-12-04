@@ -167,9 +167,8 @@ namespace KGySoft.Serialization.Binary
         TryUseSurrogateSelectorForAnyType = 1 << 11,
 
         /// <summary>
-        /// <para>If this flag is enabled, then it is ensured that no assembly loading is allowed during deserialization. All the assemblies that are referred
-        /// by the serialization stream must be preloaded before starting the deserialization. Non-natively supported types, whose assembly qualified names are
-        /// stored in the serialization stream must be explicitly declared as expected types in the deserialization methods, including <see langword="enum"/>s.</para>
+        /// <para>When this flag is enabled, the natively not supported types, whose assembly qualified names are stored in the serialization stream must be explicitly
+        /// declared as expected types in the deserialization methods, including <see langword="enum"/>s.</para>
         /// <para>Additionally, safe mode ensures that during the deserialization natively supported collections are allocated with limited capacity to prevent
         /// possible attacks that can cause <see cref="OutOfMemoryException"/>. Deserializing an invalid stream still may cause to throw a <see cref="SerializationException"/>.</para>
         /// <para>It also disallows deserializing the natively not supported non-serializable types, though this can be relaxed by enabling
@@ -180,7 +179,8 @@ namespace KGySoft.Serialization.Binary
         /// <note type="security">In safe mode it is not allowed to set the <see cref="BinarySerializationFormatter.SurrogateSelector"/>
         /// or <see cref="BinarySerializationFormatter.Binder"/> properties (except for using the <see cref="ForwardedTypesSerializationBinder"/> when
         /// its <see cref="ForwardedTypesSerializationBinder.SafeMode"/> is set to <see langword="true"/>)
-        /// because they could be used to weaken the security actions described above.</note>
+        /// because they could be used to weaken the security actions described above. These restrictions (along with the necessity of specifying expected types)
+        /// have been introduced in version v8.0. To revert to the old safe mode approach you can use the <see cref="LegacySafeMode"/> option (not recommended).</note>
         /// <para>This flag is considered on deserialization.</para>
         /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Enabled</strong></para>
         /// </summary>
@@ -198,14 +198,30 @@ namespace KGySoft.Serialization.Binary
         /// <para>Indicates that the default constructor should be called when it exists and no other constructor would be called on deserialization otherwise.</para>
         /// <para>This flag is considered on deserialization.</para>
         /// <para>This flag does not affect <see cref="IBinarySerializable"/> types, as their default constructor is called anyway if the special constructor does not exist.</para>
-        /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
         /// <note type="caution">The conventional formatter-based way for custom initialization is using serialization methods marked by the <see cref="OnDeserializingAttribute"/>
         /// or <see cref="OnDeserializedAttribute"/> attributes, or implementing the <see cref="IDeserializationCallback"/> interface. Using this flag may interfere with such custom initialization,
         /// as the serialization methods are still executed along with the regular initialization in the default constructor, unless the <see cref="IgnoreSerializationMethods"/> flags is also set.
         /// Also, the serialization method marked by <see cref="OnDeserializingAttribute"/> is still executed before the constructor call (if exists),
         /// maintaining the same initialization order as in case of using the special constructor. Please also note that the default constructor will not be called for types that implement <see cref="ISerializable"/>,
         /// unless <see cref="BinarySerializationFormatter.SurrogateSelector"/> is set, which prevents the special constructor to be called.</note>
+        /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
         /// </summary>
-        PreferInvokingDefaultConstructor = 1 << 14
+        PreferInvokingDefaultConstructor = 1 << 14,
+
+        /// <summary>
+        /// <para>The <see cref="SafeMode"/> option became more and more strict lately, tempting users to turn it off rather than to address the stricter
+        /// security requirements if deserialization broke after a version upgrade. This flag exists only to be able to use at least the earlier security settings
+        /// instead of going completely unsafe, but it is not recommended to prefer this option in a new project.</para>
+        /// <para>Using this flag instead of <see cref="SafeMode"/> allows setting the <see cref="BinarySerializationFormatter.SurrogateSelector"/>
+        /// and <see cref="BinarySerializationFormatter.Binder"/> properties to any custom instance.</para>
+        /// <para>In legacy safe mode it is not required to specify the expected types for deserialization (though when they are specified, they are
+        /// respected). With no specified expected types, this option only prevents loading assemblies during deserialization,
+        /// so all the assemblies that are referred by the serialization stream must be preloaded before starting the deserialization
+        /// (though this restriction can be worked around by setting a custom binder that still can load assemblies, for example).</para>
+        /// <para>All the other restrictions of <see cref="SafeMode"/> are effective in <see cref="LegacySafeMode"/> as well.
+        /// When both flags are set, the stricter <see cref="SafeMode"/> will be used.</para>
+        /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
+        /// </summary>
+        LegacySafeMode = 1 << 15,
     }
 }

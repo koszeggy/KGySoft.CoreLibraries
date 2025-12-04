@@ -195,7 +195,9 @@ namespace KGySoft.Serialization.Binary
             private protected bool IgnoreObjectChanges => (Options & BinarySerializationOptions.IgnoreObjectChanges) != BinarySerializationOptions.None;
             private protected bool TryUseSurrogateSelectorForAnyType => (Options & BinarySerializationOptions.TryUseSurrogateSelectorForAnyType) != BinarySerializationOptions.None;
             private protected bool IgnoreTypeForwardedFromAttribute => (Options & BinarySerializationOptions.IgnoreTypeForwardedFromAttribute) != BinarySerializationOptions.None;
-            private protected bool SafeMode => (Options & BinarySerializationOptions.SafeMode) != BinarySerializationOptions.None;
+            private protected bool SafeModeStrict => (Options & BinarySerializationOptions.SafeMode) != BinarySerializationOptions.None;
+            private protected bool SafeModeLegacy => (Options & BinarySerializationOptions.LegacySafeMode) != BinarySerializationOptions.None;
+            private protected bool SafeMode => (Options & (BinarySerializationOptions.SafeMode | BinarySerializationOptions.LegacySafeMode)) != BinarySerializationOptions.None;
             private protected bool AllowNonSerializableExpectedCustomTypes => (Options & BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes) != BinarySerializationOptions.None;
             private protected bool PreferInvokingDefaultCtor => (Options & BinarySerializationOptions.PreferInvokingDefaultConstructor) != BinarySerializationOptions.None;
 
@@ -208,6 +210,8 @@ namespace KGySoft.Serialization.Binary
             private protected SerializationManagerBase(StreamingContext context, BinarySerializationOptions options, SerializationBinder? binder, ISurrogateSelector? surrogateSelector)
             {
                 Options = options;
+                if (SafeModeStrict && SafeModeLegacy)
+                    Options &= ~BinarySerializationOptions.LegacySafeMode;
                 Context = context;
                 Binder = binder;
                 this.surrogateSelector = surrogateSelector;

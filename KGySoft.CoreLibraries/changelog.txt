@@ -36,6 +36,13 @@
 
 ! KGySoft.Serialization.Binary namespace:
 =========================================
++ BinarySerializationOptions enumeration:
+  + New LegacySafeMode flag: Allows reverting to the old safe mode used before v8.0.0. It has been added to be able
+    to choose at least some weaker safety instead of turning safe mode completely off for old projects, where
+    deserialization would break in safe mode after upgrading to v8.0.0 or later. It is not recommended to enable it
+    for new projects.
+  + New PreferInvokingDefaultConstructor flag: When enabled, the default constructor of a type is invoked during
+    deserialization if it has one, and no other constructor would be called otherwise.
 ! BinarySerializationFormatter class:
   ! Restricting more types in safe mode, even when they are specified as expected types.
   + Supporting types whose proper initialization requires a default constructor even during deserialization.
@@ -48,9 +55,6 @@
     * The default value of the options parameter is now None rather than CompactSerializationOfStructures. This may
       make the serialization output larger and the serialization time longer, but improves type compatibility across
       different architectures.
-+ BinarySerializationOptions enumeration:
-  + New PreferInvokingDefaultConstructor flag: When enabled, the default constructor of a type is invoked during
-    deserialization if it has one, and no other constructor would be called.
 
 ! KGySoft.Serialization.Xml namespace:
 ======================================
