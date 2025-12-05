@@ -552,11 +552,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures | XmlSerializationOptions.OmitCrcAttribute); // BinarySerializableStruct, NonSerializableStruct
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures | XmlSerializationOptions.OmitCrcAttribute); // BinarySerializableStruct, NonSerializableStruct
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, safeMode: false); // everything
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, safeMode: false); // every element
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, safeMode: XmlSafeMode.Medium); // everything
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, safeMode: XmlSafeMode.Medium); // every element
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback | XmlSerializationOptions.OmitCrcAttribute, safeMode: false); // everything
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback | XmlSerializationOptions.OmitCrcAttribute, safeMode: false); // every element
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback | XmlSerializationOptions.OmitCrcAttribute, safeMode: XmlSafeMode.Medium); // everything
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback | XmlSerializationOptions.OmitCrcAttribute, safeMode: XmlSafeMode.Medium); // every element
         }
 
         [Test]
@@ -1208,8 +1208,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 
             Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback),
                 "Serialization of collection \"KGySoft.CoreLibraries.UnitTests.Serialization.Xml.XmlSerializerTest+ReadOnlyCollectionWithoutInitCtorAndReadOnlyProperties\" is not supported with following options: \"RecursiveSerializationAsFallback\", because it does not implement IList, IDictionary or ICollection<T> interfaces and has no initializer constructor that can accept an array or list.");
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, safeMode: false);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, false, false);
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, safeMode: XmlSafeMode.Medium);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, false, XmlSafeMode.Medium);
         }
 
         [Test]
@@ -1361,8 +1361,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 new BlockingCollection<int> { 1, 2, 3 }, // no initializer constructor of array or list
             };
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, safeMode: false);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, false, false);
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, safeMode: XmlSafeMode.Medium);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, false, XmlSafeMode.Medium);
 #endif // !NET35
         }
 
@@ -1409,8 +1409,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             Assert.AreEqual(referenceObjects[0].IntProp.ToString(CultureInfo.InvariantCulture), xItems[0].Element(nameof(FullExtraComponent.IntProp))!.Value);
             Assert.AreEqual("0", xItems[1].Element(nameof(FullExtraComponent.IntProp))!.Value);
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, safeMode: false);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, safeMode: false);
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, safeMode: XmlSafeMode.Medium);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, safeMode: XmlSafeMode.Medium);
         }
 
         [Test]
@@ -1512,7 +1512,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             KGySerializeObject(testObj, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.IncludeRefProperties);
 
             // Binary: IncludeRefProperties is needed for content serialization
-            KGySerializeObject(testObj, XmlSerializationOptions.BinarySerializationAsFallback | XmlSerializationOptions.IncludeRefProperties, safeMode: false);
+            KGySerializeObject(testObj, XmlSerializationOptions.BinarySerializationAsFallback | XmlSerializationOptions.IncludeRefProperties, safeMode: XmlSafeMode.Medium);
         }
 #endif
 
@@ -1622,14 +1622,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 
             // 1.) by XElement
             if (!EnvironmentHelper.IsMono) // In Mono the array is simply allocated so no exception occurs
-                Throws<OutOfMemoryException>(() => XmlSerializer.Deserialize(xml));
+                Throws<OutOfMemoryException>(() => XmlSerializer.DeserializeUnsafe(xml));
             Throws<ArgumentException>(() => XmlSerializer.DeserializeSafe(xml), "Array items length mismatch. Expected items: 2147483647, found items: 3.");
+            Throws<ArgumentException>(() => XmlSerializer.Deserialize(xml), "Array items length mismatch. Expected items: 2147483647, found items: 3.");
 
             // 2.) by reader
             if (!EnvironmentHelper.IsMono) // In Mono the array is simply allocated so no exception occurs
             {
                 using var reader = XmlReader.Create(new StringReader(xml.ToString()), new XmlReaderSettings { CloseInput = true });
-                Throws<OutOfMemoryException>(() => XmlSerializer.Deserialize(reader));
+                Throws<OutOfMemoryException>(() => XmlSerializer.DeserializeUnsafe(reader));
             }
 
             using (var reader = XmlReader.Create(new StringReader(xml.ToString()), new XmlReaderSettings { CloseInput = true }))
@@ -1654,7 +1655,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 
             // 1.) by XElement
             if (!EnvironmentHelper.IsMono) // In Mono the list is simply allocated so no exception occurs
-                Throws<OutOfMemoryException>(() => XmlSerializer.Deserialize(xml));
+                Throws<OutOfMemoryException>(() => XmlSerializer.DeserializeUnsafe(xml));
             var list = XmlSerializer.DeserializeSafe<List<int>>(xml);
             AssertItemsEqual(obj, list);
 
@@ -1662,7 +1663,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             if (!EnvironmentHelper.IsMono) // In Mono the list is simply allocated so no exception occurs
             {
                 using var reader = XmlReader.Create(new StringReader(xml.ToString()), new XmlReaderSettings { CloseInput = true });
-                Throws<OutOfMemoryException>(() => XmlSerializer.Deserialize(reader));
+                Throws<OutOfMemoryException>(() => XmlSerializer.DeserializeUnsafe(reader));
             }
 
             using (var reader = XmlReader.Create(new StringReader(xml.ToString()), new XmlReaderSettings { CloseInput = true }))
@@ -1689,7 +1690,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             dataSet.Tables.Add(dataTable);
 
             SystemSerializeObject(dataSet);
-            KGySerializeObject(dataSet, XmlSerializationOptions.None, safeMode: false);
+            KGySerializeObject(dataSet, XmlSerializationOptions.None, safeMode: XmlSafeMode.Unsafe);
 
             // But throws an exception in SafeMode, even when expected types are specified
             var expectedTypes = new[] { typeof(DataSet), typeof(DataTable) };

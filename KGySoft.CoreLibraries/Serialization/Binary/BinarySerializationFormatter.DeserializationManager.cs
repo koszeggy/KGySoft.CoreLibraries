@@ -2635,12 +2635,21 @@ namespace KGySoft.Serialization.Binary
                 //     because if name is a forwarded one, it may be different from the actual FullName (e.g. may not contain the culture). We demand a matching version though.
                 var assemblyName = new AssemblyName(name);
                 result = Reflector.ResolveAssembly(assemblyName, ResolveAssemblyOptions.AllowPartialMatch);
-                bool identityMatches = result?.FullName == name || assemblyName.Version is not null && AssemblyResolver.IdentityMatches(assemblyName, result?.GetName(), false);
-                if (result is not null && !identityMatches)
+                if (result is not null)
                 {
-                    if (SafeModeLegacy)
-                        Throw.SerializationException(Res.BinarySerializationCannotResolveAssemblySafe(name));
-                    result = null;
+#if NETFRAMEWORK
+                    // GetName requires FileIOPermission under .NET Framework
+                    AssemblyName actualAsmName = new AssemblyName(result.FullName);
+#else
+                    AssemblyName actualAsmName = result.GetName();
+#endif
+                    bool identityMatches = result.FullName == name || assemblyName.Version is not null && AssemblyResolver.IdentityMatches(assemblyName, actualAsmName, false);
+                    if (!identityMatches)
+                    {
+                        if (SafeModeLegacy)
+                            Throw.SerializationException(Res.BinarySerializationCannotResolveAssemblySafe(name));
+                        result = null;
+                    }
                 }
 
                 // 2.) Trying to load assembly. Not using AssemblyResolver, because Assembly.Load allows version mismatch for some known System assemblies.

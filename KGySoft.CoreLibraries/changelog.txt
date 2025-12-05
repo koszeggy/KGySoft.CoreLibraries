@@ -6,7 +6,7 @@
 ===============================================================================
 
 ~~~~~~~~~~
-! v10.1.0:
+! v10.5.0:
 ~~~~~~~~~~
 
 + Assembly changes:
@@ -60,6 +60,9 @@
 ======================================
 ! XmlSerializer class:
   ! Restricting more types in safe mode, even when they are specified as expected types.
+  ! Deserialize/DeserializeContent methods now use a similar safety level as Deserialize[Content]Safe before v8.0.0.
+  + New DeserializeUnsafe/DeserializeContentUnsafe methods to provide the same functionality as the old
+    Deserialize/DeserializeContent methods.
   - Improving IXmlSerializer compatibility
 
 
@@ -88,7 +91,7 @@
   + New Encrypt overload with an auto-generated salt: It generates a random salt and returns it as an out parameter.
   + New Decrypt overload with byte[] salt parameter: It allows decrypting data encrypted with the new overload.
 ! Enum<TEnum> class:
-  ! The GetUnderlyingValues method filtered out duplicate underlying values, unless .NET 7.0 or later was tergeted.
+  ! The GetUnderlyingValues method filtered out duplicate underlying values, unless .NET 7.0 or later was targeted.
     Now it returns all underlying values including duplicates in all platform targets. This is actually a fix, but
     it can be considered as a breaking change because it now behaves differently when targeting .NET 6.0 or below.
   + New TryFormat overloads to support writing into span of UTF-8 bytes (.NET Core 2.1/.NET Standard 2.1 and above)

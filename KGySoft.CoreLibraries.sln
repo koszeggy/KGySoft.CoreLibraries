@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.11.35201.85
+# Visual Studio Version 18
+VisualStudioVersion = 18.0.11222.15 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KGySoft.CoreLibraries", "KGySoft.CoreLibraries\KGySoft.CoreLibraries.csproj", "{D14B4B4A-86C4-45AD-B6F8-86CD878199E0}"
 EndProject
@@ -10,6 +10,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{CF90328C-A978-4484-8C1B-69A530662BF7}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
+		en-US_User.dic = en-US_User.dic
+		IgnoredWords.dic = IgnoredWords.dic
 		KGySoft.snk = KGySoft.snk
 		LICENSE = LICENSE
 		README.md = README.md

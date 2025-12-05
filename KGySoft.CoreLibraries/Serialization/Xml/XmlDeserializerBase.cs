@@ -218,7 +218,7 @@ namespace KGySoft.Serialization.Xml
         #region Fields
 
         #region Static Fields
-        
+
         private static readonly StringKeyedDictionary<ICollection<Type>> unsafeMembers = new StringKeyedDictionary<ICollection<Type>>(2)
         {
             ["Capacity"] = new HashSet<Type> { Reflector.ListGenType, typeof(CircularList<>), typeof(ArrayList), typeof(SortedList), typeof(SortedList<,>), typeof(CircularSortedList<,>) },
@@ -294,7 +294,7 @@ namespace KGySoft.Serialization.Xml
 
         #region Instance Properties
 
-        private protected bool SafeMode { get; }
+        private protected XmlSafeMode SafeMode { get; }
         private protected Type? RootType { get; }
         private protected IEnumerable<Type>? ExpectedTypes => expectedTypes?.Values;
 
@@ -304,7 +304,7 @@ namespace KGySoft.Serialization.Xml
 
         #region Constructors
 
-        private protected XmlDeserializerBase(bool safeMode, IEnumerable<Type>? expectedCustomTypes, Type? rootType)
+        private protected XmlDeserializerBase(XmlSafeMode safeMode, IEnumerable<Type>? expectedCustomTypes, Type? rootType)
         {
             RootType = rootType == Reflector.ObjectType ? null : rootType;
             SafeMode = safeMode;
@@ -765,7 +765,7 @@ namespace KGySoft.Serialization.Xml
             // Here allowing Reflector.ResolveType because type converters cannot be misused by an input stream. Still, allowing assembly loading in non-safe mode only.
             Attribute[] attrs = Reflector.GetAttributes(member, typeof(TypeConverterAttribute), true);
             if (attrs.Length > 0 && attrs[0] is TypeConverterAttribute convAttr
-                && Reflector.ResolveType(convAttr.ConverterTypeName, SafeMode ? ResolveTypeOptions.AllowPartialAssemblyMatch : ResolveTypeOptions.AllowPartialAssemblyMatch | ResolveTypeOptions.TryToLoadAssemblies) is Type convType)
+                && Reflector.ResolveType(convAttr.ConverterTypeName, SafeMode == XmlSafeMode.Unsafe ? ResolveTypeOptions.AllowPartialAssemblyMatch | ResolveTypeOptions.TryToLoadAssemblies : ResolveTypeOptions.AllowPartialAssemblyMatch) is Type convType)
             {
                 ConstructorInfo? ctor = convType.GetConstructor([Reflector.Type]);
                 object[] ctorParams = [memberType];
@@ -792,7 +792,7 @@ namespace KGySoft.Serialization.Xml
 
         private protected bool SkipMember(MemberInfo member)
         {
-            if (!SafeMode || member is not PropertyInfo || !unsafeMembers.TryGetValue(member.Name, out ICollection<Type>? types))
+            if (SafeMode == XmlSafeMode.Unsafe || member is not PropertyInfo || !unsafeMembers.TryGetValue(member.Name, out ICollection<Type>? types))
                 return false;
 
             // Skipping known unsafe members in SafeMode, which do not make functional difference anyway
@@ -810,22 +810,22 @@ namespace KGySoft.Serialization.Xml
             if (resolvedTypes.TryGetValue(typeName, out Type? result))
                 return result;
 
-            // Expected types or fallback in non-safe mode. In SafeMode flags are irrelevant because DoResolveType throws an exception on failure
+            // Expected types or fallback in non-strict safe modes. In strict mode flags are irrelevant because DoResolveType throws an exception on failure
             // We could use ThrowError in safe mode but this way we can customize the message of the ReflectionException.
             // If there are no expected types in unsafe mode we don't specify the resolver to use the more permanent cache.
-            result = TypeResolver.ResolveType(typeName, SafeMode || expectedTypes != null ? DoResolveType : null,
-                SafeMode ? ResolveTypeOptions.None : ResolveTypeOptions.AllowPartialAssemblyMatch | ResolveTypeOptions.TryToLoadAssemblies);
+            result = TypeResolver.ResolveType(typeName, SafeMode == XmlSafeMode.Strict || expectedTypes != null ? DoResolveType : null,
+                SafeMode == XmlSafeMode.Unsafe ? ResolveTypeOptions.AllowPartialAssemblyMatch | ResolveTypeOptions.TryToLoadAssemblies : ResolveTypeOptions.None);
 
             if (result is null)
             {
-                if (SafeMode)
+                if (SafeMode == XmlSafeMode.Strict)
                     Throw.InvalidOperationException<Type>(Res.XmlSerializationCannotResolveTypeSafe(typeName));
                 else
                     Throw.ReflectionException<Type>(Res.XmlSerializationCannotResolveType(typeName));
             }
 
             // Some unsafe types are XML-serializable (e.g. DataSet/DataTable), so we must check the result in SafeMode
-            if (SafeMode && SerializationHelper.IsUnsafeType(result))
+            if (SafeMode != XmlSafeMode.Unsafe && SerializationHelper.IsUnsafeType(result))
                 Throw.InvalidOperationException(Res.SerializationUnsafeType(result));
 
             resolvedTypes[typeName] = result;
@@ -842,6 +842,7 @@ namespace KGySoft.Serialization.Xml
         /// </summary>
         private Type? DoResolveType(AssemblyName? asmName, string typeName)
         {
+            Debug.Assert(SafeMode == XmlSafeMode.Strict, "If DoResolveType is used non-strict modes as well, review the SafeMode usages below.");
             if (expectedTypes?.TryGetValue(typeName, out Type? result) == true
                 || SerializationHelper.TryGetKnownSimpleType(typeName, out result)
                 || KnownCollectionTypes.TryGetValue(typeName, out result))
@@ -849,13 +850,15 @@ namespace KGySoft.Serialization.Xml
                 if (asmName == null)
                     return result;
 
+                // Assembly is also specified: comparing it to the obtained result.
+                // (SafeMode usage below reflects how it should be considered when this method was used in non-strict modes as well)
 #if NETFRAMEWORK
                 // GetName requires FileIOPermission under .NET Framework
                 AssemblyName actualAsmName = new AssemblyName(result.Assembly.FullName!);
 #else
                 AssemblyName actualAsmName = result.Assembly.GetName();
 #endif
-                if (AssemblyResolver.IdentityMatches(actualAsmName, asmName, !SafeMode))
+                if (AssemblyResolver.IdentityMatches(actualAsmName, asmName, SafeMode != XmlSafeMode.Strict))
                     return result;
 
                 var legacyName = AssemblyResolver.GetForwardedAssemblyName(result);
@@ -867,7 +870,7 @@ namespace KGySoft.Serialization.Xml
             }
 
             // Letting TypeResolver do the resolve according to the options
-            if (!SafeMode)
+            if (SafeMode != XmlSafeMode.Strict)
                 return null;
 
             // Will be suppressed by TypeResolver but the caller will throw a customized exception for null

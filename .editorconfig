@@ -213,3 +213,13 @@ dotnet_style_prefer_is_null_check_over_reference_equality_method = true:suggesti
 dotnet_style_prefer_auto_properties = true:silent
 dotnet_style_object_initializer = true:suggestion
 dotnet_style_collection_initializer = true:suggestion
+
+[*]
+vsspell_section_id = dd753223c3e34a30b85bd9bbffb9f174
+vsspell_additional_dictionary_folders_dd753223c3e34a30b85bd9bbffb9f174 = .\
+vsspell_dictionary_languages_dd753223c3e34a30b85bd9bbffb9f174 = en-US
+vsspell_ignored_words_dd753223c3e34a30b85bd9bbffb9f174 = File:IgnoredWords.dic
+
+# VSSpell001: Spell Check -- ISSUE: VSSpellCheck ignores use dictionary for members, but configuring silent does not show possible issues even in the file.
+# Workaround: Meaningful words that are in member names should be added to IgnoredWords.dic as well.
+#dotnet_diagnostic.VSSpell001.severity = silent

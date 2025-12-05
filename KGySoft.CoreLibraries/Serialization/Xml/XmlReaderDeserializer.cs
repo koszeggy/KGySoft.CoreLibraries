@@ -61,7 +61,7 @@ namespace KGySoft.Serialization.Xml
 
         #region Constructors
 
-        internal XmlReaderDeserializer(bool safeMode, IEnumerable<Type>? expectedCustomTypes = null, Type? rootType = null)
+        internal XmlReaderDeserializer(XmlSafeMode safeMode, IEnumerable<Type>? expectedCustomTypes = null, Type? rootType = null)
             : base(safeMode, expectedCustomTypes, rootType)
         {
         }
@@ -405,7 +405,14 @@ namespace KGySoft.Serialization.Xml
                         Throw.ArgumentException(Res.XmlSerializationCrcError);
                 }
 
-                ctx.Result = BinarySerializer.Deserialize(data, 0, SafeMode ? BinarySerializationOptions.SafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes : BinarySerializationOptions.None, ExpectedTypes);
+                var binaryOptions = SafeMode switch
+                {
+                    XmlSafeMode.Unsafe => BinarySerializationOptions.None,
+                    XmlSafeMode.Medium => BinarySerializationOptions.LegacySafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes,
+                    _ => BinarySerializationOptions.SafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes
+                };
+
+                ctx.Result = BinarySerializer.Deserialize(data, 0, binaryOptions, ExpectedTypes);
                 ReadToNodeType(ctx.Reader, XmlNodeType.EndElement);
             }
 
@@ -571,7 +578,7 @@ namespace KGySoft.Serialization.Xml
         /// </summary>
         private Array DeserializeArray(Array? array, Type? elementType, XmlReader reader, bool canRecreateArray)
         {
-            var builder = new ArrayBuilder(array, elementType, reader[XmlSerializer.AttributeLength], reader[XmlSerializer.AttributeDim], canRecreateArray, SafeMode);
+            var builder = new ArrayBuilder(array, elementType, reader[XmlSerializer.AttributeLength], reader[XmlSerializer.AttributeDim], canRecreateArray, SafeMode != XmlSafeMode.Unsafe);
             string? attrCrc = reader[XmlSerializer.AttributeCrc];
             uint? crc = null;
             if (attrCrc != null)
@@ -630,7 +637,7 @@ namespace KGySoft.Serialization.Xml
         [SecuritySafeCritical]
         private void DeserializeStructBinary(ref TryDeserializeObjectContext context)
         {
-            if (SafeMode && context.Type!.IsManaged())
+            if (SafeMode != XmlSafeMode.Unsafe && context.Type!.IsManaged())
                 Throw.ArgumentException(Res.XmlSerializationValueTypeContainsReferenceSafe(context.Type!));
             string? attrCrc = context.Reader[XmlSerializer.AttributeCrc];
             ReadToNodeType(context.Reader, XmlNodeType.Text, XmlNodeType.EndElement);

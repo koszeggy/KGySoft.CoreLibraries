@@ -62,7 +62,7 @@ namespace KGySoft.Serialization.Xml
 
         #region Constructors
 
-        internal XElementDeserializer(bool safeMode, IEnumerable<Type>? expectedCustomTypes = null, Type? rootType = null)
+        internal XElementDeserializer(XmlSafeMode safeMode, IEnumerable<Type>? expectedCustomTypes = null, Type? rootType = null)
             : base(safeMode, expectedCustomTypes, rootType)
         {
         }
@@ -328,7 +328,14 @@ namespace KGySoft.Serialization.Xml
                         Throw.ArgumentException(Res.XmlSerializationCrcError);
                 }
 
-                ctx.Result = BinarySerializer.Deserialize(data, 0, SafeMode ? BinarySerializationOptions.SafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes : BinarySerializationOptions.None, ExpectedTypes);
+                var binaryOptions = SafeMode switch
+                {
+                    XmlSafeMode.Unsafe => BinarySerializationOptions.None,
+                    XmlSafeMode.Medium => BinarySerializationOptions.LegacySafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes,
+                    _ => BinarySerializationOptions.SafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes
+                };
+
+                ctx.Result = BinarySerializer.Deserialize(data, 0, binaryOptions, ExpectedTypes);
             }
 
             bool TryDeserializeComplexObject(ref TryDeserializeObjectContext ctx)
@@ -493,7 +500,7 @@ namespace KGySoft.Serialization.Xml
         {
             string? attrLength = element.Attribute(XmlSerializer.AttributeLength)?.Value;
             string? attrDim = element.Attribute(XmlSerializer.AttributeDim)?.Value;
-            var builder = new ArrayBuilder(array, elementType, attrLength, attrDim, canRecreateArray, SafeMode);
+            var builder = new ArrayBuilder(array, elementType, attrLength, attrDim, canRecreateArray, SafeMode != XmlSafeMode.Unsafe);
 
             // has no elements: primitive array (can be restored by BlockCopy)
             if (builder.ElementType.IsPrimitive && !element.HasElements)
@@ -537,7 +544,7 @@ namespace KGySoft.Serialization.Xml
         [SecuritySafeCritical]
         private void DeserializeStructBinary(ref TryDeserializeObjectContext ctx)
         {
-            if (SafeMode && ctx.Type!.IsManaged())
+            if (SafeMode != XmlSafeMode.Unsafe && ctx.Type!.IsManaged())
                 Throw.ArgumentException(Res.XmlSerializationValueTypeContainsReferenceSafe(ctx.Type!));
             byte[] data = Convert.FromBase64String(ctx.Element.Value);
             XAttribute? attrCrc = ctx.Element.Attribute(XmlSerializer.AttributeCrc);
