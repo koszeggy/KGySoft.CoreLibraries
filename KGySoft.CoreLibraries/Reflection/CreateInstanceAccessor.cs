@@ -590,7 +590,7 @@ namespace KGySoft.Reflection
                 {
                     if (!ParameterTypes[i].CanAcceptValue(parameters[i]))
                     {
-                        Type paramType = ParameterTypes[i].IsPointer ? typeof(IntPtr) : ParameterTypes[i];
+                        Type paramType = ParameterTypes[i].IsPointer() ? typeof(IntPtr) : ParameterTypes[i];
                         if (anyParams)
                             Throw.ArgumentException(Argument.parameters, Res.ElementNotAnInstanceOfType(i, paramType));
                         else

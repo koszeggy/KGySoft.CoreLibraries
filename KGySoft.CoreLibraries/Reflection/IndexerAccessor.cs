@@ -286,10 +286,10 @@ namespace KGySoft.Reflection
             bool isByRef = Property.PropertyType.IsByRef;
             bool isValueType = declaringType.IsValueType;
             Type propertyType = isByRef ? Property.PropertyType.GetElementType()! : Property.PropertyType;
-            if (propertyType.IsPointer)
+            if (propertyType.IsPointer())
                 propertyType = typeof(IntPtr);
             Type indexType = ParameterTypes[0];
-            if (indexType.IsPointer)
+            if (indexType.IsPointer())
                 indexType = typeof(IntPtr);
             Type delegateType = (isValueType ? typeof(ValueTypeAction<,,>) : typeof(ReferenceTypeAction<,,>))
                 .GetGenericType(declaringType, propertyType, indexType);
@@ -366,10 +366,10 @@ namespace KGySoft.Reflection
             bool isValueType = declaringType.IsValueType;
             bool isRefReturn = Property.PropertyType.IsByRef;
             Type returnType = isRefReturn ? Property.PropertyType.GetElementType()! : Property.PropertyType;
-            if (returnType.IsPointer)
+            if (returnType.IsPointer())
                 returnType = typeof(IntPtr);
             Type indexType = ParameterTypes[0];
-            if (indexType.IsPointer)
+            if (indexType.IsPointer())
                 indexType = typeof(IntPtr);
             Type delegateType = (isValueType ? typeof(ValueTypeFunction<,,>) : typeof(ReferenceTypeFunction<,,>))
                 .GetGenericType(declaringType, indexType, returnType);
@@ -430,7 +430,7 @@ namespace KGySoft.Reflection
             Debug.Assert(declaringType != null);
 
             Type propertyType = getterMethod.ReturnType.GetElementType()!;
-            bool isPointer = propertyType.IsPointer;
+            bool isPointer = propertyType.IsPointer();
             Type valueParameterType = isPointer ? typeof(IntPtr) : propertyType;
 
             Type[] parameterTypes =
@@ -440,7 +440,7 @@ namespace KGySoft.Reflection
                 generic switch // indices/index
                 {
                     false => Reflector.ObjectType,
-                    true => ParameterTypes[0].IsPointer ? typeof(IntPtr) : ParameterTypes[0],
+                    true => ParameterTypes[0].IsPointer() ? typeof(IntPtr) : ParameterTypes[0],
                     null => typeof(object[])
                 }
             ];
@@ -462,7 +462,7 @@ namespace KGySoft.Reflection
                 {
                     Debug.Assert(!ParameterTypes[i].IsByRef, "Indexer parameters are never passed by reference");
                     Type paramType = ParameterTypes[i];
-                    if (paramType.IsPointer)
+                    if (paramType.IsPointer())
                         paramType = typeof(IntPtr);
                     ilGenerator.Emit(OpCodes.Ldarg_2); // loading 2nd argument (indices)
                     ilGenerator.Emit(OpCodes.Ldc_I4, i); // loading index of processed argument
@@ -474,7 +474,7 @@ namespace KGySoft.Reflection
             {
                 ilGenerator.Emit(OpCodes.Ldarg_2);
                 Type indexType = ParameterTypes[0];
-                if (indexType.IsPointer)
+                if (indexType.IsPointer())
                     indexType = typeof(IntPtr);
                 if (generic == false)
                     ilGenerator.Emit(indexType.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, indexType);

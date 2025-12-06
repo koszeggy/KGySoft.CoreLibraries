@@ -767,7 +767,7 @@ namespace KGySoft.Reflection
             {
                 bool isByRef = Property.PropertyType.IsByRef;
                 Type propertyType = isByRef ? Property.PropertyType.GetElementType()! : Property.PropertyType;
-                if (propertyType.IsPointer)
+                if (propertyType.IsPointer())
                     propertyType = typeof(IntPtr);
 
                 if (!propertyType.CanAcceptValue(value) || isByRef && value == null && propertyType.IsValueType)
@@ -802,7 +802,7 @@ namespace KGySoft.Reflection
                     if (!ParameterTypes[i].CanAcceptValue(indexParameters[i]))
                     {
                         Type paramType = ParameterTypes[i];
-                        if (paramType.IsPointer)
+                        if (paramType.IsPointer())
                             paramType = typeof(IntPtr);
                         if (anyParams)
                             Throw.ArgumentException(Argument.indexParameters, Res.ElementNotAnInstanceOfType(i, paramType));

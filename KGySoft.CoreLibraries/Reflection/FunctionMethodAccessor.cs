@@ -198,7 +198,7 @@ namespace KGySoft.Reflection
 
             bool isByRef = method.ReturnType.IsByRef;
             Type returnType = isByRef ? method.ReturnType.GetElementType()! : method.ReturnType;
-            if (returnType.IsPointer)
+            if (returnType.IsPointer())
                 returnType = typeof(IntPtr);
 
             Type delegateType;

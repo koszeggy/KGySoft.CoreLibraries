@@ -249,6 +249,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             #region Static Fields
 
             public static void* StaticField;
+            public static delegate*<string, void> StaticFunctionPointerField;
 
             #endregion
 
@@ -257,6 +258,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             public readonly void* ReadOnlyInstanceField;
 
             public void* InstanceField;
+            public delegate*<string, void> InstanceFunctionPointerField;
 
             #endregion
 
@@ -269,6 +271,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             #region Static Properties
 
             public static void* StaticProperty { get; set; }
+            public static delegate*<string, void> StaticFunctionPointerProperty { get; set; }
             public static ref void* StaticRefProperty => ref StaticField;
             public static ref readonly void* StaticRefReadonlyProperty => ref StaticField;
 
@@ -277,6 +280,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             #region Instance Properties
 
             public void* InstanceProperty { get; set; }
+            public delegate*<string, void> InstanceFunctionPointerProperty { get; set; }
             public ref void* RefInstanceProperty => ref InstanceField;
             public ref readonly void* RefReadonlyProperty => ref ReadOnlyInstanceField;
 
@@ -342,10 +346,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             #region Static Methods
 
-            public static void StaticTestAction(void* ptr)
+            public static void StaticTestAction(void* ptr, delegate*<string, void> funcPtr)
             {
-                Console.WriteLine($"{nameof(UnsafeTestClass)}.{nameof(StaticTestAction)}({(IntPtr)ptr}) invoked");
+                Console.WriteLine($"{nameof(UnsafeTestClass)}.{nameof(StaticTestAction)}({(IntPtr)ptr}, {(IntPtr)funcPtr}) invoked");
                 StaticProperty = ptr;
+                StaticFunctionPointerField = funcPtr;
             }
 
             public static void StaticComplexTestAction(void* ptr, int* intPtr, out int* outIntPtr, ref void* refPtr)
@@ -769,7 +774,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             #region Instance Methods
 
-            public void TestAction(void* ptr)
+            public void TestAction(void* ptr, delegate*<string, void> funcPtr)
             {
                 Console.WriteLine($"{nameof(UnsafeTestStruct)}.{nameof(TestAction)}({(IntPtr)ptr}) invoked");
                 InstanceProperty = (int*)ptr;
@@ -1576,50 +1581,64 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Type testType = typeof(UnsafeTestClass);
             MethodInfo mi = testType.GetMethod(nameof(UnsafeTestClass.StaticTestAction));
             MethodAccessor accessor = MethodAccessor.GetAccessor(mi);
-            var arg = new IntPtr(1);
-            object[] args = [arg];
+            var arg1 = new IntPtr(1);
+            IntPtr arg2 = (IntPtr)(delegate*<string, void>)&Console.WriteLine;
+            object[] args = [arg1, arg2];
 
             Console.Write("System Reflection...");
             object[] parameters = (object[])args.Clone();
             mi.Invoke(null, parameters);
-            Assert.AreEqual(arg, (IntPtr)UnsafeTestClass.StaticProperty);
+            Assert.AreEqual(arg1, (IntPtr)UnsafeTestClass.StaticProperty);
+            Assert.AreEqual(arg2, (IntPtr)UnsafeTestClass.StaticFunctionPointerField);
 
             UnsafeTestClass.StaticProperty = null;
+            UnsafeTestClass.StaticFunctionPointerField = null;
             Console.Write("Method Accessor General...");
             parameters = (object[])args.Clone();
             MethodAccessor.GetAccessor(mi).Invoke(null, parameters);
-            Assert.AreEqual(arg, (IntPtr)UnsafeTestClass.StaticProperty);
-            Throws<ArgumentException>(() => accessor.Invoke(null, [1]), Res.ElementNotAnInstanceOfType(0, typeof(IntPtr)));
+            Assert.AreEqual(arg1, (IntPtr)UnsafeTestClass.StaticProperty);
+            Assert.AreEqual(arg2, (IntPtr)UnsafeTestClass.StaticFunctionPointerField);
+            Throws<ArgumentException>(() => accessor.Invoke(null, [1, 2]), Res.ElementNotAnInstanceOfType(0, typeof(IntPtr)));
 
             UnsafeTestClass.StaticProperty = null;
+            UnsafeTestClass.StaticFunctionPointerField = null;
             Console.Write("Method Accessor NonGeneric...");
-            MethodAccessor.GetAccessor(mi).Invoke(null, arg);
-            Assert.AreEqual(arg, (IntPtr)UnsafeTestClass.StaticProperty);
-            Throws<ArgumentException>(() => accessor.Invoke(null, 1), Res.NotAnInstanceOfType(typeof(IntPtr)));
+            MethodAccessor.GetAccessor(mi).Invoke(null, arg1, arg2);
+            Assert.AreEqual(arg1, (IntPtr)UnsafeTestClass.StaticProperty);
+            Assert.AreEqual(arg2, (IntPtr)UnsafeTestClass.StaticFunctionPointerField);
+            Throws<ArgumentException>(() => accessor.Invoke(null, 1, 2), Res.NotAnInstanceOfType(typeof(IntPtr)));
 
             UnsafeTestClass.StaticProperty = null;
+            UnsafeTestClass.StaticFunctionPointerField = null;
             Console.Write("Method Accessor Generic...");
-            accessor.InvokeStaticAction(arg);
-            Assert.AreEqual(arg, (IntPtr)UnsafeTestClass.StaticProperty);
-            Throws<ArgumentException>(() => accessor.InvokeStaticAction(1), Res.ReflectionCannotInvokeMethodGeneric(nameof(UnsafeTestClass.StaticTestAction), mi.DeclaringType));
+            accessor.InvokeStaticAction(arg1, arg2);
+            Assert.AreEqual(arg1, (IntPtr)UnsafeTestClass.StaticProperty);
+            Assert.AreEqual(arg2, (IntPtr)UnsafeTestClass.StaticFunctionPointerField);
+            Throws<ArgumentException>(() => accessor.InvokeStaticAction(1, 2), Res.ReflectionCannotInvokeMethodGeneric(nameof(UnsafeTestClass.StaticTestAction), mi.DeclaringType));
 
             UnsafeTestClass.StaticProperty = null;
+            UnsafeTestClass.StaticFunctionPointerField = null;
             Console.Write("Reflector (by MethodInfo)...");
             parameters = (object[])args.Clone();
             Reflector.InvokeMethod(null, mi, parameters);
-            Assert.AreEqual(arg, (IntPtr)UnsafeTestClass.StaticProperty);
+            Assert.AreEqual(arg1, (IntPtr)UnsafeTestClass.StaticProperty);
+            Assert.AreEqual(arg2, (IntPtr)UnsafeTestClass.StaticFunctionPointerField);
 
             UnsafeTestClass.StaticProperty = null;
+            UnsafeTestClass.StaticFunctionPointerField = null;
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
             Reflector.InvokeMethod(testType, nameof(UnsafeTestClass.StaticTestAction), parameters);
-            Assert.AreEqual(arg, (IntPtr)UnsafeTestClass.StaticProperty);
+            Assert.AreEqual(arg1, (IntPtr)UnsafeTestClass.StaticProperty);
+            Assert.AreEqual(arg2, (IntPtr)UnsafeTestClass.StaticFunctionPointerField);
 
             UnsafeTestClass.StaticProperty = null;
+            UnsafeTestClass.StaticFunctionPointerField = null;
             Console.Write("Reflector (by name, ignore case)...");
             parameters = (object[])args.Clone();
             Reflector.InvokeMethod(testType, nameof(UnsafeTestClass.StaticTestAction).ToLowerInvariant(), true, parameters);
-            Assert.AreEqual(arg, (IntPtr)UnsafeTestClass.StaticProperty);
+            Assert.AreEqual(arg1, (IntPtr)UnsafeTestClass.StaticProperty);
+            Assert.AreEqual(arg2, (IntPtr)UnsafeTestClass.StaticFunctionPointerField);
         }
 
         [Test]
@@ -4238,6 +4257,60 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         }
 
         [Test]
+        public unsafe void ClassInstanceFunctionPointerPropertyAccessUnsafe()
+        {
+            object test = new UnsafeTestClass(null);
+            PropertyInfo pi = test.GetType().GetProperty(nameof(UnsafeTestClass.InstanceFunctionPointerProperty));
+            PropertyAccessor accessor = PropertyAccessor.GetAccessor(pi);
+            object result;
+            object value = (IntPtr)(delegate*<string, void>)&Console.WriteLine;
+
+            Console.Write("System Reflection...");
+            pi.SetValue(test, value, null);
+            result = (IntPtr)pi.GetValue(test, null);
+            Assert.AreEqual(value, result);
+
+            test = new UnsafeTestClass(null);
+            Console.Write("Property Accessor General...");
+            accessor.Set(test, value, Reflector.EmptyObjects);
+            result = accessor.Get(test, Reflector.EmptyObjects);
+            Assert.AreEqual(value, result);
+            Throws<ArgumentException>(() => accessor.Set(test, 1, Reflector.EmptyObjects), Res.NotAnInstanceOfType(value.GetType()));
+
+            test = new UnsafeTestClass(null);
+            Console.Write("Property Accessor NonGeneric...");
+            accessor.Set(test, value);
+            result = accessor.Get(test);
+            Assert.AreEqual(value, result);
+            Throws<ArgumentException>(() => accessor.Set(test, 1), Res.NotAnInstanceOfType(value.GetType()));
+
+            test = new UnsafeTestClass(null);
+            Console.Write("Property Accessor Generic...");
+            accessor.SetInstanceValue((UnsafeTestClass)test, (IntPtr)value);
+            result = accessor.GetInstanceValue<UnsafeTestClass, IntPtr>((UnsafeTestClass)test);
+            Assert.AreEqual(value, result);
+            Throws<ArgumentException>(() => accessor.SetInstanceValue((UnsafeTestClass)test, 1), Res.ReflectionCannotInvokePropertyGeneric(nameof(UnsafeTestClass.InstanceFunctionPointerProperty), pi.DeclaringType!));
+            Throws<ArgumentException>(() => accessor.GetInstanceValue<UnsafeTestClass, int>((UnsafeTestClass)test), Res.ReflectionCannotInvokePropertyGeneric(nameof(UnsafeTestClass.InstanceFunctionPointerProperty), pi.DeclaringType!));
+
+            test = new UnsafeTestClass(null);
+            Console.Write("Reflector (by PropertyInfo)...");
+            Reflector.SetProperty(test, pi, value);
+            result = Reflector.GetProperty(test, pi);
+            Assert.AreEqual(value, result);
+            Throws<ArgumentException>(() => Reflector.SetProperty(test, pi, 1), Res.NotAnInstanceOfType(value.GetType()));
+
+            test = new UnsafeTestClass(null);
+            Console.Write("Reflector (by name)...");
+            Reflector.SetProperty(test, nameof(UnsafeTestClass.InstanceFunctionPointerProperty), value);
+            result = Reflector.GetProperty(test, nameof(UnsafeTestClass.InstanceFunctionPointerProperty));
+            Assert.AreEqual(value, result);
+            Reflector.SetProperty(test, nameof(UnsafeTestClass.InstanceFunctionPointerProperty).ToLowerInvariant(), true, value);
+            result = Reflector.GetProperty(test, nameof(UnsafeTestClass.InstanceFunctionPointerProperty).ToLowerInvariant(), true);
+            Assert.AreEqual(value, result);
+            Throws<ArgumentException>(() => Reflector.SetProperty(test, nameof(UnsafeTestClass.InstanceFunctionPointerProperty), 1), Res.NotAnInstanceOfType(value.GetType()));
+        }
+
+        [Test]
         public unsafe void ClassInstanceRefPropertyAccessUnsafe()
         {
             var test = new UnsafeTestClass(null);
@@ -4458,6 +4531,60 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             result = Reflector.GetProperty(testType, nameof(UnsafeTestClass.StaticProperty).ToLowerInvariant(), true);
             Assert.AreEqual(value, result);
             Throws<ArgumentException>(() => Reflector.SetProperty(testType, nameof(UnsafeTestClass.StaticProperty), 1), Res.NotAnInstanceOfType(value.GetType()));
+        }
+
+        [Test]
+        public unsafe void ClassStaticFunctionPointerPropertyAccessUnsafe()
+        {
+            Type testType = typeof(UnsafeTestClass);
+            PropertyInfo pi = testType.GetProperty(nameof(UnsafeTestClass.StaticFunctionPointerProperty));
+            PropertyAccessor accessor = PropertyAccessor.GetAccessor(pi);
+            object result;
+            object value = (IntPtr)(delegate*<string, void>)&Console.WriteLine;
+
+            Console.Write("System Reflection...");
+            pi.SetValue(null, value, null);
+            result = (IntPtr)pi.GetValue(null, null);
+            Assert.AreEqual(value, result);
+
+            UnsafeTestClass.StaticFunctionPointerProperty = null;
+            Console.Write("Property Accessor General...");
+            accessor.Set(null, value, Reflector.EmptyObjects);
+            result = accessor.Get(null, Reflector.EmptyObjects);
+            Assert.AreEqual(value, result);
+            Throws<ArgumentException>(() => accessor.Set(null, 1, Reflector.EmptyObjects), Res.NotAnInstanceOfType(value.GetType()));
+
+            UnsafeTestClass.StaticFunctionPointerProperty = null;
+            Console.Write("Property Accessor NonGeneric...");
+            accessor.Set(null, value);
+            result = accessor.Get(null);
+            Assert.AreEqual(value, result);
+            Throws<ArgumentException>(() => accessor.Set(null, 1), Res.NotAnInstanceOfType(value.GetType()));
+
+            UnsafeTestClass.StaticFunctionPointerProperty = null;
+            Console.Write("Property Accessor Generic...");
+            accessor.SetStaticValue((IntPtr)value);
+            result = accessor.GetStaticValue<IntPtr>();
+            Assert.AreEqual(value, result);
+            Throws<ArgumentException>(() => accessor.SetStaticValue(1), Res.ReflectionCannotInvokePropertyGeneric(nameof(UnsafeTestClass.StaticFunctionPointerProperty), testType));
+            Throws<ArgumentException>(() => accessor.GetStaticValue<int>(), Res.ReflectionCannotInvokePropertyGeneric(nameof(UnsafeTestClass.StaticFunctionPointerProperty), testType));
+
+            UnsafeTestClass.StaticFunctionPointerProperty = null;
+            Console.Write("Reflector (by PropertyInfo)...");
+            Reflector.SetProperty(null, pi, value);
+            result = Reflector.GetProperty(null, pi);
+            Assert.AreEqual(value, result);
+            Throws<ArgumentException>(() => Reflector.SetProperty(null, pi, 1), Res.NotAnInstanceOfType(value.GetType()));
+
+            UnsafeTestClass.StaticFunctionPointerProperty = null;
+            Console.Write("Reflector (by name)...");
+            Reflector.SetProperty(testType, nameof(UnsafeTestClass.StaticFunctionPointerProperty), value);
+            result = Reflector.GetProperty(testType, nameof(UnsafeTestClass.StaticFunctionPointerProperty));
+            Assert.AreEqual(value, result);
+            Reflector.SetProperty(testType, nameof(UnsafeTestClass.StaticFunctionPointerProperty).ToLowerInvariant(), true, value);
+            result = Reflector.GetProperty(testType, nameof(UnsafeTestClass.StaticFunctionPointerProperty).ToLowerInvariant(), true);
+            Assert.AreEqual(value, result);
+            Throws<ArgumentException>(() => Reflector.SetProperty(testType, nameof(UnsafeTestClass.StaticFunctionPointerProperty), 1), Res.NotAnInstanceOfType(value.GetType()));
         }
 
         [Test]
@@ -6067,6 +6194,51 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         }
 
         [Test]
+        public unsafe void ClassInstanceFunctionPointerFieldAccessUnsafe()
+        {
+            var test = new UnsafeTestClass(null);
+            FieldInfo fi = test.GetType().GetField(nameof(UnsafeTestClass.InstanceFunctionPointerField));
+            FieldAccessor accessor = FieldAccessor.GetAccessor(fi);
+            object result;
+            IntPtr value = (IntPtr)(delegate*<string, void>)&Console.WriteLine;
+
+            Console.Write("System Reflection...");
+            fi.SetValue(test, value);
+            result = (IntPtr)fi.GetValue(test)!;
+            Assert.AreEqual(value, result);
+
+            test = new UnsafeTestClass(null);
+            Console.Write("Field Accessor...");
+            accessor.Set(test, value);
+            result = accessor.Get(test);
+            Assert.AreEqual(value, result);
+            Throws<ArgumentException>(() => accessor.Set(test, 1), Res.NotAnInstanceOfType(value.GetType()));
+
+            test = new UnsafeTestClass(null);
+            Console.Write("Field Accessor Generic...");
+            accessor.SetInstanceValue(test, value);
+            result = accessor.GetInstanceValue<UnsafeTestClass, IntPtr>(test);
+            Assert.AreEqual(value, result);
+            Throws<ArgumentException>(() => accessor.SetInstanceValue(test, 1), Res.ReflectionCannotInvokeFieldGeneric(nameof(UnsafeTestClass.InstanceFunctionPointerField), fi.DeclaringType!));
+            Throws<ArgumentException>(() => accessor.GetInstanceValue<UnsafeTestClass, int>(test), Res.ReflectionCannotInvokeFieldGeneric(nameof(UnsafeTestClass.InstanceFunctionPointerField), fi.DeclaringType!));
+
+            test = new UnsafeTestClass(null);
+            Console.Write("Reflector (by FieldInfo)...");
+            Reflector.SetField(test, fi, value);
+            result = Reflector.GetField(test, fi);
+            Assert.AreEqual(value, result);
+
+            test = new UnsafeTestClass(null);
+            Console.Write("Reflector (by name)...");
+            Reflector.SetField(test, nameof(UnsafeTestClass.InstanceFunctionPointerField), value);
+            result = Reflector.GetField(test, nameof(UnsafeTestClass.InstanceFunctionPointerField));
+            Assert.AreEqual(value, result);
+            Reflector.SetField(test, nameof(UnsafeTestClass.InstanceFunctionPointerField).ToLowerInvariant(), true, value);
+            result = Reflector.GetField(test, nameof(UnsafeTestClass.InstanceFunctionPointerField).ToLowerInvariant(), true);
+            Assert.AreEqual(value, result);
+        }
+
+        [Test]
         public unsafe void ClassInstanceReadOnlyValueFieldAccessUnsafe()
         {
             var test = new UnsafeTestClass(null);
@@ -6153,6 +6325,51 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Assert.AreEqual(value, result);
             Reflector.SetField(testType, nameof(UnsafeTestClass.StaticField).ToLowerInvariant(), true, value);
             result = Reflector.GetField(testType, nameof(UnsafeTestClass.StaticField).ToLowerInvariant(), true);
+            Assert.AreEqual(value, result);
+        }
+
+        [Test]
+        public unsafe void ClassStaticFunctionPointerFieldAccessUnsafe()
+        {
+            Type testType = typeof(UnsafeTestClass);
+            FieldInfo fi = testType.GetField(nameof(UnsafeTestClass.StaticFunctionPointerField));
+            FieldAccessor accessor = FieldAccessor.GetAccessor(fi);
+            object result;
+            IntPtr value = (IntPtr)(delegate*<string, void>)&Console.WriteLine;
+
+            Console.Write("System Reflection...");
+            fi.SetValue(null, value);
+            result = (IntPtr)fi.GetValue(null);
+            Assert.AreEqual(value, result);
+
+            UnsafeTestClass.StaticFunctionPointerField = null;
+            Console.Write("Field Accessor...");
+            accessor.Set(null, value);
+            result = FieldAccessor.GetAccessor(fi).Get(null);
+            Assert.AreEqual(value, result);
+            Throws<ArgumentException>(() => accessor.Set(null, 1), Res.NotAnInstanceOfType(value.GetType()));
+
+            UnsafeTestClass.StaticFunctionPointerField = null;
+            Console.Write("Field Accessor Generic...");
+            accessor.SetStaticValue(value);
+            result = accessor.GetStaticValue<IntPtr>();
+            Assert.AreEqual(value, result);
+            Throws<ArgumentException>(() => accessor.SetStaticValue(1), Res.ReflectionCannotInvokeFieldGeneric(nameof(UnsafeTestClass.StaticFunctionPointerField), testType));
+            Throws<ArgumentException>(() => accessor.GetStaticValue<int>(), Res.ReflectionCannotInvokeFieldGeneric(nameof(UnsafeTestClass.StaticFunctionPointerField), testType));
+
+            UnsafeTestClass.StaticFunctionPointerField = null;
+            Console.Write("Reflector (by FieldInfo)...");
+            Reflector.SetField(null, fi, value);
+            result = Reflector.GetField(null, fi);
+            Assert.AreEqual(value, result);
+
+            UnsafeTestClass.StaticFunctionPointerField = null;
+            Console.Write("Reflector (by name)...");
+            Reflector.SetField(testType, nameof(UnsafeTestClass.StaticFunctionPointerField), value);
+            result = Reflector.GetField(testType, nameof(UnsafeTestClass.StaticFunctionPointerField));
+            Assert.AreEqual(value, result);
+            Reflector.SetField(testType, nameof(UnsafeTestClass.StaticFunctionPointerField).ToLowerInvariant(), true, value);
+            result = Reflector.GetField(testType, nameof(UnsafeTestClass.StaticFunctionPointerField).ToLowerInvariant(), true);
             Assert.AreEqual(value, result);
         }
 

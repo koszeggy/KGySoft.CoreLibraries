@@ -247,7 +247,7 @@ namespace KGySoft.Reflection
                 Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
 
             Type propertyType = isByRef ? Property.PropertyType.GetElementType()! : Property.PropertyType;
-            if (propertyType.IsPointer)
+            if (propertyType.IsPointer())
                 propertyType = typeof(IntPtr);
 
             Type delegateType = isStatic ? typeof(Action<>).GetGenericType(propertyType)
@@ -350,7 +350,7 @@ namespace KGySoft.Reflection
 
             bool isByRef = Property.PropertyType.IsByRef;
             Type propertyType = isByRef ? Property.PropertyType.GetElementType()! : Property.PropertyType;
-            if (propertyType.IsPointer)
+            if (propertyType.IsPointer())
                 propertyType = typeof(IntPtr);
             bool isValueType = declaringType?.IsValueType == true;
             Type delegateType = isStatic
@@ -433,7 +433,7 @@ namespace KGySoft.Reflection
             Debug.Assert(isStatic || declaringType != null);
             Debug.Assert(getterMethod.ReturnType.IsByRef);
             Type propertyType = getterMethod.ReturnType.GetElementType()!;
-            bool isPointer = propertyType.IsPointer;
+            bool isPointer = propertyType.IsPointer();
             Type valueParameterType = isPointer ? typeof(IntPtr) : propertyType;
 
             Type[] paramTypes = generic switch

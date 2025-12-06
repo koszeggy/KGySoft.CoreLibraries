@@ -503,7 +503,7 @@ namespace KGySoft.Reflection
             }
 
             il.Emit(OpCodes.Ldarg_1); // loading 1st argument: value parameter
-            il.Emit(Field.FieldType.IsValueType || Field.FieldType.IsPointer ? OpCodes.Unbox_Any : OpCodes.Castclass, Field.FieldType.IsPointer ? typeof(IntPtr) : Field.FieldType); // casting object value to field type
+            il.Emit(Field.FieldType.IsValueType || Field.FieldType.IsPointer() ? OpCodes.Unbox_Any : OpCodes.Castclass, Field.FieldType.IsPointer() ? typeof(IntPtr) : Field.FieldType); // casting object value to field type
             il.Emit(Field.IsStatic ? OpCodes.Stsfld : OpCodes.Stfld, Field); // processing assignment
             il.Emit(OpCodes.Ret); // returning without return value
 
@@ -570,8 +570,8 @@ namespace KGySoft.Reflection
                 il.Emit(OpCodes.Ldfld, Field); // loading instance field
             }
 
-            if (Field.FieldType.IsValueType || Field.FieldType.IsPointer)
-                il.Emit(OpCodes.Box, Field.FieldType.IsPointer ? typeof(IntPtr) : Field.FieldType); // boxing value type or pointer result
+            if (Field.FieldType.IsValueType || Field.FieldType.IsPointer())
+                il.Emit(OpCodes.Box, Field.FieldType.IsPointer() ? typeof(IntPtr) : Field.FieldType); // boxing value type or pointer result
             il.Emit(OpCodes.Ret); // returning with the field value
             return (Func<object?, object?>)dm.CreateDelegate(typeof(Func<object?, object?>));
 #endif
@@ -582,7 +582,7 @@ namespace KGySoft.Reflection
             Type? declaringType = Field.DeclaringType;
             bool isValueType = declaringType?.IsValueType == true;
             bool isStatic = Field.IsStatic;
-            Type fieldValueType = Field.FieldType.IsPointer ? typeof(IntPtr) : Field.FieldType;
+            Type fieldValueType = Field.FieldType.IsPointer() ? typeof(IntPtr) : Field.FieldType;
             if (declaringType?.ContainsGenericParameters == true)
                 Throw.InvalidOperationException(Res.ReflectionGenericMember);
             if (IsConstant)
@@ -689,7 +689,7 @@ namespace KGySoft.Reflection
             if (!isStatic && declaringType == null)
                 Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
 
-            Type returnType = Field.FieldType.IsPointer ? typeof(IntPtr) : Field.FieldType;
+            Type returnType = Field.FieldType.IsPointer() ? typeof(IntPtr) : Field.FieldType;
             Type delegateType = isStatic ? typeof(Func<>).GetGenericType(returnType)
                 : isValueType ? typeof(ValueTypeFunction<,>).GetGenericType(declaringType!, returnType)
                 : typeof(ReferenceTypeFunction<,>).GetGenericType(declaringType!, returnType);
@@ -763,7 +763,7 @@ namespace KGySoft.Reflection
             return lambda.Compile();
 
 #else
-            Type fieldValueType = Field.FieldType.IsPointer ? typeof(IntPtr) : Field.FieldType;
+            Type fieldValueType = Field.FieldType.IsPointer() ? typeof(IntPtr) : Field.FieldType;
             Type[] parameterTypes = isStatic ? Type.EmptyTypes
                 : isValueType ? [declaringType!.MakeByRefType()]
                 : [declaringType!];
@@ -855,7 +855,7 @@ namespace KGySoft.Reflection
             {
                 if (!Field.FieldType.CanAcceptValue(value))
                 {
-                    Type valueParamType = Field.FieldType.IsPointer ? typeof(IntPtr) : Field.FieldType;
+                    Type valueParamType = Field.FieldType.IsPointer() ? typeof(IntPtr) : Field.FieldType;
                     if (value == null)
                         Throw.ArgumentNullException(Argument.value, Res.NotAnInstanceOfType(valueParamType));
                     Throw.ArgumentException(Argument.value, Res.NotAnInstanceOfType(valueParamType));

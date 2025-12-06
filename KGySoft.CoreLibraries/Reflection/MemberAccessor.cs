@@ -178,7 +178,7 @@ namespace KGySoft.Reflection
             {
                 if (t.IsByRef)
                     t = t.GetElementType()!;
-                return t.IsPointer ? typeof(IntPtr) : t;
+                return t.IsPointer() ? typeof(IntPtr) : t;
             }
 
             #endregion
@@ -291,14 +291,14 @@ namespace KGySoft.Reflection
             bool stronglyTyped = options.HasFlag<DynamicMethodOptions>(DynamicMethodOptions.StronglyTyped);
             bool treatAsPropertySetter = options.HasFlag<DynamicMethodOptions>(DynamicMethodOptions.TreatAsPropertySetter);
             bool exactParameters = options.HasFlag<DynamicMethodOptions>(DynamicMethodOptions.ExactParameters);
-            Type returnType = method != null ? method.ReturnType.IsPointer ? typeof(IntPtr) : method.ReturnType
+            Type returnType = method != null ? method.ReturnType.IsPointer() ? typeof(IntPtr) : method.ReturnType
                 : treatCtorAsMethod ? Reflector.VoidType
                 : declaringType!;
             bool isRefReturn = returnType.IsByRef;
             if (isRefReturn)
             {
                 var returnElementType = returnType.GetElementType()!;
-                returnType = returnElementType.IsPointer ? typeof(IntPtr) : returnElementType;
+                returnType = returnElementType.IsPointer() ? typeof(IntPtr) : returnElementType;
             }
 
             Type dmReturnType = returnType == Reflector.VoidType ? returnNullForVoid ? Reflector.ObjectType : Reflector.VoidType
@@ -340,7 +340,7 @@ namespace KGySoft.Reflection
                 il.Emit(stronglyTyped && isStatic ? OpCodes.Ldarg_0 : OpCodes.Ldarg_1);
 
                 if (!stronglyTyped)
-                    il.Emit(pi.PropertyType.IsValueType || pi.PropertyType.IsPointer ? OpCodes.Unbox_Any : OpCodes.Castclass, pi.PropertyType.IsPointer ? typeof(IntPtr) : pi.PropertyType);
+                    il.Emit(pi.PropertyType.IsValueType || pi.PropertyType.IsPointer() ? OpCodes.Unbox_Any : OpCodes.Castclass, pi.PropertyType.IsPointer() ? typeof(IntPtr) : pi.PropertyType);
             }
 
             if (ctor != null)
@@ -399,7 +399,7 @@ namespace KGySoft.Reflection
                     else
                     {
                         PropertyInfo pi = (PropertyInfo)MemberInfo;
-                        parameters.Add(pi.PropertyType.IsPointer ? typeof(IntPtr) : pi.PropertyType);
+                        parameters.Add(pi.PropertyType.IsPointer() ? typeof(IntPtr) : pi.PropertyType);
                     }
                 }
 
@@ -451,7 +451,7 @@ namespace KGySoft.Reflection
                             EmitLdarg(il, paramsOffset + i); // loading parameter
 
                         if (!stronglyTyped)
-                            il.Emit(paramType.IsValueType || paramType.IsPointer ? OpCodes.Unbox_Any : OpCodes.Castclass, paramType.IsPointer ? typeof(IntPtr) : paramType);
+                            il.Emit(paramType.IsValueType || paramType.IsPointer() ? OpCodes.Unbox_Any : OpCodes.Castclass, paramType.IsPointer() ? typeof(IntPtr) : paramType);
                         il.Emit(OpCodes.Stloc, localsIndex); // storing value in local variable
                     }
 
@@ -493,7 +493,7 @@ namespace KGySoft.Reflection
                         EmitLdarg(il, paramsOffset + i); // loading parameter
 
                     if (!stronglyTyped)
-                        il.Emit(paramType.IsValueType || paramType.IsPointer ? OpCodes.Unbox_Any : OpCodes.Castclass, paramType.IsPointer ? typeof(IntPtr) : paramType);
+                        il.Emit(paramType.IsValueType || paramType.IsPointer() ? OpCodes.Unbox_Any : OpCodes.Castclass, paramType.IsPointer() ? typeof(IntPtr) : paramType);
                 }
             }
 
@@ -515,8 +515,8 @@ namespace KGySoft.Reflection
                     il.Emit(OpCodes.Ldloc, (short)localsIndex); // loading local variable
                     ++localsIndex;
 
-                    if (paramType.IsValueType || paramType.IsPointer)
-                        il.Emit(OpCodes.Box, paramType.IsPointer ? typeof(IntPtr) : paramType); // boxing value type into object
+                    if (paramType.IsValueType || paramType.IsPointer())
+                        il.Emit(OpCodes.Box, paramType.IsPointer() ? typeof(IntPtr) : paramType); // boxing value type into object
                     il.Emit(OpCodes.Stelem_Ref); // storing the variable into the pointed array index
                 }
             }

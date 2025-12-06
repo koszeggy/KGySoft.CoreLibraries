@@ -214,7 +214,7 @@ namespace KGySoft.CoreLibraries
                 || type.BaseType == Reflector.EnumType && instanceType == Enum.GetUnderlyingType(type)) // eg. (MyEnum)objValueContainingInt
                 return true;
 
-            if (type.IsPointer)
+            if (type.IsPointer())
                 return instanceType == Reflector.IntPtrType;
 
             return false;
@@ -884,6 +884,12 @@ namespace KGySoft.CoreLibraries
             type.IsConstructedGenericType;
 #endif
 
+        internal static bool IsPointer(this Type type) => type.IsPointer
+#if NET8_0_OR_GREATER
+            || type.IsFunctionPointer
+#endif
+        ;
+
         [SecuritySafeCritical]
         internal static object? GetDefaultValue(this Type type) => type.IsValueType
             // Trying to avoid executing possible existing parameterless struct constructor
@@ -1249,7 +1255,7 @@ namespace KGySoft.CoreLibraries
 
         private static bool HasReference(Type type)
         {
-            if (type.IsPrimitive || type.IsPointer || type.IsEnum)
+            if (type.IsPrimitive || type.IsPointer() || type.IsEnum)
                 return false;
             if (!type.IsValueType)
                 return true;

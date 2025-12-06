@@ -1105,7 +1105,7 @@ namespace KGySoft.Reflection
 
                 for (int i = 0; i < ParameterTypes.Length; i++)
                 {
-                    Type paramType = ParameterTypes[i].IsPointer ? typeof(IntPtr) : ParameterTypes[i];
+                    Type paramType = ParameterTypes[i].IsPointer() ? typeof(IntPtr) : ParameterTypes[i];
                     if (!paramType.CanAcceptValue(parameters[i]))
                     {
                         if (anyParams)
