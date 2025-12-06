@@ -2265,8 +2265,8 @@ namespace KGySoft.Serialization.Binary
                 Type structType = Nullable.GetUnderlyingType(descriptor.Type!) ?? descriptor.Type!;
                 if (!structType.IsValueType)
                     Throw.SerializationException(Res.BinarySerializationNotAValueType(structType));
-                if (SafeMode && structType.IsManaged())
-                    Throw.SerializationException(Res.BinarySerializationValueTypeContainsReferenceSafe(structType));
+                if (SafeMode && structType.HasReferenceOrPointer())
+                    Throw.SerializationException(Res.BinarySerializationValueTypeContainsReferenceOrPointerSafe(structType));
                 byte[] rawData = br.ReadBytes(Read7BitInt(br));
                 object result = BinarySerializer.DeserializeValueType(structType, rawData);
                 OnDeserializing(result);
@@ -2342,6 +2342,10 @@ namespace KGySoft.Serialization.Binary
 
             private void SetField(FieldInfo field, object obj, object? value)
             {
+                // In safe mode denying the deserialization of non-null pointer/function pointer fields. Null is allowed just like setting delegate fields to null.
+                if (SafeMode && field.FieldType.IsPointer() && !Equals(value, IntPtr.Zero))
+                    Throw.SerializationException(Res.BinarySerializationPointerFieldSafe(field.DeclaringType!, field.Name));
+
                 UsageReferences? trackedUsages = value == null ? null : objectsBeingDeserialized?.GetValueOrDefault(value);
                 if (trackedUsages == null)
                 {

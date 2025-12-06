@@ -457,6 +457,9 @@ namespace KGySoft
         /// <summary>Simple runtime element types or generic type definitions are expected.</summary>
         internal static string SerializationRootTypeExpected => Get("Serialization_RootTypeExpected");
 
+        /// <summary>Serialization of function pointer types is not supported.</summary>
+        internal static string SerializationFunctionPointerTypeNotSupported => Get("Serialization_FunctionPointerTypeNotSupported");
+
         #endregion
 
         #region StreamExtensions
@@ -732,8 +735,11 @@ namespace KGySoft
         /// <summary>The stream contains a collection of type '{0}', which is not supported on this platform.</summary>
         internal static string BinarySerializationCollectionPlatformNotSupported(string dataType) => Get("BinarySerialization_CollectionPlatformNotSupportedFormat", dataType);
         
-        /// <summary>Value type '{0}' cannot be deserialized from raw data in safe mode because it contains references. If the serialization stream is from a trusted source you may try to disable safe mode to attempt the deserialization with marshaling.</summary>
-        internal static string BinarySerializationValueTypeContainsReferenceSafe(Type type) => Get("BinarySerialization_ValueTypeContainsReferenceSafeFormat", type.GetName(TypeNameKind.LongName));
+        /// <summary>Value type '{0}' cannot be deserialized from raw data in safe mode because it contains references or unmanaged pointers. If the serialization stream is from a trusted source you may try to disable safe mode to attempt the deserialization with marshaling.</summary>
+        internal static string BinarySerializationValueTypeContainsReferenceOrPointerSafe(Type type) => Get("BinarySerialization_ValueTypeContainsReferenceOrPointerSafeFormat", type.GetName(TypeNameKind.LongName));
+
+        /// <summary>In safe mode it is not supported to set field '{0}.{1}' to a non-null value by default object graph deserialization.</summary>
+        internal static string BinarySerializationPointerFieldSafe(Type type, string fieldName) => Get("BinarySerialization_PointerFieldSafeFormat", type.GetName(TypeNameKind.LongName), fieldName);
 
         #endregion
 

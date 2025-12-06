@@ -485,6 +485,9 @@ Hit rate: {8:P2}</value>
   <data name="Serialization_RootTypeExpected" xml:space="preserve">
     <value>Simple runtime element types or generic type definitions are expected.</value>
   </data>
+  <data name="Serialization_FunctionPointerTypeNotSupported" xml:space="preserve">
+    <value>Serialization of function pointer types is not supported.</value>
+  </data>
   <data name="Serialization_MissingFieldFormat" xml:space="preserve">
     <value>Type "{0}" cannot be deserialized because it has no field "{1}". Set IgnoreNonExistingFields to true to suppress this exception.</value>
   </data>
@@ -751,8 +754,11 @@ Either try to use the ForceRecursiveSerializationOfSupportedTypes option on seri
   <data name="BinarySerialization_CollectionPlatformNotSupportedFormat" xml:space="preserve">
     <value>The stream contains a collection of type '{0}', which is not supported on this platform.</value>
   </data>
-  <data name="BinarySerialization_ValueTypeContainsReferenceSafeFormat" xml:space="preserve">
-    <value>Value type '{0}' cannot be deserialized from raw data in safe mode because it contains references. If the serialization stream is from a trusted source you may try to disable safe mode to attempt the deserialization with marshaling.</value>
+  <data name="BinarySerialization_ValueTypeContainsReferenceOrPointerSafeFormat" xml:space="preserve">
+    <value>Value type '{0}' cannot be deserialized from raw data in safe mode because it contains references or unmanaged pointers. If the serialization stream is from a trusted source you may try to disable safe mode to attempt the deserialization with marshaling.</value>
+  </data>
+  <data name="BinarySerialization_PointerFieldSafeFormat" xml:space="preserve">
+    <value>In safe mode it is not supported to set field '{0}.{1}' to a non-null value by default object graph deserialization.</value>
   </data>
   <data name="BinarySerialization_DataLengthTooSmall" xml:space="preserve">
     <value>Data length is too small.</value>

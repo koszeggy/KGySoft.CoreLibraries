@@ -1907,6 +1907,34 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
         #endregion
 
+        #region FunctionPointerField class
+
+        [Serializable]
+        private sealed unsafe class FunctionPointerField
+        {
+            #region Fields
+
+            private delegate*<string, void> loggerFunction;
+
+            #endregion
+
+            #region Constructors
+
+            public FunctionPointerField(delegate*<string, void> function) => loggerFunction = function;
+
+            #endregion
+
+            #region Methods
+
+#pragma warning disable CS8909 // Comparison of function pointers might yield an unexpected result
+            public override bool Equals(object obj) => obj is FunctionPointerField other && other.loggerFunction == loggerFunction;
+#pragma warning restore CS8909
+
+            #endregion
+        }
+
+        #endregion
+
         #region ClassRecord record class
 
         [Serializable]
@@ -2182,8 +2210,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             public void* VoidPointer;
             public int* IntPointer;
             public Point* StructPointer;
-            public int*[] PointerArray;
             public void** PointerOfPointer;
+            public delegate*<string, void> FunctionPointer;
 
             #endregion
         }

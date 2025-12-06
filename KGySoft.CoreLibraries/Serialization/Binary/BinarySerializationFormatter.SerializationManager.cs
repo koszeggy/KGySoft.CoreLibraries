@@ -1400,7 +1400,21 @@ namespace KGySoft.Serialization.Binary
                         return;
                     }
 
+#if NET8_0_OR_GREATER
                     int byteLength = Buffer.ByteLength(array);
+#else
+                    int byteLength;
+                    try
+                    {
+                        byteLength = Buffer.ByteLength(array);
+                    }
+                    catch (ArgumentException) when (elementType == typeof(IntPtr))
+                    {
+                        // for function pointer arrays pre-.NET 8 platforms fake the element type as IntPtr, though the array does not work as an IntPtr[]
+                        Throw.NotSupportedException(Res.SerializationFunctionPointerTypeNotSupported);
+                        return;
+                    }
+#endif
 
 #if NET6_0_OR_GREATER
                     // reinterpreting the primitive array as Span<byte>
@@ -1448,7 +1462,7 @@ namespace KGySoft.Serialization.Binary
                 }
 
                 // 2.b.) Complex array
-                if (elementType.IsPointer)
+                if (elementType.IsPointer())
                     Throw.NotSupportedException(Res.SerializationPointerArrayTypeNotSupported(type));
                 collectionDataTypes.MoveNextExtracted();
                 WriteCollectionElements(bw, array, collectionDataTypes, elementType);
@@ -2049,6 +2063,14 @@ namespace KGySoft.Serialization.Binary
             private void WriteNewType(BinaryWriter bw, Type type, bool allowOpenTypes, string? boundAsmName, string? boundTypeName)
             {
                 Debug.Assert(allowOpenTypes || !(type.IsGenericTypeDefinition || type.IsGenericParameter), $"Generic type definitions and generic parameters are allowed only when {nameof(allowOpenTypes)} is true.");
+#if NET8_0_OR_GREATER
+                if (type.IsFunctionPointer)
+                {
+                    // TODO: #if NET11_0_OR_GREATER - see https://github.com/dotnet/runtime/issues/75348
+                    // Though in .NET 8+ we can get the parameter/return types and the calling conventions, there is no API to restore a function pointer type.
+                    Throw.NotSupportedException(Res.SerializationFunctionPointerTypeNotSupported);
+                }
+#endif
                 Type rootType = type.IsConstructedGenericType() ? type.GetGenericTypeDefinition()
                     : type.IsGenericParameter ? type.DeclaringType!
                     : type;

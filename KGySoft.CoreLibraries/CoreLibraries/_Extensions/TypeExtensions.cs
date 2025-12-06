@@ -135,7 +135,7 @@ namespace KGySoft.CoreLibraries
 #if !NET9_0_OR_GREATER
         private static LockFreeCache<Type, int>? sizeOfCache;
 #endif
-        private static LockFreeCache<Type, bool>? hasReferenceCache;
+        private static LockFreeCache<(Type Type, bool IncludePointers), bool>? hasReferenceOrPointerCache;
         private static LockFreeCache<(Type GenTypeDef, TypesKey TypeArgs), Type>? genericTypeCache;
         private static LockFreeCache<(MethodInfo GenMethodDef, TypesKey TypeArgs), MethodInfo>? genericMethodsCache;
         private static LockFreeCache<Type, ConstructorInfo?>? defaultCtorCache;
@@ -702,9 +702,17 @@ namespace KGySoft.CoreLibraries
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static bool IsManaged(this Type type)
         {
-            if (hasReferenceCache == null)
-                Interlocked.CompareExchange(ref hasReferenceCache, new LockFreeCache<Type, bool>(HasReference, null, LockFreeCacheOptions.Profile128), null);
-            return hasReferenceCache[type];
+            if (hasReferenceOrPointerCache == null)
+                Interlocked.CompareExchange(ref hasReferenceOrPointerCache, new LockFreeCache<(Type, bool), bool>(GetHasReferenceOrPointer, null, LockFreeCacheOptions.Profile128), null);
+            return hasReferenceOrPointerCache[(type, false)];
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        internal static bool HasReferenceOrPointer(this Type type)
+        {
+            if (hasReferenceOrPointerCache == null)
+                Interlocked.CompareExchange(ref hasReferenceOrPointerCache, new LockFreeCache<(Type, bool), bool>(GetHasReferenceOrPointer, null, LockFreeCacheOptions.Profile128), null);
+            return hasReferenceOrPointerCache[(type, true)];
         }
 
         internal static IList<Delegate> GetConversions(this Type sourceType, Type targetType, bool? exactMatch)
@@ -1253,19 +1261,19 @@ namespace KGySoft.CoreLibraries
         }
 #endif
 
-        private static bool HasReference(Type type)
+        private static bool GetHasReferenceOrPointer((Type Type, bool IncludePointers) key)
         {
-            if (type.IsPrimitive || type.IsPointer() || type.IsEnum)
+            if (key.Type.IsPrimitive || !key.IncludePointers && key.Type.IsPointer() || key.Type.IsEnum)
                 return false;
-            if (!type.IsValueType)
+            if (!key.Type.IsValueType || key.IncludePointers && key.Type.IsPointer())
                 return true;
 
-            FieldInfo[] fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+            FieldInfo[] fields = key.Type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
 
             // ReSharper disable once ForCanBeConvertedToForeach - performance
             for (var i = 0; i < fields.Length; i++)
             {
-                if (HasReference(fields[i].FieldType))
+                if (GetHasReferenceOrPointer((fields[i].FieldType, key.IncludePointers)))
                     return true;
             }
 

@@ -351,7 +351,7 @@ namespace KGySoft.Serialization.Binary
                 if (surrogateSelector == null)
                     return false;
 
-                if (type.IsPrimitive || type.IsArray || type == Reflector.StringType || type == Reflector.ObjectType || type.IsPointer || type.IsByRef)
+                if (type.IsPrimitive || type.IsArray || type == Reflector.StringType || type == Reflector.ObjectType || type.IsPointer() || type.IsByRef)
                     return false;
 
                 return TryGetSurrogate(type, out var _, out var _);

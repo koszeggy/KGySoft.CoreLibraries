@@ -627,14 +627,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 // Generic Method Parameters
                 typeof(Array).GetMethod(nameof(Array.Resize)).GetGenericArguments()[0], // T of Array.Resize, unique generic method definition argument
                 //typeof(Array).GetMethod(nameof(Array.Resize)).GetGenericArguments()[0].MakeArrayType(), // T[] of Array.Resize - System and forced recursive serialization fails here: T != T[]
-                typeof(DictionaryExtensions).GetMethods().Where(mi => mi.Name == nameof(DictionaryExtensions.GetValueOrDefault)).ElementAt(2).GetGenericArguments()[0] // TKey of a GetValueOrDefault overload, ambiguous generic method definition argument
+                typeof(DictionaryExtensions).GetMethods().Where(mi => mi.Name == nameof(DictionaryExtensions.GetValueOrDefault)).ElementAt(2).GetGenericArguments()[0], // TKey of a GetValueOrDefault overload, ambiguous generic method definition argument
             };
 
 #if !NETCOREAPP // Type is not serializable in .NET Core
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
 #endif
-
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
@@ -647,6 +646,26 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #elif NETCOREAPP3_0 // RuntimeType.GetObjectData throws PlatformNotSupportedException in .NET Core 2.0. In .NET Core 3.0 it works but the Equals fails for the clones, hence safeCompare
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, safeCompare: true);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, safeCompare: true);
+#endif
+
+#if NET8_0_OR_GREATER
+            referenceObjects =
+            [
+                // Function pointers
+                typeof(delegate*<int, void>),
+                typeof(delegate* managed<int, int>),
+                typeof(delegate* unmanaged<int, int>),
+                typeof(delegate* unmanaged[Cdecl] <int, int>),
+                typeof(delegate* unmanaged[Stdcall] <int, int>),
+            ];
+
+#if NET11_0_OR_GREATER // TODO: See https://github.com/dotnet/runtime/issues/75348
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode);
+#else
+            Throws<NotSupportedException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.None), Res.SerializationFunctionPointerTypeNotSupported);
+            Throws<NotSupportedException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode), Res.SerializationFunctionPointerTypeNotSupported);
+#endif
 #endif
         }
 
@@ -2839,8 +2858,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                     VoidPointer = (void*)new IntPtr(1),
                     IntPointer = (int*)new IntPtr(1),
                     StructPointer = (Point*)new IntPtr(1),
-                    PointerArray = null, // new int*[] { (int*)new IntPtr(1), null }, - not supported
-                    PointerOfPointer = (void**)new IntPtr(1)
+                    PointerOfPointer = (void**)new IntPtr(1),
+                    FunctionPointer = &Console.WriteLine
                 },
             };
 
@@ -2851,20 +2870,32 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: new[] { typeof(UnsafeStruct) });
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: new[] { typeof(UnsafeStruct) });
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.CompactSerializationOfStructures);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.CompactSerializationOfStructures);
 
+            // In safe mode setting pointer fields are supported only if they are set to null
+            KGySerializeObject(referenceObjects[0], BinarySerializationOptions.LegacySafeMode);
+            KGySerializeObject(referenceObjects[0], BinarySerializationOptions.SafeMode, expectedTypes: [typeof(UnsafeStruct)]);
+            Throws<SerializationException>(() => KGySerializeObject(referenceObjects[1], BinarySerializationOptions.LegacySafeMode));
+            Throws<SerializationException>(() => KGySerializeObject(referenceObjects[1], BinarySerializationOptions.SafeMode, expectedTypes: [typeof(UnsafeStruct)]));
+
+            // But as a compact struct, pointer fields are not supported at all in safe mode
+            Throws<SerializationException>(() => KGySerializeObject(referenceObjects[0], BinarySerializationOptions.LegacySafeMode | BinarySerializationOptions.CompactSerializationOfStructures), Res.BinarySerializationValueTypeContainsReferenceOrPointerSafe(typeof(UnsafeStruct)));
+            Throws<SerializationException>(() => KGySerializeObject(referenceObjects[0], BinarySerializationOptions.SafeMode | BinarySerializationOptions.CompactSerializationOfStructures, expectedTypes: [typeof(UnsafeStruct)]), Res.BinarySerializationValueTypeContainsReferenceOrPointerSafe(typeof(UnsafeStruct)));
+
+            int intValue = 1;
             referenceObjects = new object[]
             {
-                // Pointer Array
-                new int*[] { (int*)IntPtr.Zero },
+                // Pointer Arrays
+                new int*[] { null, &intValue },
+                new delegate*<string, void>[] { null, &Console.WriteLine },
             };
 
-            //SystemSerializeObject(referenceObjects, safeCompare: true); // InvalidCastException: Unable to cast object of type 'System.Void*[]' to type 'System.Object[]'.
-            //SystemSerializeObjects(referenceObjects, safeCompare: true);
+            //SystemSerializeObject(referenceObjects[0], safeCompare: true); // InvalidCastException: Unable to cast object of type 'System.Void*[]' to type 'System.Object[]'.
+            //SystemSerializeObject(referenceObjects[1], safeCompare: true); // System.NotSupportedException: 'Type is not supported.' (at Array.GetItem)
 
-            Throws<NotSupportedException>(() => KGySerializeObject(referenceObjects, BinarySerializationOptions.None), "Array of pointer type 'System.Int32*[]' is not supported.");
-            Throws<NotSupportedException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.None), "Array of pointer type 'System.Int32*[]' is not supported.");
+            Throws<NotSupportedException>(() => KGySerializeObject(referenceObjects[0], BinarySerializationOptions.None), Res.SerializationPointerArrayTypeNotSupported(referenceObjects[0].GetType()));
+            Throws<NotSupportedException>(() => KGySerializeObject(referenceObjects[1], BinarySerializationOptions.None), Res.SerializationFunctionPointerTypeNotSupported);
         }
 
         [TestCase(typeof(bool))]
@@ -3193,6 +3224,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
+        }
+
+        [Test]
+        public unsafe void SerializeFunctionPointers()
+        {
+            object referenceObject = new FunctionPointerField(&Console.WriteLine);
+
+            KGySerializeObject(referenceObject, BinarySerializationOptions.None);
+            KGySerializeObject(referenceObject, BinarySerializationOptions.SafeMode, expectedTypes: [typeof(FunctionPointerField)]);
         }
 
         [Test]
