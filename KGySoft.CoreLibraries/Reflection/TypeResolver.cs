@@ -37,6 +37,9 @@ namespace KGySoft.Reflection
     /// <summary>
     /// Represents a class that is able to convert/parse every runtime type to/from string.
     /// </summary>
+#if !NET9_0_OR_GREATER
+    [SuppressMessage("ReSharper", "PartialTypeWithSinglePart", Justification = "The other part is not visible in all targeted platforms")]
+#endif
     internal sealed partial class TypeResolver
     {
         #region Nested types
@@ -56,7 +59,7 @@ namespace KGySoft.Reflection
             FullNameOrAqn,
 
             /// <summary>
-            /// A type name without assembly name.
+            /// A type name without assembly name (a name without embedding square brackets).
             /// </summary>
             TypeName,
 
@@ -66,7 +69,7 @@ namespace KGySoft.Reflection
             AssemblyName,
 
             /// <summary>
-            /// [ in FullName or TypeName
+            /// '[' in FullNameOrAqn or TypeName after a name.
             /// </summary>
             ArrayOrGeneric,
 
@@ -76,12 +79,12 @@ namespace KGySoft.Reflection
             Modifiers,
 
             /// <summary>
-            /// After , in generic type
+            /// Similar to FullNameOrAqn, but allows the expected type to be embedded in square brackets. Occurs in generics after ',', or function pointer after '(', ',' and ':' in a function pointer.
             /// </summary>
             BeforeArgument,
 
             /// <summary>
-            /// After inner ] in generic type argument
+            /// After inner ']' when a type name is inside square brackets.
             /// </summary>
             AfterArgument,
 
@@ -104,6 +107,21 @@ namespace KGySoft.Reflection
             /// Signature of declaring method of generic parameter.
             /// </summary>
             MethodSignature,
+
+            /// <summary>
+            /// Function pointer name, or before calling conventions/parameters/return type
+            /// </summary>
+            FunctionPointer,
+
+            /// <summary>
+            /// In function pointer calling conventions.
+            /// </summary>
+            FunctionPointerCallingConventions,
+
+            /// <summary>
+            /// In function pointer parameters.
+            /// </summary>
+            FunctionPointerParameters,
 
             /// <summary>
             /// Return from recursion.
@@ -142,8 +160,23 @@ namespace KGySoft.Reflection
                 get => stack.Count == 0 ? State.None : stack.Peek();
                 set
                 {
-                    Pop();
+                    if (stack.Count > 0)
+                        Pop();
                     Push(value);
+                }
+            }
+
+            internal State PrevState
+            {
+                get
+                {
+                    if (stack.Count <= 1)
+                        return State.None;
+
+                    var top = stack.Pop();
+                    var result = stack.Peek();
+                    Push(top);
+                    return result;
                 }
             }
 
@@ -230,8 +263,11 @@ namespace KGySoft.Reflection
 
         private const int pointer = -1;
         private const int byRef = -2;
+        private const string functionPointerPrefix = "&fn";
+        private const string functionPointerUnmanagedPrefix = "*fn";
 
         private const TypeNameKind removeAssemblyVersions = (TypeNameKind)(-1);
+        private const TypeNameKind callingConventionName = (TypeNameKind)(-2);
 
         #endregion
 
@@ -252,11 +288,14 @@ namespace KGySoft.Reflection
         private readonly ResolveTypeOptions options;
         private readonly CircularList<int> modifiers = new CircularList<int>();
         private readonly List<TypeResolver> genericArgs = new List<TypeResolver>();
+        private readonly List<TypeResolver> functionPointerParams = new List<TypeResolver>();
+        private readonly List<TypeResolver> functionPointerCallingConventions = new List<TypeResolver>();
 
         private string? rootName;
         private string? assemblyName;
         private TypeResolver? declaringType;
         private string? declaringMethod;
+        private TypeResolver? functionPointerReturnType;
 
         private Type? type;
         private Assembly? assembly;
@@ -357,20 +396,35 @@ namespace KGySoft.Reflection
                 type = type.GetGenericTypeDefinition();
             }
 
-            // root type
-            bool isGenericParam = type.IsGenericParameter;
-            rootName = isGenericParam ? type.Name : typeNameResolver?.Invoke(type) ?? type.FullName;
-            if (!isGenericParam)
+            // generic parameter
+            if (type.IsGenericParameter)
             {
-                assembly = type.Assembly;
-                if (kind is TypeNameKind.AssemblyQualifiedName or TypeNameKind.ForcedAssemblyQualifiedName)
-                    assemblyName = assemblyNameResolver?.Invoke(type)?.FullName ?? assembly.FullName;
+                rootName = type.Name;
+                declaringType = new TypeResolver(type.DeclaringType!, kind, assemblyNameResolver, typeNameResolver);
+                declaringMethod = type.DeclaringMethod?.ToString();
                 return;
             }
 
-            // generic parameter
-            declaringType = new TypeResolver(type.DeclaringType!, kind, assemblyNameResolver, typeNameResolver);
-            declaringMethod = type.DeclaringMethod?.ToString();
+#if NET8_0_OR_GREATER
+            // function pointer
+            if (type.IsFunctionPointer)
+            {
+                rootName = type.IsUnmanagedFunctionPointer ? functionPointerUnmanagedPrefix : functionPointerPrefix;
+                functionPointerReturnType = new TypeResolver(type.GetFunctionPointerReturnType(), kind, assemblyNameResolver, typeNameResolver);
+                foreach (Type conv in type.GetFunctionPointerCallingConventions())
+                    functionPointerCallingConventions.Add(new TypeResolver(conv, kind, assemblyNameResolver, typeNameResolver));
+                foreach (Type paramType in type.GetFunctionPointerParameterTypes())
+                    functionPointerParams.Add(new TypeResolver(paramType, kind, assemblyNameResolver, typeNameResolver));
+                return;
+            }
+#endif
+
+            // root type
+            rootName = typeNameResolver?.Invoke(type) ?? type.FullName;
+            assembly = type.Assembly;
+            if (kind is TypeNameKind.AssemblyQualifiedName or TypeNameKind.ForcedAssemblyQualifiedName)
+                assemblyName = assemblyNameResolver?.Invoke(type)?.FullName ?? assembly.FullName;
+
         }
 
         #endregion
@@ -498,6 +552,8 @@ namespace KGySoft.Reflection
         internal static string StripName(string typeName, bool stripVersionOnly)
             => new TypeResolver(typeName, ResolveTypeOptions.None).GetName(stripVersionOnly ? removeAssemblyVersions : TypeNameKind.LongName) ?? typeName;
 
+        internal static string? GetName(string typeName, TypeNameKind kind) => new TypeResolver(typeName, ResolveTypeOptions.None).GetName(kind);
+
         #endregion
 
         #region Private Methods
@@ -607,6 +663,11 @@ namespace KGySoft.Reflection
             genericArgs.Clear();
             declaringType = null;
             declaringMethod = null;
+#if NET8_0_OR_GREATER
+            functionPointerParams.Clear();
+            functionPointerCallingConventions.Clear();
+            functionPointerReturnType = null;
+#endif
         }
 
         [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity",
@@ -638,7 +699,7 @@ namespace KGySoft.Reflection
 
             void ParseTypeName(ref ParseContext ctx)
             {
-                if (ctx.Char == ',') // Type name separator in generic: returning from recursion
+                if (ctx.Char == ',') // Type name separator in type arguments: returning from recursion
                 {
                     rootName = ctx.GetBuf();
                     ctx.State = State.BeforeArgument;
@@ -646,11 +707,18 @@ namespace KGySoft.Reflection
                     return;
                 }
 
-                if (ctx.Char == ']') // end of generics, returning from recursion
+                if (ctx.Char == ']') // end of type in [], returning from recursion
                 {
                     rootName = ctx.GetBuf();
                     ctx.State = State.Modifiers;
                     ctx.Push(State.Return);
+                    return;
+                }
+
+                if (ctx.Char == ')' && ctx.PrevState == State.FunctionPointerParameters)
+                {
+                    rootName = ctx.GetBuf();
+                    ctx.State = State.Return;
                     return;
                 }
 
@@ -660,9 +728,9 @@ namespace KGySoft.Reflection
 
             void ParseFullNameOrAqnAndTypeNameCommon(ref ParseContext ctx)
             {
-                if (ctx.Char == '[') // array or generic type arguments
+                if (ctx.Char == '[') // array or generic type arguments after a name
                 {
-                    Debug.Assert(rootName == null);
+                    Debug.Assert(rootName == null && !ctx.IsBufEmpty, "A name is expected before an array or generic specifier");
                     rootName = ctx.GetBuf();
                     ctx.Push(State.ArrayOrGeneric);
                     return;
@@ -670,6 +738,13 @@ namespace KGySoft.Reflection
 
                 if (ctx.Char is '*' or '&')
                 {
+                    if (ctx.IsBufEmpty)
+                    {
+                        ctx.State = State.FunctionPointer;
+                        ctx.AppendChar();
+                        return;
+                    }
+
                     rootName = ctx.GetBuf();
                     modifiers.Add(ctx.Char == '*' ? pointer : byRef);
                     ctx.Push(State.Modifiers);
@@ -730,7 +805,7 @@ namespace KGySoft.Reflection
 
             void ParseModifiers(ref ParseContext ctx)
             {
-                if (ctx.Char == ',') // type or assembly separator
+                if (ctx.Char == ',') // parameter, type argument or assembly separator
                 {
                     ctx.Pop();
 
@@ -780,10 +855,9 @@ namespace KGySoft.Reflection
                     return;
                 }
 
-                if (ctx.Char == ':') // generic parameter identifier
+                if (ctx.Char == ':') // generic parameter identifier or function pointer return value
                 {
                     ctx.Pop();
-                    Debug.Assert(ctx.State is State.GenericParameterName or State.GenericMethodParameterName);
                     switch (ctx.State)
                     {
                         case State.GenericParameterName:
@@ -792,10 +866,20 @@ namespace KGySoft.Reflection
                         case State.GenericMethodParameterName:
                             ParseGenericMethodParameterName(ref ctx);
                             return;
+                        case State.FunctionPointer:
+                            ctx.Push(State.BeforeArgument);
+                            return;
                         default:
                             ctx.State = State.Invalid;
                             return;
                     }
+                }
+
+                if (ctx.Char == ')') // end of function pointer parameters
+                {
+                    ctx.Pop();
+                    ctx.State = ctx is { State: State.TypeName, PrevState: State.FunctionPointerParameters } ? State.Return : State.Invalid;
+                    return;
                 }
 
                 if (ctx.IsWhiteSpace)
@@ -849,7 +933,7 @@ namespace KGySoft.Reflection
                     return;
 
                 TypeResolver arg;
-                if (ctx.Char == '[') // AQN in generic: recursion
+                if (ctx.Char == '[') // AQN in type arguments or return type
                 {
                     arg = new TypeResolver(options);
                     ctx.State = State.FullNameOrAqn;
@@ -860,11 +944,37 @@ namespace KGySoft.Reflection
                         return;
                     }
 
-                    genericArgs.Add(arg);
+                    switch (ctx.PrevState)
+                    {
+                        case State.FunctionPointerParameters:
+                            functionPointerParams.Add(arg);
+                            return;
+                        case State.FunctionPointer:
+                            functionPointerReturnType = arg;
+                            ctx.Pop();
+                            ctx.Pop();
+                            return;
+                        default:
+                            genericArgs.Add(arg);
+                            return;
+                    }
+                }
+
+                // In function pointer parameters we accept empty params (), but not a closing parenthesis after ','
+                if (ctx.Char == ')' && ctx.PrevState == State.FunctionPointerParameters)
+                {
+                    if (functionPointerParams.Count > 0) 
+                    {
+                        ctx.State = State.Invalid;
+                        return;
+                    }
+
+                    ctx.Pop();
+                    ctx.State = State.Modifiers;
                     return;
                 }
 
-                // type name in generics: recursion
+                // type name in generics and function parameters: recursion
                 ctx.State = State.TypeName;
                 arg = new TypeResolver(options);
                 if (ctx.Char == '!')
@@ -873,13 +983,29 @@ namespace KGySoft.Reflection
                     ctx.AppendChar();
 
                 arg.Parse(ref ctx);
-                if (ctx.State is not (State.Modifiers or State.BeforeArgument))
+                switch (ctx.State)
                 {
-                    ctx.State = State.Invalid;
-                    return;
-                }
+                    case State.Modifiers or State.BeforeArgument:
+                        if (ctx.PrevState == State.FunctionPointerParameters)
+                            functionPointerParams.Add(arg);
+                        else
+                            genericArgs.Add(arg);
+                        return;
 
-                genericArgs.Add(arg);
+                    case State.FunctionPointerParameters:
+                        functionPointerParams.Add(arg);
+                        ctx.State = State.Modifiers;
+                        return;
+
+                    case State.FunctionPointer:
+                        functionPointerReturnType = arg;
+                        ctx.Pop();
+                        return;
+
+                    default:
+                        ctx.State = State.Invalid;
+                        return;
+                }
             }
 
             static void ParseAfterArgument(ref ParseContext ctx)
@@ -893,6 +1019,13 @@ namespace KGySoft.Reflection
                 if (ctx.Char == ']') // end of generic arguments
                 {
                     ctx.State = State.Modifiers;
+                    return;
+                }
+
+                if (ctx.Char == ')') // end of function pointer parameters
+                {
+                    ctx.Pop();
+                    ctx.State = ctx.State == State.FunctionPointerParameters ? State.Modifiers : State.Invalid;
                     return;
                 }
 
@@ -988,6 +1121,66 @@ namespace KGySoft.Reflection
                 ctx.AppendChar();
             }
 
+            void ParseFunctionPointer(ref ParseContext ctx)
+            {
+                // calling conventions
+                if (ctx.Char == '[')
+                {
+                    if (functionPointerCallingConventions.Count > 0 || functionPointerParams.Count > 0)
+                    {
+                        ctx.State = State.Invalid;
+                        return;
+                    }
+
+                    rootName = ctx.GetBuf();
+                    ctx.Push(State.FunctionPointerCallingConventions);
+                    return;
+                }
+
+                // parameters
+                if (ctx.Char == '(')
+                {
+                    if (functionPointerParams.Count > 0)
+                    {
+                        ctx.State = State.Invalid;
+                        return;
+                    }
+
+                    rootName ??= ctx.GetBuf();
+                    ctx.Push(State.FunctionPointerParameters);
+                    ctx.Push(State.BeforeArgument);
+                    return;
+                }
+
+                // whitespace after calling conventions or parameters
+                if (ctx.IsWhiteSpace && rootName != null)
+                    return;
+
+                ctx.AppendChar();
+            }
+
+            void ParseFunctionPointerCallingConventions(ref ParseContext ctx)
+            {
+                if (ctx.Char is ',' or ']')
+                {
+                    if (ctx.IsBufEmpty)
+                    {
+                        ctx.State = State.Invalid;
+                        return;
+                    }
+
+                    functionPointerCallingConventions.Add(new TypeResolver(options) { rootName = ctx.GetBuf().Trim() });
+                    if (ctx.Char == ']')
+                        ctx.Pop();
+                    return;
+                }
+
+                if (ctx.IsWhiteSpace && ctx.IsBufEmpty)
+                    return;
+
+                ctx.AppendChar();
+            }
+
             #endregion
 
             while (context.Read())
@@ -1038,9 +1231,26 @@ namespace KGySoft.Reflection
                         ParseMethodSignature(ref context);
                         break;
 
+                    case State.FunctionPointer:
+                        ParseFunctionPointer(ref context);
+                        break;
+
+                    case State.FunctionPointerCallingConventions:
+                        ParseFunctionPointerCallingConventions(ref context);
+                        break;
+
                     case State.Invalid:
                         return;
 
+                    case State.None:
+                        if (context.IsWhiteSpace)
+                            break;
+
+                        // the parsing has ended, but there is still something in the queue
+                        context.Push(State.Invalid);
+                        return;
+
+                    case State.FunctionPointerParameters: // it's just a stack marker state, not expected to be parsed
                     default:
                         Throw.InternalError($"Unexpected state: {context.State}");
                         return;
@@ -1105,16 +1315,28 @@ namespace KGySoft.Reflection
 
             void DumpRootName(StringBuilder sb, TypeNameKind kind)
             {
-                if (kind == TypeNameKind.ShortName)
-                    sb.Append(rootName!.AsSegment().Split('.', '+').LastOrDefault()
+                switch (kind)
+                {
+                    case TypeNameKind.ShortName:
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
-                            .AsSpan
+                        sb.Append(rootName!.AsSegment().Split('.', '+').LastOrDefault().AsSpan);
 #else
-                            .ToString()
+                        sb.Append(rootName!.AsSegment().Split('.', '+').LastOrDefault().ToString());
 #endif
-                    );
-                else
-                    sb.Append(rootName);
+                        break;
+
+                    case callingConventionName:
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+                        sb.Append(rootName!.StartsWith("CallConv", StringComparison.Ordinal) ? rootName.AsSpan("CallConv".Length) : rootName);
+#else
+                        sb.Append(rootName!.StartsWith("CallConv", StringComparison.Ordinal) ? rootName.Substring("CallConv".Length) : rootName);
+#endif
+                        break;
+
+                    default:
+                        sb.Append(rootName);
+                        break;
+                }
             }
 
             void DumpGenericArguments(StringBuilder sb, TypeNameKind kind)
@@ -1207,21 +1429,90 @@ namespace KGySoft.Reflection
                 sb.Append(asmName);
             }
 
+            void DumpFunctionPointerCallingConventions(StringBuilder sb, TypeNameKind kind)
+            {
+                if (functionPointerCallingConventions.Count == 0)
+                    return;
+
+                // calling conventions
+                if (kind != TypeNameKind.ShortName && functionPointerCallingConventions.Count > 0)
+                {
+                    sb.Append('[');
+                    for (int i = 0; i < functionPointerCallingConventions.Count; i++)
+                    {
+                        if (i > 0)
+                            sb.Append(',');
+                        functionPointerCallingConventions[i].DumpName(sb, callingConventionName);
+                    }
+
+                    sb.Append(']');
+                }
+            }
+
+            void DumpFunctionPointerParameters(StringBuilder sb, TypeNameKind kind)
+            {
+                if (functionPointerReturnType == null)
+                    return;
+
+                sb.Append('(');
+                for (int i = 0; i < functionPointerParams.Count; i++)
+                {
+                    if (i > 0)
+                        sb.Append(',');
+                    TypeResolver param = functionPointerParams[i];
+                    bool aqn = kind == TypeNameKind.ForcedAssemblyQualifiedName
+                        || kind is TypeNameKind.AssemblyQualifiedName or removeAssemblyVersions
+                        && !AssemblyResolver.IsCoreLibAssemblyName(param.assemblyName ?? param.declaringType?.assemblyName!);
+                    if (aqn)
+                        sb.Append('[');
+                    param.DumpName(sb, kind);
+                    if (aqn)
+                        sb.Append(']');
+                }
+
+                sb.Append(')');
+            }
+
+            void DumpFunctionPointerReturnType(StringBuilder sb, TypeNameKind kind)
+            {
+                if (functionPointerReturnType == null)
+                    return;
+
+                sb.Append(':');
+                bool aqn = kind == TypeNameKind.ForcedAssemblyQualifiedName
+                    || kind is TypeNameKind.AssemblyQualifiedName or removeAssemblyVersions
+                    && !AssemblyResolver.IsCoreLibAssemblyName(functionPointerReturnType.assemblyName ?? functionPointerReturnType.declaringType?.assemblyName!);
+                if (aqn)
+                    sb.Append('[');
+                functionPointerReturnType.DumpName(sb, kind);
+                if (aqn)
+                    sb.Append(']');
+            }
+
             #endregion
 
-            // Generic parameter indicator
+            // Generic type or method parameter indicator
             DumpGenericParameterIndicator(result, typeNameKind);
 
-            // Root name
+            // The root name without specifiers/parameters/etc.
             DumpRootName(result, typeNameKind);
 
-            // Generic arguments
+            // Unmanaged function pointer: calling conventions
+            DumpFunctionPointerCallingConventions(result, typeNameKind);
+
+            // Function pointer: parameters (without the return value)
+            DumpFunctionPointerParameters(result, typeNameKind);
+
+            // Constructed generic type (possibly still an open type): generic arguments
             DumpGenericArguments(result, typeNameKind);
 
             // Modifiers (array ranks, pointers, ByRef)
             DumpModifiers(result);
 
-            // Generic parameter identification
+            // Function pointer: return type (even if void)
+            DumpFunctionPointerReturnType(result, typeNameKind);
+
+            // Generic type of method parameter identification
             DumpGenericParameter(result, typeNameKind);
 
             // Assembly name
@@ -1282,8 +1573,12 @@ namespace KGySoft.Reflection
 
         private Type? ResolveRootType(Func<AssemblyName?, string, Type?>? typeResolver)
         {
+            // It's important that typeResolver handles with standard types only, whereas extensions like generic parameters and function pointers
+            // are handled always internally. The typeResolver is passed to them to handle the declaring type/parameters/return types.
             if (declaringType != null)
                 return ResolveGenericParameter(typeResolver);
+            if (functionPointerReturnType != null)
+                return ResolveFunctionPointer(typeResolver);
 
             bool throwError = (options & ResolveTypeOptions.ThrowError) != ResolveTypeOptions.None;
             bool allowIgnoreAssembly = (options & ResolveTypeOptions.AllowIgnoreAssemblyName) != ResolveTypeOptions.None;
@@ -1368,15 +1663,38 @@ namespace KGySoft.Reflection
             // Declaring Type
             Type? t = declaringType!.Resolve(typeResolver);
             if (t == null)
+                return null; // it's OK, exception is thrown from inside when requested
+
+            t = declaringMethod != null
+                // Generic method argument
+                ? t.GetMethods(BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly)
+                    .FirstOrDefault(m => m.ToString() == declaringMethod)?.GetGenericArguments().FirstOrDefault(a => a.Name == rootName)
+                // Generic type argument
+                : t.GetGenericArguments().FirstOrDefault(a => a.Name == rootName);
+
+            if (t is null && (options & ResolveTypeOptions.ThrowError) != ResolveTypeOptions.None)
+                Throw.ReflectionException(Res.ReflectionNotAType(ToString()));
+            return t;
+        }
+
+        private Type? ResolveFunctionPointer(Func<AssemblyName?, string, Type?>? typeResolver)
+        {
+            Debug.Assert(functionPointerReturnType != null);
+            bool throwError = (options & ResolveTypeOptions.ThrowError) != ResolveTypeOptions.None;
+            if (rootName is not (functionPointerPrefix or functionPointerUnmanagedPrefix))
+            {
+                if (throwError)
+                    Throw.ReflectionException(Res.ReflectionNotAType(rootName!));
+                return null;
+            }
+
+#if NET11_0_OR_GREATER
+#error Implement if API is already available - https://github.com/dotnet/runtime/issues/75348
+#endif
+            if (!throwError)
                 return null;
 
-            // Generic type argument
-            if (declaringMethod == null)
-                return t.GetGenericArguments().FirstOrDefault(a => a.Name == rootName);
-
-            // Generic method argument
-            return t.GetMethods(BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly)
-                .FirstOrDefault(m => m.ToString() == declaringMethod)?.GetGenericArguments().FirstOrDefault(a => a.Name == rootName);
+            return Throw.PlatformNotSupportedException<Type?>(Res.ReflectionFunctionPointersNotSupported);
         }
 
         #endregion

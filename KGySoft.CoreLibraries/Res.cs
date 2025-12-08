@@ -428,6 +428,9 @@ namespace KGySoft
         /// <summary>Generic access of potentially mutating value type members with pointer parameters or pointer return value is not supported in the .NET Standard 2.0 version of this library. Use the non-generic access instead.</summary>
         internal static string ReflectionValueTypeWithPointersGenericNetStandard20 => Get("Reflection_ValueTypeWithPointersGenericNetStandard20");
 
+        /// <summary>Resolving function pointers is not supported on this platform.</summary>
+        internal static string ReflectionFunctionPointersNotSupported => Get("Reflection_FunctionPointersNotSupported");
+
         #endregion
 
         #region Resources
@@ -738,7 +741,7 @@ namespace KGySoft
         /// <summary>Value type '{0}' cannot be deserialized from raw data in safe mode because it contains references or unmanaged pointers. If the serialization stream is from a trusted source you may try to disable safe mode to attempt the deserialization with marshaling.</summary>
         internal static string BinarySerializationValueTypeContainsReferenceOrPointerSafe(Type type) => Get("BinarySerialization_ValueTypeContainsReferenceOrPointerSafeFormat", type.GetName(TypeNameKind.LongName));
 
-        /// <summary>In safe mode it is not supported to set field '{0}.{1}' to a non-null value by default object graph deserialization.</summary>
+        /// <summary>In safe mode it is not supported to set pointer field '{0}.{1}' to a non-null value by default object graph deserialization.</summary>
         internal static string BinarySerializationPointerFieldSafe(Type type, string fieldName) => Get("BinarySerialization_PointerFieldSafeFormat", type.GetName(TypeNameKind.LongName), fieldName);
 
         #endregion
@@ -1267,11 +1270,18 @@ namespace KGySoft
         /// <summary>Circular reference found during serialization. Object is already serialized: "{0}". To avoid circular references use DesignerSerializationVisibilityAttribute with Hidden value on members directly or indirectly reference themselves.</summary>
         internal static string XmlSerializationCircularReference(object obj) => Get("XmlSerialization_CircularReferenceFormat", obj);
 
-        /// <summary>Value type "{0}" cannot be deserialized from raw data in safe mode because it contains references. If the XML data is from a trusted source you may try to use unsafe mode to attempt the deserialization with marshaling.</summary>
-        internal static string XmlSerializationValueTypeContainsReferenceSafe(Type type) => Get("XmlSerialization_ValueTypeContainsReferenceSafeFormat", type.GetName(TypeNameKind.LongName));
+        /// <summary>Value type "{0}" cannot be deserialized from raw data in safe mode because it contains references or unmanaged pointers. If the XML data is from a trusted source you may try to use unsafe mode to attempt the deserialization with marshaling.</summary>
+        internal static string XmlSerializationValueTypeContainsReferenceOrPointerSafe(Type type) => Get("XmlSerialization_ValueTypeContainsReferenceOrPointerSafeFormat", type.GetName(TypeNameKind.LongName));
 
         /// <summary>Invalid comparer for collection type "{0}": {1}</summary>
         internal static string XmlSerializationInvalidComparer(Type type, string name) => Get("XmlSerialization_InvalidComparerFormat", type.GetName(TypeNameKind.LongName), name);
+
+        /// <summary>In safe mode it is not supported to set pointer field '{0}.{1}' to a non-null value.</summary>
+        internal static string XmlSerializationPointerFieldSafe(Type type, string fieldName) => Get("XmlSerialization_PointerFieldSafeFormat", type.GetName(TypeNameKind.LongName), fieldName);
+
+        /// <summary>In safe mode it is not supported to set pointer property '{0}.{1}' to a non-null value.</summary>
+        internal static string XmlSerializationPointerPropertySafe(Type type, string propertyName) => Get("XmlSerialization_PointerPropertySafeFormat", type.GetName(TypeNameKind.LongName), propertyName);
+
 
         #endregion
 

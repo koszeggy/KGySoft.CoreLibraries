@@ -17,6 +17,8 @@
 
 using System;
 using System.Collections.Generic;
+
+using KGySoft.Annotations;
 #if NET9_0_OR_GREATER
 using System.Reflection.Metadata;
 #endif
@@ -39,7 +41,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         #region Fields
 
         private static readonly Type[] sourceDumpAndResolveTypesContainingGenericArguments =
-        {
+        [
             typeof(List<>).GetGenericArguments()[0], // T of List<>
             typeof(Dictionary<,>).MakeGenericType(typeof(string), typeof(Dictionary<,>).GetGenericArguments()[1]), // Dictionary<string, TValue>
             typeof(Dictionary<,>).MakeGenericType(typeof(Dictionary<,>).GetGenericArguments()[0], typeof(string)), // Dictionary<TKey, string>
@@ -55,8 +57,30 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             typeof(List<>).MakeGenericType(typeof(Dictionary<,>).GetGenericArguments()[0]).MakeArrayType(), // List<TKey>[]
             typeof(Array).GetMethod("Resize")!.GetGenericArguments()[0], // T of Array.Resize<T>
             typeof(Array).GetMethod("Resize")!.GetGenericArguments()[0].MakeArrayType(), // T[] of Array.Resize<T>
-            typeof(List<>).MakeGenericType(typeof(Array).GetMethod("Resize")!.GetGenericArguments()[0]), // List<T> of Array.Resize<T>
-        };
+            typeof(List<>).MakeGenericType(typeof(Array).GetMethod("Resize")!.GetGenericArguments()[0]) // List<T> of Array.Resize<T>
+        ];
+
+        private static readonly Type[] sourceFunctionPointerTypesTest =
+        [
+            typeof(delegate*<string, void>),
+            typeof(delegate*<string, void>[]),
+            typeof(delegate*<string, void>*),
+            typeof(delegate*<string, void>*[]),
+            typeof(delegate*<string, delegate*<string, void>, void>),
+            typeof(delegate*<string, delegate*<string, void>[], void*[]>[]),
+            typeof(delegate*<string, delegate*<string, void>>),
+            typeof(delegate*<string, delegate*<string, void>[]>),
+            typeof(delegate* managed<int?, void>),
+            typeof(delegate* <int?, void>),
+#if NET6_0_OR_GREATER
+            typeof(delegate* unmanaged<KeyValuePair<int, string>, void*>),
+            typeof(delegate* unmanaged<KeyValuePair<int, string>, void*>[]),
+            typeof(delegate* unmanaged[Cdecl]<string, void>),
+            typeof(delegate* unmanaged[Cdecl]<string, void>[]),
+            typeof(delegate* unmanaged[Stdcall, SuppressGCTransition]<string, void>),
+            typeof(delegate* unmanaged[Stdcall, SuppressGCTransition]<string, void>[,]),
+#endif
+        ];
 
         #endregion
 
@@ -99,7 +123,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         [TestCase("System.Collections.Generic.List`1[]")] // List<>[]
         [TestCase("System.Collections.Generic.List`1[]&")] // List<>[]&
         [TestCase("System.Collections.Generic.List`1[[System.Int32, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]], mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089")] // List<int>
-        [TestCase("System.Collections.Generic.List`1[[System.Uri, System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]], mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089")] // List<int>
+        [TestCase("System.Collections.Generic.List`1[[System.Uri, System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]], mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089")] // List<Uri>
         [TestCase("System.Collections.Generic.List`1[System.Int32, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]")] // fail
         [TestCase("System.Collections.Generic.List`1[[System.Int32]]")] // List<int>
         [TestCase("System.Collections.Generic.List`1[ [ System.Int32] ] ")] // List<int>
@@ -108,7 +132,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         [TestCase("System.Collections.Generic.List`1[[System.Int32]][]")] // List<int>[]
         [TestCase("System.Collections.Generic.List`1[System.Int32[]]")] // List<int[]>
         [TestCase("System.Collections.Generic.List`1[[System.Int32[]]]")] // List<int[]>
-        [TestCase("System.Collections.Generic.List`1[[System.Int32][]]")] // fail
+        [TestCase("System.Collections.Generic.List`1[[System.Collections.Generic.List`1[System.Int32], mscorlib]]")] // List<List<int>>
+        [TestCase("System.Collections.Generic.List`1[[System.Int32][]]")] // fail (non-generic)
         [TestCase("System.Collections.Generic.List`1[System.Int32]&")] // List<int>&
         [TestCase("System.Collections.Generic.List`1[System.Int32&]")] // fail: The type 'System.Int32&' may not be used as a type argument (except in Mono)
         [TestCase("System.Collections.Generic.List`1[System.Int32*]")] // fail: The type 'System.Int32*' may not be used as a type argument (except in Mono)
@@ -165,6 +190,80 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             Assert.AreEqual(type, Reflector.ResolveType(aqn));
             Assert.AreEqual(type, Reflector.ResolveType(fullName));
+        }
+
+        [TestCaseSource(nameof(sourceFunctionPointerTypesTest))]
+        public void FunctionPointerTypesTest(Type type)
+        {
+            string fullName = type.GetName(TypeNameKind.LongName);
+            string aqn = type.GetName(TypeNameKind.ForcedAssemblyQualifiedName);
+            Console.WriteLine($"Name: {type.GetName(TypeNameKind.ShortName)}");
+            Console.WriteLine($"FullName: {fullName}");
+            Console.WriteLine($"AssemblyQualifiedName: {aqn}");
+
+            // resolve is not supported on recent platforms, but we can test parse/rebuild by stripping
+            Assert.AreEqual(fullName, TypeResolver.StripName(aqn, false));
+#if NET11_0_OR_GREATER
+            Assert.AreEqual(type, Reflector.ResolveType(aqn));
+            Assert.AreEqual(type, Reflector.ResolveType(fullName));
+#endif
+        }
+
+        [TestCase("System.Int32", TypeNameKind.ShortName, "Int32")]
+        [TestCase("System.Int32", TypeNameKind.LongName, "System.Int32")]
+        [TestCase("System.Int32*", TypeNameKind.ShortName, "Int32*")]
+        [TestCase("System.Int32&", TypeNameKind.ShortName, "Int32&")]
+        [TestCase("System.Int32[ ] ", TypeNameKind.ShortName, "Int32[]")]
+        [TestCase("System.Int32[*]", TypeNameKind.ShortName, "Int32[*]")]
+        [TestCase("System.Int32[,]", TypeNameKind.ShortName, "Int32[,]")]
+        [TestCase("System.Int32[*,*]", TypeNameKind.ShortName, null)]
+        [TestCase("System.Int32[], mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089", TypeNameKind.ShortName, "Int32[]")]
+        [TestCase("System.Int32[], mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089", TypeNameKind.FullName, "System.Int32[]")]
+        [TestCase("System.Collections.Generic.List`1[[System.Int32, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]], mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089", TypeNameKind.ShortName, "List`1[Int32]")]
+        [TestCase("System.Collections.Generic.List`1[[System.Int32, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]], mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089", TypeNameKind.LongName, "System.Collections.Generic.List`1[System.Int32]")]
+        [TestCase("System.Collections.Generic.List`1[[System.Int32]]", TypeNameKind.ShortName, "List`1[Int32]")]
+        [TestCase("System.Collections.Generic.List`1[System.Int32][]", TypeNameKind.ShortName, "List`1[Int32][]")]
+        [TestCase("System.Collections.Generic.List`1[[System.Int32]][]", TypeNameKind.ShortName, "List`1[Int32][]")]
+        [TestCase("System.Collections.Generic.List`1[System.Int32[]]", TypeNameKind.ShortName, "List`1[Int32[]]")]
+        [TestCase("System.Collections.Generic.List`1[[System.Int32[]]]", TypeNameKind.ShortName, "List`1[Int32[]]")]
+        [TestCase("System.Collections.Generic.List`1[[System.Collections.Generic.List`1[System.Int32], mscorlib]]", TypeNameKind.ShortName, "List`1[List`1[Int32]]")]
+        [TestCase("System.Collections.Generic.List`1[[System.Int32][]]", TypeNameKind.ShortName, null)]
+        [TestCase("&fn(System.Int32):System.Void", TypeNameKind.LongName, "&fn(System.Int32):System.Void")]
+        [TestCase("&fn(System.Int32, System.String):System.Void", TypeNameKind.ShortName, "&fn(Int32,String):Void")]
+        [TestCase("&fn():System.Void", TypeNameKind.LongName, "&fn():System.Void")]
+        [TestCase("&fn:System.Void", TypeNameKind.LongName, null)]
+        [TestCase("*fn[Cdecl](System.Int32[], System.String):System.Void", TypeNameKind.ShortName, "*fn(Int32[],String):Void")]
+        [TestCase("*fn[Cdecl](System.Int32[], System.String[]):System.Void", TypeNameKind.ShortName, "*fn(Int32[],String[]):Void")]
+        [TestCase("*fn[Cdecl]([System.Int32]):System.Void", TypeNameKind.ShortName, "*fn(Int32):Void")]
+        [TestCase("*fn[Cdecl](System.Int32, [System.String]):System.Void", TypeNameKind.ShortName, "*fn(Int32,String):Void")]
+        [TestCase("*fn[Cdecl](System.Int32):[System.Void]", TypeNameKind.ShortName, "*fn(Int32):Void")]
+        [TestCase("*fn[Cdecl]([System.Int32[]]):[System.Void]", TypeNameKind.ShortName, "*fn(Int32[]):Void")]
+        [TestCase("*fn[Cdecl]([System.Int32[]],[System.String]):[System.Void]", TypeNameKind.ShortName, "*fn(Int32[],String):Void")]
+        [TestCase("*fn[Cdecl]([System.Int32],[System.String[]]):[System.Void]", TypeNameKind.ShortName, "*fn(Int32,String[]):Void")]
+        [TestCase("*fn[Cdecl](System.Int32):System.Int32[]", TypeNameKind.ShortName, "*fn(Int32):Int32[]")]
+        [TestCase("*fn[Cdecl](System.Int32):[System.Int32[]]", TypeNameKind.ShortName, "*fn(Int32):Int32[]")]
+        [TestCase("*fn[Cdecl](System.Int32)[]:System.Void", TypeNameKind.ShortName, "*fn(Int32)[]:Void")]
+        [TestCase("*fn[Cdecl]([System.Int32])[]:System.Void", TypeNameKind.ShortName, "*fn(Int32)[]:Void")]
+        [TestCase("*fn[Cdecl](System.Int32)[]:[System.Void]", TypeNameKind.ShortName, "*fn(Int32)[]:Void")]
+        [TestCase("*fn[Cdecl](System.List`1[System.Int32], System.String):System.Void", TypeNameKind.ShortName, "*fn(List`1[Int32],String):Void")]
+        [TestCase("*fn[Cdecl]([System.Collections.Generic.List`1[System.Int32], mscorlib], System.String):System.Void", TypeNameKind.ShortName, "*fn(List`1[Int32],String):Void")]
+        [TestCase("*fn[ Stdcall, SuppressGCTransition ] ( [ System.Collections.Generic.List`1[System.Int32] , mscorlib], System.String ) [,]: [System.Void] ", TypeNameKind.ShortName, "*fn(List`1[Int32],String)[,]:Void")]
+        [TestCase("&fn(System.String):&fn(System.String)[]:System.Void", TypeNameKind.ShortName, "&fn(String):&fn(String):Void")]
+        [TestCase("&fn([System.String, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]):[&fn([System.String, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e])[]:[System.Void, System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]", TypeNameKind.ShortName, "&fn(String):&fn(String):Void")]
+        public void ParseTest(string typeName, TypeNameKind kind, [CanBeNull]string expected)
+        {
+            Assert.AreEqual(expected, TypeResolver.GetName(typeName, kind));
+
+            Type type = Reflector.ResolveType(typeName);
+            if (expected == null)
+            {
+                Assert.IsNull(type);
+                return;
+            }
+
+#if NET11_0_OR_GREATER // - see https://github.com/dotnet/runtime/issues/75348
+            Assert.AreEqual(TypeResolver.GetName(typeName, TypeNameKind.ShortName), type!.GetName(TypeNameKind.ShortName));
+#endif
         }
 
         #endregion
