@@ -33,6 +33,13 @@
     - Fixing the sign of the result when power = Int32.MinValue, value is negative, and the result doesn't overflow.
   - Pow(decimal, decimal) method:
     - Fixing result when power in an integer beyond Int32 range, value is negative, and the result doesn't overflow.
++ TypeExtensions class:
+  + GetName methods: Supporting function pointer types (.NET 8.0 and above).
+
++ KGySoft.Reflection namespace:
+===============================
++ Reflector class:
+  + New ReformatTypeName method.
 
 ! KGySoft.Serialization.Binary namespace:
 =========================================

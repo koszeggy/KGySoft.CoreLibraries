@@ -352,7 +352,6 @@ namespace KGySoft.Reflection
         {
             if (typeName == null!)
                 Throw.ArgumentNullException(Argument.typeName);
-
             Initialize(typeName);
         }
 
@@ -556,7 +555,12 @@ namespace KGySoft.Reflection
         internal static string StripName(string typeName, bool stripVersionOnly)
             => new TypeResolver(typeName, ResolveTypeOptions.None).GetName(stripVersionOnly ? removeAssemblyVersions : TypeNameKind.LongName) ?? typeName;
 
-        internal static string? GetName(string typeName, TypeNameKind kind) => new TypeResolver(typeName, ResolveTypeOptions.None).GetName(kind);
+        internal static string? GetName(string typeName, TypeNameKind kind)
+        {
+            if (!Enum<TypeNameKind>.IsDefined(kind))
+                Throw.EnumArgumentOutOfRange(Argument.kind, kind);
+            return new TypeResolver(typeName, ResolveTypeOptions.None).GetName(kind);
+        }
 
         #endregion
 

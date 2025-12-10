@@ -25,7 +25,8 @@ using KGySoft.Reflection;
 namespace KGySoft.CoreLibraries
 {
     /// <summary>
-    /// Represents name formatting options for the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.GetName">TypeExtensions.GetName</see> methods.
+    /// Represents name formatting options for the <see cref="O:KGySoft.CoreLibraries.TypeExtensions.GetName">TypeExtensions.GetName</see>
+    /// and <see cref="Reflector.ReformatTypeName(string,TypeNameKind)">Reflector.ReformatTypeName</see> methods.
     /// </summary>
     public enum TypeNameKind
     {
@@ -36,6 +37,7 @@ namespace KGySoft.CoreLibraries
         /// Differences from <see cref="MemberInfo.Name">Type.Name</see>:
         /// <list type="bullet">
         /// <item><see cref="MemberInfo.Name">Type.Name</see> does not dump the generic type arguments for constructed generic types.</item>
+        /// <item><see cref="MemberInfo.Name">Type.Name</see> returns an empty string for function pointer types.</item>
         /// </list>
         /// </para>
         /// </summary>
@@ -52,6 +54,7 @@ namespace KGySoft.CoreLibraries
         /// <item><see cref="Type.ToString">Type.ToString</see> dumps generic argument names for generic type definitions.</item>
         /// <item><see cref="Type.ToString">Type.ToString</see> returns <see cref="MemberInfo.Name">Type.Name</see> for generic parameter types.</item>
         /// <item><see cref="Type.ToString">Type.ToString</see> dumps open generic types in a non parseable way.</item>
+        /// <item><see cref="Type.ToString">Type.ToString</see> formats function parameter type names differently.</item>
         /// </list>
         /// </para>
         /// </summary>
@@ -66,7 +69,7 @@ namespace KGySoft.CoreLibraries
         /// Differences from <see cref="Type.FullName">Type.FullName</see>:
         /// <list type="bullet">
         /// <item><see cref="Type.FullName">Type.FullName</see> dumps the assembly names for every generic type argument.</item>
-        /// <item><see cref="Type.FullName">Type.FullName</see> returns <see langword="null"/> for generic parameter types.</item>
+        /// <item><see cref="Type.FullName">Type.FullName</see> returns <see langword="null"/> for generic parameter and function pointer types.</item>
         /// <item><see cref="Type.FullName">Type.FullName</see> does not dump the generic arguments for constructed open generic types.</item>
         /// </list>
         /// </para>
@@ -81,7 +84,7 @@ namespace KGySoft.CoreLibraries
         /// <para>
         /// Differences from <see cref="Type.FullName">Type.FullName</see>:
         /// <list type="bullet">
-        /// <item><see cref="Type.FullName">Type.FullName</see> returns <see langword="null"/> for generic parameter types.</item>
+        /// <item><see cref="Type.FullName">Type.FullName</see> returns <see langword="null"/> for generic parameter and function pointer types.</item>
         /// <item><see cref="Type.FullName">Type.FullName</see> does not dump the generic arguments for constructed open generic types.</item>
         /// </list>
         /// </para>
@@ -100,7 +103,7 @@ namespace KGySoft.CoreLibraries
         /// <list type="bullet">
         /// <item><see cref="Type.AssemblyQualifiedName">Type.AssemblyQualifiedName</see> dumps assembly names even for core library types.
         /// For a similar result use the <see cref="ForcedAssemblyQualifiedName"/> option. This is not needed for <see cref="Type.GetType(string)">Type.GetType</see> though.</item>
-        /// <item><see cref="Type.AssemblyQualifiedName">Type.AssemblyQualifiedName</see> returns <see langword="null"/> for generic parameter types.</item>
+        /// <item><see cref="Type.AssemblyQualifiedName">Type.FullName</see> returns <see langword="null"/> for generic parameter and function pointer types.</item>
         /// <item><see cref="Type.AssemblyQualifiedName">Type.AssemblyQualifiedName</see> returns the name of the generic type definition only for constructed open generic types.</item>
         /// </list>
         /// </para>
@@ -117,7 +120,7 @@ namespace KGySoft.CoreLibraries
         /// <para>
         /// Differences from <see cref="Type.AssemblyQualifiedName">Type.AssemblyQualifiedName</see>:
         /// <list type="bullet">
-        /// <item><see cref="Type.AssemblyQualifiedName">Type.AssemblyQualifiedName</see> returns <see langword="null"/> for generic parameter types.</item>
+        /// <item><see cref="Type.AssemblyQualifiedName">Type.FullName</see> returns <see langword="null"/> for generic parameter and function pointer types.</item>
         /// <item><see cref="Type.AssemblyQualifiedName">Type.AssemblyQualifiedName</see> returns the name of the generic type definition only for constructed open generic types.</item>
         /// </list>
         /// </para>

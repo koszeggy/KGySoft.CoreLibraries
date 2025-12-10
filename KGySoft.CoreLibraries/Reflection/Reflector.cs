@@ -3632,6 +3632,25 @@ namespace KGySoft.Reflection
             => TypeResolver.ResolveType(assembly, typeName, options);
 #endif
 
+        /// <summary>
+        /// Parses the specified <paramref name="typeName"/> and reformats it using the specified <paramref name="kind"/>, without actually resolving the type name to a <see cref="System.Type"/>.
+        /// </summary>
+        /// <param name="typeName">The type name to be parsed and reformatted.</param>
+        /// <param name="kind">A <see cref="TypeNameKind"/> value, specifying the format of the desired result.</param>
+        /// <returns>A <see cref="string"/>, containing the reformatted name of the specified <paramref name="typeName"/>.</returns>
+        /// <remarks>
+        /// <para>The typical intended usage of this method is to strip unneeded information from type names. The lower the value of the specified <paramref name="kind"/>, the shorted the result will be.</para>
+        /// <para>This method works for any kind of type names in any format that can be produced by the <see cref="MemberInfo.Name">Type.Name</see>, <see cref="Type.ToString">Type.ToString</see>,
+        /// <see cref="Type.FullName">Type.FullName</see>, <see cref="Type.AssemblyQualifiedName">Type.AssemblyQualifiedName</see> members,
+        /// and the <see cref="CoreLibraries.TypeExtensions.GetName(System.Type,TypeNameKind)">TypeExtensions.GetName</see> method.</para>
+        /// <note>As this method does not actually resolve any type, the result cannot contain more details than the originally provided name. To get an arbitrarily detailed name
+        /// of a <see cref="System.Type"/> use the <see cref="CoreLibraries.TypeExtensions.GetName(System.Type,TypeNameKind)">TypeExtensions.GetName</see> method with an actual <see cref="System.Type"/> instead.</note>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="typeName"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="typeName"/> cannot be parsed as a valid type name.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="kind"/> is not a defined <see cref="TypeNameKind"/> value.</exception>
+        public static string ReformatTypeName(string typeName, TypeNameKind kind) => TypeResolver.GetName(typeName, kind) ?? Throw.ArgumentException<string>(Argument.typeName, Res.ArgumentInvalid);
+
 #if NET35 || NET40 || NET45
 #pragma warning disable CS1574 // the documentation contains types that are not available in every target
 #endif
