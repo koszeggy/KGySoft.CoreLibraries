@@ -523,8 +523,8 @@ namespace KGySoft.CoreLibraries
         /// from <see cref="Type"/> members such as <see cref="MemberInfo.Name"/>, <see cref="Type.FullName"/> and <see cref="Type.AssemblyQualifiedName"/>.</para>
         /// <para>Unlike the <see cref="Type"/> properties, the names produced by this method are never <see langword="null"/> for runtime types.</para>
         /// <para>This method always provides parseable type names by using the <see cref="TypeNameKind.AssemblyQualifiedName"/> kind.
-        /// If the type contains generic arguments, then the result will be able to be parsed by
-        /// the <see cref="Reflector.ResolveType(string,ResolveTypeOptions)">Reflector.ResolveType</see> method.</para>
+        /// If the type contains generic arguments or function pointers, then the result will be able to be parsed only by
+        /// the <see cref="Reflector.ResolveType(string,ResolveTypeOptions)">Reflector.ResolveType</see> and <see cref="Reflector.ReformatTypeName(string,TypeNameKind)">Reflector.ReformatTypeName</see> methods.</para>
         /// </remarks>
         /// <seealso cref="TypeNameKind"/>
         /// <seealso cref="Reflector.ResolveType(string,ResolveTypeOptions)">Reflector.ResolveType</seealso>

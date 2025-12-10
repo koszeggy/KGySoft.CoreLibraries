@@ -54,7 +54,7 @@ namespace KGySoft.Reflection
             None,
 
             /// <summary>
-            /// A type name optionally with assembly name.
+            /// A type name optionally with assembly name. When not at root level, it's always embedded in [].
             /// </summary>
             FullNameOrAqn,
 
@@ -114,12 +114,14 @@ namespace KGySoft.Reflection
             FunctionPointer,
 
             /// <summary>
-            /// In function pointer calling conventions.
+            /// In function pointer calling conventions. Unlike FunctionPointerParameters, it is parsed separately, because we don't expect
+            /// complex types with potential generics, nesting and modifiers in calling conventions.
             /// </summary>
             FunctionPointerCallingConventions,
 
             /// <summary>
-            /// In function pointer parameters.
+            /// In function pointer parameters. Acts as a marker on the stack only, it has no separate Parse method (parsed together with generic arguments).
+            /// If it is on top of FunctionPointer, we are processing the parameters part, if it's missing, we are in the return type part.
             /// </summary>
             FunctionPointerParameters,
 
@@ -214,10 +216,12 @@ namespace KGySoft.Reflection
                 Rank = 0;
             }
 
-            internal void Pop()
+            internal State Pop()
             {
                 if (stack.Count > 0)
-                    stack.Pop();
+                    return stack.Pop();
+                Debug.Fail("Popping an empty stack");
+                return State.Invalid;
             }
 
             internal bool Read()
@@ -687,7 +691,8 @@ namespace KGySoft.Reflection
 
                 if (ctx.Char == ']') // end of current argument, returning from recursion
                 {
-                    rootName = ctx.GetBuf();
+                    Debug.Assert(rootName == null && !ctx.IsBufEmpty || rootName != null && ctx.IsBufEmpty && functionPointerReturnType != null, "rootName is already set if returning from function pointer");
+                    rootName ??= ctx.GetBuf();
                     ctx.State = State.AfterArgument;
                     ctx.Push(State.Return);
                     return;
@@ -699,23 +704,27 @@ namespace KGySoft.Reflection
 
             void ParseTypeName(ref ParseContext ctx)
             {
-                if (ctx.Char == ',') // Type name separator in type arguments: returning from recursion
+                if (ctx.Char == ',') // Type name separator in type arguments or function pointer return: returning from recursion
                 {
                     rootName = ctx.GetBuf();
-                    ctx.State = State.BeforeArgument;
+                    ctx.Pop();
+                    if (ctx.State != State.FunctionPointer)
+                        ctx.Push(State.BeforeArgument);
                     ctx.Push(State.Return);
                     return;
                 }
 
-                if (ctx.Char == ']') // end of type in [], returning from recursion
+                if (ctx.Char == ']') // end of generic or nested function pointer type, returning from recursion
                 {
                     rootName = ctx.GetBuf();
-                    ctx.State = State.Modifiers;
+                    ctx.Pop();
+                    if (ctx.State != State.FunctionPointer)
+                        ctx.Push(State.Modifiers);
                     ctx.Push(State.Return);
                     return;
                 }
 
-                if (ctx.Char == ')' && ctx.PrevState == State.FunctionPointerParameters)
+                if (ctx.Char == ')' && ctx.PrevState is State.FunctionPointerParameters or State.FunctionPointer)
                 {
                     rootName = ctx.GetBuf();
                     ctx.State = State.Return;
@@ -730,7 +739,12 @@ namespace KGySoft.Reflection
             {
                 if (ctx.Char == '[') // array or generic type arguments after a name
                 {
-                    Debug.Assert(rootName == null && !ctx.IsBufEmpty, "A name is expected before an array or generic specifier");
+                    if (rootName != null || ctx.IsBufEmpty)
+                    {
+                        ctx.State = State.Invalid;
+                        return;
+                    }
+
                     rootName = ctx.GetBuf();
                     ctx.Push(State.ArrayOrGeneric);
                     return;
@@ -740,7 +754,7 @@ namespace KGySoft.Reflection
                 {
                     if (ctx.IsBufEmpty)
                     {
-                        ctx.State = State.FunctionPointer;
+                        ctx.Push(State.FunctionPointer);
                         ctx.AppendChar();
                         return;
                     }
@@ -824,7 +838,8 @@ namespace KGySoft.Reflection
                         return;
                     }
 
-                    Throw.InternalError(Res.InternalError($"Unexpected state: {ctx.State}"));
+                    ctx.State = State.Invalid;
+                    return;
                 }
 
                 if (ctx.Char == '[') // array
@@ -833,12 +848,14 @@ namespace KGySoft.Reflection
                     return;
                 }
 
-                if (ctx.Char == ']') // end of generic type: returning from recursion
+                if (ctx.Char == ']') // end of generic type or function pointer: returning from recursion
                 {
                     ctx.Pop();
-                    ctx.State = ctx.State == State.FullNameOrAqn ? State.AfterArgument
-                        : ctx.State == State.TypeName ? State.Modifiers
-                        : State.Invalid;
+                    State state = ctx.Pop();
+                    if (state == State.FullNameOrAqn)
+                        ctx.Push(State.AfterArgument);
+                    else if (ctx.State != State.FunctionPointer)
+                        ctx.State = state == State.TypeName ? State.Modifiers : State.Invalid;
                     ctx.Push(State.Return);
                     return;
                 }
@@ -923,7 +940,7 @@ namespace KGySoft.Reflection
 
             void ParseBeforeArgument(ref ParseContext ctx)
             {
-                if (ctx.Char is ']' or ',' or '*')
+                if (ctx.Char is ']' or ',')
                 {
                     ctx.State = State.Invalid;
                     return;
@@ -933,7 +950,7 @@ namespace KGySoft.Reflection
                     return;
 
                 TypeResolver arg;
-                if (ctx.Char == '[') // AQN in type arguments or return type
+                if (ctx.Char == '[') // AQN in type arguments or in return type
                 {
                     arg = new TypeResolver(options);
                     ctx.State = State.FullNameOrAqn;
@@ -953,6 +970,8 @@ namespace KGySoft.Reflection
                             functionPointerReturnType = arg;
                             ctx.Pop();
                             ctx.Pop();
+                            if (ctx.State != State.FullNameOrAqn) // finished function pointer was a nested parameter
+                                ctx.Push(State.Return);
                             return;
                         default:
                             genericArgs.Add(arg);
@@ -975,7 +994,7 @@ namespace KGySoft.Reflection
                 }
 
                 // type name in generics and function parameters: recursion
-                ctx.State = State.TypeName;
+                ctx.State = ctx.Char is '&' or '*' ? State.FunctionPointer : State.TypeName;
                 arg = new TypeResolver(options);
                 if (ctx.Char == '!')
                     ctx.Push(State.GenericParameterName);
@@ -986,7 +1005,7 @@ namespace KGySoft.Reflection
                 switch (ctx.State)
                 {
                     case State.Modifiers or State.BeforeArgument:
-                        if (ctx.PrevState == State.FunctionPointerParameters)
+                        if (ctx.PrevState is State.FunctionPointerParameters or State.FunctionPointer)
                             functionPointerParams.Add(arg);
                         else
                             genericArgs.Add(arg);
@@ -994,13 +1013,49 @@ namespace KGySoft.Reflection
 
                     case State.FunctionPointerParameters:
                         functionPointerParams.Add(arg);
-                        ctx.State = State.Modifiers;
-                        return;
+                        switch (ctx.Char)
+                        {
+                            case ']':
+                                ctx.Push(State.AfterArgument);
+                                return;
+                            case ')':
+                                ctx.State = State.Modifiers;
+                                return;
+                            default:
+                                ctx.State = State.Invalid;
+                                return;
+                        }
 
                     case State.FunctionPointer:
                         functionPointerReturnType = arg;
                         ctx.Pop();
-                        return;
+                        switch (ctx.State)
+                        {
+                            case State.FullNameOrAqn: // return type was at the end or in []
+                                ctx.Pop();
+                                if (ctx.State is State.FunctionPointerParameters or State.FunctionPointer)
+                                {
+                                    ctx.Push(State.AfterArgument);
+                                    ctx.Push(State.Return);
+                                }
+
+                                return;
+                            case State.FunctionPointerParameters: // exiting from nested parameters
+                                if (ctx.Char == ')') // exiting from nested parameters
+                                    ctx.State = State.Modifiers;
+                                else // exiting from return part of nested parameters
+                                    ctx.Push(ctx.Char switch { ',' => State.BeforeArgument, ']' => State.AfterArgument, _ => State.Invalid });
+                                ctx.Push(State.Return);
+                                return;
+                            case State.FunctionPointer: // exiting from nested return type
+                                if (ctx.Char == ']')
+                                    ctx.Push(State.AfterArgument);
+                                ctx.Push(State.Return);
+                                return;
+                            default:
+                                ctx.State = State.Invalid;
+                                return;
+                        }
 
                     default:
                         ctx.State = State.Invalid;
@@ -1269,7 +1324,8 @@ namespace KGySoft.Reflection
                 // simple type without assembly name
                 case State.FullNameOrAqn:
                 case State.TypeName:
-                    rootName = context.GetBuf();
+                    Debug.Assert(rootName == null || functionPointerReturnType != null);
+                    rootName ??= context.GetBuf();
                     context.Pop();
                     break;
 
@@ -1280,7 +1336,8 @@ namespace KGySoft.Reflection
 
                 case State.Modifiers:
                     context.Pop(); // Modifiers
-                    context.Pop(); // FullName/TypeName
+                    if (context.State != State.None)
+                        context.Pop(); // FullName/TypeName
                     break;
 
                 default:
@@ -1677,6 +1734,9 @@ namespace KGySoft.Reflection
             return t;
         }
 
+#if !NET11_0_OR_GREATER
+        [SuppressMessage("ReSharper", "UnusedParameter.Local", Justification = "Usage depends on targeted platform")]
+#endif
         private Type? ResolveFunctionPointer(Func<AssemblyName?, string, Type?>? typeResolver)
         {
             Debug.Assert(functionPointerReturnType != null);
