@@ -3,7 +3,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 //  File: TypeResolver.cs
 ///////////////////////////////////////////////////////////////////////////////
-//  Copyright (C) KGy SOFT, 2005-2024 - All Rights Reserved
+//  Copyright (C) KGy SOFT, 2005-2025 - All Rights Reserved
 //
 //  You should have received a copy of the LICENSE file at the top-level
 //  directory of this distribution.
@@ -291,8 +291,7 @@ namespace KGySoft.Reflection
 
         private readonly ResolveTypeOptions options;
         private readonly CircularList<int> modifiers = new CircularList<int>();
-        private readonly List<TypeResolver> genericArgs = new List<TypeResolver>();
-        private readonly List<TypeResolver> functionPointerParams = new List<TypeResolver>();
+        private readonly List<TypeResolver> typeArguments = new List<TypeResolver>(); // generic or function pointer
         private readonly List<TypeResolver> functionPointerCallingConventions = new List<TypeResolver>();
 
         private string? rootName;
@@ -394,7 +393,7 @@ namespace KGySoft.Reflection
                     : kind == TypeNameKind.ForcedFullName ? TypeNameKind.ForcedAssemblyQualifiedName
                     : kind;
                 foreach (Type genericArgument in type.GetGenericArguments())
-                    genericArgs.Add(new TypeResolver(genericArgument, subKind, assemblyNameResolver, typeNameResolver));
+                    typeArguments.Add(new TypeResolver(genericArgument, subKind, assemblyNameResolver, typeNameResolver));
 
                 type = type.GetGenericTypeDefinition();
             }
@@ -417,7 +416,7 @@ namespace KGySoft.Reflection
                 foreach (Type conv in type.GetFunctionPointerCallingConventions())
                     functionPointerCallingConventions.Add(new TypeResolver(conv, kind, assemblyNameResolver, typeNameResolver));
                 foreach (Type paramType in type.GetFunctionPointerParameterTypes())
-                    functionPointerParams.Add(new TypeResolver(paramType, kind, assemblyNameResolver, typeNameResolver));
+                    typeArguments.Add(new TypeResolver(paramType, kind, assemblyNameResolver, typeNameResolver));
                 return;
             }
 #endif
@@ -668,14 +667,11 @@ namespace KGySoft.Reflection
             assemblyName = null;
             assembly = null;
             modifiers.Clear();
-            genericArgs.Clear();
+            typeArguments.Clear();
             declaringType = null;
             declaringMethod = null;
-#if NET8_0_OR_GREATER
-            functionPointerParams.Clear();
             functionPointerCallingConventions.Clear();
             functionPointerReturnType = null;
-#endif
         }
 
         [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity",
@@ -965,28 +961,25 @@ namespace KGySoft.Reflection
                         return;
                     }
 
-                    switch (ctx.PrevState)
+                    if (ctx.PrevState == State.FunctionPointer)
                     {
-                        case State.FunctionPointerParameters:
-                            functionPointerParams.Add(arg);
-                            return;
-                        case State.FunctionPointer:
-                            functionPointerReturnType = arg;
-                            ctx.Pop();
-                            ctx.Pop();
-                            if (ctx.State != State.FullNameOrAqn) // finished function pointer was a nested parameter
-                                ctx.Push(State.Return);
-                            return;
-                        default:
-                            genericArgs.Add(arg);
-                            return;
+                        functionPointerReturnType = arg;
+                        ctx.Pop();
+                        ctx.Pop();
+                        if (ctx.State != State.FullNameOrAqn) // finished function pointer was a nested parameter
+                            ctx.Push(State.Return);
+                        return;
                     }
+
+                    // generic or function pointer parameters
+                    typeArguments.Add(arg);
+                    return;
                 }
 
                 // In function pointer parameters we accept empty params (), but not a closing parenthesis after ','
                 if (ctx.Char == ')' && ctx.PrevState == State.FunctionPointerParameters)
                 {
-                    if (functionPointerParams.Count > 0) 
+                    if (typeArguments.Count > 0) 
                     {
                         ctx.State = State.Invalid;
                         return;
@@ -1009,14 +1002,12 @@ namespace KGySoft.Reflection
                 switch (ctx.State)
                 {
                     case State.Modifiers or State.BeforeArgument:
-                        if (ctx.PrevState is State.FunctionPointerParameters or State.FunctionPointer)
-                            functionPointerParams.Add(arg);
-                        else
-                            genericArgs.Add(arg);
+                        // it can be even function pointer parameter if ctx.PrevState is FunctionPointerParameters or FunctionPointer
+                        typeArguments.Add(arg);
                         return;
 
                     case State.FunctionPointerParameters:
-                        functionPointerParams.Add(arg);
+                        typeArguments.Add(arg);
                         switch (ctx.Char)
                         {
                             case ']':
@@ -1185,7 +1176,7 @@ namespace KGySoft.Reflection
                 // calling conventions
                 if (ctx.Char == '[')
                 {
-                    if (functionPointerCallingConventions.Count > 0 || functionPointerParams.Count > 0)
+                    if (functionPointerCallingConventions.Count > 0 || typeArguments.Count > 0)
                     {
                         ctx.State = State.Invalid;
                         return;
@@ -1199,7 +1190,7 @@ namespace KGySoft.Reflection
                 // parameters
                 if (ctx.Char == '(')
                 {
-                    if (functionPointerParams.Count > 0)
+                    if (typeArguments.Count > 0)
                     {
                         ctx.State = State.Invalid;
                         return;
@@ -1402,15 +1393,15 @@ namespace KGySoft.Reflection
 
             void DumpGenericArguments(StringBuilder sb, TypeNameKind kind)
             {
-                if (genericArgs.Count <= 0)
+                if (typeArguments.Count == 0 || functionPointerReturnType != null)
                     return;
 
                 sb.Append('[');
-                for (int i = 0; i < genericArgs.Count; i++)
+                for (int i = 0; i < typeArguments.Count; i++)
                 {
                     if (i > 0)
                         sb.Append(',');
-                    TypeResolver arg = genericArgs[i];
+                    TypeResolver arg = typeArguments[i];
                     bool aqn = kind == TypeNameKind.ForcedAssemblyQualifiedName
                         || kind is TypeNameKind.AssemblyQualifiedName or removeAssemblyVersions
                             && !AssemblyResolver.IsCoreLibAssemblyName(arg.assemblyName ?? arg.declaringType?.assemblyName!);
@@ -1516,11 +1507,11 @@ namespace KGySoft.Reflection
                     return;
 
                 sb.Append('(');
-                for (int i = 0; i < functionPointerParams.Count; i++)
+                for (int i = 0; i < typeArguments.Count; i++)
                 {
                     if (i > 0)
                         sb.Append(',');
-                    TypeResolver param = functionPointerParams[i];
+                    TypeResolver param = typeArguments[i];
                     bool aqn = kind == TypeNameKind.ForcedAssemblyQualifiedName
                         || kind is TypeNameKind.AssemblyQualifiedName or removeAssemblyVersions
                         && !AssemblyResolver.IsCoreLibAssemblyName(param.assemblyName ?? param.declaringType?.assemblyName!);
@@ -1595,13 +1586,13 @@ namespace KGySoft.Reflection
                 return null;
 
             // 2. Applying generic arguments
-            if (genericArgs.Count > 0)
+            if (typeArguments.Count > 0 && functionPointerReturnType == null)
             {
                 Debug.Assert(result.IsGenericTypeDefinition, "Root type is expected to be a generic type definition");
-                Type?[] args = new Type[genericArgs.Count];
+                Type?[] args = new Type[typeArguments.Count];
                 for (int i = 0; i < args.Length; i++)
                 {
-                    args[i] = genericArgs[i].Resolve(typeResolver);
+                    args[i] = typeArguments[i].Resolve(typeResolver);
                     if (args[i] == null)
                         return null;
                 }
