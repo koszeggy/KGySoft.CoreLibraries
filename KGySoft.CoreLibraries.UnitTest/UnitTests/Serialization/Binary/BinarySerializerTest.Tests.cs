@@ -653,18 +653,29 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             [
                 // Function pointers
                 typeof(delegate*<int, void>),
+                typeof(delegate*<int, void>[]),
+                typeof(delegate*<int, void*>*[]),
                 typeof(delegate* managed<int, int>),
                 typeof(delegate* unmanaged<int, int>),
-                typeof(delegate* unmanaged[Cdecl] <int, int>),
-                typeof(delegate* unmanaged[Stdcall] <int, int>),
+                typeof(delegate* unmanaged[Cdecl]<int, int>),
+                typeof(delegate* unmanaged[Cdecl, Stdcall]<int, int>),
             ];
 
 #if NET11_0_OR_GREATER // TODO: See https://github.com/dotnet/runtime/issues/75348
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode);
+
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: [typeof(Type), typeof(CallConvCdecl), typeof(CallConvStdcall)]);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: [typeof(Type), typeof(CallConvCdecl), typeof(CallConvStdcall)]);
 #else
-            Throws<NotSupportedException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.None), Res.SerializationFunctionPointerTypeNotSupported);
-            Throws<NotSupportedException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode), Res.SerializationFunctionPointerTypeNotSupported);
+            Throws<PlatformNotSupportedException>(() => KGySerializeObject(referenceObjects, BinarySerializationOptions.None), Res.ReflectionFunctionPointersNotSupported);
+            Throws<PlatformNotSupportedException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.None), Res.ReflectionFunctionPointersNotSupported);
+
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, safeCompare: true);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, safeCompare: true);
+
+            Throws<PlatformNotSupportedException>(() => KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: [typeof(Type)]), Res.ReflectionFunctionPointersNotSupported);
+            Throws<PlatformNotSupportedException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: [typeof(Type)]), Res.ReflectionFunctionPointersNotSupported);
 #endif
 #endif
         }
@@ -2895,7 +2906,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             //SystemSerializeObject(referenceObjects[1], safeCompare: true); // System.NotSupportedException: 'Type is not supported.' (at Array.GetItem)
 
             Throws<NotSupportedException>(() => KGySerializeObject(referenceObjects[0], BinarySerializationOptions.None), Res.SerializationPointerArrayTypeNotSupported(referenceObjects[0].GetType()));
-            Throws<NotSupportedException>(() => KGySerializeObject(referenceObjects[1], BinarySerializationOptions.None), Res.SerializationFunctionPointerTypeNotSupported);
+            //Throws<NotSupportedException>(() => KGySerializeObject(referenceObjects[1], BinarySerializationOptions.None), Res.SerializationFunctionPointerTypeNotSupported); // TODO
+            Throws<NotSupportedException>(() => KGySerializeObject(referenceObjects[1], BinarySerializationOptions.None), Res.SerializationPointerArrayTypeNotSupported(referenceObjects[1].GetType()));
         }
 
         [TestCase(typeof(bool))]

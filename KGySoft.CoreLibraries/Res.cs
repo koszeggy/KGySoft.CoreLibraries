@@ -460,7 +460,7 @@ namespace KGySoft
         /// <summary>Simple runtime element types or generic type definitions are expected.</summary>
         internal static string SerializationRootTypeExpected => Get("Serialization_RootTypeExpected");
 
-        /// <summary>Serialization of function pointer types is not supported.</summary>
+        /// <summary>Serialization of function pointer types is not supported on this platform.</summary>
         internal static string SerializationFunctionPointerTypeNotSupported => Get("Serialization_FunctionPointerTypeNotSupported");
 
         #endregion

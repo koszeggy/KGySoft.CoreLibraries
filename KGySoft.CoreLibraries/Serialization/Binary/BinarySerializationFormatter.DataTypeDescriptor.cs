@@ -558,6 +558,10 @@ namespace KGySoft.Serialization.Binary
                         existingDescriptor = manager.ReadType(br, allowOpenTypes);
                         return existingDescriptor.Type!;
 
+                    case DataTypes.FunctionPointer:
+                        existingDescriptor = manager.HandleFunctionPointer(br, true, allowOpenTypes);
+                        return existingDescriptor.Type!;
+
                     default:
                         // nullable
                         if (IsNullable(dt))

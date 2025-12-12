@@ -145,7 +145,15 @@ namespace KGySoft.Serialization.Binary
                 // Technical helper types for special cases, must not be passed to binders
                 compressibleType,
                 genericMethodDefinitionPlaceholderType
+
+                // Do not add new types. It would break compatibility. Instead, add them to cache on demand, or for new placeholder types add them to ManuallyBoundTypes.
             ];
+
+            private protected static readonly Dictionary<Type, string> ManuallyBoundTypes = new()
+            {
+                { managedFunctionPointerPlaceholderType, TypeResolver.FunctionPointerPrefix },
+                { unmanagedFunctionPointerPlaceholderType, TypeResolver.FunctionPointerUnmanagedPrefix }
+            };
 
             /// <summary>
             /// A cache for types that have special support on the current platform, and it has some cost to determine this.

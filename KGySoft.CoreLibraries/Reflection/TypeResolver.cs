@@ -260,6 +260,8 @@ namespace KGySoft.Reflection
         #region Internal Constants
 
         internal const string StringTypeFullName = "System.String";
+        internal const string FunctionPointerPrefix = "&fn";
+        internal const string FunctionPointerUnmanagedPrefix = "*fn";
 
         #endregion
 
@@ -267,8 +269,6 @@ namespace KGySoft.Reflection
 
         private const int pointer = -1;
         private const int byRef = -2;
-        private const string functionPointerPrefix = "&fn";
-        private const string functionPointerUnmanagedPrefix = "*fn";
 
         private const TypeNameKind removeAssemblyVersions = (TypeNameKind)(-1);
         private const TypeNameKind callingConventionName = (TypeNameKind)(-2);
@@ -411,7 +411,7 @@ namespace KGySoft.Reflection
             // function pointer
             if (type.IsFunctionPointer)
             {
-                rootName = type.IsUnmanagedFunctionPointer ? functionPointerUnmanagedPrefix : functionPointerPrefix;
+                rootName = type.IsUnmanagedFunctionPointer ? FunctionPointerUnmanagedPrefix : FunctionPointerPrefix;
                 functionPointerReturnType = new TypeResolver(type.GetFunctionPointerReturnType(), kind, assemblyNameResolver, typeNameResolver);
                 foreach (Type conv in type.GetFunctionPointerCallingConventions())
                     functionPointerCallingConventions.Add(new TypeResolver(conv, kind, assemblyNameResolver, typeNameResolver));
@@ -1736,7 +1736,7 @@ namespace KGySoft.Reflection
         {
             Debug.Assert(functionPointerReturnType != null);
             bool throwError = (options & ResolveTypeOptions.ThrowError) != ResolveTypeOptions.None;
-            if (rootName is not (functionPointerPrefix or functionPointerUnmanagedPrefix))
+            if (rootName is not (FunctionPointerPrefix or FunctionPointerUnmanagedPrefix))
             {
                 if (throwError)
                     Throw.ReflectionException(Res.ReflectionNotAType(rootName!));

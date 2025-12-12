@@ -32,9 +32,6 @@ using System.Linq;
 using System.Numerics;
 #endif
 using System.Reflection;
-#if NET5_0_OR_GREATER
-using System.Runtime.CompilerServices;
-#endif
 #if NET6_0_OR_GREATER
 using System.Runtime.InteropServices;
 #endif
@@ -521,7 +518,7 @@ namespace KGySoft.Serialization.Binary
                     if (!IgnoreIBinarySerializable && binarySerializableType.IsAssignableFrom(t))
                         return DataTypes.BinarySerializable;
 
-                    // Any struct, if can be serialized
+                    // Any struct, if it can be serialized
                     if (CompactSerializationOfStructures && !t.IsManaged())
                         return DataTypes.RawStruct;
 
@@ -532,6 +529,10 @@ namespace KGySoft.Serialization.Binary
                     // Any struct (obsolete but still supported as backward compatibility)
                     if (ForcedSerializationValueTypesAsFallback && t.IsValueType)
                         return DataTypes.RawStruct;
+
+                    // Function pointer: only as a type name (as an instance, it's a simple IntPtr value)
+                    if (t.IsFunctionPointer())
+                        return DataTypes.FunctionPointer;
 
                     // It is alright for a collection element type. If no recursive serialization is allowed it will turn out for the items.
                     return DataTypes.RecursiveObjectGraph;
@@ -1870,7 +1871,16 @@ namespace KGySoft.Serialization.Binary
                     return;
                 }
 
-                // 5.) Writing new type
+#if NET8_0_OR_GREATER
+                // 5.) Special handling for function pointers
+                if (type.IsFunctionPointer())
+                {
+                    WriteFunctionPointer(bw, type, allowOpenTypes);
+                    return;
+                }
+#endif
+
+                // 6.) Writing new type
                 WriteNewType(bw, type, allowOpenTypes, boundAsmName, boundTypeName);
             }
 
@@ -1881,8 +1891,13 @@ namespace KGySoft.Serialization.Binary
                 boundAsmName = null;
                 boundTypeName = null;
 
-                // Constructed generics, generic parameters and known types and non-root types are never bound
-                if (type.IsConstructedGenericType() || TypeIndexCache.ContainsKey(type) || type.IsGenericParameter)
+                // Constructed generics, generic parameters, function pointers, known types and non-root types are never bound
+                if (type.IsConstructedGenericType() || TypeIndexCache.ContainsKey(type) || type.IsGenericParameter || type.IsFunctionPointer())
+                    return;
+
+                // Binding known placeholder names manually without using the binder
+                // (these could be in KnownTypes so no string name would be stored for them, but it would break compatibility with older versions).
+                if (ManuallyBoundTypes.TryGetValue(type, out boundTypeName))
                     return;
 
                 if (Binder == null)
@@ -2063,14 +2078,15 @@ namespace KGySoft.Serialization.Binary
             private void WriteNewType(BinaryWriter bw, Type type, bool allowOpenTypes, string? boundAsmName, string? boundTypeName)
             {
                 Debug.Assert(allowOpenTypes || !(type.IsGenericTypeDefinition || type.IsGenericParameter), $"Generic type definitions and generic parameters are allowed only when {nameof(allowOpenTypes)} is true.");
-#if NET8_0_OR_GREATER
-                if (type.IsFunctionPointer)
-                {
-                    // TODO: #if NET11_0_OR_GREATER - see https://github.com/dotnet/runtime/issues/75348
-                    // Though in .NET 8+ we can get the parameter/return types and the calling conventions, there is no API to restore a function pointer type.
-                    Throw.NotSupportedException(Res.SerializationFunctionPointerTypeNotSupported);
-                }
-#endif
+                Debug.Assert(!type.IsFunctionPointer(), "FunctionPointer types should be handled in caller");
+//#if NET8_0_OR_GREATER // TODO
+//                if (type.IsFunctionPointer)
+//                {
+//                    // TODO: #if NET11_0_OR_GREATER - see https://github.com/dotnet/runtime/issues/75348
+//                    // Though in .NET 8+ we can get the parameter/return types and the calling conventions, there is no API to restore a function pointer type.
+//                    Throw.NotSupportedException(Res.SerializationFunctionPointerTypeNotSupported);
+//                }
+//#endif
                 Type rootType = type.IsConstructedGenericType() ? type.GetGenericTypeDefinition()
                     : type.IsGenericParameter ? type.DeclaringType!
                     : type;
@@ -2197,6 +2213,38 @@ namespace KGySoft.Serialization.Binary
 
                 AddToTypeCache(type);
             }
+
+#if NET8_0_OR_GREATER // note though that deserialization is not possible in .NET 8-10
+            [SecurityCritical]
+            private void WriteFunctionPointer(BinaryWriter bw, Type type, bool allowOpenTypes)
+            {
+                Debug.Assert(type.IsFunctionPointer, "FunctionPointer is expected here");
+                bool isUnmanaged = type.IsUnmanagedFunctionPointer;
+
+                // Writing a special placeholder indicating the function pointer, because function pointers have no unconstructed type definitions.
+                WriteType(bw, isUnmanaged ? unmanagedFunctionPointerPlaceholderType : managedFunctionPointerPlaceholderType);
+
+                // 1.) parameters
+                Type[] types = type.GetFunctionPointerParameterTypes();
+                Write7BitInt(bw, types.Length);
+                foreach (Type t in types)
+                    WriteType(bw, t, allowOpenTypes);
+
+                // 2.) return type
+                WriteType(bw, type.GetFunctionPointerReturnType(), allowOpenTypes);
+
+                // 3.) calling conventions
+                if (isUnmanaged)
+                {
+                    types = type.GetFunctionPointerCallingConventions();
+                    Write7BitInt(bw, types.Length);
+                    foreach (Type t in types)
+                        WriteType(bw, t, allowOpenTypes);
+                }
+
+                AddToTypeCache(type);
+            }
+#endif
 
             private void AddToTypeCache(Type type, string? storedAsmName = null, string? storedTypeName = null)
             {

@@ -655,8 +655,9 @@ namespace KGySoft.Serialization.Binary
             GenericTypeDefinition = 49, // Must be combined with a supported generic collection type.
             Pointer = 50, // Followed by DataTypes. Cannot be combined.
             ByRef = 51, // Followed by DataTypes. Cannot be combined.
+            FunctionPointer = 52, // As an instance, it's a simple IntPtr, so relevant as a type only. Can be combined with Array. In .NET 8-10 deserialization is not supported. - https://github.com/dotnet/runtime/issues/75348
 
-            // 54-59: 6 reserved values
+            // 53-59: 7 reserved values
 
             //SerializationEnd = 59, // Planned technical type for IAdvancedBinarySerializable (refers to a static object)
             BinarySerializable = 60, // IBinarySerializable implementation. Can be combined.
@@ -1061,9 +1062,7 @@ namespace KGySoft.Serialization.Binary
         /// A wrapper type for 7-bit encoded types if they are encoded by index rather than DataTypes.
         /// </summary>
         // ReSharper disable once UnusedTypeParameter - used for encoding compressed type
-        private struct Compressible<T> where T : struct
-        {
-        }
+        private struct Compressible<T> where T : struct;
 
         #endregion
 
@@ -1072,14 +1071,30 @@ namespace KGySoft.Serialization.Binary
         /// <summary>
         /// An indicator type for generic method parameters.
         /// </summary>
-        private struct GenericMethodDefinitionPlaceholder
-        {
-        }
+        private struct GenericMethodDefinitionPlaceholder;
 
         #endregion
 
-        #endregion 
-        
+        #region ManagedFunctionPointerPlaceholder struct
+
+        /// <summary>
+        /// An indicator type for managed function pointers.
+        /// </summary>
+        private struct ManagedFunctionPointerPlaceholder;
+
+        #endregion
+
+        #region UnmanagedFunctionPointerPlaceholder struct
+
+        /// <summary>
+        /// An indicator type for unmanaged function pointers.
+        /// </summary>
+        private struct UnmanagedFunctionPointerPlaceholder;
+
+        #endregion
+
+        #endregion
+
         #endregion
 
         #region Fields
@@ -1095,6 +1110,8 @@ namespace KGySoft.Serialization.Binary
         private static readonly Type serializableType = typeof(ISerializable);
         private static readonly Type binarySerializableType = typeof(IBinarySerializable);
         private static readonly Type genericMethodDefinitionPlaceholderType = typeof(GenericMethodDefinitionPlaceholder);
+        private static readonly Type managedFunctionPointerPlaceholderType = typeof(ManagedFunctionPointerPlaceholder);
+        private static readonly Type unmanagedFunctionPointerPlaceholderType = typeof(UnmanagedFunctionPointerPlaceholder);
 
         private static readonly Dictionary<DataTypes, CollectionSerializationInfo> serializationInfo = new Dictionary<DataTypes, CollectionSerializationInfo>(ComparerHelper<DataTypes>.EqualityComparer)
         {

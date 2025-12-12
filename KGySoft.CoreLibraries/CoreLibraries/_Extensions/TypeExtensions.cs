@@ -892,11 +892,13 @@ namespace KGySoft.CoreLibraries
             type.IsConstructedGenericType;
 #endif
 
-        internal static bool IsPointer(this Type type) => type.IsPointer
+        internal static bool IsPointer(this Type type) => type.IsPointer || type.IsFunctionPointer();
+
 #if NET8_0_OR_GREATER
-            || type.IsFunctionPointer
+        internal static bool IsFunctionPointer(this Type type) => type.IsFunctionPointer;
+#else
+        internal static bool IsFunctionPointer(this Type type) => false;
 #endif
-        ;
 
         [SecuritySafeCritical]
         internal static object? GetDefaultValue(this Type type) => type.IsValueType

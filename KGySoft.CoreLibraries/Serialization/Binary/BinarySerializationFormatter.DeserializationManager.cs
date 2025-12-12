@@ -1063,7 +1063,10 @@ namespace KGySoft.Serialization.Binary
 
                 string typeName = br.ReadString();
                 type = ResolveType(assembly, typeName);
-                result = new DataTypeDescriptor(type,  $"{assembly.StoredName}, {typeName}");
+                if (type == managedFunctionPointerPlaceholderType || type == unmanagedFunctionPointerPlaceholderType)
+                    result = HandleFunctionPointer(br, type == managedFunctionPointerPlaceholderType, allowOpenTypes);
+                else
+                    result = new DataTypeDescriptor(type, $"{assembly.StoredName}, {typeName}");
                 CachedTypes.Add(result);
                 if (type.IsGenericTypeDefinition)
                     result = HandleGenericTypeDef(br, result, allowOpenTypes);
@@ -1122,6 +1125,17 @@ namespace KGySoft.Serialization.Binary
                     CachedTypes.Add(result);
 
                 return result;
+            }
+
+            [SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Temporary, see the comments")]
+            internal DataTypeDescriptor HandleFunctionPointer(BinaryReader br, bool allowOpenTypes, bool addToCache = true)
+            {
+                // TODO: now it is called only from 2 places, because that is how it's resolved for the 1st time (directly from string, and as an array element),
+                // but when it finally will be supported it should be called from wherever HandleGenericTypeDef is also called.
+                // See the expected format in WriteFunctionPointer.
+#if !NET11_0_OR_GREATER
+                return Throw.PlatformNotSupportedException<DataTypeDescriptor>(Res.ReflectionFunctionPointersNotSupported);
+#endif
             }
 
             internal void AddObjectToCache(object? obj, out int id)
@@ -2624,6 +2638,14 @@ namespace KGySoft.Serialization.Binary
 
             private Type? ReadBoundType(string? assemblyName, string typeName)
             {
+                if (assemblyName == AssemblyResolver.KGySoftCoreLibrariesAssembly.FullName)
+                {
+                    if (typeName is TypeResolver.FunctionPointerPrefix)
+                        return managedFunctionPointerPlaceholderType;
+                    if (typeName is TypeResolver.FunctionPointerUnmanagedPrefix)
+                        return unmanagedFunctionPointerPlaceholderType;
+                }
+
                 if (Binder is ISerializationBinder binder)
                     return binder.BindToType(assemblyName ?? String.Empty, typeName);
                 return Binder?.BindToType(assemblyName ?? String.Empty, typeName);

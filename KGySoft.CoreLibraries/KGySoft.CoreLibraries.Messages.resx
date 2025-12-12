@@ -489,7 +489,7 @@ Hit rate: {8:P2}</value>
     <value>Simple runtime element types or generic type definitions are expected.</value>
   </data>
   <data name="Serialization_FunctionPointerTypeNotSupported" xml:space="preserve">
-    <value>Serialization of function pointer types is not supported.</value>
+    <value>Serialization of function pointer types is not supported on theis platform.</value>
   </data>
   <data name="Serialization_MissingFieldFormat" xml:space="preserve">
     <value>Type "{0}" cannot be deserialized because it has no field "{1}". Set IgnoreNonExistingFields to true to suppress this exception.</value>
