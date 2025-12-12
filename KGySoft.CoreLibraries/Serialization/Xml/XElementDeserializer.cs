@@ -544,8 +544,8 @@ namespace KGySoft.Serialization.Xml
         [SecuritySafeCritical]
         private void DeserializeStructBinary(ref TryDeserializeObjectContext ctx)
         {
-            if (SafeMode != XmlSafeMode.Unsafe && ctx.Type!.IsManaged())
-                Throw.ArgumentException(Res.XmlSerializationValueTypeContainsReferenceSafe(ctx.Type!));
+            if (SafeMode != XmlSafeMode.Unsafe && ctx.Type!.HasReferenceOrPointer())
+                Throw.ArgumentException(Res.XmlSerializationValueTypeContainsReferenceOrPointerSafe(ctx.Type!));
             byte[] data = Convert.FromBase64String(ctx.Element.Value);
             XAttribute? attrCrc = ctx.Element.Attribute(XmlSerializer.AttributeCrc);
             if (attrCrc != null)

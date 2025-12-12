@@ -380,6 +380,31 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.FullyQualifiedNames, expectedTypes: expectedTypes);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.FullyQualifiedNames, false, expectedTypes: expectedTypes);
+
+#if NET8_0_OR_GREATER
+            referenceObjects =
+            [
+                // Function pointers
+                typeof(delegate*<int, void>),
+                typeof(delegate*<int, void>[]),
+                typeof(delegate*<int, void*>*[]),
+                typeof(delegate* managed<int, int>),
+                typeof(delegate* unmanaged<int, int>),
+                typeof(delegate* unmanaged[Cdecl]<int, int>),
+                typeof(delegate* unmanaged[Cdecl, Stdcall]<int, int>),
+            ];
+
+#if NET11_0_OR_GREATER // TODO: See https://github.com/dotnet/runtime/issues/75348
+            //KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
+            //KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
+
+            //KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: [typeof(Type), typeof(CallConvCdecl), typeof(CallConvStdcall)]);
+            //KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: [typeof(Type), typeof(CallConvCdecl), typeof(CallConvStdcall)]);
+#else
+            Throws<ReflectionException>(() => KGySerializeObject(referenceObjects, XmlSerializationOptions.None, safeMode: XmlSafeMode.Unsafe), "Could not resolve type");
+            Throws<ReflectionException>(() => KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, false, safeMode: XmlSafeMode.Unsafe), "Could not resolve type");
+#endif
+#endif
         }
 
         [Test]
@@ -1427,24 +1452,39 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 {
                     VoidPointer = (void*)new IntPtr(1),
                     IntPointer = (int*)new IntPtr(1),
-                    PointerArray = null, // new int*[] { (int*)new IntPtr(1), null }, - not supported
-                    PointerOfPointer = (void**)new IntPtr(1)
+                    PointerOfPointer = (void**)new IntPtr(1),
+                    FunctionPointer = &Console.WriteLine
                 },
             };
 
             //SystemSerializeObjects(referenceObjects); // InvalidOperationException: System.Void* cannot be serialized because it does not have a parameterless constructor.
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback);
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback);
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback, safeMode: XmlSafeMode.Unsafe);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback, safeMode: XmlSafeMode.Unsafe);
 
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.CompactSerializationOfStructures, safeMode: XmlSafeMode.Unsafe);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.CompactSerializationOfStructures, safeMode: XmlSafeMode.Unsafe);
+
+            // In safe mode setting pointer fields are supported only if they are set to null
+            KGySerializeObject(referenceObjects[0], XmlSerializationOptions.RecursiveSerializationAsFallback, safeMode: XmlSafeMode.Medium);
+            KGySerializeObject(referenceObjects[0], XmlSerializationOptions.RecursiveSerializationAsFallback, safeMode: XmlSafeMode.Strict);
+            Throws<SerializationException>(() => KGySerializeObject(referenceObjects[1], XmlSerializationOptions.RecursiveSerializationAsFallback, safeMode: XmlSafeMode.Medium));
+            Throws<SerializationException>(() => KGySerializeObject(referenceObjects[1], XmlSerializationOptions.RecursiveSerializationAsFallback, safeMode: XmlSafeMode.Strict, expectedTypes: [typeof(UnsafeStruct)]));
+
+            // But as a compact struct, pointer fields are not supported at all in safe mode
+            Throws<ArgumentException>(() => KGySerializeObject(referenceObjects[0], XmlSerializationOptions.CompactSerializationOfStructures, safeMode: XmlSafeMode.Medium), Res.XmlSerializationValueTypeContainsReferenceOrPointerSafe(typeof(UnsafeStruct)));
+            Throws<ArgumentException>(() => KGySerializeObject(referenceObjects[0], XmlSerializationOptions.CompactSerializationOfStructures, safeMode: XmlSafeMode.Strict, expectedTypes: [typeof(UnsafeStruct)]), Res.XmlSerializationValueTypeContainsReferenceOrPointerSafe(typeof(UnsafeStruct)));
+
+            int intValue = 1;
             referenceObjects = new object[]
             {
-                // Pointer Array
-                new int*[] { (int*)IntPtr.Zero },
+                // Pointer Arrays
+                new int*[] { null, &intValue },
+                new delegate*<string, void>[] { null, &Console.WriteLine },
             };
 
-            Throws<NotSupportedException>(() => KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback), "Array of pointer type 'System.Int32*[]' is not supported.");
-            Throws<NotSupportedException>(() => KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback), "Array of pointer type 'System.Int32*[]' is not supported.");
+            Throws<NotSupportedException>(() => KGySerializeObject(referenceObjects[0], XmlSerializationOptions.RecursiveSerializationAsFallback), Res.SerializationPointerArrayTypeNotSupported(referenceObjects[0].GetType()));
+            Throws<NotSupportedException>(() => KGySerializeObject(referenceObjects[1], XmlSerializationOptions.RecursiveSerializationAsFallback), Res.SerializationPointerArrayTypeNotSupported(referenceObjects[1].GetType()));
         }
 
         [Test]

@@ -212,7 +212,7 @@ namespace KGySoft.Serialization.Xml
                 }
 
                 // non-primitive type array or compact serialization is not enabled
-                if (elementType.IsPointer)
+                if (elementType.IsPointer())
                     Throw.NotSupportedException(Res.SerializationPointerArrayTypeNotSupported(collection.GetType()));
                 foreach (object? item in array)
                 {
@@ -504,7 +504,7 @@ namespace KGySoft.Serialization.Xml
                     writer.WriteEndElement();
                 else
                 {
-                    SerializeObject(value, memberType != actualType, writer, visibility, property?.CanWrite == false);
+                    SerializeObject(value, memberType != actualType && !memberType.IsPointer(), writer, visibility, property?.CanWrite == false);
                     writer.WriteFullEndElement();
                 }
             }

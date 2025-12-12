@@ -383,54 +383,6 @@ namespace KGySoft.Serialization.Xml
             return result;
         }
 
-        private protected static void HandleDeserializedMember(object obj, MemberInfo member, object? deserializedValue, object? existingValue, Dictionary<MemberInfo, object?>? members)
-        {
-            // 1/a.) Cache for later (obj is an initializer collection)
-            if (members != null)
-            {
-                members[member] = deserializedValue;
-                return;
-            }
-
-            // 1/b.) Successfully deserialized into the existing instance (or both are null)
-            if (deserializedValue is not ValueType && ReferenceEquals(existingValue, deserializedValue))
-                return;
-
-            // 1.c.) Processing result
-            // Field
-            if (member is FieldInfo field)
-            {
-                field.Set(obj, deserializedValue);
-                return;
-            }
-
-            var property = (PropertyInfo)member;
-
-            // Read-only property
-            if (!(property.CanWrite || property.PropertyType.IsByRef))
-            {
-                if (property.PropertyType.IsValueType)
-                {
-                    if (Equals(existingValue, deserializedValue))
-                        return;
-                    Throw.SerializationException(Res.XmlSerializationPropertyHasNoSetter(property.Name, obj.GetType()));
-                }
-
-                if (existingValue == null)
-                    Throw.ReflectionException(Res.XmlSerializationPropertyHasNoSetterGetsNull(property.Name, obj.GetType()));
-                if (deserializedValue == null)
-                    Throw.ReflectionException(Res.XmlSerializationPropertyHasNoSetterCantSetNull(property.Name, obj.GetType()));
-                if (existingValue.GetType() != deserializedValue.GetType())
-                    Throw.ArgumentException(Res.XmlSerializationPropertyTypeMismatch(obj.GetType(), property.Name, deserializedValue.GetType(), existingValue.GetType()));
-
-                CopyContent(deserializedValue, existingValue);
-                return;
-            }
-
-            // Read-write property (including ref properties)
-            property.Set(obj, deserializedValue);
-        }
-
         private protected static void AssertCollectionItem(Type objRealType, Type? collectionElementType, string name)
         {
             if (collectionElementType == null)
@@ -755,6 +707,60 @@ namespace KGySoft.Serialization.Xml
             itemType ??= property?.PropertyType ?? field?.FieldType;
             if (itemType?.IsByRef == true)
                 itemType = itemType.GetElementType();
+            else if (itemType?.IsPointer() == true)
+                itemType = typeof(IntPtr);
+        }
+
+        private protected void HandleDeserializedMember(object obj, MemberInfo member, object? deserializedValue, object? existingValue, Dictionary<MemberInfo, object?>? members)
+        {
+            // 1/a.) Cache for later (obj is an initializer collection)
+            if (members != null)
+            {
+                members[member] = deserializedValue;
+                return;
+            }
+
+            // 1/b.) Successfully deserialized into the existing instance (or both are null)
+            if (deserializedValue is not ValueType && ReferenceEquals(existingValue, deserializedValue))
+                return;
+
+            // 1.c.) Processing result
+            // Field
+            if (member is FieldInfo field)
+            {
+                if (field.FieldType.IsPointer() && SafeMode != XmlSafeMode.Unsafe && !Equals(deserializedValue, IntPtr.Zero))
+                    Throw.SerializationException(Res.XmlSerializationPointerFieldSafe(field.DeclaringType!, field.Name));
+                field.Set(obj, deserializedValue);
+                return;
+            }
+
+            var property = (PropertyInfo)member;
+
+            // Read-only property
+            if (!(property.CanWrite || property.PropertyType.IsByRef))
+            {
+                if (property.PropertyType.IsValueType)
+                {
+                    if (Equals(existingValue, deserializedValue))
+                        return;
+                    Throw.SerializationException(Res.XmlSerializationPropertyHasNoSetter(property.Name, obj.GetType()));
+                }
+
+                if (existingValue == null)
+                    Throw.ReflectionException(Res.XmlSerializationPropertyHasNoSetterGetsNull(property.Name, obj.GetType()));
+                if (deserializedValue == null)
+                    Throw.ReflectionException(Res.XmlSerializationPropertyHasNoSetterCantSetNull(property.Name, obj.GetType()));
+                if (existingValue.GetType() != deserializedValue.GetType())
+                    Throw.ArgumentException(Res.XmlSerializationPropertyTypeMismatch(obj.GetType(), property.Name, deserializedValue.GetType(), existingValue.GetType()));
+
+                CopyContent(deserializedValue, existingValue);
+                return;
+            }
+
+            // Read-write property (including ref properties)
+            if (property.PropertyType.IsPointer() && SafeMode != XmlSafeMode.Unsafe && !Equals(deserializedValue, IntPtr.Zero))
+                Throw.SerializationException(Res.XmlSerializationPointerPropertySafe(property.DeclaringType!, property.Name));
+            property.Set(obj, deserializedValue);
         }
 
         private protected bool TryDeserializeByConverter(MemberInfo member, Type memberType, Func<string?> readStringValue, out object? result)

@@ -237,7 +237,7 @@ namespace KGySoft.Serialization.Xml
                 }
 
                 // non-primitive type array or compact serialization is not enabled
-                if (elementType.IsPointer)
+                if (elementType.IsPointer())
                     Throw.NotSupportedException(Res.SerializationPointerArrayTypeNotSupported(collection.GetType()));
                 foreach (object? item in array)
                 {
@@ -390,8 +390,16 @@ namespace KGySoft.Serialization.Xml
             }
 
             // c.) Using type converter of the type if applicable
-            TypeConverter converter = TypeDescriptor.GetConverter(type);
-            if (converter.CanConvertTo(Reflector.StringType) && converter.CanConvertFrom(Reflector.StringType))
+            TypeConverter? converter = null;
+            try
+            {
+                converter = TypeDescriptor.GetConverter(type);
+            }
+            catch (Exception e) when (!e.IsCritical())
+            {
+            }
+
+            if (converter?.CanConvertTo(Reflector.StringType) == true && converter.CanConvertFrom(Reflector.StringType))
             {
                 if (typeNeeded)
                     parent.Add(new XAttribute(XmlSerializer.AttributeType, GetTypeString(type)));
@@ -505,7 +513,7 @@ namespace KGySoft.Serialization.Xml
                 }
 
                 // b.) any object
-                SerializeObject(value, memberType != actualType, memberElement, visibility, property?.CanWrite == false);
+                SerializeObject(value, memberType != actualType && !memberType.IsPointer(), memberElement, visibility, property?.CanWrite == false);
                 parent.Add(memberElement);
             }
         }

@@ -1186,8 +1186,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 
             #region Properties
 
-            public int*[] PointerArray { get; set; }
             public void** PointerOfPointer { get; set; }
+            public delegate*<string, void> FunctionPointer { get; set; }
 
             #endregion
         }
