@@ -3,7 +3,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 //  File: ResXResourceWriterTest.cs
 ///////////////////////////////////////////////////////////////////////////////
-//  Copyright (C) KGy SOFT, 2005-2024 - All Rights Reserved
+//  Copyright (C) KGy SOFT, 2005-2025 - All Rights Reserved
 //
 //  You should have received a copy of the LICENSE file at the top-level
 //  directory of this distribution.
@@ -676,7 +676,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 typeof(ICache), // custom
                 typeof(CircularList<int>), // mixed
                 typeof(CircularList<ICache>), // custom
-                typeof(List<>), // mscorlib, generic template
+                typeof(List<>), // mscorlib, generic template,
             };
 
 #if NETFRAMEWORK
