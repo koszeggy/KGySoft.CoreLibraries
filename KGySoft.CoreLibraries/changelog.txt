@@ -24,6 +24,7 @@
     dimensions.
   + New GetElementUnaligned and SetElementUnaligned methods
 + Cache<TKey, TValue> class: New TryAdd method
++ CircularSortedList<TKey, TValue> class: New TryAdd method
 
 * KGySoft.CoreLibraries namespace:
 ==================================

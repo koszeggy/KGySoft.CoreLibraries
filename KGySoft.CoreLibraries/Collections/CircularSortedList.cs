@@ -1075,6 +1075,34 @@ namespace KGySoft.Collections
             return pos;
         }
 
+        // TODO: This method has the same signature and return type as CollectionExtensions.TryAdd in .NET Core to prevent breaking possibly existing code,
+        // but after deciding about this one, new methods can be expected: https://github.com/dotnet/runtime/issues/109088.
+        /// <summary>
+        /// Attempts to add the specified key and value to the <see cref="CircularSortedList{TKey,TValue}"/> without overwriting an existing entry.
+        /// </summary>
+        /// <param name="key">The key of the element to add.</param>
+        /// <param name="value">The value of the element to add. The value can be <see langword="null"/> for reference types.</param>
+        /// <returns><see langword="true"/> if the key and value pair was added to the <see cref="CircularSortedList{TKey,TValue}"/> successfully; otherwise, <see langword="false"/>.</returns>
+        /// <remarks>
+        /// <para>Unlike the <see cref="Add">Add</see> method, this method doesn't throw an exception if the element with the given key exists in the <see cref="CircularSortedList{TKey,TValue}"/>.
+        /// Unlike the <see cref="this[TKey]">indexer</see>, <see cref="TryAdd">TryAdd</see> doesn't override the element if the element with the given key exists in the dictionary.
+        /// If the key already exists, <see cref="TryAdd">TryAdd</see> does nothing and returns <see langword="false"/>.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
+        public bool TryAdd(TKey key, TValue value)
+        {
+            if (key == null!)
+                Throw.ArgumentNullException(Argument.key);
+
+            int pos = SearchKeyOptimizedLastOrFirst(key);
+            if (pos >= 0)
+                return false;
+
+            pos = ~pos;
+            Insert(pos, key, value);
+            return true;
+        }
+
         /// <summary>
         /// Sets the value of an element at the specified <paramref name="index"/>.
         /// </summary>
