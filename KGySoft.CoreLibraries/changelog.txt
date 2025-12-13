@@ -23,6 +23,7 @@
   - Constructors: Preventing possible overflow when checking the capacity of the underlying array for very large
     dimensions.
   + New GetElementUnaligned and SetElementUnaligned methods
++ AllowNullDictionary<TKey, TValue> class: New TryAdd method
 + Cache<TKey, TValue> class: New TryAdd method
 + CircularSortedList<TKey, TValue> class: New TryAdd method
 

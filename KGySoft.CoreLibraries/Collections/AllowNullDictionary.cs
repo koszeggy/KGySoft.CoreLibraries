@@ -818,6 +818,39 @@ namespace KGySoft.Collections
         }
 
         /// <summary>
+        /// Attempts to add the specified key and value to the <see cref="AllowNullDictionary{TKey,TValue}"/> without overwriting an existing entry.
+        /// </summary>
+        /// <param name="key">The key of the element to add. In this dictionary it can be even <see langword="null"/>.</param>
+        /// <param name="value">The value of the element to add.</param>
+        /// <returns><see langword="true"/> if the key and value pair was added to the <see cref="AllowNullDictionary{TKey,TValue}"/> successfully; otherwise, <see langword="false"/>.</returns>
+        /// <remarks>
+        /// <para>Unlike the <see cref="Add">Add</see> method, this method doesn't throw an exception if the element with the given key exists in the <see cref="AllowNullDictionary{TKey,TValue}"/>.
+        /// Unlike the <see cref="this[TKey]">indexer</see>, <see cref="TryAdd">TryAdd</see> doesn't override the element if the element with the given key exists in the dictionary.
+        /// If the key already exists, <see cref="TryAdd">TryAdd</see> does nothing and returns <see langword="false"/>.</para>
+        /// </remarks>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        public bool TryAdd([CanBeNull]TKey key, TValue value)
+        {
+            if (key != null)
+            {
+#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
+                return dict.TryAdd(key, value);
+#else
+                if (dict.ContainsKey(key))
+                    return false;
+                dict.Add(key, value);
+                return true;
+#endif
+            }
+
+            if (hasNullKey)
+                return false;
+            hasNullKey = true;
+            nullValue = value;
+            return true;
+        }
+
+        /// <summary>
         /// Determines whether the <see cref="AllowNullDictionary{TKey,TValue}"/> contains a specific key.
         /// </summary>
         /// <param name="key">The key to locate in the <see cref="AllowNullDictionary{TKey,TValue}"/>.</param>

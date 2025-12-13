@@ -94,6 +94,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Assert.GreaterOrEqual(Array.IndexOf(valuesArray, value), 0);
             Assert.Throws<ArgumentException>(() => dict.Add(key, value));
             Assert.DoesNotThrow(() => dict[key] = value);
+            Assert.IsFalse(dict.TryAdd(key, value));
             Assert.IsTrue(dict.Remove(key));
 
             Array.Clear(array, 0, array.Length);
