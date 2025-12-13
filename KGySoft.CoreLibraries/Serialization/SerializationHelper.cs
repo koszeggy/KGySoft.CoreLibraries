@@ -136,11 +136,8 @@ namespace KGySoft.Serialization
 
                     // conflicting name 1st try: prefixing by type name
                     string prefixedName = field.DeclaringType!.Name + '+' + field.Name;
-                    if (!result.ContainsKey(prefixedName))
-                    {
-                        result[prefixedName] = (field, 1);
+                    if (result.TryAdd(prefixedName, (field, 1)))
                         continue;
-                    }
 
                     // 1st try didn't work, using numeric postfix
                     entry.Count += 1;

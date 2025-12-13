@@ -887,8 +887,7 @@ namespace KGySoft.Collections
             {
                 if (key == null!)
                     Throw.ArgumentNullException(Argument.key);
-
-                Insert(key, value, false);
+                Insert(key, value, DictionaryInsertion.OverwriteIfExists);
             }
         }
 
@@ -1100,8 +1099,26 @@ namespace KGySoft.Collections
         {
             if (key == null!)
                 Throw.ArgumentNullException(Argument.key);
+            Insert(key, value, DictionaryInsertion.ThrowIfExists);
+        }
 
-            Insert(key, value, true);
+        /// <summary>
+        /// Attempts to add the specified key and value to the <see cref="StringKeyedDictionary{TValue}"/> without overwriting an existing entry.
+        /// </summary>
+        /// <param name="key">The key of the element to add.</param>
+        /// <param name="value">The value of the element to add. The value can be <see langword="null"/> for reference types.</param>
+        /// <returns><see langword="true"/> if the key and value pair was added to the <see cref="StringKeyedDictionary{TValue}"/> successfully; otherwise, <see langword="false"/>.</returns>
+        /// <remarks>
+        /// <para>Unlike the <see cref="Add">Add</see> method, this method doesn't throw an exception if the element with the given key exists in the <see cref="StringKeyedDictionary{TValue}"/>.
+        /// Unlike the <see cref="this[string]">indexer</see>, <see cref="TryAdd">TryAdd</see> doesn't override the element if the element with the given key exists in the dictionary.
+        /// If the key already exists, <see cref="TryAdd">TryAdd</see> does nothing and returns <see langword="false"/>.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
+        public bool TryAdd(string key, TValue value)
+        {
+            if (key == null!)
+                Throw.ArgumentNullException(Argument.key);
+            return Insert(key, value, DictionaryInsertion.DoNotOverwrite);
         }
 
         /// <summary>
@@ -1524,7 +1541,7 @@ namespace KGySoft.Collections
             return false;
         }
 
-        private void Insert(string key, TValue value, bool throwIfExists)
+        private bool Insert(string key, TValue value, DictionaryInsertion insertion)
         {
             if (buckets == null)
                 Initialize(minCapacity);
@@ -1539,13 +1556,15 @@ namespace KGySoft.Collections
                     if (entries![i].Hash != hashCode || entries[i].Key != key)
                         continue;
 
-                    if (throwIfExists)
-                        Throw.ArgumentException(Argument.key, Res.IDictionaryDuplicateKey);
+                    if (insertion == DictionaryInsertion.DoNotOverwrite)
+                        return false;
+                    if (insertion == DictionaryInsertion.ThrowIfExists)
+                        return Throw.ArgumentException<bool>(Argument.key, Res.IDictionaryDuplicateKey);
 
                     // overwriting existing element
                     entries[i].Value = value;
                     version += 1;
-                    return;
+                    return true;
                 }
             }
             else
@@ -1556,13 +1575,15 @@ namespace KGySoft.Collections
                     if (entries![i].Hash != hashCode || !comparer.Equals(entries[i].Key, key))
                         continue;
 
-                    if (throwIfExists)
-                        Throw.ArgumentException(Argument.key, Res.IDictionaryDuplicateKey);
+                    if (insertion == DictionaryInsertion.DoNotOverwrite)
+                        return false;
+                    if (insertion == DictionaryInsertion.ThrowIfExists)
+                        return Throw.ArgumentException<bool>(Argument.key, Res.IDictionaryDuplicateKey);
 
                     // overwriting existing element
                     entries[i].Value = value;
                     version += 1;
-                    return;
+                    return true;
                 }
             }
 
@@ -1598,6 +1619,7 @@ namespace KGySoft.Collections
             entryRef.Value = value;
             bucketRef = index + 1; // bucket indices are 1-based
             version += 1;
+            return true;
         }
 
         private void Resize(int newCapacity)
@@ -1771,7 +1793,7 @@ namespace KGySoft.Collections
                 Initialize(count);
                 var keysAndValues = info.GetValueOrDefault<KeyValuePair<string, TValue>[]>(nameof(entries));
                 for (int i = 0; i < count; i++)
-                    Insert(keysAndValues[i].Key, keysAndValues[i].Value, true);
+                    Insert(keysAndValues[i].Key, keysAndValues[i].Value, DictionaryInsertion.ThrowIfExists);
             }
 
             version = info.GetInt32(nameof(version));

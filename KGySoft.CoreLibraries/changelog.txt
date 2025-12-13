@@ -26,6 +26,7 @@
 + AllowNullDictionary<TKey, TValue> class: New TryAdd method
 + Cache<TKey, TValue> class: New TryAdd method
 + CircularSortedList<TKey, TValue> class: New TryAdd method
++ StringKeyedDictionary<TValue> class: New TryAdd method
 
 * KGySoft.CoreLibraries namespace:
 ==================================

@@ -270,8 +270,7 @@ namespace KGySoft.ComponentModel
                 foreach (PropertyInfo prop in props)
                 {
                     // for conflicting names only the first property is added
-                    if (!dict.ContainsKey(prop.Name))
-                        dict[prop.Name] = prop.PropertyType;
+                    dict.TryAdd(prop.Name, prop.PropertyType);
                 }
             }
 

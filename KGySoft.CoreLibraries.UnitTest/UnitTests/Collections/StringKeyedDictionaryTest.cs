@@ -71,7 +71,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Assert.AreEqual(2, dict.Count);
             Assert.IsFalse(dict.Remove("alpha"));
             Assert.IsTrue(dict.Remove("beta"));
-            dict.Add("alpha", -1);
+            Assert.IsTrue(dict.TryAdd("alpha", -1));
+            Assert.IsFalse(dict.TryAdd("alpha", -1));
             Assert.AreEqual(2, dict.Count);
             Assert.AreEqual(-1, dict["alpha"]);
             Assert.AreEqual(-1, dict["alpha".AsSegment()]);
@@ -82,7 +83,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             // Clear
             dict.Clear();
             Assert.AreEqual(0, dict.Count);
-            dict.Add("alpha", 42);
+            Assert.IsTrue(dict.TryAdd("alpha", 42));
             Assert.AreEqual(42, dict["alpha"]);
         }
 

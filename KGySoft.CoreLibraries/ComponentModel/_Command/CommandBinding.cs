@@ -181,15 +181,13 @@ namespace KGySoft.ComponentModel
                     string name = eventInfo.Name;
 
                     // for conflicting names only the first event is added
-                    if (!dict.ContainsKey(name))
-                        dict[name] = eventInfo;
-
+                    dict.TryAdd(name, eventInfo);
                     if (!checkExplicit)
                         continue;
 
                     // For explicit interface implementations allowing mapping by simple event name so AddSource(src, nameof(IHasEvent.EventName)) always works
-                    if (Reflector.IsExplicitInterfaceImplementation(eventInfo, out EventInfo? interfaceEvent) && !dict.ContainsKey(interfaceEvent.Name))
-                        dict[interfaceEvent.Name] = eventInfo;
+                    if (Reflector.IsExplicitInterfaceImplementation(eventInfo, out EventInfo? interfaceEvent))
+                        dict.TryAdd(interfaceEvent.Name, eventInfo);
                 }
             }
 
