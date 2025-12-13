@@ -37,6 +37,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
         {
             var cache = new Cache<string, string>(s => s.ToUpperInvariant());
             Assert.AreEqual("ALPHA", cache["alpha"]);
+
+            // manual population
+            Assert.IsFalse(cache.TryAdd("alpha", "alpha2"));
+            Assert.IsTrue(cache.TryAdd("beta", "beta manual"));
         }
 
         [Test]

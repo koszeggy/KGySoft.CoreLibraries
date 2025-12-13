@@ -771,7 +771,7 @@ namespace KGySoft.Collections
                             return result;
                         }
 
-                        cache.Insert(key, newItem, false);
+                        cache.Insert(key, newItem, DictionaryInsertion.OverwriteIfExists);
                     }
 
                     return newItem;
@@ -1143,14 +1143,14 @@ namespace KGySoft.Collections
                 }
 
                 TValue newItem = itemLoader.Invoke(key);
-                Insert(key, newItem, false);
+                Insert(key, newItem, DictionaryInsertion.OverwriteIfExists);
                 return newItem;
             }
             set
             {
                 if (key == null!)
                     Throw.ArgumentNullException(Argument.key);
-                Insert(key, value, false);
+                Insert(key, value, DictionaryInsertion.OverwriteIfExists);
             }
         }
 
@@ -1463,7 +1463,7 @@ namespace KGySoft.Collections
                 Throw.ArgumentNullException(Argument.key);
 
             TValue result = itemLoader.Invoke(key);
-            Insert(key, result, false);
+            Insert(key, result, DictionaryInsertion.OverwriteIfExists);
             return result;
         }
 
@@ -1568,8 +1568,26 @@ namespace KGySoft.Collections
         {
             if (key == null!)
                 Throw.ArgumentNullException(Argument.key);
+            Insert(key, value, DictionaryInsertion.ThrowIfExists);
+        }
 
-            Insert(key, value, true);
+        /// <summary>
+        /// Attempts to add the specified key and value to the <see cref="Cache{TKey,TValue}"/> without overwriting an existing entry.
+        /// </summary>
+        /// <param name="key">The key of the element to add.</param>
+        /// <param name="value">The value of the element to add. The value can be <see langword="null"/> for reference types.</param>
+        /// <returns><see langword="true"/> if the key and value pair was added to the <see cref="Cache{TKey,TValue}"/> successfully; otherwise, <see langword="false"/>.</returns>
+        /// <remarks>
+        /// <para>Unlike the <see cref="Add">Add</see> method, this method doesn't throw an exception if the element with the given key exists in the <see cref="Cache{TKey,TValue}"/>.
+        /// Unlike the <see cref="this[TKey]">indexer</see>, <see cref="TryAdd">TryAdd</see> doesn't override the element if the element with the given key exists in the dictionary.
+        /// If the key already exists, <see cref="TryAdd">TryAdd</see> does nothing and returns <see langword="false"/>.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
+        public bool TryAdd(TKey key, TValue value)
+        {
+            if (key == null!)
+                Throw.ArgumentNullException(Argument.key);
+            return Insert(key, value, DictionaryInsertion.DoNotOverwrite);
         }
 
         /// <summary>
@@ -1884,7 +1902,7 @@ namespace KGySoft.Collections
         /// <summary>
         /// Inserting a new element into the cache
         /// </summary>
-        private void Insert(TKey key, TValue value, bool throwIfExists)
+        private bool Insert(TKey key, TValue value, DictionaryInsertion insertion)
         {
             if (buckets == null)
                 Initialize(ensureCapacity ? capacity : 1);
@@ -1909,8 +1927,10 @@ namespace KGySoft.Collections
                 if (items[i].Hash != hashCode || !comp.Equals(items[i].Key, key))
                     continue;
 
-                if (throwIfExists)
-                    Throw.ArgumentException(Argument.key, Res.IDictionaryDuplicateKey);
+                if (insertion == DictionaryInsertion.DoNotOverwrite)
+                    return false;
+                if (insertion == DictionaryInsertion.ThrowIfExists)
+                    return Throw.ArgumentException<bool>(Argument.key, Res.IDictionaryDuplicateKey);
 
                 // overwriting existing element
                 if (behavior == CacheBehavior.RemoveLeastRecentUsedElement)
@@ -1918,7 +1938,7 @@ namespace KGySoft.Collections
                 items[i].Value = value;
                 cacheWrites += 1;
                 version += 1;
-                return;
+                return true;
             }
 
             // if used with full capacity, dropping an element
@@ -1970,6 +1990,7 @@ namespace KGySoft.Collections
 
             cacheWrites += 1;
             version += 1;
+            return true;
         }
 
         private void Resize(int suggestedSize)
@@ -2228,7 +2249,7 @@ namespace KGySoft.Collections
             {
                 Initialize(ensureCapacity ? capacity : count);
                 for (int i = 0; i < count; i++)
-                    Insert(keys[i], values[i], true);
+                    Insert(keys[i], values[i], DictionaryInsertion.ThrowIfExists);
             }
 
             version = info.GetInt32(nameof(version));
