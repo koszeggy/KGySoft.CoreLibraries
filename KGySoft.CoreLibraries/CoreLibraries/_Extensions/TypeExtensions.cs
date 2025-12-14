@@ -1223,8 +1223,8 @@ namespace KGySoft.CoreLibraries
                 fixed (byte* _ = &Reflector.GetRawData(instance))
                 {
                     // Now we can access the address of the fields safely. MakeTypedReference works here because primitive types are handled in the caller
-                    TypedReference refItem1 = TypedReference.MakeTypedReference(instance, [helperType.GetField(nameof(SizeOfHelper<_>.Item1))!]);
-                    TypedReference refItem2 = TypedReference.MakeTypedReference(instance, [helperType.GetField(nameof(SizeOfHelper<_>.Item2))!]);
+                    TypedReference refItem1 = TypedReference.MakeTypedReference(instance, [helperType.GetField(nameof(SizeOfHelper<>.Item1))!]);
+                    TypedReference refItem2 = TypedReference.MakeTypedReference(instance, [helperType.GetField(nameof(SizeOfHelper<>.Item2))!]);
                     Debug.Assert(__reftype(refItem1) == type && __reftype(refItem2) == type);
 
                     return (int)(Reflector.GetValueAddress(refItem2) - Reflector.GetValueAddress(refItem1));
@@ -1238,7 +1238,7 @@ namespace KGySoft.CoreLibraries
         {
 #if NETSTANDARD2_0 // DynamicMethod is not available. Fallback: calling the generic Reflector<T>.SizeOf by reflection
             if (!EnvironmentHelper.IsPartiallyTrustedDomain)
-                return (int)typeof(Reflector<>).GetPropertyValue(type, nameof(Reflector<_>.SizeOf))!;
+                return (int)typeof(Reflector<>).GetPropertyValue(type, nameof(Reflector<>.SizeOf))!;
 
             // This can occur when the .NET Standard 2.0 build is used by .NET Framework in a partially trusted domain (not possible for NuGet references)
             try

@@ -67,8 +67,10 @@ namespace KGySoft.CoreLibraries
 
         #region Private Methods
 
+#if NET5_0_OR_GREATER
         private static IEqualityComparer<T>? GetNonDefaultEqualityComparerOrNull(IEqualityComparer<T>? comparer) => IsDefaultComparer(comparer) ? null : comparer;
-        
+#endif
+
         #endregion
 
         #endregion

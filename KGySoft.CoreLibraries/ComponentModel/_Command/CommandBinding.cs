@@ -106,10 +106,10 @@ namespace KGySoft.ComponentModel
 
         private readonly ICommand command;
         private readonly bool disposeCommand;
-        private readonly HashSet<object> targets = new HashSet<object>();
+        private readonly HashSet<object> targets = new();
         private readonly CommandState state;
         private readonly Dictionary<object, Dictionary<EventInfo, SubscriptionInfo>> sources = new Dictionary<object, Dictionary<EventInfo, SubscriptionInfo>>();
-        private readonly CircularList<ICommandStateUpdater> stateUpdaters = new CircularList<ICommandStateUpdater>();
+        private readonly CircularList<ICommandStateUpdater> stateUpdaters = new();
 
         private bool disposed;
         private Func<object?>? getParameterCallback;

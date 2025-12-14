@@ -22,7 +22,6 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
-using KGySoft.Annotations;
 using KGySoft.Diagnostics;
 using KGySoft.Reflection;
 
@@ -51,7 +50,6 @@ namespace KGySoft.Collections
     [Serializable]
     [DebuggerTypeProxy(typeof(DictionaryDebugView<,>))]
     [DebuggerDisplay("Count = {" + nameof(Count) + "}; TKey = {typeof(" + nameof(TKey) + ").Name}; TValue = {typeof(" + nameof(TValue) + ").Name}")]
-    [SuppressMessage("ReSharper", "UseNullableReferenceTypesAnnotationSyntax", Justification = "False alarm, only [NotNull] prevents AssignNullToNotNullAttribute warnings")]
     public class AllowNullDictionary<TKey, TValue> : IDictionaryInternal<TKey, TValue>, IDictionary
     {
         #region Nested Types
@@ -670,7 +668,7 @@ namespace KGySoft.Collections
         /// overwrites the old value. In contrast, the <see cref="Add">Add</see> method throws an <see cref="ArgumentException"/>, when <paramref name="key"/> already exists in the collection.</para>
         /// <para>Getting or setting this property approaches an O(1) operation.</para>
         /// </remarks>
-        public TValue this[[CanBeNull]TKey key]
+        public TValue this[TKey? key]
         {
             get
             {
@@ -803,7 +801,7 @@ namespace KGySoft.Collections
         /// <para>This method approaches an O(1) operation unless if insertion causes a resize, in which case the operation is O(n).</para>
         /// </remarks>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public void Add([CanBeNull]TKey key, TValue value)
+        public void Add(TKey? key, TValue value)
         {
             if (key != null)
             {
@@ -829,7 +827,7 @@ namespace KGySoft.Collections
         /// If the key already exists, <see cref="TryAdd">TryAdd</see> does nothing and returns <see langword="false"/>.</para>
         /// </remarks>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public bool TryAdd([CanBeNull]TKey key, TValue value)
+        public bool TryAdd(TKey? key, TValue value)
         {
             if (key != null)
             {
@@ -857,7 +855,7 @@ namespace KGySoft.Collections
         /// <returns><see langword="true"/> if the <see cref="AllowNullDictionary{TKey,TValue}"/> contains an element with the specified <paramref name="key"/>; otherwise, <see langword="false"/>.</returns>
         /// <remarks><para>This method approaches an O(1) operation.</para></remarks>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public bool ContainsKey([CanBeNull]TKey key) => key == null ? hasNullKey : dict.ContainsKey(key);
+        public bool ContainsKey(TKey? key) => key == null ? hasNullKey : dict.ContainsKey(key);
 
         /// <summary>
         /// Determines whether the <see cref="AllowNullDictionary{TKey,TValue}"/> contains a specific value.
@@ -881,7 +879,7 @@ namespace KGySoft.Collections
         /// <para>This method approaches an O(1) operation.</para>
         /// </remarks>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public bool Remove([CanBeNull]TKey key)
+        public bool Remove(TKey? key)
         {
             if (key != null)
                 return dict.Remove(key);
@@ -907,7 +905,7 @@ namespace KGySoft.Collections
         /// <para>This method approaches an O(1) operation.</para>
         /// </remarks>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public bool TryGetValue([CanBeNull]TKey key, [MaybeNullWhen(false)]out TValue value)
+        public bool TryGetValue(TKey? key, [MaybeNullWhen(false)]out TValue value)
         {
             if (key != null)
                 return dict.TryGetValue(key, out value);

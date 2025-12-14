@@ -33,6 +33,14 @@ using KGySoft.Serialization;
 
 #endregion
 
+#region Suppressions
+
+#if !NET5_0_OR_GREATER
+// ReSharper disable RedundantSuppressNullableWarningExpression 
+#endif
+
+#endregion
+
 namespace KGySoft.CoreLibraries
 {
     public static partial class RandomExtensions
@@ -305,6 +313,9 @@ namespace KGySoft.CoreLibraries
 
             #region Private Methods
 
+#if NETCOREAPP3_0
+            [SuppressMessage("ReSharper", "AssignNullToNotNullAttribute", Justification = "Types has a different nullable annotation only in .NET Core 3.0")]
+#endif
             private static Type[] LoadAssemblyTypes(Assembly asm)
             {
                 try

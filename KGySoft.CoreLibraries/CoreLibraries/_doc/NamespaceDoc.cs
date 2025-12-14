@@ -31,7 +31,5 @@ namespace KGySoft.CoreLibraries
     /// and many others.
     /// </summary>
     [CompilerGenerated]
-    internal static class NamespaceDoc
-    {
-    }
+    internal static class NamespaceDoc;
 }

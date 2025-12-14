@@ -16,6 +16,7 @@
 #region Usings
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP
 using System.Runtime.CompilerServices;
 #endif
@@ -32,6 +33,7 @@ using KGySoft.CoreLibraries;
 
 namespace KGySoft.Reflection
 {
+    [SuppressMessage("ReSharper", "StaticMemberInGenericType", Justification = "False alarm, fields depend on T")]
     internal static class Reflector<T>
     {
         #region Nested Classes
@@ -59,7 +61,6 @@ namespace KGySoft.Reflection
         {
             #region Fields
 
-            // ReSharper disable once StaticMemberInGenericType - false alarm, value depends on T
             internal static readonly int Value =
 #if NETFRAMEWORK || NETSTANDARD2_0
                 EnvironmentHelper.IsPartiallyTrustedDomain ? typeof(T).SizeOf() : Initialize();
@@ -147,7 +148,9 @@ namespace KGySoft.Reflection
 #if NET35 || NET40 || NET45
             EmptyArrayCache.Value;
 #else
+#pragma warning disable IDE0301 // Use collection expression syntax
             Array.Empty<T>();
+#pragma warning restore IDE0301 // Use collection expression syntax
 #endif
 
         internal static int SizeOf =>

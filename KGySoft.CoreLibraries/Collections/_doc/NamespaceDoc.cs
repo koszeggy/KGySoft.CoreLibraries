@@ -32,7 +32,5 @@ namespace KGySoft.Collections
     /// such as <see cref="SortableBindingList{T}"/> or <see cref="FastLookupCollection{T}"/>.
     /// </summary>
     [CompilerGenerated]
-    internal static class NamespaceDoc
-    {
-    }
+    internal static class NamespaceDoc;
 }

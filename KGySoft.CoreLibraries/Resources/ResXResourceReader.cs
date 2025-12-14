@@ -1141,12 +1141,8 @@ namespace KGySoft.Resources
             if (alias.Length == 0)
                 return null;
 
-            // alias value found
-            if (activeAliases!.TryGetValue(alias, out string? asmName))
-                return asmName;
-
-            // type name is with assembly name
-            return null;
+            // alias value, or null, when type name is with assembly name
+            return activeAliases!.GetValueOrDefault(alias);
         }
 
         /// <summary>

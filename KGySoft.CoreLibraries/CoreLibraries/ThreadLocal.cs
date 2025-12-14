@@ -193,8 +193,7 @@ namespace KGySoft.CoreLibraries
                     // the table will have been removed, and so the table can get GC'd.
                     lock (idManager)
                     {
-                        if (linkedSlot.Next != null)
-                            linkedSlot.Next.Previous = linkedSlot.Previous;
+                        linkedSlot.Next?.Previous = linkedSlot.Previous;
 
                         // Since the list uses a dummy head node, the Previous reference should never be null.
                         linkedSlot.Previous!.Next = linkedSlot.Next;
@@ -563,10 +562,7 @@ namespace KGySoft.CoreLibraries
                 slot.Next = firstRealNode;
                 slot.Previous = slot;
                 slot.Value = value;
-
-                if (firstRealNode != null)
-                    firstRealNode.Previous = slot;
-
+                firstRealNode?.Previous = slot;
                 slot.Next = slot;
 
                 // Assigning the slot under a lock prevents a race condition with Dispose (dispose also acquires the lock).

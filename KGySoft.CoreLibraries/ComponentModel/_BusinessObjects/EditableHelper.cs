@@ -31,14 +31,21 @@ namespace KGySoft.ComponentModel
         #region Fields
 
         private readonly ObservableObjectBase owner;
-        private readonly List<IDictionary<string, object?>> snapshots = new List<IDictionary<string, object?>>();
+        private readonly List<IDictionary<string, object?>> snapshots = new();
         private readonly Lock syncRoot = new Lock();
 
         #endregion
 
         #region Properties
 
-        public int EditLevel => snapshots.Count;
+        public int EditLevel
+        {
+            get
+            {
+                lock (syncRoot)
+                    return snapshots.Count;
+            }
+        }
 
         #endregion
 

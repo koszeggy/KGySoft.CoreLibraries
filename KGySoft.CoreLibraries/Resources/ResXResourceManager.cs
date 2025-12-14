@@ -1138,6 +1138,9 @@ namespace KGySoft.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
         /// <exception cref="IOException">A resource set could not be saved.</exception>
         [SuppressMessage("ReSharper", "GenericEnumeratorNotDisposed", Justification = "False alarm, IDictionaryEnumerator is not a generic enumerator and is not expected to be disposable")]
+#if NETFRAMEWORK || NETSTANDARD || !NETCOREAPP3_0_OR_GREATER
+        [SuppressMessage("ReSharper", "AssignNullToNotNullAttribute", Justification = "False alarm, but the annotation is missing for older frameworks.")]
+#endif
         public bool SaveAllResources(bool force = false, bool compatibleFormat = false)
         {
             IDictionary localResourceSets = ResourceSets; // type is Hashtable in .NET 3.5 and is StringKeyedDictionary above

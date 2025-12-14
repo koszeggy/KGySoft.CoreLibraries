@@ -72,7 +72,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             typeof(delegate*<string, delegate*<string, void>[]>),
             typeof(delegate* managed<int?, void>),
             typeof(delegate* <int?, void>),
-#if NET6_0_OR_GREATER
+#if NET8_0_OR_GREATER
             typeof(delegate* unmanaged<KeyValuePair<int, string>, void*>),
             typeof(delegate* unmanaged<KeyValuePair<int, string>, void*>[]),
             typeof(delegate* unmanaged[Cdecl]<string, void>),

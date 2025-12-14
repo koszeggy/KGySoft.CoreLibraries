@@ -18,7 +18,5 @@ namespace KGySoft.CoreLibraries
     /// <summary>
     /// Forces objects to be compared by reference.
     /// </summary>
-    internal sealed class ReferenceEqualityComparer : ReferenceEqualityComparer<object>
-    {
-    }
+    internal sealed class ReferenceEqualityComparer : ReferenceEqualityComparer<object>;
 }

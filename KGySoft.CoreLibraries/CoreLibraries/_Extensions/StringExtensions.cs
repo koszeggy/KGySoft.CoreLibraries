@@ -487,7 +487,7 @@ namespace KGySoft.CoreLibraries
         }
 
         /// <summary>
-        /// Gets the zero-based index of the first occurrence in the specified <see cref="string"/>&#160;<paramref name="s"/> of any string in the specified <paramref name="set"/> by case sensitive ordinal comparison.
+        /// Gets the zero-based index of the first occurrence in the specified <see cref="string"/>&#160;<paramref name="s"/> of any string in the specified <paramref name="set"/> by case-sensitive ordinal comparison.
         /// </summary>
         /// <param name="s">A <see cref="string"/> instance that is to be compared to each element of the <paramref name="set"/>.</param>
         /// <param name="set">An <see cref="Array"/> of strings.</param>

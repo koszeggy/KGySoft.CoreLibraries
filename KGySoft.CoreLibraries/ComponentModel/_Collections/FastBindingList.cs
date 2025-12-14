@@ -877,8 +877,7 @@ namespace KGySoft.ComponentModel
             bool readOnly = Items.IsReadOnly;
             allowNew = canAddNew && !readOnly;
             allowRemove = !readOnly;
-            allowEdit = true; //Items is IList list ? !list.IsReadOnly : !readOnly; // for editing taking the non-generic IList.IsReadOnly, which is false for fixed size but otherwise writable collections.
-
+            allowEdit = true;
             raiseListChangedEvents = true;
             HookPropertyChangedAll();
         }

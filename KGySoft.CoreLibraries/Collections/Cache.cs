@@ -1767,14 +1767,13 @@ namespace KGySoft.Collections
             if (bucketsLocal == null)
                 return -1;
 
-            uint hashCode;
             Entry[] items = entries!;
 #if NET5_0_OR_GREATER
             // Value types: Using the EqualityComparer<T>.Default intrinsic directly, which gets devirtualized
             // See https://github.com/dotnet/runtime/issues/10050
             if (typeof(TKey).IsValueType && comparer == null)
             {
-                hashCode = (uint)key.GetHashCode();
+                uint hashCode = (uint)key.GetHashCode();
                 for (int i = bucketsLocal[hashCode % (uint)bucketsLocal.Length] - 1; i >= 0; i = items[i].NextInBucket)
                 {
                     if (items[i].Hash == hashCode && EqualityComparer<TKey>.Default.Equals(items[i].Key, key))
@@ -1785,7 +1784,7 @@ namespace KGySoft.Collections
 #endif
             {
                 IEqualityComparer<TKey> comp = comparer!;
-                hashCode = (uint)comp.GetHashCode(key);
+                uint hashCode = (uint)comp.GetHashCode(key);
                 for (int i = bucketsLocal[hashCode % (uint)bucketsLocal.Length] - 1; i >= 0; i = items[i].NextInBucket)
                 {
                     if (items[i].Hash == hashCode && comp.Equals(items[i].Key, key))

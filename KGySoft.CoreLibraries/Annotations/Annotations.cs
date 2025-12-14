@@ -23,7 +23,6 @@ SOFTWARE. */
 // ReSharper disable All - Justification: Generated file by ReSharper
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 
 // ReSharper disable UnusedMember.Global
 // ReSharper disable MemberCanBePrivate.Global

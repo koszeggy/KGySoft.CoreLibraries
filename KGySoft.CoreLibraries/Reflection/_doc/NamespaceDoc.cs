@@ -26,7 +26,5 @@ namespace KGySoft.Reflection
     /// Additionally, contains several classes derived from <see cref="MemberAccessor"/> that can dynamically reflect objects, their members and type information by on-the-fly generated delegates.
     /// </summary>
     [CompilerGenerated]
-    internal static class NamespaceDoc
-    {
-    }
+    internal static class NamespaceDoc;
 }

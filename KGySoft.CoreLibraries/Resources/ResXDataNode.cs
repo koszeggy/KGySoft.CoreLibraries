@@ -426,12 +426,12 @@ namespace KGySoft.Resources
             public override bool CanConvertTo(ITypeDescriptorContext? context, Type? destinationType) => destinationType == Reflector.ByteArrayType;
             public override bool CanConvertFrom(ITypeDescriptorContext? context, Type sourceType) => sourceType == Reflector.ByteArrayType;
 
-            public override object? ConvertTo(ITypeDescriptorContext? context, CultureInfo? culture, object? value, Type destinationType)
-                => destinationType == Reflector.ByteArrayType && value is MemoryStream ms ? ms.ToArray() : base.ConvertTo(context, culture, value, destinationType);
+            public override object ConvertTo(ITypeDescriptorContext? context, CultureInfo? culture, object? value, Type destinationType)
+                => destinationType == Reflector.ByteArrayType && value is MemoryStream ms ? ms.ToArray() : base.ConvertTo(context, culture, value, destinationType)!;
 
             public override object? ConvertFrom(ITypeDescriptorContext? context, CultureInfo? culture, object? value)
                 // should not be checked by as cast because due to the CLR behavior that would allow sbyte[] as well
-                => value?.GetType() == Reflector.ByteArrayType ? new MemoryStream((byte[])value) : base.ConvertFrom(context, culture, value!);
+                => value?.GetType() == Reflector.ByteArrayType ? new MemoryStream((byte[])value) : base.ConvertFrom(context!, culture!, value!);
 
             #endregion
         }

@@ -16,6 +16,7 @@
 #region Usings
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 #if NETFRAMEWORK
 using System.Runtime.Remoting;
 using System.Runtime.Remoting.Messaging;
@@ -106,6 +107,7 @@ namespace KGySoft.Serialization.Binary
 
         #region Private Constructors
 
+        [SuppressMessage("ReSharper", "RedundantArgumentDefaultValue", Justification = "Emphasising safe mode")]
         private AnyObjectSerializerWrapper(SerializationInfo info, StreamingContext context)
         {
             byte[] rawData = (byte[])info.GetValue("data", Reflector.ByteArrayType)!;

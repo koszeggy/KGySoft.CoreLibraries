@@ -26,7 +26,5 @@ namespace KGySoft.Serialization.Binary
     /// as well as other binary serialization related classes including serialization binders and surrogate selectors.
     /// </summary>
     [CompilerGenerated]
-    internal static class NamespaceDoc
-    {
-    }
+    internal static class NamespaceDoc;
 }

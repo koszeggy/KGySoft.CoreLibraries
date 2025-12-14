@@ -907,7 +907,11 @@ namespace KGySoft.Threading
 
             public void Sort(IAsyncContext context, IList<T> list, int startIndex, int count, IComparer<T>? comparer)
             {
+#if NET45_OR_GREATER || NETSTANDARD || NETCOREAPP
                 Debug.Assert(list is not (T[] or ArraySegment<T> or List<T> or CircularList<T>), "Known ILists are expected to be handled in a special way to avoid slower virtual calls");
+#else
+                Debug.Assert(list is not (T[] or List<T> or CircularList<T>), "Known ILists are expected to be handled in a special way to avoid slower virtual calls");
+#endif
                 int maxTasks = context.MaxDegreeOfParallelism;
                 if (maxTasks <= 0)
                     maxTasks = CoreCount;
@@ -2998,7 +3002,11 @@ namespace KGySoft.Threading
 
             public void Sort(IAsyncContext context, IList<T> list, int startIndex, int count, IComparer<T>? comparer)
             {
+#if NET45_OR_GREATER || NETSTANDARD || NETCOREAPP
                 Debug.Assert(list is not (T[] or ArraySegment<T> or List<T> or CircularList<T>), "Known ILists are expected to be handled in a special way to avoid slower virtual calls");
+#else
+                Debug.Assert(list is not (T[] or List<T> or CircularList<T>), "Known ILists are expected to be handled in a special way to avoid slower virtual calls");
+#endif
                 int maxTasks = context.MaxDegreeOfParallelism;
                 if (maxTasks <= 0)
                     maxTasks = CoreCount;

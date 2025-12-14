@@ -76,7 +76,7 @@ namespace KGySoft.Collections
         {
             #region Fields
 
-            private Array3D<T> array;
+            private readonly Array3D<T> array;
 
             #endregion
 

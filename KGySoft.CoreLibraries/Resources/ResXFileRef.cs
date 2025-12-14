@@ -178,7 +178,7 @@ namespace KGySoft.Resources
 
             public override object? ConvertTo(ITypeDescriptorContext? context, CultureInfo? culture, object? value, Type destinationType) => destinationType == Reflector.StringType ? value?.ToString() : null;
 
-            public override object? ConvertFrom(ITypeDescriptorContext? context, CultureInfo? culture, object value) => value is string stringValue ? ConvertFrom(stringValue, null, null) : null;
+            public override object? ConvertFrom(ITypeDescriptorContext? context, CultureInfo? culture, object? value) => value is string stringValue ? ConvertFrom(stringValue, null, null) : null;
 
             #endregion
 

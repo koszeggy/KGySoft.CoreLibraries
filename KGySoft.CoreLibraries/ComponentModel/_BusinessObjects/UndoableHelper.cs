@@ -51,8 +51,8 @@ namespace KGySoft.ComponentModel
 
         #region Fields
 
-        private readonly CircularList<KeyValuePair<string, UndoEntry>> undoSteps = new CircularList<KeyValuePair<string, UndoEntry>>();
-        private readonly CircularList<KeyValuePair<string, UndoEntry>> redoSteps = new CircularList<KeyValuePair<string, UndoEntry>>();
+        private readonly CircularList<KeyValuePair<string, UndoEntry>> undoSteps = new();
+        private readonly CircularList<KeyValuePair<string, UndoEntry>> redoSteps = new();
         private readonly ObservableObjectBase owner;
         private readonly Lock syncRoot = new Lock();
 

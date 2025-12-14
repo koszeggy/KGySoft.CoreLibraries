@@ -2236,7 +2236,7 @@ namespace KGySoft.Threading
 
                     break;
 
-#if !NET35
+#if NET45_OR_GREATER || NETSTANDARD || NETCOREAPP
                 case ArraySegment<T> arraySection:
                     if (isSingleThreadNotCancellable)
                         Array.Sort(arraySection.Array!, startIndex + arraySection.Offset, count, comparer);
@@ -2340,7 +2340,7 @@ namespace KGySoft.Threading
 
                     break;
 
-#if !NET35
+#if NET45_OR_GREATER || NETSTANDARD || NETCOREAPP
                 case (ArraySegment<TKey> keysSection, ArraySegment<TValue> valuesSection):
 #if NET5_0_OR_GREATER
                     if (isSingleThreadNotCancellable)

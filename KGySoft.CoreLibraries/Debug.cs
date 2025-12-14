@@ -36,7 +36,7 @@ namespace KGySoft
         internal static void Assert(bool condition, [CallerArgumentExpression(nameof(condition))]string? message = null)
         {
 #if NETFRAMEWORK
-            SystemDebug.Assert(condition, message);
+            SystemDebug.Assert(condition, message!);
 #else
             if (!condition)
                 Fail(message);

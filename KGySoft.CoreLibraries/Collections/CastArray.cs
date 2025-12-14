@@ -896,6 +896,7 @@ namespace KGySoft.Collections
         /// Assigns the specified <paramref name="value"/> to all elements in this <see cref="CastArray{TFrom,TTo}"/> instance.
         /// </summary>
         /// <param name="value">The value to assign to all elements.</param>
+        [SecuritySafeCritical]
         public void Fill(TTo value)
         {
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER

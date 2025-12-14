@@ -26,7 +26,5 @@ namespace KGySoft.Diagnostics
     /// and <see cref="PerformanceTest"/> classes along with some generic debugger views.
     /// </summary>
     [CompilerGenerated]
-    internal static class NamespaceDoc
-    {
-    }
+    internal static class NamespaceDoc;
 }

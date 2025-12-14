@@ -95,7 +95,5 @@ namespace KGySoft.Resources
     /// </list>
     /// </remarks>
     [CompilerGenerated]
-    internal static class NamespaceDoc
-    {
-    }
+    internal static class NamespaceDoc;
 }

@@ -3642,9 +3642,9 @@ namespace KGySoft.Reflection
         /// <para>The typical intended usage of this method is to strip unneeded information from type names. The lower the value of the specified <paramref name="kind"/>, the shorted the result will be.</para>
         /// <para>This method works for any kind of type names in any format that can be produced by the <see cref="MemberInfo.Name">Type.Name</see>, <see cref="Type.ToString">Type.ToString</see>,
         /// <see cref="Type.FullName">Type.FullName</see>, <see cref="Type.AssemblyQualifiedName">Type.AssemblyQualifiedName</see> members,
-        /// and the <see cref="CoreLibraries.TypeExtensions.GetName(System.Type,TypeNameKind)">TypeExtensions.GetName</see> method.</para>
+        /// and the <see cref="CoreLibraries.TypeExtensions.GetName(System.Type,KGySoft.CoreLibraries.TypeNameKind)">TypeExtensions.GetName</see> method.</para>
         /// <note>As this method does not actually resolve any type, the result cannot contain more details than the originally provided name. To get an arbitrarily detailed name
-        /// of a <see cref="System.Type"/> use the <see cref="CoreLibraries.TypeExtensions.GetName(System.Type,TypeNameKind)">TypeExtensions.GetName</see> method with an actual <see cref="System.Type"/> instead.</note>
+        /// of a <see cref="System.Type"/> use the <see cref="CoreLibraries.TypeExtensions.GetName(System.Type,KGySoft.CoreLibraries.TypeNameKind)">TypeExtensions.GetName</see> method with an actual <see cref="System.Type"/> instead.</note>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="typeName"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="typeName"/> cannot be parsed as a valid type name.</exception>
@@ -3703,6 +3703,9 @@ namespace KGySoft.Reflection
         /// <exception cref="ArgumentNullException"><paramref name="expression"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="expression"/> does not return a member.</exception>
         /// <seealso cref="MemberOf"/>
+#if !NET5_0_OR_GREATER
+        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract", Justification = "Different nullability in older frameworks")]
+#endif
         public static MemberInfo MemberOf<T>(Expression<Func<T>> expression)
         {
             if (expression == null!)

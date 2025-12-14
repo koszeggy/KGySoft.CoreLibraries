@@ -94,7 +94,7 @@ namespace KGySoft.Diagnostics
         {
             #region Fields
 
-            internal readonly List<Repetition> Repetitions = new List<Repetition>();
+            internal readonly List<Repetition> Repetitions = new();
 
             internal TestCase Case = default!;
             [AllowNull]internal TResult Result;
@@ -296,7 +296,7 @@ namespace KGySoft.Diagnostics
 
         #region Fields
 
-        private readonly List<TestCase> cases = new List<TestCase>();
+        private readonly List<TestCase> cases = new();
 
         private IntPtr origAffinity;
         private ProcessPriorityClass origPriority;

@@ -26,7 +26,5 @@ namespace KGySoft.Collections.ObjectModel
     /// in the object model of a reusable library. You can use these classes when properties or methods return collections.
     /// </summary>
     [CompilerGenerated]
-    internal static class NamespaceDoc
-    {
-    }
+    internal static class NamespaceDoc;
 }

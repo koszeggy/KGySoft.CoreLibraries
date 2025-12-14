@@ -290,9 +290,9 @@ namespace KGySoft.Reflection
         #region Instance Fields
 
         private readonly ResolveTypeOptions options;
-        private readonly CircularList<int> modifiers = new CircularList<int>();
-        private readonly List<TypeResolver> typeArguments = new List<TypeResolver>(); // generic or function pointer
-        private readonly List<TypeResolver> functionPointerCallingConventions = new List<TypeResolver>();
+        private readonly CircularList<int> modifiers = new();
+        private readonly List<TypeResolver> typeArguments = new(); // generic or function pointer
+        private readonly List<TypeResolver> functionPointerCallingConventions = new();
 
         private string? rootName;
         private string? assemblyName;

@@ -18,7 +18,9 @@
 using System.Runtime.CompilerServices;
 using System.Security;
 
+#if !NETCOREAPP3_0_OR_GREATER
 using KGySoft.Reflection;
+#endif
 
 #endregion
 

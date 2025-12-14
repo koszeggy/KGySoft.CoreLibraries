@@ -76,7 +76,7 @@ namespace KGySoft.Collections
         {
             #region Fields
 
-            private Array2D<T> array;
+            private readonly Array2D<T> array;
 
             #endregion
 

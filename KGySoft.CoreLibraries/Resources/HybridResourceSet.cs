@@ -85,6 +85,9 @@ namespace KGySoft.Resources
                 }
             }
 
+#if NETFRAMEWORK || NETSTANDARD || !NETCOREAPP3_0_OR_GREATER
+        [SuppressMessage("ReSharper", "AssignNullToNotNullAttribute", Justification = "False alarm, but the annotation is missing for older frameworks.")]
+#endif
             public object Key
             {
                 get

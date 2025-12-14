@@ -28,7 +28,5 @@ namespace KGySoft.Security.Cryptography
     /// and the <see cref="SecureRandom"/> class, which is capable of producing cryptographically secure random numbers in a compatible manner with the <see cref="Random"/> class.
     /// </summary>
     [CompilerGenerated]
-    internal static class NamespaceDoc
-    {
-    }
+    internal static class NamespaceDoc;
 }

@@ -132,8 +132,7 @@ namespace KGySoft.Collections
         {
             #region Fields
 
-            [SuppressMessage("Style", "IDE0044:Add readonly modifier", Justification = "ArraySection is not readonly so it would generate defensive copies on platforms")]
-            private ArraySection<T> array;
+            private readonly ArraySection<T> array;
 
             #endregion
 
@@ -654,6 +653,7 @@ namespace KGySoft.Collections
         /// <para>If the size of <typeparamref name="TTo"/> cannot be divided by the size of <typeparamref name="TFrom"/>,
         /// then the cast result may not cover the whole original <see cref="ArraySection{T}"/> to prevent exceeding beyond the available buffer.</para>
         /// </remarks>
+        [SecuritySafeCritical]
         public readonly CastArray<TFrom, TTo> Cast<TFrom, TTo>()
 #if NETFRAMEWORK // To make the method compatible with older compilers
             where TFrom : struct, T
@@ -676,6 +676,7 @@ namespace KGySoft.Collections
         /// <param name="height">The height of the array to be returned.</param>
         /// <param name="width">The width of the array to be returned.</param>
         /// <returns>A <see cref="CastArray2D{TFrom,TTo}"/> instance for this <see cref="ArraySection{T}"/>.</returns>
+        [SecuritySafeCritical]
         public readonly CastArray2D<TFrom, TTo> Cast2D<TFrom, TTo>(int height, int width)
 #if NETFRAMEWORK // To make the method compatible with older compilers
             where TFrom : struct, T
@@ -699,6 +700,7 @@ namespace KGySoft.Collections
         /// <param name="height">The height of the array to be returned.</param>
         /// <param name="width">The width of the array to be returned.</param>
         /// <returns>A <see cref="CastArray2D{TFrom,TTo}"/> instance for this <see cref="ArraySection{T}"/>.</returns>
+        [SecuritySafeCritical]
         public readonly CastArray3D<TFrom, TTo> Cast3D<TFrom, TTo>(int depth, int height, int width)
 #if NETFRAMEWORK // To make the method compatible with older compilers
             where TFrom : struct, T

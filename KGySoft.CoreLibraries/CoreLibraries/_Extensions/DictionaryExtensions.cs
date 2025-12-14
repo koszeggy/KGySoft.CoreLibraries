@@ -542,7 +542,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="dictionary">The target dictionary.</param>
         /// <param name="item">The <see cref="KeyValuePair{TKey,TValue}"/> to add to the <paramref name="dictionary"/>.</param>
         /// <returns><see langword="true"/> if <paramref name="item"/> was added to the <paramref name="dictionary"/> successfully;
-        /// <see langword="false"/> if the key already exists or when <see cref="ICollection{T}.IsReadOnly"/> returns <see langword="true"/> for <paramref name="dictionary"/>.</returns>
+        /// <see langword="false"/> if the key already exists or when <see cref="ICollection{T}.IsReadOnly"/> returns <see langword="true"/> for the specified <paramref name="dictionary"/>.</returns>
         /// <remarks>
         /// <para>The <see cref="System.Collections.Generic.CollectionExtensions"/> class in .NET Core 2.0 and above also has
         /// a <see cref="System.Collections.Generic.CollectionExtensions.TryAdd{TKey,TValue}">TryAdd</see> method that behaves somewhat differently.
@@ -556,48 +556,59 @@ namespace KGySoft.CoreLibraries
         public static bool TryAdd<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, KeyValuePair<TKey, TValue> item)
             where TKey : notnull
         {
-            #region Local Methods
+            return TryAdd(dictionary, item.Key, item.Value);
+        }
 
-            static bool Fallback(IDictionary<TKey, TValue> dictionary, TKey key, TValue value)
-            {
-                if (dictionary.IsReadOnly || dictionary.ContainsKey(key))
-                    return false;
-                dictionary[key] = value;
-                return true;
-            }
-
-            #endregion
-
+        /// <summary>
+        /// Tries to add a pair of key and value the specified <paramref name="dictionary"/>. The operation is thread safe if <paramref name="dictionary"/>
+        /// is a <see cref="ThreadSafeDictionary{TKey,TValue}"/>, <see cref="ConcurrentDictionary{TKey,TValue}"/> or <see cref="LockingDictionary{TKey,TValue}"/> instance.
+        /// For other <see cref="IDictionary{TKey,TValue}"/> implementations the caller should care about thread safety if needed.
+        /// </summary>
+        /// <typeparam name="TKey">The type of the keys in the <paramref name="dictionary"/>.</typeparam>
+        /// <typeparam name="TValue">The type of the values in the <paramref name="dictionary"/>.</typeparam>
+        /// <param name="dictionary">The target dictionary.</param>
+        /// <param name="key">The key of the element to add.</param>
+        /// <param name="value">The value of the element to add. The value can be <see langword="null"/> for reference types.</param>
+        /// <returns><see langword="true"/> if the key and value pair was added to the <paramref name="dictionary"/> successfully;
+        /// <see langword="false"/> if the key already exists or when <see cref="ICollection{T}.IsReadOnly"/> returns <see langword="true"/> for the specified <paramref name="dictionary"/>.</returns>
+        /// <remarks>
+        /// <para>Unlike the <see cref="System.Collections.Generic.CollectionExtensions.TryAdd{TKey,TValue}">CollectionExtensions.TryAdd</see> method, this one
+        /// is thread safe when used with <see cref="ConcurrentDictionary{TKey,TValue}"/>, <see cref="ThreadSafeDictionary{TKey,TValue}"/> and <see cref="LockingDictionary{TKey,TValue}"/> instances.
+        /// Additionally, this one returns <see langword="false"/> if <paramref name="dictionary"/> is read-only instead of throwing an exception.</para>
+        /// <note type="caution">To avoid ambiguity issues with <see cref="System.Collections.Generic.CollectionExtensions.TryAdd{TKey,TValue}">System.Collections.Generic.CollectionExtensions.TryAdd</see>,
+        /// this method is declared as an extension method only in the .NET Framework and .NET Standard 2.0 builds. Whereas in .NET Core and .NET Standard 2.0 builds it is not an extension method.
+        /// It means that using <c>TryAdd</c> as an extension may map to different implementations. To avoid that, call this method as a regular one, or use
+        /// the <see cref="TryAdd{TKey,TValue}(IDictionary{TKey,TValue},KeyValuePair{TKey,TValue})"/> overload, which is a proper extension method on all platforms.</note>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="dictionary"/> is <see langword="null"/>.</exception>
+        [SuppressMessage("ReSharper", "CanSimplifyDictionaryLookupWithTryAdd", Justification = "This IS the TryAdd implementation, the System extension does not exist on all platforms.")]
+#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
+        public static bool TryAdd<TKey, TValue>(IDictionary<TKey, TValue> dictionary, TKey key, TValue value)
+#else
+        public static bool TryAdd<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, TValue value)
+#endif
+            where TKey : notnull
+        {
             if (dictionary == null!)
                 Throw.ArgumentNullException(Argument.dictionary);
-            if (item.Key == null!)
-                Throw.ArgumentException(Argument.item, Res.PropertyNull(nameof(item.Key)));
 
             switch (dictionary)
             {
-                case ThreadSafeDictionary<TKey, TValue> tDict:
-                    return tDict.TryAdd(item.Key, item.Value);
-#if !NET35
-                case ConcurrentDictionary<TKey, TValue> cDict:
-                    return cDict.TryAdd(item.Key, item.Value);
-#endif
+                case IDictionaryInternal<TKey, TValue> iDict:
+                    return iDict.TryAdd(key, value);
 #if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
                 case Dictionary<TKey, TValue> dict:
-                    return dict.TryAdd(item.Key, item.Value);
+                    return dict.TryAdd(key, value);
 #endif
-                case LockingDictionary<TKey, TValue> lDict:
-                    lDict.Lock();
-                    try
-                    {
-                        return Fallback(lDict, item.Key, item.Value);
-                    }
-                    finally
-                    {
-                        lDict.Unlock();
-                    }
-
+#if !NET35
+                case ConcurrentDictionary<TKey, TValue> cDict:
+                    return cDict.TryAdd(key, value);
+#endif
                 default:
-                    return Fallback(dictionary, item.Key, item.Value);
+                    if (dictionary.IsReadOnly || dictionary.ContainsKey(key))
+                        return false;
+                    dictionary[key] = value;
+                    return true;
             }
         }
 
@@ -693,14 +704,11 @@ namespace KGySoft.CoreLibraries
             {
                 if (dictionary.IsReadOnly)
                     Throw.NotSupportedException(Res.ICollectionReadOnlyModifyNotSupported);
-                if (dictionary.ContainsKey(key))
-                {
-                    dictionary[key] = updateValue;
-                    return updateValue;
-                }
+                if (TryAdd(dictionary, key, addValue))
+                    return addValue;
+                dictionary[key] = updateValue;
+                return updateValue;
 
-                dictionary[key] = addValue;
-                return addValue;
             }
 
             #endregion

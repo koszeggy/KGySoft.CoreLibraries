@@ -28,7 +28,5 @@ namespace KGySoft.ComponentModel
     /// which provide a technology-agnostic approach for binding events to commands (see <see cref="ICommand"/> interface for details and examples).
     /// </summary>
     [CompilerGenerated]
-    internal static class NamespaceDoc
-    {
-    }
+    internal static class NamespaceDoc;
 }

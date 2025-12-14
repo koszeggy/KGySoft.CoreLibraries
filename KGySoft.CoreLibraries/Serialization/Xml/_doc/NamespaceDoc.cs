@@ -25,7 +25,5 @@ namespace KGySoft.Serialization.Xml
     /// The <see cref="N:KGySoft.Serialization.Xml"/> namespace contains types for XML serialization.
     /// </summary>
     [CompilerGenerated]
-    internal static class NamespaceDoc
-    {
-    }
+    internal static class NamespaceDoc;
 }

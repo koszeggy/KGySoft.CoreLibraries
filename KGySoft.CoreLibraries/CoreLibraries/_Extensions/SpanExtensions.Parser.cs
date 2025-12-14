@@ -202,7 +202,7 @@ namespace KGySoft.CoreLibraries
                 culture ??= CultureInfo.InvariantCulture;
                 Type type = typeof(T);
 
-                // The fast path: the JITted version will contain one or zero branches of the checked types
+                // The fast path: the JIT-ed version will contain one or zero branches of the checked types
                 if (type.IsValueType && TryParseKnownValueType(s, culture, out value))
                     return true;
 
@@ -228,7 +228,7 @@ namespace KGySoft.CoreLibraries
                 Debug.Assert(typeof(T).IsValueType, "T must be a value type so the branches can be optimized away by the JIT compiler");
                 // Important:
                 // - Branches will be optimized away by JIT but only if we use typeof(SomeValueType) and not Reflector.XXXType
-                // - In release build there will be no boxing for (T)(object)value and the JITted code will be much
+                // - In release build there will be no boxing for (T)(object)value and the JIT-ed code will be much
                 //   simpler compared to the usually more elegant pattern matching
 
                 if (typeof(T) == typeof(bool))

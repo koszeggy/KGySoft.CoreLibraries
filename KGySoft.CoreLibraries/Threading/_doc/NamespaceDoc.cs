@@ -41,7 +41,5 @@ namespace KGySoft.Threading
     /// then see the <see cref="N:KGySoft.Collections">KGySoft.Collections</see> namespace instead.
     /// </summary>
     [CompilerGenerated]
-    internal static class NamespaceDoc
-    {
-    }
+    internal static class NamespaceDoc;
 }

@@ -55,6 +55,7 @@ namespace KGySoft.Serialization.Binary
     /// <seealso cref="BinarySerializationFormatter"/>
     /// <seealso cref="BinarySerializationOptions"/>
     /// <seealso cref="IBinarySerializable"/>
+    [SuppressMessage("ReSharper", "RedundantArgumentDefaultValue", Justification = "It's a coincidence since v10.0, but DefaultDeserializationOptions may change later.")]
     public static class BinarySerializer
     {
         #region Constants

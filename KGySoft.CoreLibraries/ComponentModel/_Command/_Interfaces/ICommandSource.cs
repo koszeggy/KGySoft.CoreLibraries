@@ -38,10 +38,10 @@ namespace KGySoft.ComponentModel
         /// Gets the sender of the underlying event. For instance events, this is usually the same as <see cref="Source"/>, but it can be different in some cases,
         /// for example when the add/remove accessors of the event map the subscription to another object's event. For static events the sender is usually <see langword="null"/>.
         /// </summary>
-#if NETFRAMEWORK || NETSTANDARD2_0
-        object? Sender { get; }
-#else
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
         object? Sender => Source;
+#else
+        object? Sender { get; }
 #endif
 
         /// <summary>

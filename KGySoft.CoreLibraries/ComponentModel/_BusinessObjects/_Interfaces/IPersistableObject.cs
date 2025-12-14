@@ -116,7 +116,7 @@ namespace KGySoft.ComponentModel
 
         /// <summary>
         /// Tries to replace a property value. The replacement will succeed if the currently stored value equals to <paramref name="originalValue"/>.
-        /// Non-existing value can be represented by <see cref="ObservableObjectBase.MissingProperty"/> so the method supports also "try remove" and "try add" functionality.
+        /// Non-existing value can be represented by <see cref="ObservableObjectBase.MissingProperty"/> so the method supports also "try to remove" and "try to add" functionality.
         /// </summary>
         /// <param name="propertyName">The name of the property.</param>
         /// <param name="originalValue">The original value.</param>

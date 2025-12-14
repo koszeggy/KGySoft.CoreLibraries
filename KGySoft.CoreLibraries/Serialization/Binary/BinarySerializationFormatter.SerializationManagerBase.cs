@@ -254,7 +254,7 @@ namespace KGySoft.Serialization.Binary
                     if (cacheItem.TryGetValue(attribute, out IEnumerable<MethodInfo>? cachedResult))
                         return cachedResult;
 
-                    List<MethodInfo> result = new List<MethodInfo>();
+                    var result = new List<MethodInfo>();
                     for (Type? t = type; t != null && t != Reflector.ObjectType; t = t.BaseType)
                     {
                         foreach (MethodInfo method in t.GetMethods(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))

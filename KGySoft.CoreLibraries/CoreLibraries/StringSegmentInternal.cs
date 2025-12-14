@@ -470,7 +470,7 @@ namespace KGySoft.CoreLibraries
 
                     // here we have a difference: continuing with skipping the matched characters
                     i += j - 1;
-                    goto continueOuter; // yes, a dreadful goto which is actually a continue
+                    goto continueOuter;
                 }
 
                 // Here we have full match. As single char separators are not handled here we could have

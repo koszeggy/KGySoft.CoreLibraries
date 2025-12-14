@@ -114,7 +114,7 @@ namespace KGySoft.ComponentModel
         /// This type converter supports <see cref="string"/> and <see cref="Array">byte[]</see> types.</param>
         /// <returns><see langword="true"/> if this converter can perform the conversion; otherwise, <see langword="false" />.</returns>
         public override bool CanConvertTo(ITypeDescriptorContext? context, Type? destinationType)
-            => destinationType.In(supportedTypes) || base.CanConvertTo(context, destinationType);
+            => destinationType.In(supportedTypes) || base.CanConvertTo(context, destinationType!);
 
         /// <summary>
         /// Returns whether this converter can convert an object of the given type to the type of this converter, using the specified context.

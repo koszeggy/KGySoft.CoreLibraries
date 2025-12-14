@@ -122,7 +122,7 @@ namespace KGySoft.ComponentModel
             /// </summary>
             /// <param name="component">The <see cref="Enum"/> instance with the property that is to be examined for persistence.</param>
             /// <returns><see langword="true"/> if the value of the property can persist; otherwise, <see langword="false" />.</returns>
-            public override bool ShouldSerializeValue(object component) => !Equals(GetValue(component), GetDefaultValue());
+            public override bool ShouldSerializeValue(object? component) => !Equals(GetValue(component), GetDefaultValue());
 
             /// <summary>
             /// Resets the value for this property of the component.
@@ -186,7 +186,7 @@ namespace KGySoft.ComponentModel
             // Obtaining enum fields by reflection. GetNames/Values could be also used but this way we get also the attributes.
             FieldInfo[] fields = enumType.GetFields(BindingFlags.Static | BindingFlags.Public);
             if (fields.Length == 0)
-                return base.GetProperties(context, value, attributes);
+                return base.GetProperties(context, value, attributes!);
 
             // this is how value field is obtained in Type.GetEnumUnderlyingType
             FieldInfo valueField = enumType.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)[0];

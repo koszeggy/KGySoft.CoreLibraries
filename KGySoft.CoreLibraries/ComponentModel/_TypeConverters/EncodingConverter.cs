@@ -103,7 +103,7 @@ namespace KGySoft.ComponentModel
         /// This type converter supports <see cref="string"/> and <see cref="int"/> types.</param>
         /// <returns><see langword="true"/> if this converter can perform the conversion; otherwise, <see langword="false" />.</returns>
         public override bool CanConvertTo(ITypeDescriptorContext? context, Type? destinationType) 
-            => destinationType.In(supportedTypes) || base.CanConvertTo(context, destinationType);
+            => destinationType.In(supportedTypes) || base.CanConvertTo(context, destinationType!);
 
         /// <summary>
         /// Converts the given value object to the specified type, using the specified context and culture information.
@@ -128,7 +128,7 @@ namespace KGySoft.ComponentModel
                 Encoding encoding => destinationType == Reflector.StringType ? $"{encoding.CodePage.ToString(CultureInfo.InvariantCulture)} | {encoding.EncodingName}"
                     : destinationType == Reflector.IntType ? encoding.CodePage
                     : new InstanceDescriptor(GetEncodingMethod, new[] { encoding.CodePage }),
-                _ => base.ConvertTo(context, culture, value, destinationType)
+                _ => base.ConvertTo(context, culture, value, destinationType)!
             };
         }
 

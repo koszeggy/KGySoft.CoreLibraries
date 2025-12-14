@@ -782,6 +782,9 @@ namespace KGySoft.Resources
         #region Static Methods
 
         [SuppressMessage("ReSharper", "GenericEnumeratorNotDisposed", Justification = "False alarm, IDictionaryEnumerator is not a generic enumerator and is not expected to be disposable")]
+#if NETFRAMEWORK || NETSTANDARD || !NETCOREAPP3_0_OR_GREATER
+        [SuppressMessage("ReSharper", "AssignNullToNotNullAttribute", Justification = "False alarm, but the annotation is missing for older frameworks.")]
+#endif
         private static void ToDictionary(ResourceSet source, StringKeyedDictionary<object?> target)
         {
             IDictionaryEnumerator enumerator = source.GetEnumerator();
@@ -1146,6 +1149,9 @@ namespace KGySoft.Resources
         /// or when there are no append options enabled in the <see cref="AutoAppend"/> property.</note>
         /// </remarks>
         [SuppressMessage("ReSharper", "GenericEnumeratorNotDisposed", Justification = "False alarm, IDictionaryEnumerator is not a generic enumerator and is not expected to be disposable")]
+#if NETFRAMEWORK || NETSTANDARD || !NETCOREAPP3_0_OR_GREATER
+        [SuppressMessage("ReSharper", "AssignNullToNotNullAttribute", Justification = "False alarm, but the annotation is missing for older frameworks.")]
+#endif
         public void EnsureInvariantResourcesMerged(CultureInfo culture)
         {
             if (culture == null!)

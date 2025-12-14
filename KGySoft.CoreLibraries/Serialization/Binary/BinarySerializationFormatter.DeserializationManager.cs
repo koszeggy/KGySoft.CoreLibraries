@@ -1128,6 +1128,9 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Temporary, see the comments")]
+#if !NET11_0_OR_GREATER
+            [SuppressMessage("ReSharper", "UnusedParameter.Local", Justification = "Target platform dependent")]
+#endif
             internal DataTypeDescriptor HandleFunctionPointer(BinaryReader br, bool allowOpenTypes, bool addToCache = true)
             {
                 // TODO: now it is called only from 2 places, because that is how it's resolved for the 1st time (directly from string, and as an array element),
@@ -1496,7 +1499,7 @@ namespace KGySoft.Serialization.Binary
                             // generic dictionary with null value: calling generic Add because non-generic one may fail in .NET Runtime 2.x
                             addMethod = MethodAccessor.GetAccessor(Reflector.IDictionaryGenType
                                 .GetGenericType(descriptor.GetKeyDescriptor().Type!, descriptor.GetValueDescriptor().Type!)
-                                .GetMethod(nameof(IDictionary<_,_>.Add))!);
+                                .GetMethod(nameof(IDictionary<,>.Add))!);
                             AddDictionaryElement(collection, addMethod, key, null, descriptor, trackUsages);
                             continue;
 #endif
@@ -1526,7 +1529,7 @@ namespace KGySoft.Serialization.Binary
 
 #if NET35
                             // generic collection with null value: calling generic Add because non-generic one may fail in .NET Runtime 2.x
-                            addMethod = MethodAccessor.GetAccessor(Reflector.ICollectionGenType.GetGenericType(descriptor.GetElementDescriptor().Type!).GetMethod(nameof(ICollection<_>.Add))!);
+                            addMethod = MethodAccessor.GetAccessor(Reflector.ICollectionGenType.GetGenericType(descriptor.GetElementDescriptor().Type!).GetMethod(nameof(ICollection<>.Add))!);
                             AddCollectionElement(collection, descriptor, addMethod, null, trackUsages);
                             continue;
 #endif

@@ -90,7 +90,7 @@ namespace KGySoft.Collections
         {
             #region Fields
 
-            private CastArray2D<TFrom, TTo> array;
+            private readonly CastArray2D<TFrom, TTo> array;
 
             #endregion
 
