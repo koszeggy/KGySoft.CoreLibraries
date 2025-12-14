@@ -22,6 +22,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
+using KGySoft.CoreLibraries;
 using KGySoft.Diagnostics;
 
 #endregion
@@ -227,6 +228,23 @@ namespace KGySoft.Collections
         {
             lock (SyncRootInternal)
                 ((IDictionary<TKey, TValue>)InnerCollection).Add(key, value);
+        }
+
+        /// <summary>
+        /// Attempts to add the specified key and value to the <see cref="LockingDictionary{TKey,TValue}"/> without overwriting an existing entry.
+        /// </summary>
+        /// <param name="key">The key of the element to add.</param>
+        /// <param name="value">The value of the element to add. The value can be <see langword="null"/> for reference types.</param>
+        /// <returns><see langword="true"/> if the key and value pair was added to the <see cref="LockingDictionary{TKey,TValue}"/> successfully; otherwise, <see langword="false"/>.</returns>
+        /// <remarks>
+        /// <para>Unlike the <see cref="Add">Add</see> method, this method doesn't throw an exception if the element with the given key exists in the <see cref="LockingDictionary{TKey,TValue}"/>.
+        /// Unlike the <see cref="this[TKey]">indexer</see>, <see cref="TryAdd">TryAdd</see> doesn't override the element if the element with the given key exists in the dictionary.
+        /// If the key already exists, <see cref="TryAdd">TryAdd</see> does nothing and returns <see langword="false"/>.</para>
+        /// </remarks>
+        public bool TryAdd(TKey key, TValue value)
+        {
+            lock (SyncRootInternal)
+                 return DictionaryExtensions.TryAdd((IDictionary<TKey, TValue>)InnerCollection, key, value);
         }
 
         /// <summary>

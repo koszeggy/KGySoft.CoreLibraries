@@ -116,7 +116,7 @@ namespace KGySoft.Collections
     [Serializable]
     [DebuggerTypeProxy(typeof(DictionaryDebugView<,>))]
     [DebuggerDisplay("Count = {" + nameof(Count) + "}; TKey = {typeof(" + nameof(TKey) + ").Name}; TValue = {typeof(" + nameof(TValue) + ").Name}")]
-    public class CircularSortedList<TKey, TValue> : IDictionary<TKey, TValue>, IList<KeyValuePair<TKey, TValue>>, IDictionary, IList
+    public class CircularSortedList<TKey, TValue> : IDictionaryInternal<TKey, TValue>, IList<KeyValuePair<TKey, TValue>>, IDictionary, IList
 #if !(NET35 || NET40)
         , IReadOnlyDictionary<TKey, TValue>, IReadOnlyList<KeyValuePair<TKey, TValue>>
 #endif

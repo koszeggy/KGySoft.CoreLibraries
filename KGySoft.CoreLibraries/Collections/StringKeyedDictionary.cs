@@ -83,7 +83,7 @@ namespace KGySoft.Collections
     [Serializable]
     [DebuggerTypeProxy(typeof(StringKeyedDictionary<>.StringKeyedDictionaryDebugView))]
     [DebuggerDisplay("Count = {" + nameof(Count) + "}; TValue = {typeof(" + nameof(TValue) + ").Name}")]
-    public class StringKeyedDictionary<TValue> : IStringKeyedDictionary<TValue>, IDictionary,
+    public class StringKeyedDictionary<TValue> : IStringKeyedDictionary<TValue>, IDictionaryInternal<string, TValue>, IDictionary,
 #if !(NET35 || NET40)
         IStringKeyedReadOnlyDictionary<TValue>,
 #endif

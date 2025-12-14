@@ -253,7 +253,7 @@ namespace KGySoft.Collections
     [Serializable]
     [DebuggerTypeProxy(typeof(DictionaryDebugView<,>))]
     [DebuggerDisplay("Count = {" + nameof(Count) + "}; TKey = {typeof(" + nameof(TKey) + ").Name}; TValue = {typeof(" + nameof(TValue) + ").Name}; Hit = {" + nameof(Cache<,>.GetStatistics) + "()." + nameof(ICacheStatistics.HitRate) + " * 100}%")]
-    public class Cache<TKey, TValue> : IDictionary<TKey, TValue>, ICache, ISerializable, IDeserializationCallback
+    public class Cache<TKey, TValue> : IDictionaryInternal<TKey, TValue>, ICache, ISerializable, IDeserializationCallback
 #if !(NET35 || NET40)
         , IReadOnlyDictionary<TKey, TValue>
 #endif

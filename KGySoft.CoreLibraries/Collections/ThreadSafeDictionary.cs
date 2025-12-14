@@ -141,7 +141,7 @@ namespace KGySoft.Collections
     [DebuggerTypeProxy(typeof(DictionaryDebugView<,>))]
     [DebuggerDisplay("Count = {" + nameof(Count) + "}; TKey = {typeof(" + nameof(TKey) + ").Name}; TValue = {typeof(" + nameof(TValue) + ").Name}")]
     [Serializable]
-    public partial class ThreadSafeDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IDictionary, ISerializable, IDeserializationCallback
+    public partial class ThreadSafeDictionary<TKey, TValue> : IDictionaryInternal<TKey, TValue>, IDictionary, ISerializable, IDeserializationCallback
 #if !(NET35 || NET40)
         , IReadOnlyDictionary<TKey, TValue>
 #endif

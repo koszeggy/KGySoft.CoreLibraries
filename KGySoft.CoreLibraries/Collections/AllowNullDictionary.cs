@@ -52,7 +52,7 @@ namespace KGySoft.Collections
     [DebuggerTypeProxy(typeof(DictionaryDebugView<,>))]
     [DebuggerDisplay("Count = {" + nameof(Count) + "}; TKey = {typeof(" + nameof(TKey) + ").Name}; TValue = {typeof(" + nameof(TValue) + ").Name}")]
     [SuppressMessage("ReSharper", "UseNullableReferenceTypesAnnotationSyntax", Justification = "False alarm, only [NotNull] prevents AssignNullToNotNullAttribute warnings")]
-    public class AllowNullDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IDictionary
+    public class AllowNullDictionary<TKey, TValue> : IDictionaryInternal<TKey, TValue>, IDictionary
     {
         #region Nested Types
 
