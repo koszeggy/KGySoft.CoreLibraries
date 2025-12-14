@@ -29,6 +29,10 @@
 + LockingDictionary<TKey, TValue> class: New TryAdd method
 + StringKeyedDictionary<TValue> class: New TryAdd method
 
++ KGySoft.ComponentModel namespace:
+===================================
++ CommandState class: New TryAdd method
+
 * KGySoft.CoreLibraries namespace:
 ==================================
 * DecimalExtensions class:

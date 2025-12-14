@@ -48,6 +48,7 @@ namespace KGySoft.ComponentModel
 #endif
 #endif
         ICommandState,
+        IDictionaryInternal<string, object?>,
         ICustomTypeDescriptor // so the dynamic properties can be reflected as normal ones (e.g. in a property grid)
     {
         #region CommandStatePropertyDescriptor class
@@ -221,11 +222,32 @@ namespace KGySoft.ComponentModel
         /// </summary>
         /// <param name="key">The object to use as the key of the element to add.</param>
         /// <param name="value">The object to use as the value of the element to add.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">An item with the same key has already been added</exception>
         public void Add(string key, object? value)
         {
             stateProperties.Add(key, value);
             OnPropertyChanged(key);
+        }
+
+        /// <summary>
+        /// Attempts to add the specified key and value to the <see cref="CommandState"/> without overwriting an existing entry.
+        /// </summary>
+        /// <param name="key">The key of the element to add.</param>
+        /// <param name="value">The value of the element to add.</param>
+        /// <returns><see langword="true"/> if the key and value pair was added to the <see cref="CommandState"/> successfully; otherwise, <see langword="false"/>.</returns>
+        /// <remarks>
+        /// <para>Unlike the <see cref="Add">Add</see> method, this method doesn't throw an exception if the element with the given key exists in the <see cref="CommandState"/>.
+        /// Unlike the <see cref="this[string]">indexer</see>, <see cref="TryAdd">TryAdd</see> doesn't override the element if the element with the given key exists in the dictionary.
+        /// If the key already exists, <see cref="TryAdd">TryAdd</see> does nothing and returns <see langword="false"/>.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
+        public bool TryAdd(string key, object? value)
+        {
+            bool result = stateProperties.TryAdd(key, value);
+            if (result)
+                OnPropertyChanged(key);
+            return result;
         }
 
         /// <summary>
