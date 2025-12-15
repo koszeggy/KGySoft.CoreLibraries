@@ -1384,7 +1384,8 @@ namespace KGySoft.Serialization.Binary
                     AddObjectToCache(result);
 
                 ref MemoryData data = ref GetMemoryData(result);
-                switch ((MemoryType)br.ReadByte())
+                MemoryType memoryType = (MemoryType)br.ReadByte();
+                switch (memoryType)
                 {
                     case MemoryType.Null:
                         return result;
@@ -1406,6 +1407,10 @@ namespace KGySoft.Serialization.Binary
 
                 data.Index = Read7BitInt(br);
                 data.Length = Read7BitInt(br);
+#if NETCOREAPP2_1 // .NET Core 2.1 only: a manager based Memory has bit 31 set
+                if (memoryType == MemoryType.Manager)
+                    data.Index |= 1 << 31;
+#endif
                 return result;
             }
 #endif

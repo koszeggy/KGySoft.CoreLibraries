@@ -239,9 +239,26 @@ namespace KGySoft.Serialization.Xml
                 // non-primitive type array or compact serialization is not enabled
                 if (elementType.IsPointer())
                     Throw.NotSupportedException(Res.SerializationPointerArrayTypeNotSupported(collection.GetType()));
-                foreach (object? item in array)
+
+                IEnumerator enumerator = array.GetEnumerator();
+                while (enumerator.MoveNext())
                 {
-                    XElement child = new XElement(XmlSerializer.ElementItem);
+                    var child = new XElement(XmlSerializer.ElementItem);
+#if NET8_0_OR_GREATER
+                    object? item = enumerator.Current;
+#else
+                    object? item;
+                    try
+                    {
+                        item = enumerator.Current;
+                    }
+                    catch (NotSupportedException) when (elementType == typeof(IntPtr))
+                    {
+                        // for function pointer arrays pre-.NET 8 platforms fake the element type as IntPtr, though the array does not work as an IntPtr[]
+                        Throw.NotSupportedException(Res.SerializationFunctionPointerTypeNotSupported);
+                        return;
+                    }
+#endif
                     if (item != null)
                         SerializeObject(item, !elementType.IsSealed && item.GetType() != elementType, child, visibility);
                     parent.Add(child);

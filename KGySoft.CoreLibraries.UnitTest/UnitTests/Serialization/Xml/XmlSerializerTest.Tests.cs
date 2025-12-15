@@ -1484,7 +1484,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             };
 
             Throws<NotSupportedException>(() => KGySerializeObject(referenceObjects[0], XmlSerializationOptions.RecursiveSerializationAsFallback), Res.SerializationPointerArrayTypeNotSupported(referenceObjects[0].GetType()));
+#if NET8_0_OR_GREATER
             Throws<NotSupportedException>(() => KGySerializeObject(referenceObjects[1], XmlSerializationOptions.RecursiveSerializationAsFallback), Res.SerializationPointerArrayTypeNotSupported(referenceObjects[1].GetType()));
+#else
+            Throws<NotSupportedException>(() => KGySerializeObject(referenceObjects[1], XmlSerializationOptions.RecursiveSerializationAsFallback), Res.SerializationFunctionPointerTypeNotSupported);
+#endif
         }
 
         [Test]

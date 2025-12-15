@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-     <!--<TargetFrameworks>net35;net40;net45;net47;net472;netcoreapp3.0;net5.0;net6.0;net7.0;net8.0;net9.0</TargetFrameworks>-->
-     <TargetFrameworks>net472;net10.0</TargetFrameworks>
+     <TargetFrameworks>net35;net40;net45;net47;net472;netcoreapp3.0;net5.0;net6.0;net7.0;net8.0;net9.0;net10.0</TargetFrameworks>
+     <!--<TargetFrameworks>net472;net10.0</TargetFrameworks>-->
 
     <!--For UnitTesting the .NET Standard versions-->
     <!--<TargetFrameworks>netcoreapp2.0;netcoreapp3.0</TargetFrameworks>-->
@@ -34,15 +34,23 @@
 
   <!-- Common NuGet references -->
   <ItemGroup>
+    <!--NUnit 4.x has major breaking changes and does not support Framework 4.6.2- and .NET 6-. -->
     <PackageReference Include="NUnit" Version="3.14" />
+
+    <!-- Cannot use different adapter versions for the different frameworks, because the Test Explorer chooses the highest version for all platforms (even though build works).
+         6.0.0 works with .NET Framework 4.6.2 and .NET 8+ only 
+         5.2.0 Emits an error for .NET Core 3.0-
+         3.15.1 Would work even with .NET Core 2.0, but Visual Studio is no longer compatible with it
+         ==> Using 5.1.0. Though it compiles for all targets, executing .NET Core 2.x/3.0 tests is no longer supported from the Test Explorer.
+             Execute .NET Framework 3.5 and .NET Core 2.x/3.x tests as a console application. -->
     <PackageReference Include="NUnit3TestAdapter" Version="5.1.0">
       <NoWarn>NU1701</NoWarn>
     </PackageReference>
   </ItemGroup>
 
-  <!-- NET Framework 4.6.2+/.NET 8.0+ references -->
+  <!-- .NET Framework 4.6.2+/.NET 8.0+ references -->
   <ItemGroup Condition="'$(TargetFramework)'=='net47' OR '$(TargetFramework)'=='net472' OR '$(TargetFramework)'=='net8.0' OR '$(TargetFramework)'=='net9.0' OR '$(TargetFramework)'=='net10.0'">
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1"/>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.1"/>
   </ItemGroup>
 
   <!-- NET Framework 4.6.2-/.NET 8.0- references -->

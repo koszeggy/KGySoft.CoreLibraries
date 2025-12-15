@@ -121,11 +121,12 @@ namespace KGySoft.CoreLibraries
             Console.ForegroundColor = ConsoleColor.Gray;
             Console.WriteLine(FrameworkVersion);
 
+            TestFilter filter = TestFilter.Empty; // (TestFilter)Reflection.Reflector.CreateInstance(Reflection.Reflector.ResolveType("NUnit.Framework.Internal.Filters.TestNameFilter")!, "ClassInstanceFunctionPointerPropertyAccessUnsafe");
             var runner = new NUnitTestAssemblyRunner(new DefaultTestAssemblyBuilder());
             runner.Load(typeof(Program).Assembly, new Dictionary<string, object>());
             Console.WriteLine("Executing tests...");
             ConsoleWriter = Console.Out;
-            ITestResult result = runner.Run(new ConsoleTestReporter(), TestFilter.Empty);
+            ITestResult result = runner.Run(new ConsoleTestReporter(), filter);
             Console.ForegroundColor = result.FailCount > 0 ? ConsoleColor.Red
                 : result.InconclusiveCount > 0 ? ConsoleColor.Yellow
                 : ConsoleColor.Green;

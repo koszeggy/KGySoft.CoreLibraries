@@ -2459,7 +2459,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new MemoryStream(new byte[] { 1, 2, 3 }),
                 new Collection<Encoding> { Encoding.ASCII, Encoding.Unicode },
 
-                // pointer arrays
+                // pointer fields
                 EnvironmentHelper.IsMono ? null : new UnsafeStruct(),
             };
 
@@ -2906,8 +2906,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             //SystemSerializeObject(referenceObjects[1], safeCompare: true); // System.NotSupportedException: 'Type is not supported.' (at Array.GetItem)
 
             Throws<NotSupportedException>(() => KGySerializeObject(referenceObjects[0], BinarySerializationOptions.None), Res.SerializationPointerArrayTypeNotSupported(referenceObjects[0].GetType()));
-            //Throws<NotSupportedException>(() => KGySerializeObject(referenceObjects[1], BinarySerializationOptions.None), Res.SerializationFunctionPointerTypeNotSupported); // TODO
+#if NET8_0_OR_GREATER
             Throws<NotSupportedException>(() => KGySerializeObject(referenceObjects[1], BinarySerializationOptions.None), Res.SerializationPointerArrayTypeNotSupported(referenceObjects[1].GetType()));
+#else
+            Throws<NotSupportedException>(() => KGySerializeObject(referenceObjects[1], BinarySerializationOptions.None), Res.SerializationFunctionPointerTypeNotSupported);
+#endif
         }
 
         [TestCase(typeof(bool))]
@@ -3244,7 +3247,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             object referenceObject = new FunctionPointerField(&Console.WriteLine);
 
             KGySerializeObject(referenceObject, BinarySerializationOptions.None);
+#if NET8_0_OR_GREATER
+            Throws<SerializationException>(() => KGySerializeObject(referenceObject, BinarySerializationOptions.SafeMode, expectedTypes: [typeof(FunctionPointerField)]), Res.BinarySerializationPointerFieldSafe(typeof(FunctionPointerField), "loggerFunction"));
+#else
+            // In older frameworks the reported type of the function pointer field is IntPtr, which we don't restrict
             KGySerializeObject(referenceObject, BinarySerializationOptions.SafeMode, expectedTypes: [typeof(FunctionPointerField)]);
+#endif
         }
 
         [Test]

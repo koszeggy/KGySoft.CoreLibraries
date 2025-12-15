@@ -132,7 +132,10 @@ namespace KGySoft.Serialization.Binary
             {
                 FieldInfo[] fields = SerializationHelper.GetSerializableFields(t);
                 for (int i = 0; i < fields.Length; i++)
-                    info.AddValue($"{level.ToString("X", NumberFormatInfo.InvariantInfo)}:{i.ToString("X", NumberFormatInfo.InvariantInfo)}",  fields[i].Get(obj), fields[i].FieldType);
+                {
+                    info.AddValue($"{level.ToString("X", NumberFormatInfo.InvariantInfo)}:{i.ToString("X", NumberFormatInfo.InvariantInfo)}",
+                        fields[i].Get(obj), fields[i].FieldType.IsPointer() ? typeof(IntPtr) : fields[i].FieldType);
+                }
 
                 // marking end of level
                 info.AddValue("x" + level.ToString("X", NumberFormatInfo.InvariantInfo), null);

@@ -1529,9 +1529,10 @@ namespace KGySoft.Serialization.Binary
                         break;
                 }
 
-                // A negative index means a pinned object. We always clear the pinned bit because the deserialized instance is never pinned.
+                // A negative index (.NET Core 2.1: length) means a pinned object. We always clear the pinned bit because the deserialized instance is never pinned.
+                // A negative length indicates MemoryManager usage (.NET Core 2.1 only). It's restored on deserialization when targeting .NET Core 2.1.
                 Write7BitInt(bw, data.Index & Int32.MaxValue);
-                Write7BitInt(bw, data.Length);
+                Write7BitInt(bw, data.Length & Int32.MaxValue);
             }
 #endif
 

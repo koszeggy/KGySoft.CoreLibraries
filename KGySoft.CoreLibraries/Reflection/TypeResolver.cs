@@ -855,7 +855,7 @@ namespace KGySoft.Reflection
                     if (state == State.FullNameOrAqn)
                         ctx.Push(State.AfterArgument);
                     else if (ctx.State != State.FunctionPointer)
-                        ctx.State = state == State.TypeName ? State.Modifiers : State.Invalid;
+                        ctx.Push(state == State.TypeName ? State.Modifiers : State.Invalid);
                     ctx.Push(State.Return);
                     return;
                 }
@@ -1330,9 +1330,9 @@ namespace KGySoft.Reflection
                     break;
 
                 case State.Modifiers:
-                    context.Pop(); // Modifiers
-                    if (context.State != State.None)
-                        context.Pop(); // FullName/TypeName
+                    context.Pop();
+                    if (context.Pop() is not (State.FullNameOrAqn or State.TypeName))
+                        context.Push(State.Invalid);
                     break;
 
                 default:

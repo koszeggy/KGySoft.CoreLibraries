@@ -378,7 +378,7 @@ namespace KGySoft.Serialization.Binary
                     {
                         Name = field.Name,
                         Value = field.Get(obj),
-                        Type = field.FieldType,
+                        Type = field.FieldType.IsPointer() ? typeof(IntPtr) : field.FieldType,
                         Handled = !IgnoreNonSerializedAttribute && field.IsNotSerialized,
                     };
 

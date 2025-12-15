@@ -774,7 +774,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             #region Instance Methods
 
-            public void TestAction(void* ptr, delegate*<string, void> funcPtr)
+            public void TestAction(void* ptr)
             {
                 Console.WriteLine($"{nameof(UnsafeTestStruct)}.{nameof(TestAction)}({(IntPtr)ptr}) invoked");
                 InstanceProperty = (int*)ptr;
@@ -4263,7 +4263,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             PropertyInfo pi = test.GetType().GetProperty(nameof(UnsafeTestClass.InstanceFunctionPointerProperty));
             PropertyAccessor accessor = PropertyAccessor.GetAccessor(pi);
             object result;
-            object value = (IntPtr)(delegate*<string, void>)&Console.WriteLine;
+            object value = new IntPtr((delegate*<string, void>)&Console.WriteLine);
 
             Console.Write("System Reflection...");
             pi.SetValue(test, value, null);
@@ -4540,7 +4540,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             PropertyInfo pi = testType.GetProperty(nameof(UnsafeTestClass.StaticFunctionPointerProperty));
             PropertyAccessor accessor = PropertyAccessor.GetAccessor(pi);
             object result;
-            object value = (IntPtr)(delegate*<string, void>)&Console.WriteLine;
+            object value = new IntPtr((delegate*<string, void>)&Console.WriteLine);
 
             Console.Write("System Reflection...");
             pi.SetValue(null, value, null);

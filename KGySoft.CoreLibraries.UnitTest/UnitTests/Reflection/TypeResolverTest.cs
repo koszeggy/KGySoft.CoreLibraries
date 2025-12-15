@@ -221,13 +221,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         [TestCase("System.Int32[*,*]", TypeNameKind.ShortName, null)]
         [TestCase("System.Int32[], mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089", TypeNameKind.ShortName, "Int32[]")]
         [TestCase("System.Int32[], mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089", TypeNameKind.FullName, "System.Int32[]")]
-        
+
         // generics
         [TestCase("System.Collections.Generic.List`1[[System.Int32, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]], mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089", TypeNameKind.ShortName, "List`1[Int32]")]
         [TestCase("System.Collections.Generic.List`1[[System.Int32, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]], mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089", TypeNameKind.LongName, "System.Collections.Generic.List`1[System.Int32]")]
         [TestCase("System.Collections.Generic.List`1[[[System.Int32]]]", TypeNameKind.ShortName, null)]
         [TestCase("System.Collections.Generic.List`1[System.Int32][]", TypeNameKind.ShortName, "List`1[Int32][]")]
+        [TestCase("System.Collections.Generic.List`1[System.Int32][], mscorlib", TypeNameKind.ShortName, "List`1[Int32][]")]
         [TestCase("System.Collections.Generic.List`1[[System.Int32]][]", TypeNameKind.ShortName, "List`1[Int32][]")]
+        [TestCase("System.Collections.Generic.List`1[[System.Int32]][], mscorlib", TypeNameKind.ShortName, "List`1[Int32][]")]
         [TestCase("System.Collections.Generic.List`1[System.Int32[]]", TypeNameKind.ShortName, "List`1[Int32[]]")]
         [TestCase("System.Collections.Generic.List`1[[System.Int32[]]]", TypeNameKind.ShortName, "List`1[Int32[]]")]
         [TestCase("System.Collections.Generic.List`1[[System.Collections.Generic.List`1[System.Int32], mscorlib]]", TypeNameKind.ShortName, "List`1[List`1[Int32]]")]
@@ -236,7 +238,17 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         [TestCase("System.Collections.Generic.Dictionary`2[System.Int32,System.String]", TypeNameKind.ShortName, "Dictionary`2[Int32,String]")]
         [TestCase("System.Collections.Generic.Dictionary`2[[System.Int32],[System.String]]", TypeNameKind.ShortName, "Dictionary`2[Int32,String]")]
         [TestCase("System.Collections.Generic.Dictionary`2[[System.Int32],[System.Uri, System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]", TypeNameKind.ShortName, "Dictionary`2[Int32,Uri]")]
-        
+        [TestCase("System.Nullable`1[System.Collections.Generic.KeyValuePair`2[System.Int32,System.String]][]", TypeNameKind.ShortName, "Nullable`1[KeyValuePair`2[Int32,String]][]")]
+        [TestCase("System.Nullable`1[System.Collections.Generic.KeyValuePair`2[System.Int32,System.String]][], mscorlib", TypeNameKind.ShortName, "Nullable`1[KeyValuePair`2[Int32,String]][]")]
+        [TestCase("System.Nullable`1[System.Collections.Generic.KeyValuePair`2[System.Int32,System.String]], mscorlib", TypeNameKind.ShortName, "Nullable`1[KeyValuePair`2[Int32,String]]")]
+        [TestCase("System.Nullable`1[System.Collections.Generic.KeyValuePair`2[System.Int32,[System.String, mscorlib]]], mscorlib", TypeNameKind.ShortName, "Nullable`1[KeyValuePair`2[Int32,String]]")]
+        [TestCase("System.Collections.Generic.KeyValuePair`2[System.Nullable`1[System.Int32],System.Nullable`1[System.Int32]][]", TypeNameKind.ShortName, "KeyValuePair`2[Nullable`1[Int32],Nullable`1[Int32]][]")]
+        [TestCase("System.Collections.Generic.KeyValuePair`2[System.Nullable`1[System.Int32],System.Nullable`1[System.Int32]][], mscorlib", TypeNameKind.ShortName, "KeyValuePair`2[Nullable`1[Int32],Nullable`1[Int32]][]")]
+        [TestCase("System.Nullable`1[System.Collections.Generic.KeyValuePair`2[System.Nullable`1[System.Int32],System.Nullable`1[System.Int32]]][]", TypeNameKind.ShortName, "Nullable`1[KeyValuePair`2[Nullable`1[Int32],Nullable`1[Int32]]][]")]
+        [TestCase("System.Nullable`1[System.Collections.Generic.KeyValuePair`2[System.Nullable`1[System.Int32],System.Nullable`1[System.Int32]]][], mscorlib", TypeNameKind.ShortName, "Nullable`1[KeyValuePair`2[Nullable`1[Int32],Nullable`1[Int32]]][]")]
+        [TestCase("System.Nullable`1[System.Collections.Generic.KeyValuePair`2[System.Nullable`1[System.Int32],System.Nullable`1[[System.Int32, mscorlib]]]][]", TypeNameKind.ShortName, "Nullable`1[KeyValuePair`2[Nullable`1[Int32],Nullable`1[Int32]]][]")]
+        [TestCase("System.Nullable`1[System.Collections.Generic.KeyValuePair`2[System.Nullable`1[System.Int32],System.Nullable`1[[System.Int32, mscorlib]]]][], mscorlib", TypeNameKind.ShortName, "Nullable`1[KeyValuePair`2[Nullable`1[Int32],Nullable`1[Int32]]][]")]
+
         // generic type/method arguments
         [TestCase("!T:System.Collections.Generic.List`1", TypeNameKind.ShortName, "T")]
         [TestCase("!T[]&:System.Collections.Generic.List`1", TypeNameKind.ShortName, "T[]&")]
