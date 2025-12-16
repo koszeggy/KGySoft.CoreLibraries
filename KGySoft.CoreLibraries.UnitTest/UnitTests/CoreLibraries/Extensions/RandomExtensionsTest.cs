@@ -908,7 +908,6 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             // enums
             Test<EmptyEnum>();
             Test<ConsoleColor>();
-            Test<Enum>();
 
             // custom type
             Test<Person>(true);

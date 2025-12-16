@@ -255,7 +255,7 @@ namespace KGySoft.CoreLibraries
         {
             if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
-            return type == Reflector.DelegateType || type.IsSubclassOf(Reflector.DelegateType);
+            return type == Reflector.DelegateType || type.IsSubclassOfInternal(Reflector.DelegateType);
         }
 
         /// <summary>
@@ -984,6 +984,75 @@ namespace KGySoft.CoreLibraries
 
             return matchesNameCache[(type, name)];
         }
+
+        internal static bool IsSubclassOfInternal(this Type @this, Type baseTypeCandidate)
+        {
+#if !NETFRAMEWORK
+            return @this.IsSubclassOf(baseTypeCandidate);
+#else
+            if (!EnvironmentHelper.IsMono)
+                return @this.IsSubclassOf(baseTypeCandidate);
+
+            // On Mono IsSubclassOf may cause a stack overflow in unmanaged code if @this has a function pointer field
+            for (Type? t = @this.BaseType; t != null; t = t.BaseType)
+            {
+                if (t == baseTypeCandidate)
+                    return true;
+            }
+
+            return false;
+#endif
+        }
+
+        internal static bool IsAssignableFromInternal(this Type @this, Type? candidate)
+        {
+#if !NETFRAMEWORK
+            return @this.IsAssignableFrom(candidate);
+#else
+            if (!EnvironmentHelper.IsMono)
+                return @this.IsAssignableFrom(candidate);
+
+            // On Mono IsAssignableFromInternal may cause a stack overflow in unmanaged code if @this has a function pointer field
+            if (candidate == null)
+                return false;
+            if (@this == candidate)
+                return true;
+            Type underlyingSystemType = @this.UnderlyingSystemType;
+            if (underlyingSystemType != @this)
+                return underlyingSystemType.IsAssignableFromInternal(candidate);
+            if (candidate.IsSubclassOfInternal(@this))
+                return true;
+            if (@this.IsInterface)
+                return candidate.ImplementsInterface(@this);
+            if (!@this.IsGenericParameter)
+                return false;
+
+            foreach (Type parameterConstraint in @this.GetGenericParameterConstraints())
+            {
+                if (!parameterConstraint.IsAssignableFromInternal(candidate))
+                    return false;
+            }
+
+            return true;
+#endif
+        }
+
+#if NETFRAMEWORK
+        internal static bool ImplementsInterface(this Type @this, Type interfaceType)
+        {
+            for (Type? type = @this; type != null; type = type.BaseType)
+            {
+                Type[] interfaces = type.GetInterfaces();
+                foreach (Type i in interfaces)
+                {
+                    if (i == interfaceType || i.ImplementsInterface(interfaceType))
+                        return true;
+                }
+            }
+
+            return false;
+        }
+#endif
 
         #endregion
 

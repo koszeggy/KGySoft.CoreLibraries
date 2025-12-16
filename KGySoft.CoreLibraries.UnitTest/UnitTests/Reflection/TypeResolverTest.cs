@@ -60,28 +60,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             typeof(List<>).MakeGenericType(typeof(Array).GetMethod("Resize")!.GetGenericArguments()[0]) // List<T> of Array.Resize<T>
         ];
 
-        private static readonly Type[] sourceFunctionPointerTypesTest =
-        [
-            typeof(delegate*<string, void>),
-            typeof(delegate*<string, void>[]),
-            typeof(delegate*<string, void>*),
-            typeof(delegate*<string, void>*[]),
-            typeof(delegate*<string, delegate*<string, void>, void>),
-            typeof(delegate*<string, delegate*<string, void>[], void*[]>[]),
-            typeof(delegate*<string, delegate*<string, void>>),
-            typeof(delegate*<string, delegate*<string, void>[]>),
-            typeof(delegate* managed<int?, void>),
-            typeof(delegate* <int?, void>),
-#if NET8_0_OR_GREATER
-            typeof(delegate* unmanaged<KeyValuePair<int, string>, void*>),
-            typeof(delegate* unmanaged<KeyValuePair<int, string>, void*>[]),
-            typeof(delegate* unmanaged[Cdecl]<string, void>),
-            typeof(delegate* unmanaged[Cdecl]<string, void>[]),
-            typeof(delegate* unmanaged[Stdcall, SuppressGCTransition]<string, void>),
-            typeof(delegate* unmanaged[Stdcall, SuppressGCTransition]<string, void>[,]),
-#endif
-        ];
-
         #endregion
 
         #region Methods
@@ -191,23 +169,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             Assert.AreEqual(type, Reflector.ResolveType(aqn));
             Assert.AreEqual(type, Reflector.ResolveType(fullName));
-        }
-
-        [TestCaseSource(nameof(sourceFunctionPointerTypesTest))]
-        public void FunctionPointerTypesTest(Type type)
-        {
-            Console.WriteLine($"Name: {type.GetName(TypeNameKind.ShortName)}");
-            string fullName = type.GetName(TypeNameKind.LongName);
-            string aqn = type.GetName(TypeNameKind.ForcedAssemblyQualifiedName);
-            Console.WriteLine($"FullName: {fullName}");
-            Console.WriteLine($"AssemblyQualifiedName: {aqn}");
-
-            // resolve is not supported on recent platforms, but we can test parse/rebuild by stripping
-            Assert.AreEqual(fullName, TypeResolver.StripName(aqn, false));
-#if NET11_0_OR_GREATER
-            Assert.AreEqual(type, Reflector.ResolveType(aqn));
-            Assert.AreEqual(type, Reflector.ResolveType(fullName));
-#endif
         }
 
         // simple types

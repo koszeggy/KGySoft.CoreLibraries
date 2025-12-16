@@ -1578,6 +1578,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         [Test]
         public unsafe void ClassStaticSimpleActionMethodInvokeUnsafe()
         {
+            if (EnvironmentHelper.IsMono)
+                Assert.Inconclusive("This test would crash on Mono");
             Type testType = typeof(UnsafeTestClass);
             MethodInfo mi = testType.GetMethod(nameof(UnsafeTestClass.StaticTestAction));
             MethodAccessor accessor = MethodAccessor.GetAccessor(mi);
@@ -4259,6 +4261,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         [Test]
         public unsafe void ClassInstanceFunctionPointerPropertyAccessUnsafe()
         {
+            if (EnvironmentHelper.IsMono)
+                Assert.Inconclusive("This test would crash on Mono");
             object test = new UnsafeTestClass(null);
             PropertyInfo pi = test.GetType().GetProperty(nameof(UnsafeTestClass.InstanceFunctionPointerProperty));
             PropertyAccessor accessor = PropertyAccessor.GetAccessor(pi);
@@ -4536,6 +4540,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         [Test]
         public unsafe void ClassStaticFunctionPointerPropertyAccessUnsafe()
         {
+            if (EnvironmentHelper.IsMono)
+                Assert.Inconclusive("This test would crash on Mono");
             Type testType = typeof(UnsafeTestClass);
             PropertyInfo pi = testType.GetProperty(nameof(UnsafeTestClass.StaticFunctionPointerProperty));
             PropertyAccessor accessor = PropertyAccessor.GetAccessor(pi);
@@ -6196,6 +6202,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         [Test]
         public unsafe void ClassInstanceFunctionPointerFieldAccessUnsafe()
         {
+            if (EnvironmentHelper.IsMono)
+                Assert.Inconclusive("This test would crash on Mono");
             var test = new UnsafeTestClass(null);
             FieldInfo fi = test.GetType().GetField(nameof(UnsafeTestClass.InstanceFunctionPointerField));
             FieldAccessor accessor = FieldAccessor.GetAccessor(fi);
@@ -6331,6 +6339,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         [Test]
         public unsafe void ClassStaticFunctionPointerFieldAccessUnsafe()
         {
+            if (EnvironmentHelper.IsMono)
+                Assert.Inconclusive("This test would crash on Mono");
             Type testType = typeof(UnsafeTestClass);
             FieldInfo fi = testType.GetField(nameof(UnsafeTestClass.StaticFunctionPointerField));
             FieldAccessor accessor = FieldAccessor.GetAccessor(fi);

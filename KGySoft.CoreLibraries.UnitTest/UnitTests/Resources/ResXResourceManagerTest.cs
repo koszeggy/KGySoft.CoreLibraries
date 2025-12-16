@@ -381,25 +381,28 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.AreEqual(refManager.GetString("TestTextFile"), manager.GetString("TestTextFile"));
 
 #if !(NETCOREAPP2_0 || NETCOREAPP2_1) && WINDOWS // .NET Core 2.x: System.NotSupportedException : Cannot read resources that depend on serialization.
-            // icon bmp by reference
-            reference = refManager.GetObject("TestIconBitmap");
-            check = manager.GetObject("TestIconBitmap");
-            Assert.IsInstanceOf<Bitmap>(reference);
-            Assert.IsInstanceOf<Bitmap>(check);
+            if (EnvironmentHelper.IsWindows) // On Mono the Windows build can be executed on Linux, so checking even when WINDOWS was enabled.
+            {
+                // icon bmp by reference
+                reference = refManager.GetObject("TestIconBitmap");
+                check = manager.GetObject("TestIconBitmap");
+                Assert.IsInstanceOf<Bitmap>(reference);
+                Assert.IsInstanceOf<Bitmap>(check);
 #if NETFRAMEWORK // system manager retrieves it as a png, while resx manager preserves its icon raw format
-            Assert.AreEqual(ImageFormat.Png, ((Bitmap)reference).RawFormat); 
+                Assert.AreEqual(ImageFormat.Png, ((Bitmap)reference).RawFormat);
 #else
-            Assert.AreEqual(ImageFormat.Icon, ((Bitmap)reference).RawFormat);
+                Assert.AreEqual(ImageFormat.Icon, ((Bitmap)reference).RawFormat);
 #endif
-            Assert.AreEqual(ImageFormat.Icon, ((Bitmap)check).RawFormat);
-            AssertDeepEquals((Bitmap)reference, (Bitmap)check);
+                Assert.AreEqual(ImageFormat.Icon, ((Bitmap)check).RawFormat);
+                AssertDeepEquals((Bitmap)reference, (Bitmap)check);
 #if NETFRAMEWORK // system manager retrieves it as a png, while resx manager preserves its icon raw format
-            Assert.AreEqual(ImageFormat.Png, ((Bitmap)reference).RawFormat);
+                Assert.AreEqual(ImageFormat.Png, ((Bitmap)reference).RawFormat);
 #else
-            Assert.AreEqual(ImageFormat.Icon, ((Bitmap)reference).RawFormat);
+                Assert.AreEqual(ImageFormat.Icon, ((Bitmap)reference).RawFormat);
 #endif
-            Assert.AreEqual(ImageFormat.Icon, ((Bitmap)check).RawFormat);
+                Assert.AreEqual(ImageFormat.Icon, ((Bitmap)check).RawFormat);
 
+            }
 #endif
             // byte array by reference
             reference = refManager.GetObject("TestBinFile");

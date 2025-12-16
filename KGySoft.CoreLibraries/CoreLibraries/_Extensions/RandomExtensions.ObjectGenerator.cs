@@ -129,7 +129,7 @@ namespace KGySoft.CoreLibraries
 
                 internal bool TryPushType(Type type)
                 {
-                    if (generatedTypes.Any(t => t.IsAssignableFrom(type)))
+                    if (generatedTypes.Any(t => t.IsAssignableFromInternal(type)))
                     {
                         if (recursionLevel >= Settings.MaxRecursionLevel)
                             return false;
@@ -144,7 +144,7 @@ namespace KGySoft.CoreLibraries
                 {
                     Type type = generatedTypes.Last();
                     generatedTypes.RemoveAt(generatedTypes.Count - 1);
-                    if (generatedTypes.Any(t => t.IsAssignableFrom(type)))
+                    if (generatedTypes.Any(t => t.IsAssignableFromInternal(type)))
                         recursionLevel -= 1;
                 }
 
@@ -344,14 +344,14 @@ namespace KGySoft.CoreLibraries
                         // 1.) Non-generic type
                         if (!t.IsGenericTypeDefinition)
                         {
-                            if (type.IsAssignableFrom(t))
+                            if (type.IsAssignableFromInternal(t))
                                 result.Add(t);
                             continue;
                         }
 
                         // Skipping if the requested type was non-generic and is not compatible with current type (e.g. EventArgs -> List<>)
                         // Explanation: for example, IList is assignable from List<> definition but IList<int> is not assignable from List<> but only from List<int>
-                        if (!type.IsGenericType && !type.IsAssignableFrom(t))
+                        if (!type.IsGenericType && !type.IsAssignableFromInternal(t))
                             continue;
 
                         // 2.) Generic type for generic interface (e.g. IList<int> -> List<int>)
@@ -370,7 +370,7 @@ namespace KGySoft.CoreLibraries
                         // Generic type for non-generic interface or for non-interface (e.g. IList -> List<object> or BaseClass<MyType> -> DerivedClass<MyType>)
                         // Trying to resolve its constraints and see whether the construction is compatible with the provided type.
                         Type? constructedType = DefaultConstructedGenerics[(t, new TypesKey(genericArguments))];
-                        if (constructedType != null && type.IsAssignableFrom(constructedType))
+                        if (constructedType != null && type.IsAssignableFromInternal(constructedType))
                             result.Add(constructedType);
                     }
                 }
@@ -394,7 +394,7 @@ namespace KGySoft.CoreLibraries
                     Type? arg = suggestedArguments.Length == argumentsToCreate.Length ? suggestedArguments[i] : null;
 
                     // If we could not get the argument from provided type, or it is not compatible with first constraint we put either first constraint or int/object
-                    if (arg == null || constraints[i].Length > 0 && !constraints[i][0].IsAssignableFrom(arg))
+                    if (arg == null || constraints[i].Length > 0 && !constraints[i][0].IsAssignableFromInternal(arg))
                         arg = constraints[i].Length >= 1 ? constraints[i][0] : valueTypeConstraint ? Reflector.IntType : Reflector.ObjectType;
 
                     // a last check for value type constraint...
@@ -420,7 +420,7 @@ namespace KGySoft.CoreLibraries
                     if (!arg.ContainsGenericParameters)
                     {
                         // asserting non-generic constraints failed: giving up
-                        if (!constraints[i].All(c => c.ContainsGenericParameters || c.IsAssignableFrom(arg)))
+                        if (!constraints[i].All(c => c.ContainsGenericParameters || c.IsAssignableFromInternal(arg)))
                             return null;
 
                         continue;
@@ -460,7 +460,7 @@ namespace KGySoft.CoreLibraries
                             : (arg.GenericParameterAttributes & GenericParameterAttributes.NotNullableValueTypeConstraint) != 0 ? Reflector.IntType : Reflector.ObjectType;
 
                     // Generic parameters are never compatible with real types so skipping assertion for them
-                    return arg.GetGenericParameterConstraints().All(c => c.ContainsGenericParameters || c.IsAssignableFrom(replacement)) ? replacement : null;
+                    return arg.GetGenericParameterConstraints().All(c => c.ContainsGenericParameters || c.IsAssignableFromInternal(replacement)) ? replacement : null;
                 }
 
                 // contains generic parameters: recursion
@@ -833,7 +833,7 @@ namespace KGySoft.CoreLibraries
                     }
 
                     // 6.) Reflection members (Assembly and Type are already handled as known types but RuntimeType is handled here)
-                    if (memberInfoType.IsAssignableFrom(type) && (result = PickRandomMemberInfo(type, ref context)) != null)
+                    if (memberInfoType.IsAssignableFromInternal(type) && (result = PickRandomMemberInfo(type, ref context)) != null)
                         return true;
 
                     // 7.) any object
@@ -1195,7 +1195,7 @@ namespace KGySoft.CoreLibraries
                     initializerCollection = (IEnumerable)CreateInstanceAccessor.GetAccessor(Reflector.DictionaryGenType.GetGenericType(args[0], args[1])).CreateInstance();
                     PopulateCollection(initializerCollection, elementType, true, ref context);
                 }
-                else if (collectionCtor.GetParameters()[0].ParameterType.IsAssignableFrom(elementType.MakeArrayType()))
+                else if (collectionCtor.GetParameters()[0].ParameterType.IsAssignableFromInternal(elementType.MakeArrayType()))
                 {
                     initializerCollection = GenerateArray(elementType.MakeArrayType(), ref context);
                 }

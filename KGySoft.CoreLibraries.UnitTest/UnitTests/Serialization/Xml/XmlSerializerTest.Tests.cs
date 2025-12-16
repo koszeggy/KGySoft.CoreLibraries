@@ -1441,22 +1441,36 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         [Test]
         public unsafe void SerializePointers()
         {
-            if (EnvironmentHelper.IsMono)
-                Assert.Inconclusive("Mono does not support pointer serialization.");
+            #region Local Methods
 
-            object[] referenceObjects =
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            static object GetFunctionPointerArray() => new delegate*<string, void>[] { null, &Console.WriteLine };
+
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            static object GetUnsafeStruct() => new UnsafeStruct();
+
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            static object GetUnsafeStructPopulated() => new UnsafeStruct
             {
-                // Pointer fields
-                new UnsafeStruct(),
-                new UnsafeStruct
-                {
-                    VoidPointer = (void*)new IntPtr(1),
-                    IntPointer = (int*)new IntPtr(1),
-                    PointerOfPointer = (void**)new IntPtr(1),
-                    FunctionPointer = &Console.WriteLine
-                },
+                VoidPointer = (void*)new IntPtr(1),
+                IntPointer = (int*)new IntPtr(1),
+                PointerOfPointer = (void**)new IntPtr(1),
+                FunctionPointer = &Console.WriteLine
             };
 
+            #endregion
+
+            if (EnvironmentHelper.IsMono)
+                Assert.Inconclusive("Mono does not support serializing pointers and function pointers.");
+
+            object[] referenceObjects =
+            [
+                // Pointer fields
+                GetUnsafeStruct(),
+                GetUnsafeStructPopulated()
+            ];
+
+            Type unsafeTypeStruct = GetUnsafeStruct().GetType();
             //SystemSerializeObjects(referenceObjects); // InvalidOperationException: System.Void* cannot be serialized because it does not have a parameterless constructor.
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback, safeMode: XmlSafeMode.Unsafe);
@@ -1469,18 +1483,18 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             KGySerializeObject(referenceObjects[0], XmlSerializationOptions.RecursiveSerializationAsFallback, safeMode: XmlSafeMode.Medium);
             KGySerializeObject(referenceObjects[0], XmlSerializationOptions.RecursiveSerializationAsFallback, safeMode: XmlSafeMode.Strict);
             Throws<SerializationException>(() => KGySerializeObject(referenceObjects[1], XmlSerializationOptions.RecursiveSerializationAsFallback, safeMode: XmlSafeMode.Medium));
-            Throws<SerializationException>(() => KGySerializeObject(referenceObjects[1], XmlSerializationOptions.RecursiveSerializationAsFallback, safeMode: XmlSafeMode.Strict, expectedTypes: [typeof(UnsafeStruct)]));
+            Throws<SerializationException>(() => KGySerializeObject(referenceObjects[1], XmlSerializationOptions.RecursiveSerializationAsFallback, safeMode: XmlSafeMode.Strict, expectedTypes: [unsafeTypeStruct]));
 
             // But as a compact struct, pointer fields are not supported at all in safe mode
-            Throws<ArgumentException>(() => KGySerializeObject(referenceObjects[0], XmlSerializationOptions.CompactSerializationOfStructures, safeMode: XmlSafeMode.Medium), Res.XmlSerializationValueTypeContainsReferenceOrPointerSafe(typeof(UnsafeStruct)));
-            Throws<ArgumentException>(() => KGySerializeObject(referenceObjects[0], XmlSerializationOptions.CompactSerializationOfStructures, safeMode: XmlSafeMode.Strict, expectedTypes: [typeof(UnsafeStruct)]), Res.XmlSerializationValueTypeContainsReferenceOrPointerSafe(typeof(UnsafeStruct)));
+            Throws<ArgumentException>(() => KGySerializeObject(referenceObjects[0], XmlSerializationOptions.CompactSerializationOfStructures, safeMode: XmlSafeMode.Medium), Res.XmlSerializationValueTypeContainsReferenceOrPointerSafe(unsafeTypeStruct));
+            Throws<ArgumentException>(() => KGySerializeObject(referenceObjects[0], XmlSerializationOptions.CompactSerializationOfStructures, safeMode: XmlSafeMode.Strict, expectedTypes: [unsafeTypeStruct]), Res.XmlSerializationValueTypeContainsReferenceOrPointerSafe(unsafeTypeStruct));
 
             int intValue = 1;
             referenceObjects = new object[]
             {
                 // Pointer Arrays
                 new int*[] { null, &intValue },
-                new delegate*<string, void>[] { null, &Console.WriteLine },
+                GetFunctionPointerArray(),
             };
 
             Throws<NotSupportedException>(() => KGySerializeObject(referenceObjects[0], XmlSerializationOptions.RecursiveSerializationAsFallback), Res.SerializationPointerArrayTypeNotSupported(referenceObjects[0].GetType()));

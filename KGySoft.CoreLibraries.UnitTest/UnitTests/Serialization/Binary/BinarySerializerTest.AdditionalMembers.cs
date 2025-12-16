@@ -18,12 +18,16 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
+#if NET6_0_OR_GREATER
 using System.Text;
+#endif
 
 using KGySoft.Reflection;
 using KGySoft.Serialization.Binary;
@@ -865,6 +869,19 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 result.AddRange(list.Where(i => i != null).Select(i => i.GetType()));
             return result;
         }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static object GetUnsafeStruct() => new UnsafeStruct();
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static unsafe object GetUnsafeStructPopulated() => new UnsafeStruct
+        {
+            VoidPointer = (void*)new IntPtr(1),
+            IntPointer = (int*)new IntPtr(1),
+            StructPointer = (Point*)new IntPtr(1),
+            PointerOfPointer = (void**)new IntPtr(1),
+            FunctionPointer = &Console.WriteLine
+        };
 
         #endregion
     }

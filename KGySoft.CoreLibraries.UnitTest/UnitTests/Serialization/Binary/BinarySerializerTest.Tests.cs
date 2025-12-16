@@ -2420,7 +2420,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new CircularSortedList<int, int> { { 1, 1 }, { 2, 2 }, { 3, 3 } },
 
                 // Pointer fields
-                EnvironmentHelper.IsMono ? null : new UnsafeStruct(),
+                EnvironmentHelper.IsMono ? null : GetUnsafeStruct(), // In Mono, it could cause stack overflow in System.Reflection.RuntimeMethodInfo.Invoke
             };
 
             ISurrogateSelector selector = new NameInvariantSurrogateSelector();
@@ -2460,7 +2460,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new Collection<Encoding> { Encoding.ASCII, Encoding.Unicode },
 
                 // pointer fields
-                EnvironmentHelper.IsMono ? null : new UnsafeStruct(),
+                EnvironmentHelper.IsMono ? null : GetUnsafeStruct(), // In Mono, it could cause stack overflow in System.Reflection.RuntimeMethodInfo.Invoke
             };
 
             var selector = new CustomSerializerSurrogateSelector();
@@ -2857,22 +2857,24 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         [Test]
         public unsafe void SerializePointers()
         {
+            #region Local Methods
+
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            static object GetFunctionPointerArray() => new delegate*<string, void>[] { null, &Console.WriteLine };
+
+            #endregion
+
             if (EnvironmentHelper.IsMono)
-                Assert.Inconclusive("Mono does not support pointer serialization.");
+                Assert.Inconclusive("Mono does not support serializing pointers and function pointers.");
 
             object[] referenceObjects =
-            {
+            [
                 // Pointer fields
-                new UnsafeStruct(),
-                new UnsafeStruct
-                {
-                    VoidPointer = (void*)new IntPtr(1),
-                    IntPointer = (int*)new IntPtr(1),
-                    StructPointer = (Point*)new IntPtr(1),
-                    PointerOfPointer = (void**)new IntPtr(1),
-                    FunctionPointer = &Console.WriteLine
-                },
-            };
+                GetUnsafeStruct(),
+                GetUnsafeStructPopulated()
+            ];
+
+            Type unsafeTypeStruct = GetUnsafeStruct().GetType();
 
 #if NETFRAMEWORK // .NET Core: SerializationException: Type 'System.Reflection.Pointer' is not marked as serializable.
             SystemSerializeObject(referenceObjects, safeCompare: true);
@@ -2886,20 +2888,20 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             // In safe mode setting pointer fields are supported only if they are set to null
             KGySerializeObject(referenceObjects[0], BinarySerializationOptions.LegacySafeMode);
-            KGySerializeObject(referenceObjects[0], BinarySerializationOptions.SafeMode, expectedTypes: [typeof(UnsafeStruct)]);
+            KGySerializeObject(referenceObjects[0], BinarySerializationOptions.SafeMode, expectedTypes: [unsafeTypeStruct]);
             Throws<SerializationException>(() => KGySerializeObject(referenceObjects[1], BinarySerializationOptions.LegacySafeMode));
-            Throws<SerializationException>(() => KGySerializeObject(referenceObjects[1], BinarySerializationOptions.SafeMode, expectedTypes: [typeof(UnsafeStruct)]));
+            Throws<SerializationException>(() => KGySerializeObject(referenceObjects[1], BinarySerializationOptions.SafeMode, expectedTypes: [unsafeTypeStruct]));
 
             // But as a compact struct, pointer fields are not supported at all in safe mode
-            Throws<SerializationException>(() => KGySerializeObject(referenceObjects[0], BinarySerializationOptions.LegacySafeMode | BinarySerializationOptions.CompactSerializationOfStructures), Res.BinarySerializationValueTypeContainsReferenceOrPointerSafe(typeof(UnsafeStruct)));
-            Throws<SerializationException>(() => KGySerializeObject(referenceObjects[0], BinarySerializationOptions.SafeMode | BinarySerializationOptions.CompactSerializationOfStructures, expectedTypes: [typeof(UnsafeStruct)]), Res.BinarySerializationValueTypeContainsReferenceOrPointerSafe(typeof(UnsafeStruct)));
+            Throws<SerializationException>(() => KGySerializeObject(referenceObjects[0], BinarySerializationOptions.LegacySafeMode | BinarySerializationOptions.CompactSerializationOfStructures), Res.BinarySerializationValueTypeContainsReferenceOrPointerSafe(unsafeTypeStruct));
+            Throws<SerializationException>(() => KGySerializeObject(referenceObjects[0], BinarySerializationOptions.SafeMode | BinarySerializationOptions.CompactSerializationOfStructures, expectedTypes: [unsafeTypeStruct]), Res.BinarySerializationValueTypeContainsReferenceOrPointerSafe(unsafeTypeStruct));
 
             int intValue = 1;
             referenceObjects = new object[]
             {
                 // Pointer Arrays
                 new int*[] { null, &intValue },
-                new delegate*<string, void>[] { null, &Console.WriteLine },
+                GetFunctionPointerArray(),
             };
 
             //SystemSerializeObject(referenceObjects[0], safeCompare: true); // InvalidCastException: Unable to cast object of type 'System.Void*[]' to type 'System.Object[]'.
@@ -3244,6 +3246,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         [Test]
         public unsafe void SerializeFunctionPointers()
         {
+#if NETFRAMEWORK
+            if (EnvironmentHelper.IsMono)
+                Assert.Inconclusive("Mono does not support function pointers.");
+#endif
+
             object referenceObject = new FunctionPointerField(&Console.WriteLine);
 
             KGySerializeObject(referenceObject, BinarySerializationOptions.None);
