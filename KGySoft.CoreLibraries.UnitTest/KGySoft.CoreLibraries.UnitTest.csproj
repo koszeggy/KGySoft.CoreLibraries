@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net35;net40;net45;net47;net472;netcoreapp3.0;net5.0;net6.0;net7.0;net8.0;net9.0;net10.0</TargetFrameworks>
-    <!--<TargetFrameworks>net472</TargetFrameworks>-->
+    <!-- <TargetFrameworks>net35;net40;net45;net47;net472;netcoreapp3.0;net5.0;net6.0;net7.0;net8.0;net9.0;net10.0</TargetFrameworks> -->
+    <TargetFrameworks>net47;net472;netcoreapp3.0;net5.0;net6.0;net7.0;net8.0;net9.0;net10.0</TargetFrameworks>
 
     <RunAnalyzersDuringLiveAnalysis>false</RunAnalyzersDuringLiveAnalysis>
     
@@ -26,6 +26,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <EnablePreviewFeatures>true</EnablePreviewFeatures>
     <LangVersion>latest</LangVersion>
+    <GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
 
     <!-- NUnit does not run .NET 3.5 tests on the correct runtime and .NET Core 2.x/3.0 tests at all so the tests for these targets can be executed as a console app -->
     <OutputType>Exe</OutputType>
@@ -82,6 +83,12 @@
     <PackageReference Condition="'$(IsWindows)'=='true'" Include="System.Drawing.Common" Version="5.0.3" />
   </ItemGroup>
 
+  <!-- .NET Framework references on non-Windows platforms -->
+  <ItemGroup Condition="'$(TargetFramework)'=='net47' OR '$(TargetFramework)'=='net472'">
+	  <!--For non-string resources. Not required on Windows. Works only on .NET Framework 4.6.2+ -->
+    <PackageReference Condition="'$(IsWindows)'!='true'" Include="System.Resources.Extensions" Version="10.0.1" />
+  </ItemGroup>
+
   <!-- .NET Core 3.0 only references -->
   <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.0'">
     <!--For non-string resources. Must not be upgraded because newer versions do not support .NET Core 3.0 -->
@@ -92,7 +99,7 @@
   <!-- .NET only references -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net5.0' OR '$(TargetFramework)' == 'net6.0' OR '$(TargetFramework)' == 'net7.0' OR '$(TargetFramework)' == 'net8.0' OR '$(TargetFramework)' == 'net9.0' OR '$(TargetFramework)' == 'net10.0'">
 	  <!--For non-string resources-->
-    <PackageReference Include="System.Resources.Extensions" Version="6.0.0" />
+    <PackageReference Include="System.Resources.Extensions" Version="10.0.1" />
     <PackageReference Condition="'$(IsWindows)'=='true'" Include="System.Drawing.Common" Version="5.0.3" />
   </ItemGroup>
 
