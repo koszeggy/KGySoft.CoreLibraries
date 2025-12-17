@@ -381,7 +381,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.AreEqual(refManager.GetString("TestTextFile"), manager.GetString("TestTextFile"));
 
 #if !(NETCOREAPP2_0 || NETCOREAPP2_1) && WINDOWS // .NET Core 2.x: System.NotSupportedException : Cannot read resources that depend on serialization.
-            if (EnvironmentHelper.IsWindows) // On Mono the Windows build can be executed on Linux, so checking even when WINDOWS was enabled.
+            if (!EnvironmentHelper.IsMono)
             {
                 // icon bmp by reference
                 reference = refManager.GetObject("TestIconBitmap");
