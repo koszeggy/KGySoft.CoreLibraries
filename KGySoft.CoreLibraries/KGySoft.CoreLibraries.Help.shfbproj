@@ -32,7 +32,7 @@
     <SaveComponentCacheCapacity>100</SaveComponentCacheCapacity>
     <WarnOnMissingSourceContext>False</WarnOnMissingSourceContext>
     <HelpTitle>KGy SOFT Core Libraries Help</HelpTitle>
-    <HelpFileVersion>10.0.0</HelpFileVersion>
+    <HelpFileVersion>10.5.0</HelpFileVersion>
     <NamingMethod>MemberName</NamingMethod>
     <ContentPlacement>AboveNamespaces</ContentPlacement>
     <RootNamespaceContainer>False</RootNamespaceContainer>
