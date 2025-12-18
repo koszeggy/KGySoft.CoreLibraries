@@ -1,11 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <!-- <TargetFrameworks>net35;net40;net45;net47;net472;netcoreapp3.0;net5.0;net6.0;net7.0;net8.0;net9.0;net10.0</TargetFrameworks> -->
-    <TargetFrameworks>net47;net472;netcoreapp3.0;net5.0;net6.0;net7.0;net8.0;net9.0;net10.0</TargetFrameworks>
+     <TargetFrameworks>net35;net40;net45;net47;net472;netcoreapp3.0;net5.0;net6.0;net7.0;net8.0;net9.0;net10.0</TargetFrameworks> 
+    <!--<TargetFrameworks>net10.0</TargetFrameworks>-->
 
-    <RunAnalyzersDuringLiveAnalysis>false</RunAnalyzersDuringLiveAnalysis>
-    
     <!--For UnitTesting the .NET Standard versions-->
     <!--<TargetFrameworks>netcoreapp2.0;netcoreapp3.0</TargetFrameworks>
     <DefineConstants>NETSTANDARD_TEST</DefineConstants>-->
@@ -16,8 +14,8 @@
     <!--For testing in a 32-bit process-->
     <!--<PlatformTarget>x86</PlatformTarget>-->
 
-    <IsWindows Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' == 'true'">true</IsWindows> 
-
+    <IsWindows Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' == 'true'">true</IsWindows>
+    <RunAnalyzersDuringLiveAnalysis>false</RunAnalyzersDuringLiveAnalysis>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <DisableImplicitNamespaceImports>true</DisableImplicitNamespaceImports>
     <RootNamespace>KGySoft.CoreLibraries</RootNamespace>
@@ -26,7 +24,6 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <EnablePreviewFeatures>true</EnablePreviewFeatures>
     <LangVersion>latest</LangVersion>
-    <GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
 
     <!-- NUnit does not run .NET 3.5 tests on the correct runtime and .NET Core 2.x/3.0 tests at all so the tests for these targets can be executed as a console app -->
     <OutputType>Exe</OutputType>
@@ -44,6 +41,16 @@
     <DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
   </PropertyGroup>
 
+  <!--Required to avoid MSB3822 on non-Windows platforms-->
+  <PropertyGroup Condition="'$(IsWindows)'!='true'">
+    <GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
+  </PropertyGroup>
+
+  <!-- Project references -->
+  <ItemGroup>
+    <ProjectReference Include="..\KGySoft.CoreLibraries\KGySoft.CoreLibraries.csproj" />
+  </ItemGroup>
+
   <!-- Common NuGet references -->
   <ItemGroup>
     <!--NUnit 4.x has major breaking changes and does not support Framework 4.6.2- and .NET 6-. -->
@@ -60,16 +67,6 @@
     </PackageReference>
   </ItemGroup>
 
-  <!-- .NET Framework 4.6.2+/.NET 8.0+ references -->
-  <ItemGroup Condition="'$(TargetFramework)'=='net47' OR '$(TargetFramework)'=='net472' OR '$(TargetFramework)'=='net8.0' OR '$(TargetFramework)'=='net9.0' OR '$(TargetFramework)'=='net10.0'">
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.1"/>
-  </ItemGroup>
-
-  <!-- NET Framework 4.6.2-/.NET 8.0- references -->
-  <ItemGroup Condition="'$(TargetFramework)'=='net35' OR '$(TargetFramework)'=='net40' OR '$(TargetFramework)'=='net45' OR '$(TargetFramework)'=='netcoreapp2.0' OR '$(TargetFramework)'=='netcoreapp2.1' OR '$(TargetFramework)'=='netcoreapp3.0' OR '$(TargetFramework)'=='net5.0' OR '$(TargetFramework)'=='net6.0' OR '$(TargetFramework)'=='net7.0'">
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.0"/>
-  </ItemGroup>
-
   <!-- .NET Framework only references -->
   <ItemGroup Condition="'$(TargetFramework)'=='net35' OR '$(TargetFramework)'=='net40' OR '$(TargetFramework)'=='net45' OR '$(TargetFramework)'=='net46' OR '$(TargetFramework)'=='net47' OR '$(TargetFramework)'=='net472'">
     <Reference Include="sysglobl" />
@@ -80,32 +77,39 @@
   <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.0' OR '$(TargetFramework)' == 'netcoreapp2.1'">
     <!--Needed for CodePagesEncodingProvider. Must not be upgraded because newer versions do not support .NET Core 2.x -->
     <PackageReference Include="System.Text.Encoding.CodePages" Version="5.0.0" />
-    <PackageReference Condition="'$(IsWindows)'=='true'" Include="System.Drawing.Common" Version="5.0.3" />
   </ItemGroup>
 
-  <!-- .NET Framework references on non-Windows platforms -->
+  <!-- Microsoft.NET.Test.Sdk -->
+  <ItemGroup Condition="'$(TargetFramework)'=='net47' OR '$(TargetFramework)'=='net472' OR '$(TargetFramework)'=='net8.0' OR '$(TargetFramework)'=='net9.0' OR '$(TargetFramework)'=='net10.0'">
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.1"/>
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)'=='net35' OR '$(TargetFramework)'=='net40' OR '$(TargetFramework)'=='net45' OR '$(TargetFramework)'=='netcoreapp2.0' OR '$(TargetFramework)'=='netcoreapp2.1' OR '$(TargetFramework)'=='netcoreapp3.0' OR '$(TargetFramework)'=='net5.0' OR '$(TargetFramework)'=='net6.0' OR '$(TargetFramework)'=='net7.0'">
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.0"/>
+  </ItemGroup>
+
+  <!-- System.Resources.Extensions. Required for non-string resources. On .NET Framework it is required on non-Windows platforms only, where it requires at least net462. -->
   <ItemGroup Condition="'$(TargetFramework)'=='net47' OR '$(TargetFramework)'=='net472'">
-	  <!--For non-string resources. Not required on Windows. Works only on .NET Framework 4.6.2+ -->
     <PackageReference Condition="'$(IsWindows)'!='true'" Include="System.Resources.Extensions" Version="10.0.1" />
   </ItemGroup>
-
-  <!-- .NET Core 3.0 only references -->
-  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.0'">
-    <!--For non-string resources. Must not be upgraded because newer versions do not support .NET Core 3.0 -->
-    <PackageReference Include="System.Resources.Extensions" Version="5.0.0" />
-    <PackageReference Condition="'$(IsWindows)'=='true'" Include="System.Drawing.Common" Version="5.0.3" />
-  </ItemGroup>
-
-  <!-- .NET only references -->
-  <ItemGroup Condition="'$(TargetFramework)' == 'net5.0' OR '$(TargetFramework)' == 'net6.0' OR '$(TargetFramework)' == 'net7.0' OR '$(TargetFramework)' == 'net8.0' OR '$(TargetFramework)' == 'net9.0' OR '$(TargetFramework)' == 'net10.0'">
-	  <!--For non-string resources-->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0' OR '$(TargetFramework)' == 'net9.0' OR '$(TargetFramework)' == 'net10.0'">
     <PackageReference Include="System.Resources.Extensions" Version="10.0.1" />
-    <PackageReference Condition="'$(IsWindows)'=='true'" Include="System.Drawing.Common" Version="5.0.3" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net6.0' OR '$(TargetFramework)' == 'net7.0'">
+    <PackageReference Include="System.Resources.Extensions" Version="8.0.0" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.0' OR '$(TargetFramework)' == 'net5.0'">
+    <PackageReference Include="System.Resources.Extensions" Version="5.0.0" />
   </ItemGroup>
 
-  <!-- Project references -->
-  <ItemGroup>
-    <ProjectReference Include="..\KGySoft.CoreLibraries\KGySoft.CoreLibraries.csproj" />
+  <!-- System.Drawing.Common. To test Bitmap/Icon resources in .NET Core+ (on Windows only). -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0' OR '$(TargetFramework)' == 'net9.0' OR '$(TargetFramework)' == 'net10.0'">
+    <PackageReference Condition="'$(IsWindows)'=='true'" Include="System.Drawing.Common" Version="10.0.1" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net6.0' OR '$(TargetFramework)' == 'net7.0'">
+    <PackageReference Condition="'$(IsWindows)'=='true'" Include="System.Drawing.Common" Version="8.0.22" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.0' OR '$(TargetFramework)' == 'netcoreapp2.1' OR '$(TargetFramework)' == 'netcoreapp3.0' OR '$(TargetFramework)' == 'net5.0'">
+    <PackageReference Condition="'$(IsWindows)'=='true'" Include="System.Drawing.Common" Version="5.0.3" />
   </ItemGroup>
 
   <!--Deployed resources-->
