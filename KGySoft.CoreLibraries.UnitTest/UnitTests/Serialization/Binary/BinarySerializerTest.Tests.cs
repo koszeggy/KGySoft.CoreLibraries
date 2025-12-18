@@ -511,6 +511,21 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         [Test]
         public void SerializeTypes()
         {
+            #region Local Methods
+
+            static bool IsValidExpectedType(Type type)
+            {
+                if (type.FullName == null)
+                    return false;
+
+                // Normally if a type has FullName, its element type has also a full name, but this isn't always the case on Mono, e.g. for T[] where T is the type argument of List<>
+                while (type!.HasElementType)
+                    type = type.GetElementType();
+                return type.FullName != null;
+            }
+
+            #endregion
+
             Type[] referenceObjects =
             {
                 // Simple types
@@ -547,7 +562,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 typeof(int[]).MakePointerType().MakePointerType(), // int[]** - actually not a valid type
                 typeof(int[]).MakePointerType().MakePointerType().MakeByRefType(), // int[]**& - actually not a valid type
 
-                // Closed Constructed Generics
+//                // Closed Constructed Generics
                 typeof(List<int>), // supported generic
                 typeof(CustomGenericCollection<CustomSerializedClass>), // custom generic
                 typeof(CustomGenericCollection<int>), // custom generic with supported parameter
@@ -637,8 +652,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: referenceObjects.Where(t => t.FullName != null).Concat(new[] { typeof(OpenGenericDictionary<>), typeof(DictionaryExtensions) }));
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: referenceObjects.Where(t => t.FullName != null).Concat(new[] { typeof(OpenGenericDictionary<>), typeof(DictionaryExtensions) }));
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: referenceObjects.Where(IsValidExpectedType).Concat(new[] { typeof(OpenGenericDictionary<>), typeof(DictionaryExtensions) }));
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: referenceObjects.Where(IsValidExpectedType).Concat(new[] { typeof(OpenGenericDictionary<>), typeof(DictionaryExtensions) }));
 
 #if NETFRAMEWORK
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);

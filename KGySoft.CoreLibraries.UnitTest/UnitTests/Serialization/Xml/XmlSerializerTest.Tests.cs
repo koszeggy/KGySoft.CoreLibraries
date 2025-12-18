@@ -280,6 +280,21 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         [Test]
         public void SerializeTypes()
         {
+            #region Local Methods
+
+            static bool IsValidExpectedType(Type type)
+            {
+                if (type.FullName == null)
+                    return false;
+
+                // Normally if a type has FullName, its element type has also a full name, but this isn't always the case on Mono, e.g. for T[] where T is the type argument of List<>
+                while (type!.HasElementType)
+                    type = type.GetElementType();
+                return type.FullName != null;
+            }
+
+            #endregion
+
             object[] referenceObjects =
             {
                 // Simple types
@@ -374,7 +389,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 typeof(DictionaryExtensions).GetMethods().Where(mi => mi.Name == nameof(DictionaryExtensions.GetValueOrDefault)).ElementAt(2).GetGenericArguments()[0] // TKey of a GetValueOrDefault overload, ambiguous generic method definition argument
             };
 
-            var expectedTypes = referenceObjects.Cast<Type>().Where(t => t.FullName != null).Concat(new[] { typeof(OpenGenericDictionary<>), typeof(DictionaryExtensions) }).ToList();
+            var expectedTypes = referenceObjects.Cast<Type>().Where(IsValidExpectedType).Concat(new[] { typeof(OpenGenericDictionary<>), typeof(DictionaryExtensions) }).ToList();
             KGySerializeObject(referenceObjects, XmlSerializationOptions.None, expectedTypes: expectedTypes);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, false, expectedTypes: expectedTypes);
 
