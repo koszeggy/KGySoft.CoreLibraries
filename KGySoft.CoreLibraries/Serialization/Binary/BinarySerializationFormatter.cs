@@ -160,15 +160,15 @@ namespace KGySoft.Serialization.Binary
     /// <note type="security"><para>If the serialization stream may come from an untrusted source (e.g. remote service, file or database) make sure you enable
     /// the <see cref="BinarySerializationOptions.SafeMode"/> option. It prevents loading assemblies during the deserialization, denies resolving unexpected natively not supported types by name,
     /// does not allow instantiating natively not supported types that are not serializable, and guards against some attacks that may cause <see cref="OutOfMemoryException"/>.
-    /// When using <see cref="BinarySerializationOptions.SafeMode"/> all of the natively not supported types, whose assembly qualified names are
+    /// When using <see cref="BinarySerializationOptions.SafeMode"/> all the natively not supported types, whose assembly qualified names are
     /// stored in the serialization stream must be explicitly declared as expected types in the deserialization methods, including apparently innocent types such as <see langword="enum"/>s.</para>
     /// <para>Please also note that in safe mode some system types are forbidden to use even if they are serializable and are specified as expected types.
     /// In the .NET Framework there are some serializable types in the fundamental core assemblies that can be exploited for several attacks (causing unresponsiveness,
     /// <see cref="StackOverflowException"/> or even files to be deleted). Starting with .NET Core these types are not serializable anymore and some of them have been moved to separate NuGet packages anyway,
     /// but the <see cref="BinaryFormatter"/> class in the .NET Framework is still vulnerable against such attacks. When using the <see cref="BinarySerializationOptions.SafeMode"/> flag,
-    /// the <see cref="BinarySerializationFormatter"/> is protected against the known security issues on all platforms but of course it cannot guard you against every potentially harmful type if
+    /// the <see cref="BinarySerializationFormatter"/> is protected against the known security issues on all platforms, but of course it cannot guard you against every potentially harmful type if
     /// you explicitly specify them as expected types in the deserialization methods.</para>
-    /// <para>Please also note that the <see cref="IFormatter"/> infrastructure has other security flaws as well but some of these can be reduced by the serializable types themselves.
+    /// <para>Please also note that the <see cref="IFormatter"/> infrastructure has other security flaws as well, but some of these can be reduced by the serializable types themselves.
     /// Most serializable types do not validate the incoming data. All serializable types that can have an invalid state regarding the field values
     /// should implement <see cref="ISerializable"/> and should throw a <see cref="SerializationException"/> from their serialization constructor if validation fails.
     /// The <see cref="BinarySerializationFormatter"/> wraps every other exception thrown by the constructor into a <see cref="SerializationException"/>.
@@ -257,8 +257,8 @@ namespace KGySoft.Serialization.Binary
     /// // Length by BinarySerializationFormatter: 50
     /// // Length by BinaryFormatter: 2217]]></code>
     /// <note>Serialization of natively supported types produce an especially compact result because these types are not serialized by traversing and storing the fields of the object graph recursively.
-    /// This means not just better performance and improved security for these types but also prevents compatibility issues between different platforms because these types are not encoded by assembly identity and type name.
-    /// Serialization of natively not supported types can be somewhat slower for the first time than by <see cref="BinaryFormatter"/> but the serialized result is almost always shorter than the one by <see cref="BinaryFormatter"/>,
+    /// This means not just better performance and improved security for these types, but also prevents compatibility issues between different platforms because these types are not encoded by assembly identity and type name.
+    /// Serialization of natively not supported types can be somewhat slower for the first time than by <see cref="BinaryFormatter"/>, but the serialized result is almost always shorter than the one by <see cref="BinaryFormatter"/>,
     /// especially when generic types are involved.</note>
     /// <h4>Example 2: How to implement a custom serializable type<a name="example">&#160;</a></h4>
     /// <note type="tip">For the most compact result and to avoid using the obsoleted serialization infrastructure in .NET 8.0 and above it is recommended to implement the <see cref="IBinarySerializable"/> interface.
