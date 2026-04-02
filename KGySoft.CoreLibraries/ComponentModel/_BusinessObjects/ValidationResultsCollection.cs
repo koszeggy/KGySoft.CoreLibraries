@@ -62,17 +62,17 @@ namespace KGySoft.ComponentModel
         #region Properties
 
         /// <summary>
-        /// Gets a read-only <see cref="ValidationResultsCollection"/> containing <see cref="ValidationResult"/> entries with <see cref="ValidationSeverity.Error"/> severities.
+        /// Gets a read-only <see cref="ValidationResultsCollection"/> containing <see cref="ValidationResult"/> entries with <see cref="ValidationSeverity.Error"/> severity.
         /// </summary>
         public ValidationResultsCollection Errors => errors ??= FilterBySeverity(ValidationSeverity.Error);
 
         /// <summary>
-        /// Gets the validation results denoting a warning.= as a read-only <see cref="ValidationResultsCollection"/>.
+        /// Gets a read-only <see cref="ValidationResultsCollection"/> containing <see cref="ValidationResult"/> entries with <see cref="ValidationSeverity.Warning"/> severity.
         /// </summary>
         public ValidationResultsCollection Warnings => warnings ??= FilterBySeverity(ValidationSeverity.Warning);
 
         /// <summary>
-        /// Gets the validation results denoting an information.
+        /// Gets a read-only <see cref="ValidationResultsCollection"/> containing <see cref="ValidationResult"/> entries with <see cref="ValidationSeverity.Information"/> severity.
         /// </summary>
         public ValidationResultsCollection Infos => infos ??= FilterBySeverity(ValidationSeverity.Information);
 

@@ -3639,7 +3639,7 @@ namespace KGySoft.Reflection
         /// <param name="kind">A <see cref="TypeNameKind"/> value, specifying the format of the desired result.</param>
         /// <returns>A <see cref="string"/>, containing the reformatted name of the specified <paramref name="typeName"/>.</returns>
         /// <remarks>
-        /// <para>The typical intended usage of this method is to strip unneeded information from type names. The lower the value of the specified <paramref name="kind"/>, the shorted the result will be.</para>
+        /// <para>The typical intended usage of this method is to strip unneeded information from type names. The lower the value of the specified <paramref name="kind"/>, the shorter the result will be.</para>
         /// <para>This method works for any kind of type names in any format that can be produced by the <see cref="MemberInfo.Name">Type.Name</see>, <see cref="Type.ToString">Type.ToString</see>,
         /// <see cref="Type.FullName">Type.FullName</see>, <see cref="Type.AssemblyQualifiedName">Type.AssemblyQualifiedName</see> members,
         /// and the <see cref="CoreLibraries.TypeExtensions.GetName(System.Type,KGySoft.CoreLibraries.TypeNameKind)">TypeExtensions.GetName</see> method.</para>

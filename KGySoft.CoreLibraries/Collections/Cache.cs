@@ -1698,8 +1698,8 @@ namespace KGySoft.Collections
         /// <see cref="M:KGySoft.Collections.Cache`2.#ctor(System.Func{`0,`1},System.Int32,System.Collections.Generic.IEqualityComparer{`0})">constructor</see>
         /// and the cache will not be accessed by other members but via the returned accessor.
         /// </summary>
-        /// <param name="protectItemLoader"><see langword="true"/> to ensure that also the item loader is locked if a new element has to be loaded and
-        /// <see langword="false"/> to allow the item loader to be called concurrently. In latter case the <see cref="Cache{TKey,TValue}"/> is not locked during the time the item loader is being called,
+        /// <param name="protectItemLoader"><see langword="true"/> to ensure that also the item loader is locked if a new element has to be loaded;
+        /// <see langword="false"/> to allow the item loader to be called concurrently. In the latter case the <see cref="Cache{TKey,TValue}"/> is not locked during the time the item loader is being called,
         /// but it can happen that values for same key are loaded multiple times and all but one will be discarded. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>An <see cref="IThreadSafeCacheAccessor{TKey,TValue}"/> instance providing a thread-safe readable indexer for this <see cref="Cache{TKey,TValue}"/> instance.</returns>
