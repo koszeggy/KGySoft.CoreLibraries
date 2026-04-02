@@ -6,6 +6,16 @@
 ===============================================================================
 
 ~~~~~~~~~~
+- v10.5.1:
+~~~~~~~~~~
+
+- KGySoft.Reflection namespace:
+===============================
+- FieldAccessor class (.NET Framework 3.5 only):
+  - Accessing a static, non-primitive value type field of an uninitialized type could throw an exception.
+
+
+~~~~~~~~~~
 ! v10.5.0:
 ~~~~~~~~~~
 

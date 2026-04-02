@@ -3,7 +3,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 //  File: ReflectorTest.cs
 ///////////////////////////////////////////////////////////////////////////////
-//  Copyright (C) KGy SOFT, 2005-2025 - All Rights Reserved
+//  Copyright (C) KGy SOFT, 2005-2026 - All Rights Reserved
 //
 //  You should have received a copy of the LICENSE file at the top-level
 //  directory of this distribution.
@@ -444,6 +444,58 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             public const nuint UIntPtrValue = 1;
             [CanBeNull] public const string NullValue = null;
             public const ConsoleColor EnumValue = ConsoleColor.Blue;
+
+            #endregion
+        }
+
+        #endregion
+
+        #region StaticTestClassGet
+
+        private static class StaticTestClassGet
+        {
+            #region Fields
+
+            public static decimal DecimalField;
+
+            #endregion
+        }
+
+        #endregion
+
+        #region StaticTestClassSet
+
+        private static class StaticTestClassSet
+        {
+            #region Fields
+
+            public static decimal DecimalField;
+
+            #endregion
+        }
+
+        #endregion
+
+        #region StaticTestClassGetGeneric
+
+        private static class StaticTestClassGetGeneric
+        {
+            #region Fields
+
+            public static decimal DecimalField;
+
+            #endregion
+        }
+
+        #endregion
+
+        #region StaticTestClassSetGeneric
+
+        private static class StaticTestClassSetGeneric
+        {
+            #region Fields
+
+            public static decimal DecimalField;
 
             #endregion
         }
@@ -6148,6 +6200,64 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Reflector.SetField(testType, nameof(TestClass.StaticIntField).ToLowerInvariant(), true, value);
             result = Reflector.GetField(testType, nameof(TestClass.StaticIntField).ToLowerInvariant(), true);
             Assert.AreEqual(value, result);
+        }
+
+        [Test]
+        public void ClassStaticNonPrimitiveFieldGet()
+        {
+            // NOTE: It's important that here we use a type not used anywhere else (StaticTestClass*), and that unlike in the normal test cases, 
+            // we don't initialize StaticTestClass*.DecimalField and don't use system reflection first.
+            // It's because this test covers a rare use case that occurs in the .NET Runtime 2.0 only, which cannot be reproduced once the type is initialized.
+            // The issue occurs for uninitialized types only, (obtaining the type by typeof() leaves the type uninitialized) when accessing a static field of a non-primitive type.
+            // In that case the generated accessors may throw a NullReferenceException for the first time, which goes away once the type gets initialized.
+            Type testType = typeof(StaticTestClassGet);
+            FieldInfo fi = testType.GetField(nameof(StaticTestClassGet.DecimalField));
+            FieldAccessor accessor = FieldAccessor.GetAccessor(fi);
+            
+            Assert.DoesNotThrow(() => accessor.Get(null));
+        }
+
+        [Test]
+        public void ClassStaticNonPrimitiveFieldSet()
+        {
+            // NOTE: It's important that here we use a type that is not used in other tests; otherwise, the type may be initialized by other test cases.
+            // See the comments in ClassStaticNonPrimitiveFieldGet for more details.
+            Type testType = typeof(StaticTestClassSet);
+            FieldInfo fi = testType.GetField(nameof(StaticTestClassSet.DecimalField));
+            FieldAccessor accessor = FieldAccessor.GetAccessor(fi);
+            object value = 1m;
+
+            Assert.DoesNotThrow(() => accessor.Set(null, value));
+            Assert.AreEqual(value, accessor.Get(null));
+        }
+
+        [Test]
+        public void ClassStaticNonPrimitiveFieldGetGeneric()
+        {
+            // NOTE: It's important that here we use a type not used anywhere else (StaticTestClass*), and that unlike in the normal test cases, 
+            // we don't initialize StaticTestClass*.DecimalField and don't use system reflection first.
+            // It's because this test covers a rare use case that occurs in the .NET Runtime 2.0 only, which cannot be reproduced once the type is initialized.
+            // The issue occurs for uninitialized types only, (obtaining the type by typeof() leaves the type uninitialized) when accessing a static field of a non-primitive type.
+            // In that case the generated accessors may throw a NullReferenceException for the first time, which goes away once the type gets initialized.
+            Type testType = typeof(StaticTestClassGetGeneric);
+            FieldInfo fi = testType.GetField(nameof(StaticTestClassGetGeneric.DecimalField));
+            FieldAccessor accessor = FieldAccessor.GetAccessor(fi);
+            
+            Assert.DoesNotThrow(() => accessor.GetStaticValue<decimal>());
+        }
+
+        [Test]
+        public void ClassStaticNonPrimitiveFieldSetGeneric()
+        {
+            // NOTE: It's important that here we use a type that is not used in other tests; otherwise, the type may be initialized by other test cases.
+            // See the comments in ClassStaticNonPrimitiveFieldGet for more details.
+            Type testType = typeof(StaticTestClassSetGeneric);
+            FieldInfo fi = testType.GetField(nameof(StaticTestClassSetGeneric.DecimalField));
+            FieldAccessor accessor = FieldAccessor.GetAccessor(fi);
+            decimal value = 1m;
+
+            Assert.DoesNotThrow(() => accessor.SetStaticValue(value));
+            Assert.AreEqual(value, accessor.Get(null));
         }
 
         #endregion

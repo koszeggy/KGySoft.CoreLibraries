@@ -3,7 +3,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 //  File: FieldAccessor.cs
 ///////////////////////////////////////////////////////////////////////////////
-//  Copyright (C) KGy SOFT, 2005-2025 - All Rights Reserved
+//  Copyright (C) KGy SOFT, 2005-2026 - All Rights Reserved
 //
 //  You should have received a copy of the LICENSE file at the top-level
 //  directory of this distribution.
@@ -296,6 +296,24 @@ namespace KGySoft.Reflection
                 // For the best performance not validating the arguments in advance
                 Setter.Invoke(instance, value);
             }
+#if NET35
+            catch (NullReferenceException) when (Field.DeclaringType is Type declaringType)
+            {
+                // .NET Runtime 2.0 issue: When accessing a static, non-primitive field of an uninitialized type, we get a NullReferenceException.
+                // In this case we force executing the static constructor first, and then repeat the invocation attempt. We could prevent the exception
+                // by putting this line before the first Invoke, but as this can occur for the very first time only, we don't want to affect the performance of the hot path.
+                try
+                {
+                    RuntimeHelpers.RunClassConstructor(declaringType.TypeHandle);
+                    Setter.Invoke(instance, value);
+                }
+                catch (Exception e)
+                {
+                    // We still perform the post validation, e.g. null/invalid for an instance field.
+                    PostValidate(instance, null, e, false);
+                }
+            }
+#endif
             catch (Exception e)
             {
                 // Post-validation if there was any exception. We do this for better performance on the happy path.
@@ -330,6 +348,25 @@ namespace KGySoft.Reflection
                 // For the best performance not validating the arguments in advance
                 return Getter.Invoke(instance);
             }
+#if NET35
+            catch (NullReferenceException) when (Field.DeclaringType is Type declaringType)
+            {
+                // .NET Runtime 2.0 issue: When accessing a static, non-primitive field of an uninitialized type, we get a NullReferenceException.
+                // In this case we force executing the static constructor first, and then repeat the invocation attempt. We could prevent the exception
+                // by putting this line before the first Invoke, but as this can occur for the very first time only, we don't want to affect the performance of the hot path.
+                try
+                {
+                    RuntimeHelpers.RunClassConstructor(declaringType.TypeHandle);
+                    return Getter.Invoke(instance);
+                }
+                catch (Exception e)
+                {
+                    // We still perform the post validation, e.g. null/invalid for an instance field.
+                    PostValidate(instance, null, e, false);
+                    return null;
+                }
+            }
+#endif
             catch (Exception e)
             {
                 // Post-validation if there was any exception. We do this for better performance on the happy path.
@@ -350,10 +387,27 @@ namespace KGySoft.Reflection
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public void SetStaticValue<TField>(TField value)
         {
-            if (GenericSetter is Action<TField> action)
-                action.Invoke(value);
-            else
+            if (GenericSetter is not Action<TField> action)
+            {
                 ThrowStatic<TField>();
+                return; // actually never reached, just to satisfy the compiler
+            }
+
+#if NET35
+            try
+            {
+                action.Invoke(value);
+                return;
+            }
+            catch (NullReferenceException) when (Field.DeclaringType is Type declaringType)
+            {
+                // .NET Runtime 2.0 issue: When accessing a static, non-primitive field of an uninitialized type, we get a NullReferenceException.
+                // In this case we force executing the static constructor first, and then repeat the invocation attempt. We could prevent the exception
+                // by putting this line before the first Invoke, but as this can occur for the very first time only, we don't want to affect the performance of the hot path.
+                RuntimeHelpers.RunClassConstructor(declaringType.TypeHandle);
+            }
+#endif
+            action.Invoke(value);
         }
 
         /// <summary>
@@ -366,7 +420,25 @@ namespace KGySoft.Reflection
         /// <exception cref="ArgumentException"><typeparamref name="TField"/> is invalid.</exception>
         /// <exception cref="NotSupportedException">On .NET Framework the code is executed in a partially trusted domain with insufficient permissions.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public TField GetStaticValue<TField>() => GenericGetter is Func<TField> func ? func.Invoke() : ThrowStatic<TField>();
+        public TField GetStaticValue<TField>()
+        {
+            if (GenericGetter is not Func<TField> func)
+                return ThrowStatic<TField>();
+#if NET35
+            try
+            {
+                return func.Invoke();
+            }
+            catch (NullReferenceException) when (Field.DeclaringType is Type declaringType)
+            {
+                // .NET Runtime 2.0 issue: When accessing a static, non-primitive field of an uninitialized type, we get a NullReferenceException.
+                // In this case we force executing the static constructor first, and then repeat the invocation attempt. We could prevent the exception
+                // by putting this line before the first Invoke, but as this can occur for the very first time only, we don't want to affect the performance of the hot path.
+                RuntimeHelpers.RunClassConstructor(declaringType.TypeHandle);
+            }
+#endif
+            return func.Invoke();
+        }
 
         /// <summary>
         /// Sets the strongly typed value of an instance field in a reference type.
@@ -448,7 +520,7 @@ namespace KGySoft.Reflection
         public TField GetInstanceValue<TInstance, TField>(in TInstance instance) where TInstance : struct
             => GenericGetter is ValueTypeFunction<TInstance, TField> func ? func.Invoke(instance) : ThrowInstance<TField>();
 
-        #endregion
+#endregion
 
         #region Private Methods
 
@@ -869,19 +941,21 @@ namespace KGySoft.Reflection
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
+        [ContractAnnotation("=> halt"), DoesNotReturn]
         private T ThrowStatic<T>() => !Field.IsStatic
             ? Throw.InvalidOperationException<T>(Res.ReflectionStaticFieldExpectedGeneric(Field.Name, Field.DeclaringType!))
             : Throw.ArgumentException<T>(Res.ReflectionCannotInvokeFieldGeneric(Field.Name, Field.DeclaringType));
 
         [MethodImpl(MethodImplOptions.NoInlining)]
+        [ContractAnnotation("=> halt"), DoesNotReturn]
         private T ThrowInstance<T>() => Field.IsStatic
             ? Throw.InvalidOperationException<T>(Res.ReflectionInstanceFieldExpectedGeneric(Field.Name, Field.DeclaringType))
             : Throw.ArgumentException<T>(Res.ReflectionCannotInvokeFieldGeneric(Field.Name, Field.DeclaringType));
 
         #endregion
 
-        #endregion
+#endregion
 
-        #endregion
+#endregion
     }
 }
