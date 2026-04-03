@@ -3,7 +3,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 //  File: Program.cs
 ///////////////////////////////////////////////////////////////////////////////
-//  Copyright (C) KGy SOFT, 2005-2025 - All Rights Reserved
+//  Copyright (C) KGy SOFT, 2005-2026 - All Rights Reserved
 //
 //  You should have received a copy of the LICENSE file at the top-level
 //  directory of this distribution.
@@ -121,7 +121,7 @@ namespace KGySoft.CoreLibraries
             Console.ForegroundColor = ConsoleColor.Gray;
             Console.WriteLine(FrameworkVersion);
 
-            TestFilter filter = TestFilter.Empty; // (TestFilter)Reflection.Reflector.CreateInstance(Reflection.Reflector.ResolveType("NUnit.Framework.Internal.Filters.TestNameFilter")!, "FormatsTest");
+            TestFilter filter = TestFilter.Empty; // (TestFilter)Reflection.Reflector.CreateInstance(Reflection.Reflector.ResolveType("NUnit.Framework.Internal.Filters.TestNameFilter")!, "ClassStaticNonPrimitiveFieldSetGeneric");
             var runner = new NUnitTestAssemblyRunner(new DefaultTestAssemblyBuilder());
             runner.Load(typeof(Program).Assembly, new Dictionary<string, object>());
             Console.WriteLine("Executing tests...");
