@@ -299,19 +299,15 @@ namespace KGySoft.Reflection
 #if NET35
             catch (NullReferenceException) when (Field.DeclaringType is Type declaringType)
             {
+                // Passing null to exception, so throws only on actual validation error, e.g. null/invalid for an instance field.
+                // That's why the 2nd attempt is not in an inner try-catch: if it throws again, we let the actual exception propagate.
+                PostValidate(instance, value, null, true);
+
                 // .NET Runtime 2.0 issue: When accessing a static, non-primitive field of an uninitialized type, we get a NullReferenceException.
                 // In this case we force executing the static constructor first, and then repeat the invocation attempt. We could prevent the exception
                 // by putting this line before the first Invoke, but as this can occur for the very first time only, we don't want to affect the performance of the hot path.
-                try
-                {
-                    RuntimeHelpers.RunClassConstructor(declaringType.TypeHandle);
-                    Setter.Invoke(instance, value);
-                }
-                catch (Exception e)
-                {
-                    // We still perform the post validation, e.g. null/invalid for an instance field.
-                    PostValidate(instance, null, e, false);
-                }
+                RuntimeHelpers.RunClassConstructor(declaringType.TypeHandle);
+                Setter.Invoke(instance, value);
             }
 #endif
             catch (Exception e)
@@ -351,20 +347,15 @@ namespace KGySoft.Reflection
 #if NET35
             catch (NullReferenceException) when (Field.DeclaringType is Type declaringType)
             {
+                // Passing null to exception, so throws only on actual validation error, e.g. null/invalid for an instance field.
+                // That's why the 2nd attempt is not in an inner try-catch: if it throws again, we let the actual exception propagate.
+                PostValidate(instance, null, null, false);
+
                 // .NET Runtime 2.0 issue: When accessing a static, non-primitive field of an uninitialized type, we get a NullReferenceException.
                 // In this case we force executing the static constructor first, and then repeat the invocation attempt. We could prevent the exception
                 // by putting this line before the first Invoke, but as this can occur for the very first time only, we don't want to affect the performance of the hot path.
-                try
-                {
-                    RuntimeHelpers.RunClassConstructor(declaringType.TypeHandle);
-                    return Getter.Invoke(instance);
-                }
-                catch (Exception e)
-                {
-                    // We still perform the post validation, e.g. null/invalid for an instance field.
-                    PostValidate(instance, null, e, false);
-                    return null;
-                }
+                RuntimeHelpers.RunClassConstructor(declaringType.TypeHandle);
+                return Getter.Invoke(instance);
             }
 #endif
             catch (Exception e)
@@ -909,8 +900,10 @@ namespace KGySoft.Reflection
 #endif
 
         [MethodImpl(MethodImplOptions.NoInlining)]
+#if !NET35
         [ContractAnnotation("=> halt"), DoesNotReturn]
-        private void PostValidate(object? instance, object? value, Exception exception, bool isSetter)
+#endif
+        private void PostValidate(object? instance, object? value, Exception? exception, bool isSetter)
         {
             if (Field.DeclaringType?.ContainsGenericParameters == true)
                 Throw.InvalidOperationException(Res.ReflectionGenericMember);
@@ -933,6 +926,9 @@ namespace KGySoft.Reflection
                     Throw.ArgumentException(Argument.value, Res.NotAnInstanceOfType(valueParamType));
                 }
             }
+
+            if (exception is null)
+                return; 
 
             ThrowIfSecurityConflict(exception, isSetter ? setterPrefix : getterPrefix);
 
