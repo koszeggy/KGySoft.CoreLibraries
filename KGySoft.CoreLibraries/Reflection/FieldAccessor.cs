@@ -511,7 +511,7 @@ namespace KGySoft.Reflection
         public TField GetInstanceValue<TInstance, TField>(in TInstance instance) where TInstance : struct
             => GenericGetter is ValueTypeFunction<TInstance, TField> func ? func.Invoke(instance) : ThrowInstance<TField>();
 
-#endregion
+        #endregion
 
         #region Private Methods
 
@@ -900,9 +900,6 @@ namespace KGySoft.Reflection
 #endif
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-#if !NET35
-        [ContractAnnotation("=> halt"), DoesNotReturn]
-#endif
         private void PostValidate(object? instance, object? value, Exception? exception, bool isSetter)
         {
             if (Field.DeclaringType?.ContainsGenericParameters == true)
@@ -928,7 +925,7 @@ namespace KGySoft.Reflection
             }
 
             if (exception is null)
-                return; 
+                return;
 
             ThrowIfSecurityConflict(exception, isSetter ? setterPrefix : getterPrefix);
 
@@ -950,8 +947,8 @@ namespace KGySoft.Reflection
 
         #endregion
 
-#endregion
+        #endregion
 
-#endregion
+        #endregion
     }
 }
