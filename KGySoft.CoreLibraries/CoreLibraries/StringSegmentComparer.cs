@@ -237,7 +237,7 @@ namespace KGySoft.CoreLibraries
 #if NET35 || NET40 || NET45
             [NonSerialized]private StringComparer stringComparer = null!;
 #endif
-#if NETSTANDARD2_1 || NETCOREAPP2_1 || NETCOREAPP3_0
+#if NETSTANDARD2_1 || NETCOREAPP2_1_OR_GREATER && !NET5_0_OR_GREATER
             [NonSerialized]private StringComparison? knownComparison;
 #endif
 

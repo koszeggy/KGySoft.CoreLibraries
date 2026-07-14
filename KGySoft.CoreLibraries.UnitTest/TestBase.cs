@@ -21,11 +21,16 @@ using System;
 using System.Collections;
 #if !NET35
 using System.Collections.Concurrent;
-using System.Collections.ObjectModel;
 #endif
 using System.Collections.Generic;
+#if NET8_0_OR_GREATER
+using System.Collections.Frozen;
+#endif
 #if NETCOREAPP
 using System.Collections.Immutable;
+#endif
+#if !NET35
+using System.Collections.ObjectModel;
 #endif
 using System.Collections.Specialized;
 #if NETFRAMEWORK
@@ -440,6 +445,9 @@ namespace KGySoft.CoreLibraries
                 || type.IsGenericTypeOf(typeof(ReadOnlyCollection<>)) // ConcurrentDictionary.Keys/Values
                 || type.IsGenericTypeOf(typeof(ConcurrentBag<>))
 #endif
+#if NET8_0_OR_GREATER
+                || type.IsImplementationOfGenericType(typeof(FrozenSet<>))
+#endif
                 )
             {
                 referenceObjects = referenceObjects.Cast<object>().OrderBy(i => i?.ToString()).ToList();
@@ -449,6 +457,9 @@ namespace KGySoft.CoreLibraries
             else if (type.IsGenericTypeOf(typeof(ConcurrentDictionary<,>))
 #if NETCOREAPP
                 || type.IsGenericTypeOf(typeof(ImmutableDictionary<,>.Builder))
+#endif
+#if NET8_0_OR_GREATER
+                || type.IsImplementationOfGenericType(typeof(FrozenDictionary<,>))
 #endif
                      )
             {
