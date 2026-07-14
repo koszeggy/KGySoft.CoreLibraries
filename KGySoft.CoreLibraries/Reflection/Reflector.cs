@@ -3192,8 +3192,6 @@ namespace KGySoft.Reflection
         /// <returns><see langword="true"/>, if the field could be read; <see langword="false"/>, if a field with name <paramref name="fieldName"/> could not be found.</returns>
         /// <remarks>
         /// <para><paramref name="fieldName"/> can refer public and non-public fields.</para>
-        /// <para>If you are not sure whether a field with the specified <paramref name="fieldName"/> exists, then you can use the
-        /// <see cref="O:KGySoft.Reflection.Reflector.TryGetField">TryGetField</see> methods instead.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way.</para>
         /// </remarks>
         public static bool TryGetField(object instance, string fieldName, bool ignoreCase, out object? value, ReflectionWays way = ReflectionWays.Auto)
@@ -3218,8 +3216,6 @@ namespace KGySoft.Reflection
         /// <returns><see langword="true"/>, if the field could be read; <see langword="false"/>, if a field with name <paramref name="fieldName"/> could not be found.</returns>
         /// <remarks>
         /// <para><paramref name="fieldName"/> can refer public and non-public fields.</para>
-        /// <para>If you are not sure whether a field with the specified <paramref name="fieldName"/> exists, then you can use the
-        /// <see cref="O:KGySoft.Reflection.Reflector.TryGetField">TryGetField</see> methods instead.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way.</para>
         /// </remarks>
         public static bool TryGetField(object instance, string fieldName, out object? value, ReflectionWays way = ReflectionWays.Auto)
@@ -3237,8 +3233,6 @@ namespace KGySoft.Reflection
         /// <returns><see langword="true"/>, if the field could be read; <see langword="false"/>, if a field with name <paramref name="fieldName"/> could not be found.</returns>
         /// <remarks>
         /// <para><paramref name="fieldName"/> can refer public and non-public fields.</para>
-        /// <para>If you are not sure whether a field with the specified <paramref name="fieldName"/> exists, then you can use the
-        /// <see cref="O:KGySoft.Reflection.Reflector.TryGetField">TryGetField</see> methods instead.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way.</para>
         /// </remarks>
         public static bool TryGetField(Type type, string fieldName, bool ignoreCase, out object? value, ReflectionWays way = ReflectionWays.Auto)
@@ -3262,8 +3256,6 @@ namespace KGySoft.Reflection
         /// <returns><see langword="true"/>, if the field could be read; <see langword="false"/>, if a field with name <paramref name="fieldName"/> could not be found.</returns>
         /// <remarks>
         /// <para><paramref name="fieldName"/> can refer public and non-public fields.</para>
-        /// <para>If you are not sure whether a field with the specified <paramref name="fieldName"/> exists, then you can use the
-        /// <see cref="O:KGySoft.Reflection.Reflector.TryGetField">TryGetField</see> methods instead.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way.</para>
         /// </remarks>
         public static bool TryGetField(Type type, string fieldName, out object? value, ReflectionWays way = ReflectionWays.Auto)

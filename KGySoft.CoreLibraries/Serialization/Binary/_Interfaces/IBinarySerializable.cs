@@ -89,8 +89,8 @@ namespace KGySoft.Serialization.Binary
     ///     }
     /// }]]>
     /// </code>
-    /// The following example introduces a pattern that can be used for serialization and deserialization serializable base and derived classes
-    /// and with versioned content (optional fields):
+    /// The following example introduces a pattern that can be used to serialize and deserialize
+    /// a serializable base and derived classes with versioned content (optional fields):
     /// <code lang="C#"><![CDATA[
     /// using System.IO;
     /// using KGySoft.Serialization.Binary;
