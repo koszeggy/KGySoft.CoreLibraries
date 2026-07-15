@@ -21,7 +21,10 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 #endif
 #if !NET35
-using System.Linq.Expressions; 
+using System.Linq.Expressions;
+#endif
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP
+using System.Runtime.CompilerServices;
 #endif
 using System.Runtime.Serialization;
 using System.Security;
@@ -107,16 +110,15 @@ namespace KGySoft.CoreLibraries
 
         #endregion
 
-        #region FallbackEnumComparer
+        #region PartiallyTrustedEnumComparer
 #if !NET35
 
         /// <summary>
-        /// A fallback comparer that uses the standard <see cref="EqualityComparer{T}"/> and <see cref="Comparer{T}"/>
-        /// classes for comparisons and dynamic delegates for conversions.
-        /// This class can be used from .NET Standard 2.0 and partially trusted domains.
+        /// An enum comparer that uses the standard <see cref="EqualityComparer{T}"/> and <see cref="Comparer{T}"/> classes for comparisons,
+        /// and dynamic delegates for conversions. This class can be used from .NET Standard 2.0 and partially trusted domains.
         /// </summary>
         [Serializable]
-        private sealed class FallbackEnumComparer : EnumComparer<TEnum>
+        private sealed class PartiallyTrustedEnumComparer : EnumComparer<TEnum>
         {
             #region Fields
 
@@ -209,6 +211,116 @@ namespace KGySoft.CoreLibraries
 #endif
         #endregion
 
+        #region NoDynamicCodeEnumComparer
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP
+
+        /// <summary>
+        /// An enum comparer that uses the standard <see cref="EqualityComparer{T}"/> and <see cref="Comparer{T}"/> classes for comparisons,
+        /// and explicit code for conversions. This class can be used in AOT mode. It typically performs better than the delegate calls
+        /// in PartiallyTrustedEnumComparer (except the ToEnum method in .NET 4.x), but due to the pointer arithmetics, it cannot be used in a net4.x partially trusted domain.
+        /// </summary>
+        [Serializable]
+        private sealed class NoDynamicCodeEnumComparer : EnumComparer<TEnum>
+        {
+            #region Fields
+
+            private static readonly RangeInfo underlyingInfo = RangeInfo.GetRangeInfo(Enum.GetUnderlyingType(typeof(TEnum)));
+
+            #endregion
+
+            #region Methods
+
+            #region Public Methods
+
+            public override bool Equals(TEnum x, TEnum y) => EqualityComparer<TEnum>.Default.Equals(x, y);
+            public override int GetHashCode(TEnum obj) => EqualityComparer<TEnum>.Default.GetHashCode(obj!);
+            public override int Compare(TEnum x, TEnum y) => Comparer<TEnum>.Default.Compare(x, y);
+
+            #endregion
+
+            #region Protected-Internal Methods
+#pragma warning disable CS8500 // This takes the address of, gets the size of, or declares a pointer to a managed type - no problem, EnumComparer.ctor ensures that TEnum is always a value type
+
+            [SecuritySafeCritical]
+            protected internal override TEnum ToEnum(ulong value)
+            {
+                //return (TEnum)Enum.ToObject(typeof(TEnum), value);
+                unsafe
+                {
+                    // In non-AOT mode the JIT compiler will eliminate all but one branches. Not using RefExtensions because no fixed context is needed for value.
+                    switch (sizeof(TEnum))
+                    {
+                        case 4:
+                            uint value32 = (uint)value;
+                            return (*(TEnum*)&value32);
+                        case 1:
+                            uint value8 = (byte)value;
+                            return (*(TEnum*)&value8);
+                        case 2:
+                            uint value16 = (uint)value;
+                            return (*(TEnum*)&value16);
+                        default:
+                            Debug.Assert(sizeof(TEnum) == 8);
+                            return (*(TEnum*)&value);
+                    }
+                }
+            }
+
+            [SecuritySafeCritical]
+            protected internal override ulong ToUInt64(TEnum value)
+            {
+                //return !underlyingInfo.IsSigned
+                //    ? Convert.ToUInt64(value)
+                //    : (ulong)Convert.ToInt64(value) & underlyingInfo.SizeMask;
+                unsafe
+                {
+                    // In non-AOT mode the JIT compiler will eliminate all but one branches. Not using RefExtensions because no fixed context is needed for value.
+                    switch (sizeof(TEnum))
+                    {
+                        case 4:
+                            return underlyingInfo.IsSigned ? (ulong)*(int*)&value & underlyingInfo.SizeMask : (*(uint*)&value);
+                        case 1:
+                            return underlyingInfo.IsSigned ? (ulong)(*(sbyte*)&value) & underlyingInfo.SizeMask : (*(byte*)&value);
+                        case 2:
+                            return underlyingInfo.IsSigned ? (ulong)(*(short*)&value) & underlyingInfo.SizeMask : (*(ushort*)&value);
+                        default:
+                            Debug.Assert(sizeof(TEnum) == 8);
+                            return (*(ulong*)&value);
+                    }
+                }
+            }
+
+            [SecuritySafeCritical]
+            protected internal override long ToInt64(TEnum value)
+            {
+                //return Convert.ToInt64(value);
+                unsafe
+                {
+                    // In non-AOT mode the JIT compiler will eliminate all but one branches. Not using RefExtensions because no fixed context is needed for value.
+                    switch (sizeof(TEnum))
+                    {
+                        case 4:
+                            return underlyingInfo.IsSigned ? (*(int*)&value) : (*(uint*)&value);
+                        case 1:
+                            return underlyingInfo.IsSigned ? (*(sbyte*)&value) : (*(byte*)&value);
+                        case 2:
+                            return underlyingInfo.IsSigned ? (*(short*)&value) : (*(ushort*)&value);
+                        default:
+                            Debug.Assert(sizeof(TEnum) == 8);
+                            return (*(long*)&value);
+                    }
+                }
+            }
+
+#pragma warning restore CS8500 // This takes the address of, gets the size of, or declares a pointer to a managed type
+            #endregion
+
+            #endregion
+        }
+
+#endif
+        #endregion
+
         #endregion
 
         #region Fields
@@ -227,16 +339,20 @@ namespace KGySoft.CoreLibraries
             EnumComparerBuilder.GetComparer<TEnum>();
 #elif NETFRAMEWORK
             EnvironmentHelper.IsPartiallyTrustedDomain
-                ? new FallbackEnumComparer()
+                ? new PartiallyTrustedEnumComparer()
                 : EnumComparerBuilder.GetComparer<TEnum>();
 #elif NETSTANDARD2_0
-            new FallbackEnumComparer();
-#else
+            new PartiallyTrustedEnumComparer();
+#elif NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
             // NOTE: TypeBuilder.CreateType may throw a BadImageFormat exception on Android, .NET 6.
             //       And though it works well on Linux (or even on Android with the .NET Standard 2.1 build) not risking using it on non-Windows platforms
+            EnvironmentHelper.IsWindows && RuntimeFeature.IsDynamicCodeCompiled
+                ? EnumComparerBuilder.GetComparer<TEnum>()
+                : new NoDynamicCodeEnumComparer();
+#else // .NET Core 2.x
             EnvironmentHelper.IsWindows
                 ? EnumComparerBuilder.GetComparer<TEnum>()
-                : new FallbackEnumComparer();
+                : new NoDynamicCodeEnumComparer();
 #endif
 
         #endregion
