@@ -20,6 +20,9 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Reflection;
+#if NETCOREAPP3_0_OR_GREATER
+using System.Runtime.CompilerServices;
+#endif
 
 using KGySoft.Annotations;
 #if NETFRAMEWORK
@@ -7005,6 +7008,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Assert.AreEqual(args[0], result.IntProp);
             Assert.AreNotEqual(args[2], parameters[2]);
 
+#if NET8_0_OR_GREATER
+            Console.Write("System Reflection.ConstructorInvoker...");
+            var inv = ConstructorInvoker.Create(ci);
+            parameters = (object[])args.Clone();
+            result = (TestClass)inv.Invoke(parameters[0], parameters[1], parameters[2], parameters[3]);
+            Assert.AreEqual(args[0], result.IntProp);
+#endif
+
             Console.Write("CreateInstanceAccessor General...");
             parameters = (object[])args.Clone();
             result = (TestClass)accessor.CreateInstance(parameters);
@@ -7167,9 +7178,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 #if NETCOREAPP2_0 && NETSTANDARD_TEST
             Throws<PlatformNotSupportedException>(() => accessor.CreateInstance(parameters));
 #else
-            result = (UnsafeTestClass)accessor.CreateInstance(parameters);
-            Assert.AreEqual(args[0], (IntPtr)result.InstanceField);
-            Assert.AreNotEqual(args[2], parameters[2]);
+#if NETCOREAPP3_0_OR_GREATER
+            if (!RuntimeFeature.IsDynamicCodeSupported)
+                Throws<PlatformNotSupportedException>(() => accessor.CreateInstance(parameters));
+            else
+#endif
+            {
+                result = (UnsafeTestClass)accessor.CreateInstance(parameters);
+                Assert.AreEqual(args[0], (IntPtr)result.InstanceField);
+                Assert.AreNotEqual(args[2], parameters[2]);
+            }
 #endif
 
             Console.Write("CreateInstanceAccessor NonGeneric...");
@@ -7177,8 +7195,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 #if NETCOREAPP2_0 && NETSTANDARD_TEST
             Throws<PlatformNotSupportedException>(() => accessor.CreateInstance(parameters[0], parameters[1], parameters[2], parameters[3]));
 #else
-            result = (UnsafeTestClass)accessor.CreateInstance(parameters[0], parameters[1], parameters[2], parameters[3]);
-            Assert.AreEqual(args[0], (IntPtr)result.InstanceField);
+#if NETCOREAPP3_0_OR_GREATER
+            if (!RuntimeFeature.IsDynamicCodeSupported)
+                Throws<PlatformNotSupportedException>(() => accessor.CreateInstance(parameters[0], parameters[1], parameters[2], parameters[3]));
+            else
+#endif
+            {
+                result = (UnsafeTestClass)accessor.CreateInstance(parameters[0], parameters[1], parameters[2], parameters[3]);
+                Assert.AreEqual(args[0], (IntPtr)result.InstanceField);
+            }
 #endif
 
             Console.Write("CreateInstanceAccessor Generic...");
@@ -7186,8 +7211,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 #if NETCOREAPP2_0 && NETSTANDARD_TEST
             Throws<PlatformNotSupportedException>(() => accessor.CreateInstance<UnsafeTestClass, IntPtr, IntPtr, IntPtr, IntPtr>((IntPtr)parameters[0], (IntPtr)parameters[1], default, (IntPtr)parameters[3]));
 #else
-            result = accessor.CreateInstance<UnsafeTestClass, IntPtr, IntPtr, IntPtr, IntPtr>((IntPtr)parameters[0], (IntPtr)parameters[1], default, (IntPtr)parameters[3]);
-            Assert.AreEqual(args[0], (IntPtr)result.InstanceField);
+#if NETCOREAPP3_0_OR_GREATER
+            if (!RuntimeFeature.IsDynamicCodeSupported)
+                Throws<PlatformNotSupportedException>(() => accessor.CreateInstance<UnsafeTestClass, IntPtr, IntPtr, IntPtr, IntPtr>((IntPtr)parameters[0], (IntPtr)parameters[1], default, (IntPtr)parameters[3]));
+            else
+#endif
+            {
+                result = accessor.CreateInstance<UnsafeTestClass, IntPtr, IntPtr, IntPtr, IntPtr>((IntPtr)parameters[0], (IntPtr)parameters[1], default, (IntPtr)parameters[3]);
+                Assert.AreEqual(args[0], (IntPtr)result.InstanceField);
+            }
 #endif
 
             Console.Write("Reflector...");
@@ -7195,9 +7227,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 #if NETCOREAPP2_0 && NETSTANDARD_TEST
             Throws<PlatformNotSupportedException>(() => Reflector.CreateInstance(ci, parameters));
 #else
-            result = (UnsafeTestClass)Reflector.CreateInstance(ci, parameters);
-            Assert.AreEqual(args[0], (IntPtr)result.InstanceField);
-            Assert.AreNotEqual(args[2], parameters[2]);
+#if NETCOREAPP3_0_OR_GREATER
+            if (!RuntimeFeature.IsDynamicCodeSupported)
+                Throws<PlatformNotSupportedException>(() => Reflector.CreateInstance(ci, parameters));
+            else
+#endif
+            {
+                result = (UnsafeTestClass)Reflector.CreateInstance(ci, parameters);
+                Assert.AreEqual(args[0], (IntPtr)result.InstanceField);
+                Assert.AreNotEqual(args[2], parameters[2]);
+            }
 #endif
         }
 
@@ -7444,9 +7483,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 #if NETCOREAPP2_0 && NETSTANDARD_TEST
             Throws<PlatformNotSupportedException>(() => accessor.CreateInstance(parameters));
 #else
-            result = (UnsafeTestStruct)accessor.CreateInstance(parameters);
-            Assert.AreEqual(args[0], (IntPtr)result.ReadOnlyField);
-            Assert.AreNotEqual(args[2], parameters[2]);
+#if NETCOREAPP3_0_OR_GREATER
+            if (!RuntimeFeature.IsDynamicCodeSupported)
+                Throws<PlatformNotSupportedException>(() => accessor.CreateInstance(parameters));
+            else
+#endif
+            {
+                result = (UnsafeTestStruct)accessor.CreateInstance(parameters);
+                Assert.AreEqual(args[0], (IntPtr)result.ReadOnlyField);
+                Assert.AreNotEqual(args[2], parameters[2]);
+            }
 #endif
 
             Console.Write("CreateInstanceAccessor NonGeneric...");
@@ -7454,8 +7500,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 #if NETCOREAPP2_0 && NETSTANDARD_TEST
             Throws<PlatformNotSupportedException>(() => accessor.CreateInstance(parameters[0], parameters[1], parameters[2], parameters[3]));
 #else
-            result = (UnsafeTestStruct)accessor.CreateInstance(parameters[0], parameters[1], parameters[2], parameters[3]);
-            Assert.AreEqual(args[0], (IntPtr)result.ReadOnlyField);
+#if NETCOREAPP3_0_OR_GREATER
+            if (!RuntimeFeature.IsDynamicCodeSupported)
+                Throws<PlatformNotSupportedException>(() => accessor.CreateInstance(parameters[0], parameters[1], parameters[2], parameters[3]));
+            else
+#endif
+            {
+                result = (UnsafeTestStruct)accessor.CreateInstance(parameters[0], parameters[1], parameters[2], parameters[3]);
+                Assert.AreEqual(args[0], (IntPtr)result.ReadOnlyField);
+            }
 #endif
 
             Console.Write("CreateInstanceAccessor Generic...");
@@ -7463,8 +7516,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 #if NETCOREAPP2_0 && NETSTANDARD_TEST
             Throws<PlatformNotSupportedException>(() => accessor.CreateInstance<UnsafeTestStruct, IntPtr, IntPtr, IntPtr, IntPtr>((IntPtr)parameters[0], (IntPtr)parameters[1], default, (IntPtr)parameters[3]));
 #else
-            result = accessor.CreateInstance<UnsafeTestStruct, IntPtr, IntPtr, IntPtr, IntPtr>((IntPtr)parameters[0], (IntPtr)parameters[1], default, (IntPtr)parameters[3]);
-            Assert.AreEqual(args[0], (IntPtr)result.ReadOnlyField);
+#if NETCOREAPP3_0_OR_GREATER
+            if (!RuntimeFeature.IsDynamicCodeSupported)
+                Throws<PlatformNotSupportedException>(() => accessor.CreateInstance<UnsafeTestStruct, IntPtr, IntPtr, IntPtr, IntPtr>((IntPtr)parameters[0], (IntPtr)parameters[1], default, (IntPtr)parameters[3]));
+            else
+#endif
+            {
+                result = accessor.CreateInstance<UnsafeTestStruct, IntPtr, IntPtr, IntPtr, IntPtr>((IntPtr)parameters[0], (IntPtr)parameters[1], default, (IntPtr)parameters[3]);
+                Assert.AreEqual(args[0], (IntPtr)result.ReadOnlyField);
+            }
 #endif
 
             Console.Write("Reflector...");
@@ -7472,9 +7532,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 #if NETCOREAPP2_0 && NETSTANDARD_TEST
             Throws<PlatformNotSupportedException>(() => Reflector.CreateInstance(ci, parameters));
 #else
-            result = (UnsafeTestStruct)Reflector.CreateInstance(ci, parameters);
-            Assert.AreEqual(args[0], (IntPtr)result.ReadOnlyField);
-            Assert.AreNotEqual(args[2], parameters[2]);
+#if NETCOREAPP3_0_OR_GREATER
+            if (!RuntimeFeature.IsDynamicCodeSupported)
+                Throws<PlatformNotSupportedException>(() => Reflector.CreateInstance(ci, parameters));
+            else
+#endif
+            {
+                result = (UnsafeTestStruct)Reflector.CreateInstance(ci, parameters);
+                Assert.AreEqual(args[0], (IntPtr)result.ReadOnlyField);
+                Assert.AreNotEqual(args[2], parameters[2]);
+            }
 #endif
         }
 

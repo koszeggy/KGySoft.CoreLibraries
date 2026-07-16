@@ -32,16 +32,22 @@ using KGySoft.CoreLibraries;
 #if !(NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER)
 #pragma warning disable CS8763 // A method marked [DoesNotReturn] should not return - false alarm, ExceptionDispatchInfo.Throw() does not return either.
 #endif
+#if !NET8_0_OR_GREATER
+#pragma warning disable CS1574 // XML comment has cref attribute that could not be resolved - Some types in the documentation are not available on all platform targets. 
+#endif
 
 #endregion
 
 namespace KGySoft.Reflection
 {
+
     /// <summary>
     /// Provides an efficient way for creating objects via dynamically created delegates.
     /// <div style="display: none;"><br/>See the <a href="https://koszeggy.github.io/docs/corelibraries/html/T_KGySoft_Reflection_CreateInstanceAccessor.htm">online help</a> for an example.</div>
     /// </summary>
     /// <remarks>
+    /// <note>In Native AOT (Ahead of Time) deployment mode dynamic IL code generation is not possible, in which case this class fallbacks to regular reflection
+    /// (or <see cref="ConstructorInvoker"/> on .NET 8.0 and later if available), which can be significantly slower. See the <strong>Examples</strong> section for performance comparisons.</note>
     /// <para>You can obtain a <see cref="CreateInstanceAccessor"/> instance by the static <see cref="O:KGySoft.Reflection.CreateInstanceAccessor.GetAccessor">GetAccessor</see> methods.
     /// There are two overloads of them: <see cref="GetAccessor(Type)"/> can be used for types with parameterless constructors and for creating value types without a constructor,
     /// and the <see cref="GetAccessor(ConstructorInfo)"/> overload is for creating an instance by a specified constructor (with or without parameters).</para>
@@ -471,6 +477,10 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <typeparam name="TInstance">The type of the created instance.</typeparam>
         /// <returns>The created instance.</returns>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode the generic accessors use interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it is slower than using the non-generic alternatives.</note>
+        /// </remarks>
         /// <exception cref="NotSupportedException">This <see cref="CreateInstanceAccessor"/> represents a constructor with more than four parameters.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="CreateInstanceAccessor"/> represents a static constructor, a constructor of an abstract class,
@@ -485,6 +495,10 @@ namespace KGySoft.Reflection
         /// <typeparam name="T">The type of the parameter.</typeparam>
         /// <param name="param">The value of the parameter.</param>
         /// <returns>The created instance.</returns>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode the generic accessors use interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it is slower than using the non-generic alternatives.</note>
+        /// </remarks>
         /// <exception cref="NotSupportedException">This <see cref="CreateInstanceAccessor"/> represents a constructor with more than four parameters.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="CreateInstanceAccessor"/> represents a static constructor, a constructor of an abstract class,
@@ -501,6 +515,10 @@ namespace KGySoft.Reflection
         /// <param name="param1">The value of the first parameter.</param>
         /// <param name="param2">The value of the second parameter.</param>
         /// <returns>The created instance.</returns>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode the generic accessors use interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it is slower than using the non-generic alternatives.</note>
+        /// </remarks>
         /// <exception cref="NotSupportedException">This <see cref="CreateInstanceAccessor"/> represents a constructor with more than four parameters.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="CreateInstanceAccessor"/> represents a static constructor, a constructor of an abstract class,
@@ -519,6 +537,10 @@ namespace KGySoft.Reflection
         /// <param name="param2">The value of the second parameter.</param>
         /// <param name="param3">The value of the third parameter.</param>
         /// <returns>The created instance.</returns>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode the generic accessors use interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it is slower than using the non-generic alternatives.</note>
+        /// </remarks>
         /// <exception cref="NotSupportedException">This <see cref="CreateInstanceAccessor"/> represents a constructor with more than four parameters.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="CreateInstanceAccessor"/> represents a static constructor, a constructor of an abstract class,
@@ -539,6 +561,10 @@ namespace KGySoft.Reflection
         /// <param name="param3">The value of the third parameter.</param>
         /// <param name="param4">The value of the fourth parameter.</param>
         /// <returns>The created instance.</returns>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode the generic accessors use interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it is slower than using the non-generic alternatives.</note>
+        /// </remarks>
         /// <exception cref="NotSupportedException">This <see cref="CreateInstanceAccessor"/> represents a constructor with more than four parameters.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="CreateInstanceAccessor"/> represents a static constructor, a constructor of an abstract class,

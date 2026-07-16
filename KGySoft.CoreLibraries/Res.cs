@@ -991,6 +991,9 @@ namespace KGySoft
         /// <summary>Ref pointer type '{0}' is not supported in the .NET Standard 2.0 version of this library. If possible, try to use the .NET Standard 2.1 version or any .NET Core/Framework versions instead.</summary>
         internal static string ReflectionRefPointerTypeNotSupportedNetStandard20(Type type) => Get("Reflection_RefPointerTypeNotSupportedNetStandard20Format", type.GetName(TypeNameKind.LongName));
 
+        /// <summary>Ref pointer type '{0}' is not supported in AOT mode.</summary>
+        internal static string ReflectionRefPointerTypeNotSupportedAot(Type type) => Get("Reflection_RefPointerTypeNotSupportedAotFormat", type.GetName(TypeNameKind.LongName));
+
         /// <summary>Reflecting pointer type '{0}' is not supported on the Mono platform.</summary>
         internal static string ReflectionPointerTypeMonoNotSupported(Type type) => Get("Reflection_PointerTypeMonoNotSupportedFormat", type.GetName(TypeNameKind.LongName));
 

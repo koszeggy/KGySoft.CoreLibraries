@@ -248,13 +248,19 @@ namespace KGySoft.Reflection
 
         #region Private Protected Methods
 
-#if NETSTANDARD2_0
+#if NETSTANDARD2_0_OR_GREATER || NETCOREAPP3_0_OR_GREATER
         private protected void ThrowIfNotSupportedParameters()
         {
             if (ParameterTypes.FirstOrDefault(p => p.IsByRef && p.GetElementType()!.IsPointer) is Type t)
+#if NETSTANDARD2_0
                 Throw.PlatformNotSupportedException(Res.ReflectionRefPointerTypeNotSupportedNetStandard20(t));
-        }
 #else
+                Throw.PlatformNotSupportedException(Res.ReflectionRefPointerTypeNotSupportedAot(t));
+#endif
+        }
+#endif
+
+#if !NETSTANDARD2_0
         /// <summary>
         /// Gets a <see cref="DynamicMethod"/> that invokes the referred <paramref name="methodBase"/> (method or constructor).
         /// An overridden class may use this to create a delegate optionally.
