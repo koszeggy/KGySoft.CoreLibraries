@@ -73,7 +73,7 @@ namespace KGySoft.Reflection
             // Doing so also for pointers, as they are not supported by Expression trees.
             if (ctor.GetParameters().Any(p => p.ParameterType.IsByRef && (!p.IsIn || p.IsOut) || p.ParameterType.IsPointer))
             {
-                ThrowIfNotSupportedParameters();
+                ThrowIfHasRefPointerParameters();
                 return ctor.Invoke;
             }
 
@@ -102,7 +102,7 @@ namespace KGySoft.Reflection
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
             if (!RuntimeFeature.IsDynamicCodeSupported)
             {
-                ThrowIfNotSupportedParameters();
+                ThrowIfHasRefPointerParameters();
 #if NET8_0_OR_GREATER
                 ConstructorInvoker invoker = FallbackInvoker;
                 return args => invoker.Invoke(args.AsSpan());
@@ -174,7 +174,7 @@ namespace KGySoft.Reflection
             // For pointer parameter types using reflection as fallback because Expression trees do not support pointers.
             if (ParameterTypes.Any(p => p.IsPointer))
             {
-                ThrowIfNotSupportedParameters();
+                ThrowIfHasRefPointerParameters();
                 return SystemReflectionFallback();
             }
 
@@ -204,7 +204,7 @@ namespace KGySoft.Reflection
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
             if (!RuntimeFeature.IsDynamicCodeSupported)
             {
-                ThrowIfNotSupportedParameters();
+                ThrowIfHasRefPointerParameters();
                 return SystemReflectionFallback();
             }
 #endif
@@ -260,7 +260,7 @@ namespace KGySoft.Reflection
                 // The constructor has pointer parameters: fallback to System reflection, which supports pointer parameters as IntPtr...
                 if (ParameterTypes.Any(p => p.IsPointer))
                 {
-                    ThrowIfNotSupportedParameters(); // ...except ref pointers
+                    ThrowIfHasRefPointerParameters(); // ...except ref pointers
 
 #if NET8_0_OR_GREATER
                     // fallback to ConstructorInvoker

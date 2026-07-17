@@ -42,7 +42,7 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-#if NET5_0_OR_GREATER
+#if NETCOREAPP3_0_OR_GREATER
 using System.Runtime.CompilerServices;
 #endif
 #if NETFRAMEWORK
@@ -102,6 +102,12 @@ namespace KGySoft.CoreLibraries
                 : TargetFramework.Other;
 #else
             TargetFramework.Other;
+#endif
+
+#if NETCOREAPP3_0_OR_GREATER
+        protected static bool IsAot => !RuntimeFeature.IsDynamicCodeSupported;
+#else
+        protected static bool IsAot => false;
 #endif
 
         #endregion

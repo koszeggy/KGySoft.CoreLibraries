@@ -428,6 +428,9 @@ namespace KGySoft
         /// <summary>Generic access of potentially mutating value type members with pointer parameters or pointer return value is not supported in the .NET Standard 2.0 version of this library. Use the non-generic access instead.</summary>
         internal static string ReflectionValueTypeWithPointersGenericNetStandard20 => Get("Reflection_ValueTypeWithPointersGenericNetStandard20");
 
+        /// <summary>Generic access of potentially mutating value type members with pointer parameters or pointer return value is not supported in AOT mode. Use the non-generic access instead.</summary>
+        internal static string ReflectionValueTypeWithPointersGenericAot => Get("Reflection_ValueTypeWithPointersGenericAot");
+
         /// <summary>Resolving function pointers is not supported on this platform.</summary>
         internal static string ReflectionFunctionPointersNotSupported => Get("Reflection_FunctionPointersNotSupported");
 

@@ -32,6 +32,9 @@ using KGySoft.CoreLibraries;
 #if !(NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER)
 #pragma warning disable CS8763 // A method marked [DoesNotReturn] should not return - false alarm, ExceptionDispatchInfo.Throw() does not return either.
 #endif
+#if !NET8_0_OR_GREATER
+#pragma warning disable CS1574 // XML comment has cref attribute that could not be resolved - Some types in the documentation are not available on all platform targets. 
+#endif
 
 #endregion
 
@@ -42,6 +45,8 @@ namespace KGySoft.Reflection
     /// <div style="display: none;"><br/>See the <a href="https://koszeggy.github.io/docs/corelibraries/html/T_KGySoft_Reflection_MethodAccessor.htm">online help</a> for an example.</div>
     /// </summary>
     /// <remarks>
+    /// <note>In Native AOT (Ahead of Time) deployment mode dynamic IL code generation is not possible, in which case this class fallbacks to regular reflection
+    /// (or <see cref="MethodInvoker"/> on .NET 8.0 and later if available), which can be significantly slower. See the <strong>Examples</strong> section for performance comparisons.</note>
     /// <para>You can obtain a <see cref="MethodAccessor"/> instance by the static <see cref="GetAccessor">GetAccessor</see> method.</para>
     /// <para>The <see cref="Invoke(object, object[])"/> method can be used to invoke the method in general cases. It can be used even for methods with parameters passed by reference.
     /// To obtain the result of possible <see langword="ref"/>/<see langword="out"/> parameters, pass a preallocated array to the <see cref="Invoke(object, object[])"/> method.
@@ -152,6 +157,11 @@ namespace KGySoft.Reflection
         private protected Func<object?, object?[]?, object?> GeneralInvoker => generalInvoker ??= CreateGeneralInvoker();
         private protected Delegate GenericInvoker => genericInvoker ??= CreateGenericInvoker();
         private protected Delegate NonGenericInvoker => nonGenericInvoker ??= CreateNonGenericInvoker();
+
+#if NET8_0_OR_GREATER
+        // Used in AOT mode where the faster dynamic methods cannot be used. It is still supposed to be faster than classic reflection by MethodInfo.
+        private protected MethodInvoker FallbackInvoker => field ??= MethodInvoker.Create(Method);
+#endif
 
         #endregion
 
@@ -437,6 +447,10 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Invokes a parameterless static action method.
         /// </summary>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> overloads.</note>
+        /// </remarks>
         /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents an instance method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentException">This <see cref="MethodAccessor"/> does not represent a parameterless action method so
@@ -455,6 +469,10 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <typeparam name="T">The type of the parameter.</typeparam>
         /// <param name="param">The value of the parameter.</param>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> overloads.</note>
+        /// </remarks>
         /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents an instance method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
@@ -474,6 +492,10 @@ namespace KGySoft.Reflection
         /// <typeparam name="T2">The type of the second parameter.</typeparam>
         /// <param name="param1">The value of the first parameter.</param>
         /// <param name="param2">The value of the second parameter.</param>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> overloads.</note>
+        /// </remarks>
         /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents an instance method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
@@ -495,6 +517,10 @@ namespace KGySoft.Reflection
         /// <param name="param1">The value of the first parameter.</param>
         /// <param name="param2">The value of the second parameter.</param>
         /// <param name="param3">The value of the third parameter.</param>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> overloads.</note>
+        /// </remarks>
         /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents an instance method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
@@ -518,6 +544,10 @@ namespace KGySoft.Reflection
         /// <param name="param2">The value of the second parameter.</param>
         /// <param name="param3">The value of the third parameter.</param>
         /// <param name="param4">The value of the fourth parameter.</param>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> overloads.</note>
+        /// </remarks>
         /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents an instance method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
@@ -535,6 +565,10 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <typeparam name="TResult">The return type of the method.</typeparam>
         /// <returns>The return value of the method.</returns>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> overloads.</note>
+        /// </remarks>
         /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents an instance method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
@@ -551,6 +585,10 @@ namespace KGySoft.Reflection
         /// <typeparam name="TResult">The return type of the method.</typeparam>
         /// <param name="param">The value of the parameter.</param>
         /// <returns>The return value of the method.</returns>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> overloads.</note>
+        /// </remarks>
         /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents an instance method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
@@ -569,6 +607,10 @@ namespace KGySoft.Reflection
         /// <param name="param1">The value of the first parameter.</param>
         /// <param name="param2">The value of the second parameter.</param>
         /// <returns>The return value of the method.</returns>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> overloads.</note>
+        /// </remarks>
         /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents an instance method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
@@ -589,6 +631,10 @@ namespace KGySoft.Reflection
         /// <param name="param2">The value of the second parameter.</param>
         /// <param name="param3">The value of the third parameter.</param>
         /// <returns>The return value of the method.</returns>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> overloads.</note>
+        /// </remarks>
         /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents an instance method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
@@ -611,6 +657,10 @@ namespace KGySoft.Reflection
         /// <param name="param3">The value of the third parameter.</param>
         /// <param name="param4">The value of the fourth parameter.</param>
         /// <returns>The return value of the method.</returns>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> overloads.</note>
+        /// </remarks>
         /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents an instance method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
@@ -625,6 +675,10 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <typeparam name="TInstance">The type of the instance that declares the method.</typeparam>
         /// <param name="instance">The instance that the method belongs to.</param>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> overloads.</note>
+        /// </remarks>
         /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
@@ -646,6 +700,10 @@ namespace KGySoft.Reflection
         /// <typeparam name="T">The type of the parameter.</typeparam>
         /// <param name="instance">The instance that the method belongs to.</param>
         /// <param name="param">The value of the parameter.</param>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> overloads.</note>
+        /// </remarks>
         /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
@@ -669,6 +727,10 @@ namespace KGySoft.Reflection
         /// <param name="instance">The instance that the method belongs to.</param>
         /// <param name="param1">The value of the first parameter.</param>
         /// <param name="param2">The value of the second parameter.</param>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> overloads.</note>
+        /// </remarks>
         /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
@@ -694,6 +756,10 @@ namespace KGySoft.Reflection
         /// <param name="param1">The value of the first parameter.</param>
         /// <param name="param2">The value of the second parameter.</param>
         /// <param name="param3">The value of the third parameter.</param>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> overloads.</note>
+        /// </remarks>
         /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
@@ -721,6 +787,10 @@ namespace KGySoft.Reflection
         /// <param name="param2">The value of the second parameter.</param>
         /// <param name="param3">The value of the third parameter.</param>
         /// <param name="param4">The value of the fourth parameter.</param>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> overloads.</note>
+        /// </remarks>
         /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
@@ -742,6 +812,10 @@ namespace KGySoft.Reflection
         /// <typeparam name="TResult">The return type of the method.</typeparam>
         /// <param name="instance">The instance that the method belongs to.</param>
         /// <returns>The return value of the method.</returns>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> overloads.</note>
+        /// </remarks>
         /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
@@ -764,6 +838,10 @@ namespace KGySoft.Reflection
         /// <param name="instance">The instance that the method belongs to.</param>
         /// <param name="param">The value of the parameter.</param>
         /// <returns>The return value of the method.</returns>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> overloads.</note>
+        /// </remarks>
         /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
@@ -788,6 +866,10 @@ namespace KGySoft.Reflection
         /// <param name="param1">The value of the first parameter.</param>
         /// <param name="param2">The value of the second parameter.</param>
         /// <returns>The return value of the method.</returns>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> overloads.</note>
+        /// </remarks>
         /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
@@ -814,6 +896,10 @@ namespace KGySoft.Reflection
         /// <param name="param2">The value of the second parameter.</param>
         /// <param name="param3">The value of the third parameter.</param>
         /// <returns>The return value of the method.</returns>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> overloads.</note>
+        /// </remarks>
         /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
@@ -842,6 +928,10 @@ namespace KGySoft.Reflection
         /// <param name="param3">The value of the third parameter.</param>
         /// <param name="param4">The value of the fourth parameter.</param>
         /// <returns>The return value of the method.</returns>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> overloads.</note>
+        /// </remarks>
         /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
@@ -860,6 +950,10 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <typeparam name="TInstance">The type of the instance that declares the method.</typeparam>
         /// <param name="instance">The instance that the method belongs to.</param>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> overloads.</note>
+        /// </remarks>
         /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
@@ -879,6 +973,10 @@ namespace KGySoft.Reflection
         /// <typeparam name="T">The type of the parameter.</typeparam>
         /// <param name="instance">The instance that the method belongs to.</param>
         /// <param name="param">The value of the parameter.</param>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> overloads.</note>
+        /// </remarks>
         /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
@@ -900,6 +998,10 @@ namespace KGySoft.Reflection
         /// <param name="instance">The instance that the method belongs to.</param>
         /// <param name="param1">The value of the first parameter.</param>
         /// <param name="param2">The value of the second parameter.</param>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> overloads.</note>
+        /// </remarks>
         /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
@@ -923,6 +1025,10 @@ namespace KGySoft.Reflection
         /// <param name="param1">The value of the first parameter.</param>
         /// <param name="param2">The value of the second parameter.</param>
         /// <param name="param3">The value of the third parameter.</param>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> overloads.</note>
+        /// </remarks>
         /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
@@ -948,6 +1054,10 @@ namespace KGySoft.Reflection
         /// <param name="param2">The value of the second parameter.</param>
         /// <param name="param3">The value of the third parameter.</param>
         /// <param name="param4">The value of the fourth parameter.</param>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> overloads.</note>
+        /// </remarks>
         /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
@@ -967,6 +1077,10 @@ namespace KGySoft.Reflection
         /// <typeparam name="TResult">The return type of the method.</typeparam>
         /// <param name="instance">The instance that the method belongs to.</param>
         /// <returns>The return value of the method.</returns>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> overloads.</note>
+        /// </remarks>
         /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
@@ -985,6 +1099,10 @@ namespace KGySoft.Reflection
         /// <param name="instance">The instance that the method belongs to.</param>
         /// <param name="param">The value of the parameter.</param>
         /// <returns>The return value of the method.</returns>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> overloads.</note>
+        /// </remarks>
         /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
@@ -1005,6 +1123,10 @@ namespace KGySoft.Reflection
         /// <param name="param1">The value of the first parameter.</param>
         /// <param name="param2">The value of the second parameter.</param>
         /// <returns>The return value of the method.</returns>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> overloads.</note>
+        /// </remarks>
         /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
@@ -1027,6 +1149,10 @@ namespace KGySoft.Reflection
         /// <param name="param2">The value of the second parameter.</param>
         /// <param name="param3">The value of the third parameter.</param>
         /// <returns>The return value of the method.</returns>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> overloads.</note>
+        /// </remarks>
         /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
@@ -1051,6 +1177,10 @@ namespace KGySoft.Reflection
         /// <param name="param3">The value of the third parameter.</param>
         /// <param name="param4">The value of the fourth parameter.</param>
         /// <returns>The return value of the method.</returns>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="O:KGySoft.Reflection.MethodAccessor.Invoke">Invoke</see> overloads.</note>
+        /// </remarks>
         /// <exception cref="NotSupportedException">This <see cref="MethodAccessor"/> represents a method with more than four parameters.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="MethodAccessor"/> represents a static method, an open generic method or a method of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
@@ -1105,7 +1235,12 @@ namespace KGySoft.Reflection
 
                 for (int i = 0; i < ParameterTypes.Length; i++)
                 {
-                    Type paramType = ParameterTypes[i].IsPointer() ? typeof(IntPtr) : ParameterTypes[i];
+                    Type paramType = ParameterTypes[i];
+                    if (paramType.IsByRef)
+                        paramType = paramType.GetElementType()!;
+                    if (paramType.IsPointer())
+                        paramType = typeof(IntPtr);
+
                     if (!paramType.CanAcceptValue(parameters[i]))
                     {
                         if (anyParams)

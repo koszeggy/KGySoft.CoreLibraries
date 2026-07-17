@@ -18,12 +18,15 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-#if NETSTANDARD2_0
+#if NETSTANDARD2_0_OR_GREATER || NETCOREAPP3_0_OR_GREATER
 using System.Linq.Expressions;
 #endif
 using System.Reflection;
 #if !NETSTANDARD2_0
 using System.Reflection.Emit;
+#endif
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+using System.Runtime.CompilerServices;
 #endif
 
 using KGySoft.CoreLibraries;
@@ -50,6 +53,30 @@ namespace KGySoft.Reflection
 
         private protected override Func<object?, object?[]?, object?> CreateGeneralInvoker()
         {
+            #region Local Methods
+
+#if NETSTANDARD2_0_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+            Func<object?, object?[]?, object?> SystemReflectionFallback()
+            {
+                MethodInfo mi = (MethodInfo)MemberInfo;
+                Type returnType = mi.ReturnType;
+                if (returnType.IsByRef)
+                    returnType = returnType.GetElementType()!;
+
+                unsafe
+                {
+#if NET8_0_OR_GREATER
+                    MethodInvoker invoker = FallbackInvoker;
+                    return returnType.IsPointer() ? (obj, args) => (IntPtr)Pointer.Unbox(invoker.Invoke(obj, args.AsSpan())!) : (obj, args) => invoker.Invoke(obj, args.AsSpan());
+#else
+                    return returnType.IsPointer() ? (instance, args) => (IntPtr)Pointer.Unbox(mi.Invoke(instance, args)!) : mi.Invoke;
+#endif
+                }
+            }
+#endif
+
+            #endregion
+
             MethodInfo method = (MethodInfo)MemberInfo;
             Type? declaringType = method.DeclaringType;
             if (declaringType?.ContainsGenericParameters == true || method.ContainsGenericParameters)
@@ -63,16 +90,10 @@ namespace KGySoft.Reflection
 
             // Non-readonly value type or has ref/out/pointer parameters or pointer return type: using reflection as fallback so mutations are preserved and ref/out parameters are assigned back
             if (!method.IsStatic && declaringType!.IsValueType && !(declaringType.IsReadOnly() || method.IsReadOnly())
-                || method.GetParameters().Any(p => p.ParameterType.IsByRef && (!p.IsIn || p.IsOut) || p.ParameterType.IsPointer)
-                || method.ReturnType.IsPointer)
+                || method.GetParameters().Any(p => p.ParameterType.IsByRef && (!p.IsIn || p.IsOut) || p.ParameterType.IsPointer()) || method.ReturnType.IsPointer())
             {
-                ThrowIfNotSupportedParameters();
-                unsafe
-                {
-                    return method.ReturnType.IsPointer
-                        ? (instance, args) => (IntPtr)Pointer.Unbox(method.Invoke(instance, args))
-                        : method.Invoke;
-                }
+                ThrowIfHasRefPointerParameters();
+                return SystemReflectionFallback();
             }
 
             ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "target");
@@ -101,6 +122,13 @@ namespace KGySoft.Reflection
                 argumentsParameter);
             return lambda.Compile();
 #else
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+            if (!RuntimeFeature.IsDynamicCodeSupported)
+            {
+                ThrowIfHasRefPointerParameters();
+                return SystemReflectionFallback();
+            }
+#endif
             DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(method, DynamicMethodOptions.None);
             return (Func<object?, object?[]?, object?>)dm.CreateDelegate(typeof(Func<object?, object?[]?, object?>));
 #endif
@@ -108,6 +136,51 @@ namespace KGySoft.Reflection
 
         private protected override Delegate CreateNonGenericInvoker()
         {
+            #region Local Methods
+
+#if NET8_0_OR_GREATER
+            unsafe Delegate SystemReflectionFallback()
+            {
+                MethodInfo mi = (MethodInfo)Method;
+                Type returnType = mi.ReturnType;
+                if (returnType.IsByRef)
+                    returnType = returnType.GetElementType()!;
+
+                bool isPointerReturn = returnType.IsPointer();
+                MethodInvoker invoker = FallbackInvoker;
+                return ParameterTypes.Length switch
+                {
+                    0 => isPointerReturn ? o => (IntPtr)Pointer.Unbox(invoker.Invoke(o)!) : new Func<object?, object?>(invoker.Invoke),
+                    1 => isPointerReturn ? (o, p) => (IntPtr)Pointer.Unbox(invoker.Invoke(o, p)!) : new Func<object?, object?, object?>(invoker.Invoke),
+                    2 => isPointerReturn ? (o, p1, p2) => (IntPtr)Pointer.Unbox(invoker.Invoke(o, p1, p2)!) : new Func<object?, object?, object?, object?>(invoker.Invoke),
+                    3 => isPointerReturn ? (o, p1, p2, p3) => (IntPtr)Pointer.Unbox(invoker.Invoke(o, p1, p2, p3)!) : new Func<object?, object?, object?, object?, object?>(invoker.Invoke),
+                    4 => isPointerReturn ? (o, p1, p2, p3, p4) => (IntPtr)Pointer.Unbox(invoker.Invoke(o, p1, p2, p3, p4)!) : new Func<object?, object?, object?, object?, object?, object?>(invoker.Invoke),
+                    _ => Throw.InternalError<Delegate>("Unexpected number of parameters")
+                };
+            }
+#elif NETSTANDARD2_0_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+            unsafe Delegate SystemReflectionFallback()
+            {
+                MethodInfo mi = (MethodInfo)Method;
+                Type returnType = mi.ReturnType;
+                if (returnType.IsByRef)
+                    returnType = returnType.GetElementType()!;
+
+                bool isPointerReturn = returnType.IsPointer();
+                return ParameterTypes.Length switch
+                {
+                    0 => (Func<object?, object?>)(isPointerReturn ? o => (IntPtr)Pointer.Unbox(mi.Invoke(o, null)!) : (o => mi.Invoke(o, null))),
+                    1 => (Func<object?, object?, object?>)(isPointerReturn ? (o, p) => (IntPtr)Pointer.Unbox(mi.Invoke(o, [p])!) : (o, p) => mi.Invoke(o, [p])),
+                    2 => (Func<object?, object?, object?, object?>)(isPointerReturn ? (o, p1, p2) => (IntPtr)Pointer.Unbox(mi.Invoke(o, [p1, p2])!) : (o, p1, p2) => mi.Invoke(o, [p1, p2])),
+                    3 => (Func<object?, object?, object?, object?, object?>)(isPointerReturn ? (o, p1, p2, p3) => (IntPtr)Pointer.Unbox(mi.Invoke(o, [p1, p2, p3])!) : (o, p1, p2, p3) => mi.Invoke(o, [p1, p2, p3])),
+                    4 => (Func<object?, object?, object?, object?, object?, object?>)(isPointerReturn ? (o, p1, p2, p3, p4) => (IntPtr)Pointer.Unbox(mi.Invoke(o, [p1, p2, p3, p4])!) : (o, p1, p2, p3, p4) => mi.Invoke(o, [p1, p2, p3, p4])),
+                    _ => Throw.InternalError<Delegate>("Unexpected number of parameters")
+                };
+            }
+#endif
+
+            #endregion
+
             MethodInfo method = (MethodInfo)MemberInfo;
             Type? declaringType = method.DeclaringType;
             if (declaringType?.ContainsGenericParameters == true || method.ContainsGenericParameters)
@@ -132,23 +205,12 @@ namespace KGySoft.Reflection
                 Throw.PlatformNotSupportedException(Res.ReflectionRefReturnTypeNetStandard20(method.ReturnType));
 
             // For non-readonly value types using reflection as fallback so mutations are preserved. Likewise, defaulting to reflection if pointer return type or parameters are used.
-            bool isPointerReturn = method.ReturnType.IsPointer;
+            bool isPointerReturn = method.ReturnType.IsPointer();
             if (!method.IsStatic && declaringType!.IsValueType && !(declaringType.IsReadOnly() || method.IsReadOnly())
-                || ParameterTypes.Any(p => p.IsPointer) || isPointerReturn)
+                || ParameterTypes.Any(p => p.IsPointer()) || isPointerReturn)
             {
-                ThrowIfNotSupportedParameters();
-                unsafe
-                {
-                    return ParameterTypes.Length switch
-                    {
-                        0 => (Func<object?, object?>)(isPointerReturn ? (o => (IntPtr)Pointer.Unbox(method.Invoke(o, null))) : (o => method.Invoke(o, null))),
-                        1 => (Func<object?, object?, object?>)(isPointerReturn ? (o, p) => (IntPtr)Pointer.Unbox(method.Invoke(o, [p])) : (o, p) => method.Invoke(o, [p])),
-                        2 => (Func<object?, object?, object?, object?>)(isPointerReturn ? (o, p1, p2) => (IntPtr)Pointer.Unbox(method.Invoke(o, [p1, p2])) : (o, p1, p2) => method.Invoke(o, [p1, p2])),
-                        3 => (Func<object?, object?, object?, object?, object?>)(isPointerReturn ? (o, p1, p2, p3) => (IntPtr)Pointer.Unbox(method.Invoke(o, [p1, p2, p3])) : (o, p1, p2, p3) => method.Invoke(o, [p1, p2, p3])),
-                        4 => (Func<object?, object?, object?, object?, object?, object?>)(isPointerReturn ? (o, p1, p2, p3, p4) => (IntPtr)Pointer.Unbox(method.Invoke(o, [p1, p2, p3, p4])) : (o, p1, p2, p3, p4) => method.Invoke(o, [p1, p2, p3, p4])),
-                        _ => Throw.InternalError<Delegate>("Unexpected number of parameters")
-                    };
-                }
+                ThrowIfHasRefPointerParameters();
+                return SystemReflectionFallback();
             }
 
             var parameters = new ParameterExpression[ParameterTypes.Length + 1];
@@ -176,6 +238,13 @@ namespace KGySoft.Reflection
                 parameters);
             return lambda.Compile();
 #else
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+            if (!RuntimeFeature.IsDynamicCodeSupported)
+            {
+                ThrowIfHasRefPointerParameters();
+                return SystemReflectionFallback();
+            }
+#endif
             DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(method, DynamicMethodOptions.ExactParameters);
             return dm.CreateDelegate(delegateType);
 #endif
@@ -198,7 +267,8 @@ namespace KGySoft.Reflection
 
             bool isByRef = method.ReturnType.IsByRef;
             Type returnType = isByRef ? method.ReturnType.GetElementType()! : method.ReturnType;
-            if (returnType.IsPointer())
+            bool isPointerReturn = returnType.IsPointer();
+            if (isPointerReturn)
                 returnType = typeof(IntPtr);
 
             Type delegateType;
@@ -250,101 +320,141 @@ namespace KGySoft.Reflection
                     .ToArray());
             }
 
+#if NETSTANDARD2_0_OR_GREATER || NETCOREAPP3_0_OR_GREATER
 #if NETSTANDARD2_0
-            if (isByRef)
+            if (isByRef) // not even the fallback supports ref returns below .NET Core 3.0
                 Throw.PlatformNotSupportedException(Res.ReflectionRefReturnTypeNetStandard20(method.ReturnType));
-
-            ParameterExpression[] parameters;
-            Expression[] methodParameters;
-            MethodCallExpression methodCall;
-            LambdaExpression lambda;
-
-            // Method has a pointer parameter: fallback to MethodInfo.Invoke(object,object[]), which supports pointers as IntPtr...
-            if (ParameterTypes.Any(p => p.IsPointer || method.ReturnType.IsPointer))
+#else
+            // Dynamic methods and IL generation are not supported: fallback to Expressions.
+            // In AOT mode it will work in interpreted mode, which is even slower than the non-generic alternative...
+            if (!RuntimeFeature.IsDynamicCodeSupported)
+#endif
             {
-                ThrowIfNotSupportedParameters(); // ...except ref pointers
+                ParameterExpression[] parameters;
+                Expression[] methodParameters;
+                MethodCallExpression methodCall;
+                LambdaExpression lambda;
 
-                // value types: though we can call Invoke(object, object[]), the ref instance parameter gets boxed in a new object, losing all mutations
-                if (isValueType && !isStatic && !declaringType!.IsReadOnly() && !method.IsReadOnly())
-                    Throw.PlatformNotSupportedException(Res.ReflectionValueTypeWithPointersGenericNetStandard20);
-                int offset = isStatic ? 0 : 1;
-                parameters = new ParameterExpression[ParameterTypes.Length + offset];
-                if (!isStatic)
-                    parameters[0] = Expression.Parameter(isValueType ? declaringType!.MakeByRefType() : declaringType!, "instance");
+                // Method has a pointer parameter, or the return type is pointer or ref: fallback to System reflection, which supports pointers as IntPtr...
+                if (ParameterTypes.Any(p => p.IsPointer()) || isPointerReturn || isByRef)
+                {
+                    ThrowIfHasRefPointerParameters(); // ...except ref pointers
 
-                Type[] genericArgs = delegateType.GetGenericArguments();
-                for (int i = offset; i < parameters.Length; i++)
-                    parameters[i] = Expression.Parameter(genericArgs[i], $"param{i + 1}");
+                    // value types: though we can call Invoke(object, object[]), the ref instance parameter gets boxed in a new object, losing all mutations
+                    if (isValueType && !isStatic && !declaringType!.IsReadOnly() && !method.IsReadOnly())
+                        ThrowMutableStructMembersNotSupported();
 
-                methodParameters = new Expression[2];
-                methodParameters[0] = isStatic
-                    ? Expression.Constant(null, typeof(object))
-                    : Expression.Convert(parameters[0], typeof(object));
+                    int offset = isStatic ? 0 : 1;
+                    parameters = new ParameterExpression[ParameterTypes.Length + offset];
+                    if (!isStatic)
+                        parameters[0] = Expression.Parameter(isValueType ? declaringType!.MakeByRefType() : declaringType!, "instance");
 
-                methodParameters[1] = Expression.NewArrayInit(typeof(object), parameters.Skip(isStatic ? 0 : 1).Select(p => Expression.Convert(p, typeof(object))));
+                    Type[] genericArgs = delegateType.GetGenericArguments();
+                    for (int i = offset; i < parameters.Length; i++)
+                        parameters[i] = Expression.Parameter(genericArgs[i], $"param{i + 1 - offset}");
 
-                // NOTE: If the return type is pointer, we should call Pointer.Unbox on the MethodInfo.Invoke result, which is not possible by expression trees.
-                // So we use the GeneralInvoker delegate for pointer return types, whose Invoke has the same signature as MethodInfo.Invoke(object, object[]),
-                // and it converts the pointer result to IntPtr.
-                object callTarget = method.ReturnType.IsPointer ? GeneralInvoker : method;
-                methodCall = Expression.Call(
-                    Expression.Constant(callTarget),
-                    callTarget.GetType().GetMethod(nameof(MethodInfo.Invoke), [typeof(object), typeof(object[])])!,
-                    methodParameters);
+#if NET8_0_OR_GREATER
+                    // fallback to MethodInvoker
+                    MethodInvoker invoker = FallbackInvoker;
+                    methodParameters = new Expression[(isStatic ? 1 : 0) + parameters.Length];
+                    methodParameters[0] = isStatic ? Expression.Constant(null, typeof(object))
+                        : parameters[0].Type == typeof(object) ? parameters[0]
+                        : Expression.Convert(parameters[0], typeof(object));
 
-                lambda = Expression.Lambda(delegateType, Expression.Convert(methodCall, returnType), parameters);
-                return lambda.Compile();
-            }
+                    for (int i = 0; i < ParameterTypes.Length; i++)
+                        methodParameters[i + 1] = parameters[i + offset].Type == typeof(object) ? parameters[i + offset] : Expression.Convert(parameters[i + offset], typeof(object));
 
-            // Static methods
-            if (isStatic)
-            {
-                parameters = new ParameterExpression[ParameterTypes.Length];
-                for (int i = 0; i < parameters.Length; i++)
+                    // NOTE: If the return type is pointer, we should call Pointer.Unbox on the MethodInvoker.Invoke result, which is not possible by expression trees.
+                    // So we use the NonGenericInvoker delegate for pointer return types, whose Invoke has the same signature as NonGenericInvoker.Invoke(object[, ...]),
+                    // and it converts the pointer result to IntPtr.
+                    object callTarget = isPointerReturn ? NonGenericInvoker : invoker;
+                    methodCall = Expression.Call(
+                        Expression.Constant(callTarget), // the instance is the MethodInvoker or the already generated NonGenericInvoker delegate instance
+                        ParameterTypes.Length switch
+                        {
+                            0 => callTarget.GetType().GetMethod(nameof(MethodInvoker.Invoke), [typeof(object)])!, // no pointer parameters in this case, but ref return is possible
+                            1 => callTarget.GetType().GetMethod(nameof(MethodInvoker.Invoke), [typeof(object), typeof(object)])!,
+                            2 => callTarget.GetType().GetMethod(nameof(MethodInvoker.Invoke), [typeof(object), typeof(object), typeof(object)])!,
+                            3 => callTarget.GetType().GetMethod(nameof(MethodInvoker.Invoke), [typeof(object), typeof(object), typeof(object), typeof(object)])!,
+                            4 => callTarget.GetType().GetMethod(nameof(MethodInvoker.Invoke), [typeof(object), typeof(object), typeof(object), typeof(object), typeof(object)])!,
+                            _ => throw new InvalidOperationException(Res.InternalError("Unexpected number of parameters"))
+                        },
+                        methodParameters);
+#else
+                    // fallback to MethodInfo.Invoke(object,object[])
+                    methodParameters = new Expression[2];
+                    methodParameters[0] = isStatic ? Expression.Constant(null, typeof(object))
+                        : parameters[0].Type == typeof(object) ? parameters[0]
+                        : Expression.Convert(parameters[0], typeof(object));
+
+                    methodParameters[1] = Expression.NewArrayInit(typeof(object), parameters.Skip(isStatic ? 0 : 1).Select(p => Expression.Convert(p, typeof(object))));
+
+                    // NOTE: If the return type is pointer, we should call Pointer.Unbox on the MethodInfo.Invoke result, which is not possible by expression trees.
+                    // So we use the GeneralInvoker delegate for pointer return types, whose Invoke has the same signature as MethodInfo.Invoke(object, object[]),
+                    // and it converts the pointer result to IntPtr.
+                    object callTarget = isPointerReturn ? GeneralInvoker : method;
+                    methodCall = Expression.Call(
+                        Expression.Constant(callTarget),
+                        callTarget.GetType().GetMethod(nameof(MethodInfo.Invoke), [typeof(object), typeof(object[])])!,
+                        methodParameters);
+#endif
+
+                    lambda = Expression.Lambda(delegateType, returnType == typeof(object) ? methodCall : Expression.Convert(methodCall, returnType), parameters);
+                    return lambda.Compile();
+                }
+
+                // Static methods
+                if (isStatic)
+                {
+                    parameters = new ParameterExpression[ParameterTypes.Length];
+                    for (int i = 0; i < parameters.Length; i++)
+                    {
+                        Type parameterType = ParameterTypes[i];
+
+                        // This just avoids error when ref parameters are used but does not assign results back
+                        if (parameterType.IsByRef)
+                            parameterType = parameterType.GetElementType()!;
+
+                        parameters[i] = Expression.Parameter(parameterType, $"param{i + 1}");
+                    }
+
+                    methodCall = Expression.Call(null, method, parameters);
+
+                    lambda = Expression.Lambda(delegateType, methodCall, parameters);
+                    return lambda.Compile();
+                }
+
+                // Instance methods
+                parameters = new ParameterExpression[ParameterTypes.Length + 1];
+                methodParameters = new Expression[ParameterTypes.Length];
+
+                if (!isValueType)
+                    parameters[0] = Expression.Parameter(declaringType!, "instance");
+                else
+                    parameters[0] = Expression.Parameter(declaringType!.MakeByRefType(), "instance");
+
+                for (int i = 0; i < ParameterTypes.Length; i++)
                 {
                     Type parameterType = ParameterTypes[i];
+                    Type methodParameterType = parameterType.IsByRef ? parameterType.GetElementType()! // This just avoids error when ref parameters are used but does not assign results back
+                        : parameterType.IsPointer() ? typeof(IntPtr)
+                        : parameterType;
 
                     // This just avoids error when ref parameters are used but does not assign results back
                     if (parameterType.IsByRef)
                         parameterType = parameterType.GetElementType()!;
 
-                    parameters[i] = Expression.Parameter(parameterType, $"param{i + 1}");
+                    parameters[i + 1] = Expression.Parameter(methodParameterType, $"param{i + 1}");
+                    methodParameters[i] = parameterType.IsPointer() ? Expression.Convert(parameters[i + 1], methodParameterType) : parameters[i + 1];
                 }
 
-                methodCall = Expression.Call(null, method, parameters);
-
+                methodCall = Expression.Call(parameters[0], method, methodParameters);
                 lambda = Expression.Lambda(delegateType, methodCall, parameters);
                 return lambda.Compile();
             }
+#endif
 
-            // Instance methods
-            parameters = new ParameterExpression[ParameterTypes.Length + 1];
-            methodParameters = new Expression[ParameterTypes.Length];
-
-            if (!isValueType)
-                parameters[0] = Expression.Parameter(declaringType!, "instance");
-            else
-                parameters[0] = Expression.Parameter(declaringType!.MakeByRefType(), "instance");
-
-            for (int i = 0; i < ParameterTypes.Length; i++)
-            {
-                Type parameterType = ParameterTypes[i];
-                Type methodParameterType = parameterType.IsByRef ? parameterType.GetElementType()! // This just avoids error when ref parameters are used but does not assign results back
-                    : parameterType.IsPointer ? typeof(IntPtr)
-                    : parameterType;
-
-                // This just avoids error when ref parameters are used but does not assign results back
-                if (parameterType.IsByRef)
-                    parameterType = parameterType.GetElementType()!;
-
-                parameters[i + 1] = Expression.Parameter(methodParameterType, $"param{i + 1}");
-                methodParameters[i] = parameterType.IsPointer ? Expression.Convert(parameters[i + 1], methodParameterType) : parameters[i + 1];
-            }
-
-            methodCall = Expression.Call(parameters[0], method, methodParameters);
-            lambda = Expression.Lambda(delegateType, methodCall, parameters);
-            return lambda.Compile();
-#else
+#if !NETSTANDARD2_0
             DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(method, DynamicMethodOptions.ExactParameters | DynamicMethodOptions.StronglyTyped);
             return dm.CreateDelegate(delegateType);
 #endif

@@ -20,9 +20,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Reflection;
-#if NETCOREAPP3_0_OR_GREATER
-using System.Runtime.CompilerServices;
-#endif
 
 using KGySoft.Annotations;
 #if NETFRAMEWORK
@@ -919,7 +916,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Assert.AreEqual(arg1, test.IntProp);
             Throws<ArgumentNullException>(() => accessor.Invoke(null, args), Res.ReflectionInstanceIsNull);
             Throws<ArgumentException>(() => accessor.Invoke(new object(), args), Res.NotAnInstanceOfType(test.GetType()));
-            Throws<ArgumentException>(() => accessor.Invoke(test, [null, arg2]), Res.ElementNotAnInstanceOfType(0, typeof(int)));
+            if (!IsAot) // the fallback reflection accepts null as int
+                Throws<ArgumentException>(() => accessor.Invoke(test, [null, arg2]), Res.ElementNotAnInstanceOfType(0, typeof(int)));
             Throws<ArgumentException>(() => accessor.Invoke(test, [arg2, arg1]), Res.ElementNotAnInstanceOfType(0, typeof(int)));
             Throws<ArgumentException>(() => accessor.Invoke(test, [arg1]), Res.ReflectionParamsLengthMismatch(2, 1));
 
@@ -929,7 +927,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Assert.AreEqual(arg1, test.IntProp);
             Throws<ArgumentNullException>(() => accessor.Invoke(null, arg1, arg2), Res.ReflectionInstanceIsNull);
             Throws<ArgumentException>(() => accessor.Invoke(new object(), arg1, arg2), Res.NotAnInstanceOfType(test.GetType()));
-            Throws<ArgumentException>(() => accessor.Invoke(test, null, arg2), Res.NotAnInstanceOfType(typeof(int)));
+            if (!IsAot) // the fallback reflection accepts null as int
+                Throws<ArgumentException>(() => accessor.Invoke(test, null, arg2), Res.NotAnInstanceOfType(typeof(int)));
             Throws<ArgumentException>(() => accessor.Invoke(test, arg2, arg1), Res.NotAnInstanceOfType(typeof(int)));
             Throws<ArgumentException>(() => accessor.Invoke(test, arg1), Res.ReflectionParamsLengthMismatch(2, 1));
 
@@ -982,7 +981,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             parameters = (object[])args.Clone();
             MethodAccessor.GetAccessor(mi).Invoke(null, parameters);
             Assert.AreEqual(arg1, TestClass.StaticIntProp);
-            Throws<ArgumentException>(() => accessor.Invoke(null, [null, arg2]), Res.ElementNotAnInstanceOfType(0, typeof(int)));
+            if (!IsAot) // the fallback reflection accepts null as int
+                Throws<ArgumentException>(() => accessor.Invoke(null, [null, arg2]), Res.ElementNotAnInstanceOfType(0, typeof(int)));
             Throws<ArgumentException>(() => accessor.Invoke(null, [arg2, arg1]), Res.ElementNotAnInstanceOfType(0, typeof(int)));
             Throws<ArgumentException>(() => accessor.Invoke(null, arg1), Res.ReflectionParamsLengthMismatch(2, 1));
 
@@ -990,7 +990,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Console.Write("Method Accessor NonGeneric...");
             MethodAccessor.GetAccessor(mi).Invoke(null, arg1, arg2);
             Assert.AreEqual(arg1, TestClass.StaticIntProp);
-            Throws<ArgumentException>(() => accessor.Invoke(null, null, arg2), Res.NotAnInstanceOfType(typeof(int)));
+            if (!IsAot) // the fallback reflection accepts null as int
+                Throws<ArgumentException>(() => accessor.Invoke(null, null, arg2), Res.NotAnInstanceOfType(typeof(int)));
             Throws<ArgumentException>(() => accessor.Invoke(null, arg2, arg1), Res.NotAnInstanceOfType(typeof(int)));
             Throws<ArgumentException>(() => accessor.Invoke(null, arg1), Res.ReflectionParamsLengthMismatch(2, 1));
 
@@ -1174,7 +1175,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Assert.AreEqual(arg1, test.IntProp);
             Throws<ArgumentNullException>(() => accessor.Invoke(null, args), Res.ReflectionInstanceIsNull);
             Throws<ArgumentException>(() => accessor.Invoke(new object(), args), Res.NotAnInstanceOfType(test.GetType()));
-            Throws<ArgumentException>(() => accessor.Invoke(test, [null, arg2]), Res.ElementNotAnInstanceOfType(0, typeof(int)));
+            if (!IsAot) // the fallback reflection accepts null as int
+                Throws<ArgumentException>(() => accessor.Invoke(test, [null, arg2]), Res.ElementNotAnInstanceOfType(0, typeof(int)));
             Throws<ArgumentException>(() => accessor.Invoke(test, [arg2, arg1]), Res.ElementNotAnInstanceOfType(0, typeof(int)));
             Throws<ArgumentException>(() => accessor.Invoke(test, [arg1]), Res.ReflectionParamsLengthMismatch(2, 1));
 
@@ -1185,7 +1187,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Assert.AreEqual(arg1, test.IntProp);
             Throws<ArgumentNullException>(() => accessor.Invoke(null, arg1, arg2), Res.ReflectionInstanceIsNull);
             Throws<ArgumentException>(() => accessor.Invoke(new object(), arg1, arg2), Res.NotAnInstanceOfType(test.GetType()));
-            Throws<ArgumentException>(() => accessor.Invoke(test, null, arg2), Res.NotAnInstanceOfType(typeof(int)));
+            if (!IsAot) // the fallback reflection accepts null as int
+                Throws<ArgumentException>(() => accessor.Invoke(test, null, arg2), Res.NotAnInstanceOfType(typeof(int)));
             Throws<ArgumentException>(() => accessor.Invoke(test, arg2, arg1), Res.NotAnInstanceOfType(typeof(int)));
             Throws<ArgumentException>(() => accessor.Invoke(test, arg1), Res.ReflectionParamsLengthMismatch(2, 1));
 
@@ -1242,78 +1245,93 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Assert.AreEqual(arg, result);
             Assert.AreEqual(arg, test.IntField);
 
+#if NET8_0_OR_GREATER
+            test = new TestClass(0);
+            Console.Write("System Reflection.MethodInvoker...");
+            MethodInvoker inv = MethodInvoker.Create(mi);
+            result = inv.Invoke(test, arg);
+            Assert.AreEqual(arg, result);
+            Assert.AreEqual(arg, test.IntField);
+#endif
+
             test = new TestClass(0);
             Console.Write("Method Accessor General...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => accessor.Invoke(test, parameters));
-#else
-            result = accessor.Invoke(test, parameters);
-            Assert.AreEqual(arg, result);
-            Assert.AreEqual(arg, test.IntField);
-            Throws<ArgumentNullException>(() => accessor.Invoke(null, args), Res.ReflectionInstanceIsNull);
-            Throws<ArgumentException>(() => accessor.Invoke(new object(), args), Res.NotAnInstanceOfType(test.GetType()));
-            Throws<ArgumentException>(() => accessor.Invoke(test, ["1"]), Res.ElementNotAnInstanceOfType(0, typeof(int)));
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20)
+                Throws<PlatformNotSupportedException>(() => accessor.Invoke(test, parameters));
+            else
+            {
+                result = accessor.Invoke(test, parameters);
+                Assert.AreEqual(arg, result);
+                Assert.AreEqual(arg, test.IntField);
+                Throws<ArgumentNullException>(() => accessor.Invoke(null, args), Res.ReflectionInstanceIsNull);
+                Throws<ArgumentException>(() => accessor.Invoke(new object(), args), Res.NotAnInstanceOfType(test.GetType()));
+                Throws<ArgumentException>(() => accessor.Invoke(test, ["1"]), Res.ElementNotAnInstanceOfType(0, typeof(int)));
+            }
 
             test = new TestClass(0);
             Console.Write("Method Accessor NonGeneric...");
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => accessor.Invoke(test, arg));
-#else
-            result = accessor.Invoke(test, arg);
-            Assert.AreEqual(arg, result);
-            Assert.AreEqual(arg, test.IntField);
-            Throws<ArgumentNullException>(() => accessor.Invoke(null, arg), Res.ReflectionInstanceIsNull);
-            Throws<ArgumentException>(() => accessor.Invoke(new object(), arg), Res.NotAnInstanceOfType(test.GetType()));
-            Throws<ArgumentException>(() => accessor.Invoke(test, "1"), Res.NotAnInstanceOfType(typeof(int)));
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20)
+                Throws<PlatformNotSupportedException>(() => accessor.Invoke(test, arg));
+            else
+            {
+                result = accessor.Invoke(test, arg);
+                Assert.AreEqual(arg, result);
+                Assert.AreEqual(arg, test.IntField);
+                Throws<ArgumentNullException>(() => accessor.Invoke(null, arg), Res.ReflectionInstanceIsNull);
+                Throws<ArgumentException>(() => accessor.Invoke(new object(), arg), Res.NotAnInstanceOfType(test.GetType()));
+                Throws<ArgumentException>(() => accessor.Invoke(test, "1"), Res.NotAnInstanceOfType(typeof(int)));
+            }
 
             test = new TestClass(0);
             Console.Write("Method Accessor Generic...");
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => accessor.InvokeInstanceFunction<TestClass, int, int>(test, arg));
-#else
-            result = accessor.InvokeInstanceFunction<TestClass, int, int>(test, arg);
-            Assert.AreEqual(arg, result);
-            Assert.AreEqual(arg, test.IntField);
-            Throws<ArgumentNullException>(() => accessor.InvokeInstanceFunction<TestClass, int, int>(null, arg), Res.ArgumentNull);
-            Throws<ArgumentException>(() => accessor.InvokeInstanceFunction<TestClass, int>(test), Res.ReflectionCannotInvokeMethodGeneric(nameof(TestClass.TestRefFunction), mi.DeclaringType));
-            Throws<ArgumentException>(() => accessor.InvokeInstanceFunction<TestClass, int, string, int>(test, arg, "x"), Res.ReflectionCannotInvokeMethodGeneric(nameof(TestClass.TestRefFunction), mi.DeclaringType));
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20)
+                Throws<PlatformNotSupportedException>(() => accessor.InvokeInstanceFunction<TestClass, int, int>(test, arg));
+            else
+            {
+                result = accessor.InvokeInstanceFunction<TestClass, int, int>(test, arg);
+                Assert.AreEqual(arg, result);
+                Assert.AreEqual(arg, test.IntField);
+                Throws<ArgumentNullException>(() => accessor.InvokeInstanceFunction<TestClass, int, int>(null, arg), Res.ArgumentNull);
+                Throws<ArgumentException>(() => accessor.InvokeInstanceFunction<TestClass, int>(test), Res.ReflectionCannotInvokeMethodGeneric(nameof(TestClass.TestRefFunction), mi.DeclaringType));
+                Throws<ArgumentException>(() => accessor.InvokeInstanceFunction<TestClass, int, string, int>(test, arg, "x"), Res.ReflectionCannotInvokeMethodGeneric(nameof(TestClass.TestRefFunction), mi.DeclaringType));
+            }
 
             test = new TestClass(0);
             Console.Write("Reflector (by MethodInfo)...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(test, mi, parameters));
-#else
-            result = Reflector.InvokeMethod(test, mi, parameters);
-            Assert.AreEqual(arg, result);
-            Assert.AreEqual(arg, test.IntField);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20)
+                Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(test, mi, parameters));
+            else
+            {
+                result = Reflector.InvokeMethod(test, mi, parameters);
+                Assert.AreEqual(arg, result);
+                Assert.AreEqual(arg, test.IntField);
+            }
 
             test = new TestClass(0);
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(test, nameof(TestClass.TestRefFunction), parameters));
-#else
-            result = Reflector.InvokeMethod(test, nameof(TestClass.TestRefFunction), parameters);
-            Assert.AreEqual(arg, result);
-            Assert.AreEqual(arg, test.IntField);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20)
+                Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(test, nameof(TestClass.TestRefFunction), parameters));
+            else
+            {
+                result = Reflector.InvokeMethod(test, nameof(TestClass.TestRefFunction), parameters);
+                Assert.AreEqual(arg, result);
+                Assert.AreEqual(arg, test.IntField);
+            }
 
             test = new TestClass(0);
             Console.Write("Reflector (by name, ignore case)...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(test, nameof(TestClass.TestRefFunction).ToLowerInvariant(), true, parameters));
-#else
-            result = Reflector.InvokeMethod(test, nameof(TestClass.TestRefFunction).ToLowerInvariant(), true, parameters);
-            Assert.AreEqual(arg, result);
-            Assert.AreEqual(arg, test.IntField);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20)
+                Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(test, nameof(TestClass.TestRefFunction).ToLowerInvariant(), true, parameters));
+            else
+            {
+                result = Reflector.InvokeMethod(test, nameof(TestClass.TestRefFunction).ToLowerInvariant(), true, parameters);
+                Assert.AreEqual(arg, result);
+                Assert.AreEqual(arg, test.IntField);
+            }
         }
 
         [Test]
@@ -1339,7 +1357,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             result = accessor.Invoke(null, parameters);
             Assert.AreEqual(arg1, result);
             Assert.AreEqual(arg1, TestClass.StaticIntProp);
-            Throws<ArgumentException>(() => accessor.Invoke(null, [null, arg2]), Res.ElementNotAnInstanceOfType(0, typeof(int)));
+            if (!IsAot) // the fallback reflection accepts null as int
+                Throws<ArgumentException>(() => accessor.Invoke(null, [null, arg2]), Res.ElementNotAnInstanceOfType(0, typeof(int)));
             Throws<ArgumentException>(() => accessor.Invoke(null, [arg2, arg1]), Res.ElementNotAnInstanceOfType(0, typeof(int)));
             Throws<ArgumentException>(() => accessor.Invoke(null, arg1), Res.ReflectionParamsLengthMismatch(2, 1));
 
@@ -1348,7 +1367,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             result = accessor.Invoke(null, arg1, arg2);
             Assert.AreEqual(arg1, result);
             Assert.AreEqual(arg1, TestClass.StaticIntProp);
-            Throws<ArgumentException>(() => accessor.Invoke(null, null, arg2), Res.NotAnInstanceOfType(typeof(int)));
+            if (!IsAot) // the fallback reflection accepts null as int
+                Throws<ArgumentException>(() => accessor.Invoke(null, null, arg2), Res.NotAnInstanceOfType(typeof(int)));
             Throws<ArgumentException>(() => accessor.Invoke(null, arg2, arg1), Res.NotAnInstanceOfType(typeof(int)));
             Throws<ArgumentException>(() => accessor.Invoke(null, arg1), Res.ReflectionParamsLengthMismatch(2, 1));
 
@@ -1722,71 +1742,78 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             inv.Invoke(test, parameters.AsSpan());
             Assert.AreEqual(args[0], (IntPtr)test.InstanceField);
             Assert.AreNotEqual(args[2], parameters[2]);
+            Assert.Fail("Now that it works, update the validation in the fallback cases of MethodAccessor");
 #endif
 
             test = new UnsafeTestClass(null);
             Console.Write("Method Accessor General...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => accessor.Invoke(test, parameters));
-#else
-            accessor.Invoke(test, parameters);
-            Assert.AreEqual(args[0], (IntPtr)test.InstanceField);
-            Assert.AreNotEqual(args[2], parameters[2]); 
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => accessor.Invoke(test, parameters));
+            else
+            {
+                accessor.Invoke(test, parameters);
+                Assert.AreEqual(args[0], (IntPtr)test.InstanceField);
+                Assert.AreNotEqual(args[2], parameters[2]);
+            }
 
             test = new UnsafeTestClass(null);
             Console.Write("Method Accessor NonGeneric...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => accessor.Invoke(test, parameters[0], parameters[1], parameters[2], parameters[3]));
-#else
-            accessor.Invoke(test, parameters[0], parameters[1], parameters[2], parameters[3]);
-            Assert.AreEqual(args[0], (IntPtr)test.InstanceField); 
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => accessor.Invoke(test, parameters[0], parameters[1], parameters[2], parameters[3]));
+            else
+            {
+                accessor.Invoke(test, parameters[0], parameters[1], parameters[2], parameters[3]);
+                Assert.AreEqual(args[0], (IntPtr)test.InstanceField);
+            }
 
             test = new UnsafeTestClass(null);
             Console.Write("Method Accessor Generic...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => accessor.InvokeInstanceAction(test, (IntPtr)parameters[0], (IntPtr)parameters[1], default(IntPtr), (IntPtr)parameters[3]));
-#else
-            accessor.InvokeInstanceAction(test, (IntPtr)parameters[0], (IntPtr)parameters[1], default(IntPtr), (IntPtr)parameters[3]);
-            Assert.AreEqual(args[0], (IntPtr)test.InstanceField);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => accessor.InvokeInstanceAction(test, (IntPtr)parameters[0], (IntPtr)parameters[1], default(IntPtr), (IntPtr)parameters[3]));
+            else
+            {
+                accessor.InvokeInstanceAction(test, (IntPtr)parameters[0], (IntPtr)parameters[1], default(IntPtr), (IntPtr)parameters[3]);
+                Assert.AreEqual(args[0], (IntPtr)test.InstanceField);
+            }
 
             test = new UnsafeTestClass(null);
             Console.Write("Reflector (by MethodInfo)...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(test, mi, parameters));
-#else
-            Reflector.InvokeMethod(test, mi, parameters);
-            Assert.AreEqual(args[0], (IntPtr)test.InstanceField);
-            Assert.AreNotEqual(args[2], parameters[2]);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(test, mi, parameters));
+            else
+            {
+                Reflector.InvokeMethod(test, mi, parameters);
+                Assert.AreEqual(args[0], (IntPtr)test.InstanceField);
+                Assert.AreNotEqual(args[2], parameters[2]);
+            }
 
             test = new UnsafeTestClass(null);
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(test, nameof(UnsafeTestClass.ComplexTestAction), parameters));
-#else
-            Reflector.InvokeMethod(test, nameof(UnsafeTestClass.ComplexTestAction), parameters);
-            Assert.AreEqual(args[0], (IntPtr)test.InstanceField);
-            Assert.AreNotEqual(args[2], parameters[2]);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(test, nameof(UnsafeTestClass.ComplexTestAction), parameters));
+            else
+            {
+                Reflector.InvokeMethod(test, nameof(UnsafeTestClass.ComplexTestAction), parameters);
+                Assert.AreEqual(args[0], (IntPtr)test.InstanceField);
+                Assert.AreNotEqual(args[2], parameters[2]);
+            }
 
             test = new UnsafeTestClass(null);
             Console.Write("Reflector (by name, ignore case)...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(test, nameof(UnsafeTestClass.ComplexTestAction).ToLowerInvariant(), true, parameters));
-#else
-            Reflector.InvokeMethod(test, nameof(UnsafeTestClass.ComplexTestAction).ToLowerInvariant(), true, parameters);
-            Assert.AreEqual(args[0], (IntPtr)test.InstanceField);
-            Assert.AreNotEqual(args[2], parameters[2]);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(test, nameof(UnsafeTestClass.ComplexTestAction).ToLowerInvariant(), true, parameters));
+            else
+            {
+                Reflector.InvokeMethod(test, nameof(UnsafeTestClass.ComplexTestAction).ToLowerInvariant(), true, parameters);
+                Assert.AreEqual(args[0], (IntPtr)test.InstanceField);
+                Assert.AreNotEqual(args[2], parameters[2]);
+            }
         }
 
         [Test]
@@ -1813,71 +1840,78 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             inv.Invoke(null, parameters.AsSpan());
             Assert.AreEqual(args[0], (IntPtr)UnsafeTestClass.StaticField);
             Assert.AreNotEqual(args[2], parameters[2]);
+            Assert.Fail("Now that it works, update the validation in the fallback cases of MethodAccessor");
 #endif
 
             UnsafeTestClass.StaticField = null;
             Console.Write("Method Accessor General...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => accessor.Invoke(null, parameters));
-#else
-            accessor.Invoke(null, parameters);
-            Assert.AreEqual(args[0], (IntPtr)UnsafeTestClass.StaticField);
-            Assert.AreNotEqual(args[2], parameters[2]);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => accessor.Invoke(null, parameters));
+            else
+            {
+                accessor.Invoke(null, parameters);
+                Assert.AreEqual(args[0], (IntPtr)UnsafeTestClass.StaticField);
+                Assert.AreNotEqual(args[2], parameters[2]);
+            }
 
             UnsafeTestClass.StaticField = null;
             Console.Write("Method Accessor NonGeneric...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => accessor.Invoke(null, parameters[0], parameters[1], parameters[2], parameters[3]));
-#else
-            accessor.Invoke(null, parameters[0], parameters[1], parameters[2], parameters[3]);
-            Assert.AreEqual(args[0], (IntPtr)UnsafeTestClass.StaticField);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => accessor.Invoke(null, parameters[0], parameters[1], parameters[2], parameters[3]));
+            else
+            {
+                accessor.Invoke(null, parameters[0], parameters[1], parameters[2], parameters[3]);
+                Assert.AreEqual(args[0], (IntPtr)UnsafeTestClass.StaticField);
+            }
 
             UnsafeTestClass.StaticField = null;
             Console.Write("Method Accessor Generic...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => accessor.InvokeStaticAction((IntPtr)parameters[0], (IntPtr)parameters[1], default(IntPtr), (IntPtr)parameters[3]));
-#else
-            accessor.InvokeStaticAction((IntPtr)parameters[0], (IntPtr)parameters[1], default(IntPtr), (IntPtr)parameters[3]);
-            Assert.AreEqual(args[0], (IntPtr)UnsafeTestClass.StaticField);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => accessor.InvokeStaticAction((IntPtr)parameters[0], (IntPtr)parameters[1], default(IntPtr), (IntPtr)parameters[3]));
+            else
+            {
+                accessor.InvokeStaticAction((IntPtr)parameters[0], (IntPtr)parameters[1], default(IntPtr), (IntPtr)parameters[3]);
+                Assert.AreEqual(args[0], (IntPtr)UnsafeTestClass.StaticField);
+            }
 
             UnsafeTestClass.StaticField = null;
             Console.Write("Reflector (by MethodInfo)...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(null, mi, parameters));
-#else
-            Reflector.InvokeMethod(null, mi, parameters);
-            Assert.AreEqual(args[0], (IntPtr)UnsafeTestClass.StaticField);
-            Assert.AreNotEqual(args[2], parameters[2]);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(null, mi, parameters));
+            else
+            {
+                Reflector.InvokeMethod(null, mi, parameters);
+                Assert.AreEqual(args[0], (IntPtr)UnsafeTestClass.StaticField);
+                Assert.AreNotEqual(args[2], parameters[2]);
+            }
 
             UnsafeTestClass.StaticField = null;
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(testType, nameof(UnsafeTestClass.StaticComplexTestAction), parameters));
-#else
-            Reflector.InvokeMethod(testType, nameof(UnsafeTestClass.StaticComplexTestAction), parameters);
-            Assert.AreEqual(args[0], (IntPtr)UnsafeTestClass.StaticField);
-            Assert.AreNotEqual(args[2], parameters[2]);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(testType, nameof(UnsafeTestClass.StaticComplexTestAction), parameters));
+            else
+            {
+                Reflector.InvokeMethod(testType, nameof(UnsafeTestClass.StaticComplexTestAction), parameters);
+                Assert.AreEqual(args[0], (IntPtr)UnsafeTestClass.StaticField);
+                Assert.AreNotEqual(args[2], parameters[2]);
+            }
 
             UnsafeTestClass.StaticField = null;
             Console.Write("Reflector (by name, ignore case)...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(testType, nameof(UnsafeTestClass.StaticComplexTestAction).ToLowerInvariant(), true, parameters));
-#else
-            Reflector.InvokeMethod(testType, nameof(UnsafeTestClass.StaticComplexTestAction).ToLowerInvariant(), true, parameters);
-            Assert.AreEqual(args[0], (IntPtr)UnsafeTestClass.StaticField);
-            Assert.AreNotEqual(args[2], parameters[2]);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(testType, nameof(UnsafeTestClass.StaticComplexTestAction).ToLowerInvariant(), true, parameters));
+            else
+            {
+                Reflector.InvokeMethod(testType, nameof(UnsafeTestClass.StaticComplexTestAction).ToLowerInvariant(), true, parameters);
+                Assert.AreEqual(args[0], (IntPtr)UnsafeTestClass.StaticField);
+                Assert.AreNotEqual(args[2], parameters[2]);
+            }
         }
 
         [Test]
@@ -1961,73 +1995,89 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Assert.AreEqual(arg, result);
             Assert.AreEqual(arg, (IntPtr)test.InstanceField);
 
+#if NET8_0_OR_GREATER
+            test = new UnsafeTestClass(null);
+            Console.Write("System Reflection.MethodInvoker...");
+            MethodInvoker inv = MethodInvoker.Create(mi);
+            parameters = (object[])args.Clone();
+            result = (IntPtr)Pointer.Unbox(inv.Invoke(test, parameters.AsSpan()));
+            Assert.AreEqual(arg, result);
+            Assert.AreEqual(arg, (IntPtr)test.InstanceField);
+#endif
+
             test = new UnsafeTestClass(null);
             Console.Write("Method Accessor General...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => accessor.Invoke(test, parameters));
-#else
-            result = accessor.Invoke(test, parameters);
-            Assert.AreEqual(arg, result);
-            Assert.AreEqual(arg, (IntPtr)test.InstanceField);
-            Throws<ArgumentException>(() => accessor.Invoke(test, [1]), Res.ElementNotAnInstanceOfType(0, typeof(IntPtr)));
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20)
+                Throws<PlatformNotSupportedException>(() => accessor.Invoke(test, parameters));
+            else
+            {
+                result = accessor.Invoke(test, parameters);
+                Assert.AreEqual(arg, result);
+                Assert.AreEqual(arg, (IntPtr)test.InstanceField);
+                Throws<ArgumentException>(() => accessor.Invoke(test, [1]), Res.ElementNotAnInstanceOfType(0, typeof(IntPtr)));
+            }
 
             test = new UnsafeTestClass(null);
             Console.Write("Method Accessor NonGeneric...");
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => accessor.Invoke(test, arg));
-#else
-            result = accessor.Invoke(test, arg);
-            Assert.AreEqual(arg, result);
-            Assert.AreEqual(arg, (IntPtr)test.InstanceField);
-            Throws<ArgumentException>(() => accessor.Invoke(test, 1), Res.NotAnInstanceOfType(typeof(IntPtr)));
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20)
+                Throws<PlatformNotSupportedException>(() => accessor.Invoke(test, arg));
+            else
+            {
+                result = accessor.Invoke(test, arg);
+                Assert.AreEqual(arg, result);
+                Assert.AreEqual(arg, (IntPtr)test.InstanceField);
+                Throws<ArgumentException>(() => accessor.Invoke(test, 1), Res.NotAnInstanceOfType(typeof(IntPtr)));
+            }
 
             test = new UnsafeTestClass(null);
             Console.Write("Method Accessor Generic...");
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => accessor.InvokeInstanceFunction<UnsafeTestClass, IntPtr, IntPtr>(test, arg));
-#else
-            result = accessor.InvokeInstanceFunction<UnsafeTestClass, IntPtr, IntPtr>(test, arg);
-            Assert.AreEqual(arg, result);
-            Assert.AreEqual(arg, (IntPtr)test.InstanceField);
-            Throws<ArgumentException>(() => accessor.InvokeInstanceFunction<UnsafeTestClass, int, IntPtr>(test, 1), Res.ReflectionCannotInvokeMethodGeneric(nameof(UnsafeTestClass.TestRefFunction), mi.DeclaringType));
-            Throws<ArgumentException>(() => accessor.InvokeInstanceFunction<UnsafeTestClass, IntPtr, int>(test, arg), Res.ReflectionCannotInvokeMethodGeneric(nameof(UnsafeTestClass.TestRefFunction), mi.DeclaringType));
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20)
+                Throws<PlatformNotSupportedException>(() => accessor.InvokeInstanceFunction<UnsafeTestClass, IntPtr, IntPtr>(test, arg));
+            else
+            {
+                result = accessor.InvokeInstanceFunction<UnsafeTestClass, IntPtr, IntPtr>(test, arg);
+                Assert.AreEqual(arg, result);
+                Assert.AreEqual(arg, (IntPtr)test.InstanceField);
+                Throws<ArgumentException>(() => accessor.InvokeInstanceFunction<UnsafeTestClass, int, IntPtr>(test, 1), Res.ReflectionCannotInvokeMethodGeneric(nameof(UnsafeTestClass.TestRefFunction), mi.DeclaringType));
+                Throws<ArgumentException>(() => accessor.InvokeInstanceFunction<UnsafeTestClass, IntPtr, int>(test, arg), Res.ReflectionCannotInvokeMethodGeneric(nameof(UnsafeTestClass.TestRefFunction), mi.DeclaringType));
+            }
 
             test = new UnsafeTestClass(null);
             Console.Write("Reflector (by MethodInfo)...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(test, mi, parameters));
-#else
-            result = Reflector.InvokeMethod(test, mi, parameters);
-            Assert.AreEqual(arg, result);
-            Assert.AreEqual(arg, (IntPtr)test.InstanceField);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20)
+                Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(test, mi, parameters));
+            else
+            {
+                result = Reflector.InvokeMethod(test, mi, parameters);
+                Assert.AreEqual(arg, result);
+                Assert.AreEqual(arg, (IntPtr)test.InstanceField);
+            }
 
             test = new UnsafeTestClass(null);
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(test, nameof(UnsafeTestClass.TestRefFunction), parameters));
-#else
-            result = Reflector.InvokeMethod(test, nameof(UnsafeTestClass.TestRefFunction), parameters);
-            Assert.AreEqual(arg, result);
-            Assert.AreEqual(arg, (IntPtr)test.InstanceField);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20)
+                Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(test, nameof(UnsafeTestClass.TestRefFunction), parameters));
+            else
+            {
+                result = Reflector.InvokeMethod(test, nameof(UnsafeTestClass.TestRefFunction), parameters);
+                Assert.AreEqual(arg, result);
+                Assert.AreEqual(arg, (IntPtr)test.InstanceField);
+            }
 
             test = new UnsafeTestClass(null);
             Console.Write("Reflector (by name, ignore case)...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(test, nameof(UnsafeTestClass.TestRefFunction).ToLowerInvariant(), true, parameters));
-#else
-            result = Reflector.InvokeMethod(test, nameof(UnsafeTestClass.TestRefFunction).ToLowerInvariant(), true, parameters);
-            Assert.AreEqual(arg, result);
-            Assert.AreEqual(arg, (IntPtr)test.InstanceField);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20)
+                Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(test, nameof(UnsafeTestClass.TestRefFunction).ToLowerInvariant(), true, parameters));
+            else
+            {
+                result = Reflector.InvokeMethod(test, nameof(UnsafeTestClass.TestRefFunction).ToLowerInvariant(), true, parameters);
+                Assert.AreEqual(arg, result);
+                Assert.AreEqual(arg, (IntPtr)test.InstanceField);
+            }
         }
 
         [Test]
@@ -2102,7 +2152,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             object[] parameters;
             object result;
 
-            // System Reflection does not support initializing the ref pointer parameter and crashes when attempts to set back the out pointer parameter
+            // System Reflection does not support initializing the ref pointer parameter: ArgumentException: 'Object of type 'System.IntPtr' cannot be converted to type 'System.Void*&'
 #if NET11_0_OR_GREATER // increase version number if it's not fixed
             Console.Write("System Reflection...");
             parameters = (object[])args.Clone();
@@ -2119,77 +2169,84 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Assert.AreEqual(args[0], result);
             Assert.AreEqual(args[0], (IntPtr)test.InstanceProperty);
             Assert.AreNotEqual(args[2], parameters[2]);
+            Assert.Fail("Now that it works, update the validation in the fallback cases of MethodAccessor");
 #endif
 
             test = new UnsafeTestClass(null);
             Console.Write("Method Accessor General...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => accessor.Invoke(test, parameters));
-#else
-            result = accessor.Invoke(test, parameters);
-            Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[0], (IntPtr)test.InstanceProperty);
-            Assert.AreNotEqual(args[2], parameters[2]);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => accessor.Invoke(test, parameters));
+            else
+            {
+                result = accessor.Invoke(test, parameters);
+                Assert.AreEqual(args[0], result);
+                Assert.AreEqual(args[0], (IntPtr)test.InstanceProperty);
+                Assert.AreNotEqual(args[2], parameters[2]);
+            }
 
             test = new UnsafeTestClass(null);
             Console.Write("Method Accessor NonGeneric...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => accessor.Invoke(test, parameters[0], parameters[1], parameters[2], parameters[3]));
-#else
-            result = accessor.Invoke(test, parameters[0], parameters[1], parameters[2], parameters[3]);
-            Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[0], (IntPtr)test.InstanceProperty);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => accessor.Invoke(test, parameters[0], parameters[1], parameters[2], parameters[3]));
+            else
+            {
+                result = accessor.Invoke(test, parameters[0], parameters[1], parameters[2], parameters[3]);
+                Assert.AreEqual(args[0], result);
+                Assert.AreEqual(args[0], (IntPtr)test.InstanceProperty);
+            }
 
             test = new UnsafeTestClass(null);
             Console.Write("Method Accessor Generic...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => accessor.InvokeInstanceFunction<UnsafeTestClass, IntPtr, IntPtr, IntPtr, IntPtr, IntPtr>(test, (IntPtr)parameters[0], (IntPtr)parameters[1], default, (IntPtr)parameters[3]));
-#else
-            result = accessor.InvokeInstanceFunction<UnsafeTestClass, IntPtr, IntPtr, IntPtr, IntPtr, IntPtr>(test, (IntPtr)parameters[0], (IntPtr)parameters[1], default, (IntPtr)parameters[3]);
-            Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[0], (IntPtr)test.InstanceProperty);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => accessor.InvokeInstanceFunction<UnsafeTestClass, IntPtr, IntPtr, IntPtr, IntPtr, IntPtr>(test, (IntPtr)parameters[0], (IntPtr)parameters[1], default, (IntPtr)parameters[3]));
+            else
+            {
+                result = accessor.InvokeInstanceFunction<UnsafeTestClass, IntPtr, IntPtr, IntPtr, IntPtr, IntPtr>(test, (IntPtr)parameters[0], (IntPtr)parameters[1], default, (IntPtr)parameters[3]);
+                Assert.AreEqual(args[0], result);
+                Assert.AreEqual(args[0], (IntPtr)test.InstanceProperty);
+            }
 
             test = new UnsafeTestClass(null);
             Console.Write("Reflector (by MethodInfo)...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(test, mi, parameters));
-#else
-            result = Reflector.InvokeMethod(test, mi, parameters);
-            Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[0], (IntPtr)test.InstanceProperty);
-            Assert.AreNotEqual(args[2], parameters[2]);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(test, mi, parameters));
+            else
+            {
+                result = Reflector.InvokeMethod(test, mi, parameters);
+                Assert.AreEqual(args[0], result);
+                Assert.AreEqual(args[0], (IntPtr)test.InstanceProperty);
+                Assert.AreNotEqual(args[2], parameters[2]);
+            }
 
             test = new UnsafeTestClass(null);
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(test, nameof(UnsafeTestClass.ComplexTestFunction), parameters));
-#else
-            result = Reflector.InvokeMethod(test, nameof(UnsafeTestClass.ComplexTestFunction), parameters);
-            Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[0], (IntPtr)test.InstanceProperty);
-            Assert.AreNotEqual(args[2], parameters[2]);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(test, nameof(UnsafeTestClass.ComplexTestFunction), parameters));
+            else
+            {
+                result = Reflector.InvokeMethod(test, nameof(UnsafeTestClass.ComplexTestFunction), parameters);
+                Assert.AreEqual(args[0], result);
+                Assert.AreEqual(args[0], (IntPtr)test.InstanceProperty);
+                Assert.AreNotEqual(args[2], parameters[2]);
+            }
 
             test = new UnsafeTestClass(null);
             Console.Write("Reflector (by name, ignore case)...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(test, nameof(UnsafeTestClass.ComplexTestFunction).ToLowerInvariant(), true, parameters));
-#else
-            result = Reflector.InvokeMethod(test, nameof(UnsafeTestClass.ComplexTestFunction).ToLowerInvariant(), true, parameters);
-            Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[0], (IntPtr)test.InstanceProperty);
-            Assert.AreNotEqual(args[2], parameters[2]);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(test, nameof(UnsafeTestClass.ComplexTestFunction).ToLowerInvariant(), true, parameters));
+            else
+            {
+                result = Reflector.InvokeMethod(test, nameof(UnsafeTestClass.ComplexTestFunction).ToLowerInvariant(), true, parameters);
+                Assert.AreEqual(args[0], result);
+                Assert.AreEqual(args[0], (IntPtr)test.InstanceProperty);
+                Assert.AreNotEqual(args[2], parameters[2]);
+            }
         }
 
         [Test]
@@ -2219,76 +2276,83 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Assert.AreEqual(args[0], result);
             Assert.AreEqual(args[0], (IntPtr)UnsafeTestClass.StaticProperty);
             Assert.AreNotEqual(args[2], parameters[2]);
+            Assert.Fail("Now that it works, update the validation in the fallback cases of MethodAccessor");
 #endif
 
             UnsafeTestClass.StaticProperty = null;
             Console.Write("Method Accessor General...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => accessor.Invoke(null, parameters));
-#else
-            result = accessor.Invoke(null, parameters);
-            Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[0], (IntPtr)UnsafeTestClass.StaticProperty);
-            Assert.AreNotEqual(args[2], parameters[2]);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => accessor.Invoke(null, parameters));
+            else
+            {
+                result = accessor.Invoke(null, parameters);
+                Assert.AreEqual(args[0], result);
+                Assert.AreEqual(args[0], (IntPtr)UnsafeTestClass.StaticProperty);
+                Assert.AreNotEqual(args[2], parameters[2]);
+            }
 
             UnsafeTestClass.StaticProperty = null;
             Console.Write("Method Accessor NonGeneric...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => accessor.Invoke(null, parameters[0], parameters[1], parameters[2], parameters[3]));
-#else
-            result = accessor.Invoke(null, parameters[0], parameters[1], parameters[2], parameters[3]);
-            Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[0], (IntPtr)UnsafeTestClass.StaticProperty);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => accessor.Invoke(null, parameters[0], parameters[1], parameters[2], parameters[3]));
+            else
+            {
+                result = accessor.Invoke(null, parameters[0], parameters[1], parameters[2], parameters[3]);
+                Assert.AreEqual(args[0], result);
+                Assert.AreEqual(args[0], (IntPtr)UnsafeTestClass.StaticProperty);
+            }
 
             UnsafeTestClass.StaticProperty = null;
             Console.Write("Method Accessor Generic...");
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => accessor.InvokeStaticFunction<IntPtr, IntPtr, IntPtr, IntPtr, IntPtr>((IntPtr)args[0], (IntPtr)args[1], default, (IntPtr)args[3]));
-#else
-            result = accessor.InvokeStaticFunction<IntPtr, IntPtr, IntPtr, IntPtr, IntPtr>((IntPtr)parameters[0], (IntPtr)parameters[1], default, (IntPtr)parameters[3]);
-            Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[0], (IntPtr)UnsafeTestClass.StaticProperty);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => accessor.InvokeStaticFunction<IntPtr, IntPtr, IntPtr, IntPtr, IntPtr>((IntPtr)args[0], (IntPtr)args[1], default, (IntPtr)args[3]));
+            else
+            {
+                result = accessor.InvokeStaticFunction<IntPtr, IntPtr, IntPtr, IntPtr, IntPtr>((IntPtr)parameters[0], (IntPtr)parameters[1], default, (IntPtr)parameters[3]);
+                Assert.AreEqual(args[0], result);
+                Assert.AreEqual(args[0], (IntPtr)UnsafeTestClass.StaticProperty);
+            }
 
             UnsafeTestClass.StaticProperty = null;
             Console.Write("Reflector (by MethodInfo)...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(null, mi, parameters));
-#else
-            result = Reflector.InvokeMethod(null, mi, parameters);
-            Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[0], (IntPtr)UnsafeTestClass.StaticProperty);
-            Assert.AreNotEqual(args[2], parameters[2]);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(null, mi, parameters));
+            else
+            {
+                result = Reflector.InvokeMethod(null, mi, parameters);
+                Assert.AreEqual(args[0], result);
+                Assert.AreEqual(args[0], (IntPtr)UnsafeTestClass.StaticProperty);
+                Assert.AreNotEqual(args[2], parameters[2]);
+            }
 
             UnsafeTestClass.StaticProperty = null;
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(testType, nameof(UnsafeTestClass.StaticComplexTestFunction), parameters));
-#else
-            result = Reflector.InvokeMethod(testType, nameof(UnsafeTestClass.StaticComplexTestFunction), parameters);
-            Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[0], (IntPtr)UnsafeTestClass.StaticProperty);
-            Assert.AreNotEqual(args[2], parameters[2]);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(testType, nameof(UnsafeTestClass.StaticComplexTestFunction), parameters));
+            else
+            {
+                result = Reflector.InvokeMethod(testType, nameof(UnsafeTestClass.StaticComplexTestFunction), parameters);
+                Assert.AreEqual(args[0], result);
+                Assert.AreEqual(args[0], (IntPtr)UnsafeTestClass.StaticProperty);
+                Assert.AreNotEqual(args[2], parameters[2]);
+            }
 
             UnsafeTestClass.StaticProperty = null;
             Console.Write("Reflector (by name, ignore case)...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(testType, nameof(UnsafeTestClass.StaticComplexTestFunction).ToLowerInvariant(), true, parameters));
-#else
-            result = Reflector.InvokeMethod(testType, nameof(UnsafeTestClass.StaticComplexTestFunction).ToLowerInvariant(), true, parameters);
-            Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[0], (IntPtr)UnsafeTestClass.StaticProperty);
-            Assert.AreNotEqual(args[2], parameters[2]);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(testType, nameof(UnsafeTestClass.StaticComplexTestFunction).ToLowerInvariant(), true, parameters));
+            else
+            {
+                result = Reflector.InvokeMethod(testType, nameof(UnsafeTestClass.StaticComplexTestFunction).ToLowerInvariant(), true, parameters);
+                Assert.AreEqual(args[0], result);
+                Assert.AreEqual(args[0], (IntPtr)UnsafeTestClass.StaticProperty);
+                Assert.AreNotEqual(args[2], parameters[2]);
+            }
         }
 
         #endregion
@@ -2318,7 +2382,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             Throws<ArgumentNullException>(() => accessor.Invoke(null, args), Res.ReflectionInstanceIsNull);
             Throws<ArgumentException>(() => accessor.Invoke(new object(), args), Res.NotAnInstanceOfType(test.GetType()));
-            if (TestedFramework != TargetFramework.NetStandard20) // the fallback reflection accepts null as int
+            if (TestedFramework != TargetFramework.NetStandard20 && !IsAot) // the fallback reflection accepts null as int
                 Throws<ArgumentException>(() => accessor.Invoke(test, [null, arg2]), Res.ElementNotAnInstanceOfType(0, typeof(int)));
             Throws<ArgumentException>(() => accessor.Invoke(test, [arg2, arg1]), Res.ElementNotAnInstanceOfType(0, typeof(int)));
             Throws<ArgumentException>(() => accessor.Invoke(test, [arg1]), Res.ReflectionParamsLengthMismatch(2, 1));
@@ -2330,7 +2394,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             Throws<ArgumentNullException>(() => accessor.Invoke(null, arg1, arg2), Res.ReflectionInstanceIsNull);
             Throws<ArgumentException>(() => accessor.Invoke(new object(), arg1, arg2), Res.NotAnInstanceOfType(test.GetType()));
-            if (TestedFramework != TargetFramework.NetStandard20) // the fallback reflection accepts null as int
+            if (TestedFramework != TargetFramework.NetStandard20 && !IsAot) // the fallback reflection accepts null as int
                 Throws<ArgumentException>(() => accessor.Invoke(test, null, arg2), Res.NotAnInstanceOfType(typeof(int)));
             Throws<ArgumentException>(() => accessor.Invoke(test, arg2, arg1), Res.NotAnInstanceOfType(typeof(int)));
             Throws<ArgumentException>(() => accessor.Invoke(test, arg1), Res.ReflectionParamsLengthMismatch(2, 1));
@@ -2383,7 +2447,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             parameters = (object[])args.Clone();
             accessor.Invoke(null, parameters);
             Assert.AreEqual(args[0], TestStruct.StaticIntProp);
-            Throws<ArgumentException>(() => accessor.Invoke(null, [null, arg2]), Res.ElementNotAnInstanceOfType(0, typeof(int)));
+            if (!IsAot) // the fallback reflection accepts null as int
+                Throws<ArgumentException>(() => accessor.Invoke(null, [null, arg2]), Res.ElementNotAnInstanceOfType(0, typeof(int)));
             Throws<ArgumentException>(() => accessor.Invoke(null, [arg2, arg1]), Res.ElementNotAnInstanceOfType(0, typeof(int)));
             Throws<ArgumentException>(() => accessor.Invoke(null, arg1), Res.ReflectionParamsLengthMismatch(2, 1));
 
@@ -2391,7 +2456,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Console.Write("Method Accessor NonGeneric...");
             accessor.Invoke(null, arg1, arg2);
             Assert.AreEqual(args[0], TestStruct.StaticIntProp);
-            Throws<ArgumentException>(() => accessor.Invoke(null, null, arg2), Res.NotAnInstanceOfType(typeof(int)));
+            if (!IsAot) // the fallback reflection accepts null as int
+                Throws<ArgumentException>(() => accessor.Invoke(null, null, arg2), Res.NotAnInstanceOfType(typeof(int)));
             Throws<ArgumentException>(() => accessor.Invoke(null, arg2, arg1), Res.NotAnInstanceOfType(typeof(int)));
             Throws<ArgumentException>(() => accessor.Invoke(null, arg1), Res.ReflectionParamsLengthMismatch(2, 1));
 
@@ -2576,7 +2642,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Assert.AreEqual(arg1, ((TestStruct)test).IntProp);
             Throws<ArgumentNullException>(() => accessor.Invoke(null, args), Res.ReflectionInstanceIsNull);
             Throws<ArgumentException>(() => accessor.Invoke(new object(), args), Res.NotAnInstanceOfType(test.GetType()));
-            if (TestedFramework != TargetFramework.NetStandard20) // the fallback reflection accepts null as int
+            if (TestedFramework != TargetFramework.NetStandard20 && !IsAot) // the fallback reflection accepts null as int
                 Throws<ArgumentException>(() => accessor.Invoke(test, [null, arg2]), Res.ElementNotAnInstanceOfType(0, typeof(int)));
             Throws<ArgumentException>(() => accessor.Invoke(test, [arg2, arg1]), Res.ElementNotAnInstanceOfType(0, typeof(int)));
             Throws<ArgumentException>(() => accessor.Invoke(test, [arg1]), Res.ReflectionParamsLengthMismatch(2, 1));
@@ -2588,7 +2654,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Assert.AreEqual(arg1, ((TestStruct)test).IntProp);
             Throws<ArgumentNullException>(() => accessor.Invoke(null, arg1, arg2), Res.ReflectionInstanceIsNull);
             Throws<ArgumentException>(() => accessor.Invoke(new object(), arg1, arg2), Res.NotAnInstanceOfType(test.GetType()));
-            if (TestedFramework != TargetFramework.NetStandard20) // the fallback reflection accepts null as int
+            if (TestedFramework != TargetFramework.NetStandard20 && !IsAot) // the fallback reflection accepts null as int
                 Throws<ArgumentException>(() => accessor.Invoke(test, null, arg2), Res.NotAnInstanceOfType(typeof(int)));
             Throws<ArgumentException>(() => accessor.Invoke(test, arg2, arg1), Res.NotAnInstanceOfType(typeof(int)));
             Throws<ArgumentException>(() => accessor.Invoke(test, arg1), Res.ReflectionParamsLengthMismatch(2, 1));
@@ -2649,7 +2715,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             result = accessor.Invoke(null, parameters);
             Assert.AreEqual(arg1, result);
             Assert.AreEqual(arg1, TestStruct.StaticIntProp);
-            Throws<ArgumentException>(() => accessor.Invoke(null, [null, arg2]), Res.ElementNotAnInstanceOfType(0, typeof(int)));
+            if (!IsAot) // the fallback reflection accepts null as int
+                Throws<ArgumentException>(() => accessor.Invoke(null, [null, arg2]), Res.ElementNotAnInstanceOfType(0, typeof(int)));
             Throws<ArgumentException>(() => accessor.Invoke(null, [arg2, arg1]), Res.ElementNotAnInstanceOfType(0, typeof(int)));
             Throws<ArgumentException>(() => accessor.Invoke(null, arg1), Res.ReflectionParamsLengthMismatch(2, 1));
 
@@ -2658,7 +2725,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             result = accessor.Invoke(null, arg1, arg2);
             Assert.AreEqual(arg1, result);
             Assert.AreEqual(arg1, TestStruct.StaticIntProp);
-            Throws<ArgumentException>(() => accessor.Invoke(null, null, arg2), Res.NotAnInstanceOfType(typeof(int)));
+            if (!IsAot) // the fallback reflection accepts null as int
+                Throws<ArgumentException>(() => accessor.Invoke(null, null, arg2), Res.NotAnInstanceOfType(typeof(int)));
             Throws<ArgumentException>(() => accessor.Invoke(null, arg2, arg1), Res.NotAnInstanceOfType(typeof(int)));
             Throws<ArgumentException>(() => accessor.Invoke(null, arg1), Res.ReflectionParamsLengthMismatch(2, 1));
 
@@ -2876,13 +2944,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             var unsafeTestStruct = new UnsafeTestStruct(null);
             Console.Write("Method Accessor Generic...");
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => accessor.InvokeInstanceAction(unsafeTestStruct, arg), Res.ReflectionValueTypeWithPointersGenericNetStandard20);
-#else
-            accessor.InvokeInstanceAction(unsafeTestStruct, arg);
-            Assert.AreEqual(arg, (IntPtr)unsafeTestStruct.InstanceProperty);
-            Throws<ArgumentException>(() => accessor.InvokeInstanceAction(unsafeTestStruct, 1), Res.ReflectionCannotInvokeMethodGeneric(nameof(UnsafeTestStruct.TestAction), mi.DeclaringType));
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+               Throws<PlatformNotSupportedException>(() => accessor.InvokeInstanceAction(unsafeTestStruct, arg));
+            else
+            {
+                accessor.InvokeInstanceAction(unsafeTestStruct, arg);
+                Assert.AreEqual(arg, (IntPtr)unsafeTestStruct.InstanceProperty);
+                Throws<ArgumentException>(() => accessor.InvokeInstanceAction(unsafeTestStruct, 1), Res.ReflectionCannotInvokeMethodGeneric(nameof(UnsafeTestStruct.TestAction), mi.DeclaringType));
+            }
 
             test = new UnsafeTestStruct(null);
             Console.Write("Reflector (by MethodInfo)...");
@@ -2980,71 +3049,78 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             inv.Invoke(test, parameters.AsSpan());
             Assert.AreEqual(args[0], (IntPtr)((UnsafeTestStruct)test).InstanceField);
             Assert.AreNotEqual(args[2], parameters[2]);
+            Assert.Fail("Now that it works, update the validation in the fallback cases of MethodAccessor");
 #endif
 
             test = new UnsafeTestStruct(null);
             Console.Write("Method Accessor General...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => accessor.Invoke(test, parameters));
-#else
-            accessor.Invoke(test, parameters);
-            Assert.AreEqual(args[0], (IntPtr)((UnsafeTestStruct)test).InstanceField);
-            Assert.AreNotEqual(args[2], parameters[2]);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => accessor.Invoke(test, parameters));
+            else
+            {
+                accessor.Invoke(test, parameters);
+                Assert.AreEqual(args[0], (IntPtr)((UnsafeTestStruct)test).InstanceField);
+                Assert.AreNotEqual(args[2], parameters[2]);
+            }
 
             test = new UnsafeTestStruct(null);
             Console.Write("Method Accessor NonGeneric...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => accessor.Invoke(test, parameters[0], parameters[1], parameters[2], parameters[3]));
-#else
-            accessor.Invoke(test, parameters[0], parameters[1], parameters[2], parameters[3]);
-            Assert.AreEqual(args[0], (IntPtr)((UnsafeTestStruct)test).InstanceField);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => accessor.Invoke(test, parameters[0], parameters[1], parameters[2], parameters[3]));
+            else
+            {
+                accessor.Invoke(test, parameters[0], parameters[1], parameters[2], parameters[3]);
+                Assert.AreEqual(args[0], (IntPtr)((UnsafeTestStruct)test).InstanceField);
+            }
 
             var unsafeTestStruct = new UnsafeTestStruct(null);
             Console.Write("Method Accessor Generic...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => accessor.InvokeInstanceAction(unsafeTestStruct, (IntPtr)parameters[0], (IntPtr)parameters[1], default(IntPtr), (IntPtr)parameters[3]));
-#else
-            accessor.InvokeInstanceAction(unsafeTestStruct, (IntPtr)parameters[0], (IntPtr)parameters[1], default(IntPtr), (IntPtr)parameters[3]);
-            Assert.AreEqual(args[0], (IntPtr)unsafeTestStruct.InstanceField);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => accessor.InvokeInstanceAction(unsafeTestStruct, (IntPtr)parameters[0], (IntPtr)parameters[1], default(IntPtr), (IntPtr)parameters[3]));
+            else
+            {
+                accessor.InvokeInstanceAction(unsafeTestStruct, (IntPtr)parameters[0], (IntPtr)parameters[1], default(IntPtr), (IntPtr)parameters[3]);
+                Assert.AreEqual(args[0], (IntPtr)unsafeTestStruct.InstanceField);
+            }
 
             test = new UnsafeTestStruct(null);
             Console.Write("Reflector (by MethodInfo)...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(test, mi, parameters));
-#else
-            Reflector.InvokeMethod(test, mi, parameters);
-            Assert.AreEqual(args[0], (IntPtr)((UnsafeTestStruct)test).InstanceField);
-            Assert.AreNotEqual(args[2], parameters[2]);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(test, mi, parameters));
+            else
+            {
+                Reflector.InvokeMethod(test, mi, parameters);
+                Assert.AreEqual(args[0], (IntPtr)((UnsafeTestStruct)test).InstanceField);
+                Assert.AreNotEqual(args[2], parameters[2]);
+            }
 
             test = new UnsafeTestStruct(null);
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(test, nameof(UnsafeTestStruct.ComplexTestAction), parameters));
-#else
-            Reflector.InvokeMethod(test, nameof(UnsafeTestStruct.ComplexTestAction), parameters);
-            Assert.AreEqual(args[0], (IntPtr)((UnsafeTestStruct)test).InstanceField);
-            Assert.AreNotEqual(args[2], parameters[2]);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(test, nameof(UnsafeTestStruct.ComplexTestAction), parameters));
+            else
+            {
+                Reflector.InvokeMethod(test, nameof(UnsafeTestStruct.ComplexTestAction), parameters);
+                Assert.AreEqual(args[0], (IntPtr)((UnsafeTestStruct)test).InstanceField);
+                Assert.AreNotEqual(args[2], parameters[2]);
+            }
 
             test = new UnsafeTestStruct(null);
             Console.Write("Reflector (by name, ignore case)...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(test, nameof(UnsafeTestStruct.ComplexTestAction).ToLowerInvariant(), true, parameters));
-#else
-            Reflector.InvokeMethod(test, nameof(UnsafeTestStruct.ComplexTestAction).ToLowerInvariant(), true, parameters);
-            Assert.AreEqual(args[0], (IntPtr)((UnsafeTestStruct)test).InstanceField);
-            Assert.AreNotEqual(args[2], parameters[2]);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(test, nameof(UnsafeTestStruct.ComplexTestAction).ToLowerInvariant(), true, parameters));
+            else
+            {
+                Reflector.InvokeMethod(test, nameof(UnsafeTestStruct.ComplexTestAction).ToLowerInvariant(), true, parameters);
+                Assert.AreEqual(args[0], (IntPtr)((UnsafeTestStruct)test).InstanceField);
+                Assert.AreNotEqual(args[2], parameters[2]);
+            }
         }
 
         [Test]
@@ -3071,71 +3147,78 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             inv.Invoke(null, parameters.AsSpan());
             Assert.AreEqual(args[0], (IntPtr)UnsafeTestStruct.StaticField);
             Assert.AreNotEqual(args[2], parameters[2]);
+            Assert.Fail("Now that it works, update the validation in the fallback cases of MethodAccessor");
 #endif
 
             UnsafeTestStruct.StaticField = null;
             Console.Write("Method Accessor General...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => accessor.Invoke(null, parameters));
-#else
-            accessor.Invoke(null, parameters);
-            Assert.AreEqual(args[0], (IntPtr)UnsafeTestStruct.StaticField);
-            Assert.AreNotEqual(args[2], parameters[2]);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => accessor.Invoke(null, parameters));
+            else
+            {
+                accessor.Invoke(null, parameters);
+                Assert.AreEqual(args[0], (IntPtr)UnsafeTestStruct.StaticField);
+                Assert.AreNotEqual(args[2], parameters[2]);
+            }
 
             UnsafeTestStruct.StaticField = null;
             Console.Write("Method Accessor NonGeneric...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => accessor.Invoke(null, parameters[0], parameters[1], parameters[2], parameters[3]));
-#else
-            accessor.Invoke(null, parameters[0], parameters[1], parameters[2], parameters[3]);
-            Assert.AreEqual(args[0], (IntPtr)UnsafeTestStruct.StaticField);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => accessor.Invoke(null, parameters[0], parameters[1], parameters[2], parameters[3]));
+            else
+            {
+                accessor.Invoke(null, parameters[0], parameters[1], parameters[2], parameters[3]);
+                Assert.AreEqual(args[0], (IntPtr)UnsafeTestStruct.StaticField);
+            }
 
             UnsafeTestStruct.StaticField = null;
             Console.Write("Method Accessor Generic...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => accessor.InvokeStaticAction((IntPtr)parameters[0], (IntPtr)parameters[1], default(IntPtr), (IntPtr)parameters[3]));
-#else
-            accessor.InvokeStaticAction((IntPtr)parameters[0], (IntPtr)parameters[1], default(IntPtr), (IntPtr)parameters[3]);
-            Assert.AreEqual(args[0], (IntPtr)UnsafeTestStruct.StaticField);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => accessor.InvokeStaticAction((IntPtr)parameters[0], (IntPtr)parameters[1], default(IntPtr), (IntPtr)parameters[3]));
+            else
+            {
+                accessor.InvokeStaticAction((IntPtr)parameters[0], (IntPtr)parameters[1], default(IntPtr), (IntPtr)parameters[3]);
+                Assert.AreEqual(args[0], (IntPtr)UnsafeTestStruct.StaticField);
+            }
 
             UnsafeTestStruct.StaticField = null;
             Console.Write("Reflector (by MethodInfo)...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(null, mi, parameters));
-#else
-            Reflector.InvokeMethod(null, mi, parameters);
-            Assert.AreEqual(args[0], (IntPtr)UnsafeTestStruct.StaticField);
-            Assert.AreNotEqual(args[2], parameters[2]);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(null, mi, parameters));
+            else
+            {
+                Reflector.InvokeMethod(null, mi, parameters);
+                Assert.AreEqual(args[0], (IntPtr)UnsafeTestStruct.StaticField);
+                Assert.AreNotEqual(args[2], parameters[2]);
+            }
 
             UnsafeTestStruct.StaticField = null;
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(testType, nameof(UnsafeTestStruct.StaticComplexTestAction), parameters));
-#else
-            Reflector.InvokeMethod(testType, nameof(UnsafeTestStruct.StaticComplexTestAction), parameters);
-            Assert.AreEqual(args[0], (IntPtr)UnsafeTestStruct.StaticField);
-            Assert.AreNotEqual(args[2], parameters[2]);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(testType, nameof(UnsafeTestStruct.StaticComplexTestAction), parameters));
+            else
+            {
+                Reflector.InvokeMethod(testType, nameof(UnsafeTestStruct.StaticComplexTestAction), parameters);
+                Assert.AreEqual(args[0], (IntPtr)UnsafeTestStruct.StaticField);
+                Assert.AreNotEqual(args[2], parameters[2]);
+            }
 
             UnsafeTestStruct.StaticField = null;
             Console.Write("Reflector (by name, ignore case)...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(testType, nameof(UnsafeTestStruct.StaticComplexTestAction).ToLowerInvariant(), true, parameters));
-#else
-            Reflector.InvokeMethod(testType, nameof(UnsafeTestStruct.StaticComplexTestAction).ToLowerInvariant(), true, parameters);
-            Assert.AreEqual(args[0], (IntPtr)UnsafeTestStruct.StaticField);
-            Assert.AreNotEqual(args[2], parameters[2]);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(testType, nameof(UnsafeTestStruct.StaticComplexTestAction).ToLowerInvariant(), true, parameters));
+            else
+            {
+                Reflector.InvokeMethod(testType, nameof(UnsafeTestStruct.StaticComplexTestAction).ToLowerInvariant(), true, parameters);
+                Assert.AreEqual(args[0], (IntPtr)UnsafeTestStruct.StaticField);
+                Assert.AreNotEqual(args[2], parameters[2]);
+            }
         }
 
         [Test]
@@ -3171,15 +3254,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             var unsafeTestStruct = new UnsafeTestStruct(null);
             Console.Write("Method Accessor Generic...");
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => accessor.InvokeInstanceFunction<UnsafeTestStruct, IntPtr, IntPtr>(unsafeTestStruct, arg), Res.ReflectionValueTypeWithPointersGenericNetStandard20);
-#else
-            result = accessor.InvokeInstanceFunction<UnsafeTestStruct, IntPtr, IntPtr>(unsafeTestStruct, arg);
-            Assert.AreEqual(arg, result);
-            Assert.AreEqual(arg, (IntPtr)unsafeTestStruct.InstanceProperty);
-            Throws<ArgumentException>(() => accessor.InvokeInstanceFunction<UnsafeTestStruct, int, IntPtr>(unsafeTestStruct, 1), Res.ReflectionCannotInvokeMethodGeneric(nameof(UnsafeTestStruct.TestFunction), mi.DeclaringType));
-            Throws<ArgumentException>(() => accessor.InvokeInstanceFunction<UnsafeTestStruct, IntPtr, int>(unsafeTestStruct, arg), Res.ReflectionCannotInvokeMethodGeneric(nameof(UnsafeTestStruct.TestFunction), mi.DeclaringType));
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => accessor.InvokeInstanceFunction<UnsafeTestStruct, IntPtr, IntPtr>(unsafeTestStruct, arg));
+            else
+            {
+                result = accessor.InvokeInstanceFunction<UnsafeTestStruct, IntPtr, IntPtr>(unsafeTestStruct, arg);
+                Assert.AreEqual(arg, result);
+                Assert.AreEqual(arg, (IntPtr)unsafeTestStruct.InstanceProperty);
+                Throws<ArgumentException>(() => accessor.InvokeInstanceFunction<UnsafeTestStruct, int, IntPtr>(unsafeTestStruct, 1), Res.ReflectionCannotInvokeMethodGeneric(nameof(UnsafeTestStruct.TestFunction), mi.DeclaringType));
+                Throws<ArgumentException>(() => accessor.InvokeInstanceFunction<UnsafeTestStruct, IntPtr, int>(unsafeTestStruct, arg), Res.ReflectionCannotInvokeMethodGeneric(nameof(UnsafeTestStruct.TestFunction), mi.DeclaringType));
+            }
 
             test = new UnsafeTestStruct(null);
             Console.Write("Reflector (by MethodInfo)...");
@@ -3292,77 +3376,84 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Assert.AreEqual(args[0], result);
             Assert.AreEqual(args[1], (IntPtr)((UnsafeTestStruct)test).InstanceField);
             Assert.AreNotEqual(args[2], parameters[2]);
+            Assert.Fail("Now that it works, update the validation in the fallback cases of MethodAccessor");
 #endif
 
             test = new UnsafeTestStruct(null);
             Console.Write("Method Accessor General...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => accessor.Invoke(test, parameters));
-#else
-            result = accessor.Invoke(test, parameters);
-            Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[1], (IntPtr)((UnsafeTestStruct)test).InstanceField);
-            Assert.AreNotEqual(args[2], parameters[2]);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => accessor.Invoke(test, parameters));
+            else
+            {
+                result = accessor.Invoke(test, parameters);
+                Assert.AreEqual(args[0], result);
+                Assert.AreEqual(args[1], (IntPtr)((UnsafeTestStruct)test).InstanceField);
+                Assert.AreNotEqual(args[2], parameters[2]);
+            }
 
             test = new UnsafeTestStruct(null);
             Console.Write("Method Accessor NonGeneric...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => accessor.Invoke(test, parameters[0], parameters[1], parameters[2], parameters[3]));
-#else
-            result = accessor.Invoke(test, parameters[0], parameters[1], parameters[2], parameters[3]);
-            Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[1], (IntPtr)((UnsafeTestStruct)test).InstanceField);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => accessor.Invoke(test, parameters[0], parameters[1], parameters[2], parameters[3]));
+            else
+            {
+                result = accessor.Invoke(test, parameters[0], parameters[1], parameters[2], parameters[3]);
+                Assert.AreEqual(args[0], result);
+                Assert.AreEqual(args[1], (IntPtr)((UnsafeTestStruct)test).InstanceField);
+            }
 
             var unsafeTestStruct = new UnsafeTestStruct(null);
             Console.Write("Method Accessor Generic...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => accessor.InvokeInstanceFunction<UnsafeTestStruct, IntPtr, IntPtr, IntPtr, IntPtr, IntPtr>(unsafeTestStruct, (IntPtr)parameters[0], (IntPtr)parameters[1], default, (IntPtr)parameters[3]));
-#else
-            result = accessor.InvokeInstanceFunction<UnsafeTestStruct, IntPtr, IntPtr, IntPtr, IntPtr, IntPtr>(unsafeTestStruct, (IntPtr)parameters[0], (IntPtr)parameters[1], default, (IntPtr)parameters[3]);
-            Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[1], (IntPtr)unsafeTestStruct.InstanceField);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => accessor.InvokeInstanceFunction<UnsafeTestStruct, IntPtr, IntPtr, IntPtr, IntPtr, IntPtr>(unsafeTestStruct, (IntPtr)parameters[0], (IntPtr)parameters[1], default, (IntPtr)parameters[3]));
+            else
+            {
+                result = accessor.InvokeInstanceFunction<UnsafeTestStruct, IntPtr, IntPtr, IntPtr, IntPtr, IntPtr>(unsafeTestStruct, (IntPtr)parameters[0], (IntPtr)parameters[1], default, (IntPtr)parameters[3]);
+                Assert.AreEqual(args[0], result);
+                Assert.AreEqual(args[1], (IntPtr)unsafeTestStruct.InstanceField);
+            }
 
             test = new UnsafeTestStruct(null);
             Console.Write("Reflector (by MethodInfo)...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(test, mi, parameters));
-#else
-            result = Reflector.InvokeMethod(test, mi, parameters);
-            Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[1], (IntPtr)((UnsafeTestStruct)test).InstanceField);
-            Assert.AreNotEqual(args[2], parameters[2]);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(test, mi, parameters));
+            else
+            {
+                result = Reflector.InvokeMethod(test, mi, parameters);
+                Assert.AreEqual(args[0], result);
+                Assert.AreEqual(args[1], (IntPtr)((UnsafeTestStruct)test).InstanceField);
+                Assert.AreNotEqual(args[2], parameters[2]);
+            }
 
             test = new UnsafeTestStruct(null);
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(test, nameof(UnsafeTestStruct.ComplexTestFunction), parameters));
-#else
-            result = Reflector.InvokeMethod(test, nameof(UnsafeTestStruct.ComplexTestFunction), parameters);
-            Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[1], (IntPtr)((UnsafeTestStruct)test).InstanceField);
-            Assert.AreNotEqual(args[2], parameters[2]);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(test, nameof(UnsafeTestStruct.ComplexTestFunction), parameters));
+            else
+            {
+                result = Reflector.InvokeMethod(test, nameof(UnsafeTestStruct.ComplexTestFunction), parameters);
+                Assert.AreEqual(args[0], result);
+                Assert.AreEqual(args[1], (IntPtr)((UnsafeTestStruct)test).InstanceField);
+                Assert.AreNotEqual(args[2], parameters[2]);
+            }
 
             test = new UnsafeTestStruct(null);
             Console.Write("Reflector (by name, ignore case)...");
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(test, nameof(UnsafeTestStruct.ComplexTestFunction).ToLowerInvariant(), true, parameters));
-#else
-            parameters = (object[])args.Clone();
-            result = Reflector.InvokeMethod(test, nameof(UnsafeTestStruct.ComplexTestFunction).ToLowerInvariant(), true, parameters);
-            Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[1], (IntPtr)((UnsafeTestStruct)test).InstanceField);
-            Assert.AreNotEqual(args[2], parameters[2]);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(test, nameof(UnsafeTestStruct.ComplexTestFunction).ToLowerInvariant(), true, parameters));
+            else
+            {
+                parameters = (object[])args.Clone();
+                result = Reflector.InvokeMethod(test, nameof(UnsafeTestStruct.ComplexTestFunction).ToLowerInvariant(), true, parameters);
+                Assert.AreEqual(args[0], result);
+                Assert.AreEqual(args[1], (IntPtr)((UnsafeTestStruct)test).InstanceField);
+                Assert.AreNotEqual(args[2], parameters[2]);
+            }
         }
 
         [Test]
@@ -3392,77 +3483,84 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Assert.AreEqual(args[0], result);
             Assert.AreEqual(args[0], (IntPtr)UnsafeTestStruct.StaticProperty);
             Assert.AreNotEqual(args[2], parameters[2]);
+            Assert.Fail("Now that it works, update the validation in the fallback cases of MethodAccessor");
 #endif
 
             UnsafeTestStruct.StaticProperty = null;
             Console.Write("Method Accessor General...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => accessor.Invoke(null, parameters));
-#else
-            result = accessor.Invoke(null, parameters);
-            Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[0], (IntPtr)UnsafeTestStruct.StaticProperty);
-            Assert.AreNotEqual(args[2], parameters[2]);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => accessor.Invoke(null, parameters));
+            else
+            {
+                result = accessor.Invoke(null, parameters);
+                Assert.AreEqual(args[0], result);
+                Assert.AreEqual(args[0], (IntPtr)UnsafeTestStruct.StaticProperty);
+                Assert.AreNotEqual(args[2], parameters[2]);
+            }
 
             UnsafeTestStruct.StaticProperty = null;
             Console.Write("Method Accessor NonGeneric...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => accessor.Invoke(null, parameters[0], parameters[1], parameters[2], parameters[3]));
-#else
-            result = accessor.Invoke(null, parameters[0], parameters[1], parameters[2], parameters[3]);
-            Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[0], (IntPtr)UnsafeTestStruct.StaticProperty);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => accessor.Invoke(null, parameters[0], parameters[1], parameters[2], parameters[3]));
+            else
+            {
+                result = accessor.Invoke(null, parameters[0], parameters[1], parameters[2], parameters[3]);
+                Assert.AreEqual(args[0], result);
+                Assert.AreEqual(args[0], (IntPtr)UnsafeTestStruct.StaticProperty);
+            }
 
             UnsafeTestStruct.StaticProperty = null;
             Console.Write("Method Accessor Generic...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => accessor.InvokeStaticFunction<IntPtr, IntPtr, IntPtr, IntPtr, IntPtr>((IntPtr)parameters[0], (IntPtr)parameters[1], default, (IntPtr)parameters[3]));
-#else
-            result = accessor.InvokeStaticFunction<IntPtr, IntPtr, IntPtr, IntPtr, IntPtr>((IntPtr)parameters[0], (IntPtr)parameters[1], default, (IntPtr)parameters[3]);
-            Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[0], (IntPtr)UnsafeTestStruct.StaticProperty);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => accessor.InvokeStaticFunction<IntPtr, IntPtr, IntPtr, IntPtr, IntPtr>((IntPtr)parameters[0], (IntPtr)parameters[1], default, (IntPtr)parameters[3]));
+            else
+            {
+                result = accessor.InvokeStaticFunction<IntPtr, IntPtr, IntPtr, IntPtr, IntPtr>((IntPtr)parameters[0], (IntPtr)parameters[1], default, (IntPtr)parameters[3]);
+                Assert.AreEqual(args[0], result);
+                Assert.AreEqual(args[0], (IntPtr)UnsafeTestStruct.StaticProperty);
+            }
 
             UnsafeTestStruct.StaticProperty = null;
             Console.Write("Reflector (by MethodInfo)...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(null, mi, parameters));
-#else
-            result = Reflector.InvokeMethod(null, mi, parameters);
-            Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[0], (IntPtr)UnsafeTestStruct.StaticProperty);
-            Assert.AreNotEqual(args[2], parameters[2]);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(null, mi, parameters));
+            else
+            {
+                result = Reflector.InvokeMethod(null, mi, parameters);
+                Assert.AreEqual(args[0], result);
+                Assert.AreEqual(args[0], (IntPtr)UnsafeTestStruct.StaticProperty);
+                Assert.AreNotEqual(args[2], parameters[2]);
+            }
 
             UnsafeTestStruct.StaticProperty = null;
             Console.Write("Reflector (by name)...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(testType, nameof(UnsafeTestStruct.StaticComplexTestFunction), parameters));
-#else
-            result = Reflector.InvokeMethod(testType, nameof(UnsafeTestStruct.StaticComplexTestFunction), parameters);
-            Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[0], (IntPtr)UnsafeTestStruct.StaticProperty);
-            Assert.AreNotEqual(args[2], parameters[2]);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(testType, nameof(UnsafeTestStruct.StaticComplexTestFunction), parameters));
+            else
+            {
+                result = Reflector.InvokeMethod(testType, nameof(UnsafeTestStruct.StaticComplexTestFunction), parameters);
+                Assert.AreEqual(args[0], result);
+                Assert.AreEqual(args[0], (IntPtr)UnsafeTestStruct.StaticProperty);
+                Assert.AreNotEqual(args[2], parameters[2]);
+            }
 
             UnsafeTestStruct.StaticProperty = null;
             Console.Write("Reflector (by name, ignore case)...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(testType, nameof(UnsafeTestStruct.StaticComplexTestFunction).ToLowerInvariant(), true, parameters));
-#else
-            result = Reflector.InvokeMethod(testType, nameof(UnsafeTestStruct.StaticComplexTestFunction).ToLowerInvariant(), true, parameters);
-            Assert.AreEqual(args[0], result);
-            Assert.AreEqual(args[0], (IntPtr)UnsafeTestStruct.StaticProperty);
-            Assert.AreNotEqual(args[2], parameters[2]);
-#endif
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => Reflector.InvokeMethod(testType, nameof(UnsafeTestStruct.StaticComplexTestFunction).ToLowerInvariant(), true, parameters));
+            else
+            {
+                result = Reflector.InvokeMethod(testType, nameof(UnsafeTestStruct.StaticComplexTestFunction).ToLowerInvariant(), true, parameters);
+                Assert.AreEqual(args[0], result);
+                Assert.AreEqual(args[0], (IntPtr)UnsafeTestStruct.StaticProperty);
+                Assert.AreNotEqual(args[2], parameters[2]);
+            }
         }
 
         #endregion
@@ -4326,7 +4424,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             Console.Write("System Reflection...");
             pi.SetValue(test, value, null);
-            result = (IntPtr)pi.GetValue(test, null);
+            result = (IntPtr)pi.GetValue(test, null)!;
             Assert.AreEqual(value, result);
 
             test = new UnsafeTestClass(null);
@@ -4605,7 +4703,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             Console.Write("System Reflection...");
             pi.SetValue(null, value, null);
-            result = (IntPtr)pi.GetValue(null, null);
+            result = (IntPtr)pi.GetValue(null, null)!;
             Assert.AreEqual(value, result);
 
             UnsafeTestClass.StaticFunctionPointerProperty = null;
@@ -6462,7 +6560,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             Console.Write("System Reflection...");
             fi.SetValue(null, value);
-            result = (IntPtr)fi.GetValue(null);
+            result = (IntPtr)fi.GetValue(null)!;
             Assert.AreEqual(value, result);
 
             UnsafeTestClass.StaticFunctionPointerField = null;
@@ -7171,73 +7269,56 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             result = (UnsafeTestClass)ci.Invoke(parameters);
             Assert.AreEqual(args[0], (IntPtr)result.InstanceField);
             Assert.AreNotEqual(args[2], parameters[2]);
+
+            Console.Write("System Reflection.ConstructorInvoker...");
+            var inv = ConstructorInvoker.Create(ci);
+            parameters = (object[])args.Clone();
+            result = (UnsafeTestClass)inv.Invoke(parameters[0], parameters[1], parameters[2], parameters[3]);
+            Assert.AreEqual(args[0], (IntPtr)result.InstanceField);
+            Assert.Fail("Now that it works, update the validation in the fallback cases of CreateInstanceAccessor");
 #endif
 
             Console.Write("CreateInstanceAccessor General...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => accessor.CreateInstance(parameters));
-#else
-#if NETCOREAPP3_0_OR_GREATER
-            if (!RuntimeFeature.IsDynamicCodeSupported)
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
                 Throws<PlatformNotSupportedException>(() => accessor.CreateInstance(parameters));
             else
-#endif
             {
                 result = (UnsafeTestClass)accessor.CreateInstance(parameters);
                 Assert.AreEqual(args[0], (IntPtr)result.InstanceField);
                 Assert.AreNotEqual(args[2], parameters[2]);
             }
-#endif
 
             Console.Write("CreateInstanceAccessor NonGeneric...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => accessor.CreateInstance(parameters[0], parameters[1], parameters[2], parameters[3]));
-#else
-#if NETCOREAPP3_0_OR_GREATER
-            if (!RuntimeFeature.IsDynamicCodeSupported)
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
                 Throws<PlatformNotSupportedException>(() => accessor.CreateInstance(parameters[0], parameters[1], parameters[2], parameters[3]));
             else
-#endif
             {
                 result = (UnsafeTestClass)accessor.CreateInstance(parameters[0], parameters[1], parameters[2], parameters[3]);
                 Assert.AreEqual(args[0], (IntPtr)result.InstanceField);
             }
-#endif
 
             Console.Write("CreateInstanceAccessor Generic...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => accessor.CreateInstance<UnsafeTestClass, IntPtr, IntPtr, IntPtr, IntPtr>((IntPtr)parameters[0], (IntPtr)parameters[1], default, (IntPtr)parameters[3]));
-#else
-#if NETCOREAPP3_0_OR_GREATER
-            if (!RuntimeFeature.IsDynamicCodeSupported)
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
                 Throws<PlatformNotSupportedException>(() => accessor.CreateInstance<UnsafeTestClass, IntPtr, IntPtr, IntPtr, IntPtr>((IntPtr)parameters[0], (IntPtr)parameters[1], default, (IntPtr)parameters[3]));
             else
-#endif
             {
                 result = accessor.CreateInstance<UnsafeTestClass, IntPtr, IntPtr, IntPtr, IntPtr>((IntPtr)parameters[0], (IntPtr)parameters[1], default, (IntPtr)parameters[3]);
                 Assert.AreEqual(args[0], (IntPtr)result.InstanceField);
             }
-#endif
 
             Console.Write("Reflector...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => Reflector.CreateInstance(ci, parameters));
-#else
-#if NETCOREAPP3_0_OR_GREATER
-            if (!RuntimeFeature.IsDynamicCodeSupported)
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
                 Throws<PlatformNotSupportedException>(() => Reflector.CreateInstance(ci, parameters));
             else
-#endif
             {
                 result = (UnsafeTestClass)Reflector.CreateInstance(ci, parameters);
                 Assert.AreEqual(args[0], (IntPtr)result.InstanceField);
                 Assert.AreNotEqual(args[2], parameters[2]);
             }
-#endif
         }
 
         #endregion
@@ -7480,69 +7561,45 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             Console.Write("CreateInstanceAccessor General...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => accessor.CreateInstance(parameters));
-#else
-#if NETCOREAPP3_0_OR_GREATER
-            if (!RuntimeFeature.IsDynamicCodeSupported)
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
                 Throws<PlatformNotSupportedException>(() => accessor.CreateInstance(parameters));
             else
-#endif
             {
                 result = (UnsafeTestStruct)accessor.CreateInstance(parameters);
                 Assert.AreEqual(args[0], (IntPtr)result.ReadOnlyField);
                 Assert.AreNotEqual(args[2], parameters[2]);
             }
-#endif
 
             Console.Write("CreateInstanceAccessor NonGeneric...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => accessor.CreateInstance(parameters[0], parameters[1], parameters[2], parameters[3]));
-#else
-#if NETCOREAPP3_0_OR_GREATER
-            if (!RuntimeFeature.IsDynamicCodeSupported)
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
                 Throws<PlatformNotSupportedException>(() => accessor.CreateInstance(parameters[0], parameters[1], parameters[2], parameters[3]));
             else
-#endif
             {
                 result = (UnsafeTestStruct)accessor.CreateInstance(parameters[0], parameters[1], parameters[2], parameters[3]);
                 Assert.AreEqual(args[0], (IntPtr)result.ReadOnlyField);
             }
-#endif
 
             Console.Write("CreateInstanceAccessor Generic...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => accessor.CreateInstance<UnsafeTestStruct, IntPtr, IntPtr, IntPtr, IntPtr>((IntPtr)parameters[0], (IntPtr)parameters[1], default, (IntPtr)parameters[3]));
-#else
-#if NETCOREAPP3_0_OR_GREATER
-            if (!RuntimeFeature.IsDynamicCodeSupported)
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
                 Throws<PlatformNotSupportedException>(() => accessor.CreateInstance<UnsafeTestStruct, IntPtr, IntPtr, IntPtr, IntPtr>((IntPtr)parameters[0], (IntPtr)parameters[1], default, (IntPtr)parameters[3]));
             else
-#endif
             {
                 result = accessor.CreateInstance<UnsafeTestStruct, IntPtr, IntPtr, IntPtr, IntPtr>((IntPtr)parameters[0], (IntPtr)parameters[1], default, (IntPtr)parameters[3]);
                 Assert.AreEqual(args[0], (IntPtr)result.ReadOnlyField);
             }
-#endif
 
             Console.Write("Reflector...");
             parameters = (object[])args.Clone();
-#if NETCOREAPP2_0 && NETSTANDARD_TEST
-            Throws<PlatformNotSupportedException>(() => Reflector.CreateInstance(ci, parameters));
-#else
-#if NETCOREAPP3_0_OR_GREATER
-            if (!RuntimeFeature.IsDynamicCodeSupported)
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
                 Throws<PlatformNotSupportedException>(() => Reflector.CreateInstance(ci, parameters));
             else
-#endif
             {
                 result = (UnsafeTestStruct)Reflector.CreateInstance(ci, parameters);
                 Assert.AreEqual(args[0], (IntPtr)result.ReadOnlyField);
                 Assert.AreNotEqual(args[2], parameters[2]);
             }
-#endif
         }
 
         #endregion
