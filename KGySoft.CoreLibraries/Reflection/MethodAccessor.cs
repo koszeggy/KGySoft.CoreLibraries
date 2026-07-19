@@ -17,7 +17,6 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
@@ -173,7 +172,7 @@ namespace KGySoft.Reflection
         /// <param name="method">The method for which the accessor is to be created.</param>
         private protected MethodAccessor(MethodBase method) :
             // ReSharper disable once ConditionalAccessQualifierIsNonNullableAccordingToAPIContract - null check is in base so it is needed here
-            base(method, method?.GetParameters().Select(p => p.ParameterType).ToArray())
+            base(method, method?.GetParameters())
         {
         }
 
@@ -1224,7 +1223,7 @@ namespace KGySoft.Reflection
                     Throw.ArgumentNullException(Argument.parameters, Res.ArgumentNull);
                 }
 
-                if (parameters.Length != ParameterTypes.Length)
+                if (parameters.Length < ParameterTypes.Length || !anyParams && parameters.Length != ParameterTypes.Length)
                 {
                     string message = Res.ReflectionParamsLengthMismatch(ParameterTypes.Length, parameters.Length);
                     if (anyParams)
@@ -1235,6 +1234,9 @@ namespace KGySoft.Reflection
 
                 for (int i = 0; i < ParameterTypes.Length; i++)
                 {
+                    if (Parameters[i].IsOut)
+                        continue;
+
                     Type paramType = ParameterTypes[i];
                     if (paramType.IsByRef)
                         paramType = paramType.GetElementType()!;
@@ -1253,7 +1255,7 @@ namespace KGySoft.Reflection
 
             ThrowIfSecurityConflict(exception);
 
-            // exceptions from the delegate factory or from the method itself: re-throwing the original exception
+            // exceptions from the delegate factory, the possible fallback invoker or from the method itself: re-throwing the original exception
             ExceptionDispatchInfo.Capture(exception).Throw();
         }
 

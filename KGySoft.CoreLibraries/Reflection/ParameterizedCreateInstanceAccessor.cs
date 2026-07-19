@@ -71,7 +71,7 @@ namespace KGySoft.Reflection
 #if NETSTANDARD2_0
             // Has ref/out parameters: using reflection as fallback so they will be assigned back.
             // Doing so also for pointers, as they are not supported by Expression trees.
-            if (ctor.GetParameters().Any(p => p.ParameterType.IsByRef && (!p.IsIn || p.IsOut) || p.ParameterType.IsPointer))
+            if (ctor.GetParameters().Any(p => p.ParameterType.IsByRef && (!p.IsIn || p.IsOut) || p.ParameterType.IsPointer()))
             {
                 ThrowIfHasRefPointerParameters();
                 return ctor.Invoke;
@@ -172,7 +172,7 @@ namespace KGySoft.Reflection
 
 #if NETSTANDARD2_0
             // For pointer parameter types using reflection as fallback because Expression trees do not support pointers.
-            if (ParameterTypes.Any(p => p.IsPointer))
+            if (ParameterTypes.Any(p => p.IsPointer()))
             {
                 ThrowIfHasRefPointerParameters();
                 return SystemReflectionFallback();
@@ -249,19 +249,18 @@ namespace KGySoft.Reflection
                     // This just avoids error when ref parameters are used but does not assign results back
                     if (parameterType.IsByRef)
                         parameterType = parameterType.GetElementType()!;
-                    if (parameterType.IsPointer)
+                    if (parameterType.IsPointer())
                         parameterType = typeof(IntPtr);
 
                     parameters[i] = Expression.Parameter(parameterType, $"param{i + 1}");
                 }
 
                 LambdaExpression lambda;
+                ThrowIfHasRefPointerParameters();
 
-                // The constructor has pointer parameters: fallback to System reflection, which supports pointer parameters as IntPtr...
-                if (ParameterTypes.Any(p => p.IsPointer))
+                // The constructor has pointer parameters: fallback to System reflection, which supports pointer parameters as IntPtr.
+                if (ParameterTypes.Any(p => p.IsPointer()))
                 {
-                    ThrowIfHasRefPointerParameters(); // ...except ref pointers
-
 #if NET8_0_OR_GREATER
                     // fallback to ConstructorInvoker
                     ConstructorInvoker invoker = FallbackInvoker;

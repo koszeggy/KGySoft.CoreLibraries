@@ -104,11 +104,14 @@ namespace KGySoft.Reflection
         #endregion
 
         #region Internal Properties
-
-        /// <summary>
-        /// Gets the type of parameters of the accessed member in the reflected type.
-        /// </summary>
+        
         internal Type[] ParameterTypes { get; }
+
+        #endregion
+
+        #region Private Protected Properties
+
+        private protected ParameterInfo[] Parameters { get; }
 
         #endregion
 
@@ -120,13 +123,14 @@ namespace KGySoft.Reflection
         /// Protected constructor for the abstract <see cref="MemberAccessor"/>.
         /// </summary>
         /// <param name="member">The <see cref="MemberInfo"/> for which the accessor is created.</param>
-        /// <param name="parameterTypes">A <see cref="Type"/> array of member parameters (method/constructor/indexer)</param>
-        private protected MemberAccessor(MemberInfo member, Type[]? parameterTypes)
+        /// <param name="parameters">The member parameters (method/constructor/indexer)</param>
+        private protected MemberAccessor(MemberInfo member, ParameterInfo[]? parameters)
         {
             if (member == null!)
                 Throw.ArgumentNullException(Argument.member);
             MemberInfo = member;
-            ParameterTypes = parameterTypes ?? Type.EmptyTypes;
+            Parameters = parameters ?? Reflector<ParameterInfo>.EmptyArray;
+            ParameterTypes = parameters == null ? Type.EmptyTypes : parameters.Select(p => p.ParameterType).ToArray();
         }
 
         #endregion
@@ -251,7 +255,7 @@ namespace KGySoft.Reflection
 #if NETSTANDARD2_0_OR_GREATER || NETCOREAPP3_0_OR_GREATER
         private protected void ThrowIfHasRefPointerParameters()
         {
-            if (ParameterTypes.FirstOrDefault(p => p.IsByRef && p.GetElementType()!.IsPointer) is Type t)
+            if (ParameterTypes.FirstOrDefault(p => p.IsByRef && p.GetElementType()!.IsPointer()) is Type t)
 #if NETSTANDARD2_0
                 Throw.PlatformNotSupportedException(Res.ReflectionRefPointerTypeNotSupportedNetStandard20(t));
 #else
@@ -398,41 +402,41 @@ namespace KGySoft.Reflection
 
             (string Name, List<Type> Parameters) GetNameAndParams()
             {
-                var parameters = new List<Type>();
+                var delegateParameters = new List<Type>();
                 string name = methodBase is ConstructorInfo && !treatCtorAsMethod
                     ? ctorInvokerPrefix + declaringType!.Name
                     : methodInvokerPrefix + methodBase.Name;
 
                 // instance parameter
                 if (treatCtorAsMethod || methodBase is MethodInfo && (!stronglyTyped || !isStatic))
-                    parameters.Add(stronglyTyped ? (isValueType ? declaringType!.MakeByRefType() : declaringType!) : Reflector.ObjectType);
+                    delegateParameters.Add(stronglyTyped ? (isValueType ? declaringType!.MakeByRefType() : declaringType!) : Reflector.ObjectType);
 
                 // property setter: value
                 if (treatAsPropertySetter)
                 {
                     if (!stronglyTyped)
-                        parameters.Add(Reflector.ObjectType);
+                        delegateParameters.Add(Reflector.ObjectType);
                     else
                     {
                         PropertyInfo pi = (PropertyInfo)MemberInfo;
-                        parameters.Add(pi.PropertyType.IsPointer() ? typeof(IntPtr) : pi.PropertyType);
+                        delegateParameters.Add(pi.PropertyType.IsPointer() ? typeof(IntPtr) : pi.PropertyType);
                     }
                 }
 
                 // parameters
                 if (!exactParameters)
-                    parameters.Add(typeof(object[]));
+                    delegateParameters.Add(typeof(object[]));
                 else
                 {
                     Debug.Assert(ParameterTypes.Length <= 4, "More than 4 parameters are not expected for separate parameters");
                     if (stronglyTyped)
-                        parameters.AddRange(GetGenericArguments(ParameterTypes));
+                        delegateParameters.AddRange(GetGenericArguments(ParameterTypes));
                     else
                         for (int i = 0; i < ParameterTypes.Length; i++)
-                            parameters.Add(Reflector.ObjectType);
+                            delegateParameters.Add(Reflector.ObjectType);
                 }
 
-                return (name, parameters);
+                return (name, delegateParameters);
             }
 
             void GenerateLocalsForRefParams()
@@ -441,9 +445,7 @@ namespace KGySoft.Reflection
                 if (stronglyTyped)
                     return;
 
-                ParameterInfo[] parameters = methodBase.GetParameters();
-                int paramsOffset = methodBase is MethodInfo || treatCtorAsMethod ? 1 : 0;
-
+                int paramsOffset = GetParamsOffset();
                 for (int i = 0, localsIndex = 0; i < ParameterTypes.Length; i++)
                 {
                     if (!ParameterTypes[i].IsByRef)
@@ -453,7 +455,7 @@ namespace KGySoft.Reflection
                     il.DeclareLocal(paramType);
 
                     // initializing locals of ref (non-out) parameters
-                    if (!parameters[i].IsOut)
+                    if (!Parameters[i].IsOut)
                     {
                         // from the object[] parameters
                         if (!exactParameters)
@@ -477,11 +479,7 @@ namespace KGySoft.Reflection
 
             void LoadParameters()
             {
-                int paramsOffset = stronglyTyped ? isStatic || methodBase is ConstructorInfo ? 0 : 1
-                    : methodBase is ConstructorInfo && !treatCtorAsMethod ? 0
-                    : !treatAsPropertySetter ? 1
-                    : 2;
-
+                int paramsOffset = GetParamsOffset();
                 for (int i = 0, localsIndex = 0; i < ParameterTypes.Length; i++)
                 {
                     Type paramType = ParameterTypes[i];
@@ -526,7 +524,7 @@ namespace KGySoft.Reflection
                         continue;
 
                     Type paramType = ParameterTypes[i].GetElementType()!;
-                    il.Emit(methodBase is MethodInfo || treatCtorAsMethod ? OpCodes.Ldarg_1 : OpCodes.Ldarg_0); // loading parameters argument
+                    EmitLdarg(il, GetParamsOffset()); // loading parameters argument
                     il.Emit(OpCodes.Ldc_I4, i); // loading index of processed argument
                     il.Emit(OpCodes.Ldloc, (short)localsIndex); // loading local variable
                     ++localsIndex;
@@ -536,6 +534,11 @@ namespace KGySoft.Reflection
                     il.Emit(OpCodes.Stelem_Ref); // storing the variable into the pointed array index
                 }
             }
+
+            int GetParamsOffset() => stronglyTyped ? isStatic || methodBase is ConstructorInfo ? 0 : 1
+                : methodBase is ConstructorInfo && !treatCtorAsMethod ? 0
+                : !treatAsPropertySetter ? 1
+                : 2;
 
             static void EmitLdarg(ILGenerator il, int index)
             {

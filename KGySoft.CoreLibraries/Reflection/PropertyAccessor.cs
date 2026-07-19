@@ -17,7 +17,6 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
@@ -214,7 +213,7 @@ namespace KGySoft.Reflection
         /// <param name="property">The property for which the accessor is to be created.</param>
         private protected PropertyAccessor(PropertyInfo property) :
             // ReSharper disable once ConditionalAccessQualifierIsNonNullableAccordingToAPIContract - null check is in base so it is needed here
-            base(property, property?.GetIndexParameters().Select(p => p.ParameterType).ToArray())
+            base(property, property?.GetIndexParameters())
         {
         }
 
@@ -788,7 +787,8 @@ namespace KGySoft.Reflection
 
                 if (indexParameters.Length == 0 && anyParams)
                     Throw.ArgumentException(Argument.indexParameters, Res.ReflectionEmptyIndices);
-                if (indexParameters.Length != ParameterTypes.Length)
+
+                if (indexParameters.Length < ParameterTypes.Length || !anyParams && indexParameters.Length != ParameterTypes.Length)
                 {
                     string message = Res.ReflectionIndexerParamsLengthMismatch(ParameterTypes.Length, indexParameters.Length);
                     if (anyParams)
@@ -799,11 +799,17 @@ namespace KGySoft.Reflection
 
                 for (int i = 0; i < ParameterTypes.Length; i++)
                 {
-                    if (!ParameterTypes[i].CanAcceptValue(indexParameters[i]))
-                    {
+                    if (Parameters[i].IsOut) // though it's not possible in C#
+                        continue;
+
                         Type paramType = ParameterTypes[i];
+                    if (paramType.IsByRef) // in C# it's only valid as 'in' modifier
+                        paramType = paramType.GetElementType()!;
                         if (paramType.IsPointer())
                             paramType = typeof(IntPtr);
+
+                    if (!paramType.CanAcceptValue(indexParameters[i]))
+                    {
                         if (anyParams)
                             Throw.ArgumentException(Argument.indexParameters, Res.ElementNotAnInstanceOfType(i, paramType));
                         else
@@ -814,7 +820,7 @@ namespace KGySoft.Reflection
 
             ThrowIfSecurityConflict(exception);
 
-            // exceptions from the property itself: re-throwing the original exception
+            // exceptions from the delegate factory, the possible fallback invoker or the property itself: re-throwing the original exception
             ExceptionDispatchInfo.Capture(exception).Throw();
         }
 

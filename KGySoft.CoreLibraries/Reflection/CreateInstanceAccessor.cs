@@ -17,7 +17,6 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
@@ -207,7 +206,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="member">Can be a <see cref="Type"/> or a <see cref="ConstructorInfo"/>.</param>
         private protected CreateInstanceAccessor(MemberInfo member) :
-            base(member, (member as ConstructorInfo)?.GetParameters().Select(p => p.ParameterType).ToArray())
+            base(member, (member as ConstructorInfo)?.GetParameters())
         {
         }
 
@@ -603,7 +602,7 @@ namespace KGySoft.Reflection
                     Throw.ArgumentNullException(Argument.parameters, Res.ArgumentNull);
                 }
 
-                if (parameters.Length != ParameterTypes.Length)
+                if (parameters.Length < ParameterTypes.Length || !anyParams && parameters.Length != ParameterTypes.Length)
                 {
                     string message = Res.ReflectionParamsLengthMismatch(ParameterTypes.Length, parameters.Length);
                     if (anyParams)
@@ -614,9 +613,17 @@ namespace KGySoft.Reflection
 
                 for (int i = 0; i < ParameterTypes.Length; i++)
                 {
-                    if (!ParameterTypes[i].CanAcceptValue(parameters[i]))
+                    if (Parameters[i].IsOut)
+                        continue;
+
+                    Type paramType = ParameterTypes[i];
+                    if (paramType.IsByRef)
+                        paramType = paramType.GetElementType()!;
+                    if (paramType.IsPointer())
+                        paramType = typeof(IntPtr);
+
+                    if (!paramType.CanAcceptValue(parameters[i]))
                     {
-                        Type paramType = ParameterTypes[i].IsPointer() ? typeof(IntPtr) : ParameterTypes[i];
                         if (anyParams)
                             Throw.ArgumentException(Argument.parameters, Res.ElementNotAnInstanceOfType(i, paramType));
                         else
@@ -627,7 +634,7 @@ namespace KGySoft.Reflection
 
             ThrowIfSecurityConflict(exception);
 
-            // exceptions from the method itself: re-throwing the original exception
+            // exceptions from the delegate factory, the possible fallback invoker or from the constructor itself: re-throwing the original exception
             ExceptionDispatchInfo.Capture(exception).Throw();
         }
 

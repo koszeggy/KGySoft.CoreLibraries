@@ -6,6 +6,19 @@
 ===============================================================================
 
 ~~~~~~~~~~
+* v11.0.0:
+~~~~~~~~~~
+
++ General changes:
+==================
++ Supporting Native AOT (Ahead of Time) deployment mode.
+
+- KGySoft.Reflection namespace:
+===============================
+- MethodAccessor, PropertyAccessor, CreateInstanceAccessor classes: fixed validation in some nongeneric error scenarios.
+
+
+~~~~~~~~~~
 - v10.5.1:
 ~~~~~~~~~~
 
