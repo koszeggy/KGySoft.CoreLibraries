@@ -66,11 +66,11 @@ namespace KGySoft.Reflection
             // - Mutations are preserved
             // - ref/out parameters are assigned back
             // - IntPtr values are accepted for pointer parameters
+            ThrowIfHasRefPointerParameters();
             if (methodBase is not MethodInfo method
                 || !method.IsStatic && declaringType!.IsValueType && !(declaringType.IsReadOnly() || method.IsReadOnly())
                 || methodBase.GetParameters().Any(p => p.ParameterType.IsByRef && (!p.IsIn || p.IsOut) || p.ParameterType.IsPointer()))
             {
-                ThrowIfHasRefPointerParameters();
                 return methodBase.Invoke;
             }
 
@@ -181,12 +181,9 @@ namespace KGySoft.Reflection
 
 #if NETSTANDARD2_0
             // For non-readonly value types using reflection as fallback so mutations are preserved. Likewise, defaulting to reflection if pointer parameters are used.
-            if (!method.IsStatic && declaringType!.IsValueType && !(declaringType.IsReadOnly() || method.IsReadOnly())
-                || ParameterTypes.Any(p => p.IsPointer()))
-            {
-                ThrowIfHasRefPointerParameters();
+            ThrowIfHasRefPointerParameters();
+            if (!method.IsStatic && declaringType!.IsValueType && !(declaringType.IsReadOnly() || method.IsReadOnly()) || ParameterTypes.Any(p => p.IsPointer()))
                 return SystemReflectionFallback();
-            }
 
             var parameters = new ParameterExpression[ParameterTypes.Length + 1];
             parameters[0] = Expression.Parameter(Reflector.ObjectType, "instance");
@@ -306,11 +303,10 @@ namespace KGySoft.Reflection
                 MethodCallExpression methodCall;
                 LambdaExpression lambda;
 
-                // Method has a pointer parameter: fallback to System reflection, which supports pointer parameters as IntPtr...
+                // Method has a pointer parameter: fallback to System reflection, which supports pointer parameters as IntPtr.
+                ThrowIfHasRefPointerParameters();
                 if (ParameterTypes.Any(p => p.IsPointer()))
                 {
-                    ThrowIfHasRefPointerParameters(); // ...except ref pointers
-
                     // value types: though we can call Invoke(object, object[]), the ref instance parameter gets boxed in a new object, losing all mutations
                     if (isValueType && !isStatic && !declaringType!.IsReadOnly() && !method.IsReadOnly())
                         ThrowMutableStructMembersNotSupported();

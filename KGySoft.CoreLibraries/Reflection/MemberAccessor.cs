@@ -520,7 +520,7 @@ namespace KGySoft.Reflection
                 Debug.Assert(!stronglyTyped, "Strongly typed generation is expected with exact parameters");
                 for (int i = 0, localsIndex = 0; i < ParameterTypes.Length; i++)
                 {
-                    if (!ParameterTypes[i].IsByRef)
+                    if (!ParameterTypes[i].IsByRef || Parameters[i].IsIn && !Parameters[i].IsOut)
                         continue;
 
                     Type paramType = ParameterTypes[i].GetElementType()!;

@@ -71,11 +71,9 @@ namespace KGySoft.Reflection
 #if NETSTANDARD2_0
             // Has ref/out parameters: using reflection as fallback so they will be assigned back.
             // Doing so also for pointers, as they are not supported by Expression trees.
+            ThrowIfHasRefPointerParameters();
             if (ctor.GetParameters().Any(p => p.ParameterType.IsByRef && (!p.IsIn || p.IsOut) || p.ParameterType.IsPointer()))
-            {
-                ThrowIfHasRefPointerParameters();
                 return ctor.Invoke;
-            }
 
             ParameterExpression argumentsParameter = Expression.Parameter(typeof(object[]), "arguments");
             var ctorParameters = new Expression[ParameterTypes.Length];
@@ -172,11 +170,9 @@ namespace KGySoft.Reflection
 
 #if NETSTANDARD2_0
             // For pointer parameter types using reflection as fallback because Expression trees do not support pointers.
+            ThrowIfHasRefPointerParameters();
             if (ParameterTypes.Any(p => p.IsPointer()))
-            {
-                ThrowIfHasRefPointerParameters();
                 return SystemReflectionFallback();
-            }
 
             var parameters = new ParameterExpression[ParameterTypes.Length];
             var ctorParameters = new Expression[ParameterTypes.Length];
@@ -256,9 +252,9 @@ namespace KGySoft.Reflection
                 }
 
                 LambdaExpression lambda;
-                ThrowIfHasRefPointerParameters();
 
                 // The constructor has pointer parameters: fallback to System reflection, which supports pointer parameters as IntPtr.
+                ThrowIfHasRefPointerParameters();
                 if (ParameterTypes.Any(p => p.IsPointer()))
                 {
 #if NET8_0_OR_GREATER

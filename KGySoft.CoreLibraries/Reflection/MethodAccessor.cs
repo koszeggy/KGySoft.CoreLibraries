@@ -1223,7 +1223,8 @@ namespace KGySoft.Reflection
                     Throw.ArgumentNullException(Argument.parameters, Res.ArgumentNull);
                 }
 
-                if (parameters.Length < ParameterTypes.Length || !anyParams && parameters.Length != ParameterTypes.Length)
+                if (parameters.Length < ParameterTypes.Length
+                    || (!anyParams || exception is TargetParameterCountException) && parameters.Length != ParameterTypes.Length)
                 {
                     string message = Res.ReflectionParamsLengthMismatch(ParameterTypes.Length, parameters.Length);
                     if (anyParams)

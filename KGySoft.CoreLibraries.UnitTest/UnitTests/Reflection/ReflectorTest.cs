@@ -134,13 +134,21 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
                 }
             }
 
-
             public ref string this[string i]
             {
                 get
                 {
                     Console.WriteLine($"{nameof(TestClass)}.ref IndexerGetter[{i}] invoked");
                     return ref StringField;
+                }
+            }
+
+            public ref int this[in char i]
+            {
+                get
+                {
+                    Console.WriteLine($"{nameof(TestClass)}.ref IndexerGetter[in {i}] invoked");
+                    return ref IntField;
                 }
             }
 
@@ -363,6 +371,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
                 get
                 {
                     Console.WriteLine($"{nameof(UnsafeTestClass)}.ref Indexer[{(IntPtr)i}] invoked");
+                    return ref InstanceField;
+                }
+            }
+
+            // ref pointer return value and byref parameter
+            public ref void* this[in int* i]
+            {
+                get
+                {
+                    Console.WriteLine($"{nameof(UnsafeTestClass)}.ref Indexer[in {(IntPtr)i}] invoked");
                     return ref InstanceField;
                 }
             }
@@ -3302,7 +3320,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             var unsafeTestStruct = new UnsafeTestStruct(null);
             Console.Write("Method Accessor Generic...");
             if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
-               Throws<PlatformNotSupportedException>(() => accessor.InvokeInstanceAction(unsafeTestStruct, arg));
+                Throws<PlatformNotSupportedException>(() => accessor.InvokeInstanceAction(unsafeTestStruct, arg));
             else
             {
                 accessor.InvokeInstanceAction(unsafeTestStruct, arg);
@@ -4618,21 +4636,21 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             result = accessor.Get(test, indexParameters);
             Assert.AreEqual(value, result);
             Throws<ArgumentNullException>(() => accessor.Set(null, value, indexParameters), Res.ReflectionInstanceIsNull);
-            //if (!IsAot) // the fallback reflection accepts null as int
+            if (!IsAot) // the fallback reflection accepts null as int
                 Throws<ArgumentNullException>(() => accessor.Set(test, null, indexParameters), Res.NotAnInstanceOfType(value.GetType()));
             Throws<ArgumentNullException>(() => accessor.Set(test, value, null), Res.ArgumentNull);
             Throws<ArgumentException>(() => accessor.Set(new object(), value, indexParameters), Res.NotAnInstanceOfType(test.GetType()));
             Throws<ArgumentException>(() => accessor.Set(test, "1", indexParameters), Res.NotAnInstanceOfType(value.GetType()));
             Throws<ArgumentException>(() => accessor.Set(test, value, Reflector.EmptyObjects), Res.ReflectionEmptyIndices);
             Throws<ArgumentException>(() => accessor.Set(test, value, ["1"]), Res.ElementNotAnInstanceOfType(0, typeof(int)));
-            //if (!IsAot) // the fallback reflection does not tolerate more parameters than needed
+            if (!IsAot) // the fallback reflection does not tolerate more parameters than needed
                 Assert.DoesNotThrow(() => accessor.Set(test, value, new object[] { 1, "2" }), "More parameters than needed are okay");
             Throws<ArgumentNullException>(() => accessor.Get(null, indexParameters), Res.ReflectionInstanceIsNull);
             Throws<ArgumentNullException>(() => accessor.Get(test, null), Res.ArgumentNull);
             Throws<ArgumentException>(() => accessor.Get(new object(), indexParameters), Res.NotAnInstanceOfType(test.GetType()));
             Throws<ArgumentException>(() => accessor.Get(test, Reflector.EmptyObjects), Res.ReflectionEmptyIndices);
             Throws<ArgumentException>(() => accessor.Get(test, ["1"]), Res.ElementNotAnInstanceOfType(0, typeof(int)));
-            //if (!IsAot) // the fallback reflection does not tolerate more parameters than needed
+            if (!IsAot) // the fallback reflection does not tolerate more parameters than needed
                 Assert.DoesNotThrow(() => accessor.Get(test, new object[] { 1, "2" }), "More parameters than needed are okay");
 
             test = new TestClass(0);
@@ -4641,7 +4659,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             result = accessor.Get(test, index);
             Assert.AreEqual(value, result);
             Throws<ArgumentNullException>(() => accessor.Set(null, value, index), Res.ReflectionInstanceIsNull);
-            //if (!IsAot) // the fallback reflection accepts null as int
+            if (!IsAot) // the fallback reflection accepts null as int
                 Throws<ArgumentNullException>(() => accessor.Set(test, null, index), Res.NotAnInstanceOfType(value.GetType()));
             Throws<ArgumentException>(() => accessor.Set(test, value), Res.ReflectionIndexerParamsLengthMismatch(1, 0));
             Throws<ArgumentException>(() => accessor.Set(new object(), value, index), Res.NotAnInstanceOfType(test.GetType()));
@@ -4675,7 +4693,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             result = Reflector.GetProperty(test, pi, ReflectionWays.Auto, indexParameters);
             Assert.AreEqual(value, result);
             Throws<ArgumentNullException>(() => Reflector.SetProperty(null, pi, value, indexParameters), Res.ReflectionInstanceIsNull);
-            //if (!IsAot) // the fallback reflection accepts null as int
+            if (!IsAot) // the fallback reflection accepts null as int
                 Throws<ArgumentNullException>(() => Reflector.SetProperty(test, pi, null, indexParameters), Res.NotAnInstanceOfType(value.GetType()));
             Throws<ArgumentNullException>(() => Reflector.SetProperty(test, pi, value, null), Res.ArgumentNull);
             Throws<ArgumentException>(() => Reflector.SetProperty(new object(), pi, value, indexParameters), Res.NotAnInstanceOfType(test.GetType()));
@@ -4694,7 +4712,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             result = Reflector.GetIndexedMember(test, indexParameters);
             Assert.AreEqual(value, result);
             Throws<ArgumentNullException>(() => Reflector.SetIndexedMember(null, value, indexParameters), Res.ArgumentNull);
-            //if (!IsAot) // the fallback reflection accepts null as int
+            if (!IsAot) // the fallback reflection accepts null as int
                 Throws<ArgumentNullException>(() => Reflector.SetIndexedMember(test, null, indexParameters), Res.NotAnInstanceOfType(value.GetType()));
             Throws<ArgumentNullException>(() => Reflector.SetIndexedMember(test, value, null), Res.ArgumentNull);
             Throws<ReflectionException>(() => Reflector.SetIndexedMember(new object(), value, indexParameters), Res.ReflectionIndexerNotFound(Reflector.ObjectType));
@@ -4828,6 +4846,136 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Throws<ArgumentNullException>(() => Reflector.SetIndexedMember(test, value, null), Res.ArgumentNull);
             Throws<ReflectionException>(() => Reflector.SetIndexedMember(new object(), value, indexParameters), Res.ReflectionIndexerNotFound(Reflector.ObjectType));
             Throws<ArgumentException>(() => Reflector.SetIndexedMember(test, 1, indexParameters), Res.NotAnInstanceOfType(value.GetType()));
+            Throws<ArgumentException>(() => Reflector.SetIndexedMember(test, value), Res.ReflectionEmptyIndices);
+            Throws<ReflectionException>(() => Reflector.SetIndexedMember(test, value, 1m), Res.ReflectionIndexerNotFound(test.GetType()));
+            Throws<ArgumentNullException>(() => Reflector.GetIndexedMember(null, indexParameters), Res.ArgumentNull);
+            Throws<ArgumentNullException>(() => Reflector.GetIndexedMember(test, null), Res.ArgumentNull);
+            Throws<ReflectionException>(() => Reflector.GetIndexedMember(new object(), indexParameters), Res.ReflectionIndexerNotFound(Reflector.ObjectType));
+            Throws<ArgumentException>(() => Reflector.GetIndexedMember(test), Res.ReflectionEmptyIndices);
+            Throws<ReflectionException>(() => Reflector.GetIndexedMember(test, 1m), Res.ReflectionIndexerNotFound(test.GetType()));
+#endif
+        }
+
+        [Test]
+        public void ClassInstanceRefReturnRefParamIndexerAccess()
+        {
+            var test = new TestClass();
+            PropertyInfo pi = test.GetType().GetProperty("Item", [typeof(char).MakeByRefType()]);
+            PropertyAccessor accessor = PropertyAccessor.GetAccessor(pi);
+            char index = 'x';
+            object[] indexParameters = [index];
+            object result;
+            int value = 13;
+
+            Console.Write("System Reflection...");
+#if NET11_0_OR_GREATER // ArgumentException : Property set method not found.
+            pi.SetValue(test, value, indexParameters);
+#else
+            test[index] = value;
+#endif
+#if NETCOREAPP3_0_OR_GREATER // NotSupportedException : ByRef return value not supported in reflection invocation.
+            result = pi.GetValue(test, indexParameters);
+#else
+            result = test[index];
+#endif
+            Assert.AreEqual(value, result);
+
+            test = new TestClass();
+            Console.Write("Property Accessor General...");
+#if NETCOREAPP2_0 && NETSTANDARD_TEST
+            Throws<PlatformNotSupportedException>(() => accessor.Set(test, value, indexParameters));
+#else
+            accessor.Set(test, value, indexParameters);
+            result = accessor.Get(test, indexParameters);
+            Assert.AreEqual(value, result);
+            Throws<ArgumentNullException>(() => accessor.Set(null, value, indexParameters), Res.ReflectionInstanceIsNull);
+            Throws<ArgumentNullException>(() => accessor.Set(test, value, null), Res.ArgumentNull);
+            Throws<ArgumentException>(() => accessor.Set(new object(), value, indexParameters), Res.NotAnInstanceOfType(test.GetType()));
+            Throws<ArgumentException>(() => accessor.Set(test, '1', indexParameters), Res.NotAnInstanceOfType(value.GetType()));
+            Throws<ArgumentException>(() => accessor.Set(test, value, Reflector.EmptyObjects), Res.ReflectionEmptyIndices);
+            Throws<ArgumentException>(() => accessor.Set(test, value, [1]), Res.ElementNotAnInstanceOfType(0, typeof(char)));
+            Assert.DoesNotThrow(() => accessor.Set(test, value, new object[] { index, 2 }), "More parameters than needed are okay");
+            Throws<ArgumentNullException>(() => accessor.Get(null, indexParameters), Res.ReflectionInstanceIsNull);
+            Throws<ArgumentNullException>(() => accessor.Get(test, null), Res.ArgumentNull);
+            Throws<ArgumentException>(() => accessor.Get(new object(), indexParameters), Res.NotAnInstanceOfType(test.GetType()));
+            Throws<ArgumentException>(() => accessor.Get(test, Reflector.EmptyObjects), Res.ReflectionEmptyIndices);
+            Throws<ArgumentException>(() => accessor.Get(test, [1]), Res.ElementNotAnInstanceOfType(0, typeof(char)));
+            Assert.DoesNotThrow(() => accessor.Get(test, new object[] { index, 2 }), "More parameters than needed are okay");
+#endif
+
+            test = new TestClass();
+            Console.Write("Property Accessor NonGeneric...");
+#if NETCOREAPP2_0 && NETSTANDARD_TEST
+            Throws<PlatformNotSupportedException>(() => accessor.Set(test, value, index));
+#else
+            accessor.Set(test, value, index);
+            result = accessor.Get(test, index);
+            Assert.AreEqual(value, result);
+            Throws<ArgumentNullException>(() => accessor.Set(null, value, index), Res.ReflectionInstanceIsNull);
+            Throws<ArgumentException>(() => accessor.Set(test, value), Res.ReflectionIndexerParamsLengthMismatch(1, 0));
+            Throws<ArgumentException>(() => accessor.Set(new object(), value, index), Res.NotAnInstanceOfType(test.GetType()));
+            Throws<ArgumentException>(() => accessor.Set(test, "1", index), Res.NotAnInstanceOfType(value.GetType()));
+            Throws<ArgumentException>(() => accessor.Set(test, value, 1), Res.NotAnInstanceOfType(typeof(char)));
+            Throws<ArgumentNullException>(() => accessor.Get(null, index), Res.ReflectionInstanceIsNull);
+            Throws<ArgumentException>(() => accessor.Get(test), Res.ReflectionIndexerParamsLengthMismatch(1, 0));
+            Throws<ArgumentException>(() => accessor.Get(new object(), index), Res.NotAnInstanceOfType(test.GetType()));
+            Throws<ArgumentException>(() => accessor.Get(test, 1), Res.NotAnInstanceOfType(typeof(char)));
+#endif
+
+            test = new TestClass();
+            Console.Write("Property Accessor Generic...");
+#if NETCOREAPP2_0 && NETSTANDARD_TEST
+            Throws<PlatformNotSupportedException>(() => accessor.SetInstanceValue(test, value, index));
+#else
+            accessor.SetInstanceValue(test, value, index);
+            result = accessor.GetInstanceValue<TestClass, int, char>(test, index);
+            Assert.AreEqual(value, result);
+            Throws<InvalidOperationException>(() => accessor.SetStaticValue(1), Res.ReflectionStaticPropertyExpectedGeneric(pi.Name, pi.DeclaringType!));
+            Throws<ArgumentNullException>(() => accessor.SetInstanceValue((TestClass)null, value, index), Res.ArgumentNull);
+            Throws<ArgumentException>(() => accessor.SetInstanceValue(new object(), value, index), Res.ReflectionCannotInvokePropertyGeneric("Item", pi.DeclaringType!));
+            Throws<ArgumentException>(() => accessor.SetInstanceValue(test, "1", index), Res.ReflectionCannotInvokePropertyGeneric("Item", pi.DeclaringType!));
+            Throws<ArgumentException>(() => accessor.SetInstanceValue(test, value), Res.ReflectionCannotInvokePropertyGeneric("Item", pi.DeclaringType!));
+            Throws<ArgumentException>(() => accessor.SetInstanceValue(test, value, 1), Res.ReflectionCannotInvokePropertyGeneric("Item", pi.DeclaringType!));
+            Throws<InvalidOperationException>(() => accessor.GetStaticValue<string>(), Res.ReflectionStaticPropertyExpectedGeneric("Item", pi.DeclaringType!));
+            Throws<ArgumentNullException>(() => accessor.GetInstanceValue<TestClass, int, char>(null, index), Res.ArgumentNull);
+            Throws<ArgumentException>(() => accessor.GetInstanceValue<object, int, char>(new object(), index), Res.ReflectionCannotInvokePropertyGeneric("Item", pi.DeclaringType!));
+            Throws<ArgumentException>(() => accessor.GetInstanceValue<TestClass, string>(test), Res.ReflectionCannotInvokePropertyGeneric("Item", pi.DeclaringType!));
+            Throws<ArgumentException>(() => accessor.GetInstanceValue<TestClass, string, int>(test, 1), Res.ReflectionCannotInvokePropertyGeneric("Item", pi.DeclaringType!));
+#endif
+
+            test = new TestClass();
+            Console.Write("Reflector (by PropertyInfo)...");
+#if NETCOREAPP2_0 && NETSTANDARD_TEST
+            Throws<PlatformNotSupportedException>(() => Reflector.SetProperty(test, pi, value, ReflectionWays.Auto, indexParameters));
+#else
+            Reflector.SetProperty(test, pi, value, ReflectionWays.Auto, indexParameters);
+            result = Reflector.GetProperty(test, pi, ReflectionWays.Auto, indexParameters);
+            Assert.AreEqual(value, result);
+            Throws<ArgumentNullException>(() => Reflector.SetProperty(null, pi, value, indexParameters), Res.ReflectionInstanceIsNull);
+            Throws<ArgumentNullException>(() => Reflector.SetProperty(test, pi, value, null), Res.ArgumentNull);
+            Throws<ArgumentException>(() => Reflector.SetProperty(new object(), pi, value, indexParameters), Res.NotAnInstanceOfType(test.GetType()));
+            Throws<ArgumentException>(() => Reflector.SetProperty(test, pi, "1", indexParameters), Res.NotAnInstanceOfType(value.GetType()));
+            Throws<ArgumentException>(() => Reflector.SetProperty(test, pi, value), Res.ReflectionEmptyIndices);
+            Throws<ArgumentException>(() => Reflector.SetProperty(test, pi, value, 1), Res.ElementNotAnInstanceOfType(0, typeof(char)));
+            Throws<ArgumentNullException>(() => Reflector.GetProperty(null, pi, indexParameters), Res.ReflectionInstanceIsNull);
+            Throws<ArgumentNullException>(() => Reflector.GetProperty(test, pi, null), Res.ArgumentNull);
+            Throws<ArgumentException>(() => Reflector.GetProperty(new object(), pi, indexParameters), Res.NotAnInstanceOfType(test.GetType()));
+            Throws<ArgumentException>(() => Reflector.GetProperty(test, pi), Res.ReflectionEmptyIndices);
+            Throws<ArgumentException>(() => Reflector.GetProperty(test, pi, 1), Res.ElementNotAnInstanceOfType(0, typeof(char)));
+#endif
+
+            test = new TestClass();
+            Console.Write("Reflector (by parameters match)...");
+#if NETCOREAPP2_0 && NETSTANDARD_TEST
+            Throws<PlatformNotSupportedException>(() => Reflector.SetIndexedMember(test, value, indexParameters));
+#else
+            Reflector.SetIndexedMember(test, value, indexParameters);
+            result = Reflector.GetIndexedMember(test, indexParameters);
+            Assert.AreEqual(value, result);
+            Throws<ArgumentNullException>(() => Reflector.SetIndexedMember(null, value, indexParameters), Res.ArgumentNull);
+            Throws<ArgumentNullException>(() => Reflector.SetIndexedMember(test, value, null), Res.ArgumentNull);
+            Throws<ReflectionException>(() => Reflector.SetIndexedMember(new object(), value, indexParameters), Res.ReflectionIndexerNotFound(Reflector.ObjectType));
+            Throws<ArgumentException>(() => Reflector.SetIndexedMember(test, "1", indexParameters), Res.NotAnInstanceOfType(value.GetType()));
             Throws<ArgumentException>(() => Reflector.SetIndexedMember(test, value), Res.ReflectionEmptyIndices);
             Throws<ReflectionException>(() => Reflector.SetIndexedMember(test, value, 1m), Res.ReflectionIndexerNotFound(test.GetType()));
             Throws<ArgumentNullException>(() => Reflector.GetIndexedMember(null, indexParameters), Res.ArgumentNull);
@@ -5476,56 +5624,72 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             result = test[in ptrIndex];
             Assert.AreEqual(value, result);
 
+            // System Reflection does not support initializing the ref pointer parameter - ArgumentException: Object of type 'System.IntPtr' cannot be converted to type 'System.Void*&'
+#if NET11_0_OR_GREATER // increase version number if it's not fixed
             Console.Write("System Reflection...");
             pi.SetValue(test, value, indexParameters);
             result = pi.GetValue(test, indexParameters);
             Assert.AreEqual(value, result);
+#endif
 
             test = new UnsafeTestClass(null);
             Console.Write("Property Accessor General...");
-            accessor.Set(test, value, indexParameters);
-            result = accessor.Get(test, indexParameters);
-            Assert.AreEqual(value, result);
-            Throws<ArgumentException>(() => accessor.Set(test, 1, indexParameters), Res.NotAnInstanceOfType(value.GetType()));
-            Throws<ArgumentException>(() => accessor.Set(test, value, [1]), Res.ElementNotAnInstanceOfType(0, typeof(IntPtr)));
-            Throws<ArgumentException>(() => accessor.Get(test, [1]), Res.ElementNotAnInstanceOfType(0, typeof(IntPtr)));
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => accessor.Set(test, value, indexParameters));
+            else
+            {
+                accessor.Set(test, value, indexParameters);
+                result = accessor.Get(test, indexParameters);
+                Assert.AreEqual(value, result);
+                Throws<ArgumentException>(() => accessor.Set(test, 1, indexParameters), Res.NotAnInstanceOfType(value.GetType()));
+                Throws<ArgumentException>(() => accessor.Set(test, value, [1]), Res.ElementNotAnInstanceOfType(0, typeof(IntPtr)));
+                Throws<ArgumentException>(() => accessor.Get(test, [1]), Res.ElementNotAnInstanceOfType(0, typeof(IntPtr)));
+            }
 
             test = new UnsafeTestClass(null);
             Console.Write("Property Accessor NonGeneric...");
-            accessor.Set(test, value, index);
-            result = accessor.Get(test, index);
-            Assert.AreEqual(value, result);
-            Throws<ArgumentException>(() => accessor.Set(test, 1, index), Res.NotAnInstanceOfType(value.GetType()));
-            Throws<ArgumentException>(() => accessor.Set(test, value, 1), Res.NotAnInstanceOfType(typeof(IntPtr)));
-            Throws<ArgumentException>(() => accessor.Get(test, 1), Res.NotAnInstanceOfType(typeof(IntPtr)));
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => accessor.Set(test, value, index));
+            else
+            {
+                accessor.Set(test, value, index);
+                result = accessor.Get(test, index);
+                Assert.AreEqual(value, result);
+                Throws<ArgumentException>(() => accessor.Set(test, 1, index), Res.NotAnInstanceOfType(value.GetType()));
+                Throws<ArgumentException>(() => accessor.Set(test, value, 1), Res.NotAnInstanceOfType(typeof(IntPtr)));
+                Throws<ArgumentException>(() => accessor.Get(test, 1), Res.NotAnInstanceOfType(typeof(IntPtr)));
+            }
 
             test = new UnsafeTestClass(null);
             Console.Write("Property Accessor Generic...");
-            accessor.SetInstanceValue(test, (IntPtr)value, (IntPtr)index);
-            result = accessor.GetInstanceValue<UnsafeTestClass, IntPtr, IntPtr>(test, (IntPtr)index);
-            Assert.AreEqual(value, result);
-            Throws<ArgumentException>(() => accessor.SetInstanceValue(test, 1, (IntPtr)index), Res.ReflectionCannotInvokePropertyGeneric("Item", pi.DeclaringType!));
-            Throws<ArgumentException>(() => accessor.SetInstanceValue(test, (IntPtr)value, 1), Res.ReflectionCannotInvokePropertyGeneric("Item", pi.DeclaringType!));
-            Throws<ArgumentException>(() => accessor.GetInstanceValue<UnsafeTestClass, int, IntPtr>(test, (IntPtr)index), Res.ReflectionCannotInvokePropertyGeneric("Item", pi.DeclaringType!));
-            Throws<ArgumentException>(() => accessor.GetInstanceValue<UnsafeTestClass, IntPtr, int>(test, 1), Res.ReflectionCannotInvokePropertyGeneric("Item", pi.DeclaringType!));
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => accessor.SetInstanceValue(test, (IntPtr)value, (IntPtr)index));
+            else
+            {
+                accessor.SetInstanceValue(test, (IntPtr)value, (IntPtr)index);
+                result = accessor.GetInstanceValue<UnsafeTestClass, IntPtr, IntPtr>(test, (IntPtr)index);
+                Assert.AreEqual(value, result);
+                Throws<ArgumentException>(() => accessor.SetInstanceValue(test, 1, (IntPtr)index), Res.ReflectionCannotInvokePropertyGeneric("Item", pi.DeclaringType!));
+                Throws<ArgumentException>(() => accessor.SetInstanceValue(test, (IntPtr)value, 1), Res.ReflectionCannotInvokePropertyGeneric("Item", pi.DeclaringType!));
+                Throws<ArgumentException>(() => accessor.GetInstanceValue<UnsafeTestClass, int, IntPtr>(test, (IntPtr)index), Res.ReflectionCannotInvokePropertyGeneric("Item", pi.DeclaringType!));
+                Throws<ArgumentException>(() => accessor.GetInstanceValue<UnsafeTestClass, IntPtr, int>(test, 1), Res.ReflectionCannotInvokePropertyGeneric("Item", pi.DeclaringType!));
+            }
 
             test = new UnsafeTestClass(null);
             Console.Write("Reflector (by PropertyInfo)...");
-            Reflector.SetProperty(test, pi, value, ReflectionWays.Auto, indexParameters);
-            result = Reflector.GetProperty(test, pi, ReflectionWays.Auto, indexParameters);
-            Assert.AreEqual(value, result);
-            Throws<ArgumentException>(() => Reflector.SetProperty(test, pi, 1, indexParameters), Res.NotAnInstanceOfType(value.GetType()));
-            Throws<ArgumentException>(() => Reflector.SetProperty(test, pi, value, 1), Res.ElementNotAnInstanceOfType(0, typeof(IntPtr)));
-            Throws<ArgumentException>(() => Reflector.GetProperty(test, pi, 1), Res.ElementNotAnInstanceOfType(0, typeof(IntPtr)));
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => Reflector.SetProperty(test, pi, value, ReflectionWays.Auto, indexParameters));
+            else
+            {
+                Reflector.SetProperty(test, pi, value, ReflectionWays.Auto, indexParameters);
+                result = Reflector.GetProperty(test, pi, ReflectionWays.Auto, indexParameters);
+                Assert.AreEqual(value, result);
+                Throws<ArgumentException>(() => Reflector.SetProperty(test, pi, 1, indexParameters), Res.NotAnInstanceOfType(value.GetType()));
+                Throws<ArgumentException>(() => Reflector.SetProperty(test, pi, value, 1), Res.ElementNotAnInstanceOfType(0, typeof(IntPtr)));
+                Throws<ArgumentException>(() => Reflector.GetProperty(test, pi, 1), Res.ElementNotAnInstanceOfType(0, typeof(IntPtr)));
+            }
 
-            test = new UnsafeTestClass(null);
-            Console.Write("Reflector (by parameters match)...");
-            Reflector.SetIndexedMember(test, value, indexParameters);
-            result = Reflector.GetIndexedMember(test, indexParameters);
-            Assert.AreEqual(value, result);
-            Throws<ArgumentException>(() => Reflector.SetIndexedMember(test, 1, indexParameters), Res.NotAnInstanceOfType(value.GetType()));
-            Throws<ReflectionException>(() => Reflector.SetIndexedMember(test, value, 1), Res.ReflectionIndexerNotFound(test.GetType()));
-            Throws<ReflectionException>(() => Reflector.GetIndexedMember(test, 1), Res.ReflectionIndexerNotFound(test.GetType()));
+            // not testing Reflector.SetIndexedMember because the pointer indexers are ambiguous by IntPtr index, and may find the other one
         }
 
         [Test]
@@ -5536,6 +5700,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             PropertyAccessor accessor = PropertyAccessor.GetAccessor(pi);
             object result, value = new IntPtr(1), index = new IntPtr(42);
             object[] indexParameters = [index];
+
+            Console.Write("Direct Access...");
+            test[(IntPtr)index] = ((IntPtr)value).ToPointer();
+            result = (IntPtr)test[(IntPtr)index];
+            Assert.AreEqual(value, result);
 
             Console.Write("System Reflection...");
             pi.SetValue(test, value, indexParameters);
@@ -5615,6 +5784,94 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             test = new UnsafeTestClass();
             Console.Write("Property Accessor General...");
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => accessor.Set(test, value, indexParameters));
+            else
+            {
+                accessor.Set(test, value, indexParameters);
+                result = accessor.Get(test, indexParameters);
+                Assert.AreEqual(value, result);
+                Throws<ArgumentException>(() => accessor.Set(test, 1, indexParameters), Res.NotAnInstanceOfType(value.GetType()));
+                Throws<ArgumentException>(() => accessor.Set(test, value, [1]), Res.ElementNotAnInstanceOfType(0, typeof(IntPtr)));
+                Throws<ArgumentException>(() => accessor.Get(test, [1]), Res.ElementNotAnInstanceOfType(0, typeof(IntPtr)));
+            }
+
+            test = new UnsafeTestClass();
+            Console.Write("Property Accessor NonGeneric...");
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => accessor.Set(test, value, index));
+            else
+            {
+                accessor.Set(test, value, index);
+                result = accessor.Get(test, index);
+                Assert.AreEqual(value, result);
+                Throws<ArgumentException>(() => accessor.Set(test, 1, index), Res.NotAnInstanceOfType(value.GetType()));
+                Throws<ArgumentException>(() => accessor.Set(test, value, 1), Res.NotAnInstanceOfType(typeof(IntPtr)));
+                Throws<ArgumentException>(() => accessor.Get(test, 1), Res.NotAnInstanceOfType(typeof(IntPtr)));
+            }
+
+            test = new UnsafeTestClass();
+            Console.Write("Property Accessor Generic...");
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => accessor.SetInstanceValue(test, value, index));
+            else
+            {
+                accessor.SetInstanceValue(test, value, index);
+                result = accessor.GetInstanceValue<UnsafeTestClass, IntPtr, IntPtr>(test, index);
+                Assert.AreEqual(value, result);
+                Throws<ArgumentException>(() => accessor.SetInstanceValue(test, 1, index), Res.ReflectionCannotInvokePropertyGeneric("Item", pi.DeclaringType!));
+                Throws<ArgumentException>(() => accessor.SetInstanceValue(test, value, 1), Res.ReflectionCannotInvokePropertyGeneric("Item", pi.DeclaringType!));
+                Throws<ArgumentException>(() => accessor.GetInstanceValue<UnsafeTestClass, IntPtr, int>(test, 1), Res.ReflectionCannotInvokePropertyGeneric("Item", pi.DeclaringType!));
+                Throws<ArgumentException>(() => accessor.GetInstanceValue<UnsafeTestClass, int, IntPtr>(test, index), Res.ReflectionCannotInvokePropertyGeneric("Item", pi.DeclaringType!));
+            }
+
+            test = new UnsafeTestClass();
+            Console.Write("Reflector (by PropertyInfo)...");
+            if (TestedFramework == TargetFramework.NetStandard20 || IsAot)
+                Throws<PlatformNotSupportedException>(() => Reflector.SetProperty(test, pi, value, ReflectionWays.Auto, indexParameters));
+            else
+            {
+                Reflector.SetProperty(test, pi, value, ReflectionWays.Auto, indexParameters);
+                result = Reflector.GetProperty(test, pi, ReflectionWays.Auto, indexParameters);
+                Assert.AreEqual(value, result);
+                Throws<ArgumentException>(() => Reflector.SetProperty(test, pi, 1, indexParameters), Res.NotAnInstanceOfType(value.GetType()));
+                Throws<ArgumentException>(() => Reflector.SetProperty(test, pi, value, 1), Res.ElementNotAnInstanceOfType(0, typeof(IntPtr)));
+                Throws<ArgumentException>(() => Reflector.GetProperty(test, pi, 1), Res.ElementNotAnInstanceOfType(0, typeof(IntPtr)));
+            }
+
+            // not testing Reflector.SetIndexedMember because the two pointer indexers are ambiguous by IntPtr index, and would find the other one
+        }
+
+        [Test]
+        public unsafe void ClassInstanceRefReturnRefParamIndexerAccessUnsafe()
+        {
+            var test = new UnsafeTestClass();
+            PropertyInfo pi = test.GetType().GetProperty("Item", [typeof(int*).MakeByRefType()]);
+            PropertyAccessor accessor = PropertyAccessor.GetAccessor(pi);
+            var index = new IntPtr(42);
+            object[] indexParameters;
+            object result;
+            var value = new IntPtr(13);
+
+            Console.Write("Direct access...");
+            var ptrIndex = (int*)index;
+            test[in ptrIndex] = value.ToPointer();
+            result = (IntPtr)test[in ptrIndex];
+            Assert.AreEqual(value, result);
+
+            Console.Write("System Reflection...");
+            // System Reflection does not support initializing the ref pointer parameter - ArgumentException: Object of type 'System.IntPtr' cannot be converted to type 'System.Void*&'
+#if NET11_0_OR_GREATER // increase version number if it's not fixed
+            test = new UnsafeTestClass();
+            indexParameters = [index];
+            pi.SetValue(test, value, indexParameters);
+            result = (IntPtr)Pointer.Unbox(pi.GetValue(test, indexParameters));
+            Assert.AreEqual(value, result);
+#endif
+
+            test = new UnsafeTestClass();
+            indexParameters = [index];
+            Console.Write("Property Accessor General...");
 #if NETCOREAPP2_0 && NETSTANDARD_TEST
             Throws<PlatformNotSupportedException>(() => accessor.Set(test, value, indexParameters));
 #else
@@ -5655,6 +5912,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             test = new UnsafeTestClass();
             Console.Write("Reflector (by PropertyInfo)...");
+            indexParameters = [index];
 #if NETCOREAPP2_0 && NETSTANDARD_TEST
             Throws<PlatformNotSupportedException>(() => Reflector.SetProperty(test, pi, value, ReflectionWays.Auto, indexParameters));
 #else
@@ -5666,7 +5924,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Throws<ArgumentException>(() => Reflector.GetProperty(test, pi, 1), Res.ElementNotAnInstanceOfType(0, typeof(IntPtr)));
 #endif
 
-            // not testing Reflector.SetIndexedMember because the two pointer indexers are ambiguous by IntPtr index, and would find the other one
+            // not testing Reflector.SetIndexedMember because the pointer indexers are ambiguous by IntPtr index, and may find the other one
         }
 
         #endregion

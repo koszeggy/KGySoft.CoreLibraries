@@ -788,7 +788,8 @@ namespace KGySoft.Reflection
                 if (indexParameters.Length == 0 && anyParams)
                     Throw.ArgumentException(Argument.indexParameters, Res.ReflectionEmptyIndices);
 
-                if (indexParameters.Length < ParameterTypes.Length || !anyParams && indexParameters.Length != ParameterTypes.Length)
+                if (indexParameters.Length < ParameterTypes.Length
+                    || (!anyParams || exception is TargetParameterCountException) && indexParameters.Length != ParameterTypes.Length)
                 {
                     string message = Res.ReflectionIndexerParamsLengthMismatch(ParameterTypes.Length, indexParameters.Length);
                     if (anyParams)
