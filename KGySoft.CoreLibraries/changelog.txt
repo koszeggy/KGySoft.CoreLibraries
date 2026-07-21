@@ -13,8 +13,9 @@
 ==================
 + Supporting Native AOT (Ahead of Time) deployment mode.
 
-- KGySoft.Reflection namespace:
+* KGySoft.Reflection namespace:
 ===============================
++ PropertyAccessor class: Supporting indexers with parameters passed by reference.
 - MethodAccessor, PropertyAccessor, CreateInstanceAccessor classes: fixed validation in some nongeneric error scenarios.
 
 

@@ -16,12 +16,15 @@
 #region Usings
 
 using System;
-#if NETSTANDARD2_0
+#if NETSTANDARD2_0_OR_GREATER || NETCOREAPP3_0_OR_GREATER
 using System.Linq.Expressions;
 #endif
 using System.Reflection;
 #if !NETSTANDARD2_0
 using System.Reflection.Emit;
+#endif
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+using System.Runtime.CompilerServices;
 #endif
 
 using KGySoft.CoreLibraries;
@@ -72,7 +75,7 @@ namespace KGySoft.Reflection
 
 #if NETSTANDARD2_0
             // Value type: using reflection as fallback so mutations are preserved. Same for pointer properties that are not supported by Expression trees.
-            if (!setterMethod.IsStatic && declaringType!.IsValueType || Property.PropertyType.IsPointer)
+            if (!setterMethod.IsStatic && declaringType!.IsValueType || Property.PropertyType.IsPointer())
                 return Property.SetValue;
 
             ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
@@ -92,6 +95,17 @@ namespace KGySoft.Reflection
                 indexParametersParameter); // indexParameters (object[]) - ignored
             return lambda.Compile();
 #else
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+            if (!RuntimeFeature.IsDynamicCodeSupported)
+            {
+#if NET8_0_OR_GREATER
+                MethodInvoker invoker = FallbackSetter!;
+                return (obj, value, _) => invoker.Invoke(obj, value);
+#else
+                return Property.SetValue;
+#endif
+            }
+#endif
             DynamicMethod result = CreateMethodInvokerAsDynamicMethod(setterMethod, DynamicMethodOptions.TreatAsPropertySetter);
             return (Action<object?, object?, object?[]?>)result.CreateDelegate(typeof(Action<object?, object?, object?[]?>));
 #endif
@@ -99,6 +113,32 @@ namespace KGySoft.Reflection
 
         private protected override Func<object?, object?[]?, object?> CreateGeneralGetter()
         {
+            #region Local Methods
+
+#if NETSTANDARD2_0_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+            Func<object?, object?[]?, object?> SystemReflectionFallback()
+            {
+                PropertyInfo pi = Property;
+                Type propertyType = pi.PropertyType;
+                if (propertyType.IsByRef)
+                    propertyType = propertyType.GetElementType()!;
+                
+                unsafe
+                {
+                    // Only real pointers are returned as Reflection.Pointer, whereas function pointers are returned as IntPtr,
+                    // so using the IsPointer property rather than the IsPointer() extension here is intended.
+#if NET8_0_OR_GREATER
+                    MethodInvoker invoker = FallbackGetter!;
+                    return propertyType.IsPointer ? (obj, _) => (IntPtr)Pointer.Unbox(invoker.Invoke(obj)!) : (obj, _) => invoker.Invoke(obj);
+#else
+                    return propertyType.IsPointer ? (obj, _) => (IntPtr)Pointer.Unbox(pi.GetValue(obj)!) : pi.GetValue;
+#endif
+                }
+            }
+#endif
+
+            #endregion
+
             Type? declaringType = Property.DeclaringType;
             if (declaringType?.ContainsGenericParameters == true)
                 Throw.InvalidOperationException(Res.ReflectionGenericMember);
@@ -113,16 +153,8 @@ namespace KGySoft.Reflection
                 Throw.PlatformNotSupportedException(Res.ReflectionRefReturnTypeNetStandard20(Property.PropertyType));
 
             // Non-readonly value type: using reflection as fallback so mutations are preserved. Same for pointer properties that are not supported by Expression trees.
-            if (!getterMethod.IsStatic && declaringType!.IsValueType && !(declaringType.IsReadOnly() || getterMethod.IsReadOnly())
-               || Property.PropertyType.IsPointer)
-            {
-                unsafe
-                {
-                    return Property.PropertyType.IsPointer
-                        ? (instance, _) => (IntPtr)Pointer.Unbox(Property.GetValue(instance))
-                        : Property.GetValue;
-                }
-            }
+            if (!getterMethod.IsStatic && declaringType!.IsValueType && !(declaringType.IsReadOnly() || getterMethod.IsReadOnly()) || Property.PropertyType.IsPointer())
+                return SystemReflectionFallback();
 
             ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
             ParameterExpression indexParametersParameter = Expression.Parameter(typeof(object[]), "indexParameters");
@@ -137,6 +169,10 @@ namespace KGySoft.Reflection
                 indexParametersParameter); // indexParameters (object[]) - ignored
             return lambda.Compile();
 #else
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+            if (!RuntimeFeature.IsDynamicCodeSupported)
+                return SystemReflectionFallback();
+#endif
             DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(getterMethod, DynamicMethodOptions.None);
             return (Func<object?, object?[]?, object?>)dm.CreateDelegate(typeof(Func<object?, object?[]?, object?>));
 #endif
@@ -169,7 +205,7 @@ namespace KGySoft.Reflection
 
 #if NETSTANDARD2_0
             // Value type: using reflection as fallback so mutations are preserved. Same for pointer properties that are not supported by Expression trees.
-            if (!setterMethod.IsStatic && declaringType!.IsValueType || Property.PropertyType.IsPointer)
+            if (!setterMethod.IsStatic && declaringType!.IsValueType || Property.PropertyType.IsPointer())
                 return new Action<object?, object?>(Property.SetValue);
 
             ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
@@ -187,6 +223,17 @@ namespace KGySoft.Reflection
                 valueParameter); // value (object)
             return lambda.Compile();
 #else
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+            if (!RuntimeFeature.IsDynamicCodeSupported)
+            {
+#if NET8_0_OR_GREATER
+                MethodInvoker invoker = FallbackSetter!;
+                return new Action<object?, object?>((obj, value) => invoker.Invoke(obj, value));
+#else
+                return new Action<object?, object?>(Property.SetValue);
+#endif
+            }
+#endif
             DynamicMethod result = CreateMethodInvokerAsDynamicMethod(setterMethod, DynamicMethodOptions.TreatAsPropertySetter | DynamicMethodOptions.ExactParameters);
             return (Action<object?, object?>)result.CreateDelegate(typeof(Action<object?, object?>));
 #endif
@@ -194,6 +241,32 @@ namespace KGySoft.Reflection
 
         private protected override Delegate CreateNonGenericGetter()
         {
+            #region Local Methods
+
+#if NETSTANDARD2_0_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+            Func<object?, object?> SystemReflectionFallback()
+            {
+                PropertyInfo pi = Property;
+                Type propertyType = pi.PropertyType;
+                if (propertyType.IsByRef)
+                    propertyType = propertyType.GetElementType()!;
+
+                unsafe
+                {
+                    // Only real pointers are returned as Reflection.Pointer, whereas function pointers are returned as IntPtr,
+                    // so using the IsPointer property rather than the IsPointer() extension here is intended.
+#if NET8_0_OR_GREATER
+                    MethodInvoker invoker = FallbackGetter!;
+                    return propertyType.IsPointer ? obj => (IntPtr)Pointer.Unbox(invoker.Invoke(obj)!) : invoker.Invoke;
+#else
+                    return propertyType.IsPointer ? obj => (IntPtr)Pointer.Unbox(pi.GetValue(obj)!) : pi.GetValue;
+#endif
+                }
+            }
+#endif
+
+            #endregion
+
             Type? declaringType = Property.DeclaringType;
             if (declaringType?.ContainsGenericParameters == true)
                 Throw.InvalidOperationException(Res.ReflectionGenericMember);
@@ -208,16 +281,8 @@ namespace KGySoft.Reflection
                 Throw.PlatformNotSupportedException(Res.ReflectionRefReturnTypeNetStandard20(Property.PropertyType));
 
             // Non-readonly value type: using reflection as fallback so mutations are preserved
-            if (!getterMethod.IsStatic && declaringType!.IsValueType && !(declaringType.IsReadOnly() || getterMethod.IsReadOnly())
-                || Property.PropertyType.IsPointer)
-            {
-                unsafe
-                {
-                    return Property.PropertyType.IsPointer
-                        ? instance => (IntPtr)Pointer.Unbox(Property.GetValue(instance))
-                        : new Func<object?, object?>(Property.GetValue);
-                }
-            }
+            if (!getterMethod.IsStatic && declaringType!.IsValueType && !(declaringType.IsReadOnly() || getterMethod.IsReadOnly()) || Property.PropertyType.IsPointer())
+                return SystemReflectionFallback();
 
             ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
             MemberExpression member = Expression.Property(
@@ -229,6 +294,10 @@ namespace KGySoft.Reflection
                 instanceParameter);
             return lambda.Compile();
 #else
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+            if (!RuntimeFeature.IsDynamicCodeSupported)
+                return SystemReflectionFallback();
+#endif
             DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(getterMethod, DynamicMethodOptions.ExactParameters);
             return (Func<object?, object?>)dm.CreateDelegate(typeof(Func<object?, object?>));
 #endif
@@ -247,7 +316,8 @@ namespace KGySoft.Reflection
                 Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
 
             Type propertyType = isByRef ? Property.PropertyType.GetElementType()! : Property.PropertyType;
-            if (propertyType.IsPointer())
+            bool isPointer = propertyType.IsPointer();
+            if (isPointer)
                 propertyType = typeof(IntPtr);
 
             Type delegateType = isStatic ? typeof(Action<>).GetGenericType(propertyType)
@@ -271,65 +341,78 @@ namespace KGySoft.Reflection
 
             MethodInfo setterMethod = Property.GetSetMethod(true)!;
 
-#if NETSTANDARD2_0
-            ParameterExpression instanceParameter;
-            MethodCallExpression setterCall;
-            LambdaExpression lambda;
-
-            // Pointer property: fallback to PropertyInfo.SetValue(object,object), which supports pointers as IntPtr
-            if (Property.PropertyType.IsPointer)
+#if NETSTANDARD2_0_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+#if !NETSTANDARD2_0
+            // Dynamic methods and IL generation are not supported: fallback to Expressions.
+            // In AOT mode it will work in interpreted mode, which is even slower than the non-generic alternative...
+            if (!RuntimeFeature.IsDynamicCodeSupported)
+#endif
             {
-                bool isValueType = declaringType?.IsValueType == true;
+                ParameterExpression instanceParameter;
+                MethodCallExpression setterCall;
+                LambdaExpression lambda;
 
-                // value types: though we can call SetValue(object,object), the ref instance parameter gets boxed in a new object, losing all mutations
-                if (isValueType && !isStatic && !declaringType!.IsReadOnly() && !setterMethod.IsReadOnly())
-                    Throw.PlatformNotSupportedException(Res.ReflectionValueTypeWithPointersGenericNetStandard20);
+                // Pointer property: fallback to System reflection, which supports pointer parameters as IntPtr.
+                if (isPointer)
+                {
+                    bool isValueType = declaringType?.IsValueType == true;
 
-                ParameterExpression[] parameters = new ParameterExpression[isStatic ? 1 : 2];
-                int valueIndex = isStatic ? 0 : 1;
-                if (!isStatic)
-                    parameters[0] = Expression.Parameter(isValueType ? declaringType!.MakeByRefType() : declaringType!, "instance");
-                parameters[valueIndex] = Expression.Parameter(propertyType, "value");
+                    // value types: though we can call SetValue(object,object), the ref instance parameter gets boxed in a new object, losing all mutations
+                    if (isValueType && !isStatic && !declaringType!.IsReadOnly() && !setterMethod.IsReadOnly())
+                        ThrowMutableStructMembersNotSupported();
 
-                Expression[] methodParameters = new Expression[2];
-                methodParameters[0] = isStatic
-                    ? Expression.Constant(null, typeof(object))
-                    : Expression.Convert(parameters[0], typeof(object));
-                methodParameters[1] = Expression.Convert(parameters[valueIndex], typeof(object));
+                    ParameterExpression[] parameters = new ParameterExpression[isStatic ? 1 : 2];
+                    int valueIndex = isStatic ? 0 : 1;
+                    if (!isStatic)
+                        parameters[0] = Expression.Parameter(isValueType ? declaringType!.MakeByRefType() : declaringType!, "instance");
+                    parameters[valueIndex] = Expression.Parameter(propertyType, "value");
 
-                MethodCallExpression methodCall = Expression.Call(
-                    Expression.Constant(Property), // the instance is the PropertyInfo itself
-                    Property.GetType().GetMethod(nameof(PropertyInfo.SetValue), [typeof(object), typeof(object)])!, // SetValue(object, object)
-                    methodParameters);
+                    Expression[] methodParameters = new Expression[2];
+                    methodParameters[0] = isStatic ? Expression.Constant(null, typeof(object))
+                        : parameters[0].Type == typeof(object) ? parameters[0]
+                        : Expression.Convert(parameters[0], typeof(object));
+                    methodParameters[1] = parameters[valueIndex].Type == typeof(object) ? parameters[valueIndex] : Expression.Convert(parameters[valueIndex], typeof(object));
 
-                lambda = Expression.Lambda(delegateType, methodCall, parameters);
-                return lambda.Compile();
-            }
+#if NET8_0_OR_GREATER
+                    // fallback to MethodInvoker
+                    MethodInvoker invoker = FallbackSetter!;
+                    MethodCallExpression methodCall = Expression.Call(
+                        Expression.Constant(invoker), // the instance is the MethodInvoker created from the setter
+                        invoker.GetType().GetMethod(nameof(MethodInvoker.Invoke), [typeof(object), typeof(object)])!, // Invoke(obj, value)
+                        methodParameters);
+#else
+                    // fallback to PropertyInfo.SetValue(object,object)
+                    MethodCallExpression methodCall = Expression.Call(
+                        Expression.Constant(Property), // the instance is the PropertyInfo itself
+                        Property.GetType().GetMethod(nameof(PropertyInfo.SetValue), [typeof(object), typeof(object)])!, // SetValue(obj, value)
+                        methodParameters);
+#endif
 
-            // Static property
-            ParameterExpression valueParameter = Expression.Parameter(propertyType, "value");
-            if (setterMethod.IsStatic)
-            {
-                setterCall = Expression.Call(null, setterMethod, valueParameter);
-                lambda = Expression.Lambda(delegateType, setterCall, valueParameter);
-                return lambda.Compile();
-            }
+                    lambda = Expression.Lambda(delegateType, methodCall, parameters);
+                    return lambda.Compile();
+                }
 
-            // Class instance property
-            if (!declaringType!.IsValueType)
-            {
-                instanceParameter = Expression.Parameter(declaringType, "instance");
+                // Static property
+                ParameterExpression valueParameter = Expression.Parameter(propertyType, "value");
+                if (setterMethod.IsStatic)
+                {
+                    setterCall = Expression.Call(null, setterMethod, valueParameter);
+                    lambda = Expression.Lambda(delegateType, setterCall, valueParameter);
+                    return lambda.Compile();
+                }
+
+                // Instance property
+                instanceParameter = declaringType!.IsValueType
+                    ? Expression.Parameter(declaringType.MakeByRefType(), "instance")
+                    : Expression.Parameter(declaringType, "instance");
+
                 setterCall = Expression.Call(instanceParameter, setterMethod, valueParameter);
                 lambda = Expression.Lambda(delegateType, setterCall, instanceParameter, valueParameter);
                 return lambda.Compile();
             }
+#endif
 
-            // Struct instance property
-            instanceParameter = Expression.Parameter(declaringType.MakeByRefType(), "instance");
-            setterCall = Expression.Call(instanceParameter, setterMethod, valueParameter);
-            lambda = Expression.Lambda(delegateType, setterCall, instanceParameter, valueParameter);
-            return lambda.Compile();
-#else
+#if !NETSTANDARD2_0
             DynamicMethod result = CreateMethodInvokerAsDynamicMethod(setterMethod, DynamicMethodOptions.TreatAsPropertySetter | DynamicMethodOptions.ExactParameters | DynamicMethodOptions.StronglyTyped);
             return result.CreateDelegate(delegateType);
 #endif
@@ -350,71 +433,83 @@ namespace KGySoft.Reflection
 
             bool isByRef = Property.PropertyType.IsByRef;
             Type propertyType = isByRef ? Property.PropertyType.GetElementType()! : Property.PropertyType;
-            if (propertyType.IsPointer())
+            bool isPointer = propertyType.IsPointer();
+            if (isPointer)
                 propertyType = typeof(IntPtr);
             bool isValueType = declaringType?.IsValueType == true;
             Type delegateType = isStatic
                 ? typeof(Func<>).GetGenericType(propertyType)
                 : (isValueType ? typeof(ValueTypeFunction<,>) : typeof(ReferenceTypeFunction<,>)).GetGenericType(declaringType!, propertyType);
 
+#if NETSTANDARD2_0_OR_GREATER || NETCOREAPP3_0_OR_GREATER
 #if NETSTANDARD2_0
-            if (isByRef)
+            if (isByRef) // not even the fallback supports ref returns below .NET Core 3.0
                 Throw.PlatformNotSupportedException(Res.ReflectionRefReturnTypeNetStandard20(Property.PropertyType));
-    
-            MethodCallExpression getterCall;
-            ParameterExpression instanceParameter;
-            LambdaExpression lambda;
-
-            // Pointer property: fallback to NonGenericGetter.Invoke(object), which supports pointers as IntPtr.
-            // NOTE: Unlike in the setter, we cannot use PropertyInfo.GetValue(object) here, because we should call Pointer.Unbox(object) on the result,
-            // which is not possible by Expression trees.
-            if (Property.PropertyType.IsPointer)
+#else
+            // Dynamic methods and IL generation are not supported: fallback to Expressions.
+            // In AOT mode it will work in interpreted mode, which is even slower than the non-generic alternative...
+            if (!RuntimeFeature.IsDynamicCodeSupported)
+#endif
             {
-                // value types: though we can call NonGenericGetter.Invoke(object), the ref instance parameter gets boxed in a new object, losing all mutations
-                if (isValueType && !isStatic && !declaringType!.IsReadOnly() && !getterMethod.IsReadOnly())
-                    Throw.PlatformNotSupportedException(Res.ReflectionValueTypeWithPointersGenericNetStandard20);
+                MethodCallExpression getterCall;
+                ParameterExpression instanceParameter;
+                LambdaExpression lambda;
 
-                ParameterExpression[] parameters = new ParameterExpression[isStatic ? 0 : 1];
-                if (!isStatic)
-                    parameters[0] = Expression.Parameter(isValueType ? declaringType!.MakeByRefType() : declaringType!, "instance");
+                // Pointer property: fallback to System reflection, which supports pointers as IntPtr.
+                if (isPointer || isByRef)
+                {
+                    // value types: though we can call NonGenericGetter.Invoke(object), the ref instance parameter gets boxed in a new object, losing all mutations
+                    if (isValueType && !isStatic && !declaringType!.IsReadOnly() && !getterMethod.IsReadOnly())
+                        ThrowMutableStructMembersNotSupported();
 
-                Expression[] methodParameters = new Expression[1];
-                methodParameters[0] = isStatic
-                    ? Expression.Constant(null, typeof(object))
-                    : Expression.Convert(parameters[0], typeof(object));
+                    ParameterExpression[] parameters = new ParameterExpression[isStatic ? 0 : 1];
+                    if (!isStatic)
+                        parameters[0] = Expression.Parameter(isValueType ? declaringType!.MakeByRefType() : declaringType!, "instance");
 
-                MethodCallExpression methodCall = Expression.Call(
-                    Expression.Constant(NonGenericGetter),
-                    NonGenericGetter.GetType().GetMethod("Invoke", [typeof(object)])!,
-                    methodParameters);
+                    Expression[] methodParameters = new Expression[1];
+                    methodParameters[0] = isStatic ? Expression.Constant(null, typeof(object))
+                        : parameters[0].Type == typeof(object) ? parameters[0]
+                        : Expression.Convert(parameters[0], typeof(object));
 
-                lambda = Expression.Lambda(delegateType, Expression.Convert(methodCall, propertyType), parameters);
-                return lambda.Compile();
-            }
+                    // NOTE: If the return type is pointer, we should call Pointer.Unbox on the PropertyInfo.GetValue result, which is not possible by expression trees.
+                    // So we use the NonGenericGetter delegate for pointer return types, whose Invoke has the same signature as PropertyInfo.GetValue(object),
+                    // and it converts the pointer result to IntPtr.
+#if NET8_0_OR_GREATER
+                    object callTarget = isPointer ? NonGenericGetter : FallbackGetter!;
+                    const string getterName = nameof(MethodInvoker.Invoke);
+#else
+                    object callTarget = isPointer ? NonGenericGetter : Property;
+                    string getterName = isPointer ? nameof(Func<,>.Invoke) : nameof(PropertyInfo.GetValue);
+#endif
 
-            // Static property
-            if (getterMethod.IsStatic)
-            {
-                getterCall = Expression.Call(null, getterMethod);
-                lambda = Expression.Lambda(delegateType, getterCall);
-                return lambda.Compile();
-            }
+                    MethodCallExpression methodCall = Expression.Call(
+                        Expression.Constant(callTarget),
+                        callTarget.GetType().GetMethod(getterName, [typeof(object)])!,
+                        methodParameters);
 
-            // Class instance property
-            if (!declaringType!.IsValueType)
-            {
-                instanceParameter = Expression.Parameter(declaringType, "instance");
+                    lambda = Expression.Lambda(delegateType, propertyType == typeof(object) ? methodCall : Expression.Convert(methodCall, propertyType), parameters);
+                    return lambda.Compile();
+                }
+
+                // Static property
+                if (getterMethod.IsStatic)
+                {
+                    getterCall = Expression.Call(null, getterMethod);
+                    lambda = Expression.Lambda(delegateType, getterCall);
+                    return lambda.Compile();
+                }
+
+                // Instance property
+                instanceParameter = declaringType!.IsValueType
+                    ? Expression.Parameter(declaringType.MakeByRefType(), "instance")
+                    : Expression.Parameter(declaringType, "instance");
+
                 getterCall = Expression.Call(instanceParameter, getterMethod);
                 lambda = Expression.Lambda(delegateType, getterCall, instanceParameter);
                 return lambda.Compile();
             }
-
-            // Struct instance property
-            instanceParameter = Expression.Parameter(declaringType.MakeByRefType(), "instance");
-            getterCall = Expression.Call(instanceParameter, getterMethod);
-            lambda = Expression.Lambda(delegateType, getterCall, instanceParameter);
-            return lambda.Compile();
-#else
+#endif
+#if !NETSTANDARD2_0
             DynamicMethod result = CreateMethodInvokerAsDynamicMethod(getterMethod, DynamicMethodOptions.ExactParameters | DynamicMethodOptions.StronglyTyped);
             return result.CreateDelegate(delegateType);
 #endif
@@ -427,6 +522,10 @@ namespace KGySoft.Reflection
 #if !NETSTANDARD2_0
         private DynamicMethod CreateSetRefAsDynamicMethod(bool? generic)
         {
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+            if (!RuntimeFeature.IsDynamicCodeSupported)
+                Throw.PlatformNotSupportedException(Res.ReflectionRefReturnSetPropertyAot(Property.PropertyType));
+#endif
             MethodInfo getterMethod = Property.GetGetMethod(true)!;
             Type? declaringType = getterMethod.DeclaringType;
             bool isStatic = getterMethod.IsStatic;

@@ -414,10 +414,13 @@ Hit rate: {8:P2}</value>
     <value>Generic access of potentially mutating value type members with pointer parameters or pointer return value is not supported in the .NET Standard 2.0 version of this library. Use the non-generic access instead.</value>
   </data>
   <data name="Reflection_ValueTypeWithPointersGenericAot" xml:space="preserve">
-    <value>Generic access of potentially mutating value type members with pointer parameters or pointer return value is not supported in AOT mode. Use the non-generic access instead.</value>
+    <value>Generic access of potentially mutating value type members with pointer parameters or pointer return value is not supported in native AOT mode. Use the non-generic access instead.</value>
   </data>
   <data name="Reflection_FunctionPointersNotSupported" xml:space="preserve">
     <value>Resolving function pointers is not supported on this platform.</value>
+  </data>
+  <data name="Reflection_RefReturnStaticIndexerNotSupported" xml:space="preserve">
+    <value>Setting static indexers with ref return value is not supported.</value>
   </data>
   <data name="ArraySection_Null" xml:space="preserve">
     <value>The underlying array is null.</value>
@@ -673,7 +676,7 @@ You can try to enable the RecursiveSerializationAsFallback flag, though the seri
     <value>Ref pointer type '{0}' is not supported in the .NET Standard 2.0 version of this library. If possible, try to use the .NET Standard 2.1 version or any .NET Core/Framework versions instead.</value>
   </data>
   <data name="Reflection_RefPointerTypeNotSupportedAotFormat" xml:space="preserve">
-    <value>Ref pointer type '{0}' is not supported in AOT mode.</value>
+    <value>Ref pointer type '{0}' is not supported in native AOT mode.</value>
   </data>
   <data name="Reflection_PointerTypeMonoNotSupportedFormat" xml:space="preserve">
     <value>Reflecting pointer type '{0}' is not supported on the Mono platform.</value>
@@ -683,6 +686,9 @@ You can try to enable the RecursiveSerializationAsFallback flag, though the seri
   </data>
   <data name="Reflection_RefReturnTypeNetStandard20Format" xml:space="preserve">
     <value>Ref return type '{0}' is not supported in the .NET Standard 2.0 version of this library. If possible, try to use the .NET Standard 2.1 version or any .NET Core/Framework versions instead.</value>
+  </data>
+  <data name="Reflection_RefReturnSetPropertyAotFormat" xml:space="preserve">
+    <value>Setting a property with ref return type '{0}' is not supported in native AOT mode.</value>
   </data>
   <data name="Reflection_StaticPropertyExpectedGenericFormat" xml:space="preserve">
     <value>This method can be used to access static properties but {0}.{1} is an instance property.</value>

@@ -428,11 +428,14 @@ namespace KGySoft
         /// <summary>Generic access of potentially mutating value type members with pointer parameters or pointer return value is not supported in the .NET Standard 2.0 version of this library. Use the non-generic access instead.</summary>
         internal static string ReflectionValueTypeWithPointersGenericNetStandard20 => Get("Reflection_ValueTypeWithPointersGenericNetStandard20");
 
-        /// <summary>Generic access of potentially mutating value type members with pointer parameters or pointer return value is not supported in AOT mode. Use the non-generic access instead.</summary>
+        /// <summary>Generic access of potentially mutating value type members with pointer parameters or pointer return value is not supported in native AOT mode. Use the non-generic access instead.</summary>
         internal static string ReflectionValueTypeWithPointersGenericAot => Get("Reflection_ValueTypeWithPointersGenericAot");
 
         /// <summary>Resolving function pointers is not supported on this platform.</summary>
         internal static string ReflectionFunctionPointersNotSupported => Get("Reflection_FunctionPointersNotSupported");
+
+        /// <summary>Setting static indexers with ref return value is not supported.</summary>
+        internal static string ReflectionRefReturnStaticIndexerNotSupported => Get("Reflection_RefReturnStaticIndexerNotSupported");
 
         #endregion
 
@@ -994,7 +997,7 @@ namespace KGySoft
         /// <summary>Ref pointer type '{0}' is not supported in the .NET Standard 2.0 version of this library. If possible, try to use the .NET Standard 2.1 version or any .NET Core/Framework versions instead.</summary>
         internal static string ReflectionRefPointerTypeNotSupportedNetStandard20(Type type) => Get("Reflection_RefPointerTypeNotSupportedNetStandard20Format", type.GetName(TypeNameKind.LongName));
 
-        /// <summary>Ref pointer type '{0}' is not supported in AOT mode.</summary>
+        /// <summary>Ref pointer type '{0}' is not supported in native AOT mode.</summary>
         internal static string ReflectionRefPointerTypeNotSupportedAot(Type type) => Get("Reflection_RefPointerTypeNotSupportedAotFormat", type.GetName(TypeNameKind.LongName));
 
         /// <summary>Reflecting pointer type '{0}' is not supported on the Mono platform.</summary>
@@ -1005,6 +1008,9 @@ namespace KGySoft
 
         /// <summary>Ref return type '{0}' is not supported in the .NET Standard 2.0 version of this library. If possible, try to use the .NET Standard 2.1 version or any .NET Core/Framework versions instead.</summary>
         internal static string ReflectionRefReturnTypeNetStandard20(Type type) => Get("Reflection_RefReturnTypeNetStandard20Format", type.GetName(TypeNameKind.LongName));
+
+        /// <summary>Setting a property with ref return type '{0}' is not supported in native AOT mode.</summary>
+        internal static string ReflectionRefReturnSetPropertyAot(Type type) => Get("Reflection_RefReturnSetPropertyAotFormat", type.GetName(TypeNameKind.LongName));
 
         /// <summary>This method can be used to access static properties but {0}.{1} is an instance property.</summary>
         internal static string ReflectionStaticPropertyExpectedGeneric(string propertyName, Type type) => Get("Reflection_StaticPropertyExpectedGenericFormat", type.GetName(TypeNameKind.LongName), propertyName);

@@ -65,11 +65,13 @@ namespace KGySoft.Reflection
 
                 unsafe
                 {
+                    // Only real pointers are returned as Reflection.Pointer, whereas function pointers are returned as IntPtr,
+                    // so using the IsPointer property rather than the IsPointer() extension here is intended.
 #if NET8_0_OR_GREATER
                     MethodInvoker invoker = FallbackInvoker;
-                    return returnType.IsPointer() ? (obj, args) => (IntPtr)Pointer.Unbox(invoker.Invoke(obj, args.AsSpan())!) : (obj, args) => invoker.Invoke(obj, args.AsSpan());
+                    return returnType.IsPointer ? (obj, args) => (IntPtr)Pointer.Unbox(invoker.Invoke(obj, args.AsSpan())!) : (obj, args) => invoker.Invoke(obj, args.AsSpan());
 #else
-                    return returnType.IsPointer() ? (instance, args) => (IntPtr)Pointer.Unbox(mi.Invoke(instance, args)!) : mi.Invoke;
+                    return returnType.IsPointer ? (instance, args) => (IntPtr)Pointer.Unbox(mi.Invoke(instance, args)!) : mi.Invoke;
 #endif
                 }
             }
@@ -146,7 +148,9 @@ namespace KGySoft.Reflection
                 if (returnType.IsByRef)
                     returnType = returnType.GetElementType()!;
 
-                bool isPointerReturn = returnType.IsPointer();
+                // Only real pointers are returned as Reflection.Pointer, whereas function pointers are returned as IntPtr,
+                // so using the IsPointer property rather than the IsPointer() extension here is intended.
+                bool isPointerReturn = returnType.IsPointer;
                 MethodInvoker invoker = FallbackInvoker;
                 return ParameterTypes.Length switch
                 {
@@ -166,7 +170,9 @@ namespace KGySoft.Reflection
                 if (returnType.IsByRef)
                     returnType = returnType.GetElementType()!;
 
-                bool isPointerReturn = returnType.IsPointer();
+                // Only real pointers are returned as Reflection.Pointer, whereas function pointers are returned as IntPtr,
+                // so using the IsPointer property rather than the IsPointer() extension here is intended.
+                bool isPointerReturn = returnType.IsPointer;
                 return ParameterTypes.Length switch
                 {
                     0 => (Func<object?, object?>)(isPointerReturn ? o => (IntPtr)Pointer.Unbox(mi.Invoke(o, null)!) : (o => mi.Invoke(o, null))),

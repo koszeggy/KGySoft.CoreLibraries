@@ -31,6 +31,9 @@ using KGySoft.CoreLibraries;
 #if !(NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER)
 #pragma warning disable CS8763 // A method marked [DoesNotReturn] should not return - false alarm, ExceptionDispatchInfo.Throw() does not return either.
 #endif
+#if !NET8_0_OR_GREATER
+#pragma warning disable CS1574 // XML comment has cref attribute that could not be resolved - Some types in the documentation are not available on all platform targets. 
+#endif
 
 #endregion
 
@@ -41,6 +44,8 @@ namespace KGySoft.Reflection
     /// <div style="display: none;"><br/>See the <a href="https://koszeggy.github.io/docs/corelibraries/html/T_KGySoft_Reflection_PropertyAccessor.htm">online help</a> for an example.</div>
     /// </summary>
     /// <remarks>
+    /// <note>In Native AOT (Ahead of Time) deployment mode dynamic IL code generation is not possible, in which case this class fallbacks to regular reflection
+    /// (or <see cref="MethodInvoker"/> on .NET 8.0 and later if available), which can be significantly slower. See the <strong>Examples</strong> section for performance comparisons.</note>
     /// <para>You can obtain a <see cref="PropertyAccessor"/> instance by the static <see cref="GetAccessor">GetAccessor</see> method.</para>
     /// <para>The <see cref="Get(object, object[])"/> and <see cref="Set(object, object, object[])"/> methods can be used to get or set the property in general cases.
     /// These methods can be used for any properties, including indexed ones.</para>
@@ -55,8 +60,6 @@ namespace KGySoft.Reflection
     /// they were dropped out from the cache, which can store about 8000 elements.</para>
     /// <note>If you want to access a property by name rather than by a <see cref="PropertyInfo"/>, then you can use the <see cref="O:KGySoft.Reflection.Reflector.SetProperty">SetProperty</see>
     /// and <see cref="O:KGySoft.Reflection.Reflector.SetProperty">GetProperty</see> methods in the <see cref="Reflector"/> class, which have some overloads with a <c>propertyName</c> parameter.</note>
-    /// <note type="caution">The getter/setter methods of this class in the .NET Standard 2.0 version throw a <see cref="PlatformNotSupportedException"/>
-    /// for <see langword="ref"/> properties. You need to reference the .NET Standard 2.1 build or any .NET Framework or .NET Core/.NET builds to support <see langword="ref"/> properties.</note>
     /// </remarks>
     /// <example>
     /// The following example compares the <see cref="PropertyAccessor"/> class with <see cref="PropertyInfo"/> on .NET 8 and .NET Framework 4.8 platforms.
@@ -195,6 +198,12 @@ namespace KGySoft.Reflection
         private protected Delegate NonGenericSetter => nonGenericSetter ??= CreateNonGenericSetter();
         private protected Delegate NonGenericGetter => nonGenericGetter ??= CreateNonGenericGetter();
 
+#if NET8_0_OR_GREATER
+        // Used in AOT mode where the faster dynamic methods cannot be used. They are still supposed to be faster than classic reflection by MethodInfo.
+        private protected MethodInvoker? FallbackSetter => field ??= Property.GetSetMethod(true) is MethodInfo setter ? MethodInvoker.Create(setter) : null;
+        private protected MethodInvoker? FallbackGetter => field ??= Property.GetGetMethod(true) is MethodInfo getter ? MethodInvoker.Create(getter) : null;
+#endif
+
         #endregion
 
         #region Private Properties
@@ -291,8 +300,8 @@ namespace KGySoft.Reflection
         /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a read-only property.
         /// <br/>-or-
         /// <br/>On .NET Framework the code is executed in a partially trusted domain with insufficient permissions.</exception>
-        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="PropertyAccessor"/>
-        /// represents a <see langword="ref"/> property.</exception>
+        /// <exception cref="PlatformNotSupportedException">This <see cref="PropertyAccessor"/> represents a <see langword="ref"/> property,
+        /// and you either use Native AOT deployment mode, or the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c>.</exception>
         /// <overloads>The <see cref="Set(object, object, object[])"/> overload can be used for any number of index parameters.
         /// The other non-generic overloads can be used for simple properties or indexers with one parameter.
         /// <note type="tip">If you know the property type at compile time, then you can use the generic <see cref="SetStaticValue{TProperty}">SetStaticValue</see>
@@ -332,8 +341,8 @@ namespace KGySoft.Reflection
         /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a read-only property.
         /// <br/>-or-
         /// <br/>On .NET Framework the code is executed in a partially trusted domain with insufficient permissions.</exception>
-        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="PropertyAccessor"/>
-        /// represents a <see langword="ref"/> property.</exception>
+        /// <exception cref="PlatformNotSupportedException">This <see cref="PropertyAccessor"/> represents a <see langword="ref"/> property,
+        /// and you either use Native AOT deployment mode, or the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c>.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("Design", "CA1031:Do not catch general exception types",
             Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
@@ -368,8 +377,8 @@ namespace KGySoft.Reflection
         /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a read-only property.
         /// <br/>-or-
         /// <br/>On .NET Framework the code is executed in a partially trusted domain with insufficient permissions.</exception>
-        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="PropertyAccessor"/>
-        /// represents a <see langword="ref"/> property.</exception>
+        /// <exception cref="PlatformNotSupportedException">This <see cref="PropertyAccessor"/> represents a <see langword="ref"/> property,
+        /// and you either use Native AOT deployment mode, or the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c>.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("Design", "CA1031:Do not catch general exception types",
             Justification = "False alarm, exception is re-thrown but the analyzer fails to consider the [DoesNotReturn] attribute")]
@@ -514,12 +523,16 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <typeparam name="TProperty">The type of the property.</typeparam>
         /// <param name="value">The value to set.</param>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="O:KGySoft.Reflection.PropertyAccessor.Set">Set</see> overloads.</note>
+        /// </remarks>
         /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents an instance property or a property of an open generic type.</exception>
         /// <exception cref="ArgumentException"><typeparamref name="TProperty"/> is invalid.</exception>
         /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a read-only property
         /// or an indexed property with more than one parameter.</exception>
-        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="PropertyAccessor"/>
-        /// represents a <see langword="ref"/> property.</exception>
+        /// <exception cref="PlatformNotSupportedException">This <see cref="PropertyAccessor"/> represents a <see langword="ref"/> property,
+        /// and you either use Native AOT deployment mode, or the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c>.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public void SetStaticValue<TProperty>(TProperty value)
         {
@@ -535,6 +548,10 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <typeparam name="TProperty">The type of the property.</typeparam>
         /// <returns>The value of the property.</returns>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="O:KGySoft.Reflection.PropertyAccessor.Get">Get</see> overloads.</note>
+        /// </remarks>
         /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents an instance property or a property of an open generic type.</exception>
         /// <exception cref="ArgumentException"><typeparamref name="TProperty"/> is invalid.</exception>
         /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a write-only property
@@ -552,13 +569,17 @@ namespace KGySoft.Reflection
         /// <typeparam name="TProperty">The type of the property.</typeparam>
         /// <param name="instance">The instance that the property belongs to.</param>
         /// <param name="value">The value to set.</param>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="O:KGySoft.Reflection.PropertyAccessor.Set">Set</see> overloads.</note>
+        /// </remarks>
         /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents a static property or a property of an open generic type.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a read-only property
         /// or an indexed property with more than one parameter.</exception>
-        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="PropertyAccessor"/>
-        /// represents a <see langword="ref"/> property.</exception>
+        /// <exception cref="PlatformNotSupportedException">This <see cref="PropertyAccessor"/> represents a <see langword="ref"/> property,
+        /// and you either use Native AOT deployment mode, or the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c>.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public void SetInstanceValue<TInstance, TProperty>(TInstance instance, TProperty value) where TInstance : class
@@ -577,6 +598,10 @@ namespace KGySoft.Reflection
         /// <typeparam name="TProperty">The type of the property.</typeparam>
         /// <param name="instance">The instance that the property belongs to.</param>
         /// <returns>The value of the property.</returns>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="O:KGySoft.Reflection.PropertyAccessor.Get">Get</see> overloads.</note>
+        /// </remarks>
         /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents a static property or a property of an open generic type.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
@@ -599,12 +624,16 @@ namespace KGySoft.Reflection
         /// <typeparam name="TProperty">The type of the property.</typeparam>
         /// <param name="instance">The instance that the property belongs to.</param>
         /// <param name="value">The value to set.</param>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="O:KGySoft.Reflection.PropertyAccessor.Set">Set</see> overloads.</note>
+        /// </remarks>
         /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents a static property or a property of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a read-only property
         /// or an indexed property with more than one parameter.</exception>
-        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="PropertyAccessor"/>
-        /// represents a <see langword="ref"/> property.</exception>
+        /// <exception cref="PlatformNotSupportedException">This <see cref="PropertyAccessor"/> represents a <see langword="ref"/> property,
+        /// and you either use Native AOT deployment mode, or the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c>.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public void SetInstanceValue<TInstance, TProperty>(in TInstance instance, TProperty value) where TInstance : struct
         {
@@ -622,6 +651,10 @@ namespace KGySoft.Reflection
         /// <typeparam name="TProperty">The type of the property.</typeparam>
         /// <param name="instance">The instance that the property belongs to.</param>
         /// <returns>The value of the property.</returns>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="O:KGySoft.Reflection.PropertyAccessor.Get">Get</see> overloads.</note>
+        /// </remarks>
         /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents a static property or a property of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a write-only property
@@ -643,13 +676,17 @@ namespace KGySoft.Reflection
         /// <param name="instance">The instance that the property belongs to.</param>
         /// <param name="value">The value to set.</param>
         /// <param name="index">The value of the index parameter.</param>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="O:KGySoft.Reflection.PropertyAccessor.Set">Set</see> overloads.</note>
+        /// </remarks>
         /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents a static property or a property of an open generic type.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a read-only property
         /// or an indexed property with more than one parameter.</exception>
-        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="PropertyAccessor"/>
-        /// represents a <see langword="ref"/> property.</exception>
+        /// <exception cref="PlatformNotSupportedException">This <see cref="PropertyAccessor"/> represents a <see langword="ref"/> property,
+        /// and you either use Native AOT deployment mode, or the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c>.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public void SetInstanceValue<TInstance, TProperty, TIndex>(TInstance instance, TProperty value, TIndex index) where TInstance : class
@@ -671,6 +708,10 @@ namespace KGySoft.Reflection
         /// <param name="instance">The instance that the property belongs to.</param>
         /// <param name="index">The value of the index parameter.</param>
         /// <returns>The value of the property.</returns>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="O:KGySoft.Reflection.PropertyAccessor.Get">Get</see> overloads.</note>
+        /// </remarks>
         /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents a static property or a property of an open generic type.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
@@ -696,12 +737,16 @@ namespace KGySoft.Reflection
         /// <param name="instance">The instance that the property belongs to.</param>
         /// <param name="value">The value to set.</param>
         /// <param name="index">The value of the index parameter.</param>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="O:KGySoft.Reflection.PropertyAccessor.Set">Set</see> overloads.</note>
+        /// </remarks>
         /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents a static property or a property of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a read-only property
         /// or an indexed property with more than one parameter.</exception>
-        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="PropertyAccessor"/>
-        /// represents a <see langword="ref"/> property.</exception>
+        /// <exception cref="PlatformNotSupportedException">This <see cref="PropertyAccessor"/> represents a <see langword="ref"/> property,
+        /// and you either use Native AOT deployment mode, or the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c>.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public void SetInstanceValue<TInstance, TProperty, TIndex>(in TInstance instance, TProperty value, TIndex index) where TInstance : struct
         {
@@ -722,6 +767,10 @@ namespace KGySoft.Reflection
         /// <param name="instance">The instance that the property belongs to.</param>
         /// <param name="index">The value of the index parameter.</param>
         /// <returns>The value of the property.</returns>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="O:KGySoft.Reflection.PropertyAccessor.Get">Get</see> overloads.</note>
+        /// </remarks>
         /// <exception cref="InvalidOperationException">This <see cref="PropertyAccessor"/> represents a static property or a property of an open generic type.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         /// <exception cref="NotSupportedException">This <see cref="PropertyAccessor"/> represents a write-only property
@@ -803,11 +852,11 @@ namespace KGySoft.Reflection
                     if (Parameters[i].IsOut) // though it's not possible in C#
                         continue;
 
-                        Type paramType = ParameterTypes[i];
+                    Type paramType = ParameterTypes[i];
                     if (paramType.IsByRef) // in C# it's only valid as 'in' modifier
                         paramType = paramType.GetElementType()!;
-                        if (paramType.IsPointer())
-                            paramType = typeof(IntPtr);
+                    if (paramType.IsPointer())
+                        paramType = typeof(IntPtr);
 
                     if (!paramType.CanAcceptValue(indexParameters[i]))
                     {
