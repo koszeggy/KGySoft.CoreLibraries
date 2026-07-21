@@ -20,7 +20,7 @@ using System.Diagnostics.CodeAnalysis;
 #if !NETSTANDARD2_0
 using System.Linq;
 #endif
-#if NETSTANDARD2_0
+#if NETSTANDARD2_0_OR_GREATER || NETCOREAPP3_0_OR_GREATER
 using System.Linq.Expressions;
 #endif
 using System.Reflection;
@@ -50,6 +50,8 @@ namespace KGySoft.Reflection
     /// <div style="display: none;"><br/>See the <a href="https://koszeggy.github.io/docs/corelibraries/html/T_KGySoft_Reflection_FieldAccessor.htm">online help</a> for an example.</div>
     /// </summary>
     /// <remarks>
+    /// <note>In Native AOT (Ahead of Time) deployment mode dynamic IL code generation is not possible, in which case this class fallbacks to regular reflection,
+    /// which can be significantly slower. See the <strong>Examples</strong> section for performance comparisons.</note>
     /// <para>You can obtain a <see cref="FieldAccessor"/> instance by the static <see cref="GetAccessor">GetAccessor</see> method.</para>
     /// <para>The non-generic <see cref="Get">Get</see> and <see cref="Set">Set</see> methods can be used to get and set the field in general cases.</para>
     /// <para>If you know the field type at compile time, then you can use the generic <see cref="GetStaticValue{TField}">GetStaticValue</see>/<see cref="SetStaticValue{TField}">SetStaticValue</see>
@@ -61,9 +63,8 @@ namespace KGySoft.Reflection
     /// they were dropped out from the cache, which can store about 8000 elements.</para>
     /// <note>If you want to access a field by name rather than by a <see cref="FieldInfo"/>, then you can use the <see cref="O:KGySoft.Reflection.Reflector.SetField">SetField</see>
     /// and <see cref="O:KGySoft.Reflection.Reflector.SetField">GetField</see> methods in the <see cref="Reflector"/> class, which have some overloads with a <c>fieldName</c> parameter.</note>
-    /// <note type="caution">The generic setter methods of this class in the .NET Standard 2.0 build throw a <see cref="PlatformNotSupportedException"/>
-    /// for read-only and pointer instance fields of value types. Use the non-generic <see cref="Set">Set</see> method or reference the .NET Standard 2.1 build or any .NET Framework or .NET Core/.NET builds
-    /// to setting support setting read-only fields by the generic setters.</note>
+    /// <note type="caution">The generic setter methods of this class in Native AOT mode or when referencing the .NET Standard 2.0 version throw a <see cref="PlatformNotSupportedException"/>
+    /// for read-only and pointer instance fields of value types. Use the non-generic <see cref="Set">Set</see> method in such cases.</note>
     /// </remarks>
     /// <example>
     /// The following example compares the <see cref="FieldAccessor"/> class with <see cref="FieldInfo"/> on .NET 8 and .NET Framework 4.8 platforms.
@@ -190,7 +191,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <remarks>
         /// <note>Even if this property returns <see langword="true"/> the <see cref="FieldAccessor"/> is able to set the field,
-        /// except if the .NET Standard 2.0 build of the <c>KGySoft.CoreLibraries</c> assembly is used and the field is an instance field of a value type,
+        /// except in Native AOT mode, or when the .NET Standard 2.0 build of the <c>KGySoft.CoreLibraries</c> assembly is used and the field is an instance field of a value type,
         /// in which case doing so throws a <see cref="PlatformNotSupportedException"/>.</note>
         /// </remarks>
         public bool IsReadOnly => Field.IsInitOnly;
@@ -372,6 +373,10 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <typeparam name="TField">The type of the field.</typeparam>
         /// <param name="value">The value to set.</param>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="Set">Set</see> method.</note>
+        /// </remarks>
         /// <exception cref="InvalidOperationException">This <see cref="FieldAccessor"/> represents a constant, an instance field or a field of an open generic type.</exception>
         /// <exception cref="ArgumentException"><typeparamref name="TField"/> is invalid.</exception>
         /// <exception cref="NotSupportedException">On .NET Framework the code is executed in a partially trusted domain with insufficient permissions.</exception>
@@ -407,6 +412,10 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <typeparam name="TField">The type of the field.</typeparam>
         /// <returns>The value of the field.</returns>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="Get">Get</see> method.</note>
+        /// </remarks>
         /// <exception cref="InvalidOperationException">This <see cref="FieldAccessor"/> represents an instance field or a field of an open generic type.</exception>
         /// <exception cref="ArgumentException"><typeparamref name="TField"/> is invalid.</exception>
         /// <exception cref="NotSupportedException">On .NET Framework the code is executed in a partially trusted domain with insufficient permissions.</exception>
@@ -439,12 +448,16 @@ namespace KGySoft.Reflection
         /// <typeparam name="TField">The type of the field.</typeparam>
         /// <param name="instance">The instance that the field belongs to.</param>
         /// <param name="value">The value to set.</param>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="Set">Set</see> method.</note>
+        /// </remarks>
         /// <exception cref="InvalidOperationException">This <see cref="FieldAccessor"/> represents a constant, a static field or a field of an open generic type.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">The type arguments are invalid.</exception>
         /// <exception cref="NotSupportedException">On .NET Framework the code is executed in a partially trusted domain with insufficient permissions.</exception>
-        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c>
-        /// and this <see cref="FieldAccessor"/> represents a read-only or a pointer field.</exception>
+        /// <exception cref="PlatformNotSupportedException">This <see cref="FieldAccessor"/> represents a read-only or pointer field,
+        /// and you either use Native AOT deployment mode, or the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c>.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public void SetInstanceValue<TInstance, TField>(TInstance instance, TField value) where TInstance : class
@@ -463,6 +476,10 @@ namespace KGySoft.Reflection
         /// <typeparam name="TField">The type of the field.</typeparam>
         /// <param name="instance">The instance that the field belongs to.</param>
         /// <returns>The value of the field.</returns>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="Get">Get</see> method.</note>
+        /// </remarks>
         /// <exception cref="InvalidOperationException">This <see cref="FieldAccessor"/> represents a static field or a field of an open generic type.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="instance"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">The type arguments are invalid.</exception>
@@ -482,11 +499,15 @@ namespace KGySoft.Reflection
         /// <typeparam name="TField">The type of the field.</typeparam>
         /// <param name="instance">The instance that the field belongs to.</param>
         /// <param name="value">The value to set.</param>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="Set">Set</see> method.</note>
+        /// </remarks>
         /// <exception cref="InvalidOperationException">This <see cref="FieldAccessor"/> represents a constant, a static field or a field of an open generic type.</exception>
         /// <exception cref="ArgumentException">The type arguments are invalid.</exception>
         /// <exception cref="NotSupportedException">On .NET Framework the code is executed in a partially trusted domain with insufficient permissions.</exception>
-        /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c>
-        /// and this <see cref="FieldAccessor"/> represents a read-only or a pointer field.</exception>
+        /// <exception cref="PlatformNotSupportedException">This <see cref="FieldAccessor"/> represents a read-only or pointer field,
+        /// and you either use Native AOT deployment mode, or the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c>.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public void SetInstanceValue<TInstance, TField>(in TInstance instance, TField value) where TInstance : struct
         {
@@ -504,6 +525,10 @@ namespace KGySoft.Reflection
         /// <typeparam name="TField">The type of the field.</typeparam>
         /// <param name="instance">The instance that the field belongs to.</param>
         /// <returns>The value of the field.</returns>
+        /// <remarks>
+        /// <note>In Native AOT (Ahead of Time) deployment mode this method uses interpreted expressions as a fallback just
+        /// to provide functional compatibility, but it gets slower than using the <see cref="Get">Get</see> method.</note>
+        /// </remarks>
         /// <exception cref="InvalidOperationException">This <see cref="FieldAccessor"/> represents a static field or a field of an open generic type.</exception>
         /// <exception cref="ArgumentException">The type arguments are invalid.</exception>
         /// <exception cref="NotSupportedException">On .NET Framework the code is executed in a partially trusted domain with insufficient permissions.</exception>
@@ -528,10 +553,10 @@ namespace KGySoft.Reflection
 
 #if NETSTANDARD2_0 // DynamicMethod and ILGenerator is not available in .NET Standard 2.0
             // Read-only/pointer field or value type: using reflection as fallback
-            if (IsReadOnly || isValueType && !Field.IsStatic || Field.FieldType.IsPointer)
+            if (IsReadOnly || isValueType && !Field.IsStatic || Field.FieldType.IsPointer())
             {
                 // pointer field: explicitly casting to IntPtr; otherwise, even a string could be passed without an error
-                return Field.FieldType.IsPointer
+                return Field.FieldType.IsPointer()
                     ? (instance, value) => Field.SetValue(instance, (IntPtr)value!)
                     : Field.SetValue;
             }
@@ -551,7 +576,10 @@ namespace KGySoft.Reflection
                 valueParameter);
             return lambda.Compile();
 #else
-            // Expressions would not work for value types and read-only fields so using always dynamic methods
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+            if (!RuntimeFeature.IsDynamicCodeSupported)
+                return Field.SetValue;
+#endif
             DynamicMethod dm = new DynamicMethod(setterPrefix + Field.Name, // setter method name
                 Reflector.VoidType, // return type
                 [Reflector.ObjectType, Reflector.ObjectType], declaringType ?? Reflector.ObjectType, true); // instance and value parameters
@@ -584,8 +612,12 @@ namespace KGySoft.Reflection
 
 #if NETSTANDARD2_0 // DynamicMethod and ILGenerator is not available in .NET Standard 2.0
             // Pointer field: Fallback to reflection
-            if (Field.FieldType.IsPointer)
-                unsafe { return instance => (IntPtr)Pointer.Unbox(Field.GetValue(instance)); }
+            if (Field.FieldType.IsPointer())
+            {
+                if (Field.FieldType.IsPointer) // only real pointers are returned as Reflection.Pointer
+                    unsafe { return instance => (IntPtr)Pointer.Unbox(Field.GetValue(instance)!); }
+                return Field.GetValue;
+            }
 
             ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
             
@@ -593,7 +625,7 @@ namespace KGySoft.Reflection
             if (IsConstant)
             {
                 // Special handling for [U]IntPtr constants, because there is no IConvertible implementation so Convert does not work.
-                // [U]IntPtr constants are always represented as int/uint by FieldInfo.GetRawConstantValue as they cannot be larger.
+                // [U]IntPtr constants are always represented as int/uint by FieldInfo.GetRawConstantValue as they cannot represent larger types.
                 object? rawConstant = Field.GetRawConstantValue();
                 // ReSharper disable once ConditionalAccessQualifierIsNonNullableAccordingToAPIContract
                 Type? rawType = rawConstant?.GetType();
@@ -615,6 +647,27 @@ namespace KGySoft.Reflection
                     instanceParameter); // instance (object)
             return lambda.Compile();
 #else
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+            if (!RuntimeFeature.IsDynamicCodeSupported)
+            {
+                if (IsConstant)
+                {
+                    // this returns [U]IntPtr constants as int/uint values, and enum constants in their underlying type
+                    object? rawConstant = Field.GetRawConstantValue();
+                    if (Field.FieldType == typeof(IntPtr))
+                        return _ => (IntPtr)(int)rawConstant!;
+                    if (Field.FieldType == typeof(UIntPtr))
+                        return _ => (UIntPtr)(uint)rawConstant!;
+                    if (Field.FieldType.IsEnum)
+                        return _ => Enum.ToObject(Field.FieldType, rawConstant!);
+                    return _ => rawConstant;
+                }
+
+                if (Field.FieldType.IsPointer) // only real pointers are returned as Reflection.Pointer, whereas function pointer fields are returned as IntPtr
+                    unsafe { return instance => (IntPtr)Pointer.Unbox(Field.GetValue(instance)!); }
+                return Field.GetValue;
+            }
+#endif
             DynamicMethod dm = new DynamicMethod(getterPrefix + Field.Name, // getter method name
                 Reflector.ObjectType, // return type
                 [Reflector.ObjectType], declaringType ?? Reflector.ObjectType, true); // instance parameter
@@ -657,73 +710,89 @@ namespace KGySoft.Reflection
                 : isValueType ? typeof(ValueTypeAction<,>).GetGenericType(declaringType!, fieldValueType)
                 : typeof(ReferenceTypeAction<,>).GetGenericType(declaringType!, fieldValueType);
 
-#if NETSTANDARD2_0 // DynamicMethod and ILGenerator is not available in .NET Standard 2.0
-            LambdaExpression lambda;
-
-            // Read-only field or value type: using reflection as fallback
-            if (IsReadOnly || Field.FieldType.IsPointer)
+#if NETSTANDARD2_0_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+#if !NETSTANDARD2_0
+            // Dynamic methods and IL generation are not supported: fallback to Expressions.
+            // In AOT mode it will work in interpreted mode, which is even slower than the non-generic alternative...
+            if (!RuntimeFeature.IsDynamicCodeSupported)
+#endif
             {
-                // value types: the ref instance parameter would be boxed, losing the mutability
-                if (isValueType && !isStatic)
+                LambdaExpression lambda;
+
+                // Read-only field or value type: using reflection as fallback
+                if (IsReadOnly || Field.FieldType.IsPointer())
                 {
-                    if (Field.IsInitOnly)
-                        Throw.PlatformNotSupportedException(Res.ReflectionSetReadOnlyFieldGenericNetStandard20(Field.Name, declaringType));
-                    if (Field.FieldType.IsPointer)
-                        Throw.PlatformNotSupportedException(Res.ReflectionValueTypeWithPointersGenericNetStandard20);
+                    // value types: the ref instance parameter would be boxed, losing the mutability
+                    if (isValueType && !isStatic)
+                    {
+                        if (Field.IsInitOnly)
+                        {
+#if NETSTANDARD2_0
+                            Throw.PlatformNotSupportedException(Res.ReflectionSetReadOnlyFieldGenericNetStandard20(Field.Name, declaringType));
+#else
+                            Throw.PlatformNotSupportedException(Res.ReflectionSetReadOnlyFieldGenericAot(Field.Name, declaringType));
+#endif
+                        }
+
+                        if (Field.FieldType.IsPointer())
+                            ThrowMutableStructMembersNotSupported();
+                    }
+
+                    ParameterExpression[] parameters = new ParameterExpression[isStatic ? 1 : 2];
+                    int valueIndex = isStatic ? 0 : 1;
+                    if (!isStatic)
+                        parameters[0] = Expression.Parameter(declaringType!, "instance");
+                    parameters[valueIndex] = Expression.Parameter(fieldValueType, "value");
+
+                    Expression[] methodParameters = new Expression[2];
+                    methodParameters[0] = isStatic
+                        ? Expression.Constant(null, typeof(object))
+                        : Expression.Convert(parameters[0], typeof(object));
+                    methodParameters[1] = parameters[valueIndex].Type == typeof(object) ? parameters[valueIndex] : Expression.Convert(parameters[valueIndex], typeof(object));
+
+                    MethodCallExpression methodCall = Expression.Call(
+                        Expression.Constant(Field), // the instance is the FieldInfo itself
+                        Field.GetType().GetMethod(nameof(FieldInfo.SetValue), [typeof(object), typeof(object)])!, // SetValue(object, object)
+                        methodParameters);
+
+                    lambda = Expression.Lambda(delegateType, methodCall, parameters);
+                    return lambda.Compile();
                 }
 
-                ParameterExpression[] parameters = new ParameterExpression[isStatic ? 1 : 2];
-                int valueIndex = isStatic ? 0 : 1;
-                if (!isStatic)
-                    parameters[0] = Expression.Parameter(declaringType!, "instance");
-                parameters[valueIndex] = Expression.Parameter(fieldValueType, "value");
+                ParameterExpression instanceParameter;
+                ParameterExpression valueParameter = Expression.Parameter(Field.FieldType, "value");
+                MemberExpression member;
+                BinaryExpression assign;
 
-                Expression[] methodParameters = new Expression[2];
-                methodParameters[0] = isStatic
-                    ? Expression.Constant(null, typeof(object))
-                    : Expression.Convert(parameters[0], typeof(object));
-                methodParameters[1] = Expression.Convert(parameters[valueIndex], typeof(object));
+                // Static field
+                if (isStatic)
+                {
+                    member = Expression.Field(null, Field);
+                    assign = Expression.Assign(member, valueParameter);
+                    lambda = Expression.Lambda(delegateType, assign, valueParameter);
+                    return lambda.Compile();
+                }
 
-                MethodCallExpression methodCall = Expression.Call(
-                    Expression.Constant(Field), // the instance is the FieldInfo itself
-                    Field.GetType().GetMethod(nameof(FieldInfo.SetValue), [typeof(object), typeof(object)])!, // SetValue(object, object)
-                    methodParameters);
+                // Class instance field
+                if (!isValueType)
+                {
+                    instanceParameter = Expression.Parameter(declaringType!, "instance");
+                    member = Expression.Field(instanceParameter, Field);
+                    assign = Expression.Assign(member, valueParameter);
+                    lambda = Expression.Lambda(delegateType, assign, instanceParameter, valueParameter);
+                    return lambda.Compile();
+                }
 
-                lambda = Expression.Lambda(delegateType, methodCall, parameters);
-                return lambda.Compile();
-            }
-
-            ParameterExpression instanceParameter;
-            ParameterExpression valueParameter = Expression.Parameter(Field.FieldType, "value");
-            MemberExpression member;
-            BinaryExpression assign;
-
-            // Static field
-            if (isStatic)
-            {
-                member = Expression.Field(null, Field);
-                assign = Expression.Assign(member, valueParameter);
-                lambda = Expression.Lambda(delegateType, assign, valueParameter);
-                return lambda.Compile();
-            }
-
-            // Class instance field
-            if (!isValueType)
-            {
-                instanceParameter = Expression.Parameter(declaringType!, "instance");
+                // Struct instance field
+                instanceParameter = Expression.Parameter(declaringType!.MakeByRefType(), "instance");
                 member = Expression.Field(instanceParameter, Field);
                 assign = Expression.Assign(member, valueParameter);
                 lambda = Expression.Lambda(delegateType, assign, instanceParameter, valueParameter);
                 return lambda.Compile();
             }
+#endif
 
-            // Struct instance field
-            instanceParameter = Expression.Parameter(declaringType!.MakeByRefType(), "instance");
-            member = Expression.Field(instanceParameter, Field);
-            assign = Expression.Assign(member, valueParameter);
-            lambda = Expression.Lambda(delegateType, assign, instanceParameter, valueParameter);
-            return lambda.Compile();
-#else
+#if !NETSTANDARD2_0
             Type[] parameterTypes = (isStatic ? Type.EmptyTypes : [isValueType ? declaringType!.MakeByRefType() : declaringType!])
                 .Append(fieldValueType)
                 .ToArray();
@@ -757,75 +826,77 @@ namespace KGySoft.Reflection
                 : isValueType ? typeof(ValueTypeFunction<,>).GetGenericType(declaringType!, returnType)
                 : typeof(ReferenceTypeFunction<,>).GetGenericType(declaringType!, returnType);
 
-#if NETSTANDARD2_0 // DynamicMethod and ILGenerator is not available in .NET Standard 2.0
-            MemberExpression member;
-            ParameterExpression instanceParameter;
-            LambdaExpression lambda;
-
-            // Pointer property: fallback to Getter.Invoke(object), which supports pointers as IntPtr.
-            // NOTE: Unlike in the setter, we cannot use FieldInfo.GetValue(object) here, because we should call Pointer.Unbox(object) on the result,
-            // which is not possible by Expression trees.
-            if (Field.FieldType.IsPointer)
+#if NETSTANDARD2_0_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+#if !NETSTANDARD2_0
+            // Dynamic methods and IL generation are not supported: fallback to Expressions.
+            // In AOT mode it will work in interpreted mode, which is even slower than the non-generic alternative...
+            if (!RuntimeFeature.IsDynamicCodeSupported)
+#endif
             {
-                ParameterExpression[] parameters = new ParameterExpression[isStatic ? 0 : 1];
-                if (!isStatic)
-                    parameters[0] = Expression.Parameter(isValueType ? declaringType!.MakeByRefType() : declaringType!, "instance");
+                MemberExpression member;
+                ParameterExpression instanceParameter;
+                LambdaExpression lambda;
 
-                Expression[] methodParameters = new Expression[1];
-                methodParameters[0] = isStatic
-                    ? Expression.Constant(null, typeof(object))
-                    : Expression.Convert(parameters[0], typeof(object));
+                // Pointer property: fallback to Getter.Invoke(object), which supports pointers as IntPtr.
+                // NOTE: Unlike in the setter, we cannot use FieldInfo.GetValue(object) here, because we should call Pointer.Unbox(object) on the result,
+                // which is not possible by Expression trees.
+                if (Field.FieldType.IsPointer())
+                {
+                    ParameterExpression[] parameters = new ParameterExpression[isStatic ? 0 : 1];
+                    if (!isStatic)
+                        parameters[0] = Expression.Parameter(isValueType ? declaringType!.MakeByRefType() : declaringType!, "instance");
 
-                MethodCallExpression methodCall = Expression.Call(
-                    Expression.Constant(Getter),
-                    Getter.GetType().GetMethod("Invoke", [typeof(object)])!,
-                    methodParameters);
+                    Expression[] methodParameters = new Expression[1];
+                    methodParameters[0] = isStatic
+                        ? Expression.Constant(null, typeof(object))
+                        : Expression.Convert(parameters[0], typeof(object));
 
-                lambda = Expression.Lambda(delegateType, Expression.Convert(methodCall, returnType), parameters);
-                return lambda.Compile();
-            }
+                    MethodCallExpression methodCall = Expression.Call(
+                        Expression.Constant(Getter),
+                        Getter.GetType().GetMethod("Invoke", [typeof(object)])!,
+                        methodParameters);
 
-            // Constant field
-            if (IsConstant)
-            {
-                // Special handling for [U]IntPtr constants, because there is no IConvertible implementation so Convert does not work.
-                // [U]IntPtr constants are always represented as int/uint by FieldInfo.GetRawConstantValue as they cannot be larger.
-                object? rawConstant = Field.GetRawConstantValue();
-                // ReSharper disable once ConditionalAccessQualifierIsNonNullableAccordingToAPIContract
-                Type? rawType = rawConstant?.GetType();
-                ConstantExpression constant = Expression.Constant(rawConstant, rawType ?? Field.FieldType);
-                Expression getValue = rawConstant is null || rawType == Field.FieldType ? constant
-                    : Field.FieldType == typeof(IntPtr) && rawType == typeof(int) ? Expression.New(typeof(IntPtr).GetConstructor([typeof(int)])!, constant)
-                    : Field.FieldType == typeof(UIntPtr) && rawType == typeof(uint) ? Expression.New(typeof(UIntPtr).GetConstructor([typeof(uint)])!, constant)
-                    : Expression.Convert(constant, Field.FieldType);
-                lambda = Expression.Lambda(delegateType, getValue);
-                return lambda.Compile();
-            }
+                    lambda = Expression.Lambda(delegateType, returnType == typeof(object) ? methodCall : Expression.Convert(methodCall, returnType), parameters);
+                    return lambda.Compile();
+                }
 
-            // Static field
-            if (isStatic)
-            {
-                member = Expression.Field(null, Field);
-                lambda = Expression.Lambda(delegateType, member);
-                return lambda.Compile();
-            }
+                // Constant field
+                if (IsConstant)
+                {
+                    // Special handling for [U]IntPtr constants, because there is no IConvertible implementation so Convert does not work.
+                    // [U]IntPtr constants are always represented as int/uint by FieldInfo.GetRawConstantValue as they cannot represent larger types.
+                    object? rawConstant = Field.GetRawConstantValue();
+                    // ReSharper disable once ConditionalAccessQualifierIsNonNullableAccordingToAPIContract
+                    Type? rawType = rawConstant?.GetType();
+                    ConstantExpression constant = Expression.Constant(rawConstant, rawType ?? Field.FieldType);
+                    Expression getValue = rawConstant is null || rawType == Field.FieldType ? constant
+                        : Field.FieldType == typeof(IntPtr) && rawType == typeof(int) ? Expression.New(typeof(IntPtr).GetConstructor([typeof(int)])!, constant)
+                        : Field.FieldType == typeof(UIntPtr) && rawType == typeof(uint) ? Expression.New(typeof(UIntPtr).GetConstructor([typeof(uint)])!, constant)
+                        : Expression.Convert(constant, Field.FieldType);
+                    lambda = Expression.Lambda(delegateType, getValue);
+                    return lambda.Compile();
+                }
 
-            // Class instance field
-            if (!declaringType!.IsValueType)
-            {
-                instanceParameter = Expression.Parameter(declaringType, "instance");
+                // Static field
+                if (isStatic)
+                {
+                    member = Expression.Field(null, Field);
+                    lambda = Expression.Lambda(delegateType, member);
+                    return lambda.Compile();
+                }
+
+                // Instance field
+                instanceParameter = declaringType!.IsValueType
+                    ? Expression.Parameter(declaringType.MakeByRefType(), "instance")
+                    : Expression.Parameter(declaringType, "instance");
+
                 member = Expression.Field(instanceParameter, Field);
                 lambda = Expression.Lambda(delegateType, member, instanceParameter);
                 return lambda.Compile();
             }
+#endif
 
-            // Struct instance field
-            instanceParameter = Expression.Parameter(declaringType.MakeByRefType(), "instance");
-            member = Expression.Field(instanceParameter, Field);
-            lambda = Expression.Lambda(delegateType, member, instanceParameter);
-            return lambda.Compile();
-
-#else
+#if !NETSTANDARD2_0
             Type fieldValueType = Field.FieldType.IsPointer() ? typeof(IntPtr) : Field.FieldType;
             Type[] parameterTypes = isStatic ? Type.EmptyTypes
                 : isValueType ? [declaringType!.MakeByRefType()]
@@ -852,7 +923,7 @@ namespace KGySoft.Reflection
 #if !NETSTANDARD2_0
         private void EmitLoadConstant(ILGenerator il)
         {
-            // NOTE: [U]IntPtr constants are always represented as int/uint by FieldInfo.GetRawConstantValue as they cannot be larger.
+            // NOTE: [U]IntPtr constants are always represented as int/uint by FieldInfo.GetRawConstantValue as they cannot represent larger types.
             switch (Field.GetRawConstantValue())
             {
                 case int value:

@@ -121,7 +121,7 @@ namespace KGySoft.CoreLibraries
             Console.ForegroundColor = ConsoleColor.Gray;
             Console.WriteLine(FrameworkVersion);
 
-            TestFilter filter = TestFilter.Empty; // (TestFilter)Reflection.Reflector.CreateInstance(Reflection.Reflector.ResolveType("NUnit.Framework.Internal.Filters.TestNameFilter")!, "ClassStaticNonPrimitiveFieldSetGeneric");
+            TestFilter filter = TestFilter.Empty; // (TestFilter)Reflection.Reflector.CreateInstance(Reflection.Reflector.ResolveType("NUnit.Framework.Internal.Filters.ClassNameFilter")!, "KGySoft.CoreLibraries.UnitTests.Reflection.ReflectorTest");
             var runner = new NUnitTestAssemblyRunner(new DefaultTestAssemblyBuilder());
             runner.Load(typeof(Program).Assembly, new Dictionary<string, object>());
             Console.WriteLine("Executing tests...");

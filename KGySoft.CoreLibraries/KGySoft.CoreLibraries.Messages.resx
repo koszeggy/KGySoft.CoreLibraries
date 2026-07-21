@@ -684,6 +684,9 @@ You can try to enable the RecursiveSerializationAsFallback flag, though the seri
   <data name="Reflection_SetReadOnlyFieldGenericNetStandard20Format" xml:space="preserve">
     <value>Setting read-only field '{0}' of type '{1}' is not supported by the generic methods of FieldAccessor in the .NET Standard 2.0 version of this library. Use the non-generic Set method instead.</value>
   </data>
+  <data name="Reflection_SetReadOnlyFieldGenericAotFormat" xml:space="preserve">
+    <value>Setting read-only field '{0}' of type '{1}' is not supported by the generic methods of FieldAccessor in native AOT mode. Use the non-generic Set method instead.</value>
+  </data>
   <data name="Reflection_RefReturnTypeNetStandard20Format" xml:space="preserve">
     <value>Ref return type '{0}' is not supported in the .NET Standard 2.0 version of this library. If possible, try to use the .NET Standard 2.1 version or any .NET Core/Framework versions instead.</value>
   </data>

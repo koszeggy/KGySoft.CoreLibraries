@@ -194,19 +194,6 @@ namespace KGySoft.CoreLibraries
             Console.WriteLine($"Expected exception {typeof(T)} has been thrown: {e.Message}");
         }
 
-        protected static bool ThrowsOnFramework<T>(TestDelegate code, string expectedMessageContent, params TargetFramework[] targets)
-            where T : Exception
-        {
-            if (TestedFramework.In(targets))
-            {
-                Throws<T>(code, expectedMessageContent);
-                return true;
-            }
-
-            Assert.DoesNotThrow(code);
-            return false;
-        }
-
         protected static void CopyContent(object target, object source)
         {
             if (target == null || source == null)
