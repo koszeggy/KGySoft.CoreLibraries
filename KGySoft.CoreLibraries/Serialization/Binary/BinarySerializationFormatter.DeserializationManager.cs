@@ -2452,8 +2452,8 @@ namespace KGySoft.Serialization.Binary
                     return;
                 }
 
-                // Neither ICollection nor has specific Add method, or collection is a proxy: adding if item is compatible, its reference cannot be replaced anymore
-                if (!addMethod.ParameterTypes[0].CanAcceptValue(value))
+                // Not an ICollection, or collection is a proxy: adding if item is compatible, its reference cannot be replaced anymore
+                if (!addMethod.Parameters[0].ParameterType.CanAcceptValue(value))
                     Throw.SerializationException(Res.BinarySerializationCircularIObjectReferenceCollection(collectionDescriptor.GetTypeToCreate()));
 
                 trackedUsages.CanBeReplaced = false;

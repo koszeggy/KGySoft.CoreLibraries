@@ -798,6 +798,8 @@ namespace KGySoft.Reflection
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         [ContractAnnotation("=> halt"), DoesNotReturn]
+        [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity",
+            Justification = "We could extract the parameters check into a local method, but it doesn't make a difference with the latest analyzers - see https://github.com/dotnet/roslyn-analyzers/issues/2934")]
         private void PostValidate(object? instance, object? value, object?[]? indexParameters, Exception exception, bool isSetter, bool anyParams)
         {
             if (Property.DeclaringType?.ContainsGenericParameters == true)
@@ -826,7 +828,7 @@ namespace KGySoft.Reflection
                 }
             }
 
-            if (ParameterTypes.Length > 0)
+            if (Parameters.Length > 0)
             {
                 if (indexParameters == null)
                 {
@@ -837,22 +839,22 @@ namespace KGySoft.Reflection
                 if (indexParameters.Length == 0 && anyParams)
                     Throw.ArgumentException(Argument.indexParameters, Res.ReflectionEmptyIndices);
 
-                if (indexParameters.Length < ParameterTypes.Length
-                    || (!anyParams || exception is TargetParameterCountException) && indexParameters.Length != ParameterTypes.Length)
+                if (indexParameters.Length < Parameters.Length
+                    || (!anyParams || exception is TargetParameterCountException) && indexParameters.Length != Parameters.Length)
                 {
-                    string message = Res.ReflectionIndexerParamsLengthMismatch(ParameterTypes.Length, indexParameters.Length);
+                    string message = Res.ReflectionIndexerParamsLengthMismatch(Parameters.Length, indexParameters.Length);
                     if (anyParams)
                         Throw.ArgumentException(Argument.indexParameters, message);
                     else
                         Throw.ArgumentException(message);
                 }
 
-                for (int i = 0; i < ParameterTypes.Length; i++)
+                for (int i = 0; i < Parameters.Length; i++)
                 {
                     if (Parameters[i].IsOut) // though it's not possible in C#
                         continue;
 
-                    Type paramType = ParameterTypes[i];
+                    Type paramType = Parameters[i].ParameterType;
                     if (paramType.IsByRef) // in C# it's only valid as 'in' modifier
                         paramType = paramType.GetElementType()!;
                     if (paramType.IsPointer())

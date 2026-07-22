@@ -16,6 +16,9 @@
 #region Usings
 
 using System;
+#if !NETSTANDARD2_0
+using System.Diagnostics.CodeAnalysis;
+#endif
 using System.Linq;
 #if NETSTANDARD2_0_OR_GREATER || NETCOREAPP3_0_OR_GREATER
 using System.Linq.Expressions;
@@ -89,10 +92,10 @@ namespace KGySoft.Reflection
             ParameterExpression indexParametersParameter = Expression.Parameter(typeof(object[]), "indexParameters");
 
             // indexer parameters
-            var setterParameters = new Expression[ParameterTypes.Length + 1]; // +1: value to set after indices
-            for (int i = 0; i < ParameterTypes.Length; i++)
+            var setterParameters = new Expression[Parameters.Length + 1]; // +1: value to set after indices
+            for (int i = 0; i < Parameters.Length; i++)
             {
-                Type parameterType = ParameterTypes[i];
+                Type parameterType = Parameters[i].ParameterType;
 
                 // for in parameters
                 if (parameterType.IsByRef)
@@ -102,7 +105,7 @@ namespace KGySoft.Reflection
             }
 
             // value parameter is the last one
-            setterParameters[ParameterTypes.Length] = Expression.Convert(valueParameter, Property.PropertyType);
+            setterParameters[Parameters.Length] = Expression.Convert(valueParameter, Property.PropertyType);
 
             MethodCallExpression setterCall = Expression.Call(
                 Expression.Convert(instanceParameter, declaringType), // (TInstance)instance
@@ -185,10 +188,10 @@ namespace KGySoft.Reflection
 
             ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
             ParameterExpression indexParametersParameter = Expression.Parameter(typeof(object[]), "indexParameters");
-            var getterParameters = new Expression[ParameterTypes.Length];
-            for (int i = 0; i < ParameterTypes.Length; i++)
+            var getterParameters = new Expression[Parameters.Length];
+            for (int i = 0; i < Parameters.Length; i++)
             {
-                Type parameterType = ParameterTypes[i];
+                Type parameterType = Parameters[i].ParameterType;
 
                 // for in parameters
                 if (parameterType.IsByRef)
@@ -229,7 +232,7 @@ namespace KGySoft.Reflection
                 Throw.InvalidOperationException(Res.ReflectionGenericMember);
 
             // The 1 parameter overload was called for a more-params indexer
-            if (ParameterTypes.Length > 1)
+            if (Parameters.Length > 1)
                 Throw.NotSupportedException(); // Will be handled in PostValidate
 
             if (!Property.CanWrite)
@@ -266,7 +269,7 @@ namespace KGySoft.Reflection
 
             // indexer parameters
             var setterParameters = new Expression[2]; // index, value
-            setterParameters[0] = Expression.Convert(indexParameter, ParameterTypes[0].IsByRef ? ParameterTypes[0].GetElementType()! : ParameterTypes[0]);
+            setterParameters[0] = Expression.Convert(indexParameter, Parameters[0].ParameterType.IsByRef ? Parameters[0].ParameterType.GetElementType()! : Parameters[0].ParameterType);
             setterParameters[1] = Expression.Convert(valueParameter, Property.PropertyType);
 
             MethodCallExpression setterCall = Expression.Call(
@@ -335,7 +338,7 @@ namespace KGySoft.Reflection
                 Throw.NotSupportedException(Res.ReflectionPropertyHasNoGetter(MemberInfo.DeclaringType, MemberInfo.Name));
 
             // The 1 parameter overload was called for a more-params indexer
-            if (ParameterTypes.Length > 1)
+            if (Parameters.Length > 1)
                 Throw.NotSupportedException(); // Will be handled in PostValidate
 
             MethodInfo getterMethod = Property.GetGetMethod(true)!;
@@ -359,7 +362,7 @@ namespace KGySoft.Reflection
             MethodCallExpression getterCall = Expression.Call(
                 Expression.Convert(instanceParameter, declaringType), // (TInstance)instance
                 getterMethod, // getter
-                Expression.Convert(indexParameter, ParameterTypes[0].IsByRef ? ParameterTypes[0].GetElementType()! : ParameterTypes[0])); // index cast to the parameter type
+                Expression.Convert(indexParameter, Parameters[0].ParameterType.IsByRef ? Parameters[0].ParameterType.GetElementType()! : Parameters[0].ParameterType)); // index cast to the parameter type
 
             var lambda = Expression.Lambda<Func<object?, object?, object?>>(
                 Expression.Convert(getterCall, Reflector.ObjectType), // object return type
@@ -386,7 +389,7 @@ namespace KGySoft.Reflection
                 Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
             if (declaringType.ContainsGenericParameters)
                 Throw.InvalidOperationException(Res.ReflectionGenericMember);
-            if (ParameterTypes.Length > 1)
+            if (Parameters.Length > 1)
                 Throw.NotSupportedException(Res.ReflectionIndexerGenericNotSupported);
 
             bool isByRef = Property.PropertyType.IsByRef;
@@ -395,7 +398,7 @@ namespace KGySoft.Reflection
             bool isPointer = propertyType.IsPointer();
             if (isPointer)
                 propertyType = typeof(IntPtr);
-            Type indexType = ParameterTypes[0];
+            Type indexType = Parameters[0].ParameterType;
             if (indexType.IsByRef)
                 indexType = indexType.GetElementType()!;
             bool isPointerIndex = indexType.IsPointer();
@@ -427,6 +430,20 @@ namespace KGySoft.Reflection
             // In AOT mode it will work in interpreted mode, which is even slower than the non-generic alternative...
             if (!RuntimeFeature.IsDynamicCodeSupported)
 #endif
+            {
+                return CreateByExpressions();
+            }
+#endif
+
+#if !NETSTANDARD2_0
+            DynamicMethod result = CreateMethodInvokerAsDynamicMethod(setterMethod, DynamicMethodOptions.TreatAsPropertySetter | DynamicMethodOptions.ExactParameters | DynamicMethodOptions.StronglyTyped);
+            return result.CreateDelegate(delegateType);
+#endif
+
+            #region Local Methods
+
+#if NETSTANDARD2_0_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+            Delegate CreateByExpressions()
             {
                 ParameterExpression instanceParameter = Expression.Parameter(isValueType ? declaringType.MakeByRefType() : declaringType, "instance");
                 ParameterExpression indexParameter = Expression.Parameter(indexType, "index");
@@ -478,10 +495,7 @@ namespace KGySoft.Reflection
             }
 #endif
 
-#if !NETSTANDARD2_0
-            DynamicMethod result = CreateMethodInvokerAsDynamicMethod(setterMethod, DynamicMethodOptions.TreatAsPropertySetter | DynamicMethodOptions.ExactParameters | DynamicMethodOptions.StronglyTyped);
-            return result.CreateDelegate(delegateType);
-#endif
+            #endregion
         }
 
         private protected override Delegate CreateGenericGetter()
@@ -494,7 +508,7 @@ namespace KGySoft.Reflection
             if (!CanRead)
                 Throw.NotSupportedException(Res.ReflectionPropertyHasNoGetter(MemberInfo.DeclaringType, MemberInfo.Name));
             MethodInfo getterMethod = Property.GetGetMethod(true)!;
-            if (ParameterTypes.Length > 1)
+            if (Parameters.Length > 1)
                 Throw.NotSupportedException(Res.ReflectionIndexerGenericNotSupported);
 
             bool isValueType = declaringType.IsValueType;
@@ -503,7 +517,7 @@ namespace KGySoft.Reflection
             bool isPointer = returnType.IsPointer();
             if (isPointer)
                 returnType = typeof(IntPtr);
-            Type indexType = ParameterTypes[0];
+            Type indexType = Parameters[0].ParameterType;
             if (indexType.IsByRef)
                 indexType = indexType.GetElementType()!;
             bool isPointerIndex = indexType.IsPointer();
@@ -521,6 +535,20 @@ namespace KGySoft.Reflection
             // In AOT mode it will work in interpreted mode, which is even slower than the non-generic alternative...
             if (!RuntimeFeature.IsDynamicCodeSupported)
 #endif
+            {
+                return CreateByExpressions();
+            }
+#endif
+
+#if !NETSTANDARD2_0
+                    DynamicMethod result = CreateMethodInvokerAsDynamicMethod(getterMethod, DynamicMethodOptions.ExactParameters | DynamicMethodOptions.StronglyTyped);
+            return result.CreateDelegate(delegateType);
+#endif
+
+            #region Local Methods
+
+#if NETSTANDARD2_0_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+            Delegate CreateByExpressions()
             {
                 ParameterExpression instanceParameter = Expression.Parameter(isValueType ? declaringType.MakeByRefType() : declaringType, "instance");
                 ParameterExpression indexParameter = Expression.Parameter(indexType, "index");
@@ -575,10 +603,7 @@ namespace KGySoft.Reflection
             }
 #endif
 
-#if !NETSTANDARD2_0
-                    DynamicMethod result = CreateMethodInvokerAsDynamicMethod(getterMethod, DynamicMethodOptions.ExactParameters | DynamicMethodOptions.StronglyTyped);
-            return result.CreateDelegate(delegateType);
-#endif
+            #endregion
         }
 
         #endregion
@@ -586,6 +611,8 @@ namespace KGySoft.Reflection
         #region Private Methods
 
 #if !NETSTANDARD2_0
+        [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity",
+            Justification = "False alarm, the new analyzer includes the complexity of local methods - see https://github.com/dotnet/roslyn-analyzers/issues/2934")]
         private DynamicMethod CreateSetRefAsDynamicMethod(bool? generic)
         {
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
@@ -595,7 +622,7 @@ namespace KGySoft.Reflection
             MethodInfo getterMethod = Property.GetGetMethod(true)!;
             Type? declaringType = getterMethod.DeclaringType;
             Debug.Assert(getterMethod.ReturnType.IsByRef);
-            Debug.Assert(generic == null || ParameterTypes.Length == 1, "When creating a specialized delegate only 1 parameter is expected");
+            Debug.Assert(generic == null || Parameters.Length == 1, "When creating a specialized delegate only 1 parameter is expected");
             Debug.Assert(declaringType != null);
             if (getterMethod.IsStatic)
                 Throw.NotSupportedException(Res.ReflectionRefReturnStaticIndexerNotSupported);
@@ -603,7 +630,7 @@ namespace KGySoft.Reflection
             Type propertyType = getterMethod.ReturnType.GetElementType()!;
             bool isPointer = propertyType.IsPointer();
             Type valueParameterType = isPointer ? typeof(IntPtr) : propertyType;
-            Type indexType = ParameterTypes[0]; // the 1st index parameter, used when generic is not null
+            Type indexType = Parameters[0].ParameterType; // the 1st index parameter, used when generic is not null
             if (indexType.IsByRef)
                 indexType = indexType.GetElementType()!;
             if (indexType.IsPointer())
@@ -626,37 +653,7 @@ namespace KGySoft.Reflection
             ILGenerator il = dm.GetILGenerator();
 
             // generating locals for ByRef parameters (in C# indexers can only have the 'in' modifier)
-            if (generic != true)
-            {
-                for (int i = 0, localsIndex = 0; i < ParameterTypes.Length; i++)
-                {
-                    if (!ParameterTypes[i].IsByRef)
-                        continue;
-
-                    Type paramType = ParameterTypes[i].GetElementType()!;
-                    il.DeclareLocal(paramType);
-
-                    // initializing locals of ref (non-out) parameters
-                    if (!Parameters[i].IsOut) // in C# this is always true
-                    {
-                        // from the object[] parameters
-                        if (generic == null)
-                        {
-                            il.Emit(OpCodes.Ldarg_2); // loading parameters argument
-                            il.Emit(OpCodes.Ldc_I4, i); // loading index of processed argument
-                            il.Emit(OpCodes.Ldelem_Ref); // loading the pointed element in arguments
-                        }
-                        // from separate parameters
-                        else
-                            il.Emit(OpCodes.Ldarg_2); // loading the index argument - only single parameter indexers are supported this way
-
-                        il.Emit(paramType.IsValueType || paramType.IsPointer() ? OpCodes.Unbox_Any : OpCodes.Castclass, paramType.IsPointer() ? typeof(IntPtr) : paramType);
-                        il.Emit(OpCodes.Stloc, localsIndex); // storing value in local variable
-                    }
-
-                    localsIndex++;
-                }
-            }
+            GenerateLocalsForRefParams();
 
             // loading 0th argument (instance)
             il.Emit(OpCodes.Ldarg_0);
@@ -664,69 +661,13 @@ namespace KGySoft.Reflection
                 il.Emit(declaringType!.IsValueType ? OpCodes.Unbox : OpCodes.Castclass, declaringType);
 
             // assigning parameter(s)
-            switch (generic)
-            {
-                case true:
-                    if (ParameterTypes[0].IsByRef)
-                        il.Emit(OpCodes.Ldarga, 2); // loading the address of the index parameter
-                    else
-                        il.Emit(OpCodes.Ldarg_2); // loading the index parameter
-                    break;
-
-                case false:
-                    if (ParameterTypes[0].IsByRef)
-                        il.Emit(OpCodes.Ldloca, 0); // passing the address of the local variable for the byref index
-                    else
-                    {
-                        il.Emit(OpCodes.Ldarg_2);
-                        il.Emit(indexType.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, indexType);
-                    }
-
-                    break;
-
-                default:
-                    for (int i = 0, localsIndex = 0; i < ParameterTypes.Length; i++)
-                    {
-                        Type paramType = ParameterTypes[i];
-                        if (paramType.IsByRef)
-                        {
-                            il.Emit(OpCodes.Ldloca, localsIndex++); // passing the address of the local variables for byref parameters
-                            continue;
-                        }
-
-                        if (paramType.IsPointer())
-                            paramType = typeof(IntPtr);
-                        il.Emit(OpCodes.Ldarg_2); // loading 2nd argument (indices)
-                        il.Emit(OpCodes.Ldc_I4, i); // loading index of processed argument
-                        il.Emit(OpCodes.Ldelem_Ref); // loading the pointed element in arguments
-                        il.Emit(paramType.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, paramType);
-                    }
-
-                    break;
-            }
+            AssignParameters();
 
             // calling the getter
             il.Emit(getterMethod.IsVirtual ? OpCodes.Callvirt : OpCodes.Call, getterMethod);
 
             // Assigning back ref/out parameters (though in C# only 'in' parameters are allowed, for which this never applies)
-            if (generic == null)
-            {
-                for (int i = 0, localsIndex = 0; i < ParameterTypes.Length; i++)
-                {
-                    if (!ParameterTypes[i].IsByRef || Parameters[i].IsIn && !Parameters[i].IsOut)
-                        continue;
-
-                    Type paramType = ParameterTypes[i].GetElementType()!;
-                    il.Emit(OpCodes.Ldarg_2); // loading 2nd argument (indices)
-                    il.Emit(OpCodes.Ldc_I4, i); // loading index of processed argument
-                    il.Emit(OpCodes.Ldloc, (short)localsIndex); // loading local variable
-                    ++localsIndex;
-
-                    if (paramType.IsValueType || paramType.IsPointer())
-                        il.Emit(OpCodes.Box, paramType.IsPointer() ? typeof(IntPtr) : paramType); // boxing value type into object
-                    il.Emit(OpCodes.Stelem_Ref); // storing the variable into the pointed array index
-                }
-            }
+            AssignRefParams();
 
             // loading 1st argument (value)
             il.Emit(OpCodes.Ldarg_1);
@@ -743,6 +684,111 @@ namespace KGySoft.Reflection
 
             il.Emit(OpCodes.Ret);
             return dm;
+
+            #region Local Methods
+            
+            void GenerateLocalsForRefParams()
+            {
+                if (generic != true)
+                {
+                    for (int i = 0, localsIndex = 0; i < Parameters.Length; i++)
+                    {
+                        if (!Parameters[i].ParameterType.IsByRef)
+                            continue;
+
+                        Type paramType = Parameters[i].ParameterType.GetElementType()!;
+                        il.DeclareLocal(paramType);
+
+                        // initializing locals of ref (non-out) parameters
+                        if (!Parameters[i].IsOut) // in C# this is always true
+                        {
+                            // from the object[] parameters
+                            if (generic == null)
+                            {
+                                il.Emit(OpCodes.Ldarg_2); // loading parameters argument
+                                il.Emit(OpCodes.Ldc_I4, i); // loading index of processed argument
+                                il.Emit(OpCodes.Ldelem_Ref); // loading the pointed element in arguments
+                            }
+                            // from separate parameters
+                            else
+                                il.Emit(OpCodes.Ldarg_2); // loading the index argument - only single parameter indexers are supported this way
+
+                            il.Emit(paramType.IsValueType || paramType.IsPointer() ? OpCodes.Unbox_Any : OpCodes.Castclass, paramType.IsPointer() ? typeof(IntPtr) : paramType);
+                            il.Emit(OpCodes.Stloc, localsIndex); // storing value in local variable
+                        }
+
+                        localsIndex++;
+                    }
+                }
+            }
+
+            void AssignParameters()
+            {
+                switch (generic)
+                {
+                    case true:
+                        if (Parameters[0].ParameterType.IsByRef)
+                            il.Emit(OpCodes.Ldarga, 2); // loading the address of the index parameter
+                        else
+                            il.Emit(OpCodes.Ldarg_2); // loading the index parameter
+                        break;
+
+                    case false:
+                        if (Parameters[0].ParameterType.IsByRef)
+                            il.Emit(OpCodes.Ldloca, 0); // passing the address of the local variable for the byref index
+                        else
+                        {
+                            il.Emit(OpCodes.Ldarg_2);
+                            il.Emit(indexType.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, indexType);
+                        }
+
+                        break;
+
+                    default:
+                        for (int i = 0, localsIndex = 0; i < Parameters.Length; i++)
+                        {
+                            Type paramType = Parameters[i].ParameterType;
+                            if (paramType.IsByRef)
+                            {
+                                il.Emit(OpCodes.Ldloca, localsIndex++); // passing the address of the local variables for byref parameters
+                                continue;
+                            }
+
+                            if (paramType.IsPointer())
+                                paramType = typeof(IntPtr);
+                            il.Emit(OpCodes.Ldarg_2); // loading 2nd argument (indices)
+                            il.Emit(OpCodes.Ldc_I4, i); // loading index of processed argument
+                            il.Emit(OpCodes.Ldelem_Ref); // loading the pointed element in arguments
+                            il.Emit(paramType.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, paramType);
+                        }
+
+                        break;
+                }
+            }
+         
+            void AssignRefParams()
+            {
+                if (generic == null)
+                {
+                    for (int i = 0, localsIndex = 0; i < Parameters.Length; i++)
+                    {
+                        if (!Parameters[i].ParameterType.IsByRef || Parameters[i].IsIn && !Parameters[i].IsOut)
+                            continue;
+
+                        Type paramType = Parameters[i].ParameterType.GetElementType()!;
+                        il.Emit(OpCodes.Ldarg_2); // loading 2nd argument (indices)
+                        il.Emit(OpCodes.Ldc_I4, i); // loading index of processed argument
+                        il.Emit(OpCodes.Ldloc, (short)localsIndex); // loading local variable
+                        ++localsIndex;
+
+                        if (paramType.IsValueType || paramType.IsPointer())
+                            il.Emit(OpCodes.Box, paramType.IsPointer() ? typeof(IntPtr) : paramType); // boxing value type into object
+                        il.Emit(OpCodes.Stelem_Ref); // storing the variable into the pointed array index
+                    }
+                }
+            }
+
+            #endregion
         }
 #endif
 

@@ -16,6 +16,7 @@
 #region Usings
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 #if NETSTANDARD2_0_OR_GREATER || NETCOREAPP3_0_OR_GREATER
 using System.Linq.Expressions;
 #endif
@@ -303,6 +304,8 @@ namespace KGySoft.Reflection
 #endif
         }
 
+        [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity",
+            Justification = "False alarm, the new analyzer includes the complexity of local methods - see https://github.com/dotnet/roslyn-analyzers/issues/2934")]
         private protected override Delegate CreateGenericSetter()
         {
             Type? declaringType = Property.DeclaringType;
@@ -347,6 +350,20 @@ namespace KGySoft.Reflection
             // In AOT mode it will work in interpreted mode, which is even slower than the non-generic alternative...
             if (!RuntimeFeature.IsDynamicCodeSupported)
 #endif
+            {
+                return CreateByExpressions();
+            }
+#endif
+
+#if !NETSTANDARD2_0
+            DynamicMethod result = CreateMethodInvokerAsDynamicMethod(setterMethod, DynamicMethodOptions.TreatAsPropertySetter | DynamicMethodOptions.ExactParameters | DynamicMethodOptions.StronglyTyped);
+            return result.CreateDelegate(delegateType);
+#endif
+
+            #region Local Methods
+
+#if NETSTANDARD2_0_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+            Delegate CreateByExpressions()
             {
                 ParameterExpression instanceParameter;
                 MethodCallExpression setterCall;
@@ -412,12 +429,11 @@ namespace KGySoft.Reflection
             }
 #endif
 
-#if !NETSTANDARD2_0
-            DynamicMethod result = CreateMethodInvokerAsDynamicMethod(setterMethod, DynamicMethodOptions.TreatAsPropertySetter | DynamicMethodOptions.ExactParameters | DynamicMethodOptions.StronglyTyped);
-            return result.CreateDelegate(delegateType);
-#endif
+            #endregion
         }
 
+        [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity",
+            Justification = "False alarm, the new analyzer includes the complexity of local methods - see https://github.com/dotnet/roslyn-analyzers/issues/2934")]
         private protected override Delegate CreateGenericGetter()
         {
             Type? declaringType = Property.DeclaringType;
@@ -450,6 +466,19 @@ namespace KGySoft.Reflection
             // In AOT mode it will work in interpreted mode, which is even slower than the non-generic alternative...
             if (!RuntimeFeature.IsDynamicCodeSupported)
 #endif
+            {
+                return CreateByExpressions();
+            }
+#endif
+#if !NETSTANDARD2_0
+            DynamicMethod result = CreateMethodInvokerAsDynamicMethod(getterMethod, DynamicMethodOptions.ExactParameters | DynamicMethodOptions.StronglyTyped);
+            return result.CreateDelegate(delegateType);
+#endif
+
+            #region Local Methods
+
+#if NETSTANDARD2_0_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+            Delegate CreateByExpressions()
             {
                 MethodCallExpression getterCall;
                 ParameterExpression instanceParameter;
@@ -509,10 +538,8 @@ namespace KGySoft.Reflection
                 return lambda.Compile();
             }
 #endif
-#if !NETSTANDARD2_0
-            DynamicMethod result = CreateMethodInvokerAsDynamicMethod(getterMethod, DynamicMethodOptions.ExactParameters | DynamicMethodOptions.StronglyTyped);
-            return result.CreateDelegate(delegateType);
-#endif
+
+            #endregion
         }
 
         #endregion

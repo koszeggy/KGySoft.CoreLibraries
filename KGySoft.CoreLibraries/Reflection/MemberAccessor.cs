@@ -105,13 +105,7 @@ namespace KGySoft.Reflection
 
         #region Internal Properties
         
-        internal Type[] ParameterTypes { get; }
-
-        #endregion
-
-        #region Private Protected Properties
-
-        private protected ParameterInfo[] Parameters { get; }
+        internal ParameterInfo[] Parameters { get; }
 
         #endregion
 
@@ -130,7 +124,6 @@ namespace KGySoft.Reflection
                 Throw.ArgumentNullException(Argument.member);
             MemberInfo = member;
             Parameters = parameters ?? Reflector<ParameterInfo>.EmptyArray;
-            ParameterTypes = parameters == null ? Type.EmptyTypes : parameters.Select(p => p.ParameterType).ToArray();
         }
 
         #endregion
@@ -255,7 +248,7 @@ namespace KGySoft.Reflection
 #if NETSTANDARD2_0_OR_GREATER || NETCOREAPP3_0_OR_GREATER
         private protected void ThrowIfHasRefPointerParameters()
         {
-            if (ParameterTypes.FirstOrDefault(p => p.IsByRef && p.GetElementType()!.IsPointer()) is Type t)
+            if (Parameters.FirstOrDefault(p => p.ParameterType.IsByRef && p.ParameterType.GetElementType()!.IsPointer())?.ParameterType is Type t)
 #if NETSTANDARD2_0
                 Throw.PlatformNotSupportedException(Res.ReflectionRefPointerTypeNotSupportedNetStandard20(t));
 #else
@@ -428,11 +421,11 @@ namespace KGySoft.Reflection
                     delegateParameters.Add(typeof(object[]));
                 else
                 {
-                    Debug.Assert(ParameterTypes.Length <= 4, "More than 4 parameters are not expected for separate parameters");
+                    Debug.Assert(Parameters.Length <= 4, "More than 4 parameters are not expected for separate parameters");
                     if (stronglyTyped)
-                        delegateParameters.AddRange(GetGenericArguments(ParameterTypes));
+                        delegateParameters.AddRange(GetGenericArguments(Parameters.Select(p => p.ParameterType)));
                     else
-                        for (int i = 0; i < ParameterTypes.Length; i++)
+                        for (int i = 0; i < Parameters.Length; i++)
                             delegateParameters.Add(Reflector.ObjectType);
                 }
 
@@ -446,12 +439,12 @@ namespace KGySoft.Reflection
                     return;
 
                 int paramsOffset = GetParamsOffset();
-                for (int i = 0, localsIndex = 0; i < ParameterTypes.Length; i++)
+                for (int i = 0, localsIndex = 0; i < Parameters.Length; i++)
                 {
-                    if (!ParameterTypes[i].IsByRef)
+                    if (!Parameters[i].ParameterType.IsByRef)
                         continue;
 
-                    Type paramType = ParameterTypes[i].GetElementType()!;
+                    Type paramType = Parameters[i].ParameterType.GetElementType()!;
                     il.DeclareLocal(paramType);
 
                     // initializing locals of ref (non-out) parameters
@@ -480,9 +473,9 @@ namespace KGySoft.Reflection
             void LoadParameters()
             {
                 int paramsOffset = GetParamsOffset();
-                for (int i = 0, localsIndex = 0; i < ParameterTypes.Length; i++)
+                for (int i = 0, localsIndex = 0; i < Parameters.Length; i++)
                 {
-                    Type paramType = ParameterTypes[i];
+                    Type paramType = Parameters[i].ParameterType;
 
                     // ref/out parameters: by the address of the local variables or parameters
                     if (paramType.IsByRef)
@@ -518,12 +511,12 @@ namespace KGySoft.Reflection
                     return;
 
                 Debug.Assert(!stronglyTyped, "Strongly typed generation is expected with exact parameters");
-                for (int i = 0, localsIndex = 0; i < ParameterTypes.Length; i++)
+                for (int i = 0, localsIndex = 0; i < Parameters.Length; i++)
                 {
-                    if (!ParameterTypes[i].IsByRef || Parameters[i].IsIn && !Parameters[i].IsOut)
+                    if (!Parameters[i].ParameterType.IsByRef || Parameters[i].IsIn && !Parameters[i].IsOut)
                         continue;
 
-                    Type paramType = ParameterTypes[i].GetElementType()!;
+                    Type paramType = Parameters[i].ParameterType.GetElementType()!;
                     EmitLdarg(il, GetParamsOffset()); // loading parameters argument
                     il.Emit(OpCodes.Ldc_I4, i); // loading index of processed argument
                     il.Emit(OpCodes.Ldloc, (short)localsIndex); // loading local variable

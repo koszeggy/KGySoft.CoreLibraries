@@ -76,10 +76,10 @@ namespace KGySoft.Reflection
 
             ParameterExpression instanceParameter = Expression.Parameter(Reflector.ObjectType, "instance");
             ParameterExpression argumentsParameter = Expression.Parameter(typeof(object[]), "arguments");
-            var methodParameters = new Expression[ParameterTypes.Length];
-            for (int i = 0; i < ParameterTypes.Length; i++)
+            var methodParameters = new Expression[Parameters.Length];
+            for (int i = 0; i < Parameters.Length; i++)
             {
-                Type parameterType = ParameterTypes[i];
+                Type parameterType = Parameters[i].ParameterType;
 
                 // for in parameters
                 if (parameterType.IsByRef)
@@ -131,7 +131,7 @@ namespace KGySoft.Reflection
             Delegate SystemReflectionFallback()
             {
                 MethodInvoker invoker = FallbackInvoker;
-                return ParameterTypes.Length switch
+                return Parameters.Length switch
                 {
                     0 => new Func<object?, object?>(invoker.Invoke),
                     1 => new Func<object?, object?, object?>(invoker.Invoke),
@@ -145,7 +145,7 @@ namespace KGySoft.Reflection
             Delegate SystemReflectionFallback()
             {
                 MethodBase mi = Method;
-                return ParameterTypes.Length switch
+                return Parameters.Length switch
                 {
                     0 => new Func<object?, object?>(o => mi.Invoke(o, null)),
                     1 => new Func<object?, object?, object?>((o, p) => mi.Invoke(o, [p])),
@@ -166,10 +166,10 @@ namespace KGySoft.Reflection
                 Throw.InvalidOperationException(Res.ReflectionGenericMember);
             if (!method.IsStatic && declaringType == null)
                 Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
-            if (ParameterTypes.Length > 4)
+            if (Parameters.Length > 4)
                 Throw.NotSupportedException(); // will be handled in PostValidate
 
-            Type delegateType = ParameterTypes.Length switch
+            Type delegateType = Parameters.Length switch
             {
                 0 => typeof(Func<object?, object?>),
                 1 => typeof(Func<object?, object?, object?>),
@@ -182,16 +182,16 @@ namespace KGySoft.Reflection
 #if NETSTANDARD2_0
             // For non-readonly value types using reflection as fallback so mutations are preserved. Likewise, defaulting to reflection if pointer parameters are used.
             ThrowIfHasRefPointerParameters();
-            if (!method.IsStatic && declaringType!.IsValueType && !(declaringType.IsReadOnly() || method.IsReadOnly()) || ParameterTypes.Any(p => p.IsPointer()))
+            if (!method.IsStatic && declaringType!.IsValueType && !(declaringType.IsReadOnly() || method.IsReadOnly()) || Parameters.Any(p => p.ParameterType.IsPointer()))
                 return SystemReflectionFallback();
 
-            var parameters = new ParameterExpression[ParameterTypes.Length + 1];
+            var parameters = new ParameterExpression[Parameters.Length + 1];
             parameters[0] = Expression.Parameter(Reflector.ObjectType, "instance");
-            var methodParameters = new Expression[ParameterTypes.Length];
-            for (int i = 0; i < ParameterTypes.Length; i++)
+            var methodParameters = new Expression[Parameters.Length];
+            for (int i = 0; i < Parameters.Length; i++)
             {
                 parameters[i + 1] = Expression.Parameter(Reflector.ObjectType, $"param{i + 1}");
-                Type parameterType = ParameterTypes[i];
+                Type parameterType = Parameters[i].ParameterType;
 
                 // This just avoids error when ref parameters are used but does not assign results back
                 if (parameterType.IsByRef)
@@ -239,13 +239,13 @@ namespace KGySoft.Reflection
                 Throw.InvalidOperationException(Res.ReflectionGenericMember);
             if (!isStatic && declaringType == null)
                 Throw.InvalidOperationException(Res.ReflectionDeclaringTypeExpected);
-            if (ParameterTypes.Length > 4)
+            if (Parameters.Length > 4)
                 Throw.NotSupportedException(Res.ReflectionMethodGenericNotSupported);
 
             Type delegateType;
             if (isStatic)
             {
-                delegateType = ParameterTypes.Length switch
+                delegateType = Parameters.Length switch
                 {
                     0 => typeof(Action),
                     1 => typeof(Action<>),
@@ -256,13 +256,13 @@ namespace KGySoft.Reflection
                 };
 
                 if (delegateType.IsGenericTypeDefinition)
-                    delegateType = delegateType.GetGenericType(GetGenericArguments(ParameterTypes).ToArray());
+                    delegateType = delegateType.GetGenericType(GetGenericArguments(Parameters.Select(p => p.ParameterType)).ToArray());
             }
             else
             {
                 if (isValueType)
                 {
-                    delegateType = ParameterTypes.Length switch
+                    delegateType = Parameters.Length switch
                     {
                         0 => typeof(ValueTypeAction<>),
                         1 => typeof(ValueTypeAction<,>),
@@ -274,7 +274,7 @@ namespace KGySoft.Reflection
                 }
                 else
                 {
-                    delegateType = ParameterTypes.Length switch
+                    delegateType = Parameters.Length switch
                     {
                         // NOTE: actually we could use simple Action but that would make possible to invoke an instance method by a static invoker
                         0 => typeof(ReferenceTypeAction<>),
@@ -287,7 +287,7 @@ namespace KGySoft.Reflection
                 }
 
                 delegateType = delegateType.GetGenericType(new[] { declaringType! }
-                    .Concat(GetGenericArguments(ParameterTypes))
+                    .Concat(GetGenericArguments(Parameters.Select(p => p.ParameterType)))
                     .ToArray());
             }
 
@@ -298,6 +298,20 @@ namespace KGySoft.Reflection
             if (!RuntimeFeature.IsDynamicCodeSupported)
 #endif
             {
+                return CreateByExpressions();
+            }
+#endif
+
+#if !NETSTANDARD2_0
+            DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(method, DynamicMethodOptions.ExactParameters | DynamicMethodOptions.StronglyTyped);
+            return dm.CreateDelegate(delegateType);
+#endif
+
+            #region Local Methods
+
+#if NETSTANDARD2_0_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+            Delegate CreateByExpressions()
+            {
                 ParameterExpression[] parameters;
                 Expression[] methodParameters;
                 MethodCallExpression methodCall;
@@ -305,14 +319,14 @@ namespace KGySoft.Reflection
 
                 // Method has a pointer parameter: fallback to System reflection, which supports pointer parameters as IntPtr.
                 ThrowIfHasRefPointerParameters();
-                if (ParameterTypes.Any(p => p.IsPointer()))
+                if (Parameters.Any(p => p.ParameterType.IsPointer()))
                 {
                     // value types: though we can call Invoke(object, object[]), the ref instance parameter gets boxed in a new object, losing all mutations
                     if (isValueType && !isStatic && !declaringType!.IsReadOnly() && !method.IsReadOnly())
                         ThrowMutableStructMembersNotSupported();
 
                     int offset = isStatic ? 0 : 1;
-                    parameters = new ParameterExpression[ParameterTypes.Length + offset];
+                    parameters = new ParameterExpression[Parameters.Length + offset];
                     if (!isStatic)
                         parameters[0] = Expression.Parameter(isValueType ? declaringType!.MakeByRefType() : declaringType!, "instance");
 
@@ -328,12 +342,12 @@ namespace KGySoft.Reflection
                         : parameters[0].Type == typeof(object) ? parameters[0]
                         : Expression.Convert(parameters[0], typeof(object));
 
-                    for (int i = 0; i < ParameterTypes.Length; i++)
+                    for (int i = 0; i < Parameters.Length; i++)
                         methodParameters[i + 1] = parameters[i + offset].Type == typeof(object) ? parameters[i + offset] : Expression.Convert(parameters[i + offset], typeof(object));
 
                     methodCall = Expression.Call(
                         Expression.Constant(invoker), // the instance is the MethodInvoker
-                        ParameterTypes.Length switch
+                        Parameters.Length switch
                         {
                             //0 => invoker.GetType().GetMethod(nameof(MethodInvoker.Invoke), [typeof(object)])!, // no pointer parameters in this case
                             1 => invoker.GetType().GetMethod(nameof(MethodInvoker.Invoke), [typeof(object), typeof(object)])!,
@@ -364,10 +378,10 @@ namespace KGySoft.Reflection
                 // Static methods
                 if (method.IsStatic)
                 {
-                    parameters = new ParameterExpression[ParameterTypes.Length];
+                    parameters = new ParameterExpression[Parameters.Length];
                     for (int i = 0; i < parameters.Length; i++)
                     {
-                        Type parameterType = ParameterTypes[i];
+                        Type parameterType = Parameters[i].ParameterType;
 
                         // This just avoids error when ref parameters are used but does not assign results back
                         if (parameterType.IsByRef)
@@ -382,17 +396,17 @@ namespace KGySoft.Reflection
                 }
 
                 // Instance methods
-                parameters = new ParameterExpression[ParameterTypes.Length + 1];
-                methodParameters = new Expression[ParameterTypes.Length];
+                parameters = new ParameterExpression[Parameters.Length + 1];
+                methodParameters = new Expression[Parameters.Length];
 
                 if (!isValueType)
                     parameters[0] = Expression.Parameter(declaringType!, "instance");
                 else
                     parameters[0] = Expression.Parameter(declaringType!.MakeByRefType(), "instance");
 
-                for (int i = 0; i < ParameterTypes.Length; i++)
+                for (int i = 0; i < Parameters.Length; i++)
                 {
-                    Type parameterType = ParameterTypes[i];
+                    Type parameterType = Parameters[i].ParameterType;
                     Type methodParameterType = parameterType.IsByRef
                         ? parameterType.GetElementType()! // This just avoids error when ref parameters are used but does not assign results back
                         : parameterType;
@@ -407,10 +421,7 @@ namespace KGySoft.Reflection
             }
 #endif
 
-#if !NETSTANDARD2_0
-            DynamicMethod dm = CreateMethodInvokerAsDynamicMethod(method, DynamicMethodOptions.ExactParameters | DynamicMethodOptions.StronglyTyped);
-            return dm.CreateDelegate(delegateType);
-#endif
+            #endregion
         }
 
         #endregion

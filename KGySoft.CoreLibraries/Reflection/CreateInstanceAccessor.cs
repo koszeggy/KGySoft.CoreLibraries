@@ -594,7 +594,7 @@ namespace KGySoft.Reflection
             if (type.IsAbstract || type.ContainsGenericParameters)
                 Throw.InvalidOperationException(Res.ReflectionCannotCreateInstanceOfType(type));
 
-            if (ParameterTypes.Length > 0)
+            if (Parameters.Length > 0)
             {
                 if (parameters == null)
                 {
@@ -602,22 +602,22 @@ namespace KGySoft.Reflection
                     Throw.ArgumentNullException(Argument.parameters, Res.ArgumentNull);
                 }
 
-                if (parameters.Length < ParameterTypes.Length
-                    || (!anyParams || exception is TargetParameterCountException) && parameters.Length != ParameterTypes.Length)
+                if (parameters.Length < Parameters.Length
+                    || (!anyParams || exception is TargetParameterCountException) && parameters.Length != Parameters.Length)
                 {
-                    string message = Res.ReflectionParamsLengthMismatch(ParameterTypes.Length, parameters.Length);
+                    string message = Res.ReflectionParamsLengthMismatch(Parameters.Length, parameters.Length);
                     if (anyParams)
                         Throw.ArgumentException(Argument.parameters, message);
                     else
                         Throw.ArgumentException(message);
                 }
 
-                for (int i = 0; i < ParameterTypes.Length; i++)
+                for (int i = 0; i < Parameters.Length; i++)
                 {
                     if (Parameters[i].IsOut)
                         continue;
 
-                    Type paramType = ParameterTypes[i];
+                    Type paramType = Parameters[i].ParameterType;
                     if (paramType.IsByRef)
                         paramType = paramType.GetElementType()!;
                     if (paramType.IsPointer())
@@ -628,7 +628,7 @@ namespace KGySoft.Reflection
                         if (anyParams)
                             Throw.ArgumentException(Argument.parameters, Res.ElementNotAnInstanceOfType(i, paramType));
                         else
-                            Throw.ArgumentException($"param{(ParameterTypes.Length > 1 ? i + 1 : null)}", Res.NotAnInstanceOfType(paramType));
+                            Throw.ArgumentException($"param{(Parameters.Length > 1 ? i + 1 : null)}", Res.NotAnInstanceOfType(paramType));
                     }
                 }
             }

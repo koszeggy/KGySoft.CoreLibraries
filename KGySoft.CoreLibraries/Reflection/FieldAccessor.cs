@@ -693,6 +693,8 @@ namespace KGySoft.Reflection
 #endif
         }
 
+        [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity",
+            Justification = "False alarm, the new analyzer includes the complexity of local methods - see https://github.com/dotnet/roslyn-analyzers/issues/2934")]
         private Delegate CreateGenericSetter()
         {
             Type? declaringType = Field.DeclaringType;
@@ -716,6 +718,35 @@ namespace KGySoft.Reflection
             // In AOT mode it will work in interpreted mode, which is even slower than the non-generic alternative...
             if (!RuntimeFeature.IsDynamicCodeSupported)
 #endif
+            {
+                return CreateByExpressions();
+            }
+#endif
+
+#if !NETSTANDARD2_0
+            Type[] parameterTypes = (isStatic ? Type.EmptyTypes : [isValueType ? declaringType!.MakeByRefType() : declaringType!])
+                .Append(fieldValueType)
+                .ToArray();
+
+            var dm = new DynamicMethod(setterPrefix + Field.Name, Reflector.VoidType, parameterTypes, declaringType ?? Reflector.ObjectType, true);
+            ILGenerator il = dm.GetILGenerator();
+            il.Emit(OpCodes.Ldarg_0); // loading 0th argument: instance for instance fields, value for static fields
+            if (isStatic)
+                il.Emit(OpCodes.Stsfld, Field); // assigning static field
+            else
+            {
+                il.Emit(OpCodes.Ldarg_1); // loading 1st argument: value parameter for instance fields
+                il.Emit(OpCodes.Stfld, Field); // assigning instance field
+            }
+
+            il.Emit(OpCodes.Ret); // returning without return value
+            return dm.CreateDelegate(delegateType);
+#endif
+
+            #region Local Methods
+
+#if NETSTANDARD2_0_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+            Delegate CreateByExpressions()
             {
                 LambdaExpression lambda;
 
@@ -792,27 +823,11 @@ namespace KGySoft.Reflection
             }
 #endif
 
-#if !NETSTANDARD2_0
-            Type[] parameterTypes = (isStatic ? Type.EmptyTypes : [isValueType ? declaringType!.MakeByRefType() : declaringType!])
-                .Append(fieldValueType)
-                .ToArray();
-
-            var dm = new DynamicMethod(setterPrefix + Field.Name, Reflector.VoidType, parameterTypes, declaringType ?? Reflector.ObjectType, true);
-            ILGenerator il = dm.GetILGenerator();
-            il.Emit(OpCodes.Ldarg_0); // loading 0th argument: instance for instance fields, value for static fields
-            if (isStatic)
-                il.Emit(OpCodes.Stsfld, Field); // assigning static field
-            else
-            {
-                il.Emit(OpCodes.Ldarg_1); // loading 1st argument: value parameter for instance fields
-                il.Emit(OpCodes.Stfld, Field); // assigning instance field
-            }
-
-            il.Emit(OpCodes.Ret); // returning without return value
-            return dm.CreateDelegate(delegateType);
-#endif
+            #endregion
         }
 
+        [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity",
+            Justification = "False alarm, the new analyzer includes the complexity of local methods - see https://github.com/dotnet/roslyn-analyzers/issues/2934")]
         private Delegate CreateGenericGetter()
         {
             Type? declaringType = Field.DeclaringType;
@@ -832,6 +847,38 @@ namespace KGySoft.Reflection
             // In AOT mode it will work in interpreted mode, which is even slower than the non-generic alternative...
             if (!RuntimeFeature.IsDynamicCodeSupported)
 #endif
+            {
+                return CreateByExpressions();
+            }
+#endif
+
+#if !NETSTANDARD2_0
+            Type fieldValueType = Field.FieldType.IsPointer() ? typeof(IntPtr) : Field.FieldType;
+            Type[] parameterTypes = isStatic ? Type.EmptyTypes
+                : isValueType ? [declaringType!.MakeByRefType()]
+                : [declaringType!];
+            var dm = new DynamicMethod(getterPrefix + Field.Name, fieldValueType,
+                parameterTypes,
+                declaringType ?? Reflector.ObjectType, true);
+            ILGenerator il = dm.GetILGenerator();
+            if (IsConstant)
+                EmitLoadConstant(il);
+            else if (isStatic)
+                il.Emit(OpCodes.Ldsfld, Field); // loading static field
+            else
+            {
+                il.Emit(OpCodes.Ldarg_0); // loading 0th argument: instance
+                il.Emit(OpCodes.Ldfld, Field); // loading field
+            }
+
+            il.Emit(OpCodes.Ret); // returning field value
+            return dm.CreateDelegate(delegateType);
+#endif
+
+            #region Local Methods
+
+#if NETSTANDARD2_0_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+            Delegate CreateByExpressions()
             {
                 MemberExpression member;
                 ParameterExpression instanceParameter;
@@ -896,28 +943,7 @@ namespace KGySoft.Reflection
             }
 #endif
 
-#if !NETSTANDARD2_0
-            Type fieldValueType = Field.FieldType.IsPointer() ? typeof(IntPtr) : Field.FieldType;
-            Type[] parameterTypes = isStatic ? Type.EmptyTypes
-                : isValueType ? [declaringType!.MakeByRefType()]
-                : [declaringType!];
-            var dm = new DynamicMethod(getterPrefix + Field.Name, fieldValueType,
-                parameterTypes,
-                declaringType ?? Reflector.ObjectType, true);
-            ILGenerator il = dm.GetILGenerator();
-            if (IsConstant)
-                EmitLoadConstant(il);
-            else if (isStatic)
-                il.Emit(OpCodes.Ldsfld, Field); // loading static field
-            else
-            {
-                il.Emit(OpCodes.Ldarg_0); // loading 0th argument: instance
-                il.Emit(OpCodes.Ldfld, Field); // loading field
-            }
-
-            il.Emit(OpCodes.Ret); // returning field value
-            return dm.CreateDelegate(delegateType);
-#endif
+            #endregion
         }
 
 #if !NETSTANDARD2_0

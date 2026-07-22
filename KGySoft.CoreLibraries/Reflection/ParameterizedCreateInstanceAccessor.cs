@@ -76,10 +76,10 @@ namespace KGySoft.Reflection
                 return ctor.Invoke;
 
             ParameterExpression argumentsParameter = Expression.Parameter(typeof(object[]), "arguments");
-            var ctorParameters = new Expression[ParameterTypes.Length];
-            for (int i = 0; i < ParameterTypes.Length; i++)
+            var ctorParameters = new Expression[Parameters.Length];
+            for (int i = 0; i < Parameters.Length; i++)
             {
-                Type parameterType = ParameterTypes[i];
+                Type parameterType = Parameters[i].ParameterType;
 
                 // for in parameters
                 if (parameterType.IsByRef)
@@ -122,7 +122,7 @@ namespace KGySoft.Reflection
             Delegate SystemReflectionFallback()
             {
                 ConstructorInvoker invoker = FallbackInvoker;
-                return ParameterTypes.Length switch
+                return Parameters.Length switch
                 {
                     0 => new Func<object?>(invoker.Invoke),
                     1 => new Func<object?, object?>(invoker.Invoke),
@@ -136,7 +136,7 @@ namespace KGySoft.Reflection
             Delegate SystemReflectionFallback()
             {
                 ConstructorInfo ci = (ConstructorInfo)MemberInfo;
-                return ParameterTypes.Length switch
+                return Parameters.Length switch
                 {
                     0 => new Func<object?>(() => ci.Invoke(null)),
                     1 => new Func<object?, object?>(p => ci.Invoke([p])),
@@ -155,10 +155,10 @@ namespace KGySoft.Reflection
                 Throw.InvalidOperationException(Res.ReflectionInstanceCtorExpected);
             if (ctor.DeclaringType is { IsAbstract: true } or { ContainsGenericParameters: true })
                 Throw.InvalidOperationException(Res.ReflectionCannotCreateInstanceOfType(ctor.DeclaringType!));
-            if (ParameterTypes.Length > 4)
+            if (Parameters.Length > 4)
                 Throw.NotSupportedException(); // will be handled in PostValidate
 
-            Type delegateType = ParameterTypes.Length switch
+            Type delegateType = Parameters.Length switch
             {
                 0 => typeof(Func<object?>),
                 1 => typeof(Func<object?, object?>),
@@ -171,15 +171,15 @@ namespace KGySoft.Reflection
 #if NETSTANDARD2_0
             // For pointer parameter types using reflection as fallback because Expression trees do not support pointers.
             ThrowIfHasRefPointerParameters();
-            if (ParameterTypes.Any(p => p.IsPointer()))
+            if (Parameters.Any(p => p.ParameterType.IsPointer()))
                 return SystemReflectionFallback();
 
-            var parameters = new ParameterExpression[ParameterTypes.Length];
-            var ctorParameters = new Expression[ParameterTypes.Length];
-            for (int i = 0; i < ParameterTypes.Length; i++)
+            var parameters = new ParameterExpression[Parameters.Length];
+            var ctorParameters = new Expression[Parameters.Length];
+            for (int i = 0; i < Parameters.Length; i++)
             {
                 parameters[i] = Expression.Parameter(Reflector.ObjectType, $"param{i + 1}");
-                Type parameterType = ParameterTypes[i];
+                Type parameterType = Parameters[i].ParameterType;
 
                 // This just avoids error when ref parameters are used but does not assign results back
                 if (parameterType.IsByRef)
@@ -217,10 +217,10 @@ namespace KGySoft.Reflection
                 Throw.InvalidOperationException(Res.ReflectionInstanceCtorExpected);
             if (ctor.DeclaringType is { IsAbstract: true } or { ContainsGenericParameters: true })
                 Throw.InvalidOperationException(Res.ReflectionCannotCreateInstanceOfType(ctor.DeclaringType!));
-            if (ParameterTypes.Length > 4)
+            if (Parameters.Length > 4)
                 Throw.NotSupportedException(Res.ReflectionCtorGenericNotSupported);
 
-            Type delegateType = (ParameterTypes.Length switch
+            Type delegateType = (Parameters.Length switch
             {
                 0 => typeof(Func<>),
                 1 => typeof(Func<,>),
@@ -228,7 +228,7 @@ namespace KGySoft.Reflection
                 3 => typeof(Func<,,,>),
                 4 => typeof(Func<,,,,>),
                 _ => Throw.InternalError<Type>("Unexpected number of parameters")
-            }).GetGenericType(GetGenericArguments(ParameterTypes).Append(ctor.DeclaringType!).ToArray());
+            }).GetGenericType(GetGenericArguments(Parameters.Select(p => p.ParameterType)).Append(ctor.DeclaringType!).ToArray());
 
 #if NETSTANDARD2_0_OR_GREATER || NETCOREAPP3_0_OR_GREATER
 #if !NETSTANDARD2_0
@@ -237,10 +237,10 @@ namespace KGySoft.Reflection
             if (!RuntimeFeature.IsDynamicCodeSupported)
 #endif
             {
-                ParameterExpression[] parameters = new ParameterExpression[ParameterTypes.Length];
+                ParameterExpression[] parameters = new ParameterExpression[Parameters.Length];
                 for (int i = 0; i < parameters.Length; i++)
                 {
-                    Type parameterType = ParameterTypes[i];
+                    Type parameterType = Parameters[i].ParameterType;
 
                     // This just avoids error when ref parameters are used but does not assign results back
                     if (parameterType.IsByRef)
@@ -255,7 +255,7 @@ namespace KGySoft.Reflection
 
                 // The constructor has pointer parameters: fallback to System reflection, which supports pointer parameters as IntPtr.
                 ThrowIfHasRefPointerParameters();
-                if (ParameterTypes.Any(p => p.IsPointer()))
+                if (Parameters.Any(p => p.ParameterType.IsPointer()))
                 {
 #if NET8_0_OR_GREATER
                     // fallback to ConstructorInvoker
