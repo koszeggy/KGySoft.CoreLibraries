@@ -1582,10 +1582,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             Throws<AssertionException>(() => KGySerializeObject(testObj, XmlSerializationOptions.RecursiveSerializationAsFallback), "Equality check failed");
 
             // But they can be included. Ref readonly is handled as normal read-only: they are considered for collections
-            KGySerializeObject(testObj, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.IncludeRefProperties);
+            if (IsAot)
+                Throws<PlatformNotSupportedException>(() => KGySerializeObject(testObj, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.IncludeRefProperties));
+            else
+                KGySerializeObject(testObj, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.IncludeRefProperties);
 
             // Binary: IncludeRefProperties is needed for content serialization
-            KGySerializeObject(testObj, XmlSerializationOptions.BinarySerializationAsFallback | XmlSerializationOptions.IncludeRefProperties, safeMode: XmlSafeMode.Medium);
+            if (IsAot)
+                Throws<PlatformNotSupportedException>(() => KGySerializeObject(testObj, XmlSerializationOptions.BinarySerializationAsFallback | XmlSerializationOptions.IncludeRefProperties, safeMode: XmlSafeMode.Medium));
+            else
+                KGySerializeObject(testObj, XmlSerializationOptions.BinarySerializationAsFallback | XmlSerializationOptions.IncludeRefProperties, safeMode: XmlSafeMode.Medium);
         }
 #endif
 
@@ -1747,6 +1753,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         [Test]
         public void SafeModeDataSetTest()
         {
+            if (IsAot)
+                Assert.Inconclusive("DataSet serialization is not AOT compatible");
             var dataTable = new DataTable("TestTable");
             dataTable.Columns.Add(new DataColumn("ID", typeof(int)));
             dataTable.Columns.Add(new DataColumn("Name", typeof(string)));

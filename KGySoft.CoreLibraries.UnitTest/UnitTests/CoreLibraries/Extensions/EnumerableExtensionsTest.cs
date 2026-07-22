@@ -30,7 +30,7 @@ using NUnit.Framework;
 namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
 {
     [TestFixture]
-    public class EnumerableExtensionsTest
+    public class EnumerableExtensionsTest : TestBase
     {
         #region Methods
 
@@ -164,8 +164,11 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Assert.IsTrue(new ArrayList { 1, 2, 3 }.TryGetCount(out count));
             Assert.AreEqual(3, count);
 
-#if !NETFRAMEWORK
             // IIListProvider<T>
+#if NET10_0_OR_GREATER // AppContext switch System.Linq.Enumerable.IsSizeOptimized
+            Assert.That(() => new int[5].Select(c => (byte)c).TryGetCount(out count), IsAot ? Is.False : Is.True);
+            Assert.That(count, IsAot ? Is.Not.EqualTo(5) : Is.EqualTo(5));
+#elif !NETFRAMEWORK
             Assert.IsTrue(new int[5].Select(c => (byte)c).TryGetCount(out count));
             Assert.AreEqual(5, count);
 #endif
@@ -174,8 +177,11 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Assert.IsTrue(((IEnumerable)new LockingCollection<int>(new int[8])).TryGetCount(out count));
             Assert.AreEqual(8, count);
 
-#if !NETFRAMEWORK
             // IIListProvider<T> via non-generic access
+#if NET10_0_OR_GREATER // AppContext switch System.Linq.Enumerable.IsSizeOptimized
+            Assert.That(() => ((IEnumerable)new int[13].Select(c => (byte)c)).TryGetCount(out count), IsAot ? Is.False : Is.True);
+            Assert.That(count, IsAot ? Is.Not.EqualTo(13) : Is.EqualTo(13));
+#elif !NETFRAMEWORK
             Assert.IsTrue(((IEnumerable)new int[13].Select(c => (byte)c)).TryGetCount(out count));
             Assert.AreEqual(13, count);
 #endif
@@ -185,6 +191,6 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Assert.AreEqual(0, count);
         }
 
-        #endregion
+#endregion
     }
 }
