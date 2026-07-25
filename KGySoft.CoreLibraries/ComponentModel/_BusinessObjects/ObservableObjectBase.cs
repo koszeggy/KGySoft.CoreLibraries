@@ -18,6 +18,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -263,8 +264,10 @@ namespace KGySoft.ComponentModel
 
         #region Static Methods
 
-        private static StringKeyedDictionary<Type> GetReflectedProperties(Type type)
+        private static StringKeyedDictionary<Type> GetReflectedProperties([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllProperties)]Type type)
         {
+            #region Local Methods
+            
             static void PopulateProperties(StringKeyedDictionary<Type> dict, IEnumerable<PropertyInfo> props)
             {
                 foreach (PropertyInfo prop in props)
@@ -273,6 +276,8 @@ namespace KGySoft.ComponentModel
                     dict.TryAdd(prop.Name, prop.PropertyType);
                 }
             }
+
+            #endregion
 
             // public properties of all levels
             var result = new StringKeyedDictionary<Type>();
@@ -320,7 +325,7 @@ namespace KGySoft.ComponentModel
             Type type = GetType();
             if (type.GetDefaultConstructor() == null)
                 Throw.InvalidOperationException(Res.ComponentModelObservableObjectHasNoDefaultCtor(type));
-            ObservableObjectBase clone = (ObservableObjectBase)Activator.CreateInstance(type)!;
+            ObservableObjectBase clone = (ObservableObjectBase)Activator.CreateInstance(type, true)!;
             clone.properties = CloneProperties();
             clone.isModified = isModified;
             clone.propertyChanged = clonePropertyChanged ? propertyChanged : null;

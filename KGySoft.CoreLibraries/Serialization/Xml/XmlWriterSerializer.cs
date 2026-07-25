@@ -46,7 +46,7 @@ namespace KGySoft.Serialization.Xml
             #region Fields
 
             internal object Object;
-            internal Type Type;
+            [DynamicallyAccessedMembers(XmlSerializer.NeededMembers)]internal Type Type;
             internal XmlWriter Writer;
             internal bool TypeNeeded;
             internal bool IsReadOnlyProperty;
@@ -96,6 +96,8 @@ namespace KGySoft.Serialization.Xml
 
         #region Internal Methods
 
+        [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(XmlSerializer.RequiresUnreferencedCodeMessage)]
         internal void Serialize(XmlWriter writer, object? obj)
         {
             if (writer == null!)
@@ -114,6 +116,8 @@ namespace KGySoft.Serialization.Xml
             writer.Flush();
         }
 
+        [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(XmlSerializer.RequiresUnreferencedCodeMessage)]
         internal void SerializeContent(XmlWriter writer, object obj)
         {
             if (obj == null!)
@@ -160,6 +164,8 @@ namespace KGySoft.Serialization.Xml
         /// <summary>
         /// Serializing a collection by XmlWriter
         /// </summary>
+        [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(XmlSerializer.RequiresUnreferencedCodeMessage)]
         private void SerializeCollection(IEnumerable? collection, Type elementType, bool typeNeeded, XmlWriter writer, DesignerSerializationVisibility visibility, ComparerType comparer)
         {
             if (collection == null)
@@ -279,10 +285,14 @@ namespace KGySoft.Serialization.Xml
         /// obj.GetType and type can be different (properties)
         /// </summary>
         [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "False alarm, the new analyzer includes the complexity of local methods.")]
+        [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(XmlSerializer.RequiresUnreferencedCodeMessage)]
         private void SerializeObject(object? obj, bool typeNeeded, XmlWriter writer, DesignerSerializationVisibility visibility, bool isReadOnlyProperty = false)
         {
             #region Local Methods to reduce complexity
 
+            [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(XmlSerializer.RequiresUnreferencedCodeMessage)]
             bool TrySerializeKeyValue(ref SerializeObjectContext ctx)
             {
                 // 1.) KeyValue 1: DictionaryEntry: can be serialized recursively. Just handling to avoid binary serialization.
@@ -329,6 +339,7 @@ namespace KGySoft.Serialization.Xml
                 return false;
             }
 
+            [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)] // IsSupportedCollectionForReflection
             bool TrySerializeComplexObject(ref SerializeObjectContext ctx)
             {
                 // 1.) collection: if it can be trusted in all circumstances
@@ -465,6 +476,8 @@ namespace KGySoft.Serialization.Xml
             Throw.SerializationException(Res.XmlSerializationSerializingTypeNotSupported(type, Options));
         }
 
+        [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(XmlSerializer.RequiresUnreferencedCodeMessage)]
         private void SerializeMembers(object obj, XmlWriter writer, DesignerSerializationVisibility parentVisibility)
         {
             foreach (Member member in GetMembersToSerialize(obj))
@@ -530,6 +543,8 @@ namespace KGySoft.Serialization.Xml
         /// <summary>
         /// Serializing binary content by XmlWriter
         /// </summary>
+        [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
         private void SerializeBinary(object? obj, XmlWriter writer)
         {
             writer.WriteAttributeString(XmlSerializer.AttributeFormat, XmlSerializer.AttributeValueBinary);

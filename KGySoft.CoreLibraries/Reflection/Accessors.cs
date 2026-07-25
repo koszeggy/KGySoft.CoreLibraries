@@ -15,12 +15,15 @@
 
 #region Usings
 
+#region Used Namespaces
+
 using System;
 using System.Collections;
 #if !NET35
 using System.Collections.Concurrent;
 #endif
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -37,7 +40,13 @@ using KGySoft.Annotations;
 using KGySoft.Collections;
 using KGySoft.CoreLibraries;
 
+#endregion
+
+#region Used Aliases
+
 using CollectionExtensions = KGySoft.CoreLibraries.CollectionExtensions;
+
+#endregion
 
 #endregion
 
@@ -562,8 +571,10 @@ namespace KGySoft.Reflection
             return constructors[(type, parameterTypes)];
         }
 
-        private static ActionMethodAccessor? GetCtorMethod(Type type, object[] ctorArgs)
+        private static ActionMethodAccessor? GetCtorMethod([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors)]Type type, object[] ctorArgs)
         {
+            #region Local Methods
+            
             static ActionMethodAccessor? GetCtorMethodAccessor((Type Type, TypesKey ParameterTypes) key)
             {
                 ConstructorInfo? ci = key.ParameterTypes.Types.Length == 0
@@ -571,6 +582,8 @@ namespace KGySoft.Reflection
                     : key.Type.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, key.ParameterTypes.Types, null);
                 return ci == null ? null : new ActionMethodAccessor(ci);
             }
+
+            #endregion
 
             if (ctorMethods == null)
                 Interlocked.CompareExchange(ref ctorMethods, new LockFreeCache<(Type, TypesKey), ActionMethodAccessor?>(GetCtorMethodAccessor, null, LockFreeCacheOptions.Profile128), null);

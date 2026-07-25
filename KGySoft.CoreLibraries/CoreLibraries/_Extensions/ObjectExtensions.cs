@@ -276,7 +276,9 @@ namespace KGySoft.CoreLibraries
 #endif
         [SecuritySafeCritical]
         [return:NotNullIfNotNull(nameof(obj))]
-        public static T DeepClone<T>(this T obj, bool ignoreCustomSerialization)
+        [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
+        public static T DeepClone<[DynamicallyAccessedMembers(BinarySerializer.NeededMembers)]T>(this T obj, bool ignoreCustomSerialization)
         {
             ISurrogateSelector? surrogate = null;
             var formatter = new BinarySerializationFormatter(BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.IgnoreTypeForwardedFromAttribute);
@@ -432,7 +434,8 @@ namespace KGySoft.CoreLibraries
         /// // DateTime => Int64: 10/11/2021 7:45:46 PM => 637695783464721787
         /// // DateTime => Double: 10/11/2021 7:45:46 PM => 6.37695783464721787E+17]]></code>
         /// </example>
-        public static TTarget Convert<TTarget>(this object? obj, CultureInfo? culture = null)
+        public static TTarget Convert<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]TTarget>(
+            this object? obj, CultureInfo? culture = null)
         {
             if (!ObjectConverter.TryConvert(obj, typeof(TTarget), culture, out object? result, out Exception? error) || (result is not TTarget && !typeof(TTarget).CanAcceptValue(result)))
                 Throw.ArgumentException(Argument.obj, Res.ObjectExtensionsCannotConvertToType(typeof(TTarget)), error);
@@ -458,7 +461,9 @@ namespace KGySoft.CoreLibraries
         /// <para><paramref name="targetType"/> can be even a collection type if <paramref name="obj"/> is also an <see cref="IEnumerable"/> implementation.
         /// The target collection type must have either a default constructor or a constructor that can accept a list, array or dictionary as an initializer collection.</para>
         /// </remarks>
-        public static object? Convert(this object? obj, Type targetType, CultureInfo? culture = null)
+        public static object? Convert(this object? obj,
+            [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]Type targetType,
+            CultureInfo? culture = null)
         {
             if (!ObjectConverter.TryConvert(obj, targetType, culture, out object? result, out Exception? error) || !targetType.CanAcceptValue(result))
                 Throw.ArgumentException(Argument.obj, Res.ObjectExtensionsCannotConvertToType(targetType), error);
@@ -481,7 +486,8 @@ namespace KGySoft.CoreLibraries
         /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="DateTime"/> to <see cref="long"/>,
         /// then conversions from <see cref="DateTime"/> to <see cref="double"/> becomes automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
         /// </remarks>
-        public static bool TryConvert<TTarget>(this object? obj, CultureInfo? culture, [MaybeNullWhen(false)]out TTarget value)
+        public static bool TryConvert<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]TTarget>(
+            this object? obj, CultureInfo? culture, [MaybeNullWhen(false)]out TTarget value)
         {
             if (TryConvert(obj, typeof(TTarget), culture, out object? result) && (result is TTarget || typeof(TTarget).CanAcceptValue(result)))
             {
@@ -508,7 +514,8 @@ namespace KGySoft.CoreLibraries
         /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="DateTime"/> to <see cref="long"/>,
         /// then conversions from <see cref="DateTime"/> to <see cref="double"/> becomes automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
         /// </remarks>
-        public static bool TryConvert<TTarget>(this object? obj, [MaybeNullWhen(false)]out TTarget value) => TryConvert(obj, null, out value);
+        public static bool TryConvert<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]TTarget>(
+            this object? obj, [MaybeNullWhen(false)]out TTarget value) => TryConvert(obj, null, out value);
 
         /// <summary>
         /// Tries to convert an <see cref="object"/> specified in the <paramref name="obj"/> parameter to the desired <paramref name="targetType"/>.
@@ -525,7 +532,9 @@ namespace KGySoft.CoreLibraries
         /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="DateTime"/> to <see cref="long"/>,
         /// then conversions from <see cref="DateTime"/> to <see cref="double"/> becomes automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
         /// </remarks>
-        public static bool TryConvert(this object? obj, Type targetType, out object? value) => TryConvert(obj, targetType, null, out value);
+        public static bool TryConvert(this object? obj,
+            [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]Type targetType,
+            out object? value) => TryConvert(obj, targetType, null, out value);
 
         /// <summary>
         /// Tries to convert an <see cref="object"/> specified in the <paramref name="obj"/> parameter to the desired <paramref name="targetType"/>.
@@ -543,7 +552,9 @@ namespace KGySoft.CoreLibraries
         /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="DateTime"/> to <see cref="long"/>,
         /// then conversions from <see cref="DateTime"/> to <see cref="double"/> becomes automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
         /// </remarks>
-        public static bool TryConvert(this object? obj, Type targetType, CultureInfo? culture, out object? value) => ObjectConverter.TryConvert(obj, targetType, culture, out value, out var _);
+        public static bool TryConvert(this object? obj,
+            [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]Type targetType,
+            CultureInfo? culture, out object? value) => ObjectConverter.TryConvert(obj, targetType, culture, out value, out var _);
 
         #endregion
 

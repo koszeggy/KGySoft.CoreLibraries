@@ -89,7 +89,11 @@ namespace KGySoft.Serialization.Binary
             internal bool IsComparer => CollectionSerializationInfo.IsComparer;
             internal bool IsStrongBox => CollectionDataType is DataTypes.StrongBox;
             internal bool IsNullable { get; private set; }
+
+            [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "The callback is not invoked, just checked if it's null.")]
+            [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "The callback is not invoked, just checked if it's null.")]
             internal bool HasBackingArray => CollectionSerializationInfo.CreateArrayBackedCollectionInstanceFromArray != null;
+
             internal bool IsBackingArrayActuallyStored => CollectionSerializationInfo.IsBackingArrayActuallyStored;
             internal bool IsTuple => UnderlyingCollectionDataType is >= DataTypes.Tuple1 and <= DataTypes.Tuple8 or >= DataTypes.ValueTuple1 and <= DataTypes.ValueTuple8;
             internal bool CreateResultFromByteArray => CollectionSerializationInfo.CreateResultFromByteArray;
@@ -122,7 +126,11 @@ namespace KGySoft.Serialization.Binary
             /// <summary>
             /// Decoded type of self descriptor. Returns null until <see cref="DecodeType"/> is executed.
             /// </summary>
-            internal Type? Type { get; private set; }
+            internal Type? Type
+            {
+                [return:DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllMethods | DynamicallyAccessedMembers.AllFields | DynamicallyAccessedMembers.AllConstructors)]get;
+                private set;
+            }
 
             internal string? StoredType { get; private set; }
 
@@ -229,6 +237,8 @@ namespace KGySoft.Serialization.Binary
             /// <summary>
             /// Decodes self and element types
             /// </summary>
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             internal Type DecodeType(BinaryReader br, DeserializationManager manager, bool allowOpenTypes = false)
             {
                 DataTypeDescriptor? existingDescriptor;
@@ -297,6 +307,7 @@ namespace KGySoft.Serialization.Binary
                 return ((OrderedDictionary)collection).AsReadOnly();
             }
 
+            [return:DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMembers.AllFields)]
             internal Type GetTypeToCreate()
             {
                 Debug.Assert(Type != null);
@@ -376,6 +387,8 @@ namespace KGySoft.Serialization.Binary
             #region Private Methods
 
             [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Very simple switch with many cases")]
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private Type GetElementType(DataTypes dt, BinaryReader br, DeserializationManager manager, bool allowOpenTypes, out DataTypeDescriptor? existingDescriptor)
             {
                 existingDescriptor = null;
@@ -583,6 +596,8 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Very simple switch with many cases")]
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private Type GetCollectionType(DataTypes collectionDataType)
             {
                 switch (collectionDataType)

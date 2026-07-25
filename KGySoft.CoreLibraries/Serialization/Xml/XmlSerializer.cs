@@ -306,6 +306,20 @@ namespace KGySoft.Serialization.Xml
         internal const string ElementItem = "item";
         internal const string MethodShouldSerialize = "ShouldSerialize";
 
+        // NOTE: though we have a fallback strategy when RuntimeFeature.IsDynamicCodeSupported is false, it does not help in other cases, e.g. when Array.CreateInstance or Type.MakeArrayType has to be used
+        internal const string RequiresDynamicCodeMessage = "XML serialization may use dynamic code generation, the type of objects being processed cannot be statically discovered. " +
+            "To improve the chance of deserializing custom types in native AOT mode, enlist the expected types in the deserialization methods by typeof() expressions, including even simple arrays if they are not referenced by the caller code otherwise.";
+
+        internal const string RequiresUnreferencedCodeMessage = "XML serialization may not be trim compatible if natively non-supported types are serialized, or when a type requires a TypeConverter for the serialization. " +
+            "To improve the chance of deserializing custom types in native AOT mode, enlist the natively non-supported expected custom types in the deserialization methods.";
+
+        internal const DynamicallyAccessedMemberTypes NeededMembers = DynamicallyAccessedMembers.AllConstructors // non-necessarily public parameterless constructors
+            | DynamicallyAccessedMembers.AllProperties // public: serialized; non-public: IsTypeTrusted returns false is a type has non-public properties
+            | DynamicallyAccessedMembers.AllFields // public: serialized; non-public: IsTypeTrusted needs to check whether there are non-backing non-public fields
+            | DynamicallyAccessedMembers.AllEvents // IsTrustedType returns false if a type has events
+            | DynamicallyAccessedMembers.AllMethods // ShouldSerialize... methods
+            | DynamicallyAccessedMemberTypes.Interfaces; // e.g. IXmlSerializable
+
         #endregion
 
         #region Private Constants
@@ -329,6 +343,8 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="NotSupportedException">Root object is a read-only collection.</exception>
         /// <exception cref="ReflectionException">The object hierarchy to serialize contains circular reference.<br/>-or-<br/>
         /// Serialization is not supported with provided <paramref name="options"/></exception>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static XElement Serialize(object? obj, XmlSerializationOptions options = defaultOptions)
             => new XElementSerializer(options).Serialize(obj);
 
@@ -348,6 +364,8 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="NotSupportedException">Root object is a read-only collection.</exception>
         /// <exception cref="ReflectionException">The object hierarchy to serialize contains circular reference.<br/>-or-<br/>
         /// Serialization is not supported with provided <paramref name="options"/></exception>
+        [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static void Serialize(XmlWriter writer, object? obj, XmlSerializationOptions options = defaultOptions)
             => new XmlWriterSerializer(options).Serialize(writer, obj);
 
@@ -362,6 +380,8 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="IOException">File cannot be created or write error.</exception>
         /// <exception cref="NotSupportedException">Serialization is not supported with provided <paramref name="options"/></exception>
         /// <exception cref="ReflectionException">The object hierarchy to serialize contains circular reference.</exception>
+        [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static void Serialize(string fileName, object? obj, XmlSerializationOptions options = defaultOptions)
         {
             if (fileName == null!)
@@ -393,6 +413,8 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="InvalidOperationException">The writer is closed.</exception>
         /// <exception cref="NotSupportedException">Serialization is not supported with provided <paramref name="options"/></exception>
         /// <exception cref="ReflectionException">The object hierarchy to serialize contains circular reference.</exception>
+        [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static void Serialize(TextWriter writer, object? obj, XmlSerializationOptions options = defaultOptions)
         {
             if (writer == null!)
@@ -424,6 +446,8 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="ReflectionException">The object hierarchy to serialize contains circular reference.</exception>
         /// <exception cref="IOException">An I/O error occurred.</exception>
         /// <exception cref="ObjectDisposedException">The stream is already closed.</exception>
+        [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static void Serialize(Stream stream, object? obj, XmlSerializationOptions options = defaultOptions)
         {
             if (stream == null!)
@@ -457,6 +481,8 @@ namespace KGySoft.Serialization.Xml
         /// If the provided object in <paramref name="obj"/> parameter is a collection, then elements will be serialized, too.
         /// If you want to serialize a primitive type, then use the <see cref="Serialize(object,XmlSerializationOptions)"/> method.
         /// </remarks>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static void SerializeContent(XElement parent, object obj, XmlSerializationOptions options = defaultOptions)
             => new XElementSerializer(options).SerializeContent(parent, obj);
 
@@ -477,6 +503,8 @@ namespace KGySoft.Serialization.Xml
         /// If the provided object in <paramref name="obj"/> parameter is a collection, then elements will be serialized, too.
         /// If you want to serialize a primitive type, then use the <see cref="Serialize(XmlWriter,object,XmlSerializationOptions)"/> method.
         /// </remarks>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static void SerializeContent(XmlWriter writer, object obj, XmlSerializationOptions options = defaultOptions)
             => new XmlWriterSerializer(options).SerializeContent(writer, obj);
 
@@ -493,6 +521,8 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="InvalidOperationException"><paramref name="content"/> cannot be deserialized in safe mode.</exception>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static object? Deserialize(XElement content) => new XElementDeserializer(XmlSafeMode.Medium).Deserialize(content);
 
         /// <summary>
@@ -506,6 +536,8 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static object? DeserializeUnsafe(XElement content) => new XElementDeserializer(XmlSafeMode.Unsafe).Deserialize(content);
 
         /// <summary>
@@ -521,6 +553,8 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="InvalidOperationException"><paramref name="content"/> cannot be deserialized in safe mode.</exception>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static object? DeserializeSafe(XElement content) => new XElementDeserializer(XmlSafeMode.Strict).Deserialize(content);
 
         /// <summary>
@@ -536,6 +570,8 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="InvalidOperationException"><paramref name="content"/> cannot be deserialized in safe mode.</exception>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static object? DeserializeSafe(XElement content, params Type[]? expectedCustomTypes)
             => new XElementDeserializer(XmlSafeMode.Strict, expectedCustomTypes).Deserialize(content);
 
@@ -563,7 +599,9 @@ namespace KGySoft.Serialization.Xml
         /// the type arguments will be treated as expected types in any combination.</para>
         /// <note type="tip">See the <strong>Remarks</strong> section of the <see cref="XmlSerializer"/> class for the list of the natively supported types.</note>
         /// </remarks>
-        public static T DeserializeSafe<T>(XElement content, params Type[]? expectedCustomTypes)
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
+        public static T DeserializeSafe<[DynamicallyAccessedMembers(NeededMembers)]T>(XElement content, params Type[]? expectedCustomTypes)
             => (T)new XElementDeserializer(XmlSafeMode.Strict, expectedCustomTypes, typeof(T)).Deserialize(content)!;
 
         /// <summary>
@@ -579,6 +617,8 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="InvalidOperationException"><paramref name="content"/> cannot be deserialized in safe mode.</exception>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static object? DeserializeSafe(XElement content, IEnumerable<Type>? expectedCustomTypes)
             => new XElementDeserializer(XmlSafeMode.Strict, expectedCustomTypes).Deserialize(content);
 
@@ -596,7 +636,9 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="InvalidOperationException"><paramref name="content"/> cannot be deserialized in safe mode.</exception>
-        public static T DeserializeSafe<T>(XElement content, IEnumerable<Type>? expectedCustomTypes)
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
+        public static T DeserializeSafe<[DynamicallyAccessedMembers(NeededMembers)]T>(XElement content, IEnumerable<Type>? expectedCustomTypes)
             => (T)new XElementDeserializer(XmlSafeMode.Strict, expectedCustomTypes, typeof(T)).Deserialize(content)!;
 
         /// <summary>
@@ -617,6 +659,8 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="XmlException">An error occurred while parsing the XML.</exception>
         /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static object? Deserialize(XmlReader reader) => new XmlReaderDeserializer(XmlSafeMode.Medium).Deserialize(reader);
 
         /// <summary>
@@ -635,6 +679,8 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="XmlException">An error occurred while parsing the XML.</exception>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static object? DeserializeUnsafe(XmlReader reader) => new XmlReaderDeserializer(XmlSafeMode.Unsafe).Deserialize(reader);
 
         /// <summary>
@@ -651,6 +697,8 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="XmlException">An error occurred while parsing the XML.</exception>
         /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static object? DeserializeSafe(XmlReader reader) => new XmlReaderDeserializer(XmlSafeMode.Strict).Deserialize(reader);
 
         /// <summary>
@@ -666,6 +714,8 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static object? DeserializeSafe(XmlReader reader, params Type[]? expectedCustomTypes)
             => new XmlReaderDeserializer(XmlSafeMode.Strict, expectedCustomTypes).Deserialize(reader);
 
@@ -693,7 +743,9 @@ namespace KGySoft.Serialization.Xml
         /// the type arguments will be treated as expected types in any combination.</para>
         /// <note type="tip">See the <strong>Remarks</strong> section of the <see cref="XmlSerializer"/> class for the list of the natively supported types.</note>
         /// </remarks>
-        public static T DeserializeSafe<T>(XmlReader reader, params Type[]? expectedCustomTypes)
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
+        public static T DeserializeSafe<[DynamicallyAccessedMembers(NeededMembers)]T>(XmlReader reader, params Type[]? expectedCustomTypes)
             => (T)new XmlReaderDeserializer(XmlSafeMode.Strict, expectedCustomTypes, typeof(T)).Deserialize(reader)!;
 
         /// <summary>
@@ -709,6 +761,8 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static object? DeserializeSafe(XmlReader reader, IEnumerable<Type>? expectedCustomTypes)
             => new XmlReaderDeserializer(XmlSafeMode.Strict, expectedCustomTypes).Deserialize(reader);
 
@@ -726,7 +780,9 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
-        public static T DeserializeSafe<T>(XmlReader reader, IEnumerable<Type>? expectedCustomTypes)
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
+        public static T DeserializeSafe<[DynamicallyAccessedMembers(NeededMembers)]T>(XmlReader reader, IEnumerable<Type>? expectedCustomTypes)
             => (T)new XmlReaderDeserializer(XmlSafeMode.Strict, expectedCustomTypes, typeof(T)).Deserialize(reader)!;
 
         /// <summary>
@@ -745,6 +801,8 @@ namespace KGySoft.Serialization.Xml
 #if NET35
         [SuppressMessage("Security", "CA3075:InsecureDTDProcessing", Justification = "False alarm for .NET 3.5, though the resolver is null also for that target.")]
 #endif
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static object? Deserialize(TextReader reader)
         {
             if (reader == null!)
@@ -775,6 +833,8 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="XmlException">An error occurred while parsing the XML.</exception>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static object? DeserializeUnsafe(TextReader reader)
         {
             if (reader == null!)
@@ -808,6 +868,8 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="XmlException">An error occurred while parsing the XML.</exception>
         /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static object? DeserializeSafe(TextReader reader)
             => DeserializeSafe<object?>(reader, (IEnumerable<Type>?)null);
 
@@ -824,6 +886,8 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static object? DeserializeSafe(TextReader reader, params Type[]? expectedCustomTypes)
             => DeserializeSafe<object?>(reader, (IEnumerable<Type>?)expectedCustomTypes);
 
@@ -841,7 +905,9 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
-        public static T DeserializeSafe<T>(TextReader reader, params Type[]? expectedCustomTypes)
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
+        public static T DeserializeSafe<[DynamicallyAccessedMembers(NeededMembers)]T>(TextReader reader, params Type[]? expectedCustomTypes)
             => DeserializeSafe<T>(reader, (IEnumerable<Type>?)expectedCustomTypes);
 
         /// <summary>
@@ -857,6 +923,8 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static object? DeserializeSafe(TextReader reader, IEnumerable<Type>? expectedCustomTypes)
             => DeserializeSafe<object?>(reader, expectedCustomTypes);
 
@@ -877,7 +945,9 @@ namespace KGySoft.Serialization.Xml
 #if NET35
         [SuppressMessage("Security", "CA3075:InsecureDTDProcessing", Justification = "False alarm for .NET 3.5, though the resolver is null also for that target.")]
 #endif
-        public static T DeserializeSafe<T>(TextReader reader, IEnumerable<Type>? expectedCustomTypes)
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
+        public static T DeserializeSafe<[DynamicallyAccessedMembers(NeededMembers)]T>(TextReader reader, IEnumerable<Type>? expectedCustomTypes)
         {
             if (reader == null!)
                 Throw.ArgumentNullException(Argument.reader);
@@ -913,6 +983,8 @@ namespace KGySoft.Serialization.Xml
         [SuppressMessage("Security", "CA3075:InsecureDTDProcessing", Justification = "False alarm for .NET 3.5, though the resolver is null also for that target.")]
 #endif
         [SuppressMessage("ReSharper", "UsingStatementResourceInitialization", Justification = "The property initialization never throws exception")]
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static object? Deserialize(string fileName)
         {
             if (fileName == null!)
@@ -944,6 +1016,8 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="XmlException">An error occurred while parsing the XML.</exception>
         [SuppressMessage("ReSharper", "UsingStatementResourceInitialization", Justification = "These properties do not throw exceptions")]
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static object? DeserializeUnsafe(string fileName)
         {
             if (fileName == null!)
@@ -977,6 +1051,8 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="XmlException">An error occurred while parsing the XML.</exception>
         /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static object? DeserializeSafe(string fileName)
             => DeserializeSafe<object?>(fileName, (IEnumerable<Type>?)null);
 
@@ -993,6 +1069,8 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static object? DeserializeSafe(string fileName, params Type[]? expectedCustomTypes)
             => DeserializeSafe<object?>(fileName, (IEnumerable<Type>?)expectedCustomTypes);
 
@@ -1010,7 +1088,9 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
-        public static T DeserializeSafe<T>(string fileName, params Type[]? expectedCustomTypes)
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
+        public static T DeserializeSafe<[DynamicallyAccessedMembers(NeededMembers)]T>(string fileName, params Type[]? expectedCustomTypes)
             => DeserializeSafe<T>(fileName, (IEnumerable<Type>?)expectedCustomTypes);
 
         /// <summary>
@@ -1026,6 +1106,8 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static object? DeserializeSafe(string fileName, IEnumerable<Type>? expectedCustomTypes)
             => DeserializeSafe<object?>(fileName, expectedCustomTypes);
 
@@ -1047,7 +1129,9 @@ namespace KGySoft.Serialization.Xml
         [SuppressMessage("Security", "CA3075:InsecureDTDProcessing", Justification = "False alarm for .NET 3.5, though the resolver is null also for that target.")]
 #endif
         [SuppressMessage("ReSharper", "UsingStatementResourceInitialization", Justification = "The property initialization never throws exception")]
-        public static T DeserializeSafe<T>(string fileName, IEnumerable<Type>? expectedCustomTypes)
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
+        public static T DeserializeSafe<[DynamicallyAccessedMembers(NeededMembers)]T>(string fileName, IEnumerable<Type>? expectedCustomTypes)
         {
             if (fileName == null!)
                 Throw.ArgumentNullException(Argument.fileName);
@@ -1082,6 +1166,8 @@ namespace KGySoft.Serialization.Xml
 #if NET35
         [SuppressMessage("Security", "CA3075:InsecureDTDProcessing", Justification = "False alarm for .NET 3.5, though the resolver is null also for that target.")]
 #endif
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static object? Deserialize(Stream stream)
         {
             if (stream == null!)
@@ -1118,6 +1204,8 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="XmlException">An error occurred while parsing the XML.</exception>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static object? DeserializeUnsafe(Stream stream)
         {
             if (stream == null!)
@@ -1151,6 +1239,8 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="XmlException">An error occurred while parsing the XML.</exception>
         /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static object? DeserializeSafe(Stream stream)
             => DeserializeSafe<object?>(stream, (IEnumerable<Type>?)null);
 
@@ -1167,6 +1257,8 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static object? DeserializeSafe(Stream stream, params Type[]? expectedCustomTypes)
             => DeserializeSafe<object?>(stream, (IEnumerable<Type>?)expectedCustomTypes);
 
@@ -1184,7 +1276,9 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
-        public static T DeserializeSafe<T>(Stream stream, params Type[]? expectedCustomTypes)
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
+        public static T DeserializeSafe<[DynamicallyAccessedMembers(NeededMembers)]T>(Stream stream, params Type[]? expectedCustomTypes)
             => DeserializeSafe<T>(stream, (IEnumerable<Type>?)expectedCustomTypes);
 
         /// <summary>
@@ -1200,6 +1294,8 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static object? DeserializeSafe(Stream stream, IEnumerable<Type>? expectedCustomTypes)
             => DeserializeSafe<object?>(stream, expectedCustomTypes);
 
@@ -1220,7 +1316,9 @@ namespace KGySoft.Serialization.Xml
 #if NET35
         [SuppressMessage("Security", "CA3075:InsecureDTDProcessing", Justification = "False alarm for .NET 3.5, though the resolver is null also for that target.")]
 #endif
-        public static T DeserializeSafe<T>(Stream stream, IEnumerable<Type>? expectedCustomTypes)
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
+        public static T DeserializeSafe<[DynamicallyAccessedMembers(NeededMembers)]T>(Stream stream, IEnumerable<Type>? expectedCustomTypes)
         {
             if (stream == null!)
                 Throw.ArgumentNullException(Argument.stream);
@@ -1251,6 +1349,8 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static void DeserializeContent(XElement content, object obj) => new XElementDeserializer(XmlSafeMode.Medium).DeserializeContent(content, obj);
 
         /// <summary>
@@ -1264,6 +1364,8 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static void DeserializeContentUnsafe(XElement content, object obj) => new XElementDeserializer(XmlSafeMode.Unsafe).DeserializeContent(content, obj);
 
         /// <summary>
@@ -1279,6 +1381,8 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="InvalidOperationException"><paramref name="content"/> cannot be deserialized in safe mode.</exception>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static void DeserializeContentSafe(XElement content, object obj) => new XElementDeserializer(XmlSafeMode.Strict).DeserializeContent(content, obj);
 
         /// <summary>
@@ -1303,6 +1407,8 @@ namespace KGySoft.Serialization.Xml
         /// the type arguments will be treated as expected types in any combination.</para>
         /// <note type="tip">See the <strong>Remarks</strong> section of the <see cref="XmlSerializer"/> class for the list of the natively supported types.</note>
         /// </remarks>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static void DeserializeContentSafe(XElement content, object obj, params Type[]? expectedCustomTypes)
             => new XElementDeserializer(XmlSafeMode.Strict, expectedCustomTypes).DeserializeContent(content, obj);
 
@@ -1320,6 +1426,8 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="InvalidOperationException"><paramref name="content"/> cannot be deserialized in safe mode.</exception>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static void DeserializeContentSafe(XElement content, object obj, IEnumerable<Type>? expectedCustomTypes)
             => new XElementDeserializer(XmlSafeMode.Strict, expectedCustomTypes).DeserializeContent(content, obj);
 
@@ -1336,6 +1444,8 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static void DeserializeContent(XmlReader reader, object obj) => new XmlReaderDeserializer(XmlSafeMode.Medium).DeserializeContent(reader, obj);
 
         /// <summary>
@@ -1349,6 +1459,8 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="NotSupportedException">Deserializing an inner type is not supported.</exception>
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static void DeserializeContentUnsafe(XmlReader reader, object obj) => new XmlReaderDeserializer(XmlSafeMode.Unsafe).DeserializeContent(reader, obj);
 
         /// <summary>
@@ -1364,6 +1476,8 @@ namespace KGySoft.Serialization.Xml
         /// <exception cref="ReflectionException">An inner type cannot be instantiated or serialized XML content is corrupt.</exception>
         /// <exception cref="ArgumentException">XML content is inconsistent or corrupt.</exception>
         /// <exception cref="InvalidOperationException">XML content cannot be deserialized in safe mode.</exception>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static void DeserializeContentSafe(XmlReader reader, object obj) => new XmlReaderDeserializer(XmlSafeMode.Strict).DeserializeContent(reader, obj);
 
         /// <summary>
@@ -1388,6 +1502,8 @@ namespace KGySoft.Serialization.Xml
         /// the type arguments will be treated as expected types in any combination.</para>
         /// <note type="tip">See the <strong>Remarks</strong> section of the <see cref="XmlSerializer"/> class for the list of the natively supported types.</note>
         /// </remarks>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static void DeserializeContentSafe(XmlReader reader, object obj, params Type[]? expectedCustomTypes)
             => new XmlReaderDeserializer(XmlSafeMode.Strict, expectedCustomTypes).DeserializeContent(reader, obj);
 
@@ -1413,6 +1529,8 @@ namespace KGySoft.Serialization.Xml
         /// the type arguments will be treated as expected types in any combination.</para>
         /// <note type="tip">See the <strong>Remarks</strong> section of the <see cref="XmlSerializer"/> class for the list of the natively supported types.</note>
         /// </remarks>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static void DeserializeContentSafe(XmlReader reader, object obj, IEnumerable<Type>? expectedCustomTypes)
             => new XmlReaderDeserializer(XmlSafeMode.Strict, expectedCustomTypes).DeserializeContent(reader, obj);
 

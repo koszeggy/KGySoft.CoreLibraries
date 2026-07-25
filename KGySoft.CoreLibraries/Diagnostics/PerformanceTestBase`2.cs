@@ -69,7 +69,7 @@ namespace KGySoft.Diagnostics
     /// </example>
     /// <seealso cref="PerformanceTest"/>
     /// <seealso cref="PerformanceTest{TResult}"/>
-    public abstract class PerformanceTestBase<TDelegate, TResult> : PerformanceTestBase
+    public abstract class PerformanceTestBase<TDelegate, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]TResult> : PerformanceTestBase
         where TDelegate : Delegate
     {
         #region Nested classes

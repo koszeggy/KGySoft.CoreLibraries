@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Threading;
@@ -40,6 +41,8 @@ namespace KGySoft.CoreLibraries
     /// A class, which can generate <see cref="EnumComparer{TEnum}"/> implementations.
     /// <br/>This class is a replacement of the old RecompILer logic and can be used also for .NET Core/Standard platforms.
     /// </summary>
+    [RequiresDynamicCode("This class uses IL code generation, and is not compatible with AOT mode.")]
+    [RequiresUnreferencedCode("This class generates statically non-referencable types, and is not compatible with trimming.")]
     internal static class EnumComparerBuilder
     {
         #region Fields

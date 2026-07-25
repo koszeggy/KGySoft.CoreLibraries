@@ -18,6 +18,7 @@
 using KGySoft.CoreLibraries;
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 
 #endregion
@@ -32,7 +33,7 @@ namespace KGySoft.Reflection
     {
         #region Constructors
 
-        internal DefaultCreateInstanceAccessor(Type instanceType)
+        internal DefaultCreateInstanceAccessor([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors)]Type instanceType)
             : base(instanceType)
         {
         }
@@ -45,6 +46,8 @@ namespace KGySoft.Reflection
         /// Creates object initialization delegate. Stored MemberInfo is a Type so it works
         /// also in case of value types where actually there is no parameterless constructor.
         /// </summary>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2072:ParameterDynamicallyAccessedMemberTypesCannotBeDetermined",
+            Justification = "False alarm, type is annotated at the public entry point in GetAccessor(Type).")]
         private protected override Func<object?[]?, object> CreateGeneralInitializer()
         {
             Type type = (Type)MemberInfo;
@@ -60,6 +63,8 @@ namespace KGySoft.Reflection
             return lambda.Compile();
         }
 
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2072:ParameterDynamicallyAccessedMemberTypesCannotBeDetermined",
+            Justification = "False alarm, type is annotated at the public entry point in GetAccessor(Type).")]
         private protected override Delegate CreateNonGenericInitializer()
         {
             Type type = (Type)MemberInfo;
@@ -74,6 +79,10 @@ namespace KGySoft.Reflection
             return lambda.Compile();
         }
 
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "GetGenericType for the same generic delegate type as used statically in the generic accessor methods.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2072:ParameterDynamicallyAccessedMemberTypesCannotBeDetermined",
+            Justification = "False alarm, type is annotated at the public entry point in GetAccessor(Type).")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "GetGenericType for the same generic delegate type as used statically in the generic accessor methods.")]
         private protected override Delegate CreateGenericInitializer()
         {
             Type type = (Type)MemberInfo;

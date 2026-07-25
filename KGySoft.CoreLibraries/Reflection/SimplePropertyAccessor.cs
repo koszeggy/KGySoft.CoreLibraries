@@ -49,6 +49,7 @@ namespace KGySoft.Reflection
 
         #region Private Protected Methods
 
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "It is handled if dynamic code is not supported")]
         private protected override Action<object?, object?, object?[]?> CreateGeneralSetter()
         {
             Type? declaringType = Property.DeclaringType;
@@ -112,6 +113,7 @@ namespace KGySoft.Reflection
 #endif
         }
 
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "It is handled if dynamic code is not supported")]
         private protected override Func<object?, object?[]?, object?> CreateGeneralGetter()
         {
             #region Local Methods
@@ -179,6 +181,7 @@ namespace KGySoft.Reflection
 #endif
         }
 
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "It is handled if dynamic code is not supported")]
         private protected override Delegate CreateNonGenericSetter()
         {
             Type? declaringType = Property.DeclaringType;
@@ -240,6 +243,7 @@ namespace KGySoft.Reflection
 #endif
         }
 
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "It is handled if dynamic code is not supported")]
         private protected override Delegate CreateNonGenericGetter()
         {
             #region Local Methods
@@ -306,6 +310,8 @@ namespace KGySoft.Reflection
 
         [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity",
             Justification = "False alarm, the new analyzer includes the complexity of local methods - see https://github.com/dotnet/roslyn-analyzers/issues/2934")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "GetGenericType for the same generic delegate type as used statically in the generic accessor methods.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "GetGenericType for the same generic delegate type as used statically in the generic accessor methods.")]
         private protected override Delegate CreateGenericSetter()
         {
             Type? declaringType = Property.DeclaringType;
@@ -434,6 +440,8 @@ namespace KGySoft.Reflection
 
         [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity",
             Justification = "False alarm, the new analyzer includes the complexity of local methods - see https://github.com/dotnet/roslyn-analyzers/issues/2934")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "GetGenericType for the same generic delegate type as used statically in the generic accessor methods.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "GetGenericType for the same generic delegate type as used statically in the generic accessor methods.")]
         private protected override Delegate CreateGenericGetter()
         {
             Type? declaringType = Property.DeclaringType;
@@ -547,6 +555,7 @@ namespace KGySoft.Reflection
         #region Private Methods
 
 #if !NETSTANDARD2_0
+        [RequiresDynamicCode("This method emits dynamic code.")]
         private DynamicMethod CreateSetRefAsDynamicMethod(bool? generic)
         {
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER

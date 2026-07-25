@@ -167,8 +167,14 @@ namespace KGySoft.Serialization.Xml
 #endif
         };
 
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2111:DynamicallyAccessedMembersAttributeViaReflection",
+            Justification = "Cannot apply RequiresUnreferencedCode to a field or static constructor, but it's accessed via the IsTrustedType method, which is annotated.")]
         private static readonly LockFreeCache<Type, bool> trustedTypesCache = new(IsTypeTrusted, null, LockFreeCacheOptions.Profile128);
 
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+            Justification = "Cannot apply RequiresUnreferencedCode to a field or static constructor, but it's accessed in the GetMembersToSerialize method, which has RequiresUnreferencedCode.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode",
+            Justification = "Cannot apply RequiresDynamicCode to a field or static constructor, but it's accessed in the GetMembersToSerialize method, which has RequiresDynamicCode.")]
         private static readonly LockFreeCache<(Type, XmlSerializationOptions), (MemberInfo Member, bool CheckIfInstanceIsReadWriteCollection)[]> serializableMembersCache
             = new(GetSerializableMembers, null, LockFreeCacheOptions.Profile128);
 
@@ -232,7 +238,7 @@ namespace KGySoft.Serialization.Xml
 
         #region Private Protected Methods
 
-        private protected static bool IsTrustedType(Type type) => trustedTypesCache[type];
+        private protected static bool IsTrustedType([DynamicallyAccessedMembers(XmlSerializer.NeededMembers)]Type type) => trustedTypesCache[type];
 
         private protected static bool IsTrustedCollection(Type type)
             => type.IsArray || trustedCollections.Contains(type.IsGenericType ? type.GetGenericTypeDefinition() : type);
@@ -261,6 +267,8 @@ namespace KGySoft.Serialization.Xml
             return comparerType == defaultComparer ? ComparerType.None : comparerType;
         }
 
+        [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)] // IsSupportedCollectionForReflection
+        [RequiresUnreferencedCode(XmlSerializer.RequiresUnreferencedCodeMessage)]
         private static (MemberInfo Member, bool CheckIfInstanceIsReadWriteCollection)[] GetSerializableMembers((Type, XmlSerializationOptions) key)
         {
             // NOTE: options here are masked to the flags that are checked in this method. If a new flag is checked adjust the mask in GetMembersToSerialize, too.
@@ -331,7 +339,7 @@ namespace KGySoft.Serialization.Xml
 
         #region Private Methods
 
-        private static bool IsTypeTrusted(Type type) =>
+        private static bool IsTypeTrusted([DynamicallyAccessedMembers(XmlSerializer.NeededMembers)]Type type) =>
             // has default constructor
             type.CanBeCreatedWithoutParameters()
             // properties:
@@ -479,6 +487,8 @@ namespace KGySoft.Serialization.Xml
             return result;
         }
 
+        [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(XmlSerializer.RequiresUnreferencedCodeMessage)]
         private protected IEnumerable<Member> GetMembersToSerialize(object obj)
         {
             Type type = obj.GetType();
@@ -521,6 +531,7 @@ namespace KGySoft.Serialization.Xml
             return result;
         }
 
+        [RequiresUnreferencedCode(XmlSerializer.RequiresUnreferencedCodeMessage)]
         private protected bool SkipMember(object obj, MemberInfo member, out object? value, ref DesignerSerializationVisibility visibility)
         {
             value = null;

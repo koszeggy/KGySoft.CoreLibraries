@@ -1433,6 +1433,7 @@ namespace KGySoft.Resources
                             surrogate.GettingField += SurrogateSelectorGettingFieldMemoryStream;
 #endif
                     }
+
                     binaryFormatter.Serialize(ms, cachedValue);
                     nodeInfo.ValueData = ResXCommon.ToBase64(ms.ToArray());
                 }
@@ -1686,7 +1687,9 @@ namespace KGySoft.Resources
                 }
             }
 
-            static object? DeserializeFromBinarySerializationFormatter(DataNodeInfo dataNodeInfo, ITypeResolutionService? typeResolver, bool safeMode, Type? expectedType)
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
+            static object? DeserializeByBinarySerializationFormatter(DataNodeInfo dataNodeInfo, ITypeResolutionService? typeResolver, bool safeMode, Type? expectedType)
             {
                 byte[] serializedData = FromBase64WrappedString(dataNodeInfo.ValueData ?? String.Empty);
                 var options = safeMode ? BinarySerializationOptions.SafeMode : BinarySerializationOptions.None;
@@ -1751,7 +1754,7 @@ namespace KGySoft.Resources
             if (mimeType == ResXCommon.KGySoftSerializedObjectMimeType)
             {
                 Debug.Assert(typeResolver == null || !safeMode, "No typeResolver is expected in safe mode");
-                return DeserializeFromBinarySerializationFormatter(dataNodeInfo, typeResolver, safeMode, expectedType);
+                return DeserializeByBinarySerializationFormatter(dataNodeInfo, typeResolver, safeMode, expectedType);
             }
 
             // 4.) SoapFormatter. We do not reference it explicitly. If it cannot be loaded, NotSupportedException will be thrown.

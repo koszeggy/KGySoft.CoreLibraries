@@ -97,7 +97,7 @@ namespace KGySoft.ComponentModel
     /// <note type="tip"><see cref="FastBindingList{T}"/> does not implement sorting. See the derived <see cref="SortableBindingList{T}"/> class for an <see cref="IBindingList"/> implementation with sorting support.</note>
     /// </example>
     [Serializable]
-    public class FastBindingList<T> : FastLookupCollection<T>, IBindingList, ICancelAddNew, IRaiseItemChangedEvents, IDisposable
+    public class FastBindingList<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllMembersAndInterfaces)]T> : FastLookupCollection<T>, IBindingList, ICancelAddNew, IRaiseItemChangedEvents, IDisposable
     {
         #region Fields
 
@@ -268,8 +268,12 @@ namespace KGySoft.ComponentModel
         /// Gets the property descriptors of <typeparamref name="T"/>.
         /// </summary>
         protected PropertyDescriptorCollection PropertyDescriptors
+        {
             // ReSharper disable once NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract - it CAN be null if an ICustomTypeDescriptor implemented so
-            => propertyDescriptors ??= TypeDescriptor.GetProperties(typeof(T)) ?? new PropertyDescriptorCollection(null); // not static so custom providers can be registered before creating an instance
+            [RequiresUnreferencedCode("PropertyDescriptor's PropertyType cannot be statically discovered.")]
+            get => propertyDescriptors ??= TypeDescriptor.GetProperties(typeof(T)) ?? new PropertyDescriptorCollection(null);
+            // not static so custom providers can be registered before creating an instance
+        }
 
         /// <summary>
         /// Gets whether <see cref="ListChanged"/> events are enabled.

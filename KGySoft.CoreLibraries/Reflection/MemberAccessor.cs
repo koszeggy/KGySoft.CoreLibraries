@@ -48,7 +48,7 @@ namespace KGySoft.Reflection
     {
         #region Delegates
 
-        // NOTE: actually these should be private protected but then help builder emits warnings for the missing documentation
+        // NOTE: actually these should be private protected but then the help builder emits warnings for the missing documentation
         internal delegate void ReferenceTypeAction<in TInstance>(TInstance instance) where TInstance : class;
         internal delegate void ReferenceTypeAction<in TInstance, in T>(TInstance instance, T arg) where TInstance : class;
         internal delegate void ReferenceTypeAction<in TInstance, in T1, in T2>(TInstance instance, T1 arg1, T2 arg2) where TInstance : class;
@@ -146,6 +146,8 @@ namespace KGySoft.Reflection
 
         #region Private Protected Methods
 
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+            Justification = "Not a real issue, in native AOT mode the exception is hardly likely to be a VerificationException. But even if so, it is handled if GetMethod returns null.")]
         private protected static void ThrowIfSecurityConflict(Exception exception, string? accessorPrefix = null)
         {
             if (exception is not VerificationException ve)
@@ -285,6 +287,7 @@ namespace KGySoft.Reflection
         /// For constructors, generated parameter is always <c><see cref="object"/>[] parameters</c>.
         /// </returns>
         [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "False alarm, the new analyzer includes the complexity of local methods.")]
+        [RequiresDynamicCode("This method emits dynamic code.")]
         private protected DynamicMethod CreateMethodInvokerAsDynamicMethod(MethodBase methodBase, DynamicMethodOptions options)
         {
             if (methodBase == null!)

@@ -540,6 +540,7 @@ namespace KGySoft.Reflection
 
         #region Private Methods
 
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "It is handled if dynamic code is not supported")]
         private Action<object?, object?> CreateSetter()
         {
             Type? declaringType = Field.DeclaringType;
@@ -602,6 +603,7 @@ namespace KGySoft.Reflection
 #endif
         }
 
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "It is handled if dynamic code is not supported")]
         private Func<object?, object?> CreateGetter()
         {
             Type? declaringType = Field.DeclaringType;
@@ -695,6 +697,8 @@ namespace KGySoft.Reflection
 
         [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity",
             Justification = "False alarm, the new analyzer includes the complexity of local methods - see https://github.com/dotnet/roslyn-analyzers/issues/2934")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "GetGenericType for the same generic delegate type as used statically in the generic accessor methods.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "GetGenericType for the same generic delegate type as used statically in the generic accessor methods.")]
         private Delegate CreateGenericSetter()
         {
             Type? declaringType = Field.DeclaringType;
@@ -783,7 +787,7 @@ namespace KGySoft.Reflection
 
                     MethodCallExpression methodCall = Expression.Call(
                         Expression.Constant(Field), // the instance is the FieldInfo itself
-                        Field.GetType().GetMethod(nameof(FieldInfo.SetValue), [typeof(object), typeof(object)])!, // SetValue(object, object)
+                        typeof(FieldInfo).GetMethod(nameof(FieldInfo.SetValue), [typeof(object), typeof(object)])!, // SetValue(object, object)
                         methodParameters);
 
                     lambda = Expression.Lambda(delegateType, methodCall, parameters);
@@ -828,6 +832,8 @@ namespace KGySoft.Reflection
 
         [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity",
             Justification = "False alarm, the new analyzer includes the complexity of local methods - see https://github.com/dotnet/roslyn-analyzers/issues/2934")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "GetGenericType for the same generic delegate type as used statically in the generic accessor methods.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "GetGenericType for the same generic delegate type as used statically in the generic accessor methods.")]
         private Delegate CreateGenericGetter()
         {
             Type? declaringType = Field.DeclaringType;

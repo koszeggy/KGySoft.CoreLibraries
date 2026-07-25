@@ -62,6 +62,22 @@ namespace KGySoft.Serialization.Binary
 
         internal const BinarySerializationOptions DefaultDeserializationOptions = BinarySerializationOptions.SafeMode;
 
+        // NOTE: though we have a fallback strategy when RuntimeFeature.IsDynamicCodeSupported is false, it does not help in other cases,
+        // e.g. when Array.CreateInstance or Type.MakeArrayType has to be used. GetGenericType is even used for the Compressible<T> decorator type, which is only created dynamically.
+        internal const string RequiresDynamicCodeMessage = "Binary serialization may use dynamic code generation, the type of objects being processed cannot be statically discovered.";
+        internal const string RequiresUnreferencedCodeMessage = "Binary serialization may not be trim compatible if natively non-supported types are serialized.";
+
+        internal const string ValueTypeSerializationRequiresDynamicCodeMessage = "Serializing value types in the non-generic way require either size calculation or marshalling, for which the code might not be available. " +
+            "In Native AOT mode try to use the generic overload instead.";
+        
+        internal const string ValueTypeSerializationRequiresUnreferencedCodeMessage = "In native AOT mode the operation may unexpectedly succeed for managed types if the trimming removes fields with reference types. " +
+            "In Native AOT mode try to use the generic overload instead.";
+
+        internal const DynamicallyAccessedMemberTypes NeededMembers = DynamicallyAccessedMembers.AllConstructors // parameterless constructors, special constructors
+            | DynamicallyAccessedMembers.AllFields // default object graph
+            | DynamicallyAccessedMembers.AllMethods // attribute-annotated serializing methods
+            | DynamicallyAccessedMemberTypes.Interfaces;
+
         #endregion
 
         #region Methods
@@ -75,6 +91,8 @@ namespace KGySoft.Serialization.Binary
         /// <param name="options">Options of the serialization. This parameter is optional.
         /// <br/>Default value: <see cref="BinarySerializationOptions.None"/>.</param>
         /// <returns>Serialized raw data of the object</returns>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static byte[] Serialize(object? data, BinarySerializationOptions options = BinarySerializationOptions.None)
             => new BinarySerializationFormatter(options).Serialize(data);
 
@@ -90,6 +108,8 @@ namespace KGySoft.Serialization.Binary
         /// <param name="options">Options of the deserialization. This parameter is optional.
         /// <br/>Default value: <see cref="BinarySerializationOptions.SafeMode"/>.</param>
         /// <returns>The deserialized object.</returns>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static object? Deserialize(byte[] rawData, int offset = 0, BinarySerializationOptions options = DefaultDeserializationOptions)
             => new BinarySerializationFormatter(options).Deserialize(rawData, offset);
 
@@ -104,6 +124,8 @@ namespace KGySoft.Serialization.Binary
         /// If <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <paramref name="options"/>
         /// or <paramref name="rawData"/> does not contain any types by name, then this parameter is optional.</param>
         /// <returns>The deserialized object.</returns>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static object? Deserialize(byte[] rawData, int offset, BinarySerializationOptions options, params Type[]? expectedCustomTypes)
             => new BinarySerializationFormatter(options).Deserialize(rawData, offset, expectedCustomTypes);
 
@@ -116,6 +138,8 @@ namespace KGySoft.Serialization.Binary
         /// <param name="expectedCustomTypes">The types that are expected to present in <paramref name="rawData"/> by name.
         /// If <paramref name="rawData"/> does not contain any types by name, then this parameter is optional.</param>
         /// <returns>The deserialized object.</returns>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static object? Deserialize(byte[] rawData, int offset, params Type[]? expectedCustomTypes)
             => new BinarySerializationFormatter(DefaultDeserializationOptions).Deserialize(rawData, offset, expectedCustomTypes);
 
@@ -151,7 +175,9 @@ namespace KGySoft.Serialization.Binary
         /// you can use the <see cref="O:KGySoft.Serialization.Binary.BinarySerializer.ExtractExpectedTypes">ExtractExpectedTypes</see> overloads
         /// to auto-detect the expected types.</note>
         /// </remarks>
-        public static T Deserialize<T>(byte[] rawData, int offset, BinarySerializationOptions options, params Type[]? expectedCustomTypes)
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
+        public static T Deserialize<[DynamicallyAccessedMembers(NeededMembers)]T>(byte[] rawData, int offset, BinarySerializationOptions options, params Type[]? expectedCustomTypes)
             => new BinarySerializationFormatter(options).Deserialize<T>(rawData, offset, expectedCustomTypes);
 
         /// <summary>
@@ -165,7 +191,9 @@ namespace KGySoft.Serialization.Binary
         /// <param name="expectedCustomTypes">The types that are expected to present in <paramref name="rawData"/> by name.
         /// If <paramref name="rawData"/> does not contain any types by name, then this parameter is optional.</param>
         /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
-        public static T Deserialize<T>(byte[] rawData, int offset = 0, params Type[]? expectedCustomTypes)
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
+        public static T Deserialize<[DynamicallyAccessedMembers(NeededMembers)]T>(byte[] rawData, int offset = 0, params Type[]? expectedCustomTypes)
             => new BinarySerializationFormatter(DefaultDeserializationOptions).Deserialize<T>(rawData, offset, expectedCustomTypes);
 
         /// <summary>
@@ -179,6 +207,8 @@ namespace KGySoft.Serialization.Binary
         /// If <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <paramref name="options"/>
         /// or <paramref name="rawData"/> does not contain any types by name, then this parameter can be <see langword="null"/>.</param>
         /// <returns>The deserialized object.</returns>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static object? Deserialize(byte[] rawData, int offset, BinarySerializationOptions options, IEnumerable<Type>? expectedCustomTypes)
             => new BinarySerializationFormatter(options).Deserialize(rawData, offset, expectedCustomTypes);
 
@@ -191,6 +221,8 @@ namespace KGySoft.Serialization.Binary
         /// <param name="expectedCustomTypes">The types that are expected to present in <paramref name="rawData"/> by name.
         /// If <paramref name="rawData"/> does not contain any types by name, then this parameter can be <see langword="null"/>.</param>
         /// <returns>The deserialized object.</returns>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static object? Deserialize(byte[] rawData, int offset, IEnumerable<Type>? expectedCustomTypes)
             => new BinarySerializationFormatter(DefaultDeserializationOptions).Deserialize(rawData, offset, expectedCustomTypes);
 
@@ -206,7 +238,9 @@ namespace KGySoft.Serialization.Binary
         /// If <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <paramref name="options"/>
         /// or <paramref name="rawData"/> does not contain any types by name, then this parameter can be <see langword="null"/>.</param>
         /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
-        public static T Deserialize<T>(byte[] rawData, int offset, BinarySerializationOptions options, IEnumerable<Type>? expectedCustomTypes)
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
+        public static T Deserialize<[DynamicallyAccessedMembers(NeededMembers)]T>(byte[] rawData, int offset, BinarySerializationOptions options, IEnumerable<Type>? expectedCustomTypes)
             => new BinarySerializationFormatter(options).Deserialize<T>(rawData, offset, expectedCustomTypes);
 
         /// <summary>
@@ -219,7 +253,9 @@ namespace KGySoft.Serialization.Binary
         /// <param name="expectedCustomTypes">The types that are expected to present in <paramref name="rawData"/> by name.
         /// If <paramref name="rawData"/> does not contain any types by name, then this parameter can be <see langword="null"/>.</param>
         /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
-        public static T Deserialize<T>(byte[] rawData, int offset, IEnumerable<Type>? expectedCustomTypes)
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
+        public static T Deserialize<[DynamicallyAccessedMembers(NeededMembers)]T>(byte[] rawData, int offset, IEnumerable<Type>? expectedCustomTypes)
             => new BinarySerializationFormatter(DefaultDeserializationOptions).Deserialize<T>(rawData, offset, expectedCustomTypes);
 
         /// <summary>
@@ -229,6 +265,8 @@ namespace KGySoft.Serialization.Binary
         /// <param name="data">The data that will be written into the stream.</param>
         /// <param name="options">Options of the serialization. This parameter is optional.
         /// <br/>Default value: <see cref="BinarySerializationOptions.None"/>.</param>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static void SerializeToStream(Stream stream, object? data, BinarySerializationOptions options = BinarySerializationOptions.None)
             => new BinarySerializationFormatter(options).SerializeToStream(stream, data);
 
@@ -242,6 +280,8 @@ namespace KGySoft.Serialization.Binary
         /// <param name="options">Options of the deserialization. This parameter is optional.
         /// <br/>Default value: <see cref="BinarySerializationOptions.SafeMode"/>.</param>
         /// <returns>The deserialized data.</returns>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static object? DeserializeFromStream(Stream stream, BinarySerializationOptions options = DefaultDeserializationOptions)
             => new BinarySerializationFormatter(options).DeserializeFromStream(stream);
 
@@ -255,6 +295,8 @@ namespace KGySoft.Serialization.Binary
         /// If <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <paramref name="options"/>
         /// or <paramref name="stream"/> does not contain any types by name, then this parameter is optional.</param>
         /// <returns>The deserialized object.</returns>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static object? DeserializeFromStream(Stream stream, BinarySerializationOptions options, params Type[]? expectedCustomTypes)
             => new BinarySerializationFormatter(options).DeserializeFromStream(stream, expectedCustomTypes);
 
@@ -266,6 +308,8 @@ namespace KGySoft.Serialization.Binary
         /// <param name="expectedCustomTypes">The types that are expected to present in the serialization <paramref name="stream"/> by name.
         /// If <paramref name="stream"/> does not contain any types by name, then this parameter is optional.</param>
         /// <returns>The deserialized object.</returns>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static object? DeserializeFromStream(Stream stream, params Type[]? expectedCustomTypes)
             => new BinarySerializationFormatter(DefaultDeserializationOptions).DeserializeFromStream(stream, expectedCustomTypes);
 
@@ -300,7 +344,9 @@ namespace KGySoft.Serialization.Binary
         /// you can use the <see cref="O:KGySoft.Serialization.Binary.BinarySerializer.ExtractExpectedTypes">ExtractExpectedTypes</see> overloads
         /// to auto-detect the expected types.</note>
         /// </remarks>
-        public static T DeserializeFromStream<T>(Stream stream, BinarySerializationOptions options, params Type[]? expectedCustomTypes)
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
+        public static T DeserializeFromStream<[DynamicallyAccessedMembers(NeededMembers)]T>(Stream stream, BinarySerializationOptions options, params Type[]? expectedCustomTypes)
             => new BinarySerializationFormatter(options).DeserializeFromStream<T>(stream, expectedCustomTypes);
 
         /// <summary>
@@ -312,7 +358,9 @@ namespace KGySoft.Serialization.Binary
         /// <param name="expectedCustomTypes">The types that are expected to present in the serialization <paramref name="stream"/> by name.
         /// If <paramref name="stream"/> does not contain any types by name, then this parameter is optional.</param>
         /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
-        public static T DeserializeFromStream<T>(Stream stream, params Type[]? expectedCustomTypes)
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
+        public static T DeserializeFromStream<[DynamicallyAccessedMembers(NeededMembers)]T>(Stream stream, params Type[]? expectedCustomTypes)
             => new BinarySerializationFormatter(DefaultDeserializationOptions).DeserializeFromStream<T>(stream, expectedCustomTypes);
 
         /// <summary>
@@ -325,6 +373,8 @@ namespace KGySoft.Serialization.Binary
         /// If <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <paramref name="options"/>
         /// or <paramref name="stream"/> does not contain any types by name, then this parameter can be <see langword="null"/>.</param>
         /// <returns>The deserialized object.</returns>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static object? DeserializeFromStream(Stream stream, BinarySerializationOptions options, IEnumerable<Type>? expectedCustomTypes)
             => new BinarySerializationFormatter(options).DeserializeFromStream(stream, expectedCustomTypes);
 
@@ -336,6 +386,8 @@ namespace KGySoft.Serialization.Binary
         /// <param name="expectedCustomTypes">The types that are expected to present in the serialization <paramref name="stream"/> by name.
         /// If <paramref name="stream"/> does not contain any types by name, then this parameter can be <see langword="null"/>.</param>
         /// <returns>The deserialized object.</returns>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static object? DeserializeFromStream(Stream stream, IEnumerable<Type>? expectedCustomTypes)
             => new BinarySerializationFormatter(DefaultDeserializationOptions).DeserializeFromStream(stream, expectedCustomTypes);
 
@@ -350,7 +402,9 @@ namespace KGySoft.Serialization.Binary
         /// If <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <paramref name="options"/>
         /// or <paramref name="stream"/> does not contain any types by name, then this parameter can be <see langword="null"/>.</param>
         /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
-        public static T DeserializeFromStream<T>(Stream stream, BinarySerializationOptions options, IEnumerable<Type>? expectedCustomTypes)
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
+        public static T DeserializeFromStream<[DynamicallyAccessedMembers(NeededMembers)]T>(Stream stream, BinarySerializationOptions options, IEnumerable<Type>? expectedCustomTypes)
             => new BinarySerializationFormatter(options).DeserializeFromStream<T>(stream, expectedCustomTypes);
 
         /// <summary>
@@ -362,7 +416,9 @@ namespace KGySoft.Serialization.Binary
         /// <param name="expectedCustomTypes">The types that are expected to present in the serialization <paramref name="stream"/> by name.
         /// If <paramref name="stream"/> does not contain any types by name, then this parameter can be <see langword="null"/>.</param>
         /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
-        public static T DeserializeFromStream<T>(Stream stream, IEnumerable<Type>? expectedCustomTypes)
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
+        public static T DeserializeFromStream<[DynamicallyAccessedMembers(NeededMembers)]T>(Stream stream, IEnumerable<Type>? expectedCustomTypes)
             => new BinarySerializationFormatter(DefaultDeserializationOptions).DeserializeFromStream<T>(stream, expectedCustomTypes);
 
         /// <summary>
@@ -377,6 +433,8 @@ namespace KGySoft.Serialization.Binary
         /// <param name="data">The data that will be written by the writer.</param>
         /// <param name="options">Options of the serialization. This parameter is optional.
         /// <br/>Default value: <see cref="BinarySerializationOptions.None"/>.</param>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static void SerializeByWriter(BinaryWriter writer, object? data, BinarySerializationOptions options = BinarySerializationOptions.None)
             => new BinarySerializationFormatter(options).SerializeByWriter(writer, data);
 
@@ -390,6 +448,8 @@ namespace KGySoft.Serialization.Binary
         /// <param name="options">Options of the deserialization. This parameter is optional.
         /// <br/>Default value: <see cref="BinarySerializationOptions.SafeMode"/>.</param>
         /// <returns>The deserialized data.</returns>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static object? DeserializeByReader(BinaryReader reader, BinarySerializationOptions options = DefaultDeserializationOptions)
             => new BinarySerializationFormatter(options).DeserializeByReader(reader);
 
@@ -403,6 +463,8 @@ namespace KGySoft.Serialization.Binary
         /// If <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <paramref name="options"/>
         /// or the stream does not contain any types by name, then this parameter is optional.</param>
         /// <returns>The deserialized object.</returns>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static object? DeserializeByReader(BinaryReader reader, BinarySerializationOptions options, params Type[]? expectedCustomTypes)
             => new BinarySerializationFormatter(options).DeserializeByReader(reader, expectedCustomTypes);
 
@@ -414,6 +476,8 @@ namespace KGySoft.Serialization.Binary
         /// <param name="expectedCustomTypes">The types that are expected to present in the serialization stream by name.
         /// If the stream does not contain any types by name, then this parameter is optional.</param>
         /// <returns>The deserialized object.</returns>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static object? DeserializeByReader(BinaryReader reader, params Type[]? expectedCustomTypes)
             => new BinarySerializationFormatter(DefaultDeserializationOptions).DeserializeByReader(reader, expectedCustomTypes);
 
@@ -452,7 +516,9 @@ namespace KGySoft.Serialization.Binary
         /// you can use the <see cref="O:KGySoft.Serialization.Binary.BinarySerializer.ExtractExpectedTypes">ExtractExpectedTypes</see> overloads
         /// to auto-detect the expected types.</note>
         /// </remarks>
-        public static T DeserializeByReader<T>(BinaryReader reader, BinarySerializationOptions options, params Type[]? expectedCustomTypes)
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
+        public static T DeserializeByReader<[DynamicallyAccessedMembers(NeededMembers)]T>(BinaryReader reader, BinarySerializationOptions options, params Type[]? expectedCustomTypes)
             => new BinarySerializationFormatter(options).DeserializeByReader<T>(reader, expectedCustomTypes);
 
         /// <summary>
@@ -465,7 +531,9 @@ namespace KGySoft.Serialization.Binary
         /// <param name="expectedCustomTypes">The types that are expected to present in the serialization stream by name.
         /// If the stream does not contain any types by name, then this parameter is optional.</param>
         /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
-        public static T DeserializeByReader<T>(BinaryReader reader, params Type[]? expectedCustomTypes)
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
+        public static T DeserializeByReader<[DynamicallyAccessedMembers(NeededMembers)]T>(BinaryReader reader, params Type[]? expectedCustomTypes)
             => new BinarySerializationFormatter(DefaultDeserializationOptions).DeserializeByReader<T>(reader, expectedCustomTypes);
 
         /// <summary>
@@ -478,6 +546,8 @@ namespace KGySoft.Serialization.Binary
         /// If <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <paramref name="options"/>
         /// or the stream does not contain any types by name, then this parameter can be <see langword="null"/>.</param>
         /// <returns>The deserialized object.</returns>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static object? DeserializeByReader(BinaryReader reader, BinarySerializationOptions options, IEnumerable<Type>? expectedCustomTypes)
             => new BinarySerializationFormatter(options).DeserializeByReader(reader, expectedCustomTypes);
 
@@ -489,6 +559,8 @@ namespace KGySoft.Serialization.Binary
         /// <param name="expectedCustomTypes">The types that are expected to present in the serialization stream by name.
         /// If the stream does not contain any types by name, then this parameter can be <see langword="null"/>.</param>
         /// <returns>The deserialized object.</returns>
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
         public static object? DeserializeByReader(BinaryReader reader, IEnumerable<Type>? expectedCustomTypes)
             => new BinarySerializationFormatter(DefaultDeserializationOptions).DeserializeByReader(reader, expectedCustomTypes);
 
@@ -504,7 +576,9 @@ namespace KGySoft.Serialization.Binary
         /// If <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <paramref name="options"/>
         /// or the stream does not contain any types by name, then this parameter can be <see langword="null"/>.</param>
         /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
-        public static T DeserializeByReader<T>(BinaryReader reader, BinarySerializationOptions options, IEnumerable<Type>? expectedCustomTypes)
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
+        public static T DeserializeByReader<[DynamicallyAccessedMembers(NeededMembers)]T>(BinaryReader reader, BinarySerializationOptions options, IEnumerable<Type>? expectedCustomTypes)
             => new BinarySerializationFormatter(options).DeserializeByReader<T>(reader, expectedCustomTypes);
 
         /// <summary>
@@ -517,7 +591,9 @@ namespace KGySoft.Serialization.Binary
         /// <param name="expectedCustomTypes">The types that are expected to present in the serialization stream by name.
         /// If the stream does not contain any types by name, then this parameter is optional.</param>
         /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
-        public static T DeserializeByReader<T>(BinaryReader reader, IEnumerable<Type>? expectedCustomTypes)
+        [RequiresDynamicCode(RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
+        public static T DeserializeByReader<[DynamicallyAccessedMembers(NeededMembers)]T>(BinaryReader reader, IEnumerable<Type>? expectedCustomTypes)
             => new BinarySerializationFormatter(DefaultDeserializationOptions).DeserializeByReader<T>(reader, expectedCustomTypes);
 
         /// <summary>
@@ -546,6 +622,8 @@ namespace KGySoft.Serialization.Binary
         /// <exception cref="ArgumentException"><paramref name="obj"/> contains references, and it cannot be serialized even by the <see cref="Marshal"/> class.</exception>
         /// <exception cref="NotSupportedException">The method is called from a restricted <see cref="AppDomain"/> with insufficient permissions.</exception>
         [SecurityCritical]
+        [RequiresDynamicCode(ValueTypeSerializationRequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ValueTypeSerializationRequiresUnreferencedCodeMessage)]
         public static byte[] SerializeValueType(ValueType obj)
         {
             if (obj == null!)
@@ -580,6 +658,10 @@ namespace KGySoft.Serialization.Binary
         /// <exception cref="ArgumentNullException"><paramref name="obj"/> is <see langword="null"/>.</exception>
         /// <exception cref="NotSupportedException">The method is called from a restricted <see cref="AppDomain"/> with insufficient permissions.</exception>
         [SecuritySafeCritical]
+        [RequiresUnreferencedCode(ValueTypeSerializationRequiresUnreferencedCodeMessage)]
+#if !NET9_0_OR_GREATER
+        [RequiresDynamicCode(ValueTypeSerializationRequiresDynamicCodeMessage)] // SerializeValueTypeRaw
+#endif
         public static bool TrySerializeValueType(ValueType obj, [MaybeNullWhen(false)]out byte[] result)
         {
             result = null;
@@ -782,7 +864,10 @@ namespace KGySoft.Serialization.Binary
         /// <br/>The length of <paramref name="data"/> is too small.
         /// <br/>-or-
         /// <br/>The specified <paramref name="type"/> contains references, and it cannot be deserialized even by using the <see cref="Marshal"/> class.</exception>
-        public static object DeserializeValueType(Type type, byte[] data) => DeserializeValueType(type, data, 0);
+        [RequiresDynamicCode(ValueTypeSerializationRequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ValueTypeSerializationRequiresUnreferencedCodeMessage)]
+        public static object DeserializeValueType([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]Type type, byte[] data)
+            => DeserializeValueType(type, data, 0);
 
         /// <summary>
         /// Deserializes a <see cref="ValueType"/> object from a byte array that was previously serialized by <see cref="SerializeValueType">SerializeValueType</see> method
@@ -800,8 +885,11 @@ namespace KGySoft.Serialization.Binary
         /// <br/>The length of <paramref name="data"/> is too small.
         /// <br/>-or-
         /// <br/>The specified <paramref name="type"/> contains references, and it cannot be deserialized even by using the <see cref="Marshal"/> class.</exception>
-        [SecuritySafeCritical]
-        public static object DeserializeValueType(Type type, byte[] data, int offset)
+        [SecuritySafeCritical] // it wouldn't be necessarily safe in AOT mode, but this attribute is effective in .NET Framework only
+        [RequiresDynamicCode(ValueTypeSerializationRequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ValueTypeSerializationRequiresUnreferencedCodeMessage)]
+        public static object DeserializeValueType([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor | DynamicallyAccessedMembers.AllFields)]Type type,
+            byte[] data, int offset)
         {
             if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
@@ -1037,7 +1125,8 @@ namespace KGySoft.Serialization.Binary
         /// this method may unnecessarily return the referenced custom types of unmanaged structs.</para>
         /// <note type="tip">The result of this method is not cached. If performance matters either do the caching explicitly or try to manually enlist the expected types instead.</note>
         /// </remarks>
-        public static IEnumerable<Type> ExtractExpectedTypes<T>(bool forceAll = false) => ExtractExpectedTypes(typeof(T), forceAll);
+        [RequiresUnreferencedCode("If T is a generic type or has element type, or contains nested custom types, this method may not be trim compatible.")]
+        public static IEnumerable<Type> ExtractExpectedTypes<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllFields)]T>(bool forceAll = false) => ExtractExpectedTypes(typeof(T), forceAll);
 
         /// <summary>
         /// Extracts a flattened collection of expected types from <paramref name="type"/> for deserialization.
@@ -1051,11 +1140,13 @@ namespace KGySoft.Serialization.Binary
         /// <returns>A collection of types extracted from <paramref name="type"/>.</returns>
         [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity",
             Justification = "False alarm, the new analyzer includes the complexity of local methods. By extracting Strip it would be just fine.")]
-        public static IEnumerable<Type> ExtractExpectedTypes(Type type, bool forceAll = false)
+        [RequiresUnreferencedCode("If type is a generic type or has element type, or contains nested custom types, this method may not be trim compatible.")]
+        public static IEnumerable<Type> ExtractExpectedTypes([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllFields)]Type type, bool forceAll = false)
         {
             #region Local Methods
 
             // not using GetRootType because we want to preserve generic arguments
+            [return:DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllFields)]
             static Type Strip(Type t)
             {
                 while (t.HasElementType)
@@ -1200,6 +1291,10 @@ namespace KGySoft.Serialization.Binary
 
         [SecurityCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
+#if !NET9_0_OR_GREATER
+        [RequiresDynamicCode("obj.GetType().SizeOf()")]
+#endif
+        [RequiresUnreferencedCode("obj.GetType().IsManaged()")] // though in DEBUG build only (Assert)
         private static byte[] SerializeValueTypeRaw(ValueType obj)
         {
             Debug.Assert(!obj.GetType().IsManaged(), "Unmanaged type expected");
@@ -1230,6 +1325,7 @@ namespace KGySoft.Serialization.Binary
 
         [SecurityCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
+        [RequiresDynamicCode(ValueTypeSerializationRequiresDynamicCodeMessage)] // NOTE: there is no warning without this, because StructureToPtr<T> is called, but T is ValueType and not the concrete type here
         private static unsafe byte[] SerializeValueTypeByMarshal(ValueType obj)
         {
             byte[] result = new byte[Marshal.SizeOf(obj)];
@@ -1240,7 +1336,11 @@ namespace KGySoft.Serialization.Binary
         }
 
         [SecurityCritical]
-        private static object DeserializeValueTypeRaw(Type type, byte[] data, int offset)
+#if !NET9_0_OR_GREATER
+        [RequiresDynamicCode("type.SizeOf()")]
+#endif
+        [RequiresUnreferencedCode("type.IsManaged()")] // though in DEBUG build only (Assert)
+        private static object DeserializeValueTypeRaw([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]Type type, byte[] data, int offset)
         {
             Debug.Assert(!type.IsManaged(), "Unmanaged type expected");
             Debug.Assert(offset >= 0);
@@ -1277,6 +1377,7 @@ namespace KGySoft.Serialization.Binary
 
         [SecurityCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
+        [RequiresDynamicCode("Marshalling code for the object might not be available")]
         private static unsafe object DeserializeValueTypeByMarshal(Type type, byte[] data, int offset)
         {
             fixed (void* src = &data[offset])

@@ -51,6 +51,7 @@ namespace KGySoft.Reflection
 
         #region Methods
 
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "It is handled if dynamic code is not supported")]
         private protected override Func<object?, object?[]?, object?> CreateGeneralInvoker()
         {
             var methodBase = (MethodBase)MemberInfo;
@@ -123,6 +124,7 @@ namespace KGySoft.Reflection
 #endif
         }
 
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "It is handled if dynamic code is not supported")]
         private protected override Delegate CreateNonGenericInvoker()
         {
             #region Local Methods
@@ -227,6 +229,8 @@ namespace KGySoft.Reflection
 
         [SuppressMessage("ReSharper", "CoVariantArrayConversion", Justification = "Expression.Call does not write the parameters")]
         [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Many simple switches for the generic delegate types.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "GetGenericType for the same generic delegate type as used statically in the generic accessor methods.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "GetGenericType for the same generic delegate type as used statically in the generic accessor methods.")]
         private protected override Delegate CreateGenericInvoker()
         {
             if (Method is not MethodInfo method)

@@ -17,6 +17,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 using KGySoft.CoreLibraries;
 using KGySoft.Reflection;
@@ -29,7 +30,8 @@ namespace KGySoft.Collections
     {
         #region Methods
 
-        internal static bool PreferBitwiseAndHash<TKey>(this HashingStrategy strategy, IEqualityComparer<TKey>? comparer)
+        internal static bool PreferBitwiseAndHash<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]TKey>(
+            this HashingStrategy strategy, IEqualityComparer<TKey>? comparer)
         {
             Type keyType = typeof(TKey);
             return strategy == HashingStrategy.And

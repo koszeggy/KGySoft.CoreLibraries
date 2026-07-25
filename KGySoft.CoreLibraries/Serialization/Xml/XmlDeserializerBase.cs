@@ -23,6 +23,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
@@ -73,12 +74,18 @@ namespace KGySoft.Serialization.Xml
 
             #region Properties
 
-            private Type ArrayType => lengths.Length > 1 ? ElementType.MakeArrayType(lengths.Length)
-                : lowerBounds[0] == 0 ? ElementType.MakeArrayType()
-                : ElementType.MakeArrayType(1);
+            private Type ArrayType
+            {
+                [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)]
+                get => lengths.Length > 1 ? ElementType.MakeArrayType(lengths.Length)
+                    : lowerBounds[0] == 0 ? ElementType.MakeArrayType()
+                    : ElementType.MakeArrayType(1);
+            }
 
             private IList Builder
             {
+                [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)]
+                [RequiresUnreferencedCode(XmlSerializer.RequiresUnreferencedCodeMessage)]
                 get
                 {
                     if (builder == null)
@@ -105,6 +112,7 @@ namespace KGySoft.Serialization.Xml
 
             #region Constructors
 
+            [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)]
             internal ArrayBuilder(Array? array, Type? elementType, string? attrLength, string? attrDim, bool canRecreateArray, bool safeMode) : this()
             {
                 if (array == null && elementType == null)
@@ -136,6 +144,7 @@ namespace KGySoft.Serialization.Xml
 
             #region Methods
 
+            [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)]
             internal void AddRaw(byte[] data)
             {
                 if (current >= 0)
@@ -150,6 +159,8 @@ namespace KGySoft.Serialization.Xml
                 current = TotalLength - 1;
             }
 
+            [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(XmlSerializer.RequiresUnreferencedCodeMessage)]
             internal void Add(object? value)
             {
                 if (++current == TotalLength)
@@ -175,6 +186,8 @@ namespace KGySoft.Serialization.Xml
                 Builder.Add(value);
             }
 
+            [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(XmlSerializer.RequiresUnreferencedCodeMessage)]
             internal Array ToArray()
             {
                 if (array != null)
@@ -226,6 +239,10 @@ namespace KGySoft.Serialization.Xml
             [nameof(BitArray.Length)] = [typeof(BitArray)],
         };
 
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+            Justification = "Cannot apply RequiresUnreferencedCode to a field, but the public entry points are annotated anyway.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode",
+            Justification = "Cannot apply RequiresDynamicCode to a field, but the public entry points are annotated anyway.")]
         private static readonly Dictionary<Type, Func<Type, ComparerType, object>> knownCollectionWithComparerFactory = new()
         {
             { Reflector.DictionaryGenType, CreateCollectionWithGenericEqualityComparer },
@@ -605,6 +622,8 @@ namespace KGySoft.Serialization.Xml
             SerializationHelper.CopyFields(source, target);
         }
 
+        [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(XmlSerializer.RequiresUnreferencedCodeMessage)]
         private static object CreateCollectionWithGenericEqualityComparer(Type type, ComparerType comparerType)
         {
             Type t = type.GetGenericArguments()[0];
@@ -618,6 +637,8 @@ namespace KGySoft.Serialization.Xml
             return type.CreateInstance(typeof(IEqualityComparer<>).GetGenericType(t), comparer);
         }
 
+        [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(XmlSerializer.RequiresUnreferencedCodeMessage)]
         private static object CreateCollectionWithGenericEqualityComparerAndHashingStrategy(Type type, ComparerType comparerType)
         {
             Type t = type.GetGenericArguments()[0];
@@ -631,6 +652,8 @@ namespace KGySoft.Serialization.Xml
             return type.CreateInstance([typeof(IEqualityComparer<>).GetGenericType(t), typeof(HashingStrategy)], comparer, HashingStrategy.Auto);
         }
 
+        [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(XmlSerializer.RequiresUnreferencedCodeMessage)]
         private static object CreateCollectionWithGenericComparer(Type type, ComparerType comparerType)
         {
             Type t = type.GetGenericArguments()[0];
@@ -679,7 +702,10 @@ namespace KGySoft.Serialization.Xml
 
         #region Private Protected Methods
 
-        private protected void ResolveMember(Type type, string memberOrItemName, string? strDeclaringType, string? strItemType, out PropertyInfo? property, out FieldInfo? field, out Type? itemType)
+        [RequiresUnreferencedCode(XmlSerializer.RequiresUnreferencedCodeMessage)]
+        private protected void ResolveMember([DynamicallyAccessedMembers(XmlSerializer.NeededMembers)]Type type,
+            string memberOrItemName, string? strDeclaringType, string? strItemType, out PropertyInfo? property, out FieldInfo? field,
+            [DynamicallyAccessedMembers(XmlSerializer.NeededMembers)]out Type? itemType)
         {
             property = null;
             field = null;
@@ -763,6 +789,7 @@ namespace KGySoft.Serialization.Xml
             property.Set(obj, deserializedValue);
         }
 
+        [RequiresUnreferencedCode(XmlSerializer.RequiresUnreferencedCodeMessage)]
         private protected bool TryDeserializeByConverter(MemberInfo member, Type memberType, Func<string?> readStringValue, out object? result)
         {
             TypeConverter? converter = null; 
@@ -808,6 +835,7 @@ namespace KGySoft.Serialization.Xml
             return types.Contains(declaringType);
         }
 
+        [RequiresUnreferencedCode(XmlSerializer.RequiresUnreferencedCodeMessage)]
         private protected Type ResolveType(string typeName)
         {
             resolvedTypes ??= new StringKeyedDictionary<Type>();

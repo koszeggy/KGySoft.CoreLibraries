@@ -17,9 +17,7 @@
 
 using System;
 using System.Collections.Generic;
-#if NET5_0_OR_GREATER
 using System.Diagnostics.CodeAnalysis;
-#endif
 #if !NET35
 using System.Linq.Expressions;
 #endif
@@ -334,6 +332,8 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Gets the comparer instance for <typeparamref name="TEnum"/> type.
         /// </summary>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Returns NoDynamicCodeEnumComparer in AOT mode.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "Returns NoDynamicCodeEnumComparer in AOT mode.")]
         public static EnumComparer<TEnum> Comparer => comparer ??=
 #if NET35
             EnumComparerBuilder.GetComparer<TEnum>();

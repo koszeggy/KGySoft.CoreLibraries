@@ -42,7 +42,7 @@ namespace KGySoft.Threading
 
         #region ISortHelper<T> interface
 
-        private interface ISortHelper<T>
+        private interface ISortHelper<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]T>
         {
             #region Methods
 
@@ -58,7 +58,7 @@ namespace KGySoft.Threading
 
         #region ISortHelper<TKey, TValue> interface
 
-        private interface ISortHelper<TKey, TValue>
+        private interface ISortHelper<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]TKey, TValue>
         {
             #region Methods
 
@@ -80,10 +80,12 @@ namespace KGySoft.Threading
 
         #region SortHelper<T> class
 
-        private sealed class SortHelper<T> : ISortHelper<T>
+        private sealed class SortHelper<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]T> : ISortHelper<T>
         {
             #region Fields
 
+            [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode",
+                Justification = "False alarm, ComparableSortHelper<T> is constructed only when T is IComparable<T>, and DynamicallyAccessedMemberTypes.Interfaces is applied to T")]
             internal static ISortHelper<T> Instance { get; } = typeof(IComparable<T>).IsAssignableFrom(typeof(T))
                 ? (ISortHelper<T>)Activator.CreateInstance(typeof(ComparableSortHelper<>).MakeGenericType(typeof(T)), true)!
                 : new SortHelper<T>();
@@ -997,10 +999,12 @@ namespace KGySoft.Threading
 
         #region SortHelper<TKey, TValue> class
 
-        private sealed class SortHelper<TKey, TValue> : ISortHelper<TKey, TValue>
+        private sealed class SortHelper<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]TKey, TValue> : ISortHelper<TKey, TValue>
         {
             #region Fields
 
+            [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode",
+                Justification = "False alarm, ComparableSortHelper<TKey, TValue> is constructed only when TKey is IComparable<TKey>, and DynamicallyAccessedMemberTypes.Interfaces is applied to TKey")]
             internal static ISortHelper<TKey, TValue> Instance { get; } = typeof(IComparable<TKey>).IsAssignableFrom(typeof(TKey))
                 ? (ISortHelper<TKey, TValue>)Activator.CreateInstance(typeof(ComparableSortHelper<,>).MakeGenericType(typeof(TKey), typeof(TValue)), true)!
                 : new SortHelper<TKey, TValue>();
@@ -2190,7 +2194,7 @@ namespace KGySoft.Threading
 
         #region ComparableSortHelper<T> class
 
-        private sealed class ComparableSortHelper<T> : ISortHelper<T>
+        private sealed class ComparableSortHelper<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]T> : ISortHelper<T>
             where T : IComparable<T>
         {
             #region Methods
@@ -3116,7 +3120,7 @@ namespace KGySoft.Threading
 
         #region ComparableSortHelper<T> class
 
-        private sealed class ComparableSortHelper<TKey, TValue> : ISortHelper<TKey, TValue>
+        private sealed class ComparableSortHelper<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]TKey, TValue> : ISortHelper<TKey, TValue>
             where TKey : IComparable<TKey>
         {
             #region Methods

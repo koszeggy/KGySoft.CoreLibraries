@@ -194,8 +194,8 @@ namespace KGySoft.Reflection
         #region Properties
 
         private protected Func<object?[]?, object> GeneralInitializer => generalInitializer ??= CreateGeneralInitializer();
-        private protected Delegate GenericInitializer => genericInitializer ??= CreateGenericInitializer();
         private protected Delegate NonGenericInitializer => nonGenericInitializer ??= CreateNonGenericInitializer();
+        private protected Delegate GenericInitializer => genericInitializer ??= CreateGenericInitializer();
 
         #endregion
 
@@ -225,7 +225,7 @@ namespace KGySoft.Reflection
         /// <param name="type">A <see cref="Type"/> for which the accessor should be retrieved.</param>
         /// <returns>A <see cref="CreateInstanceAccessor"/> instance that can be used to create an instance of <paramref name="type"/>.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public static CreateInstanceAccessor GetAccessor(Type type)
+        public static CreateInstanceAccessor GetAccessor([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors)]Type type)
         {
             if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
@@ -252,6 +252,8 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Creates an accessor for a constructor or type without caching.
         /// </summary>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2067:TargetArgumentDynamicallyAccessedMemberTypesAnnotationMismatch",
+            Justification = "False alarm, type is annotated at the public entry point in GetAccessor(Type).")]
         internal static CreateInstanceAccessor CreateAccessor(MemberInfo member)
         {
             switch (member)
@@ -576,9 +578,9 @@ namespace KGySoft.Reflection
         #region Private Protected Methods
 
         private protected abstract Func<object?[]?, object> CreateGeneralInitializer();
-        private protected abstract Delegate CreateGenericInitializer();
         private protected abstract Delegate CreateNonGenericInitializer();
-
+        private protected abstract Delegate CreateGenericInitializer();
+        
         #endregion
 
         #region Private Methods

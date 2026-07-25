@@ -128,7 +128,7 @@ namespace KGySoft.ComponentModel
     /// to the constructor is disposable, then it will also be disposed. After disposing accessing the public members may throw <see cref="ObjectDisposedException"/>.</para>
     /// </example>
     [Serializable]
-    public class ObservableBindingList<T> : Collection<T>, IDisposable,
+    public class ObservableBindingList<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllMembersAndInterfaces)]T> : Collection<T>, IDisposable,
         INotifyCollectionChanged, INotifyPropertyChanged,
         IBindingList, ICancelAddNew, IRaiseItemChangedEvents
     {
@@ -397,8 +397,12 @@ namespace KGySoft.ComponentModel
         /// Gets the property descriptors of <typeparamref name="T"/>.
         /// </summary>
         protected PropertyDescriptorCollection PropertyDescriptors
+        {
+            // not static so custom providers can be registered before creating an instance
             // ReSharper disable once NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract - it CAN be null if an ICustomTypeDescriptor is implemented so
-            => propertyDescriptors ??= TypeDescriptor.GetProperties(typeof(T)) ?? new PropertyDescriptorCollection(null); // not static so custom providers can be registered before creating an instance
+            [RequiresUnreferencedCode("PropertyDescriptor's PropertyType cannot be statically discovered.")]
+            get => propertyDescriptors ??= TypeDescriptor.GetProperties(typeof(T)) ?? new PropertyDescriptorCollection(null);
+        }
 
         #endregion
 

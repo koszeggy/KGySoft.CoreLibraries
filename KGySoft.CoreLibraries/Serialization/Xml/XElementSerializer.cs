@@ -48,7 +48,7 @@ namespace KGySoft.Serialization.Xml
             #region Fields
 
             internal object Object;
-            internal Type Type;
+            [DynamicallyAccessedMembers(XmlSerializer.NeededMembers)]internal Type Type;
             internal XElement Parent;
             internal bool TypeNeeded;
             internal bool IsReadOnlyProperty;
@@ -117,6 +117,8 @@ namespace KGySoft.Serialization.Xml
 
         #region Insternal Methods
 
+        [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(XmlSerializer.RequiresUnreferencedCodeMessage)]
         internal XElement Serialize(object? obj)
         {
             XElement result = new XElement(XmlSerializer.ElementObject);
@@ -127,6 +129,8 @@ namespace KGySoft.Serialization.Xml
             return result;
         }
 
+        [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(XmlSerializer.RequiresUnreferencedCodeMessage)]
         internal void SerializeContent(XElement parent, object obj)
         {
             if (obj == null!)
@@ -182,6 +186,8 @@ namespace KGySoft.Serialization.Xml
         /// <summary>
         /// Serializing a collection by LinqToXml
         /// </summary>
+        [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(XmlSerializer.RequiresUnreferencedCodeMessage)]
         private void SerializeCollection(IEnumerable? collection, Type elementType, bool typeNeeded, XContainer parent, DesignerSerializationVisibility visibility, ComparerType comparer)
         {
             if (collection == null)
@@ -295,6 +301,8 @@ namespace KGySoft.Serialization.Xml
         /// XElement version.
         /// </summary>
         [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "False alarm, the new analyzer includes the complexity of local methods.")]
+        [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(XmlSerializer.RequiresUnreferencedCodeMessage)]
         private void SerializeObject(object? obj, bool typeNeeded, XElement parent, DesignerSerializationVisibility visibility, bool isReadOnlyProperty = false)
         {
             #region Local Methods to reduce complexity
@@ -335,6 +343,7 @@ namespace KGySoft.Serialization.Xml
                 return false;
             }
 
+            [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)] // IsSupportedCollectionForReflection
             bool TrySerializeComplexObject(ref SerializeObjectContext ctx)
             {
                 // 1.) collection
@@ -480,6 +489,8 @@ namespace KGySoft.Serialization.Xml
             Throw.SerializationException(Res.XmlSerializationSerializingTypeNotSupported(type, Options));
         }
 
+        [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(XmlSerializer.RequiresUnreferencedCodeMessage)]
         private void SerializeMembers(object obj, XContainer parent, DesignerSerializationVisibility parentVisibility)
         {
             // signing that object is not null
@@ -538,6 +549,8 @@ namespace KGySoft.Serialization.Xml
         /// <summary>
         /// Serializing binary content by LinqToXml
         /// </summary>
+        [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
         private void SerializeBinary(object obj, XContainer parent)
         {
             parent.Add(new XAttribute(XmlSerializer.AttributeFormat, XmlSerializer.AttributeValueBinary));

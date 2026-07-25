@@ -339,6 +339,8 @@ namespace KGySoft.Serialization.Binary
             /// (Impure objects are written by index at root level, too.)
             /// </summary>>
             [SecurityCritical]
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             internal void WriteRoot(BinaryWriter bw, object? obj)
             {
                 // a.) null
@@ -374,6 +376,8 @@ namespace KGySoft.Serialization.Binary
             /// We don't do the same for parent fields because we don't write the field types at all.
             /// </summary>>
             [SecurityCritical]
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             internal void WriteNonRoot(BinaryWriter bw, object? obj, (DataTypesEnumerator? DataTypes, Type? Type) knownElementType = default)
             {
                 // If we have an impure known collection element type we mark its attributes.
@@ -421,10 +425,12 @@ namespace KGySoft.Serialization.Binary
             [SecurityCritical]
             [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity",
                 Justification = "False alarm, the new analyzer includes the complexity of local methods.")]
-            private DataTypes GetDataType(Type type)
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
+            private DataTypes GetDataType([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]Type type)
             {
                 #region Local methods to reduce complexity
 
+                [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
                 bool TryGetKnownDataType(Type t, out DataTypes result)
                 {
                     // Primitive type
@@ -512,7 +518,8 @@ namespace KGySoft.Serialization.Binary
                     return supportedCollections.TryGetValue(checkedType, out result);
                 }
 
-                DataTypes GetImpureDataType(Type t)
+                [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
+                DataTypes GetImpureDataType([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllFields)]Type t)
                 {
                     // IBinarySerializable implementation
                     if (!IgnoreIBinarySerializable && binarySerializableType.IsAssignableFrom(t))
@@ -554,6 +561,8 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private void WritePureObjectOrEnum(BinaryWriter bw, object obj, DataTypes dataType, bool isRoot)
             {
                 if (IsCompressible(dataType))
@@ -582,6 +591,8 @@ namespace KGySoft.Serialization.Binary
             [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity",
                 Justification = "False alarm, the new analyzer includes the complexity of local methods.")]
             [SecurityCritical]
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private void WriteCompressible(BinaryWriter bw, object obj, DataTypes dataType, bool isRoot)
             {
                 #region Local Methods
@@ -669,6 +680,7 @@ namespace KGySoft.Serialization.Binary
 
             [SecurityCritical]
             [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Very simple method with many cases.")]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private void WritePureObject(BinaryWriter bw, object obj, DataTypes dataType, bool isRoot)
             {
                 switch (dataType)
@@ -1046,6 +1058,8 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private void WriteImpureObject(BinaryWriter bw, object obj, DataTypes dataType, (DataTypesEnumerator? DataTypes, Type? Type) knownElementType, bool isRoot)
             {
                 if (isRoot)
@@ -1073,6 +1087,8 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private void WriteRootCollection(BinaryWriter bw, object data, DataTypes dataType)
             {
                 Type type = data.GetType();
@@ -1099,6 +1115,8 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private void WriteNonRootCollection(BinaryWriter bw, object data, DataTypes dataType, (DataTypesEnumerator? DataTypes, Type? Type) knownElementType)
             {
                 Type? type = null;
@@ -1123,7 +1141,9 @@ namespace KGySoft.Serialization.Binary
             /// Writes additional info after a [series of] DataType stream needed to completely describe an exact type.
             /// </summary>
             [SecurityCritical]
-            private void WriteTypeNamesAndRanks(BinaryWriter bw, Type type, DataTypesEnumerator enumerator, bool allowOpenTypes)
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
+            private void WriteTypeNamesAndRanks(BinaryWriter bw, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]Type type,
+                DataTypesEnumerator enumerator, bool allowOpenTypes)
             {
                 while (enumerator.MoveNextExtracted())
                 {
@@ -1175,6 +1195,7 @@ namespace KGySoft.Serialization.Binary
             /// Encodes the type as a series of <see cref="DataTypes"/> elements.
             /// </summary>
             [SecurityCritical]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private CircularList<DataTypes> EncodeDataType(Type type, DataTypes dataType)
             {
                 Debug.Assert(IsElementType(dataType) || GetCollectionDataType(dataType) == dataType, $"Unexpected compound type: {dataType}");
@@ -1212,6 +1233,7 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private CircularList<DataTypes> EncodeArray(Type type)
             {
                 Type elementType = type.GetElementType()!;
@@ -1241,6 +1263,7 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private CircularList<DataTypes> EncodeGenericCollection(Type type, DataTypes collectionType)
             {
                 if (type.IsGenericTypeDefinition || type.ContainsGenericParameters)
@@ -1273,6 +1296,8 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private void WriteCollection(BinaryWriter bw, DataTypesEnumerator collectionDataTypes, object obj)
             {
                 Debug.Assert(collectionDataTypes.Current != DataTypes.Null, "Type description is invalid");
@@ -1370,6 +1395,8 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private void WriteArray(BinaryWriter bw, Array array, DataTypesEnumerator collectionDataTypes, bool writeSize)
             {
                 var type = array.GetType();
@@ -1470,6 +1497,8 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private void WriteTuple(BinaryWriter bw, object tuple, DataTypesEnumerator itemDataTypes)
             {
                 Type type = tuple.GetType();
@@ -1482,6 +1511,8 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private void  WriteArrayBackedCollection(BinaryWriter bw, object obj, CollectionSerializationInfo serInfo, DataTypesEnumerator collectionDataTypes)
             {
                 Array? array = serInfo.GetBackingArray!.Invoke(obj);
@@ -1499,6 +1530,8 @@ namespace KGySoft.Serialization.Binary
 
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             [SecurityCritical]
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private void WriteMemory(BinaryWriter bw, object memory, DataTypesEnumerator collectionDataTypes)
             {
                 // Normally we should use the MemoryMarshal.TryGet... methods but those are generic and convert Memory to ReadOnlyMemory implicitly.
@@ -1537,6 +1570,8 @@ namespace KGySoft.Serialization.Binary
 #endif
 
             [SecurityCritical]
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private void WriteCollectionElements(BinaryWriter bw, IEnumerable collection, DataTypesEnumerator elementCollectionDataTypes, Type collectionElementType)
             {
                 foreach (object? element in collection)
@@ -1548,6 +1583,8 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private void WriteDictionaryElements(BinaryWriter bw, IEnumerable collection, CollectionSerializationInfo dictionaryInfo,
                 DataTypesEnumerator keyValueCollectionDataTypes, Type collectionKeyType, Type collectionValueType)
             {
@@ -1575,6 +1612,8 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private void WriteElement(BinaryWriter bw, object? element, DataTypesEnumerator elementCollectionDataTypes, Type collectionElementType)
             {
                 DataTypes collectionDataType = GetCollectionDataType(elementCollectionDataTypes.Current);
@@ -1630,6 +1669,8 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private void WriteObjectGraph(BinaryWriter bw, object data, Type? knownElementType, bool isRoot)
             {
                 Debug.Assert(data is not Array, "Arrays cannot be serialized as an object graph.");
@@ -1653,6 +1694,8 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private void WriteDefaultObjectGraph(BinaryWriter bw, object data, Type? knownElementType)
             {
                 Type type = data.GetType();
@@ -1700,6 +1743,8 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private void WriteCustomObjectGraph(BinaryWriter bw, object data, ISerializationSurrogate? surrogate, Type? knownElementType)
             {
                 Type type = data.GetType();
@@ -1789,8 +1834,10 @@ namespace KGySoft.Serialization.Binary
                 }
             }
 
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private void OnSerializing(object obj) => ExecuteMethodsOfAttribute(obj, onSerializingAttribute);
 
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private void OnSerialized(object obj) => ExecuteMethodsOfAttribute(obj, onSerializedAttribute);
 
             private void WriteName(BinaryWriter bw, string name)
@@ -1809,11 +1856,14 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
-            private void WriteType(BinaryWriter bw, Type type, bool allowOpenTypes = false)
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
+            private void WriteType(BinaryWriter bw, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]Type type, bool allowOpenTypes = false)
                 => WriteType(bw, type, null, allowOpenTypes);
 
             [SecurityCritical]
-            private void WriteType(BinaryWriter bw, Type type, DataTypes dataType, bool allowOpenTypes = false)
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
+            private void WriteType(BinaryWriter bw, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]Type type,
+                DataTypes dataType, bool allowOpenTypes = false)
             {
                 // WriteType writes compressed as Compressible<T>
                 if (IsCompressed(dataType))
@@ -1831,7 +1881,9 @@ namespace KGySoft.Serialization.Binary
             /// <paramref name="allowOpenTypes"/> can be <see langword="true"/> only when a RuntimeType instance is serialized.
             /// </summary>
             [SecurityCritical]
-            private void WriteType(BinaryWriter bw, Type type, DataTypesEnumerator? encodedDataType, bool allowOpenTypes = false)
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
+            private void WriteType(BinaryWriter bw, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]Type type,
+                DataTypesEnumerator? encodedDataType, bool allowOpenTypes = false)
             {
                 Debug.Assert(allowOpenTypes || !(type.IsGenericTypeDefinition || type.IsGenericParameter),
                     $"Generic type definitions and generic parameters are allowed only when {nameof(allowOpenTypes)} is true.");
@@ -1885,6 +1937,7 @@ namespace KGySoft.Serialization.Binary
                 WriteNewType(bw, type, allowOpenTypes, boundAsmName, boundTypeName);
             }
 
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private void GetBoundNames(Type type, out string? boundAsmName, out string? boundTypeName)
             {
                 Debug.Assert(!type.HasElementType, $"Arrays, pointers and ByRef types should be handled by {nameof(TryWriteTypeByDataType)}");
@@ -1957,7 +2010,9 @@ namespace KGySoft.Serialization.Binary
             /// Returning <see langword="true"/> even for partial success (array, generics) because then the beginning of the type is encoded by DataTypes.
             /// </summary>
             [SecurityCritical]
-            private bool TryWriteTypeByDataType(BinaryWriter bw, Type type, bool allowOpenTypes, DataTypesEnumerator? encodedDataTypes)
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
+            private bool TryWriteTypeByDataType(BinaryWriter bw, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]Type type,
+                bool allowOpenTypes, DataTypesEnumerator? encodedDataTypes)
             {
                 #region Local Methods
                 
@@ -2076,6 +2131,7 @@ namespace KGySoft.Serialization.Binary
             /// If open types are allowed a generic type definition is followed by a specifier; otherwise, by type arguments.
             /// </summary>
             [SecurityCritical]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private void WriteNewType(BinaryWriter bw, Type type, bool allowOpenTypes, string? boundAsmName, string? boundTypeName)
             {
                 Debug.Assert(allowOpenTypes || !(type.IsGenericTypeDefinition || type.IsGenericParameter), $"Generic type definitions and generic parameters are allowed only when {nameof(allowOpenTypes)} is true.");
@@ -2197,6 +2253,7 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private void WriteGenericMethodParameter(BinaryWriter bw, Type type)
             {
                 Debug.Assert(type.IsGenericParameter && type.DeclaringMethod != null, "Generic method argument is expected here");
@@ -2217,6 +2274,7 @@ namespace KGySoft.Serialization.Binary
 
 #if NET8_0_OR_GREATER // note though that deserialization is not possible in .NET 8-10
             [SecurityCritical]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private void WriteFunctionPointer(BinaryWriter bw, Type type, bool allowOpenTypes)
             {
                 Debug.Assert(type.IsFunctionPointer, "FunctionPointer is expected here");
@@ -2318,6 +2376,7 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private void WriteBinarySerializable(BinaryWriter bw, IBinarySerializable instance, (DataTypesEnumerator? DataTypes, Type? Type) knownElementType, bool isRoot)
             {
                 bool writeType = knownElementType.Type == null || !knownElementType.Type.IsSealed;
@@ -2337,6 +2396,8 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private void WriteValueType(BinaryWriter bw, ValueType data, (DataTypesEnumerator? DataTypes, Type? Type) knownElementType, bool isRoot)
             {
                 bool writeType = knownElementType.Type == null || !knownElementType.Type.IsSealed;

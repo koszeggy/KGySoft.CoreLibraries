@@ -19,6 +19,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.Design.Serialization;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
@@ -77,12 +78,21 @@ namespace KGySoft.ComponentModel
 
         #region Private Properties
 
-        private static MethodInfo DeserializeMethod => deserializeMethod ??= typeof(BinarySerializer)
-            .GetMember(nameof(BinarySerializer.Deserialize), MemberTypes.Method, BindingFlags.Public | BindingFlags.Static)
-            .Cast<MethodInfo>()
-            .First(mi => !mi.IsGenericMethodDefinition && mi.GetParameters()
-                .Select(p => p.ParameterType)
-                .SequenceEqual(deserializeParameters))!;
+        private static MethodInfo DeserializeMethod
+        {
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
+            get => deserializeMethod ??= typeof(BinarySerializer)
+#if NET45_OR_GREATER || NETSTANDARD || NETCOREAPP
+                .GetTypeInfo().GetDeclaredMethods(nameof(BinarySerializer.Deserialize))
+#else
+                .GetMember(nameof(BinarySerializer.Deserialize), MemberTypes.Method, BindingFlags.Public | BindingFlags.Static)
+                .Cast<MethodInfo>()
+#endif
+                .First(mi => !mi.IsGenericMethodDefinition && mi.GetParameters()
+                    .Select(p => p.ParameterType)
+                    .SequenceEqual(deserializeParameters));
+        }
 
         #endregion
 
@@ -136,6 +146,10 @@ namespace KGySoft.ComponentModel
         /// This type converter supports <see cref="string"/> and <see cref="Array">byte[]</see> types.</param>
         /// <returns>An <see cref="object" /> that represents the converted value.</returns>
         [SecuritySafeCritical]
+        [RequiresDynamicCode("If the destination type is InstanceDescriptor, this method references a binary deserialization method, which requires dynamic code. "
+            + BinarySerializer.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode("If the destination type is InstanceDescriptor, this method references a binary deserialization method, which may require unreferenced code. "
+            + BinarySerializer.RequiresUnreferencedCodeMessage)]
         public override object? ConvertTo(ITypeDescriptorContext? context, CultureInfo? culture, object? value, Type destinationType)
         {
             if (!destinationType.In(supportedTypes))
@@ -154,6 +168,8 @@ namespace KGySoft.ComponentModel
         /// <param name="value">The <see cref="object"/> to convert.
         /// This type converter supports <see cref="string"/> and <see cref="Array">byte[]</see> types.</param>
         /// <returns>An <see cref="object" /> that represents the converted value.</returns>
+        [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
         public override object? ConvertFrom(ITypeDescriptorContext? context, CultureInfo? culture, object? value)
         {
             byte[]? bytes = null;

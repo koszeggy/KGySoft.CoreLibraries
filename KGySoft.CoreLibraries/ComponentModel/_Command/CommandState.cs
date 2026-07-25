@@ -19,6 +19,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 #if !NET35
 using System.Dynamic;
 #endif
@@ -346,13 +347,28 @@ namespace KGySoft.ComponentModel
         AttributeCollection ICustomTypeDescriptor.GetAttributes() => new AttributeCollection(null);
         string ICustomTypeDescriptor.GetClassName() => nameof(CommandState);
         string ICustomTypeDescriptor.GetComponentName() => ToString()!;
+        
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2046:RequiresUnreferencedCodeMismatch",
+            Justification = "Returns the non-derived TypeConverter, which is safe, as its only [RequiresUnreferencedCode] member is GetProperties, which returns null.")]
         TypeConverter ICustomTypeDescriptor.GetConverter() => new TypeConverter();
+
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2046:RequiresUnreferencedCodeMismatch", Justification = "Returns null")]
         EventDescriptor? ICustomTypeDescriptor.GetDefaultEvent() => null;
+
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2046:RequiresUnreferencedCodeMismatch", Justification = "Returns null")]
         PropertyDescriptor? ICustomTypeDescriptor.GetDefaultProperty() => null;
+
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2046:RequiresUnreferencedCodeMismatch", Justification = "Returns null")]
         object? ICustomTypeDescriptor.GetEditor(Type editorBaseType) => null;
         EventDescriptorCollection ICustomTypeDescriptor.GetEvents() => new EventDescriptorCollection(null);
+
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2046:RequiresUnreferencedCodeMismatch", Justification = "Returns an empty collection")]
         EventDescriptorCollection ICustomTypeDescriptor.GetEvents(Attribute[]? attributes) => new EventDescriptorCollection(null);
+
+        [RequiresUnreferencedCode("The type of the dynamically added state properties cannot be statically discovered.")]
         PropertyDescriptorCollection ICustomTypeDescriptor.GetProperties() => GetProperties();
+
+        [RequiresUnreferencedCode("The type of the dynamically added state properties cannot be statically discovered.")]
         PropertyDescriptorCollection ICustomTypeDescriptor.GetProperties(Attribute[]? attributes) => attributes.IsNullOrEmpty() ? GetProperties() : new PropertyDescriptorCollection(null);
         object ICustomTypeDescriptor.GetPropertyOwner(PropertyDescriptor? pd) => this;
 

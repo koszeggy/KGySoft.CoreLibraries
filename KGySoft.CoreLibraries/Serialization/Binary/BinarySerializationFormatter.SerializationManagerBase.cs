@@ -21,6 +21,7 @@ using System.Collections;
 using System.Collections.Frozen;
 #endif
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
@@ -160,6 +161,8 @@ namespace KGySoft.Serialization.Binary
             /// The result is <see cref="DataTypes.Null"/> if the type is ignored or the special support is disabled for it
             /// so it must be determined by the regular ways if it can be serialized.
             /// </summary>
+            [UnconditionalSuppressMessage("TrimAnalysis", "IL2111:DynamicallyAccessedMembersAttributeViaReflection",
+                Justification = "Accessed via SerializationManager.GetDataType, which is annotated.")]
             private protected static readonly LockFreeCache<Type, DataTypes> SpecialSupportCache
                 = new(DetermineSpecialSupport, null, LockFreeCacheOptions.Profile256);
 
@@ -245,7 +248,9 @@ namespace KGySoft.Serialization.Binary
 
             #region Private Methods
 
-            private static IEnumerable<MethodInfo>? GetMethodsWithAttribute(Type attribute, Type type)
+            [UnconditionalSuppressMessage("TrimAnalysis", "IL2075:DynamicallyAccessedMembersReturnValueAnnotationMismatch",
+                Justification = "False alarm, all methods include the methods of the base types as well.")]
+            private static IEnumerable<MethodInfo>? GetMethodsWithAttribute(Type attribute, [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllMethods)]Type type)
             {
                 Dictionary<Type, IEnumerable<MethodInfo>?> cacheItem = methodsByAttributeCache[type];
 
@@ -285,7 +290,7 @@ namespace KGySoft.Serialization.Binary
                 }
             }
 
-            private static DataTypes DetermineSpecialSupport(Type type)
+            private static DataTypes DetermineSpecialSupport([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]Type type)
             {
                 // When this method is called with an abstract type, then the result represents the abstract type itself
                 // that can be used in type encodings, such as generic type arguments. We allow this only when every possible instance is supported.
@@ -391,12 +396,13 @@ namespace KGySoft.Serialization.Binary
                 return surrogate != null;
             }
 
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private protected void ExecuteMethodsOfAttribute(object obj, Type attributeType)
             {
                 if (IgnoreSerializationMethods)
                     return;
 
-                var methods = GetMethodsWithAttribute(attributeType, obj.GetType());
+                IEnumerable<MethodInfo>? methods = GetMethodsWithAttribute(attributeType, obj.GetType());
                 if (methods == null)
                     return;
                 foreach (MethodInfo method in methods)

@@ -452,7 +452,9 @@ namespace KGySoft.Serialization.Binary
                 #endregion
 
                 #region Constructors
-                
+
+                [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+                [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
                 internal ArrayBuilder(BinaryReader br, DataTypeDescriptor descriptor, bool safeMode) : this()
                 {
                     reader = br;
@@ -551,6 +553,7 @@ namespace KGySoft.Serialization.Binary
 #endif
                 }
 
+                [RequiresDynamicCode("The code for an array of the element type might not be available.")]
                 internal Array ToArray()
                 {
                     if (array != null)
@@ -758,17 +761,17 @@ namespace KGySoft.Serialization.Binary
             /// </summary>
             [SecurityCritical]
             [SuppressMessage("ReSharper", "MemberCanBePrivate.Local", Justification = "Needed to be internal for .NET Framework 3.5")]
-            internal static object CreateKnownEmptyObject(Type type)
+            internal static object CreateKnownEmptyObject([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors)]Type type)
             {
                 if (type.IsValueType)
-                    return Activator.CreateInstance(type)!;
+                    return Activator.CreateInstance(type)!; // requires PublicParameterlessConstructor annotation, though for value types it rarely means an actual constructor
 
 #if NETFRAMEWORK || NETSTANDARD2_0
                 if (!Reflector.TryCreateUninitializedObject(type, out object? obj))
                     Throw.SerializationException(Res.BinarySerializationCannotCreateUninitializedObject(type));
                 return obj;
 #else
-                return RuntimeHelpers.GetUninitializedObject(type);
+                return RuntimeHelpers.GetUninitializedObject(type); // requires [non]public constructors, though they are not called
 #endif
             }
 
@@ -902,6 +905,7 @@ namespace KGySoft.Serialization.Binary
                     usage.SetValue(finalObject);
             }
 
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private static object? GetPlaceholderValue(object? value, [NoEnumeration]IEnumerable collection)
                 => value is IObjectReference ? collection.GetType().GetCollectionElementType()!.GetDefaultValue() : value;
 
@@ -914,6 +918,8 @@ namespace KGySoft.Serialization.Binary
             #region Internal Methods
 
             [SecurityCritical]
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             internal object? Deserialize(BinaryReader br)
             {
                 try
@@ -942,6 +948,8 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             internal object? ReadWithType(BinaryReader br, DataTypeDescriptor? knownElementType = null)
             {
                 // 1.) getting whether the current instance is in cache
@@ -1005,6 +1013,8 @@ namespace KGySoft.Serialization.Binary
             /// Reads a type from the serialization stream.
             /// <paramref name="allowOpenTypes"/> can be <see langword="true"/> only when type is deserialized as an instance.
             /// </summary>
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             internal DataTypeDescriptor ReadType(BinaryReader br, bool allowOpenTypes)
             {
                 DataTypeDescriptor result;
@@ -1074,6 +1084,8 @@ namespace KGySoft.Serialization.Binary
                 return result;
             }
 
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             internal DataTypeDescriptor HandleGenericTypeDef(BinaryReader br, DataTypeDescriptor descriptor, bool allowOpenTypes, bool addToCache = true)
             {
                 Type typeDef = descriptor.Type!;
@@ -1159,6 +1171,8 @@ namespace KGySoft.Serialization.Binary
             #region Private Methods
 
             [SecurityCritical]
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private object? ReadRoot(BinaryReader br)
             {
                 DataTypes dataType = ReadDataType(br);
@@ -1219,6 +1233,8 @@ namespace KGySoft.Serialization.Binary
                 return CreateCollection(br, addToCache, descriptor);
             }
 
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private DataTypeDescriptor HandleGenericMethodParameter(BinaryReader br)
             {
                 Type declaringType = ReadType(br, true).Type!;
@@ -1241,6 +1257,8 @@ namespace KGySoft.Serialization.Binary
             /// Creates and populates array
             /// </summary>
             [SecurityCritical]
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private Array CreateArray(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor)
             {
                 // using a builder to prevent possible OutOfMemoryException attacks in SafeMode
@@ -1293,6 +1311,8 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private object CreateTuple(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor)
             {
                 Debug.Assert(descriptor.IsTuple);
@@ -1310,6 +1330,8 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private object CreateArrayBackedCollection(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor)
             {
                 Type type = descriptor.GetTypeToCreate();
@@ -1375,6 +1397,8 @@ namespace KGySoft.Serialization.Binary
 
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             [SecurityCritical]
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private object CreateMemory(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor)
             {
                 Debug.Assert(descriptor.IsMemory);
@@ -1423,6 +1447,8 @@ namespace KGySoft.Serialization.Binary
                 Justification = "The .NET Framework 3.5 version has to contain more checks due to non-generic handling nullable element types.")]
 #endif
             [SecurityCritical]
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private object CreateCollection(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor)
             {
                 Type type = descriptor.GetTypeToCreate();
@@ -1566,6 +1592,8 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private object? ReadElement(BinaryReader br, DataTypeDescriptor elementDescriptor)
             {
                 // single element
@@ -1590,6 +1618,8 @@ namespace KGySoft.Serialization.Binary
             /// <returns>The deserialized object.</returns>
             [SecurityCritical]
             [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Long but very straightforward switch")]
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private object? ReadObject(BinaryReader br, bool? addToCache, DataTypeDescriptor dataTypeDescriptor)
             {
                 int id = 0;
@@ -1956,6 +1986,8 @@ namespace KGySoft.Serialization.Binary
             };
 
             [SecurityCritical]
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private object ReadBinarySerializable(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor)
             {
                 // checking instance id
@@ -1996,6 +2028,8 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private object? ReadObjectGraph(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor)
             {
                 // When element types may differ, reading element with data type
@@ -2077,6 +2111,8 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private void ReadDefaultObjectGraph(BinaryReader br, object obj)
             {
                 if (PreferInvokingDefaultCtor)
@@ -2148,6 +2184,8 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private object ReadCustomObjectGraph(BinaryReader br, object obj, ISerializationSurrogate? surrogate, ISurrogateSelector? selector)
             {
                 Type type = obj.GetType();
@@ -2185,6 +2223,8 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private object ReadDefaultObjectGraphAsCustom(BinaryReader br, object obj, ISerializationSurrogate? surrogate, ISurrogateSelector? selector)
             {
                 Type type = obj.GetType();
@@ -2251,6 +2291,8 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private void ReadCustomObjectGraphAsDefault(BinaryReader br, object obj)
             {
                 if (PreferInvokingDefaultCtor)
@@ -2282,6 +2324,8 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
+            [RequiresDynamicCode(BinarySerializer.ValueTypeSerializationRequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.ValueTypeSerializationRequiresUnreferencedCodeMessage)]
             private object ReadValueType(BinaryReader br, DataTypeDescriptor descriptor)
             {
                 Type structType = Nullable.GetUnderlyingType(descriptor.Type!) ?? descriptor.Type!;
@@ -2297,7 +2341,7 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
-            private object CreateEmptyObject(bool useSurrogate, Type type)
+            private object CreateEmptyObject(bool useSurrogate, [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors)]Type type)
             {
                 if (!useSurrogate && SafeMode)
                 {
@@ -2315,8 +2359,10 @@ namespace KGySoft.Serialization.Binary
                 return obj;
             }
 
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private void OnDeserializing(object obj) => ExecuteMethodsOfAttribute(obj, onDeserializingAttribute);
 
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private void OnDeserialized(object? obj)
             {
                 if (obj == null || IgnoreSerializationMethods)
@@ -2391,6 +2437,7 @@ namespace KGySoft.Serialization.Binary
                 trackedUsages.Add(new FieldUsage(obj, field));
             }
 
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private void AddListElement(IList list, object? value, DataTypeDescriptor listDescriptor, bool isTrackedProxyCollection)
             {
                 UsageReferences? trackedUsages = value == null ? null : objectsBeingDeserialized?.GetValueOrDefault(value);
@@ -2417,6 +2464,8 @@ namespace KGySoft.Serialization.Binary
                 list.Add(value);
             }
 
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private void AddCollectionElement([NoEnumeration]IEnumerable collection, DataTypeDescriptor collectionDescriptor, MethodAccessor addMethod, object? value, bool isTrackedProxyCollection)
             {
                 UsageReferences? trackedUsages = value == null ? null : objectsBeingDeserialized?.GetValueOrDefault(value);
@@ -2525,6 +2574,7 @@ namespace KGySoft.Serialization.Binary
                 addMethod.Invoke(dictionary, key, value);
             }
 
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private void AddOrderedDictionaryElement(IDictionary dict, MethodAccessor? insertMethod, object? key, object? value, int index, bool isTrackedProxyCollection)
             {
                 Debug.Assert(!isTrackedProxyCollection, "So far no ordered dictionary with a proxy collection (e.g. FrozenOrderedDictionary) was implemented. Add the required implementation.");
@@ -2616,6 +2666,7 @@ namespace KGySoft.Serialization.Binary
                 }
             }
 
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private DataTypeDescriptor ReadNewTypeWithAssembly(string assemblyName, string typeName)
             {
                 // 1.) Binder
@@ -2712,6 +2763,7 @@ namespace KGySoft.Serialization.Binary
                 return result;
             }
 
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private Type ResolveType((Assembly? Assembly, string? StoredName) assembly, string typeName)
             {
                 // 1.) Binder

@@ -48,7 +48,7 @@ namespace KGySoft.Serialization.Xml
         {
             #region Fields
 
-            internal Type? Type;
+            [DynamicallyAccessedMembers(XmlSerializer.NeededMembers)]internal Type? Type;
             internal XmlReader Reader;
             internal object? ExistingInstance;
             internal object? Result;
@@ -140,6 +140,8 @@ namespace KGySoft.Serialization.Xml
         /// <summary>
         /// Deserializes an object using the provided <see cref="XmlReader"/> in <paramref name="reader"/> parameter.
         /// </summary>
+        [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(XmlSerializer.RequiresUnreferencedCodeMessage)]
         internal object? Deserialize(XmlReader reader)
         {
             if (reader == null!)
@@ -182,6 +184,8 @@ namespace KGySoft.Serialization.Xml
         /// Deserializes an object or collection of objects.
         /// Position is before content (on parent start element). On exit position is in parent close element.
         /// </summary>
+        [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(XmlSerializer.RequiresUnreferencedCodeMessage)]
         public void DeserializeContent(XmlReader reader, object obj)
         {
             if (obj == null!)
@@ -234,7 +238,10 @@ namespace KGySoft.Serialization.Xml
         /// <summary>
         /// Deserializes a non-populatable collection by an initializer collection.
         /// </summary>
-        private object DeserializeContentByInitializerCollection(XmlReader reader, ConstructorInfo collectionCtor, Type collectionElementType, bool isDictionary)
+        [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(XmlSerializer.RequiresUnreferencedCodeMessage)]
+        private object DeserializeContentByInitializerCollection(XmlReader reader, ConstructorInfo collectionCtor,
+            [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors)]Type collectionElementType, bool isDictionary)
         {
             IEnumerable initializerCollection = collectionElementType.CreateInitializerCollection(isDictionary);
             var members = new Dictionary<MemberInfo, object?>();
@@ -248,7 +255,11 @@ namespace KGySoft.Serialization.Xml
         /// In this case members have to be stored for later initialization into <paramref name="members"/> and <paramref name="obj"/> is a populatable collection for sure.
         /// <paramref name="collectionElementType"/> is <see langword="null"/> only if <paramref name="objRealType"/> is not a supported collection.
         /// </summary>
-        private void DeserializeMembersAndElements(XmlReader reader, object obj, Type objRealType, Type? collectionElementType, Dictionary<MemberInfo, object?>? members)
+        [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(XmlSerializer.RequiresUnreferencedCodeMessage)]
+        private void DeserializeMembersAndElements(XmlReader reader, object obj,
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]Type objRealType,
+            Type? collectionElementType, Dictionary<MemberInfo, object?>? members)
         {
             while (true)
             {
@@ -327,7 +338,9 @@ namespace KGySoft.Serialization.Xml
         /// If <paramref name="result"/> is a different instance to <paramref name="existingInstance"/>, then content if existing instance cannot be deserialized.
         /// </summary>
         [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "False alarm, the new analyzer includes the complexity of local methods.")]
-        private bool TryDeserializeObject(Type? type, XmlReader reader, object? existingInstance, out object? result)
+        [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(XmlSerializer.RequiresUnreferencedCodeMessage)]
+        private bool TryDeserializeObject([DynamicallyAccessedMembers(XmlSerializer.NeededMembers)]Type? type, XmlReader reader, object? existingInstance, out object? result)
         {
             #region Local Methods to reduce complexity
 
@@ -391,6 +404,8 @@ namespace KGySoft.Serialization.Xml
                 }
             }
 
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             void DeserializeBinary(ref TryDeserializeObjectContext ctx)
             {
                 if (ctx.Reader.IsEmptyElement)
@@ -416,6 +431,7 @@ namespace KGySoft.Serialization.Xml
                 ReadToNodeType(ctx.Reader, XmlNodeType.EndElement);
             }
 
+            [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)]
             bool TryDeserializeComplexObject(ref TryDeserializeObjectContext ctx)
             {
                 if (ctx.Type == null || ctx.Reader.IsEmptyElement)
@@ -576,6 +592,8 @@ namespace KGySoft.Serialization.Xml
         /// XmlReader version. Position is before content (on parent start element). On exit position is on parent close element.
         /// Parent is not empty here.
         /// </summary>
+        [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(XmlSerializer.RequiresUnreferencedCodeMessage)]
         private Array DeserializeArray(Array? array, Type? elementType, XmlReader reader, bool canRecreateArray)
         {
             var builder = new ArrayBuilder(array, elementType, reader[XmlSerializer.AttributeLength], reader[XmlSerializer.AttributeDim], canRecreateArray, SafeMode != XmlSafeMode.Unsafe);
@@ -635,6 +653,8 @@ namespace KGySoft.Serialization.Xml
         }
 
         [SecuritySafeCritical]
+        [RequiresDynamicCode(BinarySerializer.ValueTypeSerializationRequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(BinarySerializer.ValueTypeSerializationRequiresUnreferencedCodeMessage)]
         private void DeserializeStructBinary(ref TryDeserializeObjectContext context)
         {
             if (SafeMode != XmlSafeMode.Unsafe && context.Type!.HasReferenceOrPointer())

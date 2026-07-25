@@ -60,6 +60,7 @@ namespace KGySoft.Reflection
 
         #region Methods
 
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "It is handled if dynamic code is not supported")]
         private protected override Func<object?[]?, object> CreateGeneralInitializer()
         {
             ConstructorInfo ctor = (ConstructorInfo)MemberInfo;
@@ -114,6 +115,7 @@ namespace KGySoft.Reflection
 #endif
         }
 
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "It is handled if dynamic code is not supported")]
         private protected override Delegate CreateNonGenericInitializer()
         {
             #region Local Methods
@@ -210,6 +212,8 @@ namespace KGySoft.Reflection
         }
 
         [SuppressMessage("ReSharper", "CoVariantArrayConversion", Justification = "Expression.New does not write the parameters")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "GetGenericType for the same generic delegate type as used statically in the generic accessor methods.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "GetGenericType for the same generic delegate type as used statically in the generic accessor methods.")]
         private protected override Delegate CreateGenericInitializer()
         {
             ConstructorInfo ctor = (ConstructorInfo)MemberInfo;

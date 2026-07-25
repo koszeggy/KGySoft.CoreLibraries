@@ -18,6 +18,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -281,7 +282,8 @@ namespace KGySoft.CoreLibraries
         /// <param name="genericTypeDefinition">The generic type definition.</param>
         /// <returns><see langword="true"/> if the given <paramref name="type"/> implements the specified <paramref name="genericTypeDefinition"/>; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> or <paramref name="genericTypeDefinition"/> is <see langword="null"/>.</exception>
-        public static bool IsImplementationOfGenericType(this Type type, Type genericTypeDefinition) => IsImplementationOfGenericType(type, genericTypeDefinition, out var _);
+        public static bool IsImplementationOfGenericType([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]this Type type, Type genericTypeDefinition)
+            => IsImplementationOfGenericType(type, genericTypeDefinition, out var _);
 
         /// <summary>
         /// Gets whether the given <paramref name="type"/>, its base classes or interfaces implement the specified <paramref name="genericTypeDefinition"/>.
@@ -291,7 +293,8 @@ namespace KGySoft.CoreLibraries
         /// <param name="genericType">When this method returns <see langword="true"/>, then this parameter contains the found implementation of the specified <paramref name="genericTypeDefinition"/>.</param>
         /// <returns><see langword="true"/> if the given <paramref name="type"/> implements the specified <paramref name="genericTypeDefinition"/>; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> or <paramref name="genericTypeDefinition"/> is <see langword="null"/>.</exception>
-        public static bool IsImplementationOfGenericType(this Type type, Type genericTypeDefinition, [MaybeNullWhen(false)]out Type genericType)
+        public static bool IsImplementationOfGenericType([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]this Type type,
+            Type genericTypeDefinition, [MaybeNullWhen(false)]out Type genericType)
         {
             if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
@@ -345,7 +348,8 @@ namespace KGySoft.CoreLibraries
         /// running concurrent operation on a different thread that expects to use another converter for the same type.</note>
         /// </remarks>
         [SecuritySafeCritical]
-        public static void RegisterTypeConverter<TConverter>(this Type type) where TConverter : TypeConverter
+        public static void RegisterTypeConverter<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]TConverter>(this Type type)
+            where TConverter : TypeConverter
         {
             if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
@@ -386,7 +390,8 @@ namespace KGySoft.CoreLibraries
         /// and <typeparamref name="TConverter"/>, then this method should be also called the same number of times to restore the original converter.</para>
         /// </remarks>
         [SecuritySafeCritical]
-        public static bool UnregisterTypeConverter<TConverter>(this Type type) where TConverter : TypeConverter
+        public static bool UnregisterTypeConverter<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]TConverter>(this Type type)
+            where TConverter : TypeConverter
         {
             if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
@@ -558,22 +563,22 @@ namespace KGySoft.CoreLibraries
         internal static bool CanBeParsedNatively(this Type type)
             => type.IsEnum || nativelyParsedTypes.Contains(type) || type == Reflector.RuntimeType;
 
-        internal static Type? GetCollectionElementType(this Type type)
+        internal static Type? GetCollectionElementType([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]this Type type)
         {
             // Array
             if (type.IsArray)
                 return type.GetElementType()!;
 
             // not IEnumerable
-            if (!Reflector.IEnumerableType.IsAssignableFrom(type))
+            if (!typeof(IEnumerable).IsAssignableFrom(type))
                 return null;
 
-            if (type.IsImplementationOfGenericType(Reflector.IEnumerableGenType, out Type? genericEnumerableType))
+            if (type.IsImplementationOfGenericType(typeof(IEnumerable<>), out Type? genericEnumerableType))
                 return genericEnumerableType.GetGenericArguments()[0];
-            return Reflector.IDictionaryType.IsAssignableFrom(type) ? Reflector.DictionaryEntryType
-                : type == Reflector.BitArrayType ? Reflector.BoolType
-                : type == Reflector.StringCollectionType ? Reflector.StringType
-                : Reflector.ObjectType;
+            return typeof(IDictionary).IsAssignableFrom(type) ? typeof(DictionaryEntry)
+                : type == typeof(BitArray) ? typeof(bool)
+                : type == typeof(StringCollection) ? typeof(string)
+                : typeof(object);
         }
 
         /// <summary>
@@ -587,7 +592,12 @@ namespace KGySoft.CoreLibraries
         /// <param name="elementType">The element type. For non-generic collections it is <see cref="object"/>.</param>
         /// <param name="isDictionary"><see langword="true"/>&#160;<paramref name="type"/> is a dictionary.</param>
         /// <returns><see langword="true"/> if <paramref name="type"/> is a supported collection to populate by reflection; otherwise, <see langword="false"/>.</returns>
-        internal static bool IsSupportedCollectionForReflection(this Type type, out ConstructorInfo? defaultCtor, out ConstructorInfo? collectionCtor, [MaybeNullWhen(false)]out Type elementType, out bool isDictionary)
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2111:DynamicallyAccessedMembersAttributeViaReflection",
+            Justification = "False alarm, GetIfSupportedCollectionForReflection is called with the type parameter, which is annotated.")]
+        [RequiresDynamicCode(nameof(GetIfSupportedCollectionForReflection))]
+        [RequiresUnreferencedCode(nameof(GetIfSupportedCollectionForReflection))]
+        internal static bool IsSupportedCollectionForReflection([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]this Type type,
+            out ConstructorInfo? defaultCtor, out ConstructorInfo? collectionCtor, [MaybeNullWhen(false)]out Type elementType, out bool isDictionary)
         {
             if (isSupportedCollectionForReflectionCache == null)
             {
@@ -608,7 +618,9 @@ namespace KGySoft.CoreLibraries
         /// Creates an initializer collection for types for which <see cref="IsSupportedCollectionForReflection"/> returns <see langword="true"/> and returns a non-<see langword="null"/> collection initializer constructor.
         /// After the collection is populated call <see cref="EnumerableExtensions.AdjustInitializerCollection"/> before calling the constructor.
         /// </summary>
-        internal static IEnumerable CreateInitializerCollection(this Type collectionElementType, bool isDictionary)
+        [RequiresDynamicCode(nameof(GetGenericType))]
+        [RequiresUnreferencedCode(nameof(GetGenericType))]
+        internal static IEnumerable CreateInitializerCollection([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors)]this Type collectionElementType, bool isDictionary)
             => isDictionary
                 ? (IEnumerable)(collectionElementType.IsGenericType
                     ? CreateInstanceAccessor.GetAccessor(Reflector.DictionaryGenType.GetGenericType(collectionElementType.GetGenericArguments())).CreateInstance()
@@ -621,7 +633,7 @@ namespace KGySoft.CoreLibraries
         /// </summary>
         /// <param name="type">The type to test</param>
         /// <returns>True if <paramref name="type"/> is a collection type: implements <see cref="IList"/> or <see cref="ICollection{T}"/></returns>
-        internal static bool IsCollection(this Type type)
+        internal static bool IsCollection([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]this Type type)
         {
             return Reflector.IListType.IsAssignableFrom(type) || Reflector.IDictionaryType.IsAssignableFrom(type)
                 || type.IsGenericTypeOf(Reflector.ICollectionGenType) || type.GetInterfaces().Any(i => i.Name == collectionGenTypeName && i.IsGenericTypeOf(Reflector.ICollectionGenType));
@@ -634,7 +646,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="type">The type to test</param>
         /// <param name="instance">The object instance to test</param>
         /// <returns><see langword="true"/> if <paramref name="type"/> is a collection type: implements <see cref="IList"/> or <see cref="ICollection{T}"/> and <c><paramref name="instance"/>.IsReadOnly</c> returns <see langword="false"/>.</returns>
-        internal static bool IsReadWriteCollection(this Type type, object? instance)
+        internal static bool IsReadWriteCollection([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]this Type type, object? instance)
         {
             if (instance == null)
                 return false;
@@ -654,7 +666,7 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Almost the same as <see cref="IsReadWriteCollection"/> but returns false for fixed size collections making sure that Add/Clear methods work.
         /// </summary>
-        internal static bool IsPopulatableCollection(this Type type, object? instance)
+        internal static bool IsPopulatableCollection([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]this Type type, object? instance)
         {
             if (instance == null)
                 return false;
@@ -671,7 +683,9 @@ namespace KGySoft.CoreLibraries
             return IsGenericReadWriteCollection(type, instance);
         }
 
-        internal static ConstructorInfo? GetDefaultConstructor(this Type type)
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2070:TypeDynamicallyAccessedMemberTypesAnnotationMismatch",
+            Justification = "We could annotate the lambda parameter accordingly, but that would then cause IL2111. And the type parameter of the wrapper method is annotated anyway.")]
+        internal static ConstructorInfo? GetDefaultConstructor([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors)]this Type type)
         {
             if (defaultCtorCache == null)
             {
@@ -683,10 +697,13 @@ namespace KGySoft.CoreLibraries
             return defaultCtorCache[type];
         }
 
-        internal static bool CanBeCreatedWithoutParameters(this Type type)
+        internal static bool CanBeCreatedWithoutParameters([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors)]this Type type)
             => type.IsValueType || type.GetDefaultConstructor() != null;
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
+#if !NET9_0_OR_GREATER
+        [RequiresDynamicCode(nameof(GetSize))]
+#endif
         internal static int SizeOf(this Type type)
         {
 #if NET9_0_OR_GREATER
@@ -700,7 +717,8 @@ namespace KGySoft.CoreLibraries
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        internal static bool IsManaged(this Type type)
+        [RequiresUnreferencedCode("Fields of recursively accessed complex types might be trimmed. Omitted fields may cause a false negative result in native AOT mode.")]
+        internal static bool IsManaged([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllFields)]this Type type)
         {
             if (hasReferenceOrPointerCache == null)
                 Interlocked.CompareExchange(ref hasReferenceOrPointerCache, new LockFreeCache<(Type, bool), bool>(GetHasReferenceOrPointer, null, LockFreeCacheOptions.Profile128), null);
@@ -708,14 +726,16 @@ namespace KGySoft.CoreLibraries
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        internal static bool HasReferenceOrPointer(this Type type)
+        [RequiresUnreferencedCode("Fields of recursively accessed complex types might be trimmed. Omitted fields may cause a false negative result in native AOT mode.")]
+        internal static bool HasReferenceOrPointer([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllFields)]this Type type)
         {
             if (hasReferenceOrPointerCache == null)
                 Interlocked.CompareExchange(ref hasReferenceOrPointerCache, new LockFreeCache<(Type, bool), bool>(GetHasReferenceOrPointer, null, LockFreeCacheOptions.Profile128), null);
             return hasReferenceOrPointerCache[(type, true)];
         }
 
-        internal static IList<Delegate> GetConversions(this Type sourceType, Type targetType, bool? exactMatch)
+        internal static IList<Delegate> GetConversions([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]this Type sourceType,
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]Type targetType, bool? exactMatch)
         {
             // the exact match first
             ThreadSafeDictionary<Type, ThreadSafeDictionary<Type, List<Delegate>>>? conv = registeredConversions;
@@ -780,7 +800,8 @@ namespace KGySoft.CoreLibraries
                 : Type.EmptyTypes;
         }
 
-        internal static ICollection<Type> GetNonExactConversionIntermediateTypes(this Type sourceType, Type targetType)
+        internal static ICollection<Type> GetNonExactConversionIntermediateTypes([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]this Type sourceType,
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]Type targetType)
         {
             var result = new HashSet<Type>();
 
@@ -816,6 +837,8 @@ namespace KGySoft.CoreLibraries
             return result;
         }
 
+        [RequiresDynamicCode(nameof(CreateGenericType))]
+        [RequiresUnreferencedCode(nameof(CreateGenericType))]
         internal static Type GetGenericType(this Type genTypeDef, params Type[] typeArgs)
         {
             Debug.Assert(!typeArgs.IsNullOrEmpty());
@@ -824,6 +847,8 @@ namespace KGySoft.CoreLibraries
             return genericTypeCache[(genTypeDef, new TypesKey(typeArgs))];
         }
 
+        [RequiresDynamicCode(nameof(CreateGenericMethod))]
+        [RequiresUnreferencedCode(nameof(CreateGenericMethod))]
         internal static MethodInfo GetGenericMethod(this MethodInfo genMethodDef, params Type[] typeArgs)
         {
             Debug.Assert(!typeArgs.IsNullOrEmpty());
@@ -901,7 +926,7 @@ namespace KGySoft.CoreLibraries
 #endif
 
         [SecuritySafeCritical]
-        internal static object? GetDefaultValue(this Type type) => type.IsValueType
+        internal static object? GetDefaultValue([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors)]this Type type) => type.IsValueType
             // Trying to avoid executing possible existing parameterless struct constructor
             ? Reflector.TryCreateUninitializedObject(type, out object? result) ? result : Activator.CreateInstance(type)
             : null;
@@ -943,11 +968,13 @@ namespace KGySoft.CoreLibraries
             }
         }
 
-        internal static bool IsDefaultGetHashCode(this Type type)
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2111:DynamicallyAccessedMembersAttributeViaReflection",
+            Justification = "False alarm, the annotation for LoadCacheItem is enforced in the caller IsDefaultGetHashCode method.")]
+        internal static bool IsDefaultGetHashCode([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]this Type type)
         {
             #region Local Methods
 
-            static bool LoadCacheItem(Type t)
+            static bool LoadCacheItem([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]Type t)
             {
                 if (!t.IsClass || !t.IsSealed)
                     return false;
@@ -1058,7 +1085,10 @@ namespace KGySoft.CoreLibraries
 
         #region Private Methods
 
-        private static (bool? IsDictionary, ConstructorInfo? DefaultCtor, ConstructorInfo? CollectionCtor, Type? ElementType) GetIfSupportedCollectionForReflection(Type type)
+        [RequiresDynamicCode("MakeArrayType, GetGenericType")]
+        [RequiresUnreferencedCode("GetGenericType")]
+        private static (bool? IsDictionary, ConstructorInfo? DefaultCtor, ConstructorInfo? CollectionCtor, Type? ElementType) GetIfSupportedCollectionForReflection(
+            [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]Type type)
         {
             // If IsDictionary is null, the result is not a supported collection, though element type and the constructors still can be retrieved.
             (bool? IsDictionary, ConstructorInfo? DefaultCtor, ConstructorInfo? CollectionCtor, Type? ElementType) result = default;
@@ -1076,45 +1106,57 @@ namespace KGySoft.CoreLibraries
                 return result;
             }
 
-            result.IsDictionary = Reflector.IDictionaryType.IsAssignableFrom(type) || type.IsImplementationOfGenericType(Reflector.IDictionaryGenType);
-            bool isPopulatableCollection = type.IsCollection();
-            foreach (ConstructorInfo ctor in type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+            try
+#endif
             {
-                ParameterInfo[] args = ctor.GetParameters();
-
-                // default constructor is ignored for non-populatable collections
-                if (args.Length == 0 && isPopulatableCollection)
+                result.IsDictionary = Reflector.IDictionaryType.IsAssignableFrom(type) || type.IsImplementationOfGenericType(Reflector.IDictionaryGenType);
+                bool isPopulatableCollection = type.IsCollection();
+                foreach (ConstructorInfo ctor in type.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
                 {
-                    result.DefaultCtor = ctor;
-                    if (result.CollectionCtor is not null)
-                        return result;
-                }
-                else if (args.Length == 1 && result.CollectionCtor is null)
-                {
-                    Type paramType = args[0].ParameterType;
+                    ParameterInfo[] args = ctor.GetParameters();
 
-                    // Excluding string as it is also IEnumerable<char>.
-                    if (paramType == Reflector.StringType)
-                        continue;
-
-                    // collectionCtor is OK if it can accept array or list of element type or dictionary of object or specified key-value element type
-                    if (!result.IsDictionary.Value && (paramType.IsAssignableFrom(result.ElementType.MakeArrayType())
-                            || paramType.IsAssignableFrom(Reflector.ListGenType.GetGenericType(result.ElementType)))
-                        || result.IsDictionary.Value && paramType.IsAssignableFrom(Reflector.DictionaryGenType.GetGenericType(result.ElementType.IsGenericType
-                            ? result.ElementType.GetGenericArguments()
-                            : [Reflector.ObjectType, Reflector.ObjectType])))
+                    // default constructor is ignored for non-populatable collections
+                    if (args.Length == 0 && isPopulatableCollection)
                     {
-                        result.CollectionCtor = ctor;
-                        if (result.DefaultCtor is not null)
+                        result.DefaultCtor = ctor;
+                        if (result.CollectionCtor is not null)
                             return result;
                     }
-                }
-            }
+                    else if (args.Length == 1 && result.CollectionCtor is null)
+                    {
+                        Type paramType = args[0].ParameterType;
 
-            // We did not find both constructors. The type can be treated as a supported collection if it is populatable and has default ctor or when it has a collection ctor.
-            if (!(isPopulatableCollection && (result.DefaultCtor is not null || type.IsValueType) || result.CollectionCtor is not null))
-                result.IsDictionary = null;
-            return result;
+                        // Excluding string as it is also IEnumerable<char>.
+                        if (paramType == Reflector.StringType)
+                            continue;
+
+                        // collectionCtor is OK if it can accept array or list of element type or dictionary of object or specified key-value element type
+                        if (!result.IsDictionary.Value && (paramType.IsAssignableFrom(result.ElementType.MakeArrayType())
+                                || paramType.IsAssignableFrom(Reflector.ListGenType.GetGenericType(result.ElementType)))
+                            || result.IsDictionary.Value && paramType.IsAssignableFrom(Reflector.DictionaryGenType.GetGenericType(result.ElementType.IsGenericType
+                                ? result.ElementType.GetGenericArguments()
+                                : [Reflector.ObjectType, Reflector.ObjectType])))
+                        {
+                            result.CollectionCtor = ctor;
+                            if (result.DefaultCtor is not null)
+                                return result;
+                        }
+                    }
+                }
+
+                // We did not find both constructors. The type can be treated as a supported collection if it is populatable and has default ctor or when it has a collection ctor.
+                if (!(isPopulatableCollection && (result.DefaultCtor is not null || type.IsValueType) || result.CollectionCtor is not null))
+                    result.IsDictionary = null;
+                return result;
+            }
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+            catch (Exception e) when (!e.IsCritical() && !RuntimeFeature.IsDynamicCodeSupported)
+            {
+                // If there is an error in AOT mode we simply report that the collection is not supported by reflection
+                return default;
+            }
+#endif
         }
 
         private static bool IsNameMatch((Type, string) key)
@@ -1189,7 +1231,10 @@ namespace KGySoft.CoreLibraries
             #endregion
         }
 
-        private static bool IsGenericReadWriteCollection(Type type, object instance)
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2075:DynamicallyAccessedMembersReturnValueAnnotationMismatch",
+            Justification = "False alarm, ICollection<> is a well-known BCL interface that won't be trimmed.")]
+        private static bool IsGenericReadWriteCollection([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]Type type,
+            object instance)
         {
             foreach (Type i in new[] { type }.Concat(type.GetInterfaces())) // including self type
             {
@@ -1252,6 +1297,7 @@ namespace KGySoft.CoreLibraries
 
 #if !NET9_0_OR_GREATER
         [SecuritySafeCritical]
+        [RequiresDynamicCode("Array.CreateInstance, GetSizeComplex")]
         private static int GetSize(Type type)
         {
             if (!type.IsValueType)
@@ -1278,6 +1324,7 @@ namespace KGySoft.CoreLibraries
 #if NETFRAMEWORK
         [MethodImpl(MethodImplOptions.NoInlining)]
 #endif
+        [RequiresDynamicCode("typeof(SizeOfHelper<>).MakeGenericType(type)")]
         private static int GetSizeComplex(Type type)
         {
             // Non-primitive struct: measuring the distance between two elements in a packed struct.
@@ -1303,6 +1350,7 @@ namespace KGySoft.CoreLibraries
 #endif
 
         [SecurityCritical]
+        [RequiresDynamicCode("DynamicMethod")]
         private static int GetSizeFallback(Type type)
         {
 #if NETSTANDARD2_0 // DynamicMethod is not available. Fallback: calling the generic Reflector<T>.SizeOf by reflection
@@ -1332,6 +1380,7 @@ namespace KGySoft.CoreLibraries
         }
 #endif
 
+        [RequiresUnreferencedCode("Even if key.Type fields are preserved, fields of recursively accessed complex types might be trimmed.")]
         private static bool GetHasReferenceOrPointer((Type Type, bool IncludePointers) key)
         {
             if (key.Type.IsPrimitive || !key.IncludePointers && key.Type.IsPointer() || key.Type.IsEnum)
@@ -1351,9 +1400,13 @@ namespace KGySoft.CoreLibraries
             return false;
         }
 
+        [RequiresDynamicCode("MakeGenericType")]
+        [RequiresUnreferencedCode("MakeGenericType")]
         private static Type CreateGenericType((Type GenTypeDef, TypesKey TypeArgs) key)
             => key.GenTypeDef.MakeGenericType(key.TypeArgs.Types);
 
+        [RequiresDynamicCode("MakeGenericMethod")]
+        [RequiresUnreferencedCode("MakeGenericMethod")]
         private static MethodInfo CreateGenericMethod((MethodInfo GenMethodDef, TypesKey TypeArgs) key)
             => key.GenMethodDef.MakeGenericMethod(key.TypeArgs.Types);
 

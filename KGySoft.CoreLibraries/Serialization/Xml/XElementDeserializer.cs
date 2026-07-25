@@ -49,7 +49,7 @@ namespace KGySoft.Serialization.Xml
         {
             #region Fields
 
-            internal Type? Type;
+            [DynamicallyAccessedMembers(XmlSerializer.NeededMembers)]internal Type? Type;
             internal XElement Element;
             internal object? ExistingInstance;
             internal object? Result;
@@ -110,6 +110,8 @@ namespace KGySoft.Serialization.Xml
         /// <summary>
         /// Deserializes an XML content to an object.
         /// </summary>
+        [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(XmlSerializer.RequiresUnreferencedCodeMessage)]
         internal object? Deserialize(XElement content)
         {
             if (content == null!)
@@ -150,6 +152,8 @@ namespace KGySoft.Serialization.Xml
         /// <summary>
         /// Deserializes inner content of an object or collection.
         /// </summary>
+        [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(XmlSerializer.RequiresUnreferencedCodeMessage)]
         internal void DeserializeContent(XElement parent, object obj)
         {
             if (obj == null!)
@@ -202,7 +206,10 @@ namespace KGySoft.Serialization.Xml
         /// <summary>
         /// Deserializes a non-populatable collection by an initializer collection.
         /// </summary>
-        private object DeserializeContentByInitializerCollection(XElement parent, ConstructorInfo collectionCtor, Type collectionElementType, bool isDictionary)
+        [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(XmlSerializer.RequiresUnreferencedCodeMessage)]
+        private object DeserializeContentByInitializerCollection(XElement parent, ConstructorInfo collectionCtor,
+            [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors)]Type collectionElementType, bool isDictionary)
         {
             IEnumerable initializerCollection = collectionElementType.CreateInitializerCollection(isDictionary);
             var members = new Dictionary<MemberInfo, object?>();
@@ -216,7 +223,11 @@ namespace KGySoft.Serialization.Xml
         /// In this case members have to be stored for later initialization into <paramref name="members"/> and <paramref name="obj"/> is a populatable collection for sure.
         /// <paramref name="collectionElementType"/> is <see langword="null"/> only if <paramref name="objRealType"/> is not a supported collection.
         /// </summary>
-        private void DeserializeMembersAndElements(XElement parent, object obj, Type objRealType, Type? collectionElementType, Dictionary<MemberInfo, object?>? members)
+        [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(XmlSerializer.RequiresUnreferencedCodeMessage)]
+        private void DeserializeMembersAndElements(XElement parent, object obj,
+            [DynamicallyAccessedMembers(XmlSerializer.NeededMembers)]Type objRealType,
+            Type? collectionElementType, Dictionary<MemberInfo, object?>? members)
         {
             foreach (XElement memberOrItem in parent.Elements())
             {
@@ -281,7 +292,9 @@ namespace KGySoft.Serialization.Xml
         /// If <paramref name="result"/> is a different instance to <paramref name="existingInstance"/>, then content if existing instance cannot be deserialized.
         /// </summary>
         [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "False alarm, the new analyzer includes the complexity of local methods.")]
-        private bool TryDeserializeObject(Type? type, XElement element, object? existingInstance, out object? result)
+        [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(XmlSerializer.RequiresUnreferencedCodeMessage)]
+        private bool TryDeserializeObject([DynamicallyAccessedMembers(XmlSerializer.NeededMembers)]Type? type, XElement element, object? existingInstance, out object? result)
         {
             #region Local Methods to reduce complexity
 
@@ -315,6 +328,8 @@ namespace KGySoft.Serialization.Xml
                 return false;
             }
 
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             void DeserializeBinary(ref TryDeserializeObjectContext ctx)
             {
                 if (ctx.Element.IsEmpty)
@@ -338,6 +353,7 @@ namespace KGySoft.Serialization.Xml
                 ctx.Result = BinarySerializer.Deserialize(data, 0, binaryOptions, ExpectedTypes);
             }
 
+            [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)]
             bool TryDeserializeComplexObject(ref TryDeserializeObjectContext ctx)
             {
                 if (ctx.Type == null || ctx.Element.IsEmpty)
@@ -496,6 +512,8 @@ namespace KGySoft.Serialization.Xml
         /// <summary>
         /// Array deserialization, XElement version
         /// </summary>
+        [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(XmlSerializer.RequiresUnreferencedCodeMessage)]
         private Array DeserializeArray(Array? array, Type? elementType, XElement element, bool canRecreateArray)
         {
             string? attrLength = element.Attribute(XmlSerializer.AttributeLength)?.Value;
@@ -542,6 +560,8 @@ namespace KGySoft.Serialization.Xml
         }
 
         [SecuritySafeCritical]
+        [RequiresDynamicCode(BinarySerializer.ValueTypeSerializationRequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(BinarySerializer.ValueTypeSerializationRequiresUnreferencedCodeMessage)]
         private void DeserializeStructBinary(ref TryDeserializeObjectContext ctx)
         {
             if (SafeMode != XmlSafeMode.Unsafe && ctx.Type!.HasReferenceOrPointer())

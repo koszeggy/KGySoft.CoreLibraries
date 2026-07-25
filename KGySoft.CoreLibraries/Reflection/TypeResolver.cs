@@ -262,6 +262,8 @@ namespace KGySoft.Reflection
         internal const string StringTypeFullName = "System.String";
         internal const string FunctionPointerPrefix = "&fn";
         internal const string FunctionPointerUnmanagedPrefix = "*fn";
+        internal const string RequiresUnreferencedCodeTypeResolver = "Unless typeResolver returns all possible types, the type might be removed by the trimmer.";
+        internal const string RequiresUnreferencedCode = "The type might be removed by the trimmer. Also, allowing to load assemblies has no effect.";
 
         #endregion
 
@@ -311,6 +313,7 @@ namespace KGySoft.Reflection
 
         private static ConditionallyStoringLockFreeCache<(string, int), Type?> TypeCacheByString
         {
+            [RequiresUnreferencedCode(nameof(TryResolveType))]
             get
             {
                 if (typeCacheByString == null)
@@ -321,6 +324,7 @@ namespace KGySoft.Reflection
 
         private static ConditionallyStoringLockFreeCache<(Assembly, string, int), Type?> TypeCacheByAssembly
         {
+            [RequiresUnreferencedCode(nameof(TryResolveTypeByAssembly))]
             get
             {
                 if (typeCacheByAssembly == null)
@@ -439,6 +443,7 @@ namespace KGySoft.Reflection
 
         #region Internal Methods
 
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeTypeResolver)]
         internal static Type? ResolveType(string typeName, Func<AssemblyName?, string, Type?>? typeResolver, ResolveTypeOptions options)
         {
             if (typeName == null!)
@@ -476,6 +481,7 @@ namespace KGySoft.Reflection
             return result;
         }
 
+        [RequiresUnreferencedCode(RequiresUnreferencedCode)]
         internal static Type? ResolveType(Assembly assembly, string typeName, ResolveTypeOptions options)
         {
             if (assembly == null!)
@@ -494,6 +500,7 @@ namespace KGySoft.Reflection
 
 #if NET9_0_OR_GREATER
         [SuppressMessage("ReSharper", "ConditionalAccessQualifierIsNonNullableAccordingToAPIContract", Justification = "Forwarding the validation to the other overload.")]
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeTypeResolver)]
         internal static Type? ResolveType(TypeName typeName, Func<TypeName, Type?>? typeResolver, ResolveTypeOptions options)
         {
             // Using the caching version. We have to use our own parser because TypeName has no overridden Equals/GetHashCode, so we must use a string as key.
@@ -527,6 +534,7 @@ namespace KGySoft.Reflection
         }
 
         [SuppressMessage("ReSharper", "ConditionalAccessQualifierIsNonNullableAccordingToAPIContract", Justification = "Forwarding the validation to the other overload.")]
+        [RequiresUnreferencedCode(RequiresUnreferencedCode)]
         internal static Type? ResolveType(Assembly assembly, TypeName typeName, ResolveTypeOptions options)
         {
             // Using the caching version. We have to use our own parser because TypeName has no overridden Equals/GetHashCode, so we must use a string as key.
@@ -565,6 +573,7 @@ namespace KGySoft.Reflection
 
         #region Private Methods
 
+        [RequiresUnreferencedCode(nameof(Resolve))]
         private static Type? TryResolveType((string TypeName, int Options) key, out bool storeValue)
         {
             Type? result;
@@ -587,6 +596,7 @@ namespace KGySoft.Reflection
             return result;
         }
 
+        [RequiresUnreferencedCode("Assembly.GetType")]
         private static Type? TryResolveTypeByAssembly((Assembly Assembly, string TypeName, int Options) key, out bool storeValue)
         {
             #region Local Methods
@@ -1571,6 +1581,9 @@ namespace KGySoft.Reflection
             DumpAssemblyName(result, typeNameKind);
         }
 
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode",
+            Justification = "It already has the stronger RequiresUnreferencedCode, and Type.GetType has only RequiresUnreferencedCode")]
+        [RequiresUnreferencedCode("GetGenericType, ResolveRootType, Resolve")]
         private Type? Resolve(Func<AssemblyName?, string, Type?>? typeResolver)
         {
             if (type != null)
@@ -1623,6 +1636,7 @@ namespace KGySoft.Reflection
             return type = result;
         }
 
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeTypeResolver)]
         private Type? ResolveRootType(Func<AssemblyName?, string, Type?>? typeResolver)
         {
             // It's important that typeResolver handles with standard types only, whereas extensions like generic parameters and function pointers
@@ -1710,6 +1724,7 @@ namespace KGySoft.Reflection
             return null;
         }
 
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeTypeResolver)]
         private Type? ResolveGenericParameter(Func<AssemblyName?, string, Type?>? typeResolver)
         {
             // Declaring Type

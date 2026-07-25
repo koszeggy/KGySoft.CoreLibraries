@@ -172,7 +172,7 @@ namespace KGySoft.ComponentModel
 
         #region Static Methods
 
-        private static StringKeyedDictionary<EventInfo> GetEvents(Type type)
+        private static StringKeyedDictionary<EventInfo> GetEvents([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllEvents)]Type type)
         {
             static void PopulateEvents(StringKeyedDictionary<EventInfo> dict, IEnumerable<EventInfo> events, bool checkExplicit)
             {

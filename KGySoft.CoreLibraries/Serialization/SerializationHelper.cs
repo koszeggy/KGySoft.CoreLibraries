@@ -61,6 +61,8 @@ namespace KGySoft.Serialization
     {
         #region Fields
 
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2070:TypeDynamicallyAccessedMemberTypesAnnotationMismatch",
+            Justification = "Accessed via GetSerializableFields, where the type parameter is annotated.")]
         private static readonly LockFreeCache<Type, FieldInfo[]> serializableFieldsCache = new(t =>
             t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly)
                 .Where(f => !f.IsNotSerialized)
@@ -111,9 +113,9 @@ namespace KGySoft.Serialization
 
         #region Methods
 
-        internal static FieldInfo[] GetSerializableFields(Type t) => serializableFieldsCache[t];
+        internal static FieldInfo[] GetSerializableFields([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllFields)]Type t) => serializableFieldsCache[t];
 
-        internal static StringKeyedDictionary<FieldInfo> GetFieldsWithUniqueNames(Type type, bool considerNonSerialized)
+        internal static StringKeyedDictionary<FieldInfo> GetFieldsWithUniqueNames([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllFields)]Type type, bool considerNonSerialized)
         {
             var result = new StringKeyedDictionary<(FieldInfo Field, int Count)>();
 

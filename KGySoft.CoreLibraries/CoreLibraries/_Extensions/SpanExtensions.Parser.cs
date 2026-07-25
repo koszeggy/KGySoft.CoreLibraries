@@ -161,7 +161,7 @@ namespace KGySoft.CoreLibraries
                     }
 
                     // a registered converter from string - in this case there will be a string allocation
-                    switch (Reflector.StringType.GetConversions(type, true).FirstOrDefault())
+                    switch (typeof(string).GetConversions(type, true).FirstOrDefault())
                     {
                         case ConversionAttempt conversionAttempt:
                             if (conversionAttempt.Invoke(s.ToString(), type, culture, out value) && type.CanAcceptValue(value))

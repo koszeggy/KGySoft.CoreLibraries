@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Reflection.Metadata;
 
@@ -96,6 +97,7 @@ namespace KGySoft.Reflection
 
             #region Public Methods
 
+            [RequiresUnreferencedCode(RequiresUnreferencedCodeTypeResolver)]
             public Type? Resolve(Func<TypeName, Type?> typeResolver)
             {
                 // 1. Resolving root type
@@ -145,6 +147,7 @@ namespace KGySoft.Reflection
 
             #region Private Methods
 
+            [RequiresUnreferencedCode(RequiresUnreferencedCodeTypeResolver)]
             private Type? ResolveRootType(Func<TypeName, Type?> typeResolver)
             {
                 bool throwError = (options & ResolveTypeOptions.ThrowError) != ResolveTypeOptions.None;

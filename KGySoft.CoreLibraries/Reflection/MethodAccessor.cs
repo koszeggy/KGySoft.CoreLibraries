@@ -154,8 +154,8 @@ namespace KGySoft.Reflection
 
         private protected MethodBase Method => (MethodBase)MemberInfo;
         private protected Func<object?, object?[]?, object?> GeneralInvoker => generalInvoker ??= CreateGeneralInvoker();
-        private protected Delegate GenericInvoker => genericInvoker ??= CreateGenericInvoker();
         private protected Delegate NonGenericInvoker => nonGenericInvoker ??= CreateNonGenericInvoker();
+        private protected Delegate GenericInvoker => genericInvoker ??= CreateGenericInvoker();
 
 #if NET8_0_OR_GREATER
         // Used in AOT mode where the faster dynamic methods cannot be used. It is still supposed to be faster than classic reflection by MethodInfo.
@@ -1193,8 +1193,8 @@ namespace KGySoft.Reflection
         #region Private Protected Methods
 
         private protected abstract Func<object?, object?[]?, object?> CreateGeneralInvoker();
-        private protected abstract Delegate CreateGenericInvoker();
         private protected abstract Delegate CreateNonGenericInvoker();
+        private protected abstract Delegate CreateGenericInvoker();
 
         #endregion
 

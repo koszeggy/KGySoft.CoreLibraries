@@ -70,6 +70,8 @@ namespace KGySoft.Serialization.Binary
     [Serializable]
     [Obsolete("This type cannot be used anymore to make any type serializable by BinaryFormatter due to security reasons. " +
         "Use BinarySerializationFormatter instead, whose entire deserialization can work in safe mode if needed.")]
+    [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+    [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
     public sealed class AnyObjectSerializerWrapper : ISerializable, IObjectReference
     {
         #region Fields

@@ -193,10 +193,10 @@ namespace KGySoft.Reflection
         private protected PropertyInfo Property => (PropertyInfo)MemberInfo;
         private protected Action<object?, object?, object?[]?> GeneralSetter => generalSetter ??= CreateGeneralSetter();
         private protected Func<object?, object?[]?, object?> GeneralGetter => generalGetter ??= CreateGeneralGetter();
-        private protected Delegate GenericSetter => genericSetter ??= CreateGenericSetter();
-        private protected Delegate GenericGetter => genericGetter ??= CreateGenericGetter();
         private protected Delegate NonGenericSetter => nonGenericSetter ??= CreateNonGenericSetter();
         private protected Delegate NonGenericGetter => nonGenericGetter ??= CreateNonGenericGetter();
+        private protected Delegate GenericSetter => genericSetter ??= CreateGenericSetter();
+        private protected Delegate GenericGetter => genericGetter ??= CreateGenericGetter();
 
 #if NET8_0_OR_GREATER
         // Used in AOT mode where the faster dynamic methods cannot be used. They are still supposed to be faster than classic reflection by MethodInfo.
@@ -787,11 +787,11 @@ namespace KGySoft.Reflection
 
         private protected abstract Action<object?, object?, object?[]?> CreateGeneralSetter();
         private protected abstract Func<object?, object?[]?, object?> CreateGeneralGetter();
-        private protected abstract Delegate CreateGenericSetter();
-        private protected abstract Delegate CreateGenericGetter();
         private protected abstract Delegate CreateNonGenericSetter();
         private protected abstract Delegate CreateNonGenericGetter();
-
+        private protected abstract Delegate CreateGenericSetter();
+        private protected abstract Delegate CreateGenericGetter();
+        
         #endregion
 
         #region Private Methods

@@ -162,7 +162,7 @@ namespace KGySoft.CoreLibraries
                     }
 
                     // a registered converter from string
-                    switch (Reflector.StringType.GetConversions(type, true).FirstOrDefault())
+                    switch (typeof(string).GetConversions(type, true).FirstOrDefault())
                     {
                         case ConversionAttempt conversionAttempt:
                             if (conversionAttempt.Invoke(s, type, culture, out value) && type.CanAcceptValue(value))

@@ -60,6 +60,12 @@ namespace KGySoft.Serialization.Binary
 #endif
 
 #if NETCOREAPP3_0_OR_GREATER
+            [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+                Justification = "Cannot apply RequiresUnreferencedCode to a field, but the usages are annotated.")]
+            [UnconditionalSuppressMessage("TrimAnalysis", "IL2067:TargetArgumentDynamicallyAccessedMemberTypesAnnotationMismatch",
+                Justification = "We could annotate the lambda parameter accordingly, but that would then cause IL2111. And cannot apply RequiresUnreferencedCode to a field, but the public entry points are annotated anyway.")]
+            [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode",
+                Justification = "Cannot apply RequiresDynamicCode to a field, but the usages are annotated.")]
             internal static readonly CollectionSerializationInfo FixedSizeGenericStruct = new()
             {
                 Info = CollectionInfo.IsGeneric | CollectionInfo.BackingArrayHasKnownSize | CollectionInfo.CreateResultFromByteArray,
@@ -110,7 +116,13 @@ namespace KGySoft.Serialization.Binary
             /// or, if it does not expose or wrap any array, but it can be represented as a (fixed size) array (e.g. Vector128).
             /// If the collection does not actually wrap the array, then it must not contain any direct circular reference to the object itself because it makes proper deserialization impossible (e.g. object element type must not be supported by the collection)
             /// </summary>
-            internal Func<object, Array?>? GetBackingArray { get; set; }
+            internal Func<object, Array?>? GetBackingArray
+            {
+                [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)] // GetGenericType usages in the callback methods
+                [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
+                get;
+                set;
+            }
 
             /// <summary>
             /// Should be specified for any custom data for array backed collections.
@@ -129,19 +141,37 @@ namespace KGySoft.Serialization.Binary
             /// <summary>
             /// Should be specified to instantiate an array backed collection. Should also read specific properties written by <see cref="WriteSpecificPropertiesCallback"/>.
             /// </summary>
-            internal Func<BinaryReader, Type, Array, object>? CreateArrayBackedCollectionInstanceFromArray { get; set; }
+            internal Func<BinaryReader, Type, Array, object>? CreateArrayBackedCollectionInstanceFromArray
+            {
+                [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)] // GetGenericType usages in the callback methods
+                [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
+                get;
+                set;
+            }
 
             /// <summary>
             /// Gets a delegate that can instantiate the (possibly proxy) collection instance to populate. The parameters depend on <see cref="CtorArguments"/>.
             /// If this is not the final instance the <see cref="CreateFinalCollectionCallback"/> should be also set.
             /// </summary>
-            internal Func<Type, object?[], object>? CreateInstanceCallback { get; set; }
+            internal Func<Type, object?[], object>? CreateInstanceCallback
+            {
+                [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)] // GetGenericType usages in the callback methods
+                [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
+                get;
+                set;
+            }
 
             /// <summary>
             /// If <see cref="CreateInstanceCallback"/> returns a proxy type, then this delegate can return the final result from the builder collection.
             /// NOTE: Using this property may prevent deserialization of circular references.
             /// </summary>
-            internal Func<object, object>? CreateFinalCollectionCallback { get; set; }
+            internal Func<object, object>? CreateFinalCollectionCallback
+            {
+                [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)] // GetGenericType usages in the callback methods
+                [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
+                get;
+                set;
+            }
 
             /// <summary>
             /// Should be set if the supported public type is an abstract generic type, and we need to support its non-public derived instances (e.g. comparers, frozen collections).
@@ -226,6 +256,8 @@ namespace KGySoft.Serialization.Binary
             /// </summary>
             /// <returns>true if the whole write is finished (e.g. default instance); otherwise, false</returns>
             [SecurityCritical]
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             internal bool WriteSpecificProperties(BinaryWriter bw, [NoEnumeration]IEnumerable collection, SerializationManager manager)
             {
                 if (IsSingleElement)
@@ -294,6 +326,8 @@ namespace KGySoft.Serialization.Binary
             /// Creates collection and reads all serialized specific properties that were written by <see cref="WriteSpecificProperties"/>.
             /// </summary>
             [SecurityCritical]
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             internal object InitializeCollection(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor, DeserializationManager manager, bool safeMode, out int count, out int id)
             {
                 object result;
@@ -391,6 +425,8 @@ namespace KGySoft.Serialization.Binary
                 return result;
             }
 
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             internal object GetFinalCollection(object result, DataTypeDescriptor descriptor)
             {
                 if (descriptor.IsReadOnly)
@@ -460,6 +496,8 @@ namespace KGySoft.Serialization.Binary
                 return typeof(EqualityComparer<>).GetPropertyValue(valueType, nameof(EqualityComparer<>.Default));
             }
 
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private object CreateCollection(DataTypeDescriptor descriptor, int capacity, bool isCaseInsensitive, bool isAndHash, object? comparer, object? valueComparer)
             {
                 object?[] parameters = Reflector.EmptyObjects;
@@ -499,9 +537,15 @@ namespace KGySoft.Serialization.Binary
                 return ctor.CreateInstance(parameters);
             }
 
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private CreateInstanceAccessor GetInitializer(DataTypeDescriptor descriptor)
             {
-                CreateInstanceAccessor GetCtorAccessor(Type type)
+                #region Local Methods
+
+                [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+                [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
+                CreateInstanceAccessor GetCtorAccessor([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors)]Type type)
                 {
                     if (CtorArguments == null)
                         return CreateInstanceAccessor.GetAccessor(type);
@@ -540,6 +584,8 @@ namespace KGySoft.Serialization.Binary
                         Throw.SerializationException(Res.ReflectionCtorNotFound(type));
                     return CreateInstanceAccessor.GetAccessor(ctor);
                 }
+
+                #endregion
 
                 if (ctorCache == null)
                     Interlocked.CompareExchange(ref ctorCache, new LockFreeCache<Type, CreateInstanceAccessor>(GetCtorAccessor, null, LockFreeCacheOptions.Profile128), null);

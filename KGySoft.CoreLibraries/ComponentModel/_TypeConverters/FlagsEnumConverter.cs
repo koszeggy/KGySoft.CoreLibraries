@@ -17,6 +17,7 @@
 
 using System;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 
@@ -159,7 +160,10 @@ namespace KGySoft.ComponentModel
         /// Creates an instance of the <see cref="FlagsEnumConverter"/> class.
         /// </summary>
         /// <param name="type">The type of the enumeration.</param>
-        public FlagsEnumConverter(Type type) : base(type) { }
+        public FlagsEnumConverter([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor | DynamicallyAccessedMemberTypes.PublicFields)]Type type)
+            : base(type)
+        {
+        }
 
         #endregion
 
@@ -175,6 +179,7 @@ namespace KGySoft.ComponentModel
         /// <param name="value">The <see cref="Enum" /> instance to get the flags for.</param>
         /// <param name="attributes">An array of type <see cref="Attribute"/> that is used as a filter. In this method this parameter is ignored.</param>
         /// <returns>A <see cref="PropertyDescriptorCollection" /> with the flags of the <see cref="Enum"/> type designated by <paramref name="value"/> as <see cref="bool"/> properties.</returns>
+        [RequiresUnreferencedCode("The Type of value cannot be statically discovered.")]
         public override PropertyDescriptorCollection? GetProperties(ITypeDescriptorContext? context, object value, Attribute[]? attributes)
         {
             if (value == null!)

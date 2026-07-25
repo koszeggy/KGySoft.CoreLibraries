@@ -2529,7 +2529,7 @@ namespace KGySoft.CoreLibraries
         /// <note type="tip">See the <strong>Examples</strong> section of the <see cref="RandomExtensions"/> class for some examples.</note>
         /// </remarks>
         [SecuritySafeCritical]
-        public static T? NextObject<T>(this Random random, GenerateObjectSettings? settings = null)
+        public static T? NextObject<[DynamicallyAccessedMembers(NeededMembers)]T>(this Random random, GenerateObjectSettings? settings = null)
         {
             if (random == null!)
                 Throw.ArgumentNullException(Argument.random);
@@ -2550,7 +2550,7 @@ namespace KGySoft.CoreLibraries
         /// instantiated with the provided <paramref name="settings"/> See the <strong>Remarks</strong> section of the <see cref="NextObject{T}"/> overload for details.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> or <paramref name="type"/> is <see langword="null"/>.</exception>
         [SecuritySafeCritical]
-        public static object? NextObject(this Random random, Type type, GenerateObjectSettings? settings = null)
+        public static object? NextObject(this Random random, [DynamicallyAccessedMembers(NeededMembers)]Type type, GenerateObjectSettings? settings = null)
         {
             if (random == null!)
                 Throw.ArgumentNullException(Argument.random);

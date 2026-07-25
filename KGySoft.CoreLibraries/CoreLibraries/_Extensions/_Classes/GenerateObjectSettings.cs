@@ -16,6 +16,7 @@
 #region Usings
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 #if !NET35
 using System.Numerics;
 #endif
@@ -235,6 +236,7 @@ namespace KGySoft.CoreLibraries
         /// <para>If the value of this property is a non-sealed class and <see cref="AllowDerivedTypesForNonSealedClasses"/> property is <see langword="true"/>,
         /// then a random derived type can be used for every generated instance.</para>
         /// </remarks>
+        [DynamicallyAccessedMembers(RandomExtensions.NeededMembers)]
         public Type? SubstitutionForObjectType { get; set; }
 
         /// <summary>

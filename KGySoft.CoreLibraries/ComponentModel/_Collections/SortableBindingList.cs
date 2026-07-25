@@ -61,7 +61,7 @@ namespace KGySoft.ComponentModel
     /// to make <see cref="IBindingList.AddNew">IBindingList.AddNew</see> implementation work properly.</note> 
     /// </remarks>
     [Serializable]
-    public class SortableBindingList<T> : FastBindingList<T>
+    public class SortableBindingList<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllMembersAndInterfaces)]T> : FastBindingList<T>
     {
         #region Nested Classes
 
@@ -266,7 +266,7 @@ namespace KGySoft.ComponentModel
 
         #region Static Methods
 
-        private static IComparer<(int, object?)> CreateComparer(bool ascending, Type valueType)
+        private static IComparer<(int, object?)> CreateComparer(bool ascending, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]Type valueType)
         {
             if (valueType.GetInterfaces().Any(i => i.IsGenericTypeOf(typeof(IComparable<>)) && i.GetGenericArguments()[0] == valueType))
                 return (IComparer<(int, object?)>)typeof(ItemGenericComparer<>).GetGenericType(valueType).CreateInstance(Reflector.BoolType, ascending);
