@@ -351,6 +351,7 @@ namespace KGySoft.Serialization.Xml
 
         #region Private Protected Methods
 
+        [RequiresUnreferencedCode("AdjustInitializerCollection")]
         private protected static object CreateCollectionByInitializerCollection(ConstructorInfo collectionCtor, IEnumerable initializerCollection, Dictionary<MemberInfo, object?> members)
         {
             initializerCollection = initializerCollection.AdjustInitializerCollection(collectionCtor);
@@ -639,7 +640,7 @@ namespace KGySoft.Serialization.Xml
 
         [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)]
         [RequiresUnreferencedCode(XmlSerializer.RequiresUnreferencedCodeMessage)]
-        private static object CreateCollectionWithGenericEqualityComparerAndHashingStrategy(Type type, ComparerType comparerType)
+        private static object CreateCollectionWithGenericEqualityComparerAndHashingStrategy([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors)]Type type, ComparerType comparerType)
         {
             Type t = type.GetGenericArguments()[0];
             object? comparer = comparerType switch

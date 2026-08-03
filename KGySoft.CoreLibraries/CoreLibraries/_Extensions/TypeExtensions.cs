@@ -968,13 +968,14 @@ namespace KGySoft.CoreLibraries
             }
         }
 
-        [UnconditionalSuppressMessage("TrimAnalysis", "IL2111:DynamicallyAccessedMembersAttributeViaReflection",
-            Justification = "False alarm, the annotation for LoadCacheItem is enforced in the caller IsDefaultGetHashCode method.")]
-        internal static bool IsDefaultGetHashCode([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]this Type type)
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2070:TypeDynamicallyAccessedMemberTypesAnnotationMismatch",
+            Justification = "If an overridden GetHashCode is trimmed in AOT mode, it means the type is actually not used in a hashing collection, in which case this method is not called. " +
+                "Annotating by PublicMethods (along with the TKey arguments in the collections) would cause analyzer problems if the key is Type.")]
+        internal static bool IsDefaultGetHashCode(this Type type)
         {
             #region Local Methods
 
-            static bool LoadCacheItem([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]Type t)
+            static bool LoadCacheItem(Type t)
             {
                 if (!t.IsClass || !t.IsSealed)
                     return false;
@@ -1106,9 +1107,7 @@ namespace KGySoft.CoreLibraries
                 return result;
             }
 
-#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
             try
-#endif
             {
                 result.IsDictionary = Reflector.IDictionaryType.IsAssignableFrom(type) || type.IsImplementationOfGenericType(Reflector.IDictionaryGenType);
                 bool isPopulatableCollection = type.IsCollection();
@@ -1150,15 +1149,15 @@ namespace KGySoft.CoreLibraries
                     result.IsDictionary = null;
                 return result;
             }
-#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
-            catch (Exception e) when (!e.IsCritical() && !RuntimeFeature.IsDynamicCodeSupported)
+            catch (Exception e) when (!e.IsCriticalOr(RuntimeFeature.IsDynamicCodeSupported))
             {
                 // If there is an error in AOT mode we simply report that the collection is not supported by reflection
                 return default;
             }
-#endif
         }
 
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+            Justification = "ResolveType is used only for parsing, DoResolveType never returns null, so no actual type resolve happens.")]
         private static bool IsNameMatch((Type, string) key)
         {
             (Type type, string name) = key;
@@ -1402,13 +1401,11 @@ namespace KGySoft.CoreLibraries
 
         [RequiresDynamicCode("MakeGenericType")]
         [RequiresUnreferencedCode("MakeGenericType")]
-        private static Type CreateGenericType((Type GenTypeDef, TypesKey TypeArgs) key)
-            => key.GenTypeDef.MakeGenericType(key.TypeArgs.Types);
+        private static Type CreateGenericType((Type GenTypeDef, TypesKey TypeArgs) key) => key.GenTypeDef.MakeGenericType(key.TypeArgs.Types);
 
         [RequiresDynamicCode("MakeGenericMethod")]
         [RequiresUnreferencedCode("MakeGenericMethod")]
-        private static MethodInfo CreateGenericMethod((MethodInfo GenMethodDef, TypesKey TypeArgs) key)
-            => key.GenMethodDef.MakeGenericMethod(key.TypeArgs.Types);
+        private static MethodInfo CreateGenericMethod((MethodInfo GenMethodDef, TypesKey TypeArgs) key) => key.GenMethodDef.MakeGenericMethod(key.TypeArgs.Types);
 
         #endregion
 

@@ -290,6 +290,7 @@ namespace KGySoft.Serialization.Binary
                 }
             }
 
+            [RequiresUnreferencedCode("GetPropertyValue")]
             private static DataTypes DetermineSpecialSupport([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]Type type)
             {
                 // When this method is called with an abstract type, then the result represents the abstract type itself

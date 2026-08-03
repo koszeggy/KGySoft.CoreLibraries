@@ -113,8 +113,8 @@ namespace KGySoft.ComponentModel
 
         #region Static Fields
 
-        private static readonly LockFreeCache<Type, StringKeyedDictionary<Type>> reflectedPropertiesCache =
-            new(GetReflectedProperties, null, LockFreeCacheOptions.Profile128);
+        private static readonly LockFreeCache<Type, StringKeyedDictionary<Type>>? reflectedPropertiesCache =
+            RuntimeFeature.IsDynamicCodeSupported ? new(GetReflectedProperties, null, LockFreeCacheOptions.Profile128) : null;
 
         private static Func<object, object?> customClone =
             o => o is string || o is Delegate ? o
@@ -240,7 +240,17 @@ namespace KGySoft.ComponentModel
 
         #region Private Properties
 
-        private StringKeyedDictionary<Type> ReflectedProperties => reflectedProperties ??= reflectedPropertiesCache[GetType()];
+        private StringKeyedDictionary<Type>? ReflectedProperties
+        {
+            get
+            {
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+                if (!RuntimeFeature.IsDynamicCodeSupported)
+                    return null;
+#endif
+                return reflectedProperties ??= reflectedPropertiesCache?[GetType()];
+            }
+        }
 
         #endregion
 
@@ -255,7 +265,11 @@ namespace KGySoft.ComponentModel
         /// </summary>
         protected ObservableObjectBase()
         {
-            properties = new ThreadSafeDictionary<string, object?>(ReflectedProperties.Count, StringSegmentComparer.Ordinal) { PreserveMergedKeys = true };
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+            if (!RuntimeFeature.IsDynamicCodeSupported)
+                return;
+#endif
+            properties = new ThreadSafeDictionary<string, object?>(ReflectedProperties!.Count, StringSegmentComparer.Ordinal) { PreserveMergedKeys = true };
         }
 
         #endregion
@@ -264,7 +278,9 @@ namespace KGySoft.ComponentModel
 
         #region Static Methods
 
-        private static StringKeyedDictionary<Type> GetReflectedProperties([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllProperties)]Type type)
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2070:TypeDynamicallyAccessedMemberTypesAnnotationMismatch", Justification = "Not called in AOT mode.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2075:DynamicallyAccessedMembersReturnValueAnnotationMismatch", Justification = "Not called in AOT mode.")]
+        private static StringKeyedDictionary<Type> GetReflectedProperties(Type type)
         {
             #region Local Methods
             
@@ -278,6 +294,8 @@ namespace KGySoft.ComponentModel
             }
 
             #endregion
+
+            Debug.Assert(!RuntimeFeature.IsDynamicCodeSupported);
 
             // public properties of all levels
             var result = new StringKeyedDictionary<Type>();
@@ -320,6 +338,8 @@ namespace KGySoft.ComponentModel
         /// <returns>
         /// A new object that is a copy of this instance.
         /// </returns>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2072:ParameterDynamicallyAccessedMemberTypesCannotBeDetermined",
+            Justification = "If the parameterless constructor is trimmed in AOT mode, we throw the same exception as if it hadn't a parameterless constructor at all.")]
         public virtual ObservableObjectBase Clone(bool clonePropertyChanged = false)
         {
             Type type = GetType();
@@ -535,20 +555,35 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Gets whether the specified property can be retrieved.
         /// <br/>The base implementation allows to get the actual instance properties in this instance.
+        /// In native AOT mode the properties are not checked though (the result is always <see langword="true"/> if the method is not overridden).
         /// </summary>
         /// <param name="propertyName">Name of the property to get.</param>
         /// <returns><see langword="true"/>, if the specified property can be retrieved; otherwise, <see langword="false"/>.</returns>
-        protected virtual bool CanGetProperty(string propertyName) => ReflectedProperties.ContainsKey(propertyName);
+        protected virtual bool CanGetProperty(string propertyName)
+        {
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+            if (!RuntimeFeature.IsDynamicCodeSupported)
+                return true;
+#endif
+            return ReflectedProperties!.ContainsKey(propertyName);
+        }
 
         /// <summary>
         /// Gets whether the specified property can be set.
         /// <br/>The base implementation allows to set the actual instance properties in this instance if the specified <paramref name="value"/> is compatible with the property type.
+        /// In native AOT mode the properties are not checked though (the result is always <see langword="true"/> if the method is not overridden).
         /// </summary>
         /// <param name="propertyName">Name of the property to set.</param>
         /// <param name="value">The property value to set.</param>
         /// <returns><see langword="true"/>, if the specified property can be set; otherwise, <see langword="false"/>.</returns>
         protected virtual bool CanSetProperty(string propertyName, object? value)
-            => ReflectedProperties.TryGetValue(propertyName, out Type? type) && type.CanAcceptValue(value);
+        {
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+            if (!RuntimeFeature.IsDynamicCodeSupported)
+                return true;
+#endif
+            return ReflectedProperties!.TryGetValue(propertyName, out Type? type) && type.CanAcceptValue(value);
+        }
 
         /// <summary>
         /// Suspends the raising of the <see cref="PropertyChanged"/> event until <see cref="ResumeChangedEvent">ResumeChangeEvents</see>

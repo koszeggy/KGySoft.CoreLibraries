@@ -17,6 +17,7 @@
 
 using System;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -292,6 +293,7 @@ namespace KGySoft.Serialization.Binary
         [SecurityCritical]
         private static void GetCustomObjectData(ISerializable serializable, SerializationInfo info, StreamingContext context) => serializable.GetObjectData(info, context);
 
+        [RequiresUnreferencedCode("TryInvokeCtor")]
         private static void SetCustomObjectData(ISerializable serializable, SerializationInfo info, StreamingContext context)
         {
             if (!Accessors.TryInvokeCtor(serializable, info, context))

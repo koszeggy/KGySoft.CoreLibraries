@@ -448,14 +448,26 @@ namespace KGySoft.Collections
 
         private static BinarySearchHelper<T> BinarySearchHelperInstance
         {
+            [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "In AOT mode a less optimized helper may be returned.")]
             get
             {
                 if (binarySearchHelper == null)
                 {
                     if (typeof(IComparable<T>).IsAssignableFrom(typeof(T)))
                     {
-                        Type typeHelper = typeof(ComparableBinarySearchHelper<>).GetGenericType(typeof(T));
-                        binarySearchHelper = (BinarySearchHelper<T>)Activator.CreateInstance(typeHelper, true)!;
+#if NET11_0_OR_GREATER
+#error Check if the generic bridge feature is already available. It would help AOT mode - https://github.com/dotnet/csharplang/discussions/6308
+#endif
+
+                        try
+                        {
+                            binarySearchHelper = (BinarySearchHelper<T>)Activator.CreateInstance(typeof(ComparableBinarySearchHelper<>).MakeGenericType(typeof(T)), true)!;
+                        }
+                        catch (Exception e) when (!e.IsCriticalOr(RuntimeFeature.IsDynamicCodeSupported))
+                        {
+                            // could not dynamically create ComparableBinarySearchHelper<T>
+                            binarySearchHelper = new BinarySearchHelper<T>();
+                        }
                     }
                     else
                         binarySearchHelper = new BinarySearchHelper<T>();

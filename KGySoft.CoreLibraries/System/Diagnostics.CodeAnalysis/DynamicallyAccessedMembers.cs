@@ -37,8 +37,6 @@ namespace System.Diagnostics.CodeAnalysis
             AllProperties |
             DynamicallyAccessedMemberTypes.Interfaces;
 
-        internal const DynamicallyAccessedMemberTypes KeyWithHashingStrategy = DynamicallyAccessedMemberTypes.PublicConstructors; // for PreferBitwiseAndHash
-
         #endregion
     }
 }

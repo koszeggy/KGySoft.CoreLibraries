@@ -167,6 +167,8 @@ namespace KGySoft.Serialization.Xml
 #endif
         };
 
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+            Justification = "Cannot apply RequiresUnreferencedCode to a field or static constructor, but it's accessed via the IsTrustedType method, which is annotated.")]
         [UnconditionalSuppressMessage("TrimAnalysis", "IL2111:DynamicallyAccessedMembersAttributeViaReflection",
             Justification = "Cannot apply RequiresUnreferencedCode to a field or static constructor, but it's accessed via the IsTrustedType method, which is annotated.")]
         private static readonly LockFreeCache<Type, bool> trustedTypesCache = new(IsTypeTrusted, null, LockFreeCacheOptions.Profile128);
@@ -246,6 +248,8 @@ namespace KGySoft.Serialization.Xml
         private protected static bool IsKnownCollection(Type type)
             => knownCollectionsWithComparer.ContainsKey(type.IsGenericType ? type.GetGenericTypeDefinition() : type);
 
+        [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(XmlSerializer.RequiresUnreferencedCodeMessage)]
         private protected static ComparerType? GetComparer([NoEnumeration]IEnumerable collection)
         {
             Type type = collection.GetType();
@@ -413,6 +417,8 @@ namespace KGySoft.Serialization.Xml
         }
 
         [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Very straightforward switch with many branches")]
+        [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(XmlSerializer.RequiresUnreferencedCodeMessage)]
         private static ComparerType ToComparerType(object? comparer, Type? collectionGenericArgument) => comparer switch
         {
             null => ComparerType.None,

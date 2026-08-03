@@ -453,6 +453,8 @@ namespace KGySoft.Serialization.Binary
 
             #region Private Methods
 
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private bool IsDefaultComparer([NoEnumeration]IEnumerable collection, object? comparer)
             {
                 object? defaultComparer = GetDefaultComparer(collection.GetType());
@@ -465,12 +467,16 @@ namespace KGySoft.Serialization.Binary
                 return false;
             }
 
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private bool IsDefaultValueComparer([NoEnumeration]IEnumerable collection, object? comparer)
             {
                 object? defaultComparer = GetDefaultValueComparer(collection.GetType());
                 return Equals(defaultComparer, comparer);
             }
 
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private object? GetDefaultComparer(Type type)
             {
                 if (!IsGeneric)
@@ -488,6 +494,8 @@ namespace KGySoft.Serialization.Binary
                     : typeof(Comparer<>).GetPropertyValue(elementType, nameof(Comparer<>.Default));
             }
 
+            [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private object? GetDefaultValueComparer(Type type)
             {
                 Debug.Assert(IsGeneric && IsDictionary && !UsesComparerHelper && !HasStringSegmentComparer);

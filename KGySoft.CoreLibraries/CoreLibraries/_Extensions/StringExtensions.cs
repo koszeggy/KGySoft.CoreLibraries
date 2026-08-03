@@ -58,6 +58,12 @@ namespace KGySoft.CoreLibraries
     /// </summary>
     public static partial class StringExtensions
     {
+        #region Constants
+
+        private const string parseRequiresUnreferencedCode = "If the conversion needs TypeConverter for a generic type, or the target type is System.Type, the type might be removed by the trimmer.";
+
+        #endregion
+
         #region Methods
 
         #region Misc Tools
@@ -317,7 +323,10 @@ namespace KGySoft.CoreLibraries
         /// </remarks>
         /// <exception cref="ArgumentNullException"><typeparamref name="T"/> is not nullable and <paramref name="s"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">Parameter <paramref name="s"/> cannot be parsed as <typeparamref name="T"/>.</exception>
-        [return:NotNullIfNotNull(nameof(s))]public static T? Parse<T>(this string? s, CultureInfo? culture = null)
+        [return:NotNullIfNotNull(nameof(s))]
+        [RequiresUnreferencedCode(parseRequiresUnreferencedCode)]
+        public static T? Parse<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]T>(
+            this string? s, CultureInfo? culture = null)
         {
             if (!Parser.TryParse(s, culture, out T? value, out Exception? error))
                 Throw.ArgumentException(Argument.obj, Res.StringExtensionsCannotParseAsType(s!, typeof(T)), error);
@@ -338,7 +347,10 @@ namespace KGySoft.CoreLibraries
         /// <returns>The parsed value. A <see langword="null"/> reference can be returned if <paramref name="s"/> is <see langword="null"/>, and <paramref name="type"/> is a reference or nullable type.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> is <see langword="null"/>, or <paramref name="type"/> is not nullable and <paramref name="s"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException">Parameter <paramref name="s"/> cannot be parsed as <paramref name="type"/>.</exception>
-        [return:NotNullIfNotNull(nameof(s))]public static object? Parse(this string? s, Type type, CultureInfo? culture = null)
+        [return:NotNullIfNotNull(nameof(s))]
+        [RequiresUnreferencedCode(parseRequiresUnreferencedCode)]
+        public static object? Parse(this string? s, [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]Type type,
+            CultureInfo? culture = null)
         {
             if (!Parser.TryParse(s, type, culture, true, out object? value, out Exception? error) || !type.CanAcceptValue(value))
                 Throw.ArgumentException(Argument.obj, Res.StringExtensionsCannotParseAsType(s!, type), error);
@@ -358,8 +370,8 @@ namespace KGySoft.CoreLibraries
         /// It can be <see langword="null"/> even if <paramref name="s"/> is <see langword="null"/> and <typeparamref name="T"/> is a reference or nullable type.</param>
         /// <returns><see langword="true"/>, if <paramref name="s"/> could be parsed as <typeparamref name="T"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><typeparamref name="T"/> is not nullable and <paramref name="s"/> is <see langword="null"/>.</exception>
-        public static bool TryParse<T>(this string? s, CultureInfo? culture, out T? value)
-            => Parser.TryParse(s, culture, out value, out var _);
+        public static bool TryParse<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]T>(
+            this string? s, CultureInfo? culture, out T? value) => Parser.TryParse(s, culture, out value, out var _);
 
         /// <summary>
         /// Tries to parse an object of type <typeparamref name="T"/> from a <see cref="string">string</see> value. Firstly, it tries to parse the type natively.
@@ -373,7 +385,9 @@ namespace KGySoft.CoreLibraries
         /// It can be <see langword="null"/> even if <paramref name="s"/> is <see langword="null"/> and <typeparamref name="T"/> is a reference or nullable type.</param>
         /// <returns><see langword="true"/>, if <paramref name="s"/> could be parsed as <typeparamref name="T"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><typeparamref name="T"/> is not nullable and <paramref name="s"/> is <see langword="null"/>.</exception>
-        public static bool TryParse<T>(this string? s, out T? value) => TryParse(s, null, out value);
+        [RequiresUnreferencedCode(parseRequiresUnreferencedCode)]
+        public static bool TryParse<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]T>(
+            this string? s, out T? value) => TryParse(s, null, out value);
 
         /// <summary>
         /// Tries to parse an object of type <paramref name="type"/> from a <see cref="string">string</see> value. Firstly, it tries to parse the type natively.
@@ -388,8 +402,9 @@ namespace KGySoft.CoreLibraries
         /// It can be <see langword="null"/> even if <paramref name="s"/> is <see langword="null"/> and <paramref name="type"/> is a reference or nullable type.</param>
         /// <returns><see langword="true"/>, if <paramref name="s"/> could be parsed as <paramref name="type"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> is null, or <paramref name="type"/> is not nullable and <paramref name="s"/> is <see langword="null"/>.</exception>
-        public static bool TryParse(this string? s, Type type, CultureInfo? culture, out object? value)
-            => Parser.TryParse(s, type, culture, true,  out value, out var _);
+        [RequiresUnreferencedCode(parseRequiresUnreferencedCode)]
+        public static bool TryParse(this string? s, [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]Type type,
+            CultureInfo? culture, out object? value) => Parser.TryParse(s, type, culture, true,  out value, out var _);
 
         /// <summary>
         /// Tries to parse an object of type <paramref name="type"/> from a <see cref="string">string</see> value. Firstly, it tries to parse the type natively.
@@ -403,8 +418,8 @@ namespace KGySoft.CoreLibraries
         /// It can be <see langword="null"/> even if <paramref name="s"/> is <see langword="null"/> and <paramref name="type"/> is a reference or nullable type.</param>
         /// <returns><see langword="true"/>, if <paramref name="s"/> could be parsed as <paramref name="type"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> is null, or <paramref name="type"/> is not nullable and <paramref name="s"/> is <see langword="null"/>.</exception>
-        public static bool TryParse(this string? s, Type type, out object? value)
-            => Parser.TryParse(s, type, null, true,  out value, out var _);
+        public static bool TryParse(this string? s, [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]Type type,
+            out object? value) => Parser.TryParse(s, type, null, true,  out value, out var _);
 
         #endregion
 

@@ -32,7 +32,7 @@ namespace KGySoft.Collections
     /// Implements a lock-free and thread-safe cache.
     /// Public API: <see cref="ThreadSafeCacheFactory.Create{TKey,TValue}(Func{TKey,TValue},IEqualityComparer{TKey},ThreadSafeCacheOptionsBase)"/> with <see cref="LockFreeCacheOptions"/>
     /// </summary>
-    internal partial class LockFreeCache<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.KeyWithHashingStrategy)]TKey, TValue> : IThreadSafeCacheAccessor<TKey, TValue>
+    internal partial class LockFreeCache<TKey, TValue> : IThreadSafeCacheAccessor<TKey, TValue>
         where TKey : notnull
     {
         #region Fields

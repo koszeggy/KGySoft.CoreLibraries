@@ -24,6 +24,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Security;
 using System.Threading;
 
@@ -149,6 +150,7 @@ namespace KGySoft.CoreLibraries
         /// <see cref="ICollection{T}"/> or <see cref="IProducerConsumerCollection{T}"/> implementation.</para>
         /// <note>If it is known that the collection implements only the supported generic interfaces, then for better performance use the generic <see cref="TryAdd{T}"><![CDATA[TryAdd<T>]]></see> overload if possible.</note>
         /// </remarks>
+        [RequiresUnreferencedCode("If the item can only be added by using a generic interface, the required code might be removed by the trimmer. Try to use the generic overload if possible.")]
         public static bool TryAdd([NoEnumeration]this IEnumerable collection, object? item, bool checkReadOnly = true, bool throwError = true)
         {
             if (collection == null!)
@@ -199,7 +201,7 @@ namespace KGySoft.CoreLibraries
 
                 // 5.) ICollection<T>
                 Type collType = collection.GetType();
-                if (collType.IsImplementationOfGenericType(Reflector.ICollectionGenType, out Type? genericCollectionInterface))
+                if (collType.IsImplementationOfGenericType(typeof(ICollection<>), out Type? genericCollectionInterface))
                 {
                     if (checkReadOnly && collection.IsReadOnly(genericCollectionInterface))
                         return false;
@@ -294,6 +296,8 @@ namespace KGySoft.CoreLibraries
         /// <note type="warning">If not every element in <paramref name="collection"/> is compatible with <paramref name="target"/>, then it can happen that some elements
         /// of <paramref name="collection"/> have been added to <paramref name="target"/> and the method returns <see langword="false"/>.</note>
         /// </remarks>
+        [RequiresUnreferencedCode("If the collection can only be added by using a generic interface, the required code might be removed by the trimmer. Try to use the generic overload if possible.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "In AOT mode avoiding the path that requires dynamic code.")]
         public static bool TryAddRange([NoEnumeration]this IEnumerable target, IEnumerable collection, bool checkReadOnly = true, bool throwError = true)
         {
             if (target == null!)
@@ -310,9 +314,15 @@ namespace KGySoft.CoreLibraries
                             return false;
                         genericCollection.AddRange(collection.Cast<object>());
                         return true;
+
                     default:
+                        // Not even trying to use the generic CollectionExtensions.AddRange in AOT mode.
+                        // Though it may work, it can go wrong too many ways, and unlike TryAdd, it requires dynamic code.
+                        if (!RuntimeFeature.IsDynamicCodeSupported)
+                            break;
+
                         // ICollection<T>: CollectionExtensions.AddRange<T>
-                        if (target.GetType().IsImplementationOfGenericType(Reflector.ICollectionGenType, out Type? genericCollectionInterface))
+                        if (target.GetType().IsImplementationOfGenericType(typeof(ICollection<>), out Type? genericCollectionInterface))
                         {
                             Type t = genericCollectionInterface.GetGenericArguments()[0];
                             if (!collection.IsGenericEnumerableOf(t))
@@ -332,6 +342,7 @@ namespace KGySoft.CoreLibraries
                 return false;
             }
 
+            // fallback: adding items one by one
             return collection.Cast<object>().All(item => target.TryAdd(item, checkReadOnly, throwError));
         }
 
@@ -397,6 +408,7 @@ namespace KGySoft.CoreLibraries
         /// <para>The <paramref name="collection"/> can be cleared if that is either an <see cref="IList"/>, <see cref="IDictionary"/> or <see cref="ICollection{T}"/> implementation.</para>
         /// <note>If it is known that the collection implements only the supported generic <see cref="ICollection{T}"/> interface, then for better performance use the generic <see cref="TryClear{T}"><![CDATA[TryClear<T>]]></see> overload if possible.</note>
         /// </remarks>
+        [RequiresUnreferencedCode("If the collection can only be cleared by using a generic interface, the required code might be removed by the trimmer. Try to use the generic overload if possible.")]
         public static bool TryClear([NoEnumeration]this IEnumerable collection, bool checkReadOnly = true, bool throwError = true)
         {
             if (collection == null!)
@@ -422,7 +434,7 @@ namespace KGySoft.CoreLibraries
                         genericCollection.Clear();
                         return true;
                     default:
-                        if (collection.GetType().IsImplementationOfGenericType(Reflector.ICollectionGenType, out Type? genericCollectionInterface))
+                        if (collection.GetType().IsImplementationOfGenericType(typeof(ICollection<>), out Type? genericCollectionInterface))
                         {
                             if (checkReadOnly && collection.IsReadOnly(genericCollectionInterface))
                                 return false;
@@ -502,6 +514,7 @@ namespace KGySoft.CoreLibraries
         /// <para>The <paramref name="item"/> can be inserted into the <paramref name="collection"/> if that is either an <see cref="IList"/> or <see cref="IList{T}"/> implementation.</para>
         /// <note>If it is known that the collection implements only the supported generic <see cref="IList{T}"/> interface, then for better performance use the generic <see cref="TryInsert{T}"><![CDATA[TryInsert<T>]]></see> overload if possible.</note>
         /// </remarks>
+        [RequiresUnreferencedCode("If the item can only be inserted by using a generic interface, the required code might be removed by the trimmer. Try to use the generic overload if possible.")]
         public static bool TryInsert([NoEnumeration]this IEnumerable collection, int index, object? item, bool checkReadOnlyAndBounds = true, bool throwError = true)
         {
             if (collection == null!)
@@ -536,7 +549,7 @@ namespace KGySoft.CoreLibraries
                     return true;
                 }
 
-                if (collection.GetType().IsImplementationOfGenericType(Reflector.IListGenType, out Type? genericListInterface))
+                if (collection.GetType().IsImplementationOfGenericType(typeof(IList<>), out Type? genericListInterface))
                 {
                     var genericArgument = genericListInterface.GetGenericArguments()[0];
                     if (!genericArgument.CanAcceptValue(item))
@@ -546,7 +559,7 @@ namespace KGySoft.CoreLibraries
                     {
                         if (index < 0)
                             return false;
-                        Type genericCollectionInterface = genericListInterface.GetInterface(Reflector.ICollectionGenType.Name)!;
+                        Type genericCollectionInterface = genericListInterface.GetInterface(typeof(ICollection<>).Name)!;
                         int count = collection is ICollection coll ? coll.Count : collection.Count(genericCollectionInterface);
                         if (index > count || collection.IsReadOnly(genericCollectionInterface))
                             return false;
@@ -636,6 +649,8 @@ namespace KGySoft.CoreLibraries
         /// <note type="warning">If not every element in <paramref name="collection"/> is compatible with <paramref name="target"/>, then it can happen that some elements
         /// of <paramref name="collection"/> have been added to <paramref name="target"/> and the method returns <see langword="false"/>.</note>
         /// </remarks>
+        [RequiresUnreferencedCode("If the collection can only be inserted by using a generic interface, the required code might be removed by the trimmer. Try to use the generic overload if possible.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "In AOT mode avoiding the path that requires dynamic code.")]
         public static bool TryInsertRange([NoEnumeration]this IEnumerable target, int index, IEnumerable collection, bool checkReadOnlyAndBounds = true, bool throwError = true)
         {
             if (target == null!)
@@ -648,15 +663,19 @@ namespace KGySoft.CoreLibraries
                 switch (target)
                 {
                     case IList<object?> genericList:
-                        {
-                            if (checkReadOnlyAndBounds && (genericList.IsReadOnly || index < 0 || index > genericList.Count))
-                                return false;
-                            genericList.InsertRange(index, collection.Cast<object?>());
-                            return true;
-                        }
+                        if (checkReadOnlyAndBounds && (genericList.IsReadOnly || index < 0 || index > genericList.Count))
+                            return false;
+                        genericList.InsertRange(index, collection.Cast<object?>());
+                        return true;
+
                     default:
+                        // Not even trying to use the generic ListExtensions.InsertRange in AOT mode.
+                        // Though it may work, it can go wrong too many ways, and unlike TryInsert, it requires dynamic code.
+                        if (!RuntimeFeature.IsDynamicCodeSupported)
+                            break;
+
                         // IList<T>: ListExtensions.InsertRange<T>
-                        if (target.GetType().IsImplementationOfGenericType(Reflector.IListGenType, out Type? genericListInterface))
+                        if (target.GetType().IsImplementationOfGenericType(typeof(IList<>), out Type? genericListInterface))
                         {
                             Type t = genericListInterface.GetGenericArguments()[0];
                             if (!collection.IsGenericEnumerableOf(t))
@@ -666,7 +685,7 @@ namespace KGySoft.CoreLibraries
                             {
                                 if (index < 0)
                                     return false;
-                                Type genericCollectionInterface = genericListInterface.GetInterface(Reflector.ICollectionGenType.Name)!;
+                                Type genericCollectionInterface = genericListInterface.GetInterface(typeof(ICollection<>).Name)!;
                                 int count = target is ICollection coll ? coll.Count : target.Count(genericCollectionInterface);
                                 if (index > count || target.IsReadOnly(genericCollectionInterface))
                                     return false;
@@ -684,6 +703,7 @@ namespace KGySoft.CoreLibraries
                 return false;
             }
 
+            // fallback: inserting items one by one
             return collection.Cast<object>().All(item => target.TryInsert(index++, item, checkReadOnlyAndBounds, throwError));
         }
 
@@ -750,6 +770,7 @@ namespace KGySoft.CoreLibraries
         /// <para>Removal is supported if <paramref name="collection"/> is either an <see cref="IList"/> or <see cref="ICollection{T}"/> implementation.</para>
         /// <note>If it is known that the collection implements only the supported generic <see cref="ICollection{T}"/> interface, then for better performance use the generic <see cref="TryRemove{T}"><![CDATA[TryRemove<T>]]></see> overload if possible.</note>
         /// </remarks>
+        [RequiresUnreferencedCode("If the item can only be removed by using a generic interface, the required code might be removed by the trimmer. Try to use the generic overload if possible.")]
         public static bool TryRemove([NoEnumeration]this IEnumerable collection, object? item, bool checkReadOnly = true, bool throwError = true)
         {
             if (collection == null!)
@@ -787,7 +808,7 @@ namespace KGySoft.CoreLibraries
                     return genericCollection.Remove(item);
                 }
 
-                if (collection.GetType().IsImplementationOfGenericType(Reflector.ICollectionGenType, out Type? genericCollectionInterface))
+                if (collection.GetType().IsImplementationOfGenericType(typeof(ICollection<>), out Type? genericCollectionInterface))
                 {
                     if (checkReadOnly && collection.IsReadOnly(genericCollectionInterface))
                         return false;
@@ -880,6 +901,7 @@ namespace KGySoft.CoreLibraries
         /// <para>Removal is supported if <paramref name="collection"/> is either an <see cref="IList"/> or <see cref="IList{T}"/> implementation.</para>
         /// <note>If it is known that the collection implements only the supported generic <see cref="IList{T}"/> interface, then for better performance use the generic <see cref="TryRemoveAt{T}"><![CDATA[TryRemoveAt<T>]]></see> overload if possible.</note>
         /// </remarks>
+        [RequiresUnreferencedCode("If the item can only be removed by using a generic interface, the required code might be removed by the trimmer. Try to use the generic overload if possible.")]
         public static bool TryRemoveAt([NoEnumeration]this IEnumerable collection, int index, bool checkReadOnlyAndBounds = true, bool throwError = true)
         {
             if (collection == null!)
@@ -901,13 +923,13 @@ namespace KGySoft.CoreLibraries
                         return true;
                 }
 
-                if (collection.GetType().IsImplementationOfGenericType(Reflector.IListGenType, out Type? genericListInterface))
+                if (collection.GetType().IsImplementationOfGenericType(typeof(IList<>), out Type? genericListInterface))
                 {
                     if (checkReadOnlyAndBounds)
                     {
                         if (index < 0)
                             return false;
-                        Type genericCollectionInterface = genericListInterface.GetInterface(Reflector.ICollectionGenType.Name)!;
+                        Type genericCollectionInterface = genericListInterface.GetInterface(typeof(ICollection<>).Name)!;
                         int count = collection is ICollection coll ? coll.Count : collection.Count(genericCollectionInterface);
                         if (index >= count || collection.IsReadOnly(genericCollectionInterface))
                             return false;
@@ -990,6 +1012,8 @@ namespace KGySoft.CoreLibraries
         /// then the elements will only be removed one by one.</note>
         /// <note>Whenever possible, try to use the generic <see cref="TryRemoveRange{T}"><![CDATA[TryRemoveRange<T>]]></see> overload for better performance.</note>
         /// </remarks>
+        [RequiresUnreferencedCode("If the items can only be removed by using a generic interface, the required code might be removed by the trimmer. Try to use the generic overload if possible.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "In AOT mode avoiding the path that requires dynamic code.")]
         public static bool TryRemoveRange([NoEnumeration]this IEnumerable collection, int index, int count, bool checkReadOnlyAndBounds = true, bool throwError = true)
         {
             if (collection == null!)
@@ -1006,15 +1030,21 @@ namespace KGySoft.CoreLibraries
                             return false;
                         genericList.RemoveRange(index, count);
                         return true;
+
                     default:
+                        // Not even trying to use the generic ListExtensions.RemoveRange in AOT mode.
+                        // Though it may work, it can go wrong too many ways, and unlike TryRemoveAt, it requires dynamic code.
+                        if (!RuntimeFeature.IsDynamicCodeSupported)
+                            break;
+
                         // IList<T>: ListExtensions.RemoveRange<T>
-                        if (collection.GetType().IsImplementationOfGenericType(Reflector.IListGenType, out Type? genericListInterface))
+                        if (collection.GetType().IsImplementationOfGenericType(typeof(IList<>), out Type? genericListInterface))
                         {
                             if (checkReadOnlyAndBounds)
                             {
                                 if (index < 0)
                                     return false;
-                                Type genericCollectionInterface = genericListInterface.GetInterface(Reflector.ICollectionGenType.Name)!;
+                                Type genericCollectionInterface = genericListInterface.GetInterface(typeof(ICollection<>).Name)!;
                                 int collCount = collection is ICollection coll ? coll.Count : collection.Count(genericCollectionInterface);
                                 if ((uint)index >= (uint)collCount || index + count > collCount || collection.IsReadOnly(genericCollectionInterface))
                                     return false;
@@ -1032,6 +1062,7 @@ namespace KGySoft.CoreLibraries
                 return false;
             }
 
+            // fallback: removing items one by one
             for (int i = 0; i < count; i++)
             {
                 if (!collection.TryRemoveAt(index, checkReadOnlyAndBounds, throwError))
@@ -1105,6 +1136,7 @@ namespace KGySoft.CoreLibraries
         /// <note>If it is known that the collection implements only the supported generic <see cref="IList{T}"/> interface, then for better performance use the generic <see cref="TrySetElementAt{T}"><![CDATA[TrySetElementAt<T>]]></see> overload if possible.</note>
         /// <note>This method returns <see langword="false"/> also for multidimensional arrays.</note>
         /// </remarks>
+        [RequiresUnreferencedCode("If the item can only be set by using a generic interface, the required code might be removed by the trimmer. Try to use the generic overload if possible.")]
         public static bool TrySetElementAt([NoEnumeration]this IEnumerable collection, int index, object? item, bool checkReadOnlyAndBounds = true, bool throwError = true)
         {
             if (collection == null!)
@@ -1146,7 +1178,7 @@ namespace KGySoft.CoreLibraries
                     return true;
                 }
 
-                if (collection.GetType().IsImplementationOfGenericType(Reflector.IListGenType, out Type? genericListInterface))
+                if (collection.GetType().IsImplementationOfGenericType(typeof(IList<>), out Type? genericListInterface))
                 {
                     var genericArgument = genericListInterface.GetGenericArguments()[0];
                     if (!genericArgument.CanAcceptValue(item))
@@ -1156,7 +1188,7 @@ namespace KGySoft.CoreLibraries
                     {
                         if (index < 0)
                             return false;
-                        Type genericCollectionInterface = genericListInterface.GetInterface(Reflector.ICollectionGenType.Name)!;
+                        Type genericCollectionInterface = genericListInterface.GetInterface(typeof(ICollection<>).Name)!;
                         int count = collection is ICollection coll ? coll.Count : collection.Count(genericCollectionInterface);
                         if (index >= count || (
 #if NET35
@@ -1282,6 +1314,8 @@ namespace KGySoft.CoreLibraries
         /// <note type="warning">If not every element in <paramref name="collection"/> is compatible with <paramref name="target"/>, then it can happen that some elements
         /// of <paramref name="collection"/> have been added to <paramref name="target"/> and the method returns <see langword="false"/>.</note>
         /// </remarks>
+        [RequiresUnreferencedCode("If the items can only be replaced by using a generic interface, the required code might be removed by the trimmer. Try to use the generic overload if possible.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "In AOT mode avoiding the path that requires dynamic code.")]
         public static bool TryReplaceRange([NoEnumeration]this IEnumerable target, int index, int count, IEnumerable collection, bool checkReadOnlyAndBounds = true, bool throwError = true)
         {
             if (count == 0)
@@ -1304,8 +1338,13 @@ namespace KGySoft.CoreLibraries
                         genericList.ReplaceRange(index, count, collection.Cast<object?>());
                         return true;
                     default:
+                        // Not even trying to use the generic ListExtensions.ReplaceRange in AOT mode.
+                        // Though it may work, it can go wrong too many ways, and unlike TrySetElementAt/TryRemoveAt/TryInsert, it requires dynamic code.
+                        if (!RuntimeFeature.IsDynamicCodeSupported)
+                            break;
+
                         // IList<T>: ListExtensions.ReplaceRange<T>
-                        if (target.GetType().IsImplementationOfGenericType(Reflector.IListGenType, out Type? genericListInterface))
+                        if (target.GetType().IsImplementationOfGenericType(typeof(IList<>), out Type? genericListInterface))
                         {
                             Type t = genericListInterface.GetGenericArguments()[0];
                             if (!collection.IsGenericEnumerableOf(t))
@@ -1314,7 +1353,7 @@ namespace KGySoft.CoreLibraries
                             {
                                 if (index < 0)
                                     return false;
-                                Type genericCollectionInterface = genericListInterface.GetInterface(Reflector.ICollectionGenType.Name)!;
+                                Type genericCollectionInterface = genericListInterface.GetInterface(typeof(ICollection<>).Name)!;
                                 int targetCount = target is ICollection coll ? coll.Count : target.Count(genericCollectionInterface);
                                 if ((uint)index >= (uint)targetCount || index + count > targetCount || target.IsReadOnly(genericCollectionInterface))
                                     return false;
@@ -1719,6 +1758,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="source">The source to check.</param>
         /// <param name="count">If this method returns <see langword="true"/>, then this parameter contains the number of elements in the <paramref name="source"/> enumeration. This parameter is passed uninitialized.</param>
         /// <returns><see langword="true"/>, if the number of elements could be determined without enumeration; otherwise, <see langword="false"/>.</returns>
+        [RequiresUnreferencedCode("If the count of elements can only be determined by using a generic interface, the required code might be removed by the trimmer. Try to use the generic overload if possible.")]
         public static bool TryGetCount([NoEnumeration]this IEnumerable source, out int count)
         {
             if (source == null!)
@@ -1735,7 +1775,7 @@ namespace KGySoft.CoreLibraries
 
                 default:
                     // ICollection<T>
-                    if (source.GetType().IsImplementationOfGenericType(Reflector.ICollectionGenType, out Type? collectionType))
+                    if (source.GetType().IsImplementationOfGenericType(typeof(ICollection<>), out Type? collectionType))
                     {
                         count = source.Count(collectionType);
                         return true;
@@ -2064,6 +2104,8 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Adjusts the initializer collection created by <see cref="TypeExtensions.CreateInitializerCollection"/> after it is populated before calling the constructor.
         /// </summary>
+        [RequiresUnreferencedCode("Cannot assure Interfaces for IsImplementationOfGenericType")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "The array type in Array.CreateInstance is the same as in collectionCtor.")]
         internal static IEnumerable AdjustInitializerCollection([NoEnumeration]this IEnumerable initializerCollection, ConstructorInfo collectionCtor)
         {
             Type collectionType = collectionCtor.DeclaringType!;
@@ -2105,6 +2147,8 @@ namespace KGySoft.CoreLibraries
 
         #region Private Methods
 
+        [RequiresDynamicCode("GetGenericType")]
+        [RequiresUnreferencedCode("GetGenericType")]
         private static bool IsGenericEnumerableOf([NoEnumeration]this IEnumerable collection, Type genericArgument)
         {
             if (genericEnumerableCache == null)
@@ -2117,6 +2161,7 @@ namespace KGySoft.CoreLibraries
         /// to insert the specified <paramref name="collection"/> at the same position. The number of elements in <paramref name="collection"/> can be different from the amount of removed items.
         /// This method performs the replacement one by one.
         /// </summary>
+        [RequiresUnreferencedCode("TryRemoveRange, TryInsertRange")]
         private static bool TryReplaceRangeDefault(IEnumerable target, int index, int count, IEnumerable collection, bool checkReadOnlyAndBounds, bool throwError)
         {
             IEnumerator enumerator = collection.GetEnumerator();

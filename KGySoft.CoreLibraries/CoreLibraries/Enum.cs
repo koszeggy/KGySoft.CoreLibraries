@@ -730,10 +730,19 @@ namespace KGySoft.CoreLibraries
                 return names = Enum.GetNames(typeof(TEnum));
         }
 
+#if !NET5_0_OR_GREATER
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "False alarm, we reference TEnum[] in the method.")]
+#endif
         private static TEnum[] InitValues()
         {
             lock (syncRoot)
+            {
+#if NET5_0_OR_GREATER
+                return values = Enum.GetValues<TEnum>();
+#else
                 return values = (TEnum[])Enum.GetValues(typeof(TEnum));
+#endif
+            }
         }
 
         private static Array InitUnderlyingValues()

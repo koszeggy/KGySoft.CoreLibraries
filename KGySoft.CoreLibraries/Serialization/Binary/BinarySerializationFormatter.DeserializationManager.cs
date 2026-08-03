@@ -253,6 +253,7 @@ namespace KGySoft.Serialization.Binary
 
                 #region Methods
 
+                // TODO: some suppress, because not adding RUC just to this override
                 internal override void SetValue(object value)
                 {
                     Accessors.InvokeMethod(target, nameof(LinkedList<>.AddAfter), [referenceNode.GetType(), genericArg], referenceNode, value);
@@ -885,6 +886,7 @@ namespace KGySoft.Serialization.Binary
             }
 #endif
 
+            [RequiresUnreferencedCode("SetValue")]
             private static void ApplyPendingUsages(UsageReferences usages, object origObject, object? finalObject)
             {
                 if (!usages.CanBeReplaced && origObject != finalObject)
@@ -2619,6 +2621,7 @@ namespace KGySoft.Serialization.Binary
                 valueUsages?.Add(new OrderedDictionaryValueUsage(dict, index, insertMethod, key));
             }
 
+            [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private void SetKeyValue(object obj, object? key, object? value)
             {
                 UsageReferences? keyUsages = key == null ? null : objectsBeingDeserialized?.GetValueOrDefault(key);

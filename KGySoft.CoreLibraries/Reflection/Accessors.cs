@@ -31,7 +31,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices; 
 using System.Runtime.Serialization;
 using System.Security; 
-#if !NETCOREAPP2_0
+#if !NETCOREAPP || NETCOREAPP3_0_OR_GREATER
 using System.Text;
 #endif
 using System.Threading;
@@ -148,7 +148,9 @@ namespace KGySoft.Reflection
 
         #region ICollection<T>
 
-        private static PropertyAccessor ICollection_IsReadOnly(Type collectionInterface)
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2070:TypeDynamicallyAccessedMemberTypesAnnotationMismatch",
+            Justification = "We could annotate the lambda parameter accordingly, but that would then cause IL2111. And it is called with collectionInterface, which is annotated anyway.")]
+        private static PropertyAccessor ICollection_IsReadOnly([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]Type collectionInterface)
         {
             if (propertiesICollection_IsReadOnly == null)
             {
@@ -160,7 +162,9 @@ namespace KGySoft.Reflection
             return propertiesICollection_IsReadOnly[collectionInterface];
         }
 
-        private static MethodAccessor ICollection_Add(Type collectionInterface)
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2070:TypeDynamicallyAccessedMemberTypesAnnotationMismatch",
+            Justification = "We could annotate the lambda parameter accordingly, but that would then cause IL2111. And it is called with collectionInterface, which is annotated anyway.")]
+        private static MethodAccessor ICollection_Add([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]Type collectionInterface)
         {
             if (methodsICollection_Add == null)
             {
@@ -172,7 +176,9 @@ namespace KGySoft.Reflection
             return methodsICollection_Add[collectionInterface];
         }
 
-        private static MethodAccessor ICollection_Clear(Type collectionInterface)
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2070:TypeDynamicallyAccessedMemberTypesAnnotationMismatch",
+            Justification = "We could annotate the lambda parameter accordingly, but that would then cause IL2111. And it is called with collectionInterface, which is annotated anyway.")]
+        private static MethodAccessor ICollection_Clear([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]Type collectionInterface)
         {
             if (methodsICollection_Clear == null)
             {
@@ -184,7 +190,9 @@ namespace KGySoft.Reflection
             return methodsICollection_Clear[collectionInterface];
         }
 
-        private static PropertyAccessor ICollection_Count(Type collectionInterface)
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2070:TypeDynamicallyAccessedMemberTypesAnnotationMismatch",
+            Justification = "We could annotate the lambda parameter accordingly, but that would then cause IL2111. And it is called with collectionInterface, which is annotated anyway.")]
+        private static PropertyAccessor ICollection_Count([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]Type collectionInterface)
         {
             if (propertiesICollection_Count == null)
             {
@@ -196,7 +204,9 @@ namespace KGySoft.Reflection
             return propertiesICollection_Count[collectionInterface];
         }
 
-        private static MethodAccessor ICollection_Remove(Type collectionInterface)
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2070:TypeDynamicallyAccessedMemberTypesAnnotationMismatch",
+            Justification = "We could annotate the lambda parameter accordingly, but that would then cause IL2111. And it is called with collectionInterface, which is annotated anyway.")]
+        private static MethodAccessor ICollection_Remove([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]Type collectionInterface)
         {
             if (methodsICollection_Remove == null)
             {
@@ -213,7 +223,9 @@ namespace KGySoft.Reflection
         #region IProducerConsumerCollection<T>
 
 #if !NET35
-        private static MethodAccessor IProducerConsumerCollection_TryAdd(Type collectionInterface)
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2070:TypeDynamicallyAccessedMemberTypesAnnotationMismatch",
+            Justification = "We could annotate the lambda parameter accordingly, but that would then cause IL2111. And it is called with collectionInterface, which is annotated anyway.")]
+        private static MethodAccessor IProducerConsumerCollection_TryAdd([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]Type collectionInterface)
         {
             if (methodsIProducerConsumerCollection_TryAdd == null)
             {
@@ -230,7 +242,9 @@ namespace KGySoft.Reflection
 
         #region IList<T>
 
-        private static MethodAccessor IList_Insert(Type listInterface)
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2070:TypeDynamicallyAccessedMemberTypesAnnotationMismatch",
+            Justification = "We could annotate the lambda parameter accordingly, but that would then cause IL2111. And it is called with listInterface, which is annotated anyway.")]
+        private static MethodAccessor IList_Insert([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]Type listInterface)
         {
             if (methodsIList_Insert == null)
             {
@@ -242,7 +256,9 @@ namespace KGySoft.Reflection
             return methodsIList_Insert[listInterface];
         }
 
-        private static MethodAccessor IList_RemoveAt(Type listInterface)
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2070:TypeDynamicallyAccessedMemberTypesAnnotationMismatch",
+            Justification = "We could annotate the lambda parameter accordingly, but that would then cause IL2111. And it is called with listInterface, which is annotated anyway.")]
+        private static MethodAccessor IList_RemoveAt([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]Type listInterface)
         {
             if (methodsIList_RemoveAt == null)
             {
@@ -254,7 +270,9 @@ namespace KGySoft.Reflection
             return methodsIList_RemoveAt[listInterface];
         }
 
-        private static PropertyAccessor IList_Item(Type listInterface)
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2070:TypeDynamicallyAccessedMemberTypesAnnotationMismatch",
+            Justification = "We could annotate the lambda parameter accordingly, but that would then cause IL2111. And it is called with listInterface, which is annotated anyway.")]
+        private static PropertyAccessor IList_Item([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]Type listInterface)
         {
             if (propertiesIList_Item == null)
             {
@@ -302,6 +320,7 @@ namespace KGySoft.Reflection
 
         #region IIListProvider<T>
 
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "It is handled if the type could not be resolved")]
         private static Type? IIListProviderType
         {
             get
@@ -318,15 +337,29 @@ namespace KGySoft.Reflection
 
         private static MethodAccessor? IIListProvider_GetCount(Type genericArgument)
         {
+            #region Local Methods
+
+            [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "It is handled if the generic type cannot be created.")]
+            [UnconditionalSuppressMessage("TrimAnalysis", "IL2075:DynamicallyAccessedMembersReturnValueAnnotationMismatch", Justification = "It is handled if the method is not found.")]
+            [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "It is handled if the generic type cannot be created.")]
             static MethodAccessor? GetGetCountMethod(Type arg)
             {
                 Type? listProviderType = IIListProviderType;
                 if (listProviderType == null)
                     return null;
-                Type genericType = listProviderType.GetGenericType(arg);
-                MethodInfo? getCountMethod = genericType.GetMethod("GetCount");
-                return getCountMethod == null ? null : MethodAccessor.GetAccessor(getCountMethod);
+                try
+                {
+                    Type genericType = listProviderType.GetGenericType(arg);
+                    MethodInfo? getCountMethod = genericType.GetMethod("GetCount");
+                    return getCountMethod == null ? null : MethodAccessor.GetAccessor(getCountMethod);
+                }
+                catch (Exception e) when (!e.IsCriticalOr(RuntimeFeature.IsDynamicCodeSupported))
+                {
+                    return null;
+                }
             }
+
+            #endregion
 
             if (methodsIIListProvider_GetCount == null)
                 Interlocked.CompareExchange(ref methodsIIListProvider_GetCount, new LockFreeCache<Type, MethodAccessor?>(GetGetCountMethod, null, LockFreeCacheOptions.Profile128), null);
@@ -339,6 +372,7 @@ namespace KGySoft.Reflection
         #region Iterator<T>
 #if NET9_0_OR_GREATER
 
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "It handles if type cannot be resolved.")]
         private static Type? IteratorType
         {
             get
@@ -355,15 +389,29 @@ namespace KGySoft.Reflection
 
         private static MethodAccessor? Iterator_GetCount(Type genericArgument)
         {
+            #region Local Methods
+
+            [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "It is handled if the generic type cannot be created.")]
+            [UnconditionalSuppressMessage("TrimAnalysis", "IL2075:DynamicallyAccessedMembersReturnValueAnnotationMismatch", Justification = "It is handled if the method is not found.")]
+            [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "It is handled if the generic type cannot be created.")]
             static MethodAccessor? GetGetCountMethod(Type arg)
             {
                 Type? iteratorType = IteratorType;
                 if (iteratorType == null)
                     return null;
-                Type genericType = iteratorType.GetGenericType(arg);
-                MethodInfo? getCountMethod = genericType.GetMethod("GetCount");
-                return getCountMethod == null ? null : MethodAccessor.GetAccessor(getCountMethod);
+                try
+                {
+                    Type genericType = iteratorType.GetGenericType(arg);
+                    MethodInfo? getCountMethod = genericType.GetMethod("GetCount");
+                    return getCountMethod == null ? null : MethodAccessor.GetAccessor(getCountMethod);
+                }
+                catch (Exception e) when (!e.IsCriticalOr(RuntimeFeature.IsDynamicCodeSupported))
+                {
+                    return null;
+                }
             }
+
+            #endregion
 
             if (methodsIterator_GetCount == null)
                 Interlocked.CompareExchange(ref methodsIterator_GetCount, new LockFreeCache<Type, MethodAccessor?>(GetGetCountMethod, null, LockFreeCacheOptions.Profile128), null);
@@ -379,8 +427,12 @@ namespace KGySoft.Reflection
         #region Any Member
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        private static PropertyAccessor? GetProperty(Type type, string propertyName)
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2080:DynamicallyAccessedMembersFieldAnnotationMismatch",
+            Justification = "False alarm, the tuple field gets its value from the type of the outer method, which is annotated.")]
+        private static PropertyAccessor? GetProperty([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllProperties)]Type type, string propertyName)
         {
+            #region Local Methods
+            
             static PropertyAccessor? GetPropertyAccessor((Type DeclaringType, string PropertyName) key)
             {
                 // Ignoring case is allowed due to some incompatibilities between platforms (e.g. internal IsSzArray vs. public IsSZArray).
@@ -389,14 +441,22 @@ namespace KGySoft.Reflection
                 return property == null ? null : PropertyAccessor.GetAccessor(property);
             }
 
+            #endregion
+
             if (properties == null)
                 Interlocked.CompareExchange(ref properties, new LockFreeCache<(Type, string), PropertyAccessor?>(GetPropertyAccessor, null, LockFreeCacheOptions.Profile128), null);
             return properties[(type, propertyName)];
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        private static FieldAccessor? GetField(Type type, Type? fieldType, string? fieldNamePattern)
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2075:DynamicallyAccessedMembersReturnValueAnnotationMismatch",
+                Justification = "False alarm, just traversing the hierarchy of the same type by BaseType.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2080:DynamicallyAccessedMembersFieldAnnotationMismatch",
+            Justification = "False alarm, the tuple field gets its value from the type of the outer method, which is annotated.")]
+        private static FieldAccessor? GetField([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllFields)]Type type, Type? fieldType, string? fieldNamePattern)
         {
+            #region Local Methods
+            
             // Fields are meant to be used for non-visible members either by type or name pattern (or both)
             FieldAccessor? GetFieldAccessor((Type DeclaringType, Type? FieldType, string? FieldNamePattern) key)
             {
@@ -414,11 +474,14 @@ namespace KGySoft.Reflection
                 return null;
             }
 
+            #endregion
+
             if (fields == null)
                 Interlocked.CompareExchange(ref fields, new LockFreeCache<(Type, Type?, string?), FieldAccessor?>(GetFieldAccessor, null, LockFreeCacheOptions.Profile128), null);
             return fields[(type, fieldType, fieldNamePattern)];
         }
 
+        [RequiresUnreferencedCode("GetField")]
         private static object? GetFieldValue(object obj, string fieldName)
         {
             FieldAccessor? field = GetField(obj.GetType(), null, fieldName);
@@ -427,26 +490,34 @@ namespace KGySoft.Reflection
             return field.Get(obj);
         }
 
+        [RequiresUnreferencedCode("GetField")]
         private static T? GetFieldValueOrDefault<T>(object obj, T? defaultValue = default, string? fieldNamePattern = null)
         {
             FieldAccessor? field = GetField(obj.GetType(), typeof(T), fieldNamePattern);
             return field == null ? defaultValue : (T)field.Get(obj)!;
         }
 
-        private static TField? GetFieldValueOrDefault<TInstance, TField>(TInstance obj, TField? defaultValue = default, string? fieldNamePattern = null)
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2072:ParameterDynamicallyAccessedMemberTypesCannotBeDetermined",
+            Justification = "Using typeof(TInstance) instead of obj.GetType() would make this warning disappear, but we use the possibly derived types. It is handled if the field is not found.")]
+        private static TField? GetFieldValueOrDefault<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllFields)]TInstance, TField>(
+            TInstance obj, TField? defaultValue = default, string? fieldNamePattern = null)
             where TInstance : class
         {
             FieldAccessor? field = GetField(obj.GetType(), typeof(TField), fieldNamePattern);
             return field == null ? defaultValue : field.GetInstanceValue<TInstance, TField>(obj);
         }
 
-        private static TField GetFieldValueOrDefault<TInstance, TField>(TInstance obj, Func<TField> defaultValueFactory)
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2072:ParameterDynamicallyAccessedMemberTypesCannotBeDetermined",
+            Justification = "Using typeof(TInstance) instead of obj.GetType() would make this warning disappear, but we use the possibly derived types. It is handled if the field is not found.")]
+        private static TField GetFieldValueOrDefault<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllFields)]TInstance, TField>(
+            TInstance obj, Func<TField> defaultValueFactory)
             where TInstance : class
         {
             FieldAccessor? field = GetField(obj.GetType(), typeof(TField), null);
             return field == null ? defaultValueFactory.Invoke() : field.GetInstanceValue<TInstance, TField>(obj);
         }
 
+        [RequiresUnreferencedCode("GetField")]
         private static void SetFieldValue(object obj, string fieldNamePattern, object? value)
         {
             Type type = obj.GetType();
@@ -464,21 +535,31 @@ namespace KGySoft.Reflection
             field.Set(obj, value);
         }
 
-        private static MethodAccessor? GetMethodByName(Type type, string methodName)
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2080:DynamicallyAccessedMembersFieldAnnotationMismatch",
+            Justification = "False alarm, the tuple field gets its value from the type of the outer method, which is annotated.")]
+        private static MethodAccessor? GetMethodByName([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllMethods)]Type type, string methodName)
         {
+            #region Local Methods
+            
             static MethodAccessor? GetMethodAccessor((Type DeclaringType, string MethodName) key)
             {
                 MethodInfo? method = key.DeclaringType.GetMethod(key.MethodName, BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
                 return method == null ? null : MethodAccessor.GetAccessor(method);
             }
 
+            #endregion
+
             if (methodsByName == null)
                 Interlocked.CompareExchange(ref methodsByName, new LockFreeCache<(Type, string), MethodAccessor?>(GetMethodAccessor, null, LockFreeCacheOptions.Profile128), null);
             return methodsByName[(type, methodName)];
         }
 
-        private static MethodAccessor GetMethodByTypes(Type type, string methodName, TypesKey parameterTypes)
+        private static MethodAccessor GetMethodByTypes([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]Type type, string methodName, TypesKey parameterTypes)
         {
+            #region Local Methods
+
+            [UnconditionalSuppressMessage("TrimAnalysis", "IL2080:DynamicallyAccessedMembersFieldAnnotationMismatch",
+                Justification = "False alarm, the tuple field gets its value from the type of the outer method, which is annotated, and it is enough to get the public methods only.")]
             static MethodAccessor GetMethodAccessor((Type DeclaringType, string MethodName, TypesKey ParameterTypes) key)
             {
                 // Unlike in GetMethodByName, here result is not nullable because we invoke public methods only
@@ -498,13 +579,22 @@ namespace KGySoft.Reflection
                 return Throw.InternalError<MethodAccessor>($"No matching method found: {key}");
             }
 
+            #endregion
+
             if (methodsByTypes == null)
                 Interlocked.CompareExchange(ref methodsByTypes, new LockFreeCache<(Type, string, TypesKey), MethodAccessor>(GetMethodAccessor, null, LockFreeCacheOptions.Profile128), null);
             return methodsByTypes[(type, methodName, parameterTypes)];
         }
 
-        private static MethodAccessor GetStaticGenericMethodByName(Type type, Type typeArgument, string methodName)
+        [RequiresDynamicCode("GetGenericMethod")]
+        [RequiresUnreferencedCode("GetGenericMethod")]
+        private static MethodAccessor GetStaticGenericMethodByName([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]Type type, // public generic method definitions
+            Type typeArgument, string methodName)
         {
+            #region Local Methods
+
+            [RequiresDynamicCode("GetGenericMethod")]
+            [RequiresUnreferencedCode("GetGenericMethod")]
             static MethodAccessor GetMethodAccessor((Type DeclaringType, Type T, string MethodName) key)
             {
                 // Unlike in GetMethodByName, here result is not nullable because we invoke public methods only
@@ -512,13 +602,22 @@ namespace KGySoft.Reflection
                 return MethodAccessor.GetAccessor(method);
             }
 
+            #endregion
+
             if (staticGenericMethodsByName == null)
                 Interlocked.CompareExchange(ref staticGenericMethodsByName, new LockFreeCache<(Type, Type, string), MethodAccessor>(GetMethodAccessor, null, LockFreeCacheOptions.Profile128), null);
             return staticGenericMethodsByName[(type, typeArgument, methodName)];
         }
 
-        private static MethodAccessor GetStaticGenericMethodByTypes(Type type, string methodName, TypesKey typeArguments, TypesKey parameterTypes)
+        [RequiresDynamicCode("MakeGenericMethod")]
+        [RequiresUnreferencedCode("MakeGenericMethod")]
+        private static MethodAccessor GetStaticGenericMethodByTypes([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]Type type, // public generic method definitions
+            string methodName, TypesKey typeArguments, TypesKey parameterTypes)
         {
+            #region Local Methods
+
+            [RequiresDynamicCode("MakeGenericMethod")]
+            [RequiresUnreferencedCode("MakeGenericMethod")]
             static MethodAccessor GetMethodAccessor((Type DeclaringType, TypesKey GenericArguments, string MethodName, TypesKey ParameterTypes) key)
             {
                 // Unlike in GetMethodByName, here result is not nullable because we invoke public methods only
@@ -548,21 +647,29 @@ namespace KGySoft.Reflection
                 return Throw.InternalError<MethodAccessor>($"No matching method found: {key}");
             }
 
+            #endregion
+
             if (staticGenericMethodsByTypes == null)
                 Interlocked.CompareExchange(ref staticGenericMethodsByTypes, new LockFreeCache<(Type, TypesKey, string, TypesKey), MethodAccessor>(GetMethodAccessor, null, LockFreeCacheOptions.Profile128), null);
             return staticGenericMethodsByTypes[(type, typeArguments, methodName, parameterTypes)];
         }
 
-        private static CreateInstanceAccessor GetConstructor(Type type, TypesKey parameterTypes)
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2080:DynamicallyAccessedMembersFieldAnnotationMismatch",
+            Justification = "False alarm, the tuple field gets its value from the type of the outer method, which is annotated.")]
+        private static CreateInstanceAccessor GetConstructor([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors)]Type type, TypesKey parameterTypes)
         {
+            #region Local Methods
+            
             static CreateInstanceAccessor GetCreateInstanceAccessor((Type DeclaringType, TypesKey ParameterTypes) key)
             {
                 // Here we accept non-public constructors, too. They should be really well-known at least internal members.
-                ConstructorInfo? ci = key.DeclaringType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, 
+                ConstructorInfo? ci = key.DeclaringType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
                     null, key.ParameterTypes.Types, null);
                 Debug.Assert(ci != null, "Constructor was not found for the specified parameter types");
                 return CreateInstanceAccessor.GetAccessor(ci!);
             }
+
+            #endregion
 
             Debug.Assert(parameterTypes.Types.Length > 0, "At least one parameter is expected.");
 
@@ -571,6 +678,10 @@ namespace KGySoft.Reflection
             return constructors[(type, parameterTypes)];
         }
 
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2077:DynamicallyAccessedMembersSourceFieldTargetParameterAnnotationMismatch",
+            Justification = "False alarm, the tuple field gets its value from the type of the outer method, which is annotated.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2080:DynamicallyAccessedMembersFieldAnnotationMismatch",
+            Justification = "False alarm, the tuple field gets its value from the type of the outer method, which is annotated.")]
         private static ActionMethodAccessor? GetCtorMethod([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors)]Type type, object[] ctorArgs)
         {
             #region Local Methods
@@ -600,6 +711,9 @@ namespace KGySoft.Reflection
 
         #region CollectionExtensions
 
+        [RequiresDynamicCode("InvokeMethod/GetStaticGenericMethodByName")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+            Justification = "MakeGenericMethod has RequiresUnreferencedCode because the constraints cannot be validated, but CollectionExtensions.AddRange has no constraints.")]
         internal static void AddRange(this IEnumerable target, Type genericArgument, IEnumerable collection)
             => InvokeMethod(typeof(CollectionExtensions), nameof(CollectionExtensions.AddRange), genericArgument, target, collection);
 
@@ -607,12 +721,21 @@ namespace KGySoft.Reflection
 
         #region ListExtensions
 
+        [RequiresDynamicCode("InvokeMethod/GetStaticGenericMethodByName")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+            Justification = "MakeGenericMethod has RequiresUnreferencedCode because the constraints cannot be validated, but ListExtensions.InsertRange has no constraints.")]
         internal static void InsertRange(this IEnumerable target, Type genericArgument, int index, IEnumerable collection)
             => typeof(ListExtensions).InvokeMethod(nameof(ListExtensions.InsertRange), genericArgument, target, index, collection);
 
+        [RequiresDynamicCode("InvokeMethod/GetStaticGenericMethodByName")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+            Justification = "MakeGenericMethod has RequiresUnreferencedCode because the constraints cannot be validated, but ListExtensions.RemoveRange has no constraints.")]
         internal static void RemoveRange(this IEnumerable collection, Type genericArgument, int index, int count)
             => typeof(ListExtensions).InvokeMethod(nameof(ListExtensions.RemoveRange), genericArgument, collection, index, count);
 
+        [RequiresDynamicCode("InvokeMethod/GetStaticGenericMethodByName")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+            Justification = "MakeGenericMethod has RequiresUnreferencedCode because the constraints cannot be validated, but ListExtensions.ReplaceRange has no constraints.")]
         internal static void ReplaceRange(this IEnumerable target, Type genericArgument, int index, int count, IEnumerable collection)
             => typeof(ListExtensions).InvokeMethod(nameof(ListExtensions.ReplaceRange), genericArgument, target, index, count, collection);
 
@@ -620,27 +743,43 @@ namespace KGySoft.Reflection
 
         #region ICollection<T>
 
-        internal static bool IsReadOnly([NoEnumeration]this IEnumerable collection, Type collectionInterface) => (bool)ICollection_IsReadOnly(collectionInterface).Get(collection)!;
-        internal static void Add([NoEnumeration]this IEnumerable collection, Type collectionInterface, object? item) => ICollection_Add(collectionInterface).Invoke(collection, item);
-        internal static void Clear([NoEnumeration]this IEnumerable collection, Type collectionInterface) => ICollection_Clear(collectionInterface).Invoke(collection);
-        internal static int Count([NoEnumeration]this IEnumerable collection, Type collectionInterface) => (int)ICollection_Count(collectionInterface).Get(collection)!;
-        internal static bool Remove([NoEnumeration]this IEnumerable collection, Type collectionInterface, object? item) => (bool)ICollection_Remove(collectionInterface).Invoke(collection, item)!;
+        internal static bool IsReadOnly([NoEnumeration]this IEnumerable collection, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]Type collectionInterface)
+            => (bool)ICollection_IsReadOnly(collectionInterface).Get(collection)!;
+
+        internal static void Add([NoEnumeration]this IEnumerable collection, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]Type collectionInterface, object? item)
+            => ICollection_Add(collectionInterface).Invoke(collection, item);
+        
+        internal static void Clear([NoEnumeration]this IEnumerable collection, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]Type collectionInterface)
+            => ICollection_Clear(collectionInterface).Invoke(collection);
+        
+        internal static int Count([NoEnumeration]this IEnumerable collection, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]Type collectionInterface)
+            => (int)ICollection_Count(collectionInterface).Get(collection)!;
+        
+        internal static bool Remove([NoEnumeration]this IEnumerable collection, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]Type collectionInterface, object? item)
+            => (bool)ICollection_Remove(collectionInterface).Invoke(collection, item)!;
 
         #endregion
 
         #region IProducerConsumerCollection<T>
 
 #if !NET35
-        internal static bool TryAddToProducerConsumerCollection([NoEnumeration]this IEnumerable collection, Type collectionInterface, object? item) => (bool)IProducerConsumerCollection_TryAdd(collectionInterface).Invoke(collection, item)!;
+        internal static bool TryAddToProducerConsumerCollection([NoEnumeration]this IEnumerable collection,
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]Type collectionInterface, object? item)
+            => (bool)IProducerConsumerCollection_TryAdd(collectionInterface).Invoke(collection, item)!;
 #endif
 
         #endregion
 
         #region IList<T>
 
-        internal static void Insert([NoEnumeration]this IEnumerable list, Type listInterface, int index, object? item) => IList_Insert(listInterface).Invoke(list, index, item);
-        internal static void RemoveAt([NoEnumeration]this IEnumerable list, Type listInterface, int index) => IList_RemoveAt(listInterface).Invoke(list, index);
-        internal static void SetElementAt([NoEnumeration]this IEnumerable list, Type listInterface, int index, object? item) => IList_Item(listInterface).Set(list, item, index);
+        internal static void Insert([NoEnumeration]this IEnumerable list, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]Type listInterface, int index, object? item)
+            => IList_Insert(listInterface).Invoke(list, index, item);
+
+        internal static void RemoveAt([NoEnumeration]this IEnumerable list, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]Type listInterface, int index)
+            => IList_RemoveAt(listInterface).Invoke(list, index);
+        
+        internal static void SetElementAt([NoEnumeration]this IEnumerable list, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]Type listInterface, int index, object? item)
+            => IList_Item(listInterface).Set(list, item, index);
 
         #endregion
 
@@ -766,8 +905,11 @@ namespace KGySoft.Reflection
 
         #region Point
 
-#if !NETCOREAPP2_0
+#if !NETCOREAPP || NETCOREAPP3_0_OR_GREATER
+        [RequiresUnreferencedCode("GetPropertyValue")]
         internal static int Point_GetX(object? point) => point == null ? 0 : (int)GetPropertyValue(point, "X")!;
+        
+        [RequiresUnreferencedCode("GetPropertyValue")]
         internal static int Point_GetY(object? point) => point == null ? 0 : (int)GetPropertyValue(point, "Y")!;
 #endif
 
@@ -775,19 +917,23 @@ namespace KGySoft.Reflection
 
         #region MemoryStream
 
-        internal static byte[]? InternalGetBuffer(this MemoryStream ms) => GetMethodByName(typeof(MemoryStream), "InternalGetBuffer")?.InvokeInstanceFunction<MemoryStream, byte[]>(ms);
+        internal static byte[]? InternalGetBuffer(this MemoryStream ms)
+            => GetMethodByName(typeof(MemoryStream), "InternalGetBuffer")?.InvokeInstanceFunction<MemoryStream, byte[]>(ms);
 
         #endregion
 
         #region Object
 
-        internal static object MemberwiseClone(this object obj) => GetMethodByName(Reflector.ObjectType, nameof(MemberwiseClone))!.InvokeInstanceFunction<object, object>(obj);
+        internal static object MemberwiseClone(this object obj)
+            => GetMethodByName(typeof(object), nameof(MemberwiseClone))!.InvokeInstanceFunction<object, object>(obj);
 
         #endregion
 
         #region IIListProvider<T>
 
 #if !NET6_0_OR_GREATER
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2072:ParameterDynamicallyAccessedMemberTypesCannotBeDetermined",
+            Justification = "It is handled if the list provider count cannot be determined.")]
         internal static int? GetListProviderCount<T>([NoEnumeration]this IEnumerable<T> collection)
         {
             MethodAccessor? accessor = IIListProvider_GetCount(typeof(T));
@@ -797,6 +943,8 @@ namespace KGySoft.Reflection
         }
 #endif
 
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2072:ParameterDynamicallyAccessedMemberTypesCannotBeDetermined",
+            Justification = "It is handled if the list provider count cannot be determined.")]
         internal static int? GetListProviderCount([NoEnumeration]this IEnumerable collection)
         {
             Type? listProviderType = IIListProviderType;
@@ -815,7 +963,9 @@ namespace KGySoft.Reflection
         #region Iterator<T>
 #if NET9_0_OR_GREATER
 
-        internal static int? GetIteratorCount([NoEnumeration] this IEnumerable collection)
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2072:ParameterDynamicallyAccessedMemberTypesCannotBeDetermined",
+            Justification = "It is handled if the iterator count cannot be determined.")]
+        internal static int? GetIteratorCount([NoEnumeration]this IEnumerable collection)
         {
             Type? iteratorType = IteratorType;
             if (iteratorType == null || !collection.GetType().IsImplementationOfGenericType(iteratorType, out Type? genericType))
@@ -826,7 +976,6 @@ namespace KGySoft.Reflection
                 return null;
             Debug.Assert(accessor.MemberInfo.DeclaringType!.IsInstanceOfType(collection));
             return accessor.Invoke(collection, true) as int?;
-
         }
 
 #endif
@@ -844,20 +993,32 @@ namespace KGySoft.Reflection
 
         #region ResXFileRef
 
-#if !NETCOREAPP2_0
+#if !NETCOREAPP || NETCOREAPP3_0_OR_GREATER
+        [RequiresUnreferencedCode("GetPropertyValue")]
         internal static string? ResXFileRef_GetFileName(object fileRef) => (string?)GetPropertyValue(fileRef, "FileName");
+
+        [RequiresUnreferencedCode("GetPropertyValue")]
         internal static string? ResXFileRef_GetTypeName(object fileRef) => (string?)GetPropertyValue(fileRef, "TypeName");
-        internal static Encoding? ResXFileRef_GetTextFileEncoding(object fileRef) => (Encoding?)GetPropertyValue(fileRef, "TextFileEncoding");
+        
+        [RequiresUnreferencedCode("GetPropertyValue")]
+        internal static Encoding? ResXFileRef_GetTextFileEncoding(object fileRef) => GetPropertyValueOrDefault<Encoding>(fileRef, "TextFileEncoding");
 #endif
 
         #endregion
 
         #region ResXDataNode
 
-#if !NETCOREAPP2_0
+#if !NETCOREAPP || NETCOREAPP3_0_OR_GREATER
+        [RequiresUnreferencedCode("GetFieldValueOrDefault")]
         internal static object? ResXDataNode_GetValue(object node) => GetFieldValueOrDefault<object?>(node, null, "value");
+
+        [RequiresUnreferencedCode("GetFieldValueOrDefault")]
         internal static string? ResXDataNode_GetComment(object node) => GetFieldValueOrDefault<string?>(node, null, "comment");
+        
+        [RequiresUnreferencedCode("GetField")]
         internal static object? ResXDataNode_GetFileRef(object node) => GetField(node.GetType(), null, "fileRef")?.Get(node);
+
+        [RequiresUnreferencedCode("GetField")]
         internal static object? ResXDataNode_GetNodeInfo(object node) => GetField(node.GetType(), null, "nodeInfo")?.Get(node);
 #endif
 
@@ -865,12 +1026,23 @@ namespace KGySoft.Reflection
 
         #region DataNodeInfo
 
-#if !NETCOREAPP2_0
+#if !NETCOREAPP || NETCOREAPP3_0_OR_GREATER
+        [RequiresUnreferencedCode("GetFieldValueOrDefault")]
         internal static string? DataNodeInfo_GetName(object nodeInfo) => GetFieldValueOrDefault<string?>(nodeInfo, null, "Name");
+        
+        [RequiresUnreferencedCode("GetFieldValueOrDefault")]
         internal static string? DataNodeInfo_GetComment(object nodeInfo) => GetFieldValueOrDefault<string?>(nodeInfo, null, "Comment");
+        
+        [RequiresUnreferencedCode("GetFieldValueOrDefault")]
         internal static string? DataNodeInfo_GetTypeName(object nodeInfo) => GetFieldValueOrDefault<string?>(nodeInfo, null, "TypeName");
+        
+        [RequiresUnreferencedCode("GetFieldValueOrDefault")]
         internal static string? DataNodeInfo_GetMimeType(object nodeInfo) => GetFieldValueOrDefault<string?>(nodeInfo, null, "MimeType");
+     
+        [RequiresUnreferencedCode("GetFieldValueOrDefault")]
         internal static string? DataNodeInfo_GetValueData(object nodeInfo) => GetFieldValueOrDefault<string?>(nodeInfo, null, "ValueData");
+        
+        [RequiresUnreferencedCode("GetField")]
         internal static object? DataNodeInfo_GetReaderPosition(object nodeInfo) => GetField(nodeInfo.GetType(), null, "ReaderPosition")?.Get(nodeInfo);
 #endif
 
@@ -878,6 +1050,7 @@ namespace KGySoft.Reflection
 
         #region IEnumerable
 
+        [RequiresUnreferencedCode("GetProperty")]
         internal static int Count([NoEnumeration]this IEnumerable collection)
         {
             if (collection is ICollection c)
@@ -888,6 +1061,7 @@ namespace KGySoft.Reflection
             return (int)property.Get(collection)!;
         }
 
+        [RequiresUnreferencedCode("GetProperty")]
         internal static int Capacity([NoEnumeration]this IEnumerable collection)
         {
             PropertyAccessor? property = GetProperty(collection.GetType(), "Capacity"); // List<T>, CircularList<T>, SortedList<TKey, TValue>, SortedList, CircularSortedList<TKey, TValue>, ArrayList, OrderedDictionary<TKey, TValue>
@@ -896,15 +1070,18 @@ namespace KGySoft.Reflection
             return (int)property.Get(collection)!;
         }
 
+        [RequiresUnreferencedCode("GetFieldValueOrDefault")]
         internal static bool IsCaseInsensitive([NoEnumeration]this IEnumerable collection)
             => GetFieldValueOrDefault<bool>(collection, false, "caseInsensitive"); // HybridDictionary
 
+        [RequiresUnreferencedCode("GetFieldValue")]
         internal static bool UsesBitwiseAndHash([NoEnumeration]this IEnumerable collection)
         {
             Debug.Assert(collection.GetType().IsGenericTypeOf(typeof(ThreadSafeHashSet<>)) || collection.GetType().IsGenericTypeOf(typeof(ThreadSafeDictionary<,>)));
             return (bool)GetFieldValue(collection, "bitwiseAndHash")!; // ThreadSafeHashSet<T>, ThreadSafeDictionary<TKey, TValue>
         }
 
+        [RequiresUnreferencedCode("GetProperty, GetField")]
         internal static object? GetComparer([NoEnumeration]this IEnumerable collection)
         {
             // 1.) By Comparer/EqualityComparer/KeyComparer property
@@ -934,9 +1111,10 @@ namespace KGySoft.Reflection
         internal static CompareInfo? CompareInfo(this StringComparer comparer)
         {
             Debug.Assert(comparer.GetType() == StringComparer.CurrentCulture.GetType(), "Not a culture aware string comparer.");
-            return GetFieldValueOrDefault<CompareInfo>(comparer);
+            return GetFieldValueOrDefault<StringComparer, CompareInfo>(comparer);
         }
 
+        [RequiresUnreferencedCode("GetField")]
         internal static CompareOptions CompareOptions(this StringComparer comparer)
         {
             Type type = comparer.GetType();
@@ -980,6 +1158,7 @@ namespace KGySoft.Reflection
 
         #region DictionaryEntry/KeyValuePair
 
+        [RequiresUnreferencedCode("GetProperty, SetFieldValue")]
         internal static void SetKeyValue(object instance, object? key, object? value)
         {
             // Though DictionaryEntry.Key/Value have setters they must be set by reflection because of the boxed struct
@@ -1031,7 +1210,7 @@ namespace KGySoft.Reflection
         // Note: These methods could be completely replaced by Reflector methods but these use a smaller and more direct cache
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        internal static FieldInfo GetFieldInfo(this Type type, string fieldNamePattern)
+        internal static FieldInfo GetFieldInfo([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllFields)]this Type type, string fieldNamePattern)
         {
             FieldInfo? field = (FieldInfo?)GetField(type, null, fieldNamePattern)?.MemberInfo;
             if (field == null)
@@ -1040,6 +1219,8 @@ namespace KGySoft.Reflection
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
+        [RequiresDynamicCode("GetGenericType")]
+        [RequiresUnreferencedCode("GetGenericType")]
         internal static object? GetPropertyValue(this Type genTypeDef, Type t, string propertyName)
         {
             Type type = genTypeDef.GetGenericType(t);
@@ -1050,6 +1231,7 @@ namespace KGySoft.Reflection
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
+        [RequiresUnreferencedCode("GetProperty")]
         internal static object? GetPropertyValue(object instance, string propertyName)
         {
             PropertyAccessor? property = GetProperty(instance.GetType(), propertyName);
@@ -1058,8 +1240,15 @@ namespace KGySoft.Reflection
             return property.Get(instance);
         }
 
+        [RequiresUnreferencedCode("GetProperty")]
+        private static T? GetPropertyValueOrDefault<T>(object obj, string propertyName)
+        {
+            PropertyAccessor? property = GetProperty(obj.GetType(), propertyName);
+            return property == null ? default : (T?)property.Get(obj);
+        }
+
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        internal static object? GetPropertyValue(this Type type, string propertyName)
+        internal static object? GetPropertyValue([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllProperties)]this Type type, string propertyName)
         {
             PropertyAccessor? property = GetProperty(type, propertyName);
             if (property == null)
@@ -1068,6 +1257,7 @@ namespace KGySoft.Reflection
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
+        [RequiresUnreferencedCode("GetProperty")]
         internal static void SetPropertyValue(object instance, string propertyName, object? value)
         {
             PropertyAccessor? property = GetProperty(instance.GetType(), propertyName);
@@ -1120,6 +1310,7 @@ namespace KGySoft.Reflection
         /// For unambiguous instance methods by name.
         /// </summary>
         [MethodImpl(MethodImpl.AggressiveInlining)]
+        [RequiresUnreferencedCode("GetMethodByName")]
         internal static object? InvokeMethod(object instance, string methodName, params object?[] parameters)
             => GetMethodByName(instance.GetType(), methodName)!.Invoke(instance, parameters);
 
@@ -1127,6 +1318,7 @@ namespace KGySoft.Reflection
         /// For instance methods by name and parameter types.
         /// </summary>
         [MethodImpl(MethodImpl.AggressiveInlining)]
+        [RequiresUnreferencedCode("GetMethodByTypes")]
         internal static object? InvokeMethod(object instance, string methodName, Type[] parameterTypes, params object?[] parameters)
             => GetMethodByTypes(instance.GetType(), methodName, parameterTypes.ToTypesKey()).Invoke(instance, parameters);
 
@@ -1134,6 +1326,7 @@ namespace KGySoft.Reflection
         /// For instance methods by name with exactly one non-base typed parameter.
         /// </summary>
         [MethodImpl(MethodImpl.AggressiveInlining)]
+        [RequiresUnreferencedCode("InvokeMethod")]
         internal static object? InvokeMethod(object instance, string methodName, object parameter)
             => InvokeMethod(instance, methodName, [parameter.GetType()], parameter);
 
@@ -1141,7 +1334,7 @@ namespace KGySoft.Reflection
         /// For unambiguous static methods by name.
         /// </summary>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        internal static object? InvokeMethod(this Type type, string methodName, params object?[] parameters)
+        internal static object? InvokeMethod([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllMethods)]this Type type, string methodName, params object?[] parameters)
         {
             Debug.Assert(!type.IsValueType, $"{type}.{methodName} should be invoked by the Invoke(MethodInfo,...) overload to handle value type mutations on all platforms");
             Debug.Assert(!type.IsGenericTypeDefinition);
@@ -1153,14 +1346,20 @@ namespace KGySoft.Reflection
         /// For unambiguous generic static methods by name.
         /// </summary>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        internal static object? InvokeMethod(this Type type, string methodName, Type genericArgument, params object?[] parameters)
+        [RequiresDynamicCode("GetStaticGenericMethodByName")]
+        [RequiresUnreferencedCode("GetStaticGenericMethodByName")]
+        internal static object? InvokeMethod([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]this Type type,
+            string methodName, Type genericArgument, params object?[] parameters)
             => GetStaticGenericMethodByName(type, genericArgument, methodName).Invoke(null, parameters);
 
         /// <summary>
         /// For static methods by name and parameter types.
         /// </summary>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        internal static object? InvokeMethod(this Type type, string methodName, Type[] genericArguments, Type[] parameterTypes, params object?[] parameters)
+        [RequiresDynamicCode("GetStaticGenericMethodByTypes")]
+        [RequiresUnreferencedCode("GetStaticGenericMethodByTypes")]
+        internal static object? InvokeMethod([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]this Type type,
+            string methodName, Type[] genericArguments, Type[] parameterTypes, params object?[] parameters)
         {
             Debug.Assert(genericArguments.Length > 0, "For non-generic types use the other overload of InvokeMethod");
             Debug.Assert(parameterTypes.Length > 0, "For parameterless methods use the other overload of InvokeMethod");
@@ -1171,21 +1370,28 @@ namespace KGySoft.Reflection
         /// For static methods by name and parameter type.
         /// </summary>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        internal static object? InvokeMethod(this Type type, string methodName, Type genericArgument, Type parameterType, params object?[] parameters)
+        [RequiresDynamicCode("InvokeMethod/GetStaticGenericMethodByTypes")]
+        [RequiresUnreferencedCode("InvokeMethod/GetStaticGenericMethodByTypes")]
+        internal static object? InvokeMethod([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]this Type type,
+            string methodName, Type genericArgument, Type parameterType, params object?[] parameters)
             => InvokeMethod(type, methodName, [genericArgument], [parameterType], parameters);
 
         /// <summary>
         /// For static methods by name and parameter types.
         /// </summary>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        internal static object? InvokeMethod(this Type type, string methodName, Type genericArgument, Type[] parameterTypes, params object?[] parameters)
+        [RequiresDynamicCode("InvokeMethod/GetStaticGenericMethodByTypes")]
+        [RequiresUnreferencedCode("InvokeMethod/GetStaticGenericMethodByTypes")]
+        internal static object? InvokeMethod([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]this Type type,
+            string methodName, Type genericArgument, Type[] parameterTypes, params object?[] parameters)
             => InvokeMethod(type, methodName, [genericArgument], parameterTypes, parameters);
 
         /// <summary>
         /// For constructors by exact parameter types.
         /// </summary>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        internal static object CreateInstance(this Type type, Type[] parameterTypes, params object?[] parameters)
+        internal static object CreateInstance([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors)]this Type type,
+            Type[] parameterTypes, params object?[] parameters)
         {
             Debug.Assert(parameterTypes.Length == parameters.Length);
             return GetConstructor(type, parameterTypes.ToTypesKey()).CreateInstance(parameters);
@@ -1195,26 +1401,27 @@ namespace KGySoft.Reflection
         /// For constructors for exactly one parameter.
         /// </summary>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        internal static object CreateInstance(this Type type, Type parameterType, object? parameter)
+        internal static object CreateInstance([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors)]this Type type, Type parameterType, object? parameter)
             => CreateInstance(type, [parameterType], parameter);
 
         /// <summary>
         /// For constructors with exactly one non-derived parameter.
         /// </summary>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        internal static object CreateInstance(this Type type, object parameter)
+        internal static object CreateInstance([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors)]this Type type, object parameter)
             => CreateInstance(type, [parameter.GetType()], parameter);
 
         /// <summary>
         /// For constructors with non-derived parameters.
         /// </summary>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        internal static object CreateInstance(this Type type, params object[] parameters)
+        internal static object CreateInstance([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors)]this Type type, params object[] parameters)
             => CreateInstance(type, parameters.ToTypesKey().Types, parameters);
 
         /// <summary>
         /// Invokes a constructor on an already created instance.
         /// </summary>
+        [RequiresUnreferencedCode("GetCtorMethod")]
         internal static bool TryInvokeCtor(object instance, params object[] ctorArgs)
         {
             ActionMethodAccessor? accessor = GetCtorMethod(instance.GetType(), ctorArgs);

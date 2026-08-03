@@ -23,9 +23,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER                                                      
 using System.Runtime.CompilerServices;
-#endif
 using System.Security;
 using System.Text;
 using System.Threading;
@@ -804,19 +802,15 @@ namespace KGySoft.CoreLibraries
                 Array values = Enum.GetValuesAsUnderlyingType(type);
                 return Enum.ToObject(type, context.Random.Next(values.Length));
 #else
-#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
                 try
-#endif
                 {
                     Array values = Enum.GetValues(type);
                     return values.Length == 0 ? Enum.ToObject(type, 0) : values.GetValue(context.Random.Next(values.Length))!;
                 }
-#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
-                catch (Exception e) when (!e.IsCritical() && !RuntimeFeature.IsDynamicCodeSupported)
+                catch (Exception e) when (!e.IsCriticalOr(RuntimeFeature.IsDynamicCodeSupported))
                 {
                     return Enum.ToObject(type, 0);
                 }
-#endif
 #endif
             }
 
@@ -1203,10 +1197,11 @@ namespace KGySoft.CoreLibraries
             }
 
             [SecurityCritical]
+            [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "If TryAdd fails, the caller handles it.")]
             [UnconditionalSuppressMessage("TrimAnalysis", "IL2062:MethodDynamicallyAccessedMemberTypesCannotBeDetermined",
                 Justification = "Not a problem, the recursive TryGenerateObject handles if a collection element cannot be created.")]
             [UnconditionalSuppressMessage("TrimAnalysis", "IL2075:DynamicallyAccessedMembersReturnValueAnnotationMismatch",
-                Justification = "Not a problem, the recursive TryGenerateObject handles if a collection element cannot be created.")]
+                Justification = "Not a problem, the recursive TryGenerateObject handles if a collection element cannot be created. And if TryAdd fails, the caller handles it.")]
             private static void PopulateCollection(IEnumerable collection, [DynamicallyAccessedMembers(NeededMembers)]Type elementType,
                 bool isDictionary, ref GeneratorContext context)
             {

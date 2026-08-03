@@ -42,7 +42,7 @@ namespace KGySoft.Threading
 
         #region ISortHelper<T> interface
 
-        private interface ISortHelper<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]T>
+        private interface ISortHelper<T>
         {
             #region Methods
 
@@ -58,7 +58,7 @@ namespace KGySoft.Threading
 
         #region ISortHelper<TKey, TValue> interface
 
-        private interface ISortHelper<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]TKey, TValue>
+        private interface ISortHelper<TKey, TValue>
         {
             #region Methods
 
@@ -80,15 +80,40 @@ namespace KGySoft.Threading
 
         #region SortHelper<T> class
 
-        private sealed class SortHelper<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]T> : ISortHelper<T>
+        private sealed class SortHelper<T> : ISortHelper<T>
         {
-            #region Fields
+            #region Properties
 
-            [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode",
-                Justification = "False alarm, ComparableSortHelper<T> is constructed only when T is IComparable<T>, and DynamicallyAccessedMemberTypes.Interfaces is applied to T")]
-            internal static ISortHelper<T> Instance { get; } = typeof(IComparable<T>).IsAssignableFrom(typeof(T))
-                ? (ISortHelper<T>)Activator.CreateInstance(typeof(ComparableSortHelper<>).MakeGenericType(typeof(T)), true)!
-                : new SortHelper<T>();
+            internal static ISortHelper<T> Instance
+            {
+                [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "In AOT mode a less optimized helper may be returned.")]
+                get
+                {
+                    if (field == null)
+                    {
+                        if (typeof(IComparable<T>).IsAssignableFrom(typeof(T)))
+                        {
+#if NET11_0_OR_GREATER
+#error Check if the generic bridge feature is already available. It would help AOT mode - https://github.com/dotnet/csharplang/discussions/6308
+#endif
+
+                            try
+                            {
+                                field = (ISortHelper<T>)Activator.CreateInstance(typeof(ComparableSortHelper<>).MakeGenericType(typeof(T)), true)!;
+                            }
+                            catch (Exception e) when (!e.IsCriticalOr(RuntimeFeature.IsDynamicCodeSupported))
+                            {
+                                // could not dynamically create ComparableSortHelper<T>
+                                field = new SortHelper<T>();
+                            }
+                        }
+                        else
+                            field = new SortHelper<T>();
+                    }
+
+                    return field;
+                }
+            }
 
             #endregion
 
@@ -999,15 +1024,41 @@ namespace KGySoft.Threading
 
         #region SortHelper<TKey, TValue> class
 
-        private sealed class SortHelper<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]TKey, TValue> : ISortHelper<TKey, TValue>
+        private sealed class SortHelper<TKey, TValue> : ISortHelper<TKey, TValue>
         {
-            #region Fields
+            #region Properties
 
-            [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode",
-                Justification = "False alarm, ComparableSortHelper<TKey, TValue> is constructed only when TKey is IComparable<TKey>, and DynamicallyAccessedMemberTypes.Interfaces is applied to TKey")]
-            internal static ISortHelper<TKey, TValue> Instance { get; } = typeof(IComparable<TKey>).IsAssignableFrom(typeof(TKey))
-                ? (ISortHelper<TKey, TValue>)Activator.CreateInstance(typeof(ComparableSortHelper<,>).MakeGenericType(typeof(TKey), typeof(TValue)), true)!
-                : new SortHelper<TKey, TValue>();
+            internal static ISortHelper<TKey, TValue> Instance
+            {
+                [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "In AOT mode a less optimized helper may be returned.")]
+                get
+                {
+                    if (field == null)
+                    {
+                        if (typeof(IComparable<TKey>).IsAssignableFrom(typeof(TKey)))
+                        {
+#if NET11_0_OR_GREATER
+#error Check if the generic bridge feature is already available. It would help AOT mode - https://github.com/dotnet/csharplang/discussions/6308
+#endif
+
+                            try
+                            {
+                                field = (ISortHelper<TKey, TValue>)Activator.CreateInstance(typeof(ComparableSortHelper<,>).MakeGenericType(typeof(TKey), typeof(TValue)), true)!;
+                            }
+                            catch (Exception e) when (!e.IsCriticalOr(RuntimeFeature.IsDynamicCodeSupported))
+                            {
+                                // could not dynamically create ComparableSortHelper<TKey, TValue>
+                                field = new SortHelper<TKey, TValue>();
+                            }
+                        }
+                        else
+                            field = new SortHelper<TKey, TValue>();
+                    }
+
+                    return field;
+                }
+            }
+
 
             #endregion
 
@@ -2194,7 +2245,7 @@ namespace KGySoft.Threading
 
         #region ComparableSortHelper<T> class
 
-        private sealed class ComparableSortHelper<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]T> : ISortHelper<T>
+        private sealed class ComparableSortHelper<T> : ISortHelper<T>
             where T : IComparable<T>
         {
             #region Methods
@@ -3120,7 +3171,7 @@ namespace KGySoft.Threading
 
         #region ComparableSortHelper<T> class
 
-        private sealed class ComparableSortHelper<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]TKey, TValue> : ISortHelper<TKey, TValue>
+        private sealed class ComparableSortHelper<TKey, TValue> : ISortHelper<TKey, TValue>
             where TKey : IComparable<TKey>
         {
             #region Methods

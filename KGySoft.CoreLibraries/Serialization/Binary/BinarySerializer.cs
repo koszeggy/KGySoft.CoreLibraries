@@ -64,6 +64,7 @@ namespace KGySoft.Serialization.Binary
 
         // NOTE: though we have a fallback strategy when RuntimeFeature.IsDynamicCodeSupported is false, it does not help in other cases,
         // e.g. when Array.CreateInstance or Type.MakeArrayType has to be used. GetGenericType is even used for the Compressible<T> decorator type, which is only created dynamically.
+        // NOTE 2: unlike regular IFormatter.Serialize, BSF serializer requires RDC, because of Compressible<T>, GetBackingArray, and generic GetProperty calls (e.g. GetDefaultComparer)
         internal const string RequiresDynamicCodeMessage = "Binary serialization may use dynamic code generation, the type of objects being processed cannot be statically discovered.";
         internal const string RequiresUnreferencedCodeMessage = "Binary serialization may not be trim compatible if natively non-supported types are serialized.";
 

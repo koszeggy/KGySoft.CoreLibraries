@@ -967,6 +967,7 @@ namespace KGySoft.Serialization.Binary
                 WriteStringValue(bw, compareInfo.Name, isRoot);
             }
 
+            [RequiresUnreferencedCode("CompareOptions")]
             private void WriteStringComparer(BinaryWriter bw, StringComparer comparer, bool isRoot)
             {
                 switch (comparer)

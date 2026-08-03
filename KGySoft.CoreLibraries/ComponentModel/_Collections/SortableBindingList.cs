@@ -24,6 +24,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 
 using KGySoft.Collections;
@@ -269,7 +270,16 @@ namespace KGySoft.ComponentModel
         private static IComparer<(int, object?)> CreateComparer(bool ascending, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]Type valueType)
         {
             if (valueType.GetInterfaces().Any(i => i.IsGenericTypeOf(typeof(IComparable<>)) && i.GetGenericArguments()[0] == valueType))
-                return (IComparer<(int, object?)>)typeof(ItemGenericComparer<>).GetGenericType(valueType).CreateInstance(Reflector.BoolType, ascending);
+            {
+                try
+                {
+                    return (IComparer<(int, object?)>)typeof(ItemGenericComparer<>).GetGenericType(valueType).CreateInstance(Reflector.BoolType, ascending);
+                }
+                catch (Exception e) when (!e.IsCriticalOr(RuntimeFeature.IsDynamicCodeSupported))
+                {
+                }
+            }
+
             return new ItemComparer(ascending);
         }
 

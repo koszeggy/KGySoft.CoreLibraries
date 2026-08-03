@@ -434,6 +434,7 @@ namespace KGySoft.CoreLibraries
         /// // DateTime => Int64: 10/11/2021 7:45:46 PM => 637695783464721787
         /// // DateTime => Double: 10/11/2021 7:45:46 PM => 6.37695783464721787E+17]]></code>
         /// </example>
+        [RequiresUnreferencedCode(ObjectConverter.RequiresUnreferencedCode)]
         public static TTarget Convert<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]TTarget>(
             this object? obj, CultureInfo? culture = null)
         {
@@ -461,6 +462,7 @@ namespace KGySoft.CoreLibraries
         /// <para><paramref name="targetType"/> can be even a collection type if <paramref name="obj"/> is also an <see cref="IEnumerable"/> implementation.
         /// The target collection type must have either a default constructor or a constructor that can accept a list, array or dictionary as an initializer collection.</para>
         /// </remarks>
+        [RequiresUnreferencedCode(ObjectConverter.RequiresUnreferencedCode)]
         public static object? Convert(this object? obj,
             [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]Type targetType,
             CultureInfo? culture = null)
@@ -486,6 +488,7 @@ namespace KGySoft.CoreLibraries
         /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="DateTime"/> to <see cref="long"/>,
         /// then conversions from <see cref="DateTime"/> to <see cref="double"/> becomes automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
         /// </remarks>
+        [RequiresUnreferencedCode(ObjectConverter.RequiresUnreferencedCode)]
         public static bool TryConvert<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]TTarget>(
             this object? obj, CultureInfo? culture, [MaybeNullWhen(false)]out TTarget value)
         {
@@ -514,6 +517,7 @@ namespace KGySoft.CoreLibraries
         /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="DateTime"/> to <see cref="long"/>,
         /// then conversions from <see cref="DateTime"/> to <see cref="double"/> becomes automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
         /// </remarks>
+        [RequiresUnreferencedCode(ObjectConverter.RequiresUnreferencedCode)]
         public static bool TryConvert<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]TTarget>(
             this object? obj, [MaybeNullWhen(false)]out TTarget value) => TryConvert(obj, null, out value);
 
@@ -532,6 +536,7 @@ namespace KGySoft.CoreLibraries
         /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="DateTime"/> to <see cref="long"/>,
         /// then conversions from <see cref="DateTime"/> to <see cref="double"/> becomes automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
         /// </remarks>
+        [RequiresUnreferencedCode(ObjectConverter.RequiresUnreferencedCode)]
         public static bool TryConvert(this object? obj,
             [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]Type targetType,
             out object? value) => TryConvert(obj, targetType, null, out value);
@@ -552,6 +557,7 @@ namespace KGySoft.CoreLibraries
         /// <note type="tip">The registered conversions are tried to be used for intermediate conversion steps if possible. For example, if a conversion is registered from <see cref="DateTime"/> to <see cref="long"/>,
         /// then conversions from <see cref="DateTime"/> to <see cref="double"/> becomes automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
         /// </remarks>
+        [RequiresUnreferencedCode(ObjectConverter.RequiresUnreferencedCode)]
         public static bool TryConvert(this object? obj,
             [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]Type targetType,
             CultureInfo? culture, out object? value) => ObjectConverter.TryConvert(obj, targetType, culture, out value, out var _);

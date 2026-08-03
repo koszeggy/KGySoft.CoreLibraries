@@ -107,8 +107,7 @@ namespace KGySoft.Collections
     [DebuggerTypeProxy(typeof(CollectionDebugView<>))]
     [DebuggerDisplay("Count = {" + nameof(Count) + "}; T = {typeof(" + nameof(T) + ").Name}")]
     [Serializable]
-    public partial class ThreadSafeHashSet<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.KeyWithHashingStrategy)]T>
-        : ICollection<T>, ICollection, ISerializable, IDeserializationCallback
+    public partial class ThreadSafeHashSet<T> : ICollection<T>, ICollection, ISerializable, IDeserializationCallback
 #if !(NET35 || NET40)
         , IReadOnlyCollection<T>
 #endif

@@ -45,8 +45,6 @@ namespace KGySoft.CoreLibraries
     {
         #region Nested classes
 
-        #region Parser class
-
         /// <summary>
         /// A separate class so knowing all the supported types do not impact the <see cref="StringExtensions"/> class.
         /// </summary>
@@ -114,7 +112,9 @@ namespace KGySoft.CoreLibraries
 
             #region Internal Methods
 
-            internal static bool TryParse(ReadOnlySpan<char> s, Type type, CultureInfo? culture, bool tryKnownTypes, out object? value, out Exception? error)
+            [RequiresUnreferencedCode("Reflector.ResolveType, TypeDescriptor.GetConverter")]
+            internal static bool TryParse(ReadOnlySpan<char> s, [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]Type type,
+                CultureInfo? culture, bool tryKnownTypes, out object? value, out Exception? error)
             {
                 if (type == null!)
                     Throw.ArgumentNullException(Argument.type);
@@ -196,7 +196,9 @@ namespace KGySoft.CoreLibraries
                 }
             }
 
-            internal static bool TryParse<T>(ReadOnlySpan<char> s, CultureInfo? culture, out T? value, out Exception? error)
+            [RequiresUnreferencedCode(parseRequiresUnreferencedCode)]
+            internal static bool TryParse<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]T>(
+                ReadOnlySpan<char> s, CultureInfo? culture, out T? value, out Exception? error)
             {
                 error = null;
                 culture ??= CultureInfo.InvariantCulture;
@@ -947,8 +949,6 @@ namespace KGySoft.CoreLibraries
 
             #endregion
         }
-
-        #endregion
 
         #endregion
     }
