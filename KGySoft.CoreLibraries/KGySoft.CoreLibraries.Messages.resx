@@ -1055,8 +1055,14 @@ You may try to specify the expected type or use the unsafe GetValue if the resou
   <data name="Reflection_TypeWithAssemblyName" xml:space="preserve">
     <value>In this ResolveType overload the type name should not contain the assembly name.</value>
   </data>
+  <data name="Resources_NonStringResourceFormat" xml:space="preserve">
+    <value>Type of resource "{0}" is not string - enable SafeMode or use GetObject instead.</value>
+  </data>
   <data name="Resources_NonStringResourceWithTypeFormat" xml:space="preserve">
     <value>Type of resource "{0}" is not string but "{1}" - enable SafeMode or use GetObject instead.</value>
+  </data>
+  <data name="Resources_NonStreamResourceFormat" xml:space="preserve">
+    <value>Type of resource "{0}" is not MemoryStream - enable SafeMode or use GetObject instead.</value>
   </data>
   <data name="Resources_NonStreamResourceWithTypeFormat" xml:space="preserve">
     <value>Type of resource "{0}" is not MemoryStream but "{1}" - enable SafeMode or use GetObject instead.</value>

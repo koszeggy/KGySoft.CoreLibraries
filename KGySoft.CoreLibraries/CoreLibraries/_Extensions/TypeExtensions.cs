@@ -847,6 +847,20 @@ namespace KGySoft.CoreLibraries
             return genericTypeCache[(genTypeDef, new TypesKey(typeArgs))];
         }
 
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "It handles if the type is not available.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "It handles if the type is not available")]
+        internal static Type? TryGetGenericType(this Type genTypeDef, params Type[] typeArgs)
+        {
+            try
+            {
+                return genTypeDef.GetGenericType(typeArgs);
+            }
+            catch (Exception e) when (!e.IsCritical())
+            {
+                return null;
+            }
+        }
+
         [RequiresDynamicCode(nameof(CreateGenericMethod))]
         [RequiresUnreferencedCode(nameof(CreateGenericMethod))]
         internal static MethodInfo GetGenericMethod(this MethodInfo genMethodDef, params Type[] typeArgs)

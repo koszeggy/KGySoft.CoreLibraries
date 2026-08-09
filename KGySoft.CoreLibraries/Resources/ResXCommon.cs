@@ -19,6 +19,7 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 #if NETFRAMEWORK
 using System.Runtime.Serialization;
 #endif
@@ -86,6 +87,16 @@ namespace KGySoft.Resources
 #else
         internal const string WinFormsPostfix = ", Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089";
 #endif
+
+        internal const string RequiresDynamicCodeMessage = "Natively not supported resource types that use binary serialization might require dynamic code generation.";
+        internal const string RequiresUnreferencedCodeMessage = "Natively not supported resource types that use a type converter or binary serialization might not be trim compatible.";
+        internal const string NewNodeFromObjectRequiresUnreferencedCode = "If value is a System.Resources.ResXDataNode or System.Resources.ResXFileRef instance from System.Windows.Forms, the conversion to KGy SOFT ResXDataNode/ResXFileRef types happens by reflection.";
+        internal const string UnsafeReadRequiresDynamicCodeMessage = "In unsafe mode natively not supported types that use binary serialization might require dynamic code generation.";
+        internal const string UnsafeReadRequiresUnreferencedCodeMessage = "In unsafe mode natively not supported types that use a type converter or binary serialization might not be trim compatible.";
+        internal const string UnsafeEnumerationRequiresDynamicCodeMessage = "Though calling this method in itself is AOT-compatible, reading the Value or Entry properties of the returned enumerator " +
+            "in unsafe mode might require dynamic code generation if an entry requires binary deserialization.";
+        internal const string UnsafeEnumerationRequiresUnreferencedCodeMessage = "Though calling this method in itself is AOT-compatible, reading the Value or Entry properties of the returned enumerator " +
+            "in unsafe mode might not be trim compatible if an entry has a natively not supported type that use a type converter or binary serialization.";
 
         #endregion
 
@@ -265,6 +276,8 @@ namespace KGySoft.Resources
             return true;
         }
 
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "GetValueSafe without expected type, GetDataNodeInfo is not called in AOT mode.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "GetValueSafe without expected type, GetDataNodeInfo is not called in AOT mode.")]
         private static MemoryStream? ToStreamSafe(ResXDataNode node)
         {
             object? value = node.ValueInternal;
@@ -292,7 +305,12 @@ namespace KGySoft.Resources
                 return result;
 
             // not a supported type or type cannot be determined: by raw value
-            return new StringStream(node.ValueData ?? node.GetDataNodeInfo(null, null).ValueData!);
+            string? stringValue = node.ValueData;
+            stringValue ??= RuntimeFeature.IsDynamicCodeSupported
+                ? node.GetDataNodeInfo(null, null).ValueData!
+                : value?.ToString() ?? value?.GetType().ToString() ?? String.Empty;
+
+            return new StringStream(stringValue);
         }
 
         #endregion

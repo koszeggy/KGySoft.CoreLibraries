@@ -16,6 +16,7 @@
 #region Usings
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 
 using KGySoft.Reflection;
@@ -44,7 +45,8 @@ namespace KGySoft.Resources
 
         #region Static Methods
 
-#if !NETCOREAPP2_0
+#if !NETCOREAPP || NETCOREAPP3_0_OR_GREATER
+        [RequiresUnreferencedCode("Accessing WinForms NodeInfo properties by reflection")]
         internal static DataNodeInfo InitFromWinForms(object nodeInfoWinForms)
         {
             object pos = Accessors.DataNodeInfo_GetReaderPosition(nodeInfoWinForms)!;

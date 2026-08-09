@@ -793,6 +793,8 @@ namespace KGySoft.Resources
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
         /// <remarks>For examples, see the description of the <see cref="ResXResourceManager"/> class.</remarks>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "String values never require unreferenced code.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "String values never require dynamic code.")]
         public override string? GetString(string name) => (string?)GetObjectInternal(name, null, true, false);
 
         /// <summary>
@@ -816,6 +818,8 @@ namespace KGySoft.Resources
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
         /// <remarks>For examples, see the description of the <see cref="ResXResourceManager"/> class.</remarks>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "String values never require unreferenced code.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "String values never require dynamic code.")]
         public override string? GetString(string name, CultureInfo? culture) => (string?)GetObjectInternal(name, culture, true, false);
 
         /// <summary>
@@ -869,9 +873,23 @@ namespace KGySoft.Resources
         /// <exception cref="InvalidOperationException"><see cref="SafeMode"/> is <see langword="false"/> and the type of the resource is neither <see cref="MemoryStream"/> nor <see cref="Array">byte[]</see>.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Streams never require unreferenced code. When called for non-stream resources, an exception is expected anyway.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "Streams never require dynamic code. When called for non-stream resources, an exception is expected anyway.")]
         public new virtual MemoryStream? GetStream(string name, CultureInfo? culture)
         {
-            object? value = GetObjectInternal(name, culture, false, false);
+            object? value;
+            try
+            {
+                value = GetObjectInternal(name, culture, false, false);
+            }
+            catch (Exception e) when (!SafeMode
+                && e is not (ArgumentNullException or ObjectDisposedException or MissingManifestResourceException or NotSupportedException or SerializationException or TypeLoadException or FileNotFoundException) 
+                && !e.IsCriticalOr(RuntimeFeature.IsDynamicCodeSupported))
+            {
+                // In AOT mode if obtaining as an object in unsafe mode fails for a non-stream resource, ensuring the same exception as in JITed mode
+                return Throw.InvalidOperationException<MemoryStream>(Res.ResourcesNonStreamResource(name), e);
+            }
+
             return ResXCommon.ToMemoryStream(name, value, SafeMode);
         }
 
@@ -895,6 +913,10 @@ namespace KGySoft.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
+        [RequiresDynamicCode(ResXCommon.UnsafeReadRequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.UnsafeReadRequiresUnreferencedCodeMessage)]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2046:RequiresUnreferencedCodeMismatch", Justification = "Regardless of the base type, it needs [RequiresUnreferencedCode].")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3051:RequiresDynamicCodeMismatch", Justification = "Regardless of the base type, it needs [RequiresDynamicCode].")]
         public override object? GetObject(string name) => GetObjectInternal(name, null, false, CloneValues);
 
         /// <summary>
@@ -920,6 +942,10 @@ namespace KGySoft.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
+        [RequiresDynamicCode(ResXCommon.UnsafeReadRequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.UnsafeReadRequiresUnreferencedCodeMessage)]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2046:RequiresUnreferencedCodeMismatch", Justification = "Unlike the base type, the interface needs it.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3051:RequiresDynamicCodeMismatch", Justification = "Unlike the base type, the interface needs it.")]
         public override object? GetObject(string name, CultureInfo? culture) => GetObjectInternal(name, culture, false, CloneValues);
 
         /// <summary>
@@ -943,6 +969,8 @@ namespace KGySoft.Resources
         /// <exception cref="InvalidOperationException"><see cref="SafeMode"/> is <see langword="false"/> and the type of the metadata is not <see cref="string"/>.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "String values never require unreferenced code.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "String values never require dynamic code.")]
         public string? GetMetaString(string name, CultureInfo? culture = null) => (string?)GetMetaInternal(name, culture, true, CloneValues);
 
         /// <summary>
@@ -972,6 +1000,8 @@ namespace KGySoft.Resources
         /// <exception cref="InvalidOperationException"><see cref="SafeMode"/> is <see langword="false"/> and the type of the metadata is neither <see cref="MemoryStream"/> nor <see cref="Array">byte[]</see>.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Streams never require unreferenced code.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "Streams never require dynamic code.")]
         public MemoryStream? GetMetaStream(string name, CultureInfo? culture = null)
         {
             object? value = GetMetaInternal(name, culture, false, false);
@@ -995,6 +1025,8 @@ namespace KGySoft.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
+        [RequiresDynamicCode(ResXCommon.UnsafeReadRequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.UnsafeReadRequiresUnreferencedCodeMessage)]
         public object? GetMetaObject(string name, CultureInfo? culture = null) => GetMetaInternal(name, culture, false, CloneValues);
 
         /// <summary>
@@ -1017,6 +1049,7 @@ namespace KGySoft.Resources
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="name" /> is <see langword="null" />.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
+        [RequiresUnreferencedCode(ResXCommon.NewNodeFromObjectRequiresUnreferencedCode)]
         public void SetObject(string name, object? value, CultureInfo? culture = null)
         {
             ResXResourceSet rs = GetResXResourceSet(culture ?? CultureInfo.CurrentUICulture, ResourceSetRetrieval.CreateIfNotExists, false)!;
@@ -1061,6 +1094,7 @@ namespace KGySoft.Resources
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="name" /> is <see langword="null" />.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
+        [RequiresUnreferencedCode(ResXCommon.NewNodeFromObjectRequiresUnreferencedCode)]
         public void SetMetaObject(string name, object? value, CultureInfo? culture = null)
         {
             ResXResourceSet rs = GetResXResourceSet(culture ?? CultureInfo.InvariantCulture, ResourceSetRetrieval.CreateIfNotExists, false)!;
@@ -1104,6 +1138,8 @@ namespace KGySoft.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceManager"/> is already disposed.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="culture"/> is <see langword="null"/>.</exception>
         /// <exception cref="IOException">The resource set could not be saved.</exception>
+        [RequiresDynamicCode(ResXCommon.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.RequiresUnreferencedCodeMessage)]
         public bool SaveResourceSet(CultureInfo culture, bool force = false, bool compatibleFormat = false)
         {
             if (culture == null!)
@@ -1141,6 +1177,8 @@ namespace KGySoft.Resources
 #if NETFRAMEWORK || NETSTANDARD || !NETCOREAPP3_0_OR_GREATER
         [SuppressMessage("ReSharper", "AssignNullToNotNullAttribute", Justification = "False alarm, but the annotation is missing for older frameworks.")]
 #endif
+        [RequiresDynamicCode(ResXCommon.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.RequiresUnreferencedCodeMessage)]
         public bool SaveAllResources(bool force = false, bool compatibleFormat = false)
         {
             IDictionary localResourceSets = ResourceSets; // type is Hashtable in .NET 3.5 and is StringKeyedDictionary above
@@ -1481,6 +1519,8 @@ namespace KGySoft.Resources
         private void ResetResourceSets() => resourceSets = new StringKeyedDictionary<ResourceSet>();
 #endif
 
+        [RequiresDynamicCode("GetResourceInternal")]
+        [RequiresUnreferencedCode("GetResourceInternal")]
         private object? GetObjectInternal(string name, CultureInfo? culture, bool isString, bool cloneValue)
         {
             if (name == null!)
@@ -1526,6 +1566,8 @@ namespace KGySoft.Resources
             return null;
         }
 
+        [RequiresDynamicCode("ResXResourceSet.GetMetaInternal")]
+        [RequiresUnreferencedCode("ResXResourceSet.GetMetaInternal")]
         private object? GetMetaInternal(string name, CultureInfo? culture, bool isString, bool cloneValue)
         {
             if (name == null!)

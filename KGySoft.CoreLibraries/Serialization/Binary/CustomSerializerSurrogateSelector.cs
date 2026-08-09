@@ -367,6 +367,7 @@ namespace KGySoft.Serialization.Binary
 
         #region Private Methods
 
+        [RequiresUnreferencedCode("Cannot ensure DynamicallyAccessedMembers for GetFields")]
         private void GetDefaultObjectData(object obj, SerializationInfo info, StreamingContext context)
         {
             Type type = obj.GetType();
@@ -413,11 +414,14 @@ namespace KGySoft.Serialization.Binary
             }
         }
 
+        [RequiresUnreferencedCode("Cannot ensure DynamicallyAccessedMembers for GetFieldsWithUniqueNames and TryGetField")]
         private void SetDefaultObjectData(object obj, SerializationInfo info, StreamingContext context)
         {
             #region Local Methods
 
-            static FieldInfo? TryGetField(Type instanceType, string name)
+            [UnconditionalSuppressMessage("TrimAnalysis", "IL2075:DynamicallyAccessedMembersReturnValueAnnotationMismatch",
+                Justification = "False alarm, t can only be the base types of instanceType.")]
+            static FieldInfo? TryGetField([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllFields)]Type instanceType, string name)
             {
                 FieldInfo? result;
 
@@ -490,6 +494,8 @@ namespace KGySoft.Serialization.Binary
         #region Explicitly Implemented Interface Methods
 
         [SecurityCritical]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Makes little sense to annotate an explicit " +
+            "interface implementation if the interface member itself is not annotated. Public serialization entry points are annotated in this project though.")]
         void ISerializationSurrogate.GetObjectData(object obj, SerializationInfo info, StreamingContext context)
         {
             if (obj == null!)
@@ -511,6 +517,8 @@ namespace KGySoft.Serialization.Binary
         }
 
         [SecurityCritical]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Makes little sense to annotate an explicit " +
+            "interface implementation if the interface member itself is not annotated. Public serialization entry points are annotated in this project though.")]
         object ISerializationSurrogate.SetObjectData(object obj, SerializationInfo info, StreamingContext context, ISurrogateSelector? selector)
         {
             if (obj == null!)

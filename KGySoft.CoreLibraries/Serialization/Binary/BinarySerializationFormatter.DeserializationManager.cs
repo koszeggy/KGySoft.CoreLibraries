@@ -253,7 +253,8 @@ namespace KGySoft.Serialization.Binary
 
                 #region Methods
 
-                // TODO: some suppress, because not adding RUC just to this override
+                [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+                    Justification = "Neither the base, nor other overrides are annotated, it would just trigger IL2046. But the public entry points are annotated anyway.")]
                 internal override void SetValue(object value)
                 {
                     Accessors.InvokeMethod(target, nameof(LinkedList<>.AddAfter), [referenceNode.GetType(), genericArg], referenceNode, value);

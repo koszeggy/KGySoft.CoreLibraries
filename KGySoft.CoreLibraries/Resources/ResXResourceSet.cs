@@ -700,6 +700,10 @@ namespace KGySoft.Resources
         /// <seealso cref="O:KGySoft.Resources.ResXResourceSet.GetString"/>
         /// <seealso cref="GetMetadataEnumerator"/>
         /// <seealso cref="GetAliasEnumerator"/>
+        [RequiresDynamicCode(ResXCommon.UnsafeEnumerationRequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.UnsafeEnumerationRequiresUnreferencedCodeMessage)]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2046:RequiresUnreferencedCodeMismatch", Justification = "Unlike the base type, the interface needs it.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3051:RequiresDynamicCodeMismatch", Justification = "Unlike the base type, the interface needs it.")]
         public override IDictionaryEnumerator GetEnumerator() => GetEnumeratorInternal(ResXEnumeratorModes.Resources);
 
         /// <summary>
@@ -720,6 +724,8 @@ namespace KGySoft.Resources
         /// <seealso cref="GetMetaString"/>
         /// <seealso cref="GetEnumerator"/>
         /// <seealso cref="GetAliasEnumerator"/>
+        [RequiresDynamicCode(ResXCommon.UnsafeEnumerationRequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.UnsafeEnumerationRequiresUnreferencedCodeMessage)]
         public IDictionaryEnumerator GetMetadataEnumerator() => GetEnumeratorInternal(ResXEnumeratorModes.Metadata);
 
         /// <summary>
@@ -739,6 +745,8 @@ namespace KGySoft.Resources
         /// <seealso cref="GetAliasValue"/>
         /// <seealso cref="GetEnumerator"/>
         /// <seealso cref="GetMetadataEnumerator"/>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Alias values are always strings.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "Alias values are always strings.")]
         public IDictionaryEnumerator GetAliasEnumerator() => GetEnumeratorInternal(ResXEnumeratorModes.Aliases);
 
         /// <summary>
@@ -755,6 +763,10 @@ namespace KGySoft.Resources
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceSet"/> is already disposed.</exception>
+        [RequiresDynamicCode(ResXCommon.UnsafeReadRequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.UnsafeReadRequiresUnreferencedCodeMessage)]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2046:RequiresUnreferencedCodeMismatch", Justification = "Regardless of the base type, it needs [RequiresUnreferencedCode].")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3051:RequiresDynamicCodeMismatch", Justification = "Regardless of the base type, it needs [RequiresDynamicCode].")]
         public override object? GetObject(string name) => GetValueInternal(name, false, false, safeMode, cloneValues, resources, ref resourcesIgnoreCase);
 
         /// <summary>
@@ -772,6 +784,10 @@ namespace KGySoft.Resources
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceSet"/> is already disposed.</exception>
+        [RequiresDynamicCode(ResXCommon.UnsafeReadRequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.UnsafeReadRequiresUnreferencedCodeMessage)]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2046:RequiresUnreferencedCodeMismatch", Justification = "Unlike the base type, the interface needs it.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3051:RequiresDynamicCodeMismatch", Justification = "Unlike the base type, the interface needs it.")]
         public override object? GetObject(string name, bool ignoreCase) => GetValueInternal(name, ignoreCase, false, safeMode, cloneValues, resources, ref resourcesIgnoreCase);
 
         /// <summary>
@@ -789,6 +805,8 @@ namespace KGySoft.Resources
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceSet"/> is already disposed.</exception>
         /// <exception cref="InvalidOperationException"><see cref="SafeMode"/> is <see langword="false"/> and the type of the resource is not <see cref="string"/>.</exception>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "String values never require unreferenced code.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "String values never require dynamic code.")]
         public override string? GetString(string name) => (string?)GetValueInternal(name, false, true, safeMode, cloneValues, resources, ref resourcesIgnoreCase);
 
         /// <summary>
@@ -807,6 +825,8 @@ namespace KGySoft.Resources
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceSet"/> is already disposed.</exception>
         /// <exception cref="InvalidOperationException"><see cref="SafeMode"/> is <see langword="false"/> and the type of the resource is not <see cref="string"/>.</exception>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "String values never require unreferenced code.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "String values never require dynamic code.")]
         public override string? GetString(string name, bool ignoreCase) => (string?)GetValueInternal(name, ignoreCase, true, safeMode, cloneValues, resources, ref resourcesIgnoreCase);
 
         /// <summary>
@@ -825,6 +845,8 @@ namespace KGySoft.Resources
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceSet"/> is already disposed.</exception>
+        [RequiresDynamicCode(ResXCommon.UnsafeReadRequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.UnsafeReadRequiresUnreferencedCodeMessage)]
         public object? GetMetaObject(string name, bool ignoreCase = false) => GetValueInternal(name, ignoreCase, false, safeMode, cloneValues, metadata, ref metadataIgnoreCase);
 
         /// <summary>
@@ -841,6 +863,8 @@ namespace KGySoft.Resources
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="ResXResourceSet"/> is already disposed.</exception>
         /// <exception cref="InvalidOperationException"><see cref="SafeMode"/> is <see langword="false"/> and the type of the metadata is not <see cref="string"/>.</exception>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "String values never require unreferenced code.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "String values never require dynamic code.")]
         public string? GetMetaString(string name, bool ignoreCase = false) => (string?)GetValueInternal(name, ignoreCase, true, safeMode, cloneValues, metadata, ref metadataIgnoreCase);
 
         /// <summary>
@@ -880,6 +904,7 @@ namespace KGySoft.Resources
         /// and <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxfileref" target="_blank">System.Resources.ResXFileRef</a> as well. The compatibility with the system versions
         /// is provided without any reference to <c>System.Windows.Forms.dll</c>, where those types are located.</note>
         /// </remarks>
+        [RequiresUnreferencedCode(ResXCommon.NewNodeFromObjectRequiresUnreferencedCode)]
         public void SetObject(string name, object? value) => SetValueInternal(name, value, resources, ref resourcesIgnoreCase);
 
         /// <summary>
@@ -901,6 +926,7 @@ namespace KGySoft.Resources
         /// and <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxfileref" target="_blank">System.Resources.ResXFileRef</a> as well. The compatibility with the system versions
         /// is provided without any reference to <c>System.Windows.Forms.dll</c>, where those types are located.</note>
         /// </remarks>
+        [RequiresUnreferencedCode(ResXCommon.NewNodeFromObjectRequiresUnreferencedCode)]
         public void SetMetaObject(string name, object? value) => SetValueInternal(name, value, metadata, ref metadataIgnoreCase);
 
         /// <summary>
@@ -991,6 +1017,8 @@ namespace KGySoft.Resources
         /// <br/>Default value: <c><see langword="null"/>.</c></param>
         /// <seealso cref="ResXResourceWriter"/>
         /// <seealso cref="ResXResourceWriter.CompatibleFormat"/>
+        [RequiresDynamicCode(ResXCommon.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.RequiresUnreferencedCodeMessage)]
         public void Save(string fileName, bool compatibleFormat = false, bool forceEmbeddedResources = false, string? newBasePath = null)
         {
             // ReSharper disable once UsingStatementResourceInitialization - these properties never throw exception on initialization
@@ -1013,6 +1041,8 @@ namespace KGySoft.Resources
         /// <br/>Default value: <c><see langword="null"/>.</c></param>
         /// <seealso cref="ResXResourceWriter"/>
         /// <seealso cref="ResXResourceWriter.CompatibleFormat"/>
+        [RequiresDynamicCode(ResXCommon.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.RequiresUnreferencedCodeMessage)]
         public void Save(Stream stream, bool compatibleFormat = false, bool forceEmbeddedResources = false, string? newBasePath = null)
         {
             // ReSharper disable once UsingStatementResourceInitialization - these properties never throw exception on initialization
@@ -1035,6 +1065,8 @@ namespace KGySoft.Resources
         /// <br/>Default value: <c><see langword="null"/>.</c></param>
         /// <seealso cref="ResXResourceWriter"/>
         /// <seealso cref="ResXResourceWriter.CompatibleFormat"/>
+        [RequiresDynamicCode(ResXCommon.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.RequiresUnreferencedCodeMessage)]
         public void Save(TextWriter textWriter, bool compatibleFormat = false, bool forceEmbeddedResources = false, string? newBasePath = null)
         {
             // ReSharper disable once UsingStatementResourceInitialization - these properties never throw exception on initialization
@@ -1064,9 +1096,13 @@ namespace KGySoft.Resources
 
         #region Internal Methods
 
+        [RequiresDynamicCode("GetValueInternal")]
+        [RequiresUnreferencedCode("GetValueInternal")]
         internal object? GetResourceInternal(string name, bool ignoreCase, bool isString, bool asSafe, bool cloneValue)
             => GetValueInternal(name, ignoreCase, isString, asSafe, cloneValue, resources, ref resourcesIgnoreCase);
 
+        [RequiresDynamicCode("GetValueInternal")]
+        [RequiresUnreferencedCode("GetValueInternal")]
         internal object? GetMetaInternal(string name, bool ignoreCase, bool isString, bool asSafe, bool cloneValue)
             => GetValueInternal(name, ignoreCase, isString, asSafe, cloneValue, metadata, ref metadataIgnoreCase);
 
@@ -1102,6 +1138,8 @@ namespace KGySoft.Resources
             }
         }
 
+        [RequiresDynamicCode(ResXCommon.UnsafeEnumerationRequiresDynamicCodeMessage)] // for the enumerator members, not this method in itself
+        [RequiresUnreferencedCode(ResXCommon.UnsafeEnumerationRequiresUnreferencedCodeMessage)] // for the enumerator members, not this method in itself
         private IDictionaryEnumerator GetEnumeratorInternal(ResXEnumeratorModes mode)
         {
             StringKeyedDictionary<ResXDataNode>? res = resources;
@@ -1112,6 +1150,8 @@ namespace KGySoft.Resources
                 return new ResXResourceEnumerator(this, mode, version);
         }
 
+        [RequiresDynamicCode("GetNodeToSave when forcing embedded resources, AddResource/AddMetadata when XML content generation needs binary serialization.")]
+        [RequiresUnreferencedCode("GetNodeToSave when forcing embedded resources, AddResource/AddMetadata when XML content generation needs type converters or binary serialization.")]
         private void Save(ResXResourceWriter writer, bool forceEmbeddedResources)
         {
             StringKeyedDictionary<ResXDataNode>? resourcesLocal = resources;
@@ -1147,6 +1187,8 @@ namespace KGySoft.Resources
             isModified = false;
         }
 
+        [RequiresDynamicCode("GetValue when forcing embedded resources")]
+        [RequiresUnreferencedCode("GetValue when forcing embedded resources")]
         private ResXDataNode GetNodeToSave(ResXDataNode node, bool forceEmbeddedResources, bool adjustPath)
         {
             ResXFileRef? fileRef = node.FileRef;
@@ -1167,6 +1209,8 @@ namespace KGySoft.Resources
             return node;
         }
 
+        [RequiresDynamicCode("GetSafeValueInternal, GetUnsafeValueInternal")]
+        [RequiresUnreferencedCode("GetSafeValueInternal, GetUnsafeValueInternal")]
         private object? GetValueInternal(string name, bool ignoreCase, bool isString, bool asSafe, bool cloneValue, StringKeyedDictionary<ResXDataNode>? data, ref StringKeyedDictionary<ResXDataNode>? dataCaseInsensitive)
         {
             if (data == null)
@@ -1198,6 +1242,7 @@ namespace KGySoft.Resources
             return null;
         }
 
+        [RequiresUnreferencedCode("ResXDataNode ctor")]
         private void SetValueInternal(string name, object? value, StringKeyedDictionary<ResXDataNode>? data, ref StringKeyedDictionary<ResXDataNode>? dataIgnoreCase)
         {
             if (data == null)
@@ -1246,11 +1291,19 @@ namespace KGySoft.Resources
 
         #region Explicitly Implemented Interface Methods
 
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+            Justification = "The caller can only access this member via the interface, which is not annotated, but the public GetEnumerator has the annotation.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode",
+            Justification = "The caller can only access this member via the interface, which is not annotated, but the public GetEnumerator has the annotation.")]
         IEnumerator IEnumerable.GetEnumerator() => GetEnumeratorInternal(ResXEnumeratorModes.Resources);
 
+        [RequiresDynamicCode(ResXCommon.UnsafeReadRequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.UnsafeReadRequiresUnreferencedCodeMessage)]
         object? IExpandoResourceSetInternal.GetResource(string name, bool ignoreCase, bool isString, bool asSafe, bool cloneValue)
             => GetResourceInternal(name, ignoreCase, isString, asSafe, cloneValue);
 
+        [RequiresDynamicCode(ResXCommon.UnsafeReadRequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.UnsafeReadRequiresUnreferencedCodeMessage)]
         object? IExpandoResourceSetInternal.GetMeta(string name, bool ignoreCase, bool isString, bool asSafe, bool cloneValue)
             => GetMetaInternal(name, ignoreCase, isString, asSafe, cloneValue);
 

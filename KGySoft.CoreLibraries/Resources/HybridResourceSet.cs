@@ -310,6 +310,10 @@ namespace KGySoft.Resources
         }
 
         [SuppressMessage("ReSharper", "GenericEnumeratorNotDisposed", Justification = "False alarm, IDictionaryEnumerator is not a generic enumerator and is not expected to be disposable")]
+        [RequiresDynamicCode(ResXCommon.UnsafeEnumerationRequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.UnsafeEnumerationRequiresUnreferencedCodeMessage)]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2046:RequiresUnreferencedCodeMismatch", Justification = "Unlike the base type, the interface needs it.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3051:RequiresDynamicCodeMismatch", Justification = "Unlike the base type, the interface needs it.")]
         public override IDictionaryEnumerator GetEnumerator()
         {
             ResXResourceSet? resx = resxResourceSet;
@@ -321,6 +325,10 @@ namespace KGySoft.Resources
             return new Enumerator(this, (ResXResourceEnumerator)resx.GetEnumerator(), compiled.GetEnumerator(), ((IResXResourceContainer)resx).Version);
         }
 
+        [RequiresDynamicCode(ResXCommon.UnsafeReadRequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.UnsafeReadRequiresUnreferencedCodeMessage)]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2046:RequiresUnreferencedCodeMismatch", Justification = "Regardless of the base type, it needs [RequiresUnreferencedCode].")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3051:RequiresDynamicCodeMismatch", Justification = "Regardless of the base type, it needs [RequiresDynamicCode].")]
         public override object? GetObject(string name)
         {
             ResXResourceSet? resx = resxResourceSet;
@@ -330,6 +338,10 @@ namespace KGySoft.Resources
             return GetResource(name, false, false, resx.SafeMode, resx.CloneValues);
         }
 
+        [RequiresDynamicCode(ResXCommon.UnsafeReadRequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.UnsafeReadRequiresUnreferencedCodeMessage)]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2046:RequiresUnreferencedCodeMismatch", Justification = "Unlike the base type, the interface needs it.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3051:RequiresDynamicCodeMismatch", Justification = "Unlike the base type, the interface needs it.")]
         public override object? GetObject(string name, bool ignoreCase)
         {
             ResXResourceSet? resx = resxResourceSet;
@@ -339,6 +351,8 @@ namespace KGySoft.Resources
             return GetResource(name, ignoreCase, false, resx.SafeMode, resx.CloneValues);
         }
 
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "String values never require unreferenced code.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "String values never require dynamic code.")]
         public override string? GetString(string name)
         {
             ResXResourceSet? resx = resxResourceSet;
@@ -348,6 +362,8 @@ namespace KGySoft.Resources
             return (string?)GetResource(name, false, true, resx.SafeMode, resx.CloneValues);
         }
 
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "String values never require unreferenced code.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "String values never require dynamic code.")]
         public override string? GetString(string name, bool ignoreCase)
         {
             ResXResourceSet? resx = resxResourceSet;
@@ -357,6 +373,8 @@ namespace KGySoft.Resources
             return (string?)GetResource(name, ignoreCase, true, resx.SafeMode, resx.CloneValues);
         }
 
+        [RequiresDynamicCode(ResXCommon.UnsafeReadRequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.UnsafeReadRequiresUnreferencedCodeMessage)]
         public object? GetResource(string name, bool ignoreCase, bool isString, bool asSafe, bool cloneValue)
         {
             ResXResourceSet? resx = resxResourceSet;
@@ -376,6 +394,8 @@ namespace KGySoft.Resources
             return isString ? compiled.GetString(name, ignoreCase) : compiled.GetObject(name, ignoreCase);
         }
 
+        [RequiresDynamicCode(ResXCommon.UnsafeReadRequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.UnsafeReadRequiresUnreferencedCodeMessage)]
         public object? GetMeta(string name, bool ignoreCase, bool isString, bool asSafe, bool cloneValue)
         {
             ResXResourceSet? resx = resxResourceSet;
@@ -385,6 +405,8 @@ namespace KGySoft.Resources
             return resx.GetMetaInternal(name, ignoreCase, isString, asSafe, cloneValue);
         }
 
+        [RequiresDynamicCode(ResXCommon.UnsafeEnumerationRequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.UnsafeEnumerationRequiresUnreferencedCodeMessage)]
         public IDictionaryEnumerator GetMetadataEnumerator()
         {
             ResXResourceSet? resx = resxResourceSet;
@@ -448,6 +470,8 @@ namespace KGySoft.Resources
             return resx.ContainsMeta(name, ignoreCase);
         }
 
+        [RequiresDynamicCode(ResXCommon.UnsafeReadRequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.UnsafeReadRequiresUnreferencedCodeMessage)]
         public object? GetMetaObject(string name, bool ignoreCase = false)
         {
             ResXResourceSet? resx = resxResourceSet;
@@ -457,6 +481,8 @@ namespace KGySoft.Resources
             return resx.GetMetaInternal(name, ignoreCase, false, resx.SafeMode, resx.CloneValues);
         }
 
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "String values never require unreferenced code.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "String values never require dynamic code.")]
         public string? GetMetaString(string name, bool ignoreCase = false)
         {
             ResXResourceSet? resx = resxResourceSet;
@@ -475,6 +501,7 @@ namespace KGySoft.Resources
             return resx.GetAliasValue(alias);
         }
 
+        [RequiresUnreferencedCode(ResXCommon.NewNodeFromObjectRequiresUnreferencedCode)]
         public void SetObject(string name, object? value)
         {
             ResXResourceSet? resx = resxResourceSet;
@@ -484,6 +511,7 @@ namespace KGySoft.Resources
             resx.SetObject(name, value);
         }
 
+        [RequiresUnreferencedCode(ResXCommon.NewNodeFromObjectRequiresUnreferencedCode)]
         public void SetMetaObject(string name, object? value)
         {
             ResXResourceSet? resx = resxResourceSet;
@@ -529,6 +557,8 @@ namespace KGySoft.Resources
             resx.RemoveAliasValue(alias);
         }
 
+        [RequiresDynamicCode(ResXCommon.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.RequiresUnreferencedCodeMessage)]
         public void Save(string fileName, bool compatibleFormat = false, bool forceEmbeddedResources = false, string? newBasePath = null)
         {
             ResXResourceSet? resx = resxResourceSet;
@@ -538,6 +568,8 @@ namespace KGySoft.Resources
             resx.Save(fileName, compatibleFormat, forceEmbeddedResources, newBasePath);
         }
 
+        [RequiresDynamicCode(ResXCommon.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.RequiresUnreferencedCodeMessage)]
         public void Save(Stream stream, bool compatibleFormat = false, bool forceEmbeddedResources = false, string? newBasePath = null)
         {
             ResXResourceSet? resx = resxResourceSet;
@@ -547,6 +579,8 @@ namespace KGySoft.Resources
             resx.Save(stream, compatibleFormat, forceEmbeddedResources, newBasePath);
         }
 
+        [RequiresDynamicCode(ResXCommon.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.RequiresUnreferencedCodeMessage)]
         public void Save(TextWriter textWriter, bool compatibleFormat = false, bool forceEmbeddedResources = false, string? newBasePath = null)
         {
             ResXResourceSet? resx = resxResourceSet;

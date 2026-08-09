@@ -1582,7 +1582,7 @@ namespace KGySoft.Reflection
         }
 
         [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode",
-            Justification = "It already has the stronger RequiresUnreferencedCode, and Type.GetType has only RequiresUnreferencedCode")]
+            Justification = "It already has the stronger RequiresUnreferencedCode, and Type.GetType has only RequiresUnreferencedCode as well")]
         [RequiresUnreferencedCode("GetGenericType, ResolveRootType, Resolve")]
         private Type? Resolve(Func<AssemblyName?, string, Type?>? typeResolver)
         {

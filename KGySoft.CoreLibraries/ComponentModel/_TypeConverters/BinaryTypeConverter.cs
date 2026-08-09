@@ -150,6 +150,8 @@ namespace KGySoft.ComponentModel
             + BinarySerializer.RequiresDynamicCodeMessage)]
         [RequiresUnreferencedCode("If the destination type is InstanceDescriptor, this method references a binary deserialization method, which may require unreferenced code. "
             + BinarySerializer.RequiresUnreferencedCodeMessage)]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2046:RequiresUnreferencedCodeMismatch", Justification = "Regardless of the base type, it needs [RequiresUnreferencedCode].")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3051:RequiresDynamicCodeMismatch", Justification = "Regardless of the base type, it needs [RequiresDynamicCode].")]
         public override object? ConvertTo(ITypeDescriptorContext? context, CultureInfo? culture, object? value, Type destinationType)
         {
             if (!destinationType.In(supportedTypes))
@@ -170,6 +172,8 @@ namespace KGySoft.ComponentModel
         /// <returns>An <see cref="object" /> that represents the converted value.</returns>
         [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
         [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2046:RequiresUnreferencedCodeMismatch", Justification = "Regardless of the base type, it needs [RequiresUnreferencedCode].")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3051:RequiresDynamicCodeMismatch", Justification = "Regardless of the base type, it needs [RequiresDynamicCode].")]
         public override object? ConvertFrom(ITypeDescriptorContext? context, CultureInfo? culture, object? value)
         {
             byte[]? bytes = null;

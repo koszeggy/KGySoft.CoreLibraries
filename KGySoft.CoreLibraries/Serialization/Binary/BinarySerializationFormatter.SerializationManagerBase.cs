@@ -161,6 +161,8 @@ namespace KGySoft.Serialization.Binary
             /// The result is <see cref="DataTypes.Null"/> if the type is ignored or the special support is disabled for it
             /// so it must be determined by the regular ways if it can be serialized.
             /// </summary>
+            [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+                Justification = "Accessed via SerializationManager.GetDataType, which is annotated.")]
             [UnconditionalSuppressMessage("TrimAnalysis", "IL2111:DynamicallyAccessedMembersAttributeViaReflection",
                 Justification = "Accessed via SerializationManager.GetDataType, which is annotated.")]
             private protected static readonly LockFreeCache<Type, DataTypes> SpecialSupportCache

@@ -379,11 +379,10 @@ namespace KGySoft.CoreLibraries
                         {
                             try
                             {
-                                if (t.GetGenericArguments().Length == genericArguments.Length && t.GetInterface(type.Name) != null)
-                                    result.Add(t.GetGenericType(genericArguments));
+                                if (t.GetGenericArguments().Length == genericArguments.Length && t.GetInterface(type.Name) != null && t.TryGetGenericType(genericArguments) is Type genericType)
+                                    result.Add(genericType);
                             }
                             catch (AmbiguousMatchException) { }
-                            catch (ArgumentException) { }
                             continue;
                         }
 
@@ -460,15 +459,8 @@ namespace KGySoft.CoreLibraries
                     argumentsToCreate[i] = arg;
                 }
 
-                // the checks above cannot be perfect (especially if constraints contain generics) so creating the type in try-catch
-                try
-                {
-                    return genericTypeDef.GetGenericType(argumentsToCreate);
-                }
-                catch (ArgumentException)
-                {
-                    return null;
-                }
+                // the checks above cannot be perfect (especially if constraints contain generics) so the result can be null
+                return genericTypeDef.TryGetGenericType(argumentsToCreate);
             }
 
             private static Type? SubstituteGenericParameter(Type arg, Type[] definitionArguments, Type[] constructedArguments)
@@ -499,15 +491,8 @@ namespace KGySoft.CoreLibraries
                     replacedArgs[i] = replacement;
                 }
 
-                try
-                {
-                    // This still can throw exception because we skipped constraints with generic parameters
-                    return arg.GetGenericTypeDefinition().GetGenericType(replacedArgs);
-                }
-                catch (ArgumentException)
-                {
-                    return null;
-                }
+                // This still can be null because we skipped constraints with generic parameters
+                return arg.GetGenericTypeDefinition().TryGetGenericType(replacedArgs);
             }
 
             [RequiresDynamicCode("This method uses IL code generation, and is not compatible with AOT mode.")]
@@ -815,6 +800,7 @@ namespace KGySoft.CoreLibraries
             }
 
             [SecurityCritical]
+            [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "It handles if the object cannot be generated.")]
             [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "It handles if the object cannot be generated.")]
             private static bool TryGenerateObject([DynamicallyAccessedMembers(NeededMembers)]Type type,
                 ref GeneratorContext context, out object? result, bool checkingDerivedType = false)
@@ -905,6 +891,7 @@ namespace KGySoft.CoreLibraries
             }
 
             [SecurityCritical]
+            [RequiresUnreferencedCode("SetKeyValue")]
             [UnconditionalSuppressMessage("TrimAnalysis", "IL2062:MethodDynamicallyAccessedMemberTypesCannotBeDetermined",
                 Justification = "Not a problem, the recursive TryGenerateObject handles if an instance of the key or value cannot be created.")]
             private static object GenerateKeyValuePair([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]Type type, ref GeneratorContext context)
@@ -942,7 +929,7 @@ namespace KGySoft.CoreLibraries
 
             [SecurityCritical]
             [RequiresDynamicCode("IsSupportedCollectionForReflection (though it is alright if it simply returns false), GenerateCollectionByCtor")]
-            [RequiresUnreferencedCode("IsSupportedCollectionForReflection")]
+            [RequiresUnreferencedCode("IsSupportedCollectionForReflection, GenerateCollectionByCtor")]
             private static bool TryGenerateCollection([DynamicallyAccessedMembers(NeededMembers)]Type type,
                 ref GeneratorContext context, out object? result)
             {
@@ -988,10 +975,8 @@ namespace KGySoft.CoreLibraries
             }
 
             [SecurityCritical]
-            [UnconditionalSuppressMessage("TrimAnalysis", "IL2062:MethodDynamicallyAccessedMemberTypesCannotBeDetermined",
-                Justification = "Not a problem, returning false if TryCreateConcreteObject or TryGenerateObject fail.")]
-            [UnconditionalSuppressMessage("TrimAnalysis", "IL2072:ParameterDynamicallyAccessedMemberTypesCannotBeDetermined",
-                Justification = "Not a problem, returning false if TryCreateConcreteObject or TryGenerateObject fail.")]
+            [RequiresDynamicCode("TryCreateConcreteObject")]
+            [RequiresUnreferencedCode("TryCreateConcreteObject")]
             private static bool TryGenerateCustomObject([DynamicallyAccessedMembers(NeededMembers)]Type type, ref GeneratorContext context, out object? result)
             {
                 result = null;
@@ -1042,6 +1027,8 @@ namespace KGySoft.CoreLibraries
             }
 
             [SecurityCritical]
+            [RequiresDynamicCode("InitializeMembers")]
+            [RequiresUnreferencedCode("InitializeMembers")]
             private static bool TryCreateConcreteObject([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors)]Type type, ref GeneratorContext context, [MaybeNullWhen(false)]out object result)
             {
                 bool isRoot = context.TrySetRoot(type);
@@ -1061,12 +1048,8 @@ namespace KGySoft.CoreLibraries
             }
 
             [SecurityCritical]
-            [UnconditionalSuppressMessage("TrimAnalysis", "IL2072:ParameterDynamicallyAccessedMemberTypesCannotBeDetermined",
-                Justification = "Not a problem, the recursive TryGenerateObject handles if a member cannot be initialized.")]
-            [UnconditionalSuppressMessage("TrimAnalysis", "IL2075:DynamicallyAccessedMembersReturnValueAnnotationMismatch",
-                Justification = "Not a problem, the recursive TryGenerateObject handles if a member cannot be initialized.")]
-            [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode",
-                Justification = "Not a problem, if IsSupportedCollectionForReflection returns false, the collection is simply not initialized.")]
+            [RequiresDynamicCode("IsSupportedCollectionForReflection")]
+            [RequiresUnreferencedCode("IsSupportedCollectionForReflection, GetFields, GetProperties")]
             private static void InitializeMembers(object obj, ref GeneratorContext context)
             {
                 IList<PropertyInfo> properties = Reflector.EmptyArray<PropertyInfo>();
@@ -1222,7 +1205,7 @@ namespace KGySoft.CoreLibraries
 
                 Type[] keyValue = GetKeyValueTypes(elementType);
                 IDictionary? dictionary = collection as IDictionary;
-                PropertyInfo? genericIndexer = dictionary != null ? null : (PropertyInfo?)Reflector.IDictionaryGenType.GetGenericType(keyValue).GetDefaultMembers().FirstOrDefault();
+                PropertyInfo? genericIndexer = dictionary != null ? null : (PropertyInfo?)Reflector.IDictionaryGenType.TryGetGenericType(keyValue)?.GetDefaultMembers().FirstOrDefault();
 
                 for (int i = 0; i < count; i++)
                 {
@@ -1265,6 +1248,7 @@ namespace KGySoft.CoreLibraries
 
             [SecurityCritical]
             [RequiresDynamicCode("The type of the initializer collection type may not be available.")]
+            [RequiresUnreferencedCode("The type of the initializer collection type may not be available.")]
             private static object GenerateCollectionByCtor(ConstructorInfo collectionCtor, [DynamicallyAccessedMembers(NeededMembers)]Type elementType,
                 bool isDictionary, ref GeneratorContext context)
             {

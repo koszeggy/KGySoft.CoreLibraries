@@ -29,13 +29,11 @@ namespace System.Diagnostics.CodeAnalysis
         internal const DynamicallyAccessedMemberTypes AllEvents = DynamicallyAccessedMemberTypes.PublicEvents | NonPublicEventsWithInherited;
 
         internal const DynamicallyAccessedMemberTypes AllMembersAndInterfaces =
-            AllConstructors |
-            AllEvents |
-            AllFields |
-            AllMethods |
-            AllNestedTypes |
-            AllProperties |
-            DynamicallyAccessedMemberTypes.Interfaces;
+#if NET10_0_OR_GREATER
+            AllConstructors | AllEvents | AllFields | AllMethods | AllNestedTypes | AllProperties | DynamicallyAccessedMemberTypes.Interfaces;
+#else
+            DynamicallyAccessedMemberTypes.All; // Needed to avoid IL2087 on older versions
+#endif
 
         #endregion
     }

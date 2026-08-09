@@ -793,6 +793,8 @@ namespace KGySoft.Resources
         /// </summary>
         /// <param name="name">The name of a property.</param>
         /// <param name="value">An object that is the value of the property to add.</param>
+        [RequiresDynamicCode(ResXCommon.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.RequiresUnreferencedCodeMessage)]
         public void AddMetadata(string name, object? value)
         {
             if (value is ResXDataNode node)
@@ -812,6 +814,8 @@ namespace KGySoft.Resources
         /// <exception cref="ArgumentNullException"><paramref name="node"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException"><see cref="SafeMode"/> and <see cref="CompatibleFormat"/> are both <see langword="true"/> and <paramref name="node"/> contains
         /// a non-deserialized node in non-compatible format with a non-natively supported type name. Deserialize the node manually and use the <see cref="AddMetadata(string, object?)"/> overload instead.</exception>
+        [RequiresDynamicCode(ResXCommon.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.RequiresUnreferencedCodeMessage)]
         public void AddMetadata(ResXDataNode node)
         {
             if (node == null!)
@@ -831,6 +835,10 @@ namespace KGySoft.Resources
         /// </summary>
         /// <param name="name">The name of the resource.</param>
         /// <param name="value">The value of the resource.</param>
+        [RequiresDynamicCode(ResXCommon.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.RequiresUnreferencedCodeMessage)]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3051:RequiresDynamicCodeMismatch", Justification = "Regardless of the interface, it needs [RequiresDynamicCode].")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2046:RequiresUnreferencedCodeMismatch", Justification = "Regardless of the interface, it needs [RequiresUnreferencedCode].")]
         public void AddResource(string name, object? value)
         {
             if (value is ResXDataNode node)
@@ -857,6 +865,8 @@ namespace KGySoft.Resources
         /// <exception cref="ArgumentNullException"><paramref name="node"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException"><see cref="SafeMode"/> and <see cref="CompatibleFormat"/> are both <see langword="true"/> and <paramref name="node"/> contains
         /// a non-deserialized node in non-compatible format with a non-natively supported type name. Deserialize the node manually and use the <see cref="AddResource(string, object?)"/> overload instead.</exception>
+        [RequiresDynamicCode(ResXCommon.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.RequiresUnreferencedCodeMessage)]
         public void AddResource(ResXDataNode node)
         {
             if (node == null!)
@@ -952,6 +962,8 @@ namespace KGySoft.Resources
             writer.WriteEndElement();
         }
 
+        [RequiresDynamicCode(ResXCommon.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.RequiresUnreferencedCodeMessage)]
         private void AddDataRow(string elementName, string name, ResXDataNode node)
         {
             DataNodeInfo info = node.GetDataNodeInfo(typeNameConverter, compatibleFormat, safeMode);
@@ -972,6 +984,8 @@ namespace KGySoft.Resources
                 AddDataRow(elementName, name, ResXCommon.ToBase64(value), GetTypeNameWithAlias(Reflector.ByteArrayType), null, null);
         }
 
+        [RequiresDynamicCode(ResXCommon.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.RequiresUnreferencedCodeMessage)]
         private void AddDataRow(string elementName, string name, object? value)
         {
             // 1.) String

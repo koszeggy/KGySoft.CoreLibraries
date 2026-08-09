@@ -396,13 +396,11 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Gets the property descriptors of <typeparamref name="T"/>.
         /// </summary>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Working only with the available properties.")]
         protected PropertyDescriptorCollection PropertyDescriptors
-        {
             // not static so custom providers can be registered before creating an instance
             // ReSharper disable once NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract - it CAN be null if an ICustomTypeDescriptor is implemented so
-            [RequiresUnreferencedCode("PropertyDescriptor's PropertyType cannot be statically discovered.")]
-            get => propertyDescriptors ??= TypeDescriptor.GetProperties(typeof(T)) ?? new PropertyDescriptorCollection(null);
-        }
+            => propertyDescriptors ??= TypeDescriptor.GetProperties(typeof(T)) ?? new PropertyDescriptorCollection(null);
 
         #endregion
 

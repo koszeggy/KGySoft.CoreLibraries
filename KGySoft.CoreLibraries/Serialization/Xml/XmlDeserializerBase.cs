@@ -241,6 +241,10 @@ namespace KGySoft.Serialization.Xml
 
         [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
             Justification = "Cannot apply RequiresUnreferencedCode to a field, but the public entry points are annotated anyway.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2072:ParameterDynamicallyAccessedMemberTypesCannotBeDetermined",
+            Justification = "Cannot apply RequiresUnreferencedCode to a field, but the public entry points are annotated anyway.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2111:DynamicallyAccessedMembersAttributeViaReflection",
+            Justification = "Cannot apply RequiresUnreferencedCode to a field, but the public entry points are annotated anyway.")]
         [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode",
             Justification = "Cannot apply RequiresDynamicCode to a field, but the public entry points are annotated anyway.")]
         private static readonly Dictionary<Type, Func<Type, ComparerType, object>> knownCollectionWithComparerFactory = new()

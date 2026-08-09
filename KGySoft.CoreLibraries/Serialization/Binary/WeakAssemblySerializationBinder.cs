@@ -16,6 +16,7 @@
 #region Usings
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
@@ -164,6 +165,7 @@ namespace KGySoft.Serialization.Binary
         /// <param name="assemblyName">Specifies the <see cref="Assembly"/> name of the serialized object.</param>
         /// <param name="typeName">Specifies the <see cref="Type"/> name of the serialized object.</param>
         /// <exception cref="SerializationException">The type cannot be resolved or the assembly cannot be loaded.</exception>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Throws an exception if a type cannot be resolved.")]
         public override Type BindToType(string assemblyName, string typeName)
         {
             Assembly? assembly = GetAssembly(assemblyName);
@@ -174,17 +176,15 @@ namespace KGySoft.Serialization.Binary
                 options |= ResolveTypeOptions.TryToLoadAssemblies;
             Type? result = assembly == null ? Reflector.ResolveType(typeName, options) : Reflector.ResolveType(assembly, typeName, options);
 
-            if (result == null)
-            {
-                string message = String.IsNullOrEmpty(assemblyName)
-                    ? Res.BinarySerializationCannotResolveType(typeName)
-                    : SafeMode
-                        ? Res.BinarySerializationCannotResolveTypeInAssemblySafe(typeName, assemblyName)
-                        : Res.BinarySerializationCannotResolveTypeInAssembly(typeName, assemblyName);
-                Throw.SerializationException(message);
-            }
+            if (result != null)
+                return result;
 
-            return result;
+            string message = String.IsNullOrEmpty(assemblyName)
+                ? Res.BinarySerializationCannotResolveType(typeName)
+                : SafeMode
+                    ? Res.BinarySerializationCannotResolveTypeInAssemblySafe(typeName, assemblyName)
+                    : Res.BinarySerializationCannotResolveTypeInAssembly(typeName, assemblyName);
+            return Throw.SerializationException<Type>(message);
         }
 
         #endregion

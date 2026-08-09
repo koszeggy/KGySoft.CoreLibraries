@@ -87,6 +87,7 @@ namespace KGySoft.Threading
             internal static ISortHelper<T> Instance
             {
                 [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "In AOT mode a less optimized helper may be returned.")]
+                [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(ComparableSortHelper<string>))] // it provides a shareable implementation for reference types
                 get
                 {
                     if (field == null)
@@ -96,14 +97,13 @@ namespace KGySoft.Threading
 #if NET11_0_OR_GREATER
 #error Check if the generic bridge feature is already available. It would help AOT mode - https://github.com/dotnet/csharplang/discussions/6308
 #endif
-
                             try
                             {
                                 field = (ISortHelper<T>)Activator.CreateInstance(typeof(ComparableSortHelper<>).MakeGenericType(typeof(T)), true)!;
                             }
                             catch (Exception e) when (!e.IsCriticalOr(RuntimeFeature.IsDynamicCodeSupported))
                             {
-                                // could not dynamically create ComparableSortHelper<T>
+                                // could not dynamically create ComparableSortHelper<T> - maybe T is a value type
                                 field = new SortHelper<T>();
                             }
                         }
@@ -1031,6 +1031,7 @@ namespace KGySoft.Threading
             internal static ISortHelper<TKey, TValue> Instance
             {
                 [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "In AOT mode a less optimized helper may be returned.")]
+                [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(ComparableSortHelper<string, string>))] // it provides a shareable implementation for reference key/value types
                 get
                 {
                     if (field == null)
@@ -1047,7 +1048,7 @@ namespace KGySoft.Threading
                             }
                             catch (Exception e) when (!e.IsCriticalOr(RuntimeFeature.IsDynamicCodeSupported))
                             {
-                                // could not dynamically create ComparableSortHelper<TKey, TValue>
+                                // could not dynamically create ComparableSortHelper<TKey, TValue> - maybe TKey or TValue are value types
                                 field = new SortHelper<TKey, TValue>();
                             }
                         }

@@ -267,16 +267,21 @@ namespace KGySoft.ComponentModel
 
         #region Static Methods
 
-        private static IComparer<(int, object?)> CreateComparer(bool ascending, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]Type valueType)
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "It handles if ItemGenericComparer<> cannot be instantiated.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2072:ParameterDynamicallyAccessedMemberTypesCannotBeDetermined", Justification = "False alarm, DynamicDependency provides all members.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "It handles if ItemGenericComparer<> cannot be instantiated.")]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(ItemGenericComparer<string>))] // it provides a shareable implementation for reference type properties of T
+        private static IComparer<(int, object?)> CreateComparer(bool ascending, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]Type propertyType)
         {
-            if (valueType.GetInterfaces().Any(i => i.IsGenericTypeOf(typeof(IComparable<>)) && i.GetGenericArguments()[0] == valueType))
+            if (propertyType.GetInterfaces().Any(i => i.IsGenericTypeOf(typeof(IComparable<>)) && i.GetGenericArguments()[0] == propertyType))
             {
                 try
                 {
-                    return (IComparer<(int, object?)>)typeof(ItemGenericComparer<>).GetGenericType(valueType).CreateInstance(Reflector.BoolType, ascending);
+                    return (IComparer<(int, object?)>)typeof(ItemGenericComparer<>).GetGenericType(propertyType).CreateInstance(Reflector.BoolType, ascending);
                 }
                 catch (Exception e) when (!e.IsCriticalOr(RuntimeFeature.IsDynamicCodeSupported))
                 {
+                    // AOT mode, propertyType is maybe a value type - fallback to the non-generic comparer
                 }
             }
 
@@ -774,6 +779,8 @@ namespace KGySoft.ComponentModel
             sortPropertyName = null;
         }
 
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2072:ParameterDynamicallyAccessedMemberTypesCannotBeDetermined",
+            Justification = "If the needed members of sortProperty.PropertyType are trimmed, CreateComparer creates a fallback comparer.")]
         private void DoSort()
         {
             EndNew();

@@ -168,48 +168,48 @@ namespace KGySoft.CoreLibraries.PerformanceTests.Reflection
             MethodInvoker invokerStatic = MethodInvoker.Create(miStatic);
 #endif
 
-            new PerformanceTest<int> { TestName = "Method Invoke", Iterations = 1_000_000, TestTime = 200, Repeat = 1 }
+            new PerformanceTest<int> { TestName = "Method Invoke", Iterations = 1_000_000, TestTime = 2000, Repeat = 3 }
                 .AddCase(() => t.InstanceMethod(p1, p2), "Direct invoke (instance)")
-                .AddCase(() => TestClass.StaticMethod(p1, p2), "Direct invoke (static)")
+                //.AddCase(() => TestClass.StaticMethod(p1, p2), "Direct invoke (static)")
 
                 .AddCase(() => (int)miInstance.Invoke(t, new object[] { p1, p2 }), "MethodInfo.Invoke (instance)")
-                .AddCase(() => (int)miStatic.Invoke(null, new object[] { p1, p2 }), "MethodInfo.Invoke (static)")
+                //.AddCase(() => (int)miStatic.Invoke(null, new object[] { p1, p2 }), "MethodInfo.Invoke (static)")
 
 #if !NET35
                 .AddCase(() => ((dynamic)t).InstanceMethod(p1, p2), "Dynamic invoke (instance)")
 #endif
 
-                .AddCase(() => (int)typeof(TestClass).GetMethod(nameInstance).Invoke(t, new object[] { p1, p2 }), "Type.GetMethod(name).Invoke (instance)")
-                .AddCase(() => (int)typeof(TestClass).GetMethod(nameStatic).Invoke(null, new object[] { p1, p2 }), "Type.GetMethod(name).Invoke (static)")
+                //.AddCase(() => (int)typeof(TestClass).GetMethod(nameInstance).Invoke(t, new object[] { p1, p2 }), "Type.GetMethod(name).Invoke (instance)")
+                //.AddCase(() => (int)typeof(TestClass).GetMethod(nameStatic).Invoke(null, new object[] { p1, p2 }), "Type.GetMethod(name).Invoke (static)")
 
                 .AddCase(() => (int)accessorInstance.Invoke(t, new object[] { p1, p2 }), "MethodAccessor.Invoke(object, object[]) (instance)")
-                .AddCase(() => (int)accessorStatic.Invoke(null, new object[] { p1, p2 }), "MethodAccessor.Invoke(object, object[]) (static)")
+                //.AddCase(() => (int)accessorStatic.Invoke(null, new object[] { p1, p2 }), "MethodAccessor.Invoke(object, object[]) (static)")
 
                 .AddCase(() => (int)accessorInstance.Invoke(t, p1, p2), "MethodAccessor.Invoke (specialized, instance)")
-                .AddCase(() => (int)accessorStatic.Invoke(null, p1, p2), "MethodAccessor.Invoke (specialized, static)")
+                //.AddCase(() => (int)accessorStatic.Invoke(null, p1, p2), "MethodAccessor.Invoke (specialized, static)")
 
                 .AddCase(() => accessorInstance.InvokeInstanceFunction<TestClass, int, int, int>(t, p1, p2), "MethodAccessor.InvokeInstanceFunction<,,,>")
-                .AddCase(() => accessorStatic.InvokeStaticFunction<int, int, int>(p1, p2), "MethodAccessor.InvokeStaticFunction<,,>")
+                //.AddCase(() => accessorStatic.InvokeStaticFunction<int, int, int>(p1, p2), "MethodAccessor.InvokeStaticFunction<,,>")
 
-                .AddCase(() => (int)MethodAccessor.GetAccessor(miInstance).Invoke(t, p1, p2), "MethodAccessor.GetAccessor(MethodInfo).Invoke (instance)")
-                .AddCase(() => (int)MethodAccessor.GetAccessor(miStatic).Invoke(null, p1, p2), "MethodAccessor.GetAccessor(MethodInfo).Invoke (static)")
+                //.AddCase(() => (int)MethodAccessor.GetAccessor(miInstance).Invoke(t, p1, p2), "MethodAccessor.GetAccessor(MethodInfo).Invoke (instance)")
+                //.AddCase(() => (int)MethodAccessor.GetAccessor(miStatic).Invoke(null, p1, p2), "MethodAccessor.GetAccessor(MethodInfo).Invoke (static)")
 
 #if NET8_0_OR_GREATER
                 .AddCase(() => (int)invokerInstance.Invoke(t, p1, p2), "MethodInvoker.Invoke (instance)")
-                .AddCase(() => (int)invokerStatic.Invoke(null, p1, p2), "MethodInvoker.Invoke (static)")
+                //.AddCase(() => (int)invokerStatic.Invoke(null, p1, p2), "MethodInvoker.Invoke (static)")
 
-                .AddCase(() => (int)MethodInvoker.Create(miInstance).Invoke(t, p1, p2), "MethodInvoker.Create(MethodInfo).Invoke (instance)")
-                .AddCase(() => (int)MethodInvoker.Create(miStatic).Invoke(null, p1, p2), "MethodInvoker.Create(MethodInfo).Invoke (static)")
+                //.AddCase(() => (int)MethodInvoker.Create(miInstance).Invoke(t, p1, p2), "MethodInvoker.Create(MethodInfo).Invoke (instance)")
+                //.AddCase(() => (int)MethodInvoker.Create(miStatic).Invoke(null, p1, p2), "MethodInvoker.Create(MethodInfo).Invoke (static)")
 #endif
 
-                .AddCase(() => (int)Reflector.InvokeMethod(t, miInstance, p1, p2), "Reflector.InvokeMethod (instance by MethodInfo)")
-                .AddCase(() => (int)Reflector.InvokeMethod(null, miStatic, p1, p2), "Reflector.InvokeMethod (static by MethodInfo)")
+                //.AddCase(() => (int)Reflector.InvokeMethod(t, miInstance, p1, p2), "Reflector.InvokeMethod (instance by MethodInfo)")
+                //.AddCase(() => (int)Reflector.InvokeMethod(null, miStatic, p1, p2), "Reflector.InvokeMethod (static by MethodInfo)")
 
-                .AddCase(() => (int)Reflector.InvokeMethod(t, nameInstance, p1, p2), "Reflector.InvokeMethod (instance by name)")
-                .AddCase(() => (int)Reflector.InvokeMethod(typeof(TestClass), nameStatic, p1, p2), "Reflector.InvokeMethod (static by name)")
+                //.AddCase(() => (int)Reflector.InvokeMethod(t, nameInstance, p1, p2), "Reflector.InvokeMethod (instance by name)")
+                //.AddCase(() => (int)Reflector.InvokeMethod(typeof(TestClass), nameStatic, p1, p2), "Reflector.InvokeMethod (static by name)")
 
-                .AddCase(() => (int)Accessors.InvokeMethod(t, nameInstance, p1, p2), "Accessors.InvokeMethod (instance by name)")
-                .AddCase(() => (int)Accessors.InvokeMethod(typeof(TestClass), nameStatic, p1, p2), "Accessors.InvokeMethod (static by name)")
+                //.AddCase(() => (int)Accessors.InvokeMethod(t, nameInstance, p1, p2), "Accessors.InvokeMethod (instance by name)")
+                //.AddCase(() => (int)Accessors.InvokeMethod(typeof(TestClass), nameStatic, p1, p2), "Accessors.InvokeMethod (static by name)")
 
                 .DoTest()
                 .DumpResults(Console.Out);

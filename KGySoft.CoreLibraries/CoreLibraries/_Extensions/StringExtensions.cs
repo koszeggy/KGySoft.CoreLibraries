@@ -370,6 +370,7 @@ namespace KGySoft.CoreLibraries
         /// It can be <see langword="null"/> even if <paramref name="s"/> is <see langword="null"/> and <typeparamref name="T"/> is a reference or nullable type.</param>
         /// <returns><see langword="true"/>, if <paramref name="s"/> could be parsed as <typeparamref name="T"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><typeparamref name="T"/> is not nullable and <paramref name="s"/> is <see langword="null"/>.</exception>
+        [RequiresUnreferencedCode(parseRequiresUnreferencedCode)]
         public static bool TryParse<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]T>(
             this string? s, CultureInfo? culture, out T? value) => Parser.TryParse(s, culture, out value, out var _);
 
@@ -418,6 +419,7 @@ namespace KGySoft.CoreLibraries
         /// It can be <see langword="null"/> even if <paramref name="s"/> is <see langword="null"/> and <paramref name="type"/> is a reference or nullable type.</param>
         /// <returns><see langword="true"/>, if <paramref name="s"/> could be parsed as <paramref name="type"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> is null, or <paramref name="type"/> is not nullable and <paramref name="s"/> is <see langword="null"/>.</exception>
+        [RequiresUnreferencedCode(parseRequiresUnreferencedCode)]
         public static bool TryParse(this string? s, [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]Type type,
             out object? value) => Parser.TryParse(s, type, null, true,  out value, out var _);
 

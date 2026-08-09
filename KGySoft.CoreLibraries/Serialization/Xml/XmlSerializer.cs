@@ -315,7 +315,7 @@ namespace KGySoft.Serialization.Xml
 
         internal const DynamicallyAccessedMemberTypes NeededMembers = DynamicallyAccessedMembers.AllConstructors // non-necessarily public parameterless constructors
             | DynamicallyAccessedMembers.AllProperties // public: serialized; non-public: IsTypeTrusted returns false is a type has non-public properties
-            | DynamicallyAccessedMembers.AllFields // public: serialized; non-public: IsTypeTrusted needs to check whether there are non-backing non-public fields
+            | DynamicallyAccessedMembers.AllFields // public: serialized; non-public: CopyFields, IsTypeTrusted needs to check whether there are non-backing non-public fields
             | DynamicallyAccessedMembers.AllEvents // IsTrustedType returns false if a type has events
             | DynamicallyAccessedMembers.AllMethods // ShouldSerialize... methods
             | DynamicallyAccessedMemberTypes.Interfaces; // e.g. IXmlSerializable

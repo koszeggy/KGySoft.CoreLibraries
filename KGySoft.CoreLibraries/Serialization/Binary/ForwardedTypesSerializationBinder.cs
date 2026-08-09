@@ -17,6 +17,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -319,6 +320,7 @@ namespace KGySoft.Serialization.Binary
         /// <param name="assemblyName">Specifies the <see cref="Assembly"/> name of the serialized object.</param>
         /// <param name="typeName">Specifies the <see cref="Type"/> name of the serialized object.</param>
         /// <exception cref="SerializationException">The type cannot be resolved or the assembly cannot be loaded.</exception>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Throws an exception if a type cannot be resolved.")]
         public override Type BindToType(string assemblyName, string typeName)
         {
             #region Local Methods

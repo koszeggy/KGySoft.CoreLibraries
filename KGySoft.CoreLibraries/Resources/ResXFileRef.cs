@@ -123,6 +123,7 @@ namespace KGySoft.Resources
                 return result;
             }
 
+            [RequiresUnreferencedCode(TypeResolver.RequiresUnreferencedCode)]
             internal static object ConvertFrom(string stringValue, Type? objectType, string? basePath)
             {
                 if (stringValue == null!)
@@ -178,6 +179,9 @@ namespace KGySoft.Resources
 
             public override object? ConvertTo(ITypeDescriptorContext? context, CultureInfo? culture, object? value, Type destinationType) => destinationType == Reflector.StringType ? value?.ToString() : null;
 
+            [UnconditionalSuppressMessage("TrimAnalysis", "IL2046:RequiresUnreferencedCodeMismatch",
+                Justification = "No matter what how the base is annotated, this needs [RequiresUnreferencedCode]. But the method is available via a public annotated route, originating from ResXDataNode.GetValue.")]
+            [RequiresUnreferencedCode(TypeResolver.RequiresUnreferencedCode)]
             public override object? ConvertFrom(ITypeDescriptorContext? context, CultureInfo? culture, object? value) => value is string stringValue ? ConvertFrom(stringValue, null, null) : null;
 
             #endregion
@@ -357,7 +361,8 @@ namespace KGySoft.Resources
             return result;
         }
 
-#if !NETCOREAPP2_0
+#if !NETCOREAPP || NETCOREAPP3_0_OR_GREATER
+        [RequiresUnreferencedCode("Accessors/GetPropertyValue")]
         internal static ResXFileRef InitFromWinForms(object other) => new ResXFileRef(
             Accessors.ResXFileRef_GetFileName(other)!,
             Accessors.ResXFileRef_GetTypeName(other)!,
@@ -384,6 +389,7 @@ namespace KGySoft.Resources
 
         #region Internal Methods
 
+        [RequiresUnreferencedCode(TypeResolver.RequiresUnreferencedCode)]
         internal object GetValue(Type objectType, string? basePath) => Converter.ConvertFrom(ToString(), objectType, basePath);
 
         #endregion

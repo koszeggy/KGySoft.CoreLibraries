@@ -529,6 +529,8 @@ namespace KGySoft
         /// resource files are generated for the currently set <see cref="DisplayLanguage"/>.</para>
         /// <note>This method has no effect if <see cref="DynamicResourceManagersSource"/> is <see cref="ResourceManagerSources.CompiledOnly"/>.</note>
         /// </remarks>
+        [RequiresDynamicCode(ResXCommon.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.RequiresUnreferencedCodeMessage)]
         public static void SavePendingResources(bool compatibleFormat)
             => DynamicResourceManagersCommonSignal?.Invoke(null, new EventArgs<LanguageSettingsSignal>(compatibleFormat ? LanguageSettingsSignal.SavePendingResourcesCompatible : LanguageSettingsSignal.SavePendingResourcesNonCompatible));
 
@@ -546,6 +548,8 @@ namespace KGySoft
         /// resource files are generated for the currently set <see cref="DisplayLanguage"/>.</para>
         /// <note>This method has no effect if <see cref="DynamicResourceManagersSource"/> is <see cref="ResourceManagerSources.CompiledOnly"/>.</note>
         /// </remarks>
+        [RequiresDynamicCode(ResXCommon.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.RequiresUnreferencedCodeMessage)]
         public static void SavePendingResources()
             => DynamicResourceManagersCommonSignal?.Invoke(null, new EventArgs<LanguageSettingsSignal>(LanguageSettingsSignal.SavePendingResources));
 

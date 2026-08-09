@@ -23,6 +23,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Security;
@@ -374,6 +375,12 @@ namespace KGySoft.Resources
                 }
             }
 
+            [UnconditionalSuppressMessage("TrimAnalysis", "IL2062:MethodDynamicallyAccessedMemberTypesCannotBeDetermined",
+                Justification = "Not a problem, returning null, when binding fails.")]
+            [UnconditionalSuppressMessage("TrimAnalysis", "IL2067:TargetArgumentDynamicallyAccessedMemberTypesAnnotationMismatch",
+                Justification = "Not a problem, returning null, when binding fails.")]
+            [UnconditionalSuppressMessage("TrimAnalysis", "IL2072:ParameterDynamicallyAccessedMemberTypesCannotBeDetermined",
+                Justification = "Not a problem, returning null, when binding fails.")]
             public override Type? BindToType(string assemblyName, string typeName)
             {
                 Debug.Assert(typeResolver != null, "typeResolver must be assigned on deserialization");
@@ -568,7 +575,7 @@ namespace KGySoft.Resources
         internal object? ValueInternal => cachedValue;
 
         /// <summary>
-        /// Gets the assembly qualified name of the node, or null, if type cannot be determined until deserialized.
+        /// Gets the assembly qualified name of the node, or null, if type cannot be determined until it's deserialized.
         /// </summary>
         internal string? AssemblyQualifiedName
         {
@@ -644,6 +651,7 @@ namespace KGySoft.Resources
         /// <note>The compatibility with <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxfileref" target="_blank">System.Resources.ResXFileRef</a> is provided without any reference to <c>System.Windows.Forms.dll</c>, where that type is located.</note>
         /// </para>
         /// </remarks>
+        [RequiresUnreferencedCode(ResXCommon.NewNodeFromObjectRequiresUnreferencedCode)]
         public ResXDataNode(string name, object? value)
         {
             if (name == null!)
@@ -675,7 +683,7 @@ namespace KGySoft.Resources
                 return;
             }
 
-#if !NETCOREAPP2_0
+#if !NETCOREAPP || NETCOREAPP3_0_OR_GREATER
             string? typeName = value.GetType().AssemblyQualifiedName;
             if (typeName != null)
             {
@@ -723,6 +731,24 @@ namespace KGySoft.Resources
             fileRefBasePath = basePath;
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ResXDataNode"/> class.
+        /// </summary>
+        /// <param name="name">The name of the resource.</param>
+        /// <param name="value">The resource to store.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="name"/> is a string of zero length.</exception>
+        public ResXDataNode(string name, string? value)
+        {
+            if (name == null!)
+                Throw.ArgumentNullException(Argument.name);
+            if (name.Length == 0)
+                Throw.ArgumentException(Argument.name, Res.ArgumentEmpty);
+
+            this.name = name;
+            cachedValue = value is null ? ResXNullRef.Value : value;
+        }
+
         #endregion
 
         #region Internal Constructors
@@ -757,6 +783,8 @@ namespace KGySoft.Resources
             InitFileRef(info.GetString(nameof(fileRefBasePath)));
         }
 
+        [RequiresDynamicCode("GetDataNodeInfo, when binary serialization is required")]
+        [RequiresUnreferencedCode("GetDataNodeInfo, when both nodeInfo and fileRef are null in other")]
         private ResXDataNode(ResXDataNode other)
         {
             name = other.name;
@@ -764,7 +792,7 @@ namespace KGySoft.Resources
             fileRefBasePath = other.fileRefBasePath;
             fileRef = other.FileRef;
 
-            // nodeInfo is regenerated only if also fileRef is null
+            // nodeInfo is regenerated only if fileRef is null as well
             nodeInfo = other.nodeInfo?.Clone() ?? (fileRef == null ? other.GetDataNodeInfo(null, null) : null);
         }
 
@@ -837,6 +865,7 @@ namespace KGySoft.Resources
             return Convert.FromBase64String(sb.ToString());
         }
 
+        [RequiresUnreferencedCode(TypeResolver.RequiresUnreferencedCode)]
         private static Type? ResolveType(string assemblyQualifiedName, ITypeResolutionService? typeResolver, bool safeMode, Type? expectedType)
         {
             #region Local Methods
@@ -988,6 +1017,8 @@ namespace KGySoft.Resources
         /// <para>If the resource is a file reference, <see cref="GetValue">GetValue</see> tries to open the file and deserialize its content.</para>
         /// <para>If the resource is not a file reference, <see cref="GetValue">GetValue</see> tries to deserialize the value from the raw .resx string content.</para>
         /// </remarks>
+        [RequiresDynamicCode(ResXCommon.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.RequiresUnreferencedCodeMessage)]
         public object? GetValue(ITypeResolutionService? typeResolver = null, string? basePath = null, bool cleanupRawData = false)
             => DoGetValue(typeResolver, basePath, cleanupRawData, false);
 
@@ -1011,6 +1042,8 @@ namespace KGySoft.Resources
         /// <see cref="FileRef"/> is not <see langword="null"/>.
         /// </exception>
         [Obsolete("In safe mode neither typeResolver nor file references are allowed")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "In safe mode without an expected type no unreferenced code is required.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "In safe mode without an expected type no dynamic code is required.")]
         public object? GetValueSafe(ITypeResolutionService? typeResolver, string? basePath = null, bool cleanupRawData = false)
         {
             if (typeResolver != null)
@@ -1039,6 +1072,8 @@ namespace KGySoft.Resources
         /// <para>If the resource is a file reference, and it has not been deserialized yet, then this method throws a <see cref="NotSupportedException"/>.
         /// You can only use the <see cref="GetValue">GetValue</see> method to deserialize a file reference.</para>
         /// </remarks>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "In safe mode without an expected type no unreferenced code is required.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "In safe mode without an expected type no dynamic code is required.")]
         public object? GetValueSafe(bool cleanupRawData = false)
             => DoGetValue(null, null, cleanupRawData, true);
 
@@ -1064,7 +1099,9 @@ namespace KGySoft.Resources
         /// <para>If the resource is a file reference, and it has not been deserialized yet, then this method throws a <see cref="NotSupportedException"/>.
         /// You can only use the <see cref="GetValue">GetValue</see> method to deserialize a file reference.</para>
         /// </remarks>
-        public object? GetValueSafe(Type? expectedType, bool cleanupRawData = false)
+        [RequiresDynamicCode(ResXCommon.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.RequiresUnreferencedCodeMessage)]
+        public object? GetValueSafe([DynamicallyAccessedMembers(BinarySerializer.NeededMembers)]Type? expectedType, bool cleanupRawData = false)
             => DoGetValue(null, null, cleanupRawData, true, expectedType);
 
         /// <summary>
@@ -1090,7 +1127,9 @@ namespace KGySoft.Resources
         /// <para>If the resource is a file reference, and it has not been deserialized yet, then this method throws a <see cref="NotSupportedException"/>.
         /// You can only use the <see cref="GetValue">GetValue</see> method to deserialize a file reference.</para>
         /// </remarks>
-        public T? GetValueSafe<T>(bool cleanupRawData = false)
+        [RequiresDynamicCode(ResXCommon.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.RequiresUnreferencedCodeMessage)]
+        public T? GetValueSafe<[DynamicallyAccessedMembers(BinarySerializer.NeededMembers)]T>(bool cleanupRawData = false)
         {
             var result = DoGetValue(null, null, cleanupRawData, true, typeof(T));
             if (result is null)
@@ -1128,6 +1167,12 @@ namespace KGySoft.Resources
         /// A new <see cref="ResXDataNode"/> instance that is a copy of this instance.
         /// </returns>
         /// <exception cref="NotImplementedException"></exception>
+        [RequiresDynamicCode(ResXCommon.RequiresDynamicCodeMessage + " It matters only when the raw XML content is not available (newly added resource or cleanup after getting the value), and (re)generating it needs binary serialization.")]
+        [RequiresUnreferencedCode(ResXCommon.RequiresUnreferencedCodeMessage + " It matters only when the raw XML content is not available (newly added resource or cleanup after getting the value).")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2046:RequiresUnreferencedCodeMismatch", Justification = "Regardless of the interface, it needs [RequiresUnreferencedCode]. " +
+            "However, it matters only when cloning an instance without XML info and (re)generating it needs a type resolver or serialization.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3051:RequiresDynamicCodeMismatch", Justification = "Regardless of the interface, it needs [RequiresDynamicCode]. " +
+            "However, it matters only when cloning an instance without XML info and (re)generating it needs binary serialization in non-compatible format.")]
         public object Clone() => new ResXDataNode(this);
 
         #endregion
@@ -1137,6 +1182,8 @@ namespace KGySoft.Resources
         /// <summary>
         /// Called from <see cref="ResXResourceSet"/> when <see cref="ResXResourceSet.SafeMode"/> is <see langword="true"/>.
         /// </summary>
+        [RequiresDynamicCode("Relevant when getting as a non-string resource with cloning, the XML data is not present, and generating it needs binary serialization.")]
+        [RequiresUnreferencedCode("Relevant when getting as a non-string resource with cloning, the XML data is not present, and generating it needs a type converter or binary serialization.")]
         internal object? GetSafeValueInternal(bool isString, bool cloneValue)
         {
             if (!isString)
@@ -1153,7 +1200,11 @@ namespace KGySoft.Resources
             if (fileRef != null)
                 return fileRef.ToString();
 
-            // here there is no available string meta so generating nodeInfo
+            // Here there is no available string data. In AOT mode not generating node info for unsupported types to prevent requiring [DRC]/[RUC] for strings
+            if (!RuntimeFeature.IsDynamicCodeSupported && !CanConvertNatively(false))
+                return result?.ToString();
+
+            // generating nodeInfo
             Debug.Assert(result != null);
             nodeInfo = GetDataNodeInfo(null, null);
             return nodeInfo.ValueData;
@@ -1162,6 +1213,8 @@ namespace KGySoft.Resources
         /// <summary>
         /// Called from <see cref="ResXResourceSet"/> when <see cref="ResXResourceSet.SafeMode"/> is <see langword="false"/>.
         /// </summary>
+        [RequiresDynamicCode("Relevant when getting a non-string resource, the data is not present, and obtaining it needs binary serialization.")]
+        [RequiresUnreferencedCode("Relevant when getting a non-string resource, the data is not present, and obtaining it needs a type converter or binary serialization.")]
         internal object? GetUnsafeValueInternal(ITypeResolutionService? typeResolver, bool isString, bool cloneValue, bool cleanup, string? basePath)
         {
             if (cachedValue is string or ValueType or Type)
@@ -1190,9 +1243,20 @@ namespace KGySoft.Resources
             if (aqn != null && !IsNullRef(aqn) && !aqn.StartsWith(stringName, StringComparison.Ordinal) && (fileRef == null || !fileRef.TypeName.StartsWith(stringName, StringComparison.Ordinal)))
                 Throw.InvalidOperationException(Res.ResourcesNonStringResourceWithType(Name, fileRef == null ? aqn : fileRef.TypeName));
 
-            object? result = GetValue(typeResolver, basePath, !cloneValue && cleanup);
-            if (result == null || result is string)
-                return result;
+            Debug.Assert(fileRef != null || nodeInfo != null);
+            object? result;
+
+            try
+            {
+                result = GetValue(typeResolver, basePath, !cloneValue && cleanup);
+                if (result is null or string)
+                    return result;
+            }
+            catch (Exception e) when (e is not (NotSupportedException or SerializationException or TypeLoadException or FileNotFoundException) && !e.IsCriticalOr(RuntimeFeature.IsDynamicCodeSupported))
+            {
+                // In AOT mode if unsafe deserialization fails for a non-string resource while attempting to get as a string, ensuring the same exception as in JITed mode
+                return Throw.InvalidOperationException<object>(Res.ResourcesNonStringResource(Name));
+            }
 
             Throw.InvalidOperationException(Res.ResourcesNonStringResourceWithType(Name, result.GetType().GetName(TypeNameKind.LongName)));
             return null;
@@ -1202,6 +1266,8 @@ namespace KGySoft.Resources
         /// Gets or (re)generates the nodeInfo. Parameters are not null only if called from a <see cref="ResXResourceWriter"/>.
         /// <paramref name="safeMode"/> is relevant only when <paramref name="compatibleFormat"/> is changed to true and there is no cached value yet.
         /// </summary>
+        [RequiresDynamicCode("NodeInfoToObject, InitNodeInfo")]
+        [RequiresUnreferencedCode("NodeInfoToObject, InitNodeInfo")]
         internal DataNodeInfo GetDataNodeInfo(Func<Type, string?>? typeNameConverter, bool? compatibleFormat, bool safeMode = true)
         {
             // Regenerating existing node info only if switching to compatible format because the other way is supported,
@@ -1266,7 +1332,8 @@ namespace KGySoft.Resources
 
         #region Private Methods
 
-#if !NETCOREAPP2_0
+#if !NETCOREAPP || NETCOREAPP3_0_OR_GREATER
+        [RequiresUnreferencedCode("Accessing WinForms ResXDataNode/ResXFileRef/DataNodeInfo properties by reflection")]
         private void InitFromWinForms(object other)
         {
             cachedValue = Accessors.ResXDataNode_GetValue(other);
@@ -1308,6 +1375,8 @@ namespace KGySoft.Resources
         /// <summary>
         /// (Re)generates the nodeInfo from a value.
         /// </summary>
+        [RequiresDynamicCode("Binary serialization in non-compatible format")]
+        [RequiresUnreferencedCode("TypeDescriptor.GetConverter, serialization")]
         private void InitNodeInfo(Func<Type, string?>? typeNameConverter, bool compatibleFormat)
         {
             #region Local Methods
@@ -1315,7 +1384,7 @@ namespace KGySoft.Resources
 #if NETSTANDARD || (NETCOREAPP3_0_OR_GREATER && !NET8_0_OR_GREATER)
             static void SurrogateSelectorGettingFieldMemoryStream(object? sender, GettingFieldEventArgs e)
             {
-                // Special handling for non-derived MemoryStream in compatible format by BinaryFormatter, which used to be serializable so we must provide compatibility for it
+                // Special handling for non-derived MemoryStream in compatible format by BinaryFormatter, which used to be serializable so we must provide compatibility for it,
                 // because the designer may produce embedded MemoryStreams in .resx files: https://github.com/dotnet/runtime/issues/13349#issuecomment-528112760
                 // So we just skip non-primitive or non-array fields (as of now there is only a Task<int>/CachedCompletedInt32Task field to skip).
                 // Note: In .NET Core 2.x MemoryStream was already non-serializable but the Task field still had the [NonSerialized] property
@@ -1328,7 +1397,7 @@ namespace KGySoft.Resources
 
             #endregion
 
-            Debug.Assert(cachedValue != null, "value is null in FillDataNodeInfoFromObject");
+            Debug.Assert(cachedValue != null, "value is null in InitNodeInfo");
 
             // 1.) natively supported type
             if (CanConvertNatively(compatibleFormat))
@@ -1472,6 +1541,8 @@ namespace KGySoft.Resources
             nodeInfo.CompatibleFormat = !type.In(nonCompatibleModeNativeTypes);
         }
 
+        [RequiresDynamicCode("NodeInfoToObject")]
+        [RequiresUnreferencedCode("fileRef.GetValue, NodeInfoToObject")]
         private object? DoGetValue(ITypeResolutionService? typeResolver, string? basePath, bool cleanupRawData, bool safeMode, Type? expectedType = null)
         {
             object? result;
@@ -1528,6 +1599,8 @@ namespace KGySoft.Resources
             return type.CanBeParsedNatively() && (!compatibleFormat || !type.In(nonCompatibleModeNativeTypes));
         }
 
+        [RequiresDynamicCode("NodeInfoToObjectByMime")]
+        [RequiresUnreferencedCode("ResolveType, TypeConverter.GetConverter, NodeInfoToObjectByMime, StringExtensions.Parse")]
         private object? NodeInfoToObject(DataNodeInfo dataNodeInfo, ITypeResolutionService? typeResolver, bool safeMode, Type? expectedType)
         {
             // Handling that <value> can be missing in .resx.
@@ -1616,6 +1689,8 @@ namespace KGySoft.Resources
 
         [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity",
             Justification = "False alarm, the new analyzer includes the complexity of local methods. And moving them outside this method would be a bad idea.")]
+        [RequiresDynamicCode("Binary deserialization")]
+        [RequiresUnreferencedCode("TypeDescriptor, binary deserialization")]
         private object? NodeInfoToObjectByMime(DataNodeInfo dataNodeInfo, ITypeResolutionService? typeResolver, bool safeMode, Type? expectedType)
         {
             #region Local Methods to reduce complexity
@@ -1652,6 +1727,7 @@ namespace KGySoft.Resources
             }
 #endif
 
+            [RequiresUnreferencedCode("TypeDescriptor.GetConverter")]
             static object? DeserializeByTypeConverter(DataNodeInfo dataNodeInfo, ITypeResolutionService? typeResolver, bool safeMode, Type? expectedType, string typeName)
             {
                 Type? type = ResolveType(typeName, typeResolver, safeMode, expectedType);
@@ -1770,6 +1846,8 @@ namespace KGySoft.Resources
         /// <summary>
         /// Called from <see cref="GetUnsafeValueInternal"/> when cloning is requested.
         /// </summary>
+        [RequiresDynamicCode("NodeInfoToObject, GetValue")]
+        [RequiresUnreferencedCode("NodeInfoToObject, GetValue")]
         private object? CloneValue(ITypeResolutionService? typeResolver, string? basePath)
         {
             Debug.Assert(cachedValue is not (string or ResXNullRef or ValueType or Type), "String, ValueType, Type or null values should never be cloned.");
@@ -1813,6 +1891,10 @@ namespace KGySoft.Resources
         #region Explicitly Implemented Interface Methods
 
         [SecurityCritical]
+        [RequiresDynamicCode("GetDataNodeInfo")]
+        [RequiresUnreferencedCode("GetDataNodeInfo")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2046:RequiresUnreferencedCodeMismatch", Justification = "Regardless of the interface, it needs [RequiresUnreferencedCode].")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3051:RequiresDynamicCodeMismatch", Justification = "Regardless of the interface, it needs [RequiresDynamicCode].")]
         void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
         {
             if (info == null!)

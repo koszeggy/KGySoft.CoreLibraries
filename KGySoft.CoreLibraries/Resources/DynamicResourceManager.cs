@@ -785,6 +785,8 @@ namespace KGySoft.Resources
 #if NETFRAMEWORK || NETSTANDARD || !NETCOREAPP3_0_OR_GREATER
         [SuppressMessage("ReSharper", "AssignNullToNotNullAttribute", Justification = "False alarm, but the annotation is missing for older frameworks.")]
 #endif
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "asSafe is true in GetResource")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "asSafe is true in GetResource")]
         private static void ToDictionary(ResourceSet source, StringKeyedDictionary<object?> target)
         {
             IDictionaryEnumerator enumerator = source.GetEnumerator();
@@ -848,6 +850,7 @@ namespace KGySoft.Resources
             return null;
         }
 
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "newValue in SetObject is never a WinForms ResXDataNode or ResXFileRef here.")]
         private static void MergeResourceSet(StringKeyedDictionary<object?> source, IExpandoResourceSet target, bool rebuildSource)
         {
             string prefix = LanguageSettings.UntranslatedResourcePrefix;
@@ -901,6 +904,8 @@ namespace KGySoft.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="DynamicResourceManager"/> is already disposed.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
+        [RequiresDynamicCode(ResXCommon.UnsafeReadRequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.UnsafeReadRequiresUnreferencedCodeMessage)]
         public override object? GetObject(string name, CultureInfo? culture) => base.GetObject(name, culture);
 
         /// <summary>
@@ -924,6 +929,8 @@ namespace KGySoft.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="DynamicResourceManager"/> is already disposed.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
+        [RequiresDynamicCode(ResXCommon.UnsafeReadRequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.UnsafeReadRequiresUnreferencedCodeMessage)]
         public override object? GetObject(string name) => GetObject(name, null);
 
         // ReSharper disable once RedundantOverriddenMember - overridden for the description
@@ -1152,6 +1159,8 @@ namespace KGySoft.Resources
 #if NETFRAMEWORK || NETSTANDARD || !NETCOREAPP3_0_OR_GREATER
         [SuppressMessage("ReSharper", "AssignNullToNotNullAttribute", Justification = "False alarm, but the annotation is missing for older frameworks.")]
 #endif
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "safeMode is true in GetObjectInternal")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "safeMode is true in GetObjectInternal")]
         public void EnsureInvariantResourcesMerged(CultureInfo culture)
         {
             if (culture == null!)
@@ -1213,6 +1222,7 @@ namespace KGySoft.Resources
         /// <exception cref="ArgumentNullException"><paramref name="name" /> is <see langword="null" />.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="HybridResourceManager"/> is already disposed.</exception>
         /// <exception cref="InvalidOperationException"><see cref="Source"/> is <see cref="ResourceManagerSources.CompiledOnly"/>.</exception>
+        [RequiresUnreferencedCode(ResXCommon.NewNodeFromObjectRequiresUnreferencedCode)]
         public override void SetObject(string name, object? value, CultureInfo? culture = null)
         {
             base.SetObject(name, value, culture);
@@ -1349,10 +1359,14 @@ namespace KGySoft.Resources
         }
 
         [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "False alarm, the new analyzer includes the complexity of local methods.")]
+        [RequiresDynamicCode("base.GetObjectInternal, TryGetWhileTraverse, TryGetFromCache, matters in unsafe mode only")]
+        [RequiresUnreferencedCode("base.GetObjectInternal, TryGetWhileTraverse, TryGetFromCache, matters in unsafe mode only")]
         private protected override object? GetObjectInternal(string name, CultureInfo? culture, bool isString, bool cloneValue, bool safeMode)
         {
             #region Local Methods to reduce complexity
 
+            [RequiresDynamicCode("TryGetFromCachedResourceSet, matters in unsafe mode only")]
+            [RequiresUnreferencedCode("TryGetFromCachedResourceSet, matters in unsafe mode only")]
             bool TryGetFromCache(ref GetObjectWithAppendContext ctx)
             {
                 ctx.CheckedResource = TryGetFromCachedResourceSet(ctx.Name, ctx.Culture, ctx.IsString, ctx.CloneValue, ctx.SafeMode, out ctx.Result);
@@ -1364,6 +1378,8 @@ namespace KGySoft.Resources
                         && (Unwrap(ctx.CheckedResource) as IExpandoResourceSet)?.ContainsResource(ctx.Name, IgnoreCase) == true);
             }
 
+            [RequiresDynamicCode("GetResourceFromAny, matters in unsafe mode only")]
+            [RequiresUnreferencedCode("GetResourceFromAny, matters in unsafe mode only")]
             bool TryGetWhileTraverse(ref GetObjectWithAppendContext ctx)
             {
                 ctx.ToMerge = new Stack<IExpandoResourceSet>();
@@ -1530,6 +1546,8 @@ namespace KGySoft.Resources
                 DoAutoSave();
         }
 
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Handles AOT issues by calling OnAutoSaveError")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "Handles AOT issues by calling OnAutoSaveError")]
         private void DoAutoSave()
         {
             try
@@ -1559,6 +1577,10 @@ namespace KGySoft.Resources
             return e.Exception is IOException || e.Exception is SecurityException || e.Exception is UnauthorizedAccessException;
         }
 
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+            Justification = "This is just event subscription. But the invocation is annotated in LanguageSettings.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode",
+            Justification = "This is just event subscription. But the invocation is annotated in LanguageSettings.")]
         private void HookEvents()
         {
             if (useLanguageSettings)
@@ -1580,6 +1602,8 @@ namespace KGySoft.Resources
             }
         }
 
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "This is just event unsubscription.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "This is just event unsubscription.")]
         private void UnhookEvents()
         {
             LanguageSettings.DynamicResourceManagersSourceChanged -= LanguageSettings_DynamicResourceManagersSourceChanged;
@@ -1808,6 +1832,8 @@ namespace KGySoft.Resources
 
         #region Event handlers
 
+        [RequiresDynamicCode("SaveAllResources")]
+        [RequiresUnreferencedCode("SaveAllResources")]
         private void LanguageSettings_DynamicResourceManagersCommonSignal(object? sender, EventArgs<LanguageSettingsSignal> e)
         {
             switch (e.EventData)

@@ -16,6 +16,7 @@
 #region Usings
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Reflection;
 using System.Runtime.Serialization;
@@ -117,6 +118,8 @@ namespace KGySoft.Serialization.Binary
         #region Explicitly Implemented Interface Methods
 
         [SecurityCritical]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2072:ParameterDynamicallyAccessedMemberTypesCannotBeDetermined", Justification = "Makes little sense " +
+            "to annotate an explicit interface implementation if the interface member itself is not annotated. Public serialization entry points are annotated in this project though.")]
         void ISerializationSurrogate.GetObjectData(object obj, SerializationInfo info, StreamingContext context)
         {
             if (obj == null!)
@@ -125,9 +128,7 @@ namespace KGySoft.Serialization.Binary
                 Throw.ArgumentNullException(Argument.info);
 
             Type type = obj.GetType();
-
             int level = 0;
-
             for (Type t = type; t != Reflector.ObjectType; t = t.BaseType!)
             {
                 FieldInfo[] fields = SerializationHelper.GetSerializableFields(t);
@@ -144,6 +145,8 @@ namespace KGySoft.Serialization.Binary
         }
 
         [SecurityCritical]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2072:ParameterDynamicallyAccessedMemberTypesCannotBeDetermined", Justification = "Makes little sense " +
+            "to annotate an explicit interface implementation if the interface member itself is not annotated. Public serialization entry points are annotated in this project though.")]
         object ISerializationSurrogate.SetObjectData(object obj, SerializationInfo info, StreamingContext context, ISurrogateSelector? selector)
         {
             if (obj == null!)

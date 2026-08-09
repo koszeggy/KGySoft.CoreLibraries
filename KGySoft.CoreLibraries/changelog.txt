@@ -18,6 +18,10 @@
 + PropertyAccessor class: Supporting indexers with parameters passed by reference.
 - MethodAccessor, PropertyAccessor, CreateInstanceAccessor classes: fixed validation in some nongeneric error scenarios.
 
++ KGySoft.Resources namespace:
+==============================
++ ResXDataNode class: new constructor overload
+
 
 ~~~~~~~~~~
 - v10.5.1:

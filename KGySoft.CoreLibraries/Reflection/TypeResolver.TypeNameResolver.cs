@@ -98,6 +98,8 @@ namespace KGySoft.Reflection
             #region Public Methods
 
             [RequiresUnreferencedCode(RequiresUnreferencedCodeTypeResolver)]
+            [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode",
+                Justification = "It already has the stronger RequiresUnreferencedCode, and Type.GetType has only RequiresUnreferencedCode as well")]
             public Type? Resolve(Func<TypeName, Type?> typeResolver)
             {
                 // 1. Resolving root type

@@ -115,6 +115,8 @@ namespace KGySoft.Serialization
 
         internal static FieldInfo[] GetSerializableFields([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllFields)]Type t) => serializableFieldsCache[t];
 
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2072:ParameterDynamicallyAccessedMemberTypesCannotBeDetermined", Justification = "False alarm, t can only be the base types of type.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2075:DynamicallyAccessedMembersReturnValueAnnotationMismatch", Justification = "False alarm, t can only be the base types of type.")]
         internal static StringKeyedDictionary<FieldInfo> GetFieldsWithUniqueNames([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllFields)]Type type, bool considerNonSerialized)
         {
             var result = new StringKeyedDictionary<(FieldInfo Field, int Count)>();
@@ -155,7 +157,9 @@ namespace KGySoft.Serialization
         /// <summary>
         /// Restores target from source. Can be used for read-only properties when source object is already fully serialized.
         /// </summary>
-        internal static void CopyFields(object source, object target)
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2075:DynamicallyAccessedMembersReturnValueAnnotationMismatch",
+            Justification = "When T is object, the callers are annotated, or expected types should be specified. Otherwise, t can only be the base types of T.")]
+        internal static void CopyFields<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllFields)]T>(T source, T target)
         {
             Debug.Assert(target != null! && source != null! && target.GetType() == source.GetType(), $"Same types are expected in {nameof(CopyFields)}.");
             Debug.Assert(!target!.GetType().IsArray, $"Arrays are not expected in {nameof(CopyFields)}.");

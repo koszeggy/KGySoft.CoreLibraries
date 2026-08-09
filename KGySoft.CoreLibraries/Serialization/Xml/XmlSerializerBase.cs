@@ -343,6 +343,8 @@ namespace KGySoft.Serialization.Xml
 
         #region Private Methods
 
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+            Justification = "The declaring type of the property for IsExplicitInterfaceImplementation is actually the type parameter, which is annotated.")]
         private static bool IsTypeTrusted([DynamicallyAccessedMembers(XmlSerializer.NeededMembers)]Type type) =>
             // has default constructor
             type.CanBeCreatedWithoutParameters()

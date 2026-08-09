@@ -1105,8 +1105,14 @@ namespace KGySoft
         /// You may try to specify the expected type or use the unsafe GetValue if the resource is from a trusted source.</summary>
         internal static string ResourcesTypeLoadExceptionSafe(string typeName) => Get("Resources_TypeLoadExceptionSafeFormat", typeName);
 
+        /// <summary>Type of resource "{0}" is not string - enable SafeMode or use GetObject instead.</summary>
+        internal static string ResourcesNonStringResource(string name) => Get("Resources_NonStringResourceFormat", name);
+
         /// <summary>Type of resource "{0}" is not string but "{1}" - enable SafeMode or use GetObject instead.</summary>
         internal static string ResourcesNonStringResourceWithType(string name, string typeName) => Get("Resources_NonStringResourceWithTypeFormat", name, typeName);
+
+        /// <summary>Type of resource "{0}" is not MemoryStream - enable SafeMode or use GetObject instead.</summary>
+        internal static string ResourcesNonStreamResource(string name) => Get("Resources_NonStreamResourceFormat", name);
 
         /// <summary>Type of resource "{0}" is not MemoryStream but "{1}" - enable SafeMode or use GetObject instead.</summary>
         internal static string ResourcesNonStreamResourceWithType(string name, Type type) => Get("Resources_NonStreamResourceWithTypeFormat", name, type.GetName(TypeNameKind.LongName));

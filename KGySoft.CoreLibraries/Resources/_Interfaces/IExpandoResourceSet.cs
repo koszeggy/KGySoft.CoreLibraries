@@ -17,6 +17,7 @@
 
 using System;
 using System.Collections;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
 using System.Resources;
@@ -93,6 +94,8 @@ namespace KGySoft.Resources
         /// <seealso cref="GetString"/>
         /// <seealso cref="GetMetadataEnumerator"/>
         /// <seealso cref="GetAliasEnumerator"/>
+        [RequiresDynamicCode(ResXCommon.UnsafeEnumerationRequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.UnsafeEnumerationRequiresUnreferencedCodeMessage)]
         IDictionaryEnumerator GetEnumerator();
 
         /// <summary>
@@ -113,6 +116,8 @@ namespace KGySoft.Resources
         /// <seealso cref="GetMetaString"/>
         /// <seealso cref="GetEnumerator"/>
         /// <seealso cref="GetAliasEnumerator"/>
+        [RequiresDynamicCode(ResXCommon.UnsafeEnumerationRequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.UnsafeEnumerationRequiresUnreferencedCodeMessage)]
         IDictionaryEnumerator GetMetadataEnumerator();
 
         /// <summary>
@@ -145,6 +150,8 @@ namespace KGySoft.Resources
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceSet"/> is already disposed.</exception>
+        [RequiresDynamicCode(ResXCommon.UnsafeReadRequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.UnsafeReadRequiresUnreferencedCodeMessage)]
         object? GetObject(string name, bool ignoreCase = false);
 
         /// <summary>
@@ -175,6 +182,8 @@ namespace KGySoft.Resources
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
         /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceSet"/> is already disposed.</exception>
+        [RequiresDynamicCode(ResXCommon.UnsafeReadRequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.UnsafeReadRequiresUnreferencedCodeMessage)]
         object? GetMetaObject(string name, bool ignoreCase = false);
 
         /// <summary>
@@ -242,6 +251,7 @@ namespace KGySoft.Resources
         /// and <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxfileref" target="_blank">System.Resources.ResXFileRef</a> as well. The compatibility with the system versions
         /// is provided without any reference to <c>System.Windows.Forms.dll</c>, where those types are located.</note>
         /// </remarks>
+        [RequiresUnreferencedCode(ResXCommon.NewNodeFromObjectRequiresUnreferencedCode)]
         void SetObject(string name, object? value);
 
         /// <summary>
@@ -261,6 +271,7 @@ namespace KGySoft.Resources
         /// and <a href="https://learn.microsoft.com/en-us/dotnet/api/system.resources.resxfileref" target="_blank">System.Resources.ResXFileRef</a> as well. The compatibility with the system versions
         /// is provided without any reference to <c>System.Windows.Forms.dll</c>, where those types are located.</note>
         /// </remarks>
+        [RequiresUnreferencedCode(ResXCommon.NewNodeFromObjectRequiresUnreferencedCode)]
         void SetMetaObject(string name, object? value);
 
         /// <summary>
@@ -324,6 +335,8 @@ namespace KGySoft.Resources
         /// <br/>Default value: <c><see langword="null"/>.</c></param>
         /// <seealso cref="ResXResourceWriter"/>
         /// <seealso cref="ResXResourceWriter.CompatibleFormat"/>
+        [RequiresDynamicCode(ResXCommon.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.RequiresUnreferencedCodeMessage)]
         void Save(string fileName, bool compatibleFormat = false, bool forceEmbeddedResources = false, string? newBasePath = null);
 
         /// <summary>
@@ -343,6 +356,8 @@ namespace KGySoft.Resources
         /// <br/>Default value: <c><see langword="null"/>.</c></param>
         /// <seealso cref="ResXResourceWriter"/>
         /// <seealso cref="ResXResourceWriter.CompatibleFormat"/>
+        [RequiresDynamicCode(ResXCommon.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.RequiresUnreferencedCodeMessage)]
         void Save(Stream stream, bool compatibleFormat = false, bool forceEmbeddedResources = false, string? newBasePath = null);
 
         /// <summary>
@@ -362,6 +377,8 @@ namespace KGySoft.Resources
         /// <br/>Default value: <c><see langword="null"/>.</c></param>
         /// <seealso cref="ResXResourceWriter"/>
         /// <seealso cref="ResXResourceWriter.CompatibleFormat"/>
+        [RequiresDynamicCode(ResXCommon.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.RequiresUnreferencedCodeMessage)]
         void Save(TextWriter textWriter, bool compatibleFormat = false, bool forceEmbeddedResources = false, string? newBasePath = null);
 
         #endregion

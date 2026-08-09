@@ -13,6 +13,8 @@
 
 #endregion
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace KGySoft.Resources
 {
     /// <summary>
@@ -22,8 +24,12 @@ namespace KGySoft.Resources
     {
         #region Methods
 
+        [RequiresDynamicCode(ResXCommon.UnsafeReadRequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.UnsafeReadRequiresUnreferencedCodeMessage)]
         object? GetResource(string name, bool ignoreCase, bool isString, bool asSafe, bool cloneValue);
 
+        [RequiresDynamicCode(ResXCommon.UnsafeReadRequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.UnsafeReadRequiresUnreferencedCodeMessage)]
         object? GetMeta(string name, bool ignoreCase, bool isString, bool asSafe, bool cloneValue);
 
         #endregion

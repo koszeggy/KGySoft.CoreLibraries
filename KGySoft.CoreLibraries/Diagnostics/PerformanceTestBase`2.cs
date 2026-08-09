@@ -160,6 +160,9 @@ namespace KGySoft.Diagnostics
 
             [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity",
                 Justification = "False alarm, the new analyzer includes the complexity of local methods.")]
+            [UnconditionalSuppressMessage("TrimAnalysis", "IL2090:DynamicallyAccessedMembersGenericParameterAnnotationMismatch", Justification = "We could annotate " +
+                "the TDelegate with PublicMethods, but that would trigger a lot of IL2026 and IL2111 for every public methods in the base Delegate class, and actually we expect the Invoke " +
+                "to be exists in typeof(TDelegate).GetMethod, because it's used in PerformanceTest<TResult>. But we simply just ignore the result in the dump if it's removed.")]
             public void DumpResults(TextWriter writer, bool dumpConfig, bool dumpReturnValue, bool forceShowSize)
             {
                 #region Local Methods
@@ -263,8 +266,7 @@ namespace KGySoft.Diagnostics
                     }
 
                     // Result
-                    // ReSharper disable once PossibleNullReferenceException - never null, ensured by static ctor
-                    if (typeof(TDelegate).GetMethod(nameof(Action.Invoke))!.ReturnType != Reflector.VoidType
+                    if (typeof(TDelegate).GetMethod(nameof(Action.Invoke))?.ReturnType is Type returnType && returnType != Reflector.VoidType
                         && (forceShowSize || dumpReturnValue || test.SortBySize))
                     {
                         int caseLength = test.GetLength(result.Result);

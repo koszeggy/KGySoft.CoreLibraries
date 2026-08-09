@@ -1115,10 +1115,14 @@ namespace KGySoft.Serialization.Binary
 
         [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
             Justification = "GetGenericType in CreateArrayBackedCollectionInstanceFromArray, CreateInstanceCallback, GetBackingArray, CreateFinalCollectionCallback. Cannot apply RequiresUnreferencedCode to a field, but the usages are annotated.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2067:TargetArgumentDynamicallyAccessedMemberTypesAnnotationMismatch",
+            Justification = "We could annotate the lambda parameters accordingly, but that would then cause IL2111. And cannot apply RequiresUnreferencedCode to a field, but the public entry points are annotated anyway.")]
         [UnconditionalSuppressMessage("TrimAnalysis", "IL2070:TypeDynamicallyAccessedMemberTypesAnnotationMismatch",
             Justification = "We could annotate the lambda parameters accordingly, but that would then cause IL2111. And cannot apply RequiresUnreferencedCode to a field, but the public entry points are annotated anyway.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2072:ParameterDynamicallyAccessedMemberTypesCannotBeDetermined",
+            Justification = "CreateInstance in CreateArrayBackedCollectionInstanceFromArray, GetBackingArray. Cannot apply RequiresUnreferencedCode to a field, but the usages are annotated.")]
         [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode",
-            Justification = "GetGenericType in CreateArrayBackedCollectionInstanceFromArray, CreateInstanceCallback, GetBackingArray, CreateFinalCollectionCallback Cannot apply RequiresDynamicCode to a field, but the usages are annotated.")]
+            Justification = "GetGenericType in CreateArrayBackedCollectionInstanceFromArray, CreateInstanceCallback, GetBackingArray, CreateFinalCollectionCallback. Cannot apply RequiresDynamicCode to a field, but the usages are annotated.")]
         private static readonly Dictionary<DataTypes, CollectionSerializationInfo> serializationInfo = new Dictionary<DataTypes, CollectionSerializationInfo>(ComparerHelper<DataTypes>.EqualityComparer)
         {
             #region Generic collections (DataTypes 1..15 << 8)

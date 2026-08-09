@@ -373,6 +373,10 @@ namespace KGySoft.Resources
 
             public DictionaryEntry Entry
             {
+                [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+                    Justification = "The caller can only access this member via the interface, which is not annotated, but the public entry point (getting the enumerator) has the annotation.")]
+                [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode",
+                    Justification = "The caller can only access this member via the interface, which is not annotated, but the public entry point (getting the enumerator) has the annotation.")]
                 get
                 {
                     if (state != EnumeratorStates.Enumerating)
@@ -926,6 +930,12 @@ namespace KGySoft.Resources
         /// <seealso cref="SafeMode"/>
         /// <seealso cref="GetMetadataEnumerator"/>
         /// <seealso cref="GetAliasEnumerator"/>
+        [RequiresDynamicCode(ResXCommon.UnsafeEnumerationRequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.UnsafeEnumerationRequiresUnreferencedCodeMessage)]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2046:RequiresUnreferencedCodeMismatch",
+            Justification = "This call itself is actually safe, but not the members on the enumerator, which cannot be annotated otherwise.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3051:RequiresDynamicCodeMismatch",
+            Justification = "This call itself is actually safe, but not the members on the enumerator, which cannot be annotated otherwise.")]
         public IDictionaryEnumerator GetEnumerator() => GetEnumeratorInternal(ResXEnumeratorModes.Resources);
 
         /// <summary>
@@ -946,6 +956,8 @@ namespace KGySoft.Resources
         /// <seealso cref="SafeMode"/>
         /// <seealso cref="GetEnumerator"/>
         /// <seealso cref="GetAliasEnumerator"/>
+        [RequiresDynamicCode(ResXCommon.UnsafeEnumerationRequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.UnsafeEnumerationRequiresUnreferencedCodeMessage)]
         public IDictionaryEnumerator GetMetadataEnumerator() => GetEnumeratorInternal(ResXEnumeratorModes.Metadata);
 
         /// <summary>
@@ -964,6 +976,8 @@ namespace KGySoft.Resources
         /// <seealso cref="SafeMode"/>
         /// <seealso cref="GetEnumerator"/>
         /// <seealso cref="GetMetadataEnumerator"/>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Alias values are always strings, no unreferenced code is required.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "Alias values are always strings, no dynamic code generation is needed.")]
         public IDictionaryEnumerator GetAliasEnumerator() => GetEnumeratorInternal(ResXEnumeratorModes.Aliases);
 
         #endregion
@@ -1006,6 +1020,8 @@ namespace KGySoft.Resources
             state = States.Disposed;
         }
 
+        [RequiresDynamicCode(ResXCommon.UnsafeEnumerationRequiresDynamicCodeMessage)] // for the enumerator members, not this method in itself
+        [RequiresUnreferencedCode(ResXCommon.UnsafeEnumerationRequiresUnreferencedCodeMessage)] // for the enumerator members, not this method in itself
         private IDictionaryEnumerator GetEnumeratorInternal(ResXEnumeratorModes mode)
         {
             lock (syncRoot)
@@ -1342,6 +1358,10 @@ namespace KGySoft.Resources
             Dispose(true);
         }
 
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+            Justification = "The annotation doesn't really make sense on an explicit interface implementation (and the interface member is not annotated), the public GetEnumerator is annotated though.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode",
+            Justification = "The annotation doesn't really make sense on an explicit interface implementation (and the interface member is not annotated), the public GetEnumerator is annotated though.")]
         IEnumerator IEnumerable.GetEnumerator() => GetEnumeratorInternal(ResXEnumeratorModes.Resources);
 
         #endregion

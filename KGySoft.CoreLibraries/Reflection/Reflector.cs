@@ -72,9 +72,10 @@ namespace KGySoft.Reflection
     {
         #region Constants
 
-        private const string propertyReflectionByTypeDescriptorRequiresUnreferencedCode = "If way is ReflectionWays.TypeDescriptor, the PropertyDescriptor's PropertyType cannot be statically discovered.";
         private const string instancePropertyReflectionRequiresUnreferencedCode = "When accessing an instance property by name, the property might not be available. " +
             "In native AOT mode it is recommended to use the overloads with PropertyInfo parameter, or the PropertyAccessor class instead.";
+        private const string indexerReflectionRequiresUnreferencedCode = "When accessing an indexed property by this method, the property might not be available. " +
+            "In native AOT mode it is recommended to use the property-accessing methods with PropertyInfo parameter, or the PropertyAccessor class instead.";
 
         private const string genericMethodReflectionByMethodInfoRequiresDynamicCode = "If the MethodInfo parameter is a generic method definition, the native code for the constructed generic method might not be available at runtime.";
         private const string genericMethodReflectionByMethodInfoRequiresUnreferencedCode = "If the MethodInfo parameter is a generic method definition, trimming can't validate if the constraints of the generic arguments are met.";
@@ -88,6 +89,8 @@ namespace KGySoft.Reflection
 
         private const string instanceFieldReflectionRequiresUnreferencedCode = "When accessing an instance field by name, the field might not be available. " +
             "In native AOT mode it is recommended to use the overloads with FieldInfo parameter, or the FieldAccessor class instead.";
+
+        private const string interfaceImplementationReflectionRequiresUnreferencedCode = "If the trimming removes the implemented interfaces or its implementations of the declaring type, this method may return a false negative result.";
 
         #endregion
 
@@ -407,7 +410,7 @@ namespace KGySoft.Reflection
         /// <see cref="O:KGySoft.Reflection.Reflector.TrySetProperty">TrySetProperty</see> methods instead.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
         /// </remarks>
-        [RequiresUnreferencedCode(propertyReflectionByTypeDescriptorRequiresUnreferencedCode)]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "DynamicallyAccessedMembers can be applied for a static property by type.")]
         public static void SetProperty([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllProperties)]Type type,
             string propertyName, bool ignoreCase, object? value, ReflectionWays way = ReflectionWays.Auto)
         {
@@ -435,7 +438,6 @@ namespace KGySoft.Reflection
         /// <see cref="O:KGySoft.Reflection.Reflector.TrySetProperty">TrySetProperty</see> methods instead.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
         /// </remarks>
-        [RequiresUnreferencedCode(propertyReflectionByTypeDescriptorRequiresUnreferencedCode)]
         public static void SetProperty([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllProperties)]Type type,
             string propertyName, object? value, ReflectionWays way = ReflectionWays.Auto)
             => SetProperty(type, propertyName, false, value, way);
@@ -556,7 +558,7 @@ namespace KGySoft.Reflection
         /// for better performance.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
         /// </remarks>
-        [RequiresUnreferencedCode(propertyReflectionByTypeDescriptorRequiresUnreferencedCode)]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "DynamicallyAccessedMembers can be applied for a static property by type.")]
         public static bool TrySetProperty([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllProperties)]Type type,
             string propertyName, bool ignoreCase, object? value, ReflectionWays way = ReflectionWays.Auto)
         {
@@ -584,12 +586,11 @@ namespace KGySoft.Reflection
         /// for better performance.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
         /// </remarks>
-        [RequiresUnreferencedCode(propertyReflectionByTypeDescriptorRequiresUnreferencedCode)]
         public static bool TrySetProperty([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllProperties)]Type type,
             string propertyName, object? value, ReflectionWays way = ReflectionWays.Auto)
             => TrySetProperty(type, propertyName, false, value, way);
 
-        [RequiresUnreferencedCode(propertyReflectionByTypeDescriptorRequiresUnreferencedCode)]
+        [RequiresUnreferencedCode(instancePropertyReflectionRequiresUnreferencedCode)]
         private static bool DoTrySetProperty(string propertyName, bool ignoreCase,
             [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllProperties)]Type type,
             object? instance, object? value, ReflectionWays way, object?[] indexParameters, bool throwError)
@@ -680,6 +681,7 @@ namespace KGySoft.Reflection
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then the <see cref="ReflectionWays.DynamicDelegate"/> way will be used.</para>
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
+        [RequiresUnreferencedCode(indexerReflectionRequiresUnreferencedCode)]
         public static void SetIndexedMember(object instance, object? value, ReflectionWays way, params object?[] indexParameters)
         {
             if (instance == null!)
@@ -707,6 +709,7 @@ namespace KGySoft.Reflection
         /// <para>For setting an indexed property this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
+        [RequiresUnreferencedCode(indexerReflectionRequiresUnreferencedCode)]
         public static void SetIndexedMember(object instance, object? value, params object?[] indexParameters)
             => SetIndexedMember(instance, value, ReflectionWays.Auto, indexParameters);
 
@@ -726,6 +729,7 @@ namespace KGySoft.Reflection
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then the <see cref="ReflectionWays.DynamicDelegate"/> way will be used.</para>
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
+        [RequiresUnreferencedCode(indexerReflectionRequiresUnreferencedCode)]
         public static bool TrySetIndexedMember(object instance, object? value, ReflectionWays way, params object?[] indexParameters)
         {
             if (instance == null!)
@@ -755,9 +759,11 @@ namespace KGySoft.Reflection
         /// <para>For setting an indexed property this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
+        [RequiresUnreferencedCode(indexerReflectionRequiresUnreferencedCode)]
         public static bool TrySetIndexedMember(object instance, object? value, params object?[] indexParameters)
             => TrySetIndexedMember(instance, value, ReflectionWays.Auto, indexParameters);
 
+        [RequiresUnreferencedCode("GetMember")]
         private static bool DoTrySetIndexedMember(object instance, object? value, ReflectionWays way, object?[] indexParameters, bool throwError)
         {
             // Arrays
@@ -1006,7 +1012,7 @@ namespace KGySoft.Reflection
         /// <see cref="O:KGySoft.Reflection.Reflector.TryGetProperty">TryGetProperty</see> methods instead.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
         /// </remarks>
-        [RequiresUnreferencedCode(propertyReflectionByTypeDescriptorRequiresUnreferencedCode)]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "DynamicallyAccessedMembers can be applied for a static property by type.")]
         public static object? GetProperty([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllProperties)]Type type,
             string propertyName, bool ignoreCase, ReflectionWays way = ReflectionWays.Auto)
         {
@@ -1034,7 +1040,6 @@ namespace KGySoft.Reflection
         /// <see cref="O:KGySoft.Reflection.Reflector.TryGetProperty">TryGetProperty</see> methods instead.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
         /// </remarks>
-        [RequiresUnreferencedCode(propertyReflectionByTypeDescriptorRequiresUnreferencedCode)]
         public static object? GetProperty([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllProperties)]Type type,
             string propertyName, ReflectionWays way = ReflectionWays.Auto)
             => GetProperty(type, propertyName, false, way);
@@ -1151,7 +1156,7 @@ namespace KGySoft.Reflection
         /// for better performance.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
         /// </remarks>
-        [RequiresUnreferencedCode(propertyReflectionByTypeDescriptorRequiresUnreferencedCode)]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "DynamicallyAccessedMembers can be applied for a static property by type.")]
         public static bool TryGetProperty([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllProperties)]Type type,
             string propertyName, bool ignoreCase, out object? value, ReflectionWays way = ReflectionWays.Auto)
         {
@@ -1179,12 +1184,11 @@ namespace KGySoft.Reflection
         /// for better performance.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
         /// </remarks>
-        [RequiresUnreferencedCode(propertyReflectionByTypeDescriptorRequiresUnreferencedCode)]
         public static bool TryGetProperty([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllProperties)]Type type,
             string propertyName, out object? value, ReflectionWays way = ReflectionWays.Auto)
             => TryGetProperty(type, propertyName, false, out value, way);
 
-        [RequiresUnreferencedCode(propertyReflectionByTypeDescriptorRequiresUnreferencedCode)]
+        [RequiresUnreferencedCode(instancePropertyReflectionRequiresUnreferencedCode)]
         private static bool DoTryGetProperty(string propertyName, bool ignoreCase, [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllProperties)]Type type,
             object? instance, ReflectionWays way, object?[] indexParameters, bool throwError, out object? value)
         {
@@ -1274,6 +1278,7 @@ namespace KGySoft.Reflection
         /// for better performance.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
         /// </remarks>
+        [RequiresUnreferencedCode(indexerReflectionRequiresUnreferencedCode)]
         public static object? GetIndexedMember(object instance, ReflectionWays way, params object?[] indexParameters)
         {
             if (instance == null!)
@@ -1300,6 +1305,7 @@ namespace KGySoft.Reflection
         /// for better performance.</para>
         /// <para>For getting an indexed property this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
         /// </remarks>
+        [RequiresUnreferencedCode(indexerReflectionRequiresUnreferencedCode)]
         public static object? GetIndexedMember(object instance, params object?[] indexParameters)
             => GetIndexedMember(instance, ReflectionWays.Auto, indexParameters);
 
@@ -1318,6 +1324,7 @@ namespace KGySoft.Reflection
         /// for better performance.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
         /// </remarks>
+        [RequiresUnreferencedCode(indexerReflectionRequiresUnreferencedCode)]
         public static bool TryGetIndexedMember(object instance, ReflectionWays way, out object? value, params object?[] indexParameters)
         {
             if (instance == null!)
@@ -1346,9 +1353,11 @@ namespace KGySoft.Reflection
         /// for better performance.</para>
         /// <para>For getting an indexed property this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
         /// </remarks>
+        [RequiresUnreferencedCode(indexerReflectionRequiresUnreferencedCode)]
         public static bool TryGetIndexedMember(object instance, out object? value, params object?[] indexParameters)
             => TryGetIndexedMember(instance, ReflectionWays.Auto, out value, indexParameters);
 
+        [RequiresUnreferencedCode("GetMember")]
         private static bool DoTryGetIndexedMember(object instance, ReflectionWays way, object?[] indexParameters, bool throwError, out object? value)
         {
             value = null;
@@ -1516,6 +1525,8 @@ namespace KGySoft.Reflection
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// <note>To invoke the method explicitly by dynamically created delegates use the <see cref="MethodAccessor"/> class.</note>
         /// </remarks>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Not using generic method arguments here.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "Not using generic method arguments here.")]
         public static object? InvokeMethod(object? instance, MethodInfo method, ReflectionWays way, params object?[]? parameters)
             => InvokeMethod(instance, method, null, way, parameters);
 
@@ -1531,6 +1542,8 @@ namespace KGySoft.Reflection
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// <note>To invoke the method explicitly by dynamically created delegates use the <see cref="MethodAccessor"/> class.</note>
         /// </remarks>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Not using generic method arguments here.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "Not using generic method arguments here.")]
         public static object? InvokeMethod(object? instance, MethodInfo method, params object?[]? parameters)
             => InvokeMethod(instance, method, null, ReflectionWays.Auto, parameters);
 
@@ -1661,6 +1674,7 @@ namespace KGySoft.Reflection
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
         [RequiresUnreferencedCode(instanceMethodReflectionRequiresUnreferencedCode)]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "Not using generic method arguments here.")]
         public static object? InvokeMethod(object instance, string methodName, bool ignoreCase, ReflectionWays way, params object?[]? parameters)
             => InvokeMethod(instance, methodName, ignoreCase, null, way, parameters);
 
@@ -1683,6 +1697,7 @@ namespace KGySoft.Reflection
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
         [RequiresUnreferencedCode(instanceMethodReflectionRequiresUnreferencedCode)]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "Not using generic method arguments here.")]
         public static object? InvokeMethod(object instance, string methodName, ReflectionWays way, params object?[]? parameters)
             => InvokeMethod(instance, methodName, false, null, way, parameters);
 
@@ -1705,6 +1720,7 @@ namespace KGySoft.Reflection
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
         [RequiresUnreferencedCode(instanceMethodReflectionRequiresUnreferencedCode)]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "Not using generic method arguments here.")]
         public static object? InvokeMethod(object instance, string methodName, bool ignoreCase, params object?[]? parameters)
             => InvokeMethod(instance, methodName, ignoreCase, null, ReflectionWays.Auto, parameters);
 
@@ -1726,6 +1742,7 @@ namespace KGySoft.Reflection
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
         [RequiresUnreferencedCode(instanceMethodReflectionRequiresUnreferencedCode)]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "Not using generic method arguments here.")]
         public static object? InvokeMethod(object instance, string methodName, params object?[]? parameters)
             => InvokeMethod(instance, methodName, false, null, ReflectionWays.Auto, parameters);
 
@@ -1850,6 +1867,8 @@ namespace KGySoft.Reflection
         /// <see cref="O:KGySoft.Reflection.Reflector.TryInvokeMethod">TryInvokeMethod</see> methods instead.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then the <see cref="ReflectionWays.DynamicDelegate"/> way will be used.</para>
         /// </remarks>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Not using generic method arguments here.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "Not using generic method arguments here.")]
         public static object? InvokeMethod([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllMethods)]Type type,
             string methodName, bool ignoreCase, ReflectionWays way, params object?[]? parameters)
             => InvokeMethod(type, methodName, ignoreCase, null, way, parameters);
@@ -1871,6 +1890,8 @@ namespace KGySoft.Reflection
         /// <see cref="O:KGySoft.Reflection.Reflector.TryInvokeMethod">TryInvokeMethod</see> methods instead.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then the <see cref="ReflectionWays.DynamicDelegate"/> way will be used.</para>
         /// </remarks>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Not using generic method arguments here.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "Not using generic method arguments here.")]
         public static object? InvokeMethod([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllMethods)]Type type,
             string methodName, ReflectionWays way, params object?[]? parameters)
             => InvokeMethod(type, methodName, false, null, way, parameters);
@@ -1892,6 +1913,8 @@ namespace KGySoft.Reflection
         /// <see cref="O:KGySoft.Reflection.Reflector.TryInvokeMethod">TryInvokeMethod</see> methods instead.</para>
         /// <para>For invoking the method this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
         /// </remarks>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Not using generic method arguments here.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "Not using generic method arguments here.")]
         public static object? InvokeMethod([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllMethods)]Type type,
             string methodName, bool ignoreCase, params object?[]? parameters)
             => InvokeMethod(type, methodName, ignoreCase, null, ReflectionWays.Auto, parameters);
@@ -1912,6 +1935,8 @@ namespace KGySoft.Reflection
         /// <see cref="O:KGySoft.Reflection.Reflector.TryInvokeMethod">TryInvokeMethod</see> methods instead.</para>
         /// <para>For invoking the method this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
         /// </remarks>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Not using generic method arguments here.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "Not using generic method arguments here.")]
         public static object? InvokeMethod([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllMethods)]Type type,
             string methodName, params object?[]? parameters)
             => InvokeMethod(type, methodName, false, null, ReflectionWays.Auto, parameters);
@@ -2039,6 +2064,7 @@ namespace KGySoft.Reflection
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
         [RequiresUnreferencedCode(instanceMethodReflectionRequiresUnreferencedCode)]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "Not using generic method arguments here.")]
         public static bool TryInvokeMethod(object instance, string methodName, bool ignoreCase, ReflectionWays way, out object? result, params object?[]? parameters)
             => TryInvokeMethod(instance, methodName, ignoreCase, null, way, out result, parameters);
 
@@ -2061,6 +2087,7 @@ namespace KGySoft.Reflection
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
         [RequiresUnreferencedCode(instanceMethodReflectionRequiresUnreferencedCode)]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "Not using generic method arguments here.")]
         public static bool TryInvokeMethod(object instance, string methodName, ReflectionWays way, out object? result, params object?[]? parameters)
             => TryInvokeMethod(instance, methodName, false, null, way, out result, parameters);
 
@@ -2083,6 +2110,7 @@ namespace KGySoft.Reflection
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
         [RequiresUnreferencedCode(instanceMethodReflectionRequiresUnreferencedCode)]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "Not using generic method arguments here.")]
         public static bool TryInvokeMethod(object instance, string methodName, bool ignoreCase, out object? result, params object?[]? parameters)
             => TryInvokeMethod(instance, methodName, ignoreCase, null, ReflectionWays.Auto, out result, parameters);
 
@@ -2104,6 +2132,7 @@ namespace KGySoft.Reflection
         /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
         /// </remarks>
         [RequiresUnreferencedCode(instanceMethodReflectionRequiresUnreferencedCode)]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "Not using generic method arguments here.")]
         public static bool TryInvokeMethod(object instance, string methodName, out object? result, params object?[]? parameters)
             => TryInvokeMethod(instance, methodName, false, null, ReflectionWays.Auto, out result, parameters);
 
@@ -2228,6 +2257,8 @@ namespace KGySoft.Reflection
         /// for better performance.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then the <see cref="ReflectionWays.DynamicDelegate"/> way will be used.</para>
         /// </remarks>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Not using generic method arguments here.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "Not using generic method arguments here.")]
         public static bool TryInvokeMethod([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllMethods)]Type type,
             string methodName, bool ignoreCase, ReflectionWays way, out object? result, params object?[]? parameters)
             => TryInvokeMethod(type, methodName, ignoreCase, null, way, out result, parameters);
@@ -2249,6 +2280,8 @@ namespace KGySoft.Reflection
         /// for better performance.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then the <see cref="ReflectionWays.DynamicDelegate"/> way will be used.</para>
         /// </remarks>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Not using generic method arguments here.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "Not using generic method arguments here.")]
         public static bool TryInvokeMethod([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllMethods)]Type type,
             string methodName, ReflectionWays way, out object? result, params object?[]? parameters)
             => TryInvokeMethod(type, methodName, false, null, way, out result, parameters);
@@ -2270,6 +2303,8 @@ namespace KGySoft.Reflection
         /// for better performance.</para>
         /// <para>For invoking the method this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
         /// </remarks>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Not using generic method arguments here.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "Not using generic method arguments here.")]
         public static bool TryInvokeMethod([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllMethods)]Type type,
             string methodName, bool ignoreCase, out object? result, params object?[]? parameters)
             => TryInvokeMethod(type, methodName, ignoreCase, null, ReflectionWays.Auto, out result, parameters);
@@ -2290,6 +2325,8 @@ namespace KGySoft.Reflection
         /// for better performance.</para>
         /// <para>For invoking the method this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
         /// </remarks>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Not using generic method arguments here.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "Not using generic method arguments here.")]
         public static bool TryInvokeMethod([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllMethods)]Type type,
             string methodName, out object? result, params object?[]? parameters)
             => TryInvokeMethod(type, methodName, false, null, ReflectionWays.Auto, out result, parameters);
@@ -2454,7 +2491,7 @@ namespace KGySoft.Reflection
             TryCreateInstanceByType(type, genericParameters ?? Type.EmptyTypes, way, true, out object? result);
             return result!;
         }
-        
+
         /// <summary>
         /// Creates a new instance of the specified <paramref name="type"/>.
         /// </summary>
@@ -2467,6 +2504,8 @@ namespace KGySoft.Reflection
         /// <see cref="O:KGySoft.Reflection.Reflector.TryCreateInstance">TryCreateInstance</see> methods instead.</para>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way.</para>
         /// </remarks>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Not using generic type arguments here.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "Not using generic type arguments here.")]
         public static object CreateInstance([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors)]Type type,
             ReflectionWays way = ReflectionWays.Auto) => CreateInstance(type, null, way);
 
@@ -2519,6 +2558,8 @@ namespace KGySoft.Reflection
         /// <note>If an instance can be created by its parameterless constructor and the constructor itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way.</para>
         /// </remarks>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Not using generic type arguments here.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "Not using generic type arguments here.")]
         public static bool TryCreateInstance([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors)]Type type, ReflectionWays way, out object? result)
             => TryCreateInstance(type, null, way, out result);
 
@@ -2532,6 +2573,8 @@ namespace KGySoft.Reflection
         /// <note>If an instance can be created by its parameterless constructor and the constructor itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
         /// <para>For creating the instance this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way.</para>
         /// </remarks>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Not using generic type arguments here.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "Not using generic type arguments here.")]
         public static bool TryCreateInstance([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors)]Type type, out object? result)
             => TryCreateInstance(type, null, ReflectionWays.Auto, out result);
 
@@ -2756,6 +2799,8 @@ namespace KGySoft.Reflection
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way, unless for value types with
         /// empty or <see langword="null"/>&#160;<paramref name="parameters"/>, in which case the <see cref="ReflectionWays.SystemReflection"/> way is selected, which will use the <see cref="Activator"/> class.</para>
         /// </remarks>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Not using generic type arguments here.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "Not using generic type arguments here.")]
         public static object CreateInstance([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors)]Type type,
             ReflectionWays way, params object?[]? parameters) => CreateInstance(type, null, way, parameters);
 
@@ -2771,6 +2816,8 @@ namespace KGySoft.Reflection
         /// <para>For creating the instance this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way, unless for value types with
         /// empty or <see langword="null"/>&#160;<paramref name="parameters"/>, in which case the <see cref="ReflectionWays.SystemReflection"/> way is selected, which will use the <see cref="Activator"/> class.</para>
         /// </remarks>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Not using generic type arguments here.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "Not using generic type arguments here.")]
         public static object CreateInstance([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors)]Type type,
             params object?[]? parameters) => CreateInstance(type, null, ReflectionWays.Auto, parameters);
 
@@ -2832,6 +2879,8 @@ namespace KGySoft.Reflection
         /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way, unless for value types with
         /// empty or <see langword="null"/>&#160;<paramref name="parameters"/>, in which case the <see cref="ReflectionWays.SystemReflection"/> way is selected, which will use the <see cref="Activator"/> class.</para>
         /// </remarks>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Not using generic type arguments here.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "Not using generic type arguments here.")]
         public static bool TryCreateInstance([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors)]Type type,
             ReflectionWays way, [MaybeNullWhen(false)]out object result, params object?[]? parameters)
             => TryCreateInstance(type, null, way, out result, parameters);
@@ -2848,6 +2897,8 @@ namespace KGySoft.Reflection
         /// <para>For creating the instance this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way, unless for value types with
         /// empty or <see langword="null"/>&#160;<paramref name="parameters"/>, in which case the <see cref="ReflectionWays.SystemReflection"/> way is selected, which will use the <see cref="Activator"/> class.</para>
         /// </remarks>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Not using generic type arguments here.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "Not using generic type arguments here.")]
         public static bool TryCreateInstance([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors)]Type type,
             [MaybeNullWhen(false)]out object result, params object?[]? parameters)
             => TryCreateInstance(type, null, ReflectionWays.Auto, out result, parameters);
@@ -3170,6 +3221,8 @@ namespace KGySoft.Reflection
             string fieldName, object? value, ReflectionWays way = ReflectionWays.Auto)
             => TrySetField(type, fieldName, false, value, way);
 
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2070:TypeDynamicallyAccessedMemberTypesAnnotationMismatch", Justification = "False alarm, GetMember is called with MemberTypes.Field.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2075:DynamicallyAccessedMembersReturnValueAnnotationMismatch", Justification = "False alarm, checkedType can only be the base types of type.")]
         private static bool DoTrySetField(string fieldName, bool ignoreCase,
             [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllFields)]Type type,
             object? instance, object? value, ReflectionWays way, bool throwError)
@@ -3434,6 +3487,8 @@ namespace KGySoft.Reflection
             string fieldName, out object? value, ReflectionWays way = ReflectionWays.Auto)
             => TryGetField(type, fieldName, false, out value, way);
 
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2070:TypeDynamicallyAccessedMemberTypesAnnotationMismatch", Justification = "False alarm, GetMember is called with MemberTypes.Field.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2075:DynamicallyAccessedMembersReturnValueAnnotationMismatch", Justification = "False alarm, checkedType can only be the base types of type.")]
         private static bool DoTryGetField(string fieldName, bool ignoreCase,
             [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllFields)]Type type,
             object? instance, ReflectionWays way, out object? value, bool throwError)
@@ -3942,6 +3997,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="method">The method to check.</param>
         /// <returns><see langword="true"/>, if the specified <paramref name="method"/> is an explicit interface implementation; otherwise, <see langword="false"/>.</returns>
+        [RequiresUnreferencedCode(interfaceImplementationReflectionRequiresUnreferencedCode)]
         public static bool IsExplicitInterfaceImplementation(MethodInfo method) => IsExplicitInterfaceImplementation(method, out var _);
 
         /// <summary>
@@ -3950,6 +4006,7 @@ namespace KGySoft.Reflection
         /// <param name="method">The method to check.</param>
         /// <param name="interfaceMethod">When this method returns <see langword="true"/>, then contains the method declared on the interface. This parameter is passed uninitialized.</param>
         /// <returns><see langword="true"/>, if the specified <paramref name="method"/> is an explicit interface implementation; otherwise, <see langword="false"/>.</returns>
+        [RequiresUnreferencedCode(interfaceImplementationReflectionRequiresUnreferencedCode)]
         public static bool IsExplicitInterfaceImplementation(MethodInfo method, [MaybeNullWhen(false)]out MethodInfo interfaceMethod)
         {
             if (method == null!)
@@ -3985,6 +4042,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="property">The property to check.</param>
         /// <returns><see langword="true"/>, if the specified <paramref name="property"/> is an explicit interface implementation; otherwise, <see langword="false"/>.</returns>
+        [RequiresUnreferencedCode(interfaceImplementationReflectionRequiresUnreferencedCode)]
         public static bool IsExplicitInterfaceImplementation(PropertyInfo property)
         {
             if (property == null!)
@@ -3998,6 +4056,7 @@ namespace KGySoft.Reflection
         /// <param name="property">The property to check.</param>
         /// <param name="interfaceProperty">When this method returns <see langword="true"/>, then contains the property declared on the interface. This parameter is passed uninitialized.</param>
         /// <returns><see langword="true"/>, if the specified <paramref name="property"/> is an explicit interface implementation; otherwise, <see langword="false"/>.</returns>
+        [RequiresUnreferencedCode(interfaceImplementationReflectionRequiresUnreferencedCode)]
         public static bool IsExplicitInterfaceImplementation(PropertyInfo property, [MaybeNullWhen(false)]out PropertyInfo interfaceProperty)
         {
             if (property == null!)
@@ -4020,6 +4079,7 @@ namespace KGySoft.Reflection
         /// </summary>
         /// <param name="info">The <see cref="EventInfo"/> to check.</param>
         /// <returns><see langword="true"/>, if the specified <see cref="EventInfo"/> is an explicit interface implementation; otherwise, <see langword="false"/>.</returns>
+        [RequiresUnreferencedCode(interfaceImplementationReflectionRequiresUnreferencedCode)]
         public static bool IsExplicitInterfaceImplementation(EventInfo info)
         {
             if (info == null!)
@@ -4034,6 +4094,7 @@ namespace KGySoft.Reflection
         /// <param name="info">The <see cref="EventInfo"/> to check.</param>
         /// <param name="interfaceEvent">When this method returns <see langword="true"/>, then contains the event declared on the interface. This parameter is passed uninitialized.</param>
         /// <returns><see langword="true"/>, if the specified <see cref="EventInfo"/> is an explicit interface implementation; otherwise, <see langword="false"/>.</returns>
+        [RequiresUnreferencedCode(interfaceImplementationReflectionRequiresUnreferencedCode)]
         public static bool IsExplicitInterfaceImplementation(EventInfo info, [MaybeNullWhen(false)]out EventInfo interfaceEvent)
         {
             if (info == null!)

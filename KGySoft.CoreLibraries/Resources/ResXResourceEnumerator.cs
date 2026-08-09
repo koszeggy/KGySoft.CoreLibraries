@@ -17,6 +17,7 @@
 
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 #endregion
@@ -57,6 +58,10 @@ namespace KGySoft.Resources
 
         public DictionaryEntry Entry
         {
+            [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+                Justification = "The caller can only access this member via the interface, which is not annotated, but the public entry point (getting the enumerator) has the annotation.")]
+            [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode",
+                Justification = "The caller can only access this member via the interface, which is not annotated, but the public entry point (getting the enumerator) has the annotation.")]
             get
             {
                 if (state != States.Enumerating)

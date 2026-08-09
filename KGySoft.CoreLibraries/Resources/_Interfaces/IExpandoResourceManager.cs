@@ -16,6 +16,7 @@
 #region Usings
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Resources;
@@ -187,6 +188,8 @@ namespace KGySoft.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceManager"/> is already disposed.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
+        [RequiresDynamicCode(ResXCommon.UnsafeReadRequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.UnsafeReadRequiresUnreferencedCodeMessage)]
         object? GetObject(string name, CultureInfo? culture = null);
 
         /// <summary>
@@ -212,6 +215,7 @@ namespace KGySoft.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceManager"/> is already disposed.</exception>
         /// <exception cref="InvalidOperationException">The current <see cref="IExpandoResourceManager"/> is a <see cref="HybridResourceManager"/>, and
         /// <see cref="HybridResourceManager.Source"/> is <see cref="ResourceManagerSources.CompiledOnly"/>.</exception>
+        [RequiresUnreferencedCode(ResXCommon.NewNodeFromObjectRequiresUnreferencedCode)]
         void SetObject(string name, object? value, CultureInfo? culture = null);
 
         /// <summary>
@@ -313,6 +317,8 @@ namespace KGySoft.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceManager"/> is already disposed.</exception>
         /// <exception cref="MissingManifestResourceException">No usable set of localized resources has been found, and there are no default culture resources.
         /// For information about how to handle this exception, see the notes under <em>Instantiating a ResXResourceManager object</em> section of the description of the <see cref="ResXResourceManager"/> class.</exception>
+        [RequiresDynamicCode(ResXCommon.UnsafeReadRequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.UnsafeReadRequiresUnreferencedCodeMessage)]
         object? GetMetaObject(string name, CultureInfo? culture = null);
 
         /// <summary>
@@ -335,6 +341,7 @@ namespace KGySoft.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceManager"/> is already disposed.</exception>
         /// <exception cref="InvalidOperationException">The current <see cref="IExpandoResourceManager"/> is a <see cref="HybridResourceManager"/>, and
         /// <see cref="HybridResourceManager.Source"/> is <see cref="ResourceManagerSources.CompiledOnly"/>.</exception>
+        [RequiresUnreferencedCode(ResXCommon.NewNodeFromObjectRequiresUnreferencedCode)]
         void SetMetaObject(string name, object? value, CultureInfo? culture = null);
 
         /// <summary>
@@ -370,6 +377,8 @@ namespace KGySoft.Resources
         /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceManager"/> is already disposed.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="culture"/> is <see langword="null"/>.</exception>
         /// <exception cref="IOException">The resource set could not be saved.</exception>
+        [RequiresDynamicCode(ResXCommon.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.RequiresUnreferencedCodeMessage)]
         bool SaveResourceSet(CultureInfo culture, bool force = false, bool compatibleFormat = false);
 
         /// <summary>
@@ -384,6 +393,8 @@ namespace KGySoft.Resources
         /// <returns><see langword="true"/> if at least one resource set has been saved; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ObjectDisposedException">The <see cref="IExpandoResourceManager"/> is already disposed.</exception>
         /// <exception cref="IOException">A resource set could not be saved.</exception>
+        [RequiresDynamicCode(ResXCommon.RequiresDynamicCodeMessage)]
+        [RequiresUnreferencedCode(ResXCommon.RequiresUnreferencedCodeMessage)]
         bool SaveAllResources(bool force = false, bool compatibleFormat = false);
 
         #endregion
