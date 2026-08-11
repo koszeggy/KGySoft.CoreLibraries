@@ -321,7 +321,8 @@ namespace KGySoft.CoreLibraries
         /// This can be overridden by handling these types in <paramref name="customClone"/>.</para>
         /// </remarks>
         [return:NotNullIfNotNull(nameof(obj))]
-        public static T DeepClone<T>(this T obj, Func<object, object?>? customClone = null)
+        [RequiresUnreferencedCode("Fields of nested types might be removed by the trimmer.")]
+        public static T DeepClone<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllFields)]T>(this T obj, Func<object, object?>? customClone = null)
             => (T)ObjectCloner.Clone(obj, customClone)!;
 
         /// <summary>

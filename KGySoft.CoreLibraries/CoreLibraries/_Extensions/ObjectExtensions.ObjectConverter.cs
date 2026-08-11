@@ -122,9 +122,12 @@ namespace KGySoft.CoreLibraries
 
             #endregion
 
-
             #region Constructors
 
+            [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+                Justification = "Cannot apply RequiresUnreferencedCode to a static constructor, but the conversions are used by the TryConvertByRegisteredConversion method, which is annotated.")]
+            [UnconditionalSuppressMessage("TrimAnalysis", "IL2111:DynamicallyAccessedMembersAttributeViaReflection",
+                Justification = "Cannot apply RequiresUnreferencedCode to a static constructor, but the conversions are used by the TryConvertByRegisteredConversion method, which is annotated.")]
             static ObjectConverter()
             {
                 // KeyValuePair and Dictionary entry conversions
@@ -210,7 +213,7 @@ namespace KGySoft.CoreLibraries
             private static object ConvertKeyValuePairToDictionaryEntry(object obj, Type targetType, CultureInfo? culture)
                 => new DictionaryEntry(Accessors.GetPropertyValue(obj, nameof(KeyValuePair<,>.Key))!, Accessors.GetPropertyValue(obj, nameof(KeyValuePair<,>.Value)));
 
-            [RequiresUnreferencedCode("StringExtensions.TryParse, TryConvertByTypeConverter, TryConvertCollection")]
+            [RequiresUnreferencedCode("StringExtensions.TryParse, TryConvertByTypeConverter, TryConvertCollection, TryConvertByRegisteredConversion")]
             private static bool DoConvert(ref ConversionContext context, object? obj,
                 [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]Type targetType,
                 out object? value, bool isRoot = false)
@@ -288,6 +291,7 @@ namespace KGySoft.CoreLibraries
                 }
             }
 
+            [RequiresUnreferencedCode("TryUseConversion")]
             private static bool TryConvertByRegisteredConversion(ref ConversionContext context, object obj,
                 [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]Type targetType,
                 out object? value, bool exactTypeMatch)
@@ -319,6 +323,7 @@ namespace KGySoft.CoreLibraries
                 return false;
             }
 
+            [RequiresUnreferencedCode("DoConvert")]
             private static bool TryUseConversion(ref ConversionContext context, object obj,
                 [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]Type targetType,
                 Delegate conversionDelegate, out object? value)
@@ -416,6 +421,7 @@ namespace KGySoft.CoreLibraries
             }
 
             [RequiresUnreferencedCode("TryConvertToArray")]
+            [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "It is handled if IsSupportedCollectionForReflection returns false.")]
             private static bool TryConvertCollection(ref ConversionContext context, IEnumerable collection,
                 [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]Type targetType, out object? value)
             {

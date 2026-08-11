@@ -22,6 +22,7 @@ using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Text;
 
@@ -203,12 +204,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.AreEqual("576, 17", rs.GetString("TestPoint"));
 
             // in non-safe mode, raw value is cleared once an object is generated
+            var point = new Point(576, 17);
             rs.SafeMode = false;
-            Assert.AreEqual(new Point(576, 17), rs.GetObject("TestPoint"));
+            Assert.AreEqual(point, rs.GetObject("TestPoint"));
 
-            // when safe mode is turned on again, raw value is re-generated
+            // when safe mode is turned on again, raw value is re-generated for GetString, except in AOT mode, which just returns the cached ToString
             rs.SafeMode = true;
-            Assert.AreEqual("576, 17", rs.GetString("TestPoint"));
+            Assert.AreEqual(RuntimeFeature.IsDynamicCodeSupported ? "576, 17" : point.ToString(), rs.GetString("TestPoint"));
 
             // for fileref, in safe mode, path/type is expected
             Assert.IsTrue(rs.GetString("TestBinFile").StartsWith("TestBinFile.bin;System.Byte[], mscorlib", StringComparison.Ordinal));

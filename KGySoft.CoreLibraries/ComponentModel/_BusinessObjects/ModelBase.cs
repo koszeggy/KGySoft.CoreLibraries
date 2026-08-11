@@ -17,6 +17,7 @@
 
 using System;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
 using KGySoft.CoreLibraries;
@@ -176,6 +177,7 @@ namespace KGySoft.ComponentModel
         public void RedoAll() => Undoable.RedoAll();
 
         /// <inheritdoc />
+        [RequiresUnreferencedCode("This method creates a snapshot of the properties by cloning. " + CloneRequiresUnreferencedCode)]
         public void BeginNewEdit() => Editable.BeginNewEdit();
 
         /// <inheritdoc />
@@ -230,6 +232,9 @@ namespace KGySoft.ComponentModel
         void ICanUndoInternal.ResumeUndo() => Undoable.ResumeUndo();
         void IChangeTracking.AcceptChanges() => ClearUndoHistory();
         void IRevertibleChangeTracking.RejectChanges() => UndoAll();
+
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "It makes little sense to annotate an explicit " +
+            "interface implementation if the interface member itself is not annotated. The public BeginNewEdit method is annotated though.")]
         void IEditableObject.BeginEdit() => Editable.BeginEdit(EditableObjectBehavior);
         void IEditableObject.EndEdit() => Editable.EndEdit(EditableObjectBehavior);
         void IEditableObject.CancelEdit() => Editable.CancelEdit(EditableObjectBehavior);

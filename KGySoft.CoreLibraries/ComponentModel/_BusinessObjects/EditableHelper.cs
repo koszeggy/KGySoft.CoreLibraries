@@ -17,6 +17,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
 using KGySoft.Collections;
@@ -59,6 +60,7 @@ namespace KGySoft.ComponentModel
 
         #region Public Methods
 
+        [RequiresUnreferencedCode("This method creates a snapshot of the properties by cloning. " + ObservableObjectBase.CloneRequiresUnreferencedCode)]
         public void BeginNewEdit()
         {
             int oldLevel = EditLevel;
@@ -154,6 +156,7 @@ namespace KGySoft.ComponentModel
 
         #region Internal Methods
 
+        [RequiresUnreferencedCode("BeginNewEdit")]
         internal void BeginEdit(EditableObjectBehavior behavior)
         {
             switch (behavior)

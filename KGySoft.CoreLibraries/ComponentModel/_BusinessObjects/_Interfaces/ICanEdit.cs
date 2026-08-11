@@ -13,6 +13,12 @@
 
 #endregion
 
+#region Usings
+
+using System.Diagnostics.CodeAnalysis;
+
+#endregion
+
 namespace KGySoft.ComponentModel
 {
     /// <summary>
@@ -35,6 +41,7 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Begins a new level of committable/revertible editing session on the object.
         /// </summary>
+        [RequiresUnreferencedCode("This method creates a snapshot of the properties by cloning. " + ObservableObjectBase.CloneRequiresUnreferencedCode)]
         void BeginNewEdit();
 
         /// <summary>

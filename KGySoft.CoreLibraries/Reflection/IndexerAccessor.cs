@@ -16,9 +16,7 @@
 #region Usings
 
 using System;
-#if !NETSTANDARD2_0
 using System.Diagnostics.CodeAnalysis;
-#endif
 using System.Linq;
 #if NETSTANDARD2_0_OR_GREATER || NETCOREAPP3_0_OR_GREATER
 using System.Linq.Expressions;

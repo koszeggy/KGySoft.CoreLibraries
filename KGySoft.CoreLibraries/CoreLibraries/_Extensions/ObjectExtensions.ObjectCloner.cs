@@ -55,6 +55,7 @@ namespace KGySoft.CoreLibraries
 
             #region Internal Methods
 
+            [RequiresUnreferencedCode("IsDeepCloned may return a false negative result if a value type is mistakenly considered as an unmanaged one.")]
             [return:NotNullIfNotNull("obj")]internal static object? Clone(object? obj, Func<object, object?>? customClone)
             {
                 if (obj == null)
@@ -78,7 +79,8 @@ namespace KGySoft.CoreLibraries
 
             #region Private Methods
 
-            private static bool IsDeepCloned(Type type)
+            [RequiresUnreferencedCode("IsManaged may return a false negative result.")]
+            private static bool IsDeepCloned([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllFields)]Type type)
                 => !type.IsPrimitive
                 && type != Reflector.StringType
                 && !type.IsEnum
@@ -93,6 +95,7 @@ namespace KGySoft.CoreLibraries
             #region Instance Methods
 
             [SecuritySafeCritical]
+            [RequiresUnreferencedCode("IsDeepCloned")]
             private object CreateClone(object obj, bool handleReference, bool isRoot = false)
             {
                 var type = obj.GetType();
@@ -143,6 +146,7 @@ namespace KGySoft.CoreLibraries
                 return clone!;
             }
 
+            [RequiresUnreferencedCode("CreateClone")]
             private void CloneArray(Array source, Array target)
             {
                 var type = source.GetType();
@@ -177,6 +181,7 @@ namespace KGySoft.CoreLibraries
                 }
             }
 
+            [RequiresUnreferencedCode("GetFields, CreateClone")]
             private void CloneFields(object source, object target)
             {
                 var type = source.GetType();

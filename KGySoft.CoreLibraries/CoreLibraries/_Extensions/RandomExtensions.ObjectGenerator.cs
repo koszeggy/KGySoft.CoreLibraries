@@ -22,7 +22,9 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+#if !NETSTANDARD2_0
 using System.Reflection.Emit;
+#endif
 using System.Runtime.CompilerServices;
 using System.Security;
 using System.Text;
@@ -264,7 +266,9 @@ namespace KGySoft.CoreLibraries
             private static LockFreeCache<Assembly, Type[]>? assemblyTypesCache;
             private static LockFreeCache<Type, Type[]>? typeImplementorsCache;
             private static LockFreeCache<(Type GenTypeDef, TypesKey TypeArgs), Type?>? defaultConstructedGenerics;
+#if !NETSTANDARD2_0
             private static LockFreeCache<Type, Delegate?>? delegatesCache;
+#endif
 
             #endregion
 
@@ -300,6 +304,7 @@ namespace KGySoft.CoreLibraries
                 }
             }
 
+#if !NETSTANDARD2_0
             [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Not called in AOT mode.")]
             [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "Not called in AOT mode.")]
             private static LockFreeCache<Type, Delegate?> DelegatesCache
@@ -311,6 +316,7 @@ namespace KGySoft.CoreLibraries
                     return delegatesCache;
                 }
             }
+#endif
 
             #endregion
 
@@ -495,6 +501,7 @@ namespace KGySoft.CoreLibraries
                 return arg.GetGenericTypeDefinition().TryGetGenericType(replacedArgs);
             }
 
+#if !NETSTANDARD2_0
             [RequiresDynamicCode("This method uses IL code generation, and is not compatible with AOT mode.")]
             [RequiresUnreferencedCode("This method is not compatible with trimming.")]
             private static Delegate? CreateDelegate(Type type)
@@ -544,6 +551,7 @@ namespace KGySoft.CoreLibraries
                     return null;
                 }
             }
+#endif
 
             private static object GenerateBoolean(ref GeneratorContext context) => context.Random.NextBoolean();
             private static object GenerateByte(ref GeneratorContext context) => context.Random.SampleByte();
@@ -855,7 +863,9 @@ namespace KGySoft.CoreLibraries
                     {
 #if NETSTANDARD2_0
                         result = null;
-#elif NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+                        return true;
+#else
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
                         // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression - needed for the #if
                         if (!RuntimeFeature.IsDynamicCodeSupported)
                             result = null;
@@ -866,6 +876,7 @@ namespace KGySoft.CoreLibraries
                         }
 
                         return true;
+#endif
                     }
 
                     // 6.) Reflection members (Assembly and Type are already handled as known types but RuntimeType is handled here)

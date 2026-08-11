@@ -109,12 +109,19 @@ namespace KGySoft.ComponentModel
 
         #endregion
 
+        #region Constants
+
+        internal const string CloneRequiresUnreferencedCode = "The fields of the stored property values might be removed by the trimmer. If such values are cloned by deep cloning, the removed fields might not be initialized properly.";
+
+        #endregion
+
         #region Fields
 
         #region Static Fields
 
-        private static readonly LockFreeCache<Type, StringKeyedDictionary<Type>>? reflectedPropertiesCache =
-            RuntimeFeature.IsDynamicCodeSupported ? new(GetReflectedProperties, null, LockFreeCacheOptions.Profile128) : null;
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2111:DynamicallyAccessedMembersAttributeViaReflection",
+            Justification = "Trimmed properties can affect the result of CanSetProperty, which is documented.")]
+        private static readonly LockFreeCache<Type, StringKeyedDictionary<Type>> reflectedPropertiesCache = new(GetReflectedProperties, null, LockFreeCacheOptions.Profile128);
 
         private static Func<object, object?> customClone =
             o => o is string || o is Delegate ? o
@@ -240,17 +247,7 @@ namespace KGySoft.ComponentModel
 
         #region Private Properties
 
-        private StringKeyedDictionary<Type>? ReflectedProperties
-        {
-            get
-            {
-#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
-                if (!RuntimeFeature.IsDynamicCodeSupported)
-                    return null;
-#endif
-                return reflectedProperties ??= reflectedPropertiesCache?[GetType()];
-            }
-        }
+        private StringKeyedDictionary<Type> ReflectedProperties => reflectedProperties ??= reflectedPropertiesCache[GetType()];
 
         #endregion
 
@@ -263,14 +260,7 @@ namespace KGySoft.ComponentModel
         /// <summary>
         /// Initializes a new instance of the <see cref="ObservableObjectBase"/> class.
         /// </summary>
-        protected ObservableObjectBase()
-        {
-#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
-            if (!RuntimeFeature.IsDynamicCodeSupported)
-                return;
-#endif
-            properties = new ThreadSafeDictionary<string, object?>(ReflectedProperties!.Count, StringSegmentComparer.Ordinal) { PreserveMergedKeys = true };
-        }
+        protected ObservableObjectBase() => properties = new ThreadSafeDictionary<string, object?>(ReflectedProperties.Count, StringSegmentComparer.Ordinal) { PreserveMergedKeys = true };
 
         #endregion
 
@@ -278,9 +268,8 @@ namespace KGySoft.ComponentModel
 
         #region Static Methods
 
-        [UnconditionalSuppressMessage("TrimAnalysis", "IL2070:TypeDynamicallyAccessedMemberTypesAnnotationMismatch", Justification = "Not called in AOT mode.")]
-        [UnconditionalSuppressMessage("TrimAnalysis", "IL2075:DynamicallyAccessedMembersReturnValueAnnotationMismatch", Justification = "Not called in AOT mode.")]
-        private static StringKeyedDictionary<Type> GetReflectedProperties(Type type)
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2075:DynamicallyAccessedMembersReturnValueAnnotationMismatch", Justification = "False alarm, t can only be the base types of type.")]
+        private static StringKeyedDictionary<Type> GetReflectedProperties([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllProperties)]Type type)
         {
             #region Local Methods
             
@@ -294,8 +283,6 @@ namespace KGySoft.ComponentModel
             }
 
             #endregion
-
-            Debug.Assert(!RuntimeFeature.IsDynamicCodeSupported);
 
             // public properties of all levels
             var result = new StringKeyedDictionary<Type>();
@@ -338,8 +325,7 @@ namespace KGySoft.ComponentModel
         /// <returns>
         /// A new object that is a copy of this instance.
         /// </returns>
-        [UnconditionalSuppressMessage("TrimAnalysis", "IL2072:ParameterDynamicallyAccessedMemberTypesCannotBeDetermined",
-            Justification = "If the parameterless constructor is trimmed in AOT mode, we throw the same exception as if it hadn't a parameterless constructor at all.")]
+        [RequiresUnreferencedCode(CloneRequiresUnreferencedCode)]
         public virtual ObservableObjectBase Clone(bool clonePropertyChanged = false)
         {
             Type type = GetType();
@@ -404,9 +390,10 @@ namespace KGySoft.ComponentModel
             return true;
         }
 
+        [RequiresUnreferencedCode("DeepClone")]
         internal ThreadSafeDictionary<string, object?> CloneProperties()
         {
-            ThreadSafeDictionary<string, object?> result = new ThreadSafeDictionary<string, object?>(Properties.Count) { PreserveMergedKeys = true };
+            var result = new ThreadSafeDictionary<string, object?>(Properties.Count) { PreserveMergedKeys = true };
             foreach (KeyValuePair<string, object?> property in Properties)
                 result[property.Key] = property.Value.DeepClone(customClone);
 
@@ -502,7 +489,7 @@ namespace KGySoft.ComponentModel
         /// then this method may throw an <see cref="InvalidOperationException"/>. Overriding the <see cref="CanSetProperty">CanSetProperty</see> method can solve this issue,
         /// but it may lead to further errors if multiple properties use the same key in the inner storage.</para>
         /// </remarks>
-        protected bool Set(object? value, bool invokeChangedEvent = true, [CallerMemberName] string propertyName = null!)
+        protected bool Set(object? value, bool invokeChangedEvent = true, [CallerMemberName]string propertyName = null!)
         {
             if (propertyName == null!)
                 Throw.ArgumentNullException(Argument.propertyName);
@@ -565,24 +552,22 @@ namespace KGySoft.ComponentModel
             if (!RuntimeFeature.IsDynamicCodeSupported)
                 return true;
 #endif
-            return ReflectedProperties!.ContainsKey(propertyName);
+            return ReflectedProperties.ContainsKey(propertyName);
         }
 
         /// <summary>
         /// Gets whether the specified property can be set.
         /// <br/>The base implementation allows to set the actual instance properties in this instance if the specified <paramref name="value"/> is compatible with the property type.
-        /// In native AOT mode the properties are not checked though (the result is always <see langword="true"/> if the method is not overridden).
+        /// In native AOT mode the possibly removed properties are not checked though (the result is always <see langword="true"/> for non-existing or removed properties if the method is not overridden).
         /// </summary>
         /// <param name="propertyName">Name of the property to set.</param>
         /// <param name="value">The property value to set.</param>
         /// <returns><see langword="true"/>, if the specified property can be set; otherwise, <see langword="false"/>.</returns>
         protected virtual bool CanSetProperty(string propertyName, object? value)
         {
-#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
-            if (!RuntimeFeature.IsDynamicCodeSupported)
-                return true;
-#endif
-            return ReflectedProperties!.TryGetValue(propertyName, out Type? type) && type.CanAcceptValue(value);
+            if (ReflectedProperties.TryGetValue(propertyName, out Type? type))
+                return type.CanAcceptValue(value);
+            return !RuntimeFeature.IsDynamicCodeSupported;
         }
 
         /// <summary>
@@ -663,6 +648,8 @@ namespace KGySoft.ComponentModel
 
         #region Explicitly Implemented Interface Methods
 
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "It makes little sense to annotate an explicit " +
+            "interface implementation if the interface member itself is not annotated. The public Clone method is annotated though.")]
         object ICloneable.Clone() => Clone();
 
         #endregion

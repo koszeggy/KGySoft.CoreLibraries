@@ -17,6 +17,7 @@
 
 using System;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
 #endregion
@@ -145,6 +146,7 @@ namespace KGySoft.ComponentModel
         #region Public Methods
 
         /// <inheritdoc />
+        [RequiresUnreferencedCode("This method creates a snapshot of the properties by cloning. " + CloneRequiresUnreferencedCode)]
         public void BeginNewEdit() => Editable.BeginNewEdit();
 
         /// <inheritdoc />
@@ -175,6 +177,8 @@ namespace KGySoft.ComponentModel
 
         #region Explicitly Implemented Interface Methods
 
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "It makes little sense to annotate an explicit " +
+            "interface implementation if the interface member itself is not annotated. The public BeginNewEdit method is annotated though.")]
         void IEditableObject.BeginEdit() => Editable.BeginEdit(EditableObjectBehavior);
         void IEditableObject.EndEdit() => Editable.EndEdit(EditableObjectBehavior);
         void IEditableObject.CancelEdit() => Editable.CancelEdit(EditableObjectBehavior);
