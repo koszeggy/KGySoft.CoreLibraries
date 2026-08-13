@@ -6,13 +6,28 @@
 ===============================================================================
 
 ~~~~~~~~~~
-* v11.0.0:
+! v11.0.0:
 ~~~~~~~~~~
 
 + General changes:
 ==================
 + Supporting Native AOT (Ahead of Time) deployment mode.
 
+! KGySoft.ComponentModel namespace:
+===================================
+! ICommandBinding interface:
+  ! New AddSource overloads for better AOT support. Not a breaking change on .NET [Core] and .NET Standard 2.1
+    platforms, where they maps to the previously existing nongeneric overload. But as this interface is not meant to
+    be implemented by consumers, it would hardly break even when targeting .NET Framework / Standard 2.0 platforms.
++ Command class:
+  + New CreateBinding/CreatePropertyBinding/CreateSynchronizedPropertyBinding/CreateTwoWayPropertyBinding overloads
+    for better AOT support.
++ CommandBindingsCollection class:
+  + New Add/AddPropertyBinding/AddSynchronizedPropertyBinding/AddTwoWayPropertyBinding overloads for better AOT
+    support.
++ CommandStateUpdater class:
+  + Now it supports static properties of the source type as well, if the source is a static event.
+  
 * KGySoft.Reflection namespace:
 ===============================
 + PropertyAccessor class: Supporting indexers with parameters passed by reference.

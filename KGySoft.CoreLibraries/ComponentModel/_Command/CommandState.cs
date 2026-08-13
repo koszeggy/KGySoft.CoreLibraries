@@ -183,6 +183,10 @@ namespace KGySoft.ComponentModel
         /// <param name="initialConfiguration">The initial configuration to use for initializing this <see cref="CommandState"/> instance. This parameter is optional.
         /// <br/>Default value: <see langword="null"/>.</param>
         /// <exception cref="ArgumentException"><paramref name="initialConfiguration"/> contains a non-<see cref="bool">bool</see>&#160;<c>Enabled</c> entry.</exception>
+#if !NET35
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "The whole DynamicObject base class is marked as [RequiresDynamicCode], " +
+            "but the constructor is safe. Treating CommandState as a dynamic object is just an option, and the overridden methods (property access) use simple dictionary access.")] 
+#endif
         public CommandState(IDictionary<string, object?>? initialConfiguration = null)
         {
             if (initialConfiguration == null)
@@ -261,7 +265,6 @@ namespace KGySoft.ComponentModel
         public bool TryGetValue(string key, out object? value) => stateProperties.TryGetValue(key, out value);
 
 #if !NET35
-
         /// <summary>
         /// Sets the <paramref name="value"/> of a state specified by the <see cref="SetMemberBinder.Name"/> property.
         /// </summary>

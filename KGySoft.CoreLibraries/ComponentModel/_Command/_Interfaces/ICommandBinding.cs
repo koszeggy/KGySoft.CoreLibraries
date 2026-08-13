@@ -18,6 +18,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 
 #endregion
 
@@ -110,7 +111,50 @@ namespace KGySoft.ComponentModel
         /// <param name="eventName">The name of the event on the source, which will trigger the underlying <see cref="ICommand"/>.</param>
         /// <returns>This <see cref="ICommandBinding"/> instance to provide fluent initialization.</returns>
         /// <seealso cref="ICommand"/>
+        [RequiresUnreferencedCode(CommandBinding.RequiresUnreferencedCodeMessage)]
         ICommandBinding AddSource(object source, string eventName);
+
+        /// <summary>
+        /// Adds an instance event source to this <see cref="ICommandBinding"/> instance.
+        /// If state updaters were added to the binding by the <see cref="AddStateUpdater">AddStateUpdater</see> method, then the <see cref="State"/> entries will be applied to the new source.
+        /// At least one source has to be added to the binding to be able to invoke the underlying <see cref="ICommand"/>.
+        /// </summary>
+        /// <typeparam name="T">A type that has the specified instance event.</typeparam>
+        /// <param name="source">The new source to add.</param>
+        /// <param name="eventName">The name of the event on the source, which will trigger the underlying <see cref="ICommand"/>.</param>
+        /// <returns>This <see cref="ICommandBinding"/> instance to provide fluent initialization.</returns>
+        /// <seealso cref="ICommand"/>
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+            Justification = "False alarm, this overload is exactly for the reason to be able to omit [RequiresUnreferencedCode] as long as [DynamicallyAccessedMembers] requirements are met.")]
+#endif
+        ICommandBinding AddSource<[DynamicallyAccessedMembers(Command.NeededSourceMembers)]T>(
+            T source, string eventName)
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+            where T : class => AddSource((object)source, eventName);
+#else
+            where T : class;
+#endif
+
+        /// <summary>
+        /// Adds a static event source to this <see cref="ICommandBinding"/> instance.
+        /// If state updaters were added to the binding by the <see cref="AddStateUpdater">AddStateUpdater</see> method, then the <see cref="State"/> entries will be applied to the new source.
+        /// At least one source has to be added to the binding to be able to invoke the underlying <see cref="ICommand"/>.
+        /// </summary>
+        /// <typeparam name="T">A type that has the specified static event.</typeparam>
+        /// <param name="eventName">The name of the event on the source, which will trigger the underlying <see cref="ICommand"/>.</param>
+        /// <returns>This <see cref="ICommandBinding"/> instance to provide fluent initialization.</returns>
+        /// <seealso cref="ICommand"/>
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+            Justification = "False alarm, this overload is exactly for the reason to be able to omit [RequiresUnreferencedCode] as long as [DynamicallyAccessedMembers] requirements are met.")]
+#endif
+        ICommandBinding AddSource<[DynamicallyAccessedMembers(Command.NeededSourceMembers)]T>(string eventName)
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+            => AddSource((object)typeof(T), eventName);
+#else
+            ;
+#endif
 
         /// <summary>
         /// Adds the target to this <see cref="ICommandBinding"/> instance. The underlying <see cref="ICommand"/> will be invoked for each added target.

@@ -90,7 +90,7 @@ namespace KGySoft.Reflection
         private const string instanceFieldReflectionRequiresUnreferencedCode = "When accessing an instance field by name, the field might not be available. " +
             "In native AOT mode it is recommended to use the overloads with FieldInfo parameter, or the FieldAccessor class instead.";
 
-        private const string interfaceImplementationReflectionRequiresUnreferencedCode = "If the trimming removes the implemented interfaces or its implementations of the declaring type, this method may return a false negative result.";
+        private const string interfaceImplementationReflectionRequiresUnreferencedCode = "If the trimming removes the implemented interfaces or their implementations in the declaring type, this method may return a false negative result.";
 
         #endregion
 

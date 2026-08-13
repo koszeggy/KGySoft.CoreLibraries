@@ -94,10 +94,20 @@ namespace KGySoft.ComponentModel
 
         #endregion
 
+        #region Constants
+
+        internal const string RequiresUnreferencedCodeMessage = "The source event might be removed by the trimmer. Use the generic overloads with the actual type that contains the event if possible.";
+
+        #endregion
+
         #region Fields
 
         #region Static Fields
 
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+            Justification = "Cannot apply RequiresUnreferencedCode to a field, but it's used in AddSource, which is annotated.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2111:DynamicallyAccessedMembersAttributeViaReflection",
+            Justification = "Cannot apply RequiresUnreferencedCode to a field, but it's used in AddSource, which is annotated.")]
         private static readonly LockFreeCache<Type, StringKeyedDictionary<EventInfo>> eventsCache = new(GetEvents, null, LockFreeCacheOptions.Profile128);
 
         #endregion
@@ -172,8 +182,13 @@ namespace KGySoft.ComponentModel
 
         #region Static Methods
 
+        [RequiresUnreferencedCode("PopulateEvents")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2075:DynamicallyAccessedMembersReturnValueAnnotationMismatch", Justification = "False alarm, t can only be the base types of type.")]
         private static StringKeyedDictionary<EventInfo> GetEvents([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllEvents)]Type type)
         {
+            #region Local Methods
+
+            [RequiresUnreferencedCode("IsExplicitInterfaceImplementation")]
             static void PopulateEvents(StringKeyedDictionary<EventInfo> dict, IEnumerable<EventInfo> events, bool checkExplicit)
             {
                 foreach (EventInfo eventInfo in events)
@@ -190,6 +205,8 @@ namespace KGySoft.ComponentModel
                         dict.TryAdd(interfaceEvent.Name, eventInfo);
                 }
             }
+
+            #endregion
 
             // public events of all levels
             var result = new StringKeyedDictionary<EventInfo>();
@@ -232,6 +249,9 @@ namespace KGySoft.ComponentModel
                 (command as IDisposable)?.Dispose();
         }
 
+        [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(SubscriptionInfo<EventArgs>))] // as the argument is always a class, it provides a shareable implementation for all cases
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "False alarm, that's why [DynamicDependency] is added.")]
         public ICommandBinding AddSource(object source, string eventName)
         {
             if (disposed)
@@ -278,6 +298,16 @@ namespace KGySoft.ComponentModel
             UpdateSource(source);
             return this;
         }
+
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+            Justification = "False alarm, this overload is exactly for the reason to be able to omit [RequiresUnreferencedCode] as long as [DynamicallyAccessedMembers] requirements are met.")]
+        public ICommandBinding AddSource<[DynamicallyAccessedMembers(Command.NeededSourceMembers)]T>(
+            T source, string eventName) where T : class => AddSource((object)source, eventName);
+
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+            Justification = "False alarm, this overload is exactly for the reason to be able to omit [RequiresUnreferencedCode] as long as [DynamicallyAccessedMembers] requirements are met.")]
+        public ICommandBinding AddSource<[DynamicallyAccessedMembers(Command.NeededSourceMembers)]T>(
+            string eventName) => AddSource((object)typeof(T), eventName);
 
         public bool RemoveSource(object source)
         {
@@ -366,6 +396,10 @@ namespace KGySoft.ComponentModel
 
         public override string ToString()
         {
+            #region Local Methods
+
+            [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+                Justification = "Not a problem, if a possible Name property has been trimmed, a fallback string representation is still provided.")]
             static string GetName(object? obj)
             {
                 if (obj == null)
@@ -379,6 +413,8 @@ namespace KGySoft.ComponentModel
                 type = obj.GetType();
                 return asString == null! || asString == type.ToString() ? type.GetName(TypeNameKind.ShortName) : asString;
             }
+
+            #endregion
 
             string sourceNames = Sources.Select(s => $"{GetName(s.Key)}.{s.Value.Join('/')}").Join('|');
             string targetNames = Targets.Select(GetName).Join('|');

@@ -18,6 +18,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
 using KGySoft.Collections;
@@ -36,6 +37,27 @@ namespace KGySoft.ComponentModel
     {
         #region Constants
 
+        #region Internal Constants
+
+        internal const string CommandBindingRequiresUnreferencedCode = "The bound event might be removed by the trimmer. " +
+            "Use the generic overloads with the actual source type if possible. Note that there are separate generic methods for static and instance events.";
+        internal const string PropertyBindingRequiresUnreferencedCode = "The bound properties or the changed event for the source property might be removed by the trimmer. " +
+            "Use the generic overloads with the actual source and target instance types if possible.";
+        internal const string TwoWayPropertyBindingRequiresUnreferencedCode = "The bound properties or their changed events might be removed by the trimmer. " +
+            "Use the generic overload with the actual source and target instance types if possible.";
+        internal const string NotifyPropertyChangedBindingRequiresUnreferencedCode = "The target property might be removed by the trimmer. " +
+            "Use the generic overloads with the actual source and target instance types if possible.";
+        internal const string TwoWayNotifyPropertyChangedBindingRequiresUnreferencedCode = "The bound properties might be removed by the trimmer. " +
+            "Use the generic overloads with the actual source and target instance types if possible.";
+
+        internal const DynamicallyAccessedMemberTypes NeededSourceMembers = DynamicallyAccessedMembers.AllEvents
+            | DynamicallyAccessedMembers.AllProperties // not just for property bindings, but also for command source state updaters
+            | DynamicallyAccessedMemberTypes.Interfaces; // so possible explicit interface event implementations remain discoverable when mapping simple event names
+
+        #endregion
+
+        #region Private Constants
+
         private const string stateSourcePropertyName = nameof(stateSourcePropertyName);
         private const string stateTargetPropertyName = nameof(stateTargetPropertyName);
         private const string stateFormatValue = nameof(stateFormatValue);
@@ -46,8 +68,12 @@ namespace KGySoft.ComponentModel
 
         #endregion
 
-        #region Properties
+        #endregion
 
+        #region Fields
+
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+            Justification = "Cannot apply RequiresUnreferencedCode to a field, but it's used in CreatePropertyBinding, which is annotated.")]
         private static readonly ICommand updatePropertyCommand = new SourceAwareTargetedCommand<EventArgs, object>(OnUpdatePropertyCommand);
         private static readonly ICommand propertyChangedCommand = new SourceAwareCommand<PropertyChangedEventArgs>(OnPropertyChangedCommand);
 
@@ -68,6 +94,7 @@ namespace KGySoft.ComponentModel
         /// <param name="initialState">The initial state of the binding.</param>
         /// <param name="targets">Zero or more targets for the binding.</param>
         /// <returns>An <see cref="ICommandBinding"/> instance, whose <see cref="ICommandBinding.State"/> is initialized by the provided <paramref name="initialState"/> and to which the specified <paramref name="source"/> and <paramref name="targets"/> are bound.</returns>
+        [RequiresUnreferencedCode(CommandBindingRequiresUnreferencedCode)]
         public static ICommandBinding CreateBinding(this ICommand command, object source, string eventName, IDictionary<string, object?>? initialState = null, params object[]? targets)
         {
             if (source == null!)
@@ -85,6 +112,59 @@ namespace KGySoft.ComponentModel
         }
 
         /// <summary>
+        /// Creates a binding for a <paramref name="command"/> using the specified <paramref name="source"/>, <paramref name="eventName"/> and <paramref name="targets"/> as well as the optionally provided initial state of the binding.
+        /// </summary>
+        /// <typeparam name="T">A type that has the specified instance event.</typeparam>
+        /// <param name="command">The command to bind.</param>
+        /// <param name="source">The source, which can trigger the command.</param>
+        /// <param name="eventName">The name of the event on the <paramref name="source"/> that can trigger the command.</param>
+        /// <param name="initialState">The initial state of the binding.</param>
+        /// <param name="targets">Zero or more targets for the binding.</param>
+        /// <returns>An <see cref="ICommandBinding"/> instance, whose <see cref="ICommandBinding.State"/> is initialized by the provided <paramref name="initialState"/> and to which the specified <paramref name="source"/> and <paramref name="targets"/> are bound.</returns>
+        public static ICommandBinding CreateBinding<[DynamicallyAccessedMembers(NeededSourceMembers)]T>(
+            this ICommand command, T source, string eventName, IDictionary<string, object?>? initialState = null, params object[]? targets)
+            where T : class
+        {
+            if (source == null!)
+                Throw.ArgumentNullException(Argument.source);
+            if (eventName == null!)
+                Throw.ArgumentNullException(Argument.eventName);
+            ICommandBinding result = command.CreateBinding(initialState).AddSource(source, eventName);
+            if (!targets.IsNullOrEmpty())
+            {
+                foreach (object target in targets!)
+                    result.AddTarget(target);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Creates a binding for a <paramref name="command"/> using the specified <typeparamref name="T"/> type, <paramref name="eventName"/> and <paramref name="targets"/> as well as the optionally provided initial state of the binding.
+        /// </summary>
+        /// <typeparam name="T">A type that has the specified static event.</typeparam>
+        /// <param name="command">The command to bind.</param>
+        /// <param name="eventName">The name of the event in the <typeparamref name="T"/> type that can trigger the command.</param>
+        /// <param name="initialState">The initial state of the binding.</param>
+        /// <param name="targets">Zero or more targets for the binding.</param>
+        /// <returns>An <see cref="ICommandBinding"/> instance, whose <see cref="ICommandBinding.State"/> is initialized by the provided <paramref name="initialState"/>
+        /// and to which the specified <paramref name="targets"/> are bound.</returns>
+        public static ICommandBinding CreateBinding<[DynamicallyAccessedMembers(NeededSourceMembers)]T>(
+            this ICommand command, string eventName, IDictionary<string, object?>? initialState = null, params object[]? targets)
+        {
+            if (eventName == null!)
+                Throw.ArgumentNullException(Argument.eventName);
+            ICommandBinding result = command.CreateBinding(initialState).AddSource<T>(eventName);
+            if (!targets.IsNullOrEmpty())
+            {
+                foreach (object target in targets!)
+                    result.AddTarget(target);
+            }
+
+            return result;
+        }
+
+        /// <summary>
         /// Creates a binding for a <paramref name="command"/> using the specified <paramref name="source"/>, <paramref name="eventName"/> and <paramref name="targets"/>.
         /// </summary>
         /// <param name="command">The command to bind.</param>
@@ -92,8 +172,35 @@ namespace KGySoft.ComponentModel
         /// <param name="eventName">The name of the event on the <paramref name="source"/> that can trigger the command.</param>
         /// <param name="targets">Zero or more targets for the binding.</param>
         /// <returns>An <see cref="ICommandBinding"/> instance, to which the specified <paramref name="source"/> and <paramref name="targets"/> are bound.</returns>
+        [RequiresUnreferencedCode(CommandBindingRequiresUnreferencedCode)]
         public static ICommandBinding CreateBinding(this ICommand command, object source, string eventName, params object[]? targets)
             => command.CreateBinding(source, eventName, null, targets);
+
+        /// <summary>
+        /// Creates a binding for a <paramref name="command"/> using the specified <paramref name="source"/>, <paramref name="eventName"/> and <paramref name="targets"/>.
+        /// </summary>
+        /// <typeparam name="T">A type that has the specified instance event.</typeparam>
+        /// <param name="command">The command to bind.</param>
+        /// <param name="source">The source, which can trigger the command.</param>
+        /// <param name="eventName">The name of the event on the <paramref name="source"/> that can trigger the command.</param>
+        /// <param name="targets">Zero or more targets for the binding.</param>
+        /// <returns>An <see cref="ICommandBinding"/> instance, to which the specified <paramref name="source"/> and <paramref name="targets"/> are bound.</returns>
+        public static ICommandBinding CreateBinding<[DynamicallyAccessedMembers(NeededSourceMembers)]T>(
+            this ICommand command, T source, string eventName, params object[]? targets)
+            where T : class
+            => command.CreateBinding(source, eventName, null, targets);
+
+        /// <summary>
+        /// Creates a binding for a <paramref name="command"/> using the specified <typeparamref name="T"/> type, <paramref name="eventName"/> and <paramref name="targets"/>.
+        /// </summary>
+        /// <typeparam name="T">A type that has the specified static event.</typeparam>
+        /// <param name="command">The command to bind.</param>
+        /// <param name="eventName">The name of the event in the <typeparamref name="T"/> type that can trigger the command.</param>
+        /// <param name="targets">Zero or more targets for the binding.</param>
+        /// <returns>An <see cref="ICommandBinding"/> instance, to which the specified <paramref name="targets"/> are bound.</returns>
+        public static ICommandBinding CreateBinding<[DynamicallyAccessedMembers(NeededSourceMembers)]T>(
+            this ICommand command, string eventName, params object[]? targets)
+            => command.CreateBinding<T>(eventName, null, targets);
 
         /// <summary>
         /// Creates a binding for a <paramref name="command"/> without any sources and targets. At least one source must be added by the <see cref="ICommandBinding.AddSource">ICommandBinding.AddSource</see> method to make the command invokable.
@@ -134,6 +241,7 @@ namespace KGySoft.ComponentModel
         /// The targets, which are added later by the <see cref="O:KGySoft.ComponentModel.ICommandBinding.AddTarget">ICommandBinding.AddTarget</see> methods, are set only when the
         /// <see cref="INotifyPropertyChanged.PropertyChanged"/> event occurs on the <paramref name="source"/> object.</para>
         /// </remarks>
+        [RequiresUnreferencedCode(NotifyPropertyChangedBindingRequiresUnreferencedCode)]
         public static ICommandBinding CreatePropertyBinding(this INotifyPropertyChanged source, string sourcePropertyName, string targetPropertyName, params object[]? targets)
             => CreatePropertyBinding((object)source, sourcePropertyName, targetPropertyName, null, targets, true, null);
 
@@ -157,6 +265,7 @@ namespace KGySoft.ComponentModel
         /// The targets, which are added later by the <see cref="O:KGySoft.ComponentModel.ICommandBinding.AddTarget">ICommandBinding.AddTarget</see> methods, are set only when the
         /// <see cref="INotifyPropertyChanged.PropertyChanged"/> event occurs on the <paramref name="source"/> object.</para>
         /// </remarks>
+        [RequiresUnreferencedCode(NotifyPropertyChangedBindingRequiresUnreferencedCode)]
         public static ICommandBinding CreatePropertyBinding(this INotifyPropertyChanged source, string sourcePropertyName, string targetPropertyName, Func<object?, object?>? format, params object[]? targets)
             => CreatePropertyBinding((object)source, sourcePropertyName, targetPropertyName, format, targets, true, null);
 
@@ -181,6 +290,7 @@ namespace KGySoft.ComponentModel
         /// The targets, which are added later by the <see cref="O:KGySoft.ComponentModel.ICommandBinding.AddTarget">ICommandBinding.AddTarget</see> methods, are set only when the
         /// <see cref="INotifyPropertyChanged.PropertyChanged"/> or <c><paramref name="sourcePropertyName"/>Changed</c> event occurs on the <paramref name="source"/> object.</para>
         /// </remarks>
+        [RequiresUnreferencedCode(PropertyBindingRequiresUnreferencedCode)]
         public static ICommandBinding CreatePropertyBinding(object source, string sourcePropertyName, string targetPropertyName, params object[]? targets)
             => CreatePropertyBinding(source, sourcePropertyName, targetPropertyName, null, targets, true, null);
 
@@ -206,7 +316,75 @@ namespace KGySoft.ComponentModel
         /// The targets, which are added later by the <see cref="O:KGySoft.ComponentModel.ICommandBinding.AddTarget">ICommandBinding.AddTarget</see> methods, are set only when the
         /// <see cref="INotifyPropertyChanged.PropertyChanged"/> or <c><paramref name="sourcePropertyName"/>Changed</c> event occurs on the <paramref name="source"/> object.</para>
         /// </remarks>
+        [RequiresUnreferencedCode(PropertyBindingRequiresUnreferencedCode)]
         public static ICommandBinding CreatePropertyBinding(object source, string sourcePropertyName, string targetPropertyName, Func<object?, object?>? format, params object[]? targets)
+            => CreatePropertyBinding(source, sourcePropertyName, targetPropertyName, format, targets, true, null);
+
+        /// <summary>
+        /// Creates a special binding for the <see cref="INotifyPropertyChanged.PropertyChanged"/> or <c><paramref name="sourcePropertyName"/>Changed</c> event of the specified <paramref name="source"/>, which allows to update the
+        /// specified <paramref name="targetPropertyName"/> in the <paramref name="targets"/>, when the property of <paramref name="sourcePropertyName"/> changes in the <paramref name="source"/>.
+        /// </summary>
+        /// <typeparam name="TSource">The type of the source object that has the specified <paramref name="sourcePropertyName"/> along with the event that notifies the change.</typeparam>
+        /// <typeparam name="TTarget">The type of the target object(s) that have the specified <paramref name="targetPropertyName"/>.</typeparam>
+        /// <param name="source">The source object, whose property specified by the <paramref name="sourcePropertyName"/> parameter is observed.</param>
+        /// <param name="sourcePropertyName">The name of the property, whose change is observed.</param>
+        /// <param name="targetPropertyName">The name of the property in the target object(s).</param>
+        /// <param name="targets">The targets to be updated. If the concrete instances to update have to be returned when the change occurs use the <see cref="ICommandBinding.AddTarget(Func{object})">ICommandBinding.AddTarget</see>
+        /// method on the result <see cref="ICommandBinding"/> instance.</param>
+        /// <returns>An <see cref="ICommandBinding"/> instance, to which the specified <paramref name="source"/> and <paramref name="targets"/> are bound.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="source"/>, <paramref name="sourcePropertyName"/> or <paramref name="targetPropertyName"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="source"/> is neither an <see cref="INotifyPropertyChanged"/> implementation nor has a <c><paramref name="sourcePropertyName"/>Changed</c> event.</exception>
+        /// <remarks>
+        /// <para>This method uses a prepared command internally, which is bound to the <see cref="INotifyPropertyChanged.PropertyChanged"/> event of the specified <paramref name="source"/> object.
+        /// Or, when <paramref name="source"/> does not implement <see cref="INotifyPropertyChanged"/>, then an event of name <paramref name="sourcePropertyName"/> postfixed by <c>Changed</c> should exist on the <paramref name="source"/> object.</para>
+        /// <para>The <see cref="ICommandState"/>, which is created for the underlying command contains the specified property names.
+        /// Do not remove these state entries; otherwise, the command will throw an <see cref="InvalidOperationException"/> when executed.</para>
+        /// <para>The property with <paramref name="targetPropertyName"/> will be set in the specified <paramref name="targets"/> immediately when this method is called.
+        /// The targets, which are added later by the <see cref="O:KGySoft.ComponentModel.ICommandBinding.AddTarget">ICommandBinding.AddTarget</see> methods, are set only when the
+        /// <see cref="INotifyPropertyChanged.PropertyChanged"/> or <c><paramref name="sourcePropertyName"/>Changed</c> event occurs on the <paramref name="source"/> object.</para>
+        /// </remarks>
+        [SuppressMessage("ReSharper", "CoVariantArrayConversion", Justification = "The array is never updated.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+            Justification = "False alarm, this overload is exactly for the reason to be able to omit [RequiresUnreferencedCode] as long as [DynamicallyAccessedMembers] requirements are met.")]
+        public static ICommandBinding CreatePropertyBinding<[DynamicallyAccessedMembers(NeededSourceMembers)]TSource,
+            [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllProperties)]TTarget>(
+            TSource source, string sourcePropertyName, string targetPropertyName, params TTarget[]? targets)
+            where TSource : class
+            where TTarget : class
+            => CreatePropertyBinding(source, sourcePropertyName, targetPropertyName, null, targets, true, null);
+
+        /// <summary>
+        /// Creates a special binding for the <see cref="INotifyPropertyChanged.PropertyChanged"/> or <c><paramref name="sourcePropertyName"/>Changed</c> event of the specified <paramref name="source"/>, which allows to update the
+        /// specified <paramref name="targetPropertyName"/> in the <paramref name="targets"/>, when the property of <paramref name="sourcePropertyName"/> changes in the <paramref name="source"/>.
+        /// </summary>
+        /// <typeparam name="TSource">The type of the source object that has the specified <paramref name="sourcePropertyName"/> along with the event that notifies the change.</typeparam>
+        /// <typeparam name="TTarget">The type of the target object(s) that have the specified <paramref name="targetPropertyName"/>.</typeparam>
+        /// <param name="source">The source object, whose property specified by the <paramref name="sourcePropertyName"/> parameter is observed.</param>
+        /// <param name="sourcePropertyName">The name of the property, whose change is observed.</param>
+        /// <param name="targetPropertyName">The name of the property in the target object(s).</param>
+        /// <param name="format">If not <see langword="null"/>, then can be used to format the value to be set in the <paramref name="targets"/>.</param>
+        /// <param name="targets">The targets to be updated. If the concrete instances to update have to be returned when the change occurs use the <see cref="ICommandBinding.AddTarget(Func{object})">ICommandBinding.AddTarget</see>
+        /// method on the result <see cref="ICommandBinding"/> instance.</param>
+        /// <returns>An <see cref="ICommandBinding"/> instance, to which the specified <paramref name="source"/> and <paramref name="targets"/> are bound.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="source"/>, <paramref name="sourcePropertyName"/> or <paramref name="targetPropertyName"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="source"/> is neither an <see cref="INotifyPropertyChanged"/> implementation nor has a <c><paramref name="sourcePropertyName"/>Changed</c> event.</exception>
+        /// <remarks>
+        /// <para>This method uses a prepared command internally, which is bound to the <see cref="INotifyPropertyChanged.PropertyChanged"/> event of the specified <paramref name="source"/> object.
+        /// Or, when <paramref name="source"/> does not implement <see cref="INotifyPropertyChanged"/>, then an event of name <paramref name="sourcePropertyName"/> postfixed by <c>Changed</c> should exist on the <paramref name="source"/> object.</para>
+        /// <para>The <see cref="ICommandState"/>, which is created for the underlying command contains the specified property names and <paramref name="format"/>parameters.
+        /// Do not remove these state entries; otherwise, the command will throw an <see cref="InvalidOperationException"/> when executed.</para>
+        /// <para>The property with <paramref name="targetPropertyName"/> will be set in the specified <paramref name="targets"/> immediately when this method is called.
+        /// The targets, which are added later by the <see cref="O:KGySoft.ComponentModel.ICommandBinding.AddTarget">ICommandBinding.AddTarget</see> methods, are set only when the
+        /// <see cref="INotifyPropertyChanged.PropertyChanged"/> or <c><paramref name="sourcePropertyName"/>Changed</c> event occurs on the <paramref name="source"/> object.</para>
+        /// </remarks>
+        [SuppressMessage("ReSharper", "CoVariantArrayConversion", Justification = "The array is never updated.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+            Justification = "False alarm, this overload is exactly for the reason to be able to omit [RequiresUnreferencedCode] as long as [DynamicallyAccessedMembers] requirements are met.")]
+        public static ICommandBinding CreatePropertyBinding<[DynamicallyAccessedMembers(NeededSourceMembers)]TSource,
+            [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllProperties)]TTarget>(
+            TSource source, string sourcePropertyName, string targetPropertyName, Func<object?, object?>? format, params TTarget[]? targets)
+            where TSource : class
+            where TTarget : class
             => CreatePropertyBinding(source, sourcePropertyName, targetPropertyName, format, targets, true, null);
 
         #endregion
@@ -234,6 +412,7 @@ namespace KGySoft.ComponentModel
         /// The targets, which are added later by the <see cref="O:KGySoft.ComponentModel.ICommandBinding.AddTarget">ICommandBinding.AddTarget</see> methods, are set only when the
         /// <see cref="INotifyPropertyChanged.PropertyChanged"/> event occurs on the <paramref name="source"/> object.</para>
         /// </remarks>
+        [RequiresUnreferencedCode(NotifyPropertyChangedBindingRequiresUnreferencedCode)]
         public static ICommandBinding CreateSynchronizedPropertyBinding(this INotifyPropertyChanged source, string sourcePropertyName, string targetPropertyName, bool awaitCompletion, params object[]? targets)
             => CreatePropertyBinding((object)source, sourcePropertyName, targetPropertyName, null, targets, true, awaitCompletion);
 
@@ -259,6 +438,7 @@ namespace KGySoft.ComponentModel
         /// The targets, which are added later by the <see cref="O:KGySoft.ComponentModel.ICommandBinding.AddTarget">ICommandBinding.AddTarget</see> methods, are set only when the
         /// <see cref="INotifyPropertyChanged.PropertyChanged"/> event occurs on the <paramref name="source"/> object.</para>
         /// </remarks>
+        [RequiresUnreferencedCode(NotifyPropertyChangedBindingRequiresUnreferencedCode)]
         public static ICommandBinding CreateSynchronizedPropertyBinding(this INotifyPropertyChanged source, string sourcePropertyName, string targetPropertyName, Func<object?, object?>? format, bool awaitCompletion, params object[]? targets)
             => CreatePropertyBinding((object)source, sourcePropertyName, targetPropertyName, format, targets, true, awaitCompletion);
 
@@ -285,6 +465,7 @@ namespace KGySoft.ComponentModel
         /// The targets, which are added later by the <see cref="O:KGySoft.ComponentModel.ICommandBinding.AddTarget">ICommandBinding.AddTarget</see> methods, are set only when the
         /// <see cref="INotifyPropertyChanged.PropertyChanged"/> or <c><paramref name="sourcePropertyName"/>Changed</c> event occurs on the <paramref name="source"/> object.</para>
         /// </remarks>
+        [RequiresUnreferencedCode(PropertyBindingRequiresUnreferencedCode)]
         public static ICommandBinding CreateSynchronizedPropertyBinding(object source, string sourcePropertyName, string targetPropertyName, bool awaitCompletion, params object[]? targets)
             => CreatePropertyBinding(source, sourcePropertyName, targetPropertyName, null, targets, true, awaitCompletion);
 
@@ -312,7 +493,79 @@ namespace KGySoft.ComponentModel
         /// The targets, which are added later by the <see cref="O:KGySoft.ComponentModel.ICommandBinding.AddTarget">ICommandBinding.AddTarget</see> methods, are set only when the
         /// <see cref="INotifyPropertyChanged.PropertyChanged"/> or <c><paramref name="sourcePropertyName"/>Changed</c> event occurs on the <paramref name="source"/> object.</para>
         /// </remarks>
+        [RequiresUnreferencedCode(PropertyBindingRequiresUnreferencedCode)]
         public static ICommandBinding CreateSynchronizedPropertyBinding(object source, string sourcePropertyName, string targetPropertyName, Func<object?, object?>? format, bool awaitCompletion, params object[]? targets)
+            => CreatePropertyBinding(source, sourcePropertyName, targetPropertyName, format, targets, true, awaitCompletion);
+
+        /// <summary>
+        /// Creates a special binding for the <see cref="INotifyPropertyChanged.PropertyChanged"/> or <c><paramref name="sourcePropertyName"/>Changed</c> event of the specified <paramref name="source"/>, which allows to update the
+        /// specified <paramref name="targetPropertyName"/> in the <paramref name="targets"/>, when the property of <paramref name="sourcePropertyName"/> changes in the <paramref name="source"/>.
+        /// The target properties will be set using the <see cref="SynchronizationContext"/> of the thread on which this method was called.
+        /// </summary>
+        /// <typeparam name="TSource">The type of the source object that has the specified <paramref name="sourcePropertyName"/> along with the event that notifies the change.</typeparam>
+        /// <typeparam name="TTarget">The type of the target object(s) that have the specified <paramref name="targetPropertyName"/>.</typeparam>
+        /// <param name="source">The source object, whose property specified by the <paramref name="sourcePropertyName"/> parameter is observed.</param>
+        /// <param name="sourcePropertyName">The name of the property, whose change is observed.</param>
+        /// <param name="targetPropertyName">The name of the property in the target object(s).</param>
+        /// <param name="awaitCompletion"><see langword="true"/> to block the thread of the triggering event until setting a target property is completed; otherwise, <see langword="false"/>.</param>
+        /// <param name="targets">The targets to be updated. If the concrete instances to update have to be returned when the change occurs use the <see cref="ICommandBinding.AddTarget(Func{object})">ICommandBinding.AddTarget</see>
+        /// method on the result <see cref="ICommandBinding"/> instance.</param>
+        /// <returns>An <see cref="ICommandBinding"/> instance, to which the specified <paramref name="source"/> and <paramref name="targets"/> are bound.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="source"/>, <paramref name="sourcePropertyName"/> or <paramref name="targetPropertyName"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="source"/> is neither an <see cref="INotifyPropertyChanged"/> implementation nor has a <c><paramref name="sourcePropertyName"/>Changed</c> event.</exception>
+        /// <remarks>
+        /// <para>This method uses a prepared command internally, which is bound to the <see cref="INotifyPropertyChanged.PropertyChanged"/> event of the specified <paramref name="source"/> object.
+        /// Or, when <paramref name="source"/> does not implement <see cref="INotifyPropertyChanged"/>, then an event of name <paramref name="sourcePropertyName"/> postfixed by <c>Changed</c> should exist on the <paramref name="source"/> object.</para>
+        /// <para>The <see cref="ICommandState"/>, which is created for the underlying command contains the specified property names.
+        /// Do not remove these state entries; otherwise, the command will throw an <see cref="InvalidOperationException"/> when executed.</para>
+        /// <para>The property with <paramref name="targetPropertyName"/> will be set in the specified <paramref name="targets"/> immediately when this method is called.
+        /// The targets, which are added later by the <see cref="O:KGySoft.ComponentModel.ICommandBinding.AddTarget">ICommandBinding.AddTarget</see> methods, are set only when the
+        /// <see cref="INotifyPropertyChanged.PropertyChanged"/> or <c><paramref name="sourcePropertyName"/>Changed</c> event occurs on the <paramref name="source"/> object.</para>
+        /// </remarks>
+        [SuppressMessage("ReSharper", "CoVariantArrayConversion", Justification = "The array is never updated.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+            Justification = "False alarm, this overload is exactly for the reason to be able to omit [RequiresUnreferencedCode] as long as [DynamicallyAccessedMembers] requirements are met.")]
+        public static ICommandBinding CreateSynchronizedPropertyBinding<[DynamicallyAccessedMembers(NeededSourceMembers)]TSource,
+            [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllProperties)]TTarget>(
+            TSource source, string sourcePropertyName, string targetPropertyName, bool awaitCompletion, params TTarget[]? targets)
+            where TSource : class
+            where TTarget : class
+            => CreatePropertyBinding(source, sourcePropertyName, targetPropertyName, null, targets, true, awaitCompletion);
+
+        /// <summary>
+        /// Creates a special binding for the <see cref="INotifyPropertyChanged.PropertyChanged"/> or <c><paramref name="sourcePropertyName"/>Changed</c> event of the specified <paramref name="source"/>, which allows to update the
+        /// specified <paramref name="targetPropertyName"/> in the <paramref name="targets"/>, when the property of <paramref name="sourcePropertyName"/> changes in the <paramref name="source"/>.
+        /// The target properties will be set using the <see cref="SynchronizationContext"/> of the thread on which this method was called.
+        /// </summary>
+        /// <typeparam name="TSource">The type of the source object that has the specified <paramref name="sourcePropertyName"/> along with the event that notifies the change.</typeparam>
+        /// <typeparam name="TTarget">The type of the target object(s) that have the specified <paramref name="targetPropertyName"/>.</typeparam>
+        /// <param name="source">The source object, whose property specified by the <paramref name="sourcePropertyName"/> parameter is observed.</param>
+        /// <param name="sourcePropertyName">The name of the property, whose change is observed.</param>
+        /// <param name="targetPropertyName">The name of the property in the target object(s).</param>
+        /// <param name="format">If not <see langword="null"/>, then can be used to format the value to be set in the <paramref name="targets"/>.</param>
+        /// <param name="awaitCompletion"><see langword="true"/> to block the thread of the triggering event until setting a target property is completed; otherwise, <see langword="false"/>.</param>
+        /// <param name="targets">The targets to be updated. If the concrete instances to update have to be returned when the change occurs use the <see cref="ICommandBinding.AddTarget(Func{object})">ICommandBinding.AddTarget</see>
+        /// method on the result <see cref="ICommandBinding"/> instance.</param>
+        /// <returns>An <see cref="ICommandBinding"/> instance, to which the specified <paramref name="source"/> and <paramref name="targets"/> are bound.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="source"/>, <paramref name="sourcePropertyName"/> or <paramref name="targetPropertyName"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="source"/> is neither an <see cref="INotifyPropertyChanged"/> implementation nor has a <c><paramref name="sourcePropertyName"/>Changed</c> event.</exception>
+        /// <remarks>
+        /// <para>This method uses a prepared command internally, which is bound to the <see cref="INotifyPropertyChanged.PropertyChanged"/> event of the specified <paramref name="source"/> object.
+        /// Or, when <paramref name="source"/> does not implement <see cref="INotifyPropertyChanged"/>, then an event of name <paramref name="sourcePropertyName"/> postfixed by <c>Changed</c> should exist on the <paramref name="source"/> object.</para>
+        /// <para>The <see cref="ICommandState"/>, which is created for the underlying command contains the specified property names and <paramref name="format"/>parameters.
+        /// Do not remove these state entries; otherwise, the command will throw an <see cref="InvalidOperationException"/> when executed.</para>
+        /// <para>The property with <paramref name="targetPropertyName"/> will be set in the specified <paramref name="targets"/> immediately when this method is called.
+        /// The targets, which are added later by the <see cref="O:KGySoft.ComponentModel.ICommandBinding.AddTarget">ICommandBinding.AddTarget</see> methods, are set only when the
+        /// <see cref="INotifyPropertyChanged.PropertyChanged"/> or <c><paramref name="sourcePropertyName"/>Changed</c> event occurs on the <paramref name="source"/> object.</para>
+        /// </remarks>
+        [SuppressMessage("ReSharper", "CoVariantArrayConversion", Justification = "The array is never updated.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+            Justification = "False alarm, this overload is exactly for the reason to be able to omit [RequiresUnreferencedCode] as long as [DynamicallyAccessedMembers] requirements are met.")]
+        public static ICommandBinding CreateSynchronizedPropertyBinding<[DynamicallyAccessedMembers(NeededSourceMembers)]TSource,
+            [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllProperties)]TTarget>(
+            TSource source, string sourcePropertyName, string targetPropertyName, Func<object?, object?>? format, bool awaitCompletion, params TTarget[]? targets)
+            where TSource : class
+            where TTarget : class
             => CreatePropertyBinding(source, sourcePropertyName, targetPropertyName, format, targets, true, awaitCompletion);
 
         #endregion
@@ -336,6 +589,7 @@ namespace KGySoft.ComponentModel
         /// <returns>The created pair of <see cref="ICommandBinding"/> instances.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="source"/>, <paramref name="sourcePropertyName"/> or <paramref name="target"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="source"/> or <paramref name="target"/> is neither an <see cref="INotifyPropertyChanged"/> implementation nor has a <c><paramref name="sourcePropertyName"/>Changed</c> event.</exception>
+        [RequiresUnreferencedCode(TwoWayNotifyPropertyChangedBindingRequiresUnreferencedCode)]
         public static ICommandBinding[] CreateTwoWayPropertyBinding(this INotifyPropertyChanged source, string sourcePropertyName, INotifyPropertyChanged target,
             string? targetPropertyName = null, Func<object?, object?>? format = null, Func<object?, object?>? parse = null)
         {
@@ -367,6 +621,7 @@ namespace KGySoft.ComponentModel
         /// <returns>The created pair of <see cref="ICommandBinding"/> instances.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="source"/>, <paramref name="sourcePropertyName"/> or <paramref name="target"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentException"><paramref name="source"/> or <paramref name="target"/> is neither an <see cref="INotifyPropertyChanged"/> implementation nor has a <c><paramref name="sourcePropertyName"/>Changed</c> event.</exception>
+        [RequiresUnreferencedCode(TwoWayPropertyBindingRequiresUnreferencedCode)]
         public static ICommandBinding[] CreateTwoWayPropertyBinding(object source, string sourcePropertyName, object target,
             string? targetPropertyName = null, Func<object?, object?>? format = null, Func<object?, object?>? parse = null)
         {
@@ -382,6 +637,34 @@ namespace KGySoft.ComponentModel
             result[0].InvokeCommand(source, eventName, isNotifyPropertyChanged ? new PropertyChangedEventArgs(sourcePropertyName) : EventArgs.Empty);
             return result;
         }
+
+        /// <summary>
+        /// Creates a pair of special bindings for the <see cref="INotifyPropertyChanged.PropertyChanged"/> or <c><paramref name="sourcePropertyName"/>Changed</c> event of the specified <paramref name="source"/>
+        /// and <paramref name="target"/>, which allow to update the specified <paramref name="targetPropertyName"/> and <paramref name="sourcePropertyName"/> in both directions when any of them changes.
+        /// </summary>
+        /// <typeparam name="TSource">The type of the source object that has the specified <paramref name="sourcePropertyName"/> along with the event that notifies about the change.</typeparam>
+        /// <typeparam name="TTarget">The type of the target object that have the specified <paramref name="targetPropertyName"/> along with the event that notifies about the change.</typeparam>
+        /// <param name="source">The source object, whose property specified by the <paramref name="sourcePropertyName"/> parameter is observed.</param>
+        /// <param name="sourcePropertyName">The name of the <paramref name="source"/> property, whose change is observed.</param>
+        /// <param name="target">The target object, whose property specified by the <paramref name="targetPropertyName"/> parameter is observed.</param>
+        /// <param name="targetPropertyName">The name of the <paramref name="target"/> property, whose change is observed. If <see langword="null"/>,
+        /// then it is considered as the same as <paramref name="sourcePropertyName"/>. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <param name="format">If not <see langword="null"/>, then can be used to format the value to be set in the <paramref name="target"/> object. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <param name="parse">If not <see langword="null"/>, then can be used to parse the value to be set in the <paramref name="source"/> object. This parameter is optional.
+        /// <br/>Default value: <see langword="null"/>.</param>
+        /// <returns>The created pair of <see cref="ICommandBinding"/> instances.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="source"/>, <paramref name="sourcePropertyName"/> or <paramref name="target"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="source"/> or <paramref name="target"/> is neither an <see cref="INotifyPropertyChanged"/> implementation nor has a <c><paramref name="sourcePropertyName"/>Changed</c> event.</exception>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+            Justification = "False alarm, this overload is exactly for the reason to be able to omit [RequiresUnreferencedCode] as long as [DynamicallyAccessedMembers] requirements are met.")]
+        public static ICommandBinding[] CreateTwoWayPropertyBinding<[DynamicallyAccessedMembers(NeededSourceMembers)]TSource,
+            [DynamicallyAccessedMembers(NeededSourceMembers)]TTarget>(
+            TSource source, string sourcePropertyName, TTarget target, string? targetPropertyName = null, Func<object?, object?>? format = null, Func<object?, object?>? parse = null)
+            where TSource : class
+            where TTarget : class
+            => CreateTwoWayPropertyBinding((object)source, sourcePropertyName, (object)target, targetPropertyName, format, parse);
 
         #endregion
 
@@ -419,6 +702,8 @@ namespace KGySoft.ComponentModel
 
         #region Internal Methods
 
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicEvents, typeof(INotifyPropertyChanged))]
+        [RequiresUnreferencedCode("AddSource, OnUpdatePropertyCommand (used by updatePropertyCommand)")]
         internal static ICommandBinding CreatePropertyBinding(object source, string sourcePropertyName, string targetPropertyName, Func<object?, object?>? format, object[]? targets, bool syncTargets, bool? awaitCompletion)
         {
             if (source == null!)
@@ -488,10 +773,12 @@ namespace KGySoft.ComponentModel
                 .AddSource(source, nameof(source.PropertyChanged));
         }
 
+        [RequiresUnreferencedCode("GetProperty, DoSetProperty")]
         private static void OnUpdatePropertyCommand(ICommandSource src, ICommandState state, object target)
         {
             #region Local Methods
 
+            [RequiresUnreferencedCode("TrySetProperty, SetProperty")]
             static void DoSetProperty(object target, string targetPropertyName, object? propertyValue)
             {
                 switch (target)
@@ -500,8 +787,6 @@ namespace KGySoft.ComponentModel
                         // if there is no such actual settable property, then setting by interface
                         if (!Reflector.TrySetProperty(target, targetPropertyName, propertyValue))
                             persistableTarget.SetProperty(targetPropertyName, propertyValue);
-                        else
-                            Reflector.SetProperty(target, targetPropertyName, propertyValue);
                         break;
                     case ICommandState stateTarget:
                         stateTarget[targetPropertyName] = propertyValue;
