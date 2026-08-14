@@ -31,11 +31,20 @@
 * KGySoft.Reflection namespace:
 ===============================
 + PropertyAccessor class: Supporting indexers with parameters passed by reference.
-- MethodAccessor, PropertyAccessor, CreateInstanceAccessor classes: fixed validation in some nongeneric error scenarios.
+- MethodAccessor, PropertyAccessor, CreateInstanceAccessor classes: fixed validation in some nongeneric error
+  scenarios.
 
 + KGySoft.Resources namespace:
 ==============================
 + ResXDataNode class: new constructor overload
+
+- KGySoft.Security.Cryptography
+===============================
+- SecureRandom class:
+  - Next(int): maxValue was not allowed to be zero via the SecureRandom instance returned by the static
+    SecureRandom.Instance property, though a regular Random instance allows this case.
+  - Next(int, int): maxValue was not allowed to be the same as minValue via the SecureRandom instance returned by
+    the static SecureRandom.Instance property, though a regular Random instance allows this case.
 
 
 ~~~~~~~~~~

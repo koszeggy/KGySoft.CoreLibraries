@@ -78,8 +78,8 @@ namespace KGySoft.Security.Cryptography
 
 #if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             public override int Next() => RandomNumberGenerator.GetInt32(Int32.MaxValue);
-            public override int Next(int maxValue) => RandomNumberGenerator.GetInt32(maxValue);
-            public override int Next(int minValue, int maxValue) => RandomNumberGenerator.GetInt32(minValue, maxValue);
+            public override int Next(int maxValue) => maxValue <= 1 ? base.Next(maxValue) : RandomNumberGenerator.GetInt32(maxValue);
+            public override int Next(int minValue, int maxValue) => maxValue <= minValue ? base.Next(minValue, maxValue) : RandomNumberGenerator.GetInt32(minValue, maxValue);
 #endif
 
             #endregion
