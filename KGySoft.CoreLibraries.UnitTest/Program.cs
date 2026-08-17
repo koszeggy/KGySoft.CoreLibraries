@@ -22,6 +22,8 @@ using System.IO;
 using System.Runtime.InteropServices;
 #endif
 
+using KGySoft.Reflection;
+
 using NUnit.Framework.Api;
 using NUnit.Framework.Interfaces;
 using NUnit.Framework.Internal;
@@ -113,15 +115,17 @@ namespace KGySoft.CoreLibraries
 
         #region Methods
 
-        internal static void Main()
+        #region Internal Methods
+
+        internal static void Main(string[] args)
         {
             // This executes all tests. Can be useful for .NET 3.5, which is executed on .NET 4.x runtime otherwise.
             // Filtering can be done by reflecting NUnit.Framework.Internal.Filters.TestNameFilter,
             // or just calling the method to debug directly
             Console.ForegroundColor = ConsoleColor.Gray;
             Console.WriteLine(FrameworkVersion);
+            ProcessArgs(args, out TestFilter filter);
 
-            TestFilter filter = TestFilter.Empty; // (TestFilter)Reflection.Reflector.CreateInstance(Reflection.Reflector.ResolveType("NUnit.Framework.Internal.Filters.ClassNameFilter")!, "KGySoft.CoreLibraries.UnitTests.Reflection.ReflectorTest");
             var runner = new NUnitTestAssemblyRunner(new DefaultTestAssemblyBuilder());
             runner.Load(typeof(Program).Assembly, new Dictionary<string, object>());
             Console.WriteLine("Executing tests...");
@@ -135,6 +139,56 @@ namespace KGySoft.CoreLibraries
             if (!String.IsNullOrEmpty(result.Message))
                 Console.WriteLine($"Message: {result.Message}");
             ProcessChildren(result.Children);
+        }
+
+        #endregion
+
+        #region Private Methods
+
+        private static void ProcessArgs(string[] args, out TestFilter filter)
+        {
+            filter = TestFilter.Empty;
+            if ("-?".In(args) || "-h".ContainsAny(StringComparison.OrdinalIgnoreCase, args) || "--help".ContainsAny(StringComparison.OrdinalIgnoreCase, args))
+            {
+                Console.WriteLine("Available command line arguments:");
+                Console.WriteLine("  -? or -h or --help         Displays this help message.");
+                Console.WriteLine("  TestName=<name>            Runs only tests with the specified name.");
+                Console.WriteLine("  ClassName=<name>           Runs only tests in the specified class.");
+                Environment.Exit(-1);
+            }
+
+            foreach (string arg in args)
+            {
+                if (arg.StartsWith("TestName=", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (filter != TestFilter.Empty)
+                    {
+                        Console.WriteLine($"Error: Duplicate filter: {arg}");
+                        Environment.Exit(-1);
+                    }
+
+                    string testName = arg.Substring(arg.IndexOf('=') + 1);
+                    Console.WriteLine($"Applying test name filter: {testName}");
+                    filter = (TestFilter)Reflector.CreateInstance(Reflector.ResolveType("NUnit.Framework.Internal.Filters.TestNameFilter")!, testName);
+                }
+                else if (arg.StartsWith("ClassName=", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (filter != TestFilter.Empty)
+                    {
+                        Console.WriteLine($"Error: Duplicate filter: {arg}");
+                        Environment.Exit(-1);
+                    }
+
+                    string className = arg.Substring(arg.IndexOf('=') + 1);
+                    Console.WriteLine($"Applying class name filter: {className}");
+                    filter = (TestFilter)Reflector.CreateInstance(Reflector.ResolveType("NUnit.Framework.Internal.Filters.ClassNameFilter")!, className);
+                }
+                else
+                {
+                    Console.WriteLine($"Error: Unknown argument: {arg}");
+                    Environment.Exit(-1);
+                }
+            }
         }
 
         private static void ProcessChildren(IEnumerable<ITestResult> children)
@@ -163,6 +217,8 @@ namespace KGySoft.CoreLibraries
                     Console.WriteLine($"Assertion #{i}: {child.AssertionResults[i].Message}{Environment.NewLine}{child.AssertionResults[i].StackTrace}{Environment.NewLine}");
             }
         }
+
+        #endregion
 
         #endregion
     }
