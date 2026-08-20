@@ -4,33 +4,22 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-        // {
-        //     "name": "Performance Test .NET 9.0 Launch (console)",
-        //     "type": "coreclr",
-        //     "request": "launch",
-        //     "preLaunchTask": "build Performance Test",
-        //     "program": "${workspaceFolder}/KGySoft.CoreLibraries.PerformanceTest/bin/Debug/net9.0/KGySoft.CoreLibraries.PerformanceTest.dll",
-        //     "args": [],
-        //     "cwd": "${workspaceFolder}/KGySoft.CoreLibraries.PerformanceTest",
-        //     "console": "internalConsole",
-        //     "stopAtEntry": false
-        // },
         {
-            "name": "UnitTest .NET 9.0 Launch (console)",
+            "name": "Debug UnitTest Console App",
+            "type": "dotnet",
+            "request": "launch",
+            "projectPath": "${workspaceFolder}/KGySoft.CoreLibraries.UnitTest/KGySoft.CoreLibraries.UnitTest.csproj"
+        },
+        {
+            "name": "UnitTest .NET 10.0 Launch",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build Unit Test",
-            "program": "${workspaceFolder}/KGySoft.CoreLibraries.UnitTest/bin/Debug/net9.0/KGySoft.CoreLibraries.UnitTest.dll",
+            "program": "${workspaceFolder}/KGySoft.CoreLibraries.UnitTest/bin/Debug/net10.0/KGySoft.CoreLibraries.UnitTest.dll",
             "args": [],
             "cwd": "${workspaceFolder}/KGySoft.CoreLibraries.UnitTest",
             "console": "internalConsole",
             "stopAtEntry": false
         },
-        {
-            "name": ".NET Core Attach",
-            "type": "coreclr",
-            "request": "attach",
-            "processId": "${command:pickProcess}"
-        }
     ]
 }

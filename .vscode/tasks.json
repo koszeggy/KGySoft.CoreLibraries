@@ -15,7 +15,8 @@
         // },
         {
             "label": "build Unit Test",
-            "command": "/usr/bin/dotnet",
+            // "command": "/usr/bin/dotnet",
+            "command": "dotnet",
             "type": "process",
             "args": [
                 "build",
@@ -25,30 +26,5 @@
             ],
             "problemMatcher": "$msCompile"
         },
-        {
-            "label": "publish",
-            "command": "/usr/bin/dotnet",
-            "type": "process",
-            "args": [
-                "publish",
-                "${workspaceFolder}/KGySoft.CoreLibraries.PerformanceTest/KGySoft.CoreLibraries.PerformanceTest.csproj",
-                "/property:GenerateFullPaths=true",
-                "/consoleloggerparameters:NoSummary"
-            ],
-            "problemMatcher": "$msCompile"
-        },
-        {
-            "label": "watch",
-            "command": "/usr/bin/dotnet",
-            "type": "process",
-            "args": [
-                "watch",
-                "run",
-                "${workspaceFolder}/KGySoft.CoreLibraries.PerformanceTest/KGySoft.CoreLibraries.PerformanceTest.csproj",
-                "/property:GenerateFullPaths=true",
-                "/consoleloggerparameters:NoSummary"
-            ],
-            "problemMatcher": "$msCompile"
-        }
     ]
 }
