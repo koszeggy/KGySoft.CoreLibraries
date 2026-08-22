@@ -394,11 +394,11 @@ namespace KGySoft.CoreLibraries
                 }  
 #endif
 
-                bool simpleEquals = typeRef.IsEnum || typeof(Encoding).IsAssignableFrom(typeRef);
+                bool simpleEquals = typeRef.IsEnum || typeof(Encoding).IsAssignableFrom(typeRef) || typeRef.IsPrimitive || typeof(IComparable).IsAssignableFrom(typeRef);
 
                 // Structural equality if forced for non-primitive types or when Equals is not overridden
-                if (forceEqualityByMembers && !typeRef.IsPrimitive && !typeof(IComparable).IsAssignableFrom(typeRef)
-                    || !simpleEquals && !typeRef.GetMember(nameof(Equals), MemberTypes.Method, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly).Any(m => m is MethodInfo mi && mi.GetParameters() is ParameterInfo[] parameters && parameters.Length == 1 && parameters[0].ParameterType == typeof(object) && mi.DeclaringType != mi.GetBaseDefinition().DeclaringType))
+                if (!simpleEquals && (forceEqualityByMembers
+                    || !typeRef.GetMember(nameof(Equals), MemberTypes.Method, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly).Any(m => m is MethodInfo mi && mi.GetParameters() is ParameterInfo[] parameters && parameters.Length == 1 && parameters[0].ParameterType == typeof(object) && mi.DeclaringType != mi.GetBaseDefinition().DeclaringType)))
                 {
                     return CheckMembersEqual(reference, check, forceEqualityByMembers, errors, checkedObjects);
                 }
