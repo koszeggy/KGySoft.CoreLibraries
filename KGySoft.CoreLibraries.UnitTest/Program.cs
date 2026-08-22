@@ -22,11 +22,8 @@ using System.IO;
 using System.Runtime.InteropServices;
 #endif
 
-using KGySoft.Reflection;
-
 using NUnit.Framework.Api;
 using NUnit.Framework.Interfaces;
-using NUnit.Framework.Internal;
 
 #endregion
 
@@ -119,82 +116,63 @@ namespace KGySoft.CoreLibraries
 
         internal static void Main(string[] args)
         {
+            //args = ["TestName=UsageTest", "-f"/*, "ClassName=AllowNullDictionaryTest"*/];
+
             // This executes all tests. Can be useful for .NET 3.5, which is executed on .NET 4.x runtime otherwise.
-            // Filtering can be done by reflecting NUnit.Framework.Internal.Filters.TestNameFilter,
-            // or just calling the method to debug directly
+            // It is useful also for testing the library in AOT mode after publishing with the PublishAot option.
+            // Filtering can be done by arguments (see TestRunConfig.ProcessArgs)
+            ConsoleColor origColor = Console.ForegroundColor;
             Console.ForegroundColor = ConsoleColor.Gray;
             Console.WriteLine(FrameworkVersion);
-            ProcessArgs(args, out TestFilter filter);
-
-            var runner = new NUnitTestAssemblyRunner(new DefaultTestAssemblyBuilder());
-            runner.Load(typeof(Program).Assembly, new Dictionary<string, object>());
-            Console.WriteLine("Executing tests...");
+            var config = new TestRunConfig(args);
             ConsoleWriter = Console.Out;
-            ITestResult result = runner.Run(new ConsoleTestReporter(), filter);
+            ITestResult result;
+
+#if NETCOREAPP3_0_OR_GREATER
+            if (config.FallbackRunnerRequired)
+            {
+                Console.WriteLine("Executing tests by the fallback test runner...");
+                var runner = new AotTestRunner(config);
+                result = runner.Run(new ConsoleTestReporter());
+            }
+            else
+#endif
+            {
+                Console.WriteLine("Executing tests by NUnit test runner...");
+                var runner = new NUnitTestAssemblyRunner(new DefaultTestAssemblyBuilder());
+                runner.Load(typeof(Program).Assembly, new Dictionary<string, object>());
+                result = runner.Run(new ConsoleTestReporter(), config.TestFilter);
+            }
+
             Console.ForegroundColor = result.FailCount > 0 ? ConsoleColor.Red
-                : result.InconclusiveCount > 0 ? ConsoleColor.Yellow
+                : result.InconclusiveCount > 0 || result.WarningCount > 0 ? ConsoleColor.Yellow
+                : result.PassCount == 0 ? ConsoleColor.DarkCyan
                 : ConsoleColor.Green;
 
-            Console.WriteLine($"Passed: {result.PassCount}; Failed: {result.FailCount}; Inconclusive: {result.InconclusiveCount}; Skipped: {result.SkipCount}");
+            Console.WriteLine($"Passed: {result.PassCount}; Failed: {result.FailCount}; Inconclusive: {result.InconclusiveCount}; Skipped: {result.SkipCount}; Warnings: {result.WarningCount}");
             if (!String.IsNullOrEmpty(result.Message))
                 Console.WriteLine($"Message: {result.Message}");
             ProcessChildren(result.Children);
+            Console.ForegroundColor = origColor;
         }
 
         #endregion
 
         #region Private Methods
 
-        private static void ProcessArgs(string[] args, out TestFilter filter)
-        {
-            filter = TestFilter.Empty;
-            if ("-?".In(args) || "-h".ContainsAny(StringComparison.OrdinalIgnoreCase, args) || "--help".ContainsAny(StringComparison.OrdinalIgnoreCase, args))
-            {
-                Console.WriteLine("Available command line arguments:");
-                Console.WriteLine("  -? or -h or --help         Displays this help message.");
-                Console.WriteLine("  TestName=<name>            Runs only tests with the specified name.");
-                Console.WriteLine("  ClassName=<name>           Runs only tests in the specified class.");
-                Environment.Exit(-1);
-            }
-
-            foreach (string arg in args)
-            {
-                if (arg.StartsWith("TestName=", StringComparison.OrdinalIgnoreCase))
-                {
-                    if (filter != TestFilter.Empty)
-                    {
-                        Console.WriteLine($"Error: Duplicate filter: {arg}");
-                        Environment.Exit(-1);
-                    }
-
-                    string testName = arg.Substring(arg.IndexOf('=') + 1);
-                    Console.WriteLine($"Applying test name filter: {testName}");
-                    filter = (TestFilter)Reflector.CreateInstance(Reflector.ResolveType("NUnit.Framework.Internal.Filters.TestNameFilter")!, testName);
-                }
-                else if (arg.StartsWith("ClassName=", StringComparison.OrdinalIgnoreCase))
-                {
-                    if (filter != TestFilter.Empty)
-                    {
-                        Console.WriteLine($"Error: Duplicate filter: {arg}");
-                        Environment.Exit(-1);
-                    }
-
-                    string className = arg.Substring(arg.IndexOf('=') + 1);
-                    Console.WriteLine($"Applying class name filter: {className}");
-                    filter = (TestFilter)Reflector.CreateInstance(Reflector.ResolveType("NUnit.Framework.Internal.Filters.ClassNameFilter")!, className);
-                }
-                else
-                {
-                    Console.WriteLine($"Error: Unknown argument: {arg}");
-                    Environment.Exit(-1);
-                }
-            }
-        }
-
         private static void ProcessChildren(IEnumerable<ITestResult> children)
         {
             foreach (ITestResult child in children)
             {
+                if (child.ResultState == ResultState.Warning)
+                {
+                    Console.ForegroundColor = ConsoleColor.Gray;
+                    Console.WriteLine();
+                    Console.WriteLine("====================================");
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine($"{child.Name}: {child.Message}");
+                }
+
                 if (child.HasChildren)
                 {
                     ProcessChildren(child.Children);
