@@ -18,6 +18,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+#if NETCOREAPP3_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
+#endif
 using System.Linq;
 using System.Reflection;
 
@@ -133,6 +136,9 @@ namespace KGySoft.CoreLibraries
 
         #region Static Methods
 
+#if NETCOREAPP3_0_OR_GREATER
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "All generic test type arguments are statically rooted by the AOT test runner.")]
+#endif
         private static void RunTestCases(object instance, TestResultContainer classResult, ITestListener listener, MethodInfo method, IReadOnlyCollection<MethodInfo> setupMethods, IReadOnlyCollection<MethodInfo> tearDownMethods)
         {
             foreach ((object?[] Parameters, Type[]? TypeArguments) testCaseInfo in GetTestCases(method, instance))
@@ -164,7 +170,7 @@ namespace KGySoft.CoreLibraries
                     catch (Exception e)
                     {
                         var state = e is AssertionException ? ResultState.SetUpFailure : ResultState.SetUpError;
-                        testResult.SetResult(state, e.Message, e.StackTrace);
+                        testResult.SetResult(state, $"{e.GetType()}: {e.Message}", e.StackTrace);
                         return;
                     }
 
@@ -184,7 +190,7 @@ namespace KGySoft.CoreLibraries
                             AssertionException => ResultState.Failure,
                             _ => ResultState.Error
                         };
-                        testResult.SetResult(state, e.Message, e.StackTrace);
+                        testResult.SetResult(state, $"{e.GetType()}: {e.Message}", e.StackTrace);
                     }
                     finally
                     {
@@ -197,7 +203,7 @@ namespace KGySoft.CoreLibraries
                         catch (Exception e)
                         {
                             if (testResult.ResultState == ResultState.Success || testResult.ResultState == ResultState.Inconclusive)
-                                testResult.SetResult(ResultState.TearDownError, e.Message, e.StackTrace);
+                                testResult.SetResult(ResultState.TearDownError, $"{e.GetType()}: {e.Message}", e.StackTrace);
                         }
                     }
                 }
@@ -360,7 +366,7 @@ namespace KGySoft.CoreLibraries
             catch (Exception e)
             {
                 var state = e is AssertionException ? ResultState.SetUpFailure : ResultState.SetUpError;
-                classResult.SetResult(state, e.Message, e.StackTrace);
+                classResult.SetResult(state, $"{e.GetType()}: {e.Message}", e.StackTrace);
                 return true;
             }
 
@@ -395,7 +401,7 @@ namespace KGySoft.CoreLibraries
             }
             catch (Exception e)
             {
-                classResult.SetResult(ResultState.TearDownError, e.Message, e.StackTrace);
+                classResult.SetResult(ResultState.TearDownError, $"{e.GetType()}: {e.Message}", e.StackTrace);
             }
 
             return true;

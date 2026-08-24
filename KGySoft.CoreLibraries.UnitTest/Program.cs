@@ -21,6 +21,9 @@ using System.IO;
 #if NETCOREAPP
 using System.Runtime.InteropServices;
 #endif
+#if AOT
+using System.Runtime.Versioning;
+#endif
 
 using NUnit.Framework.Api;
 using NUnit.Framework.Interfaces;
@@ -100,6 +103,8 @@ namespace KGySoft.CoreLibraries
         private static string FrameworkVersion =>
 #if NETFRAMEWORK
             $".NET Framework Runtime {typeof(object).Assembly.ImageRuntimeVersion}";
+#elif AOT
+            $"{((TargetFrameworkAttribute)Attribute.GetCustomAttribute(typeof(Program).Assembly, typeof(TargetFrameworkAttribute)))!.FrameworkDisplayName} ({RuntimeInformation.ProcessArchitecture})";
 #elif NETCOREAPP
             $".NET Core {Path.GetFileName(Path.GetDirectoryName(typeof(object).Assembly.Location))} ({RuntimeInformation.ProcessArchitecture})";
 #else

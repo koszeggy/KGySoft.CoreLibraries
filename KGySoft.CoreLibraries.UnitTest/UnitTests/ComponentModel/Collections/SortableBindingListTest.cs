@@ -19,9 +19,11 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 using KGySoft.Collections;
+using KGySoft.Collections.ObjectModel;
 using KGySoft.ComponentModel;
 using KGySoft.Reflection;
 
@@ -79,6 +81,7 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel.Collections
 
         [TestCase(ListSortDirection.Ascending)]
         [TestCase(ListSortDirection.Descending)]
+        [DynamicDependency("itemToSortedIndex", typeof(SortableBindingList<>))]
         public void UsageTest(ListSortDirection direction)
         {
             var coll = new SortableBindingList<int> { CheckConsistency = true };

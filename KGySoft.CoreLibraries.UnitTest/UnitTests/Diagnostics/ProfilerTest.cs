@@ -35,7 +35,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Diagnostics
         #region Public Methods
 
         [Test]
-        public void MesureTest()
+        public void MeasureTest()
         {
             const string category = "ProfilerTest.MeasureTest";
 

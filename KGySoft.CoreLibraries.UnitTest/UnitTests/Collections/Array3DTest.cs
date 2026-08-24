@@ -49,7 +49,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
                 } 
             }
 
-            Assert.AreEqual(array, array3D);
+            CollectionAssert.AreEqual(array, array3D);
         }
 
         [Test]
@@ -81,8 +81,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Index from = 1;
             Index to = ^1;
             Span<int> span = section.AsSpan;
-            Assert.AreEqual(span.Slice(1, 2).ToArray(), array[0][0].Slice(1, 2));
-            Assert.AreEqual(span[(from.Value * planeSize)..^(to.Value * planeSize)].ToArray(), array[from..to].AsSpan.ToArray());
+            CollectionAssert.AreEqual(span.Slice(1, 2).ToArray(), array[0][0].Slice(1, 2));
+            CollectionAssert.AreEqual(span[(from.Value * planeSize)..^(to.Value * planeSize)].ToArray(), array[from..to].AsSpan.ToArray());
 #endif
         }
 

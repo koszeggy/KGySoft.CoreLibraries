@@ -44,7 +44,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
                     array[y, x] = array2d[y, x] = y * width + x;
             }
 
-            Assert.AreEqual(array, array2d);
+            CollectionAssert.AreEqual(array, array2d);
         }
 
         [Test]
@@ -73,8 +73,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Index from = 1;
             Index to = ^1;
             Span<int> span = section.AsSpan;
-            Assert.AreEqual(span.Slice(1, 2).ToArray(), array[0].Slice(1, 2));
-            Assert.AreEqual(span[(from.Value * width)..^(to.Value * width)].ToArray(), array[from..to].AsSpan.ToArray());
+            CollectionAssert.AreEqual(span.Slice(1, 2).ToArray(), array[0].Slice(1, 2));
+            CollectionAssert.AreEqual(span[(from.Value * width)..^(to.Value * width)].ToArray(), array[from..to].AsSpan.ToArray());
 #endif
         }
 

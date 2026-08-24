@@ -22,6 +22,9 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 using KGySoft.Collections;
+#if AOT
+using KGySoft.Reflection;
+#endif
 
 using NUnit.Framework;
 
@@ -45,6 +48,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
     public class AllowNullDictionaryTest
     {
         #region Methods
+
+#if AOT
+        [OneTimeSetUp]
+        public void EnsureAotGenericTests()
+        {
+            Reflector.MemberOf(() => UsageTest<int, string>(default, default!));
+            Reflector.MemberOf(() => UsageTest<int?, string>(default, default!));
+        }
+#endif
 
         [SuppressMessage("ReSharper", "GenericEnumeratorNotDisposed", Justification = "Its Dispose doesn't do anything")]
         [TestCase("key1", "value1")]

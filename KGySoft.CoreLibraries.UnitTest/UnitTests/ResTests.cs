@@ -22,6 +22,7 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Resources;
+using System.Runtime.CompilerServices;
 
 using KGySoft.Reflection;
 using KGySoft.Resources;
@@ -70,7 +71,8 @@ namespace KGySoft.CoreLibraries.UnitTests
             var generateSettings = new GenerateObjectSettings { AllowCreateObjectWithoutConstructor = true }; // for PropertyDescriptors
             foreach (MethodInfo mi in methods)
             {
-                var method = mi.IsGenericMethodDefinition ? mi.MakeGenericMethod(random.NextObject(typeof(Enum)).GetType()) : mi;
+                var enumType = RuntimeFeature.IsDynamicCodeSupported ? random.NextObject(typeof(Enum))!.GetType() : typeof(ConsoleColor);
+                var method = mi.IsGenericMethodDefinition ? mi.MakeGenericMethod(enumType) : mi;
                 if (method.ReturnType == typeof(void))
                     continue;
 
@@ -132,7 +134,29 @@ namespace KGySoft.CoreLibraries.UnitTests
         #region Instance Methods
 
         [OneTimeSetUp]
-        public void Initialize() => LanguageSettings.DynamicResourceManagersSource = ResourceManagerSources.CompiledOnly;
+        public void Initialize()
+        {
+            LanguageSettings.DynamicResourceManagersSource = ResourceManagerSources.CompiledOnly;
+            if (RuntimeFeature.IsDynamicCodeSupported)
+                return;
+
+            Reflector.MemberOf(() => Res.ArgumentMustBeGreaterThan<ConsoleColor>(default));
+            Reflector.MemberOf(() => Res.ArgumentMustBeGreaterThanOrEqualTo<ConsoleColor>(default));
+            Reflector.MemberOf(() => Res.ArgumentMustBeLessThan<ConsoleColor>(default));
+            Reflector.MemberOf(() => Res.ArgumentMustBeLessThanOrEqualTo<ConsoleColor>(default));
+            Reflector.MemberOf(() => Res.ArgumentMustBeBetween<ConsoleColor>(default, default));
+            Reflector.MemberOf(() => Res.PropertyMustBeGreaterThan<ConsoleColor>(default, default));
+            Reflector.MemberOf(() => Res.PropertyMustBeGreaterThanOrEqualTo<ConsoleColor>(default, default));
+            Reflector.MemberOf(() => Res.PropertyMustBeLessThan<ConsoleColor>(default, default));
+            Reflector.MemberOf(() => Res.PropertyMustBeLessThanOrEqualTo<ConsoleColor>(default, default));
+            Reflector.MemberOf(() => Res.PropertyMustBeBetween<ConsoleColor>(default, default, default));
+            Reflector.MemberOf(() => Res.EnumOutOfRangeWithValues<ConsoleColor>(default));
+            Reflector.MemberOf(() => Res.FlagsEnumOutOfRangeWithValues<ConsoleColor>(default));
+            Reflector.MemberOf(() => Res.EnumOutOfRange<ConsoleColor>(default));
+            Reflector.MemberOf(() => Res.FlagsEnumOutOfRange<ConsoleColor>(default));
+            Reflector.MemberOf(() => Res.UnmanagedTypeArgumentExpected<ConsoleColor>(default));
+            Reflector.MemberOf(() => Res.UnmanagedMethodTypeArgumentExpected<ConsoleColor>());
+        }
 
         [Test]
         public void TestUnknownResource() => Assert.IsTrue(Reflector.InvokeMethod(typeof(Res), "Get", "unknown").ToString().StartsWith(unavailableResourcePrefix, StringComparison.Ordinal));

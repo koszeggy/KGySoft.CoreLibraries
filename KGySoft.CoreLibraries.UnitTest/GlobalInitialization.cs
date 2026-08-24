@@ -16,9 +16,18 @@
 #region Usings
 
 using System;
-#if !NETFRAMEWORK
+#if NETCOREAPP && !NETCOREAPP3_0_OR_GREATER
 using System.Drawing;
+#endif
+#if NETCOREAPP3_0_OR_GREATER
+#if !AOT
 using System.IO;
+#else
+using System.Runtime.CompilerServices;
+#endif
+#endif
+#if !NETFRAMEWORK
+using System.Runtime.Versioning;
 using System.Text;
 #endif
 
@@ -38,15 +47,24 @@ namespace KGySoft.CoreLibraries
         {
             if (Program.ConsoleWriter != null)
                 Console.SetOut(Program.ConsoleWriter);
-            Console.WriteLine($"Referenced runtime by KGySoft.CoreLibraries: {typeof(Module).Assembly.GetReferencedAssemblies()[0]}");
+#if NETCOREAPP3_0_OR_GREATER
+            if (RuntimeFeature.IsDynamicCodeSupported)
+#endif
+            {
+                Console.WriteLine($"Referenced runtime by KGySoft.CoreLibraries: {typeof(Module).Assembly.GetReferencedAssemblies()[0]}");
+            }
 #if NET35
             if (typeof(object).Assembly.GetName().Version != new Version(2, 0, 0, 0))
                 Assert.Inconclusive($"mscorlib version does not match to .NET 3.5: {typeof(object).Assembly.GetName().Version}. Change the executing framework to .NET 2.0 or execute the tests as a console application.");
 #elif NETFRAMEWORK
             if (typeof(object).Assembly.GetName().Version != new Version(4, 0, 0, 0))
                 Assert.Inconclusive($"mscorlib version does not match to .NET 4.x: {typeof(object).Assembly.GetName().Version}. Change the executing framework to .NET 4.x");
+#elif AOT
+            TargetFrameworkAttribute attr = (TargetFrameworkAttribute)Attribute.GetCustomAttribute(typeof(GlobalInitialization).Assembly, typeof(TargetFrameworkAttribute))!;
+            string frameworkName = attr.FrameworkDisplayName is { Length: > 0 } name ? name : attr.FrameworkName;
+            Console.WriteLine($"Tests are executing on {frameworkName}");
 #elif NETCOREAPP
-            Console.WriteLine($"Tests executed on .NET Core version {Path.GetFileName(Path.GetDirectoryName(typeof(object).Assembly.Location))}");
+            Console.WriteLine($"Tests are executing on .NET Core version {Path.GetFileName(Path.GetDirectoryName(typeof(object).Assembly.Location))}");
 #else
 #error unknown .NET version
 #endif

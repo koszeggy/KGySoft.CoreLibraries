@@ -18,6 +18,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 using KGySoft.Collections;
@@ -40,7 +41,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
         private const string testString = "dummy";
 
         #endregion
-        
+
         #region Methods
 
         #region Static Methods
@@ -48,6 +49,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
         /// <summary>
         /// Creates a list with given conditions
         /// </summary>
+        [DynamicDependency("startIndex", typeof(CircularList<>))]
         private static CircularList<T> PrepareList<T>(int capacity, int startIndex, int count)
         {
             CircularList<T> result = new CircularList<T>(capacity);

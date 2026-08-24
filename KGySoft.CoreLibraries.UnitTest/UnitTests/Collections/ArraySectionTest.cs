@@ -45,7 +45,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Assert.IsFalse(section.IsNull);
             Assert.IsTrue(section.IsNullOrEmpty);
             Assert.IsTrue(section.Length == 0);
-            Assert.AreEqual(Reflector.EmptyArray<int>(), section.ToArray());
+            CollectionAssert.AreEqual(Reflector.EmptyArray<int>(), section.ToArray());
         }
 
         [Test]
@@ -59,7 +59,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Assert.IsTrue(section.Equals(Reflector.EmptyArray<int>()));
             Assert.IsTrue(section.Equals((object)Reflector.EmptyArray<int>()));
 
-            Assert.AreNotEqual(ArraySection<_>.Null, ArraySection<_>.Empty);
+            Assert.IsFalse(ArraySection<_>.Null.Equals(ArraySection<_>.Empty)); // Assert.AreNotEqual fails in AOT mode, and CollectionAssert.AreNotEqual returns true
         }
 
         [Test]
@@ -82,16 +82,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
 
 #if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             Span<int> span = section.AsSpan;
-            Assert.AreEqual(span.Slice(1, 2).ToArray(), subsection);
-            Assert.AreEqual(span[1..^1].ToArray(), section[1..^1]);
+            CollectionAssert.AreEqual(span.Slice(1, 2).ToArray(), subsection);
+            CollectionAssert.AreEqual(span[1..^1].ToArray(), section[1..^1]);
 #endif
 
             subsection = section.Slice(1, 0);
             Assert.AreEqual(0, subsection.Length);
             Assert.AreEqual(0, subsection.ToArray()!.Length);
 
-            Assert.AreEqual(ArraySection<int>.Empty, ArraySection<int>.Empty.Slice(0));
-            Assert.AreEqual(ArraySection<int>.Null, ArraySection<int>.Null.Slice(0));
+            CollectionAssert.AreEqual(ArraySection<int>.Empty, ArraySection<int>.Empty.Slice(0));
+            CollectionAssert.AreEqual(ArraySection<int>.Null, ArraySection<int>.Null.Slice(0));
         }
 
 #if !NETFRAMEWORK
@@ -101,7 +101,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
         public void SerializationTest()
         {
             var section = ArraySection<int>.Null;
-            Assert.AreEqual(section, section.DeepClone(false));
+            CollectionAssert.AreEqual(section, section.DeepClone(false));
 
             section = new[] { 1, 2, 3, 4, 5 }.AsSection(1, 3);
             Assert.IsTrue(section.SequenceEqual(section.DeepClone(false)));

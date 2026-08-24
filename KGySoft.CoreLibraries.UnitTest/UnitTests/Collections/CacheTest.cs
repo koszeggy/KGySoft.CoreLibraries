@@ -300,12 +300,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Assert.AreEqual(cache.Count, cacheCopy.Count);
             Assert.AreEqual(cache.Capacity, cacheCopy.Capacity);
             Assert.AreEqual(cache.Behavior, cacheCopy.Behavior);
-            Assert.AreEqual(cache.DisposeDroppedValues, cacheCopy.DisposeDroppedValues);
-            Assert.AreEqual(cache.EnsureCapacity, cacheCopy.EnsureCapacity);
+            Assert.IsTrue(cache.DisposeDroppedValues == cacheCopy.DisposeDroppedValues, "diff in DisposeDroppedValues"); // Assert.AreEqual throws IndexOutOfRangeException for bool values with trimming
+            Assert.IsTrue(cache.EnsureCapacity == cacheCopy.EnsureCapacity, "diff in EnsureCapacity"); // Assert.AreEqual throws IndexOutOfRangeException for bool values with trimming
 
-            Assert.IsTrue(cache.SequenceEqual(cacheCopy));
-            Assert.IsTrue(cache.Keys.SequenceEqual(cacheCopy.Keys));
-            Assert.IsTrue(cache.Values.SequenceEqual(cacheCopy.Values));
+            CollectionAssert.AreEqual(cache, cacheCopy);
+            CollectionAssert.AreEqual(cache.Keys, cacheCopy.Keys);
+            CollectionAssert.AreEqual(cache.Values, cacheCopy.Values);
 #endif
         }
 

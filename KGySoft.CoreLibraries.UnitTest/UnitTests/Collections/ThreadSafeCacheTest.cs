@@ -22,6 +22,7 @@ using System.Threading.Tasks;
 #endif
 
 using KGySoft.Collections;
+using KGySoft.Reflection;
 
 using NUnit.Framework;
 
@@ -49,6 +50,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
         #endregion
 
         #region Methods
+
+#if AOT
+        [OneTimeSetUp]
+        public void EnsureAotGenericTests()
+        {
+            Reflector.MemberOf(() => UsageTest<int>(null, false, null));
+            Reflector.MemberOf(() => UsageTest<string>(null, false, null));
+            Reflector.MemberOf(() => UsageTest<ConsoleColor>(null, false, null));
+        }
+#endif
 
         [Test]
         public void GrowOnlyDictionaryTest()

@@ -31,7 +31,7 @@ using System.Text;
 namespace KGySoft.CoreLibraries
 {
     /// <summary>
-    /// Moved to the tests from Libraries (it was internal anyway) because not recommended to use in general as it is not repeatable.
+    /// Moved to the tests from Libraries (they were internal anyway).
     /// </summary>
     internal static class Extensions
     {

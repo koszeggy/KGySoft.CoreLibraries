@@ -16,6 +16,7 @@
 #region Usings
 
 using System.Collections;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 using KGySoft.Collections;
@@ -35,6 +36,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections.ObjectModel
 
         #region Static Methods
 
+        [DynamicDependency("itemToIndex", typeof(FastLookupCollection<>))]
         private static void AssertConsistency<T>(FastLookupCollection<T> coll, bool expectNull = false)
         {
             var actualItemToIndex = (AllowNullDictionary<T, int>)Reflector.GetField(coll, "itemToIndex");

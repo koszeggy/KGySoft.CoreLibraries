@@ -17,6 +17,7 @@
     <!--To test AOT mode-->
     <PublishAot Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">true</PublishAot>
     <CustomResourceTypesSupport Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">true</CustomResourceTypesSupport>
+    <DefineConstants>$(DefineConstants);AOT</DefineConstants>
 
     <IsWindows Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' == 'true'">true</IsWindows>
     <RunAnalyzersDuringLiveAnalysis>false</RunAnalyzersDuringLiveAnalysis>
@@ -59,6 +60,7 @@
   <ItemGroup>
     <!--NUnit 4.x has major breaking changes and does not support Framework 4.6.2- and .NET 6-. -->
     <PackageReference Include="NUnit" Version="3.14" />
+    <TrimmerRootAssembly Include="nunit.framework" />
 
     <!-- Cannot use different adapter versions for the different frameworks, because the Test Explorer chooses the highest version for all platforms (even though build works).
          6.0.0 works with .NET Framework 4.6.2 and .NET 8+ only 

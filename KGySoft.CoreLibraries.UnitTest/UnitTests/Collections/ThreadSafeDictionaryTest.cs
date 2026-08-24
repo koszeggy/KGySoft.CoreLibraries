@@ -506,7 +506,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             ParallelHelper.For(0, results.Length,
                 y => results[y] = dict.ContainsKey(key));
 
-            CollectionAssert.DoesNotContain(results, false);
+            Assert.IsFalse(results.Contains(false)); // CollectionAssert.DoesNotContain throws an IndexOutOfRangeException when the tests are published in AOT mode
         }
 
         [Test]
@@ -524,7 +524,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             ParallelHelper.For(0, results.Length,
                 y => results[y] = dict.TryAdd(key, false));
 
-            CollectionAssert.DoesNotContain(results, true);
+            Assert.IsFalse(results.Contains(true)); // CollectionAssert.DoesNotContain throws an IndexOutOfRangeException when the tests are published in AOT mode
         }
 
         [Test]
@@ -542,7 +542,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             ParallelHelper.For(0, results.Length,
                 y => results[y] = dict.TryUpdate(key, true, false));
 
-            CollectionAssert.DoesNotContain(results, true);
+            Assert.IsFalse(results.Contains(true)); // CollectionAssert.DoesNotContain throws an IndexOutOfRangeException when the tests are published in AOT mode
         }
 
         [Test]

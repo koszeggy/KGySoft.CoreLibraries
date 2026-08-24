@@ -16,9 +16,10 @@
 #region Usings
 
 using System;
+#if NETFRAMEWORK
 using System.Collections;
+#endif
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 #if NETFRAMEWORK
 using System.Reflection;
 using System.Security.Permissions;
@@ -99,13 +100,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Assert.IsNull(array.ToArray());
 
             array = Reflector.EmptyArray<int>();
-            Assert.AreEqual(CastArray<int, byte>.Empty, array);
+            CollectionAssert.AreEqual(CastArray<int, byte>.Empty, array);
             Assert.IsTrue(array == CastArray<int, byte>.Empty);
             Assert.IsFalse(array.IsNull);
             Assert.IsTrue(array.IsNullOrEmpty);
             Assert.IsTrue(array.Length == 0);
 
-            Assert.AreNotEqual(CastArray<int, byte>.Null, CastArray<int, byte>.Empty);
+            Assert.IsFalse(CastArray<int, byte>.Null.Equals(CastArray<int, byte>.Empty)); // Assert.AreNotEqual throws IndexOutOfRangeException in AOT mode
             CollectionAssert.AreEqual(CastArray<int, byte>.Null, CastArray<int, byte>.Empty);
         }
 
@@ -245,11 +246,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             }
         }
 
+#if !AOT // In AOT mode it can throw either TypeInitializationException or InvalidOperationException, depending on whether the tests are published with trimming
         [Test]
         public void ConstraintTest()
         {
             Throws<TypeInitializationException>(() => Reflector.CreateInstance(typeof(CastArray<,>), [typeof(int), typeof(DictionaryEntry)], new int[1].AsSection()));
         }
+#endif
 
 #if !NETFRAMEWORK
         [Obsolete]
@@ -258,10 +261,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
         public void SerializationTest()
         {
             var castArray = CastArray<int, byte>.Null;
-            Assert.AreEqual(castArray, castArray.DeepClone(false));
+            Assert.IsTrue(castArray.Equals(castArray.DeepClone(false))); // Assert.AreEqual throws IndexOutOfRangeException in AOT mode, and CollectionAssert.AreEqual checks only that both are empty
 
             castArray = new[] { 1, 2, 3, 4, 5 }.Cast<int, byte>();
-            Assert.IsTrue(castArray.SequenceEqual(castArray.DeepClone(false)));
+            CollectionAssert.AreEqual(castArray, castArray.DeepClone(false));
         }
 
 #if NETFRAMEWORK
