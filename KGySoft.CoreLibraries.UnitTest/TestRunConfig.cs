@@ -47,12 +47,10 @@ namespace KGySoft.CoreLibraries
             : ClassName is string className ? (TestFilter)Reflector.CreateInstance(Reflector.ResolveType("NUnit.Framework.Internal.Filters.ClassNameFilter")!, className)
             : TestFilter.Empty;
 
-#if NETCOREAPP3_0_OR_GREATER
         internal bool FallbackRunnerRequired => forceFallbackRunner
             || !RuntimeFeature.IsDynamicCodeSupported // AOT mode
             || (TestName != null && ClassName != null) // Both filters are set, but NUnit does not support combining them
             || ClassName?.Contains('.') == false; // ClassName is set without namespace
-#endif
 
         #endregion
 

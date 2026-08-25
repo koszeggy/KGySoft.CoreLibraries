@@ -121,7 +121,7 @@ namespace KGySoft.CoreLibraries
 
         internal static void Main(string[] args)
         {
-            //args = ["TestName=UsageTest", "-f"/*, "ClassName=AllowNullDictionaryTest"*/];
+            //args = ["TestName=SerializeSimpleTypes", "ClassName=BinarySerializerTest"];
 
             // This executes all tests. Can be useful for .NET 3.5, which is executed on .NET 4.x runtime otherwise.
             // It is useful also for testing the library in AOT mode after publishing with the PublishAot option.
@@ -133,15 +133,13 @@ namespace KGySoft.CoreLibraries
             ConsoleWriter = Console.Out;
             ITestResult result;
 
-#if NETCOREAPP3_0_OR_GREATER
             if (config.FallbackRunnerRequired)
             {
                 Console.WriteLine("Executing tests by the fallback test runner...");
-                var runner = new AotTestRunner(config);
+                var runner = new FallbackTestRunner(config);
                 result = runner.Run(new ConsoleTestReporter());
             }
             else
-#endif
             {
                 Console.WriteLine("Executing tests by NUnit test runner...");
                 var runner = new NUnitTestAssemblyRunner(new DefaultTestAssemblyBuilder());

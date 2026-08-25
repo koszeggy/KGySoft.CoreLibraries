@@ -1,13 +1,11 @@
-#if NETCOREAPP3_0_OR_GREATER
+#if NETCOREAPP3_0_OR_GREATER && AOT
 
 using System.Diagnostics.CodeAnalysis;
 
 namespace KGySoft.CoreLibraries
 {
-    internal sealed partial class AotTestRunner
+    internal sealed partial class FallbackTestRunner
     {
-        [DynamicDependency(DynamicallyAccessedMemberTypes.All, "NUnit.Framework.Internal.TestExecutionContext", "nunit.framework")]
-        [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(GlobalInitialization))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(UnitTests.ResTests))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(UnitTests.Collections.AllowNullDictionaryTest))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(UnitTests.Collections.Array2DTest))]
@@ -65,7 +63,7 @@ namespace KGySoft.CoreLibraries
         [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(UnitTests.Serialization.Xml.XmlSerializerTest))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(UnitTests.Threading.AsyncHelperTest))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(UnitTests.Threading.ParallelHelperTest))]
-        private AotTestRunner()
+        private FallbackTestRunner()
         {
         }
     }

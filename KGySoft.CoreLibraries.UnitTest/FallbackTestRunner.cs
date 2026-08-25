@@ -1,7 +1,7 @@
 #region Copyright
 
 ///////////////////////////////////////////////////////////////////////////////
-//  File: AotTestRunner.cs
+//  File: FallbackTestRunner.cs
 ///////////////////////////////////////////////////////////////////////////////
 //  Copyright (C) KGy SOFT, 2005-2026 - All Rights Reserved
 //
@@ -34,7 +34,8 @@ using NUnit.Framework.Internal;
 
 namespace KGySoft.CoreLibraries
 {
-    internal sealed partial class AotTestRunner
+    // ReSharper disable once PartialTypeWithSinglePart - the other part is used in .NET Core 3.0+ in AOT mode
+    internal sealed partial class FallbackTestRunner
     {
         #region Nested classes
 
@@ -124,8 +125,10 @@ namespace KGySoft.CoreLibraries
 
         #region Constructors
 
-        internal AotTestRunner(TestRunConfig config)
-            : this() // to ensure the [DynamicDependency] attributes take effect
+        internal FallbackTestRunner(TestRunConfig config)
+#if NETCOREAPP3_0_OR_GREATER
+                    : this() // to ensure the [DynamicDependency] attributes take effect
+#endif
         {
             this.config = config;
         }
@@ -139,7 +142,7 @@ namespace KGySoft.CoreLibraries
 #if NETCOREAPP3_0_OR_GREATER
         [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "All generic test type arguments are statically rooted by the AOT test runner.")]
 #endif
-        private static void RunTestCases(object instance, TestResultContainer classResult, ITestListener listener, MethodInfo method, IReadOnlyCollection<MethodInfo> setupMethods, IReadOnlyCollection<MethodInfo> tearDownMethods)
+        private static void RunTestCases(object instance, TestResultContainer classResult, ITestListener listener, MethodInfo method, ICollection<MethodInfo> setupMethods, ICollection<MethodInfo> tearDownMethods)
         {
             foreach ((object?[] Parameters, Type[]? TypeArguments) testCaseInfo in GetTestCases(method, instance))
             {
@@ -218,9 +221,9 @@ namespace KGySoft.CoreLibraries
         private static IEnumerable<(object?[] Parameters, Type[]? TypeArguments)> GetTestCases(MethodInfo method, object fixtureInstance)
         {
             // simple [Test] method
-            if (!method.IsDefined(typeof(TestCaseAttribute)) && !method.IsDefined(typeof(TestCaseSourceAttribute)))
+            if (!method.IsDefined(typeof(TestCaseAttribute), false) && !method.IsDefined(typeof(TestCaseSourceAttribute), false))
             {
-                yield return (Array.Empty<object>(), null);
+                yield return ([], null);
                 yield break;
             }
 
@@ -228,7 +231,7 @@ namespace KGySoft.CoreLibraries
             ParameterInfo[] parameters = method.GetParameters();
 
             // [TestCase], [TestCaseGeneric]
-            foreach (TestCaseAttribute attribute in method.GetCustomAttributes<TestCaseAttribute>())
+            foreach (TestCaseAttribute attribute in method.GetCustomAttributes(typeof(TestCaseAttribute), false))
             {
                 Type[]? typeArguments = (attribute as TestCaseGenericAttribute)?.TypeArguments;
 
@@ -250,7 +253,7 @@ namespace KGySoft.CoreLibraries
             }
 
             // [TestCaseSource], [TestCaseSourceGeneric]
-            foreach (TestCaseSourceAttribute attribute in method.GetCustomAttributes<TestCaseSourceAttribute>())
+            foreach (TestCaseSourceAttribute attribute in method.GetCustomAttributes(typeof(TestCaseSourceAttribute), false))
             {
                 Type sourceType = attribute.SourceType ?? fixtureType;
                 string? sourceName = attribute.SourceName;
@@ -262,7 +265,7 @@ namespace KGySoft.CoreLibraries
                 object? source = sourceMember switch
                 {
                     FieldInfo field => field.GetValue(sourceInstance),
-                    PropertyInfo property => property.GetValue(sourceInstance),
+                    PropertyInfo property => property.GetValue(sourceInstance, null),
                     MethodInfo methodInfo => methodInfo.Invoke(sourceInstance, null),
                     _ => null
                 };
@@ -293,7 +296,7 @@ namespace KGySoft.CoreLibraries
             new GlobalInitialization().Initialize(); // not bothering with [SetUpFixture]
 
             // Discoverability in AOT mode is provided by the parameterless constructor, see the other part of this partial class.
-            foreach (Type fixtureType in typeof(AotTestRunner).Assembly.GetTypes())
+            foreach (Type fixtureType in typeof(FallbackTestRunner).Assembly.GetTypes())
             {
                 //if (fixtureType.GetCustomAttribute<TestFixtureAttribute>() == null) // the [TextFixture] attribute is actually optional
                 //    continue;
@@ -334,10 +337,10 @@ namespace KGySoft.CoreLibraries
         {
             #region Local Methods
 
-            static IReadOnlyCollection<MethodInfo> FilterMethods<TAttribute>(MethodInfo[] methods)
+            static ICollection<MethodInfo> FilterMethods<TAttribute>(MethodInfo[] methods)
                 where TAttribute : Attribute
             {
-                return methods.Where(method => method.IsDefined(typeof(TAttribute))).ToList();
+                return methods.Where(method => method.IsDefined(typeof(TAttribute), false)).ToList();
             }
 
             #endregion
@@ -349,13 +352,13 @@ namespace KGySoft.CoreLibraries
                 return false;
 
             // No [TextFixture]: warning, unless other NUnit attributes are present, which is a valid case (e.g., [SetUpFixture]).
-            if (fixtureType.GetCustomAttribute<TestFixtureAttribute>() == null && !fixtureType.IsDefined(typeof(NUnitAttribute)))
+            if (Attribute.GetCustomAttribute(fixtureType, typeof(TestFixtureAttribute), false) == null && !fixtureType.IsDefined(typeof(NUnitAttribute), false))
                 classResult.SetResult(ResultState.Warning, $"{fixtureType.FullName}: [TestFixture] attribute is missing. The test class might be trimmed when publishing in in AOT mode.");
 
-            IReadOnlyCollection<MethodInfo> oneTimeSetUpMethods = FilterMethods<OneTimeSetUpAttribute>(methods);
-            IReadOnlyCollection<MethodInfo> setupMethods = FilterMethods<SetUpAttribute>(methods);
-            IReadOnlyCollection<MethodInfo> tearDownMethods = FilterMethods<TearDownAttribute>(methods);
-            IReadOnlyCollection<MethodInfo> oneTimeTearDownMethods = FilterMethods<OneTimeTearDownAttribute>(methods);
+            ICollection<MethodInfo> oneTimeSetUpMethods = FilterMethods<OneTimeSetUpAttribute>(methods);
+            ICollection<MethodInfo> setupMethods = FilterMethods<SetUpAttribute>(methods);
+            ICollection<MethodInfo> tearDownMethods = FilterMethods<TearDownAttribute>(methods);
+            ICollection<MethodInfo> oneTimeTearDownMethods = FilterMethods<OneTimeTearDownAttribute>(methods);
 
             // [OneTimeSetUp]
             try
@@ -372,16 +375,16 @@ namespace KGySoft.CoreLibraries
 
             foreach (MethodInfo method in methods)
             {
-                if (method.GetCustomAttribute<TestAttribute>() == null
-                    && !method.IsDefined(typeof(TestCaseAttribute))
-                    && !method.IsDefined(typeof(TestCaseSourceAttribute)))
+                if (Attribute.GetCustomAttribute(method, typeof(TestAttribute), false) == null
+                    && !method.IsDefined(typeof(TestCaseAttribute), false)
+                    && !method.IsDefined(typeof(TestCaseSourceAttribute), false))
                     continue;
 
                 if (config.TestName != null && config.TestName != method.Name)
                     continue;
 
                 // [Explicit]: skipping, unless requested by the config
-                if (method.GetCustomAttribute<ExplicitAttribute>() != null)
+                if (Attribute.GetCustomAttribute(method, typeof(ExplicitAttribute), false) != null)
                 {
                     if (config.TestName != method.Name)
                     {
