@@ -140,6 +140,33 @@ namespace KGySoft.ComponentModel
         }
 
         /// <summary>
+        /// Creates a binding for a <paramref name="command"/> using the specified <paramref name="source"/> type,
+        /// static <paramref name="eventName"/> and <paramref name="targets"/> as well as the optionally provided initial state of the binding.
+        /// </summary>
+        /// <param name="command">The command to bind.</param>
+        /// <param name="source">The source, which can trigger the command.</param>
+        /// <param name="eventName">The name of the static event in the <paramref name="source"/> type that can trigger the command.</param>
+        /// <param name="initialState">The initial state of the binding.</param>
+        /// <param name="targets">Zero or more targets for the binding.</param>
+        /// <returns>An <see cref="ICommandBinding"/> instance, whose <see cref="ICommandBinding.State"/> is initialized by the provided <paramref name="initialState"/> and to which the specified <paramref name="source"/> and <paramref name="targets"/> are bound.</returns>
+        public static ICommandBinding CreateBinding(this ICommand command, [DynamicallyAccessedMembers(NeededSourceMembers)]Type source,
+            string eventName, IDictionary<string, object?>? initialState = null, params object[]? targets)
+        {
+            if (source == null!)
+                Throw.ArgumentNullException(Argument.source);
+            if (eventName == null!)
+                Throw.ArgumentNullException(Argument.eventName);
+            ICommandBinding result = command.CreateBinding(initialState).AddSource(source, eventName);
+            if (!targets.IsNullOrEmpty())
+            {
+                foreach (object target in targets!)
+                    result.AddTarget(target);
+            }
+
+            return result;
+        }
+
+        /// <summary>
         /// Creates a binding for a <paramref name="command"/> using the specified <typeparamref name="T"/> type, <paramref name="eventName"/> and <paramref name="targets"/> as well as the optionally provided initial state of the binding.
         /// </summary>
         /// <typeparam name="T">A type that has the specified static event.</typeparam>
@@ -188,6 +215,19 @@ namespace KGySoft.ComponentModel
         public static ICommandBinding CreateBinding<[DynamicallyAccessedMembers(NeededSourceMembers)]T>(
             this ICommand command, T source, string eventName, params object[]? targets)
             where T : class
+            => command.CreateBinding(source, eventName, null, targets);
+
+        /// <summary>
+        /// Creates a binding for a <paramref name="command"/> using the specified <paramref name="source"/> type,
+        /// static <paramref name="eventName"/> and <paramref name="targets"/>.
+        /// </summary>
+        /// <param name="command">The command to bind.</param>
+        /// <param name="source">The source, which can trigger the command.</param>
+        /// <param name="eventName">The name of the event in the <paramref name="source"/> type that can trigger the command.</param>
+        /// <param name="targets">Zero or more targets for the binding.</param>
+        /// <returns>An <see cref="ICommandBinding"/> instance, to which the specified <paramref name="source"/> and <paramref name="targets"/> are bound.</returns>
+        public static ICommandBinding CreateBinding(this ICommand command, [DynamicallyAccessedMembers(NeededSourceMembers)]Type source,
+            string eventName, params object[]? targets)
             => command.CreateBinding(source, eventName, null, targets);
 
         /// <summary>

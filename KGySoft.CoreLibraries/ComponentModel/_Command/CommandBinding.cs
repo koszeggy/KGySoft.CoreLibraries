@@ -301,6 +301,11 @@ namespace KGySoft.ComponentModel
 
         [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
             Justification = "False alarm, this overload is exactly for the reason to be able to omit [RequiresUnreferencedCode] as long as [DynamicallyAccessedMembers] requirements are met.")]
+        public ICommandBinding AddSource([DynamicallyAccessedMembers(Command.NeededSourceMembers)]Type source, string eventName)
+            => AddSource((object)source, eventName);
+
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+            Justification = "False alarm, this overload is exactly for the reason to be able to omit [RequiresUnreferencedCode] as long as [DynamicallyAccessedMembers] requirements are met.")]
         public ICommandBinding AddSource<[DynamicallyAccessedMembers(Command.NeededSourceMembers)]T>(
             T source, string eventName) where T : class => AddSource((object)source, eventName);
 
