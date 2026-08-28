@@ -27,7 +27,7 @@ using NUnit.Framework;
 namespace KGySoft.CoreLibraries.UnitTests.Collections
 {
     [TestFixture]
-    public class ArraySectionTest
+    public class ArraySectionTest : TestBase
     {
         #region Methods
 
@@ -59,7 +59,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Assert.IsTrue(section.Equals(Reflector.EmptyArray<int>()));
             Assert.IsTrue(section.Equals((object)Reflector.EmptyArray<int>()));
 
-            Assert.IsFalse(ArraySection<_>.Null.Equals(ArraySection<_>.Empty)); // Assert.AreNotEqual fails in AOT mode, and CollectionAssert.AreNotEqual returns true
+            AssertAreNotEqual(ArraySection<_>.Null, ArraySection<_>.Empty);
         }
 
         [Test]
@@ -90,8 +90,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Assert.AreEqual(0, subsection.Length);
             Assert.AreEqual(0, subsection.ToArray()!.Length);
 
-            CollectionAssert.AreEqual(ArraySection<int>.Empty, ArraySection<int>.Empty.Slice(0));
-            CollectionAssert.AreEqual(ArraySection<int>.Null, ArraySection<int>.Null.Slice(0));
+            AssertAreEqual(ArraySection<int>.Empty, ArraySection<int>.Empty.Slice(0));
+            AssertAreEqual(ArraySection<int>.Null, ArraySection<int>.Null.Slice(0));
         }
 
 #if !NETFRAMEWORK
@@ -101,7 +101,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
         public void SerializationTest()
         {
             var section = ArraySection<int>.Null;
-            CollectionAssert.AreEqual(section, section.DeepClone(false));
+            AssertAreEqual(section, section.DeepClone(false));
 
             section = new[] { 1, 2, 3, 4, 5 }.AsSection(1, 3);
             Assert.IsTrue(section.SequenceEqual(section.DeepClone(false)));

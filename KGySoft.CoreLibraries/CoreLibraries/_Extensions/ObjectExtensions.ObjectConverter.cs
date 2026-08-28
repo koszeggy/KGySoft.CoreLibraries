@@ -27,7 +27,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 #if NETCOREAPP3_0_OR_GREATER
-using System.Text; 
+using System.Text;
 #endif
 
 using KGySoft.Collections;
@@ -63,7 +63,7 @@ namespace KGySoft.CoreLibraries
                 #endregion
 
                 #region Private Fields
-                
+
                 // A null value indicates a failed attempt or an unfinished conversion
                 private Cache<(object Instance, Type SourceType, Type TargetType), StrongBox<object?>?>? resultsCache;
 
@@ -137,6 +137,7 @@ namespace KGySoft.CoreLibraries
 
 #if NETCOREAPP3_0_OR_GREATER
                 // char-rune collections conversion
+                typeof(List<Rune>).EnsureType(); // Ensuring List<Rune> type for AOT mode - used by TryConvertToArray because the count of StringRuneEnumerator is unknown
                 typeof(IEnumerable<char>).RegisterConversion(typeof(IEnumerable<Rune>), (o, _, _)
                     => (o as string ?? new String(o as char[] ?? ((IEnumerable<char>)o).ToArray())).EnumerateRunes());
                 typeof(IEnumerable<Rune>).RegisterConversion(typeof(IEnumerable<char>), (o, _, _)
@@ -152,7 +153,7 @@ namespace KGySoft.CoreLibraries
 
             [RequiresUnreferencedCode(RequiresUnreferencedCode)]
             internal static bool TryConvert(object? obj,
-                [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]Type targetType,
+                [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)] Type targetType,
                 CultureInfo? culture, out object? value, out Exception? error)
             {
                 if (targetType == null!)
@@ -170,8 +171,9 @@ namespace KGySoft.CoreLibraries
             #region Private Methods
 
             [RequiresUnreferencedCode("GetPropertyValue, TryConvert")]
-            private static bool TryConvertKeyValuePair(object obj, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]Type targetType,
-                CultureInfo? culture, [MaybeNullWhen(false)]out object result)
+            [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(KeyValuePair<,>))]
+            private static bool TryConvertKeyValuePair(object obj, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)] Type targetType,
+                CultureInfo? culture, [MaybeNullWhen(false)] out object result)
             {
                 if (obj.GetType() == targetType)
                 {
@@ -193,8 +195,8 @@ namespace KGySoft.CoreLibraries
             }
 
             [RequiresUnreferencedCode("SetKeyValue, TryConvert")]
-            private static bool TryConvertDictionaryEntryToKeyValuePair(object obj, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]Type targetType,
-                CultureInfo? culture, [MaybeNullWhen(false)]out object result)
+            private static bool TryConvertDictionaryEntryToKeyValuePair(object obj, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)] Type targetType,
+                CultureInfo? culture, [MaybeNullWhen(false)] out object result)
             {
                 var source = (DictionaryEntry)obj;
                 Type[] types = targetType.GetGenericArguments();
@@ -210,12 +212,13 @@ namespace KGySoft.CoreLibraries
             }
 
             [RequiresUnreferencedCode("GetPropertyValue")]
+            [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(KeyValuePair<,>))]
             private static object ConvertKeyValuePairToDictionaryEntry(object obj, Type targetType, CultureInfo? culture)
                 => new DictionaryEntry(Accessors.GetPropertyValue(obj, nameof(KeyValuePair<,>.Key))!, Accessors.GetPropertyValue(obj, nameof(KeyValuePair<,>.Value)));
 
             [RequiresUnreferencedCode("StringExtensions.TryParse, TryConvertByTypeConverter, TryConvertCollection, TryConvertByRegisteredConversion")]
             private static bool DoConvert(ref ConversionContext context, object? obj,
-                [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]Type targetType,
+                [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)] Type targetType,
                 out object? value, bool isRoot = false)
             {
                 if (targetType.IsInstanceOfType(obj))
@@ -272,7 +275,7 @@ namespace KGySoft.CoreLibraries
                     }
 
                     // If both source and target types are enumerable, trying to convert their types, too (including string-collection conversions)
-                    if (obj is IEnumerable collection && Reflector.IEnumerableType.IsAssignableFrom(targetType) && TryConvertCollection(ref context, collection, targetType, out value))
+                    if (obj is IEnumerable collection && typeof(IEnumerable).IsAssignableFrom(targetType) && TryConvertCollection(ref context, collection, targetType, out value))
                         return success = true;
 
                     // String target ultimate fallback
@@ -284,6 +287,12 @@ namespace KGySoft.CoreLibraries
 
                     return success = TryConvertByIntermediateTypes(ref context, obj, targetType, out value);
                 }
+                catch (Exception e) when (!e.IsCritical())
+                {
+                    context.Error ??= e;
+                    value = null;
+                    return false;
+                }
                 finally
                 {
                     if (!isRoot && success)
@@ -293,7 +302,7 @@ namespace KGySoft.CoreLibraries
 
             [RequiresUnreferencedCode("TryUseConversion")]
             private static bool TryConvertByRegisteredConversion(ref ConversionContext context, object obj,
-                [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]Type targetType,
+                [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)] Type targetType,
                 out object? value, bool exactTypeMatch)
             {
                 Type sourceType = obj.GetType();
@@ -325,7 +334,7 @@ namespace KGySoft.CoreLibraries
 
             [RequiresUnreferencedCode("DoConvert")]
             private static bool TryUseConversion(ref ConversionContext context, object obj,
-                [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]Type targetType,
+                [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)] Type targetType,
                 Delegate conversionDelegate, out object? value)
             {
                 try
@@ -420,10 +429,10 @@ namespace KGySoft.CoreLibraries
                 }
             }
 
-            [RequiresUnreferencedCode("TryConvertToArray")]
+            [RequiresUnreferencedCode("TryConvertToArray, IsPopulatableCollection")]
             [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "It is handled if IsSupportedCollectionForReflection returns false.")]
             private static bool TryConvertCollection(ref ConversionContext context, IEnumerable collection,
-                [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]Type targetType, out object? value)
+                [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)] Type targetType, out object? value)
             {
                 if (targetType.IsArray)
                     return TryConvertToArray(ref context, collection, targetType, out value);
@@ -453,7 +462,7 @@ namespace KGySoft.CoreLibraries
             [RequiresUnreferencedCode("DoConvert")]
             [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "The array type is the same as targetType.")]
             private static bool TryConvertToArray(ref ConversionContext context, IEnumerable sourceCollection,
-                [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]Type targetType, out object? value)
+                [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)] Type targetType, out object? value)
             {
                 value = null;
                 int rank = targetType.GetArrayRank();
@@ -525,7 +534,7 @@ namespace KGySoft.CoreLibraries
             [RequiresUnreferencedCode("TryPopulateCollection, AdjustInitializerCollection")]
             [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "It is handled if the initializer collection cannot be created.")]
             private static bool TryPopulateByInitializerCollection(ref ConversionContext context, IEnumerable sourceCollection, ConstructorInfo collectionCtor,
-                [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]Type targetElementType,
+                [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)] Type targetElementType,
                 bool isDictionary, out object? value)
             {
                 IEnumerable initializerCollection;
@@ -552,7 +561,7 @@ namespace KGySoft.CoreLibraries
 
             [RequiresUnreferencedCode("DoConvert, TryPopulateCollection")]
             private static bool TryPopulateCollection(ref ConversionContext context, IEnumerable sourceCollection, IEnumerable targetCollection,
-                [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]Type targetElementType)
+                [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)] Type targetElementType)
             {
                 try
                 {
@@ -573,11 +582,11 @@ namespace KGySoft.CoreLibraries
 
             [RequiresUnreferencedCode("DoTryConvertByIntermediateTypes")]
             private static bool TryConvertByIntermediateTypes(ref ConversionContext context, object obj,
-                [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]Type targetType,
+                [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)] Type targetType,
                 out object? value)
             {
                 Type sourceType = obj.GetType();
-                
+
                 // Firstly, trying to use whatever source types of the exact target type
                 return DoTryConvertByIntermediateTypes(ref context, obj, targetType.GetConversionSourceTypes(), targetType, out value)
                     // Alternatively, we consider all registered conversions whose source or target type are compatible with our actual types, and the string type
@@ -586,7 +595,7 @@ namespace KGySoft.CoreLibraries
 
             [RequiresUnreferencedCode("DoConvert")]
             private static bool DoTryConvertByIntermediateTypes(ref ConversionContext context, object obj, ICollection<Type> intermediateTypes,
-                [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]Type targetType,
+                [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)] Type targetType,
                 out object? value)
             {
                 if (intermediateTypes.Count > 0)

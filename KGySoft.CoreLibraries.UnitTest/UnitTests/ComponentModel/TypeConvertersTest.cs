@@ -18,10 +18,12 @@
 using System;
 using System.ComponentModel;
 using System.ComponentModel.Design.Serialization;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 
 using KGySoft.ComponentModel;
+using KGySoft.Reflection;
 
 using NUnit.Framework;
 
@@ -30,9 +32,18 @@ using NUnit.Framework;
 namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
 {
     [TestFixture]
-    public class TypeConvertersTest
+    public class TypeConvertersTest : TestBase
     {
         #region Methods
+
+#if AOT
+        [OneTimeSetUp]
+        public void EnsureAotGenericTests()
+        {
+            Reflector.MemberOf(() => FlagsEnumConverterTest<ConsoleColor>(default, default!));
+            Reflector.MemberOf(() => FlagsEnumConverterTest<ConsoleModifiers>(default, default!));
+        }
+#endif
 
         [TestCase(42, typeof(string))]
         [TestCase(42, typeof(byte[]))]
@@ -90,7 +101,7 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
 #if !(NETCOREAPP2_0 || NETCOREAPP2_1)
         [TestCase(ConsoleModifiers.Control | ConsoleModifiers.Shift, typeof(InstanceDescriptor))]
 #endif
-        public void FlagsEnumConverterTest<TEnum>(TEnum testData, Type targetType)
+        public void FlagsEnumConverterTest<[DynamicallyAccessedMembers(FlagsEnumConverter.NeededMembers)]TEnum>(TEnum testData, Type targetType)
             where TEnum : struct, Enum
         {
             var converter = new FlagsEnumConverter(typeof(TEnum));
@@ -105,7 +116,7 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
             Assert.AreEqual(flags.Length, properties!.Count);
 
             foreach (TEnum flag in flags)
-                Assert.AreEqual(Enum<TEnum>.HasFlag(testData, flag), properties[Enum<TEnum>.ToString(flag)].GetValue(testData));
+                AssertAreEqual(Enum<TEnum>.HasFlag(testData, flag), properties[Enum<TEnum>.ToString(flag)]?.GetValue(testData));
         }
 
         [TestCase("1.2.0", typeof(string))]
@@ -134,7 +145,7 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
                 Assert.IsInstanceOf(targetType, result);
 
             object retrieved = converter.ConvertFrom(result);
-            Assert.AreEqual(testData, retrieved);
+            AssertAreEqual(testData, retrieved);
         }
 
         [TestCase("value", typeof(string))]
@@ -156,7 +167,7 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
                 Assert.IsInstanceOf(targetType, result);
 
             object retrieved = converter.ConvertFrom(result);
-            Assert.AreEqual(testData, retrieved);
+            AssertAreEqual(testData, retrieved);
         }
 
         [Test]

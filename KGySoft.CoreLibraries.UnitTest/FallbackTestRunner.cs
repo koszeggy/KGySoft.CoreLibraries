@@ -173,7 +173,7 @@ namespace KGySoft.CoreLibraries
                     catch (Exception e)
                     {
                         var state = e is AssertionException ? ResultState.SetUpFailure : ResultState.SetUpError;
-                        testResult.SetResult(state, $"{e.GetType()}: {e.Message}", e.StackTrace);
+                        testResult.SetResult(state, e.Message, e.ToString());
                         return;
                     }
 
@@ -193,7 +193,7 @@ namespace KGySoft.CoreLibraries
                             AssertionException => ResultState.Failure,
                             _ => ResultState.Error
                         };
-                        testResult.SetResult(state, $"{e.GetType()}: {e.Message}", e.StackTrace);
+                        testResult.SetResult(state, e.Message, e.ToString());
                     }
                     finally
                     {
@@ -206,7 +206,7 @@ namespace KGySoft.CoreLibraries
                         catch (Exception e)
                         {
                             if (testResult.ResultState == ResultState.Success || testResult.ResultState == ResultState.Inconclusive)
-                                testResult.SetResult(ResultState.TearDownError, $"{e.GetType()}: {e.Message}", e.StackTrace);
+                                testResult.SetResult(ResultState.TearDownError, e.Message, e.ToString());
                         }
                     }
                 }
@@ -321,7 +321,7 @@ namespace KGySoft.CoreLibraries
                 }
                 catch (Exception e)
                 {
-                    classResult.SetResult(ResultState.Error, e.Message, e.StackTrace);
+                    classResult.SetResult(ResultState.Error, e.Message, e.ToString());
                     rootResult.AddResult(classResult);
                 }
             }
@@ -369,7 +369,7 @@ namespace KGySoft.CoreLibraries
             catch (Exception e)
             {
                 var state = e is AssertionException ? ResultState.SetUpFailure : ResultState.SetUpError;
-                classResult.SetResult(state, $"{e.GetType()}: {e.Message}", e.StackTrace);
+                classResult.SetResult(state, e.Message, e.ToString());
                 return true;
             }
 
@@ -404,7 +404,7 @@ namespace KGySoft.CoreLibraries
             }
             catch (Exception e)
             {
-                classResult.SetResult(ResultState.TearDownError, $"{e.GetType()}: {e.Message}", e.StackTrace);
+                classResult.SetResult(ResultState.TearDownError, e.Message, e.ToString());
             }
 
             return true;

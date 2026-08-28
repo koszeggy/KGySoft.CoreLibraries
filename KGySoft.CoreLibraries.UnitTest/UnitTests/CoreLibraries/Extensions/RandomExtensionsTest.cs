@@ -19,6 +19,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 #if NETFRAMEWORK
 using System.Diagnostics;
 #endif
@@ -296,17 +297,17 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
 
             // no range
             BigInteger result = rnd.SampleBigInteger(0);
-            Assert.AreEqual(BigInteger.Zero, result);
+            AssertAreEqual(BigInteger.Zero, result);
             result = rnd.NextBigInteger(0);
-            Assert.AreEqual(BigInteger.Zero, result);
+            AssertAreEqual(BigInteger.Zero, result);
             result = rnd.NextBigInteger(BigInteger.One, BigInteger.One);
-            Assert.AreEqual(BigInteger.One, result);
+            AssertAreEqual(BigInteger.One, result);
 
             // 1 range
             result = rnd.NextBigInteger(BigInteger.One);
-            Assert.AreEqual(BigInteger.Zero, result);
+            AssertAreEqual(BigInteger.Zero, result);
             result = rnd.NextBigInteger(BigInteger.One, new BigInteger(2));
-            Assert.AreEqual(BigInteger.One, result);
+            AssertAreEqual(BigInteger.One, result);
 
             for (int i = 0; i < 10_000; i++)
             {
@@ -351,15 +352,15 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
 
             // no range
             Int128 result = rnd.NextInt128(0);
-            Assert.AreEqual((Int128)0, result);
+            AssertAreEqual((Int128)0, result);
             result = rnd.NextInt128(1, 1);
-            Assert.AreEqual((Int128)1, result);
+            AssertAreEqual((Int128)1, result);
 
             // 1 range
             result = rnd.NextInt128(1);
-            Assert.AreEqual((Int128)0, result);
+            AssertAreEqual((Int128)0, result);
             result = rnd.NextInt128(1, 2);
-            Assert.AreEqual((Int128)1, result);
+            AssertAreEqual((Int128)1, result);
 
             for (int i = 0; i < 10_000; i++)
             {
@@ -393,15 +394,15 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
 
             // no range
             UInt128 result = rnd.NextUInt128(0);
-            Assert.AreEqual((UInt128)0, result);
+            AssertAreEqual((UInt128)0, result);
             result = rnd.NextUInt128(1, 1);
-            Assert.AreEqual((UInt128)1, result);
+            AssertAreEqual((UInt128)1, result);
 
             // 1 range
             result = rnd.NextUInt128(1);
-            Assert.AreEqual((UInt128)0, result);
+            AssertAreEqual((UInt128)0, result);
             result = rnd.NextUInt128(1, 2);
-            Assert.AreEqual((UInt128)1, result);
+            AssertAreEqual((UInt128)1, result);
 
             for (int i = 0; i < 10_000; i++)
             {
@@ -815,7 +816,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
 
             // no range
             Rune result = rnd.NextRune((Rune)0, (Rune)0);
-            Assert.AreEqual((Rune)0, result);
+            AssertAreEqual((Rune)0, result);
 
             // min > max
             Throws<ArgumentOutOfRangeException>(() => rnd.NextRune((Rune)2, (Rune)1));
@@ -857,7 +858,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
         public void NextObjectTest(bool secure)
         {
             Random rnd = secure ? SecureRandom.Instance : new FastRandom();
-            void Test<T>(bool dumpProperties = false, GenerateObjectSettings settings = null)
+            void Test<[DynamicallyAccessedMembers(RandomExtensions.NeededMembers)]T>(bool dumpProperties = false, GenerateObjectSettings settings = null)
             {
                 var obj = rnd.NextObject<T>(settings);
                 Console.WriteLine($"{typeof(T).GetName(TypeNameKind.ShortName)}: {obj.Dump(dumpProperties)}");

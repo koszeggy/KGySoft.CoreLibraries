@@ -20,6 +20,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -29,6 +30,7 @@ using System.Numerics;
 using System.Text;
 
 using KGySoft.Collections;
+using KGySoft.Serialization.Binary;
 
 using NUnit.Framework;
 
@@ -58,6 +60,8 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
 
         #region Fields
 
+        [DynamicDependency(BinarySerializer.NeededMembers, typeof(Exception))]
+        [DynamicDependency(BinarySerializer.NeededMembers, typeof(MemoryStream))]
         private static readonly unsafe object[] deepCloneBySerializerTestSource =
         {
             // natively supported types
@@ -74,7 +78,9 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
 
             // not serializable in .NET Core
             CultureInfo.GetCultureInfo("en-US"),
-            new Collection<Encoding> { Encoding.ASCII, Encoding.Unicode },
+#if !AOT // Equality check failed at type ASCIIEncodingSealed: System.Text.ASCIIEncoding+ASCIIEncodingSealed <-> System.Text.ASCIIEncoding+ASCIIEncodingSealed
+		    new Collection<Encoding> { Encoding.ASCII, Encoding.Unicode },  
+#endif
             new MemoryStream(new byte[] { 1, 2, 3 }),
 
             // pointer fields
@@ -87,6 +93,8 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             },
         };
 
+        [DynamicDependency(DynamicallyAccessedMembers.AllFields, typeof(List<>))]
+        [DynamicDependency(DynamicallyAccessedMembers.AllFields, typeof(Cache<,>))]
         private static readonly unsafe object[] deepCloneByObjectClonerTestSource =
         {
             // not cloned types
@@ -106,7 +114,9 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             // complex types
             new Exception("message"),
             CultureInfo.GetCultureInfo("en-US"),
-            new Collection<Encoding> { Encoding.ASCII, Encoding.Unicode },
+#if !AOT // Equality check failed at type ASCIIEncodingSealed: System.Text.ASCIIEncoding+ASCIIEncodingSealed <-> System.Text.ASCIIEncoding+ASCIIEncodingSealed
+		    new Collection<Encoding> { Encoding.ASCII, Encoding.Unicode },  
+#endif
             new MemoryStream(new byte[] { 1, 2, 3 }),
 
             // contains delegate (it crashes the Mono runtime)
@@ -131,7 +141,8 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
         {
             #region Local Methods
 
-            static void Test<TTarget>(object source, TTarget expectedResult)
+            static void Test<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]TTarget>(
+                object source, TTarget expectedResult)
             {
                 Console.Write($"{source?.GetType().GetName(TypeNameKind.ShortName) ?? "<null>"} ({AsString(source)}) -> {typeof(TTarget).GetName(TypeNameKind.ShortName)} ");
                 TTarget actualResult = source.Convert<TTarget>();
@@ -269,10 +280,10 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
                 Console.Write($"{type.GetName(TypeNameKind.ShortName)} ({source}) -> ");
                 string str = source.ToStringInternal(CultureInfo.InvariantCulture);
                 Console.WriteLine(str);
-                Assert.AreEqual(str, source.Convert<string>());
+                AssertAreEqual(str, source.Convert<string>());
                 object parsed = str.Parse(type);
-                Assert.AreEqual(source, parsed);
-                Assert.AreEqual(source, str.Convert(type));
+                AssertAreEqual(source, parsed);
+                AssertAreEqual(source, str.Convert(type));
                 AssertDeepEquals(source, parsed); // bitwise equality such as negative zero
             }
 

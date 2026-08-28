@@ -61,7 +61,7 @@ namespace KGySoft.Collections.ObjectModel
         /// <summary>
         /// A lazy-initialized item-index cache. A negated index means that the item occurs multiple times so on remove the cache has to be invalidated.
         /// </summary>
-        [NonSerialized] private AllowNullDictionary<T, int>? itemToIndex;
+        [NonSerialized]private AllowNullDictionary<T, int>? itemToIndex;
 
         #endregion
 

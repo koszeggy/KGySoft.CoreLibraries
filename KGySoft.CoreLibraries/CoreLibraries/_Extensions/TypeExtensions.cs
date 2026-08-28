@@ -646,6 +646,7 @@ namespace KGySoft.CoreLibraries
         /// <param name="type">The type to test</param>
         /// <param name="instance">The object instance to test</param>
         /// <returns><see langword="true"/> if <paramref name="type"/> is a collection type: implements <see cref="IList"/> or <see cref="ICollection{T}"/> and <c><paramref name="instance"/>.IsReadOnly</c> returns <see langword="false"/>.</returns>
+        [RequiresUnreferencedCode("IsGenericReadWriteCollection")]
         internal static bool IsReadWriteCollection([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]this Type type, object? instance)
         {
             if (instance == null)
@@ -666,6 +667,7 @@ namespace KGySoft.CoreLibraries
         /// <summary>
         /// Almost the same as <see cref="IsReadWriteCollection"/> but returns false for fixed size collections making sure that Add/Clear methods work.
         /// </summary>
+        [RequiresUnreferencedCode("IsGenericReadWriteCollection")]
         internal static bool IsPopulatableCollection([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]this Type type, object? instance)
         {
             if (instance == null)
@@ -1096,6 +1098,14 @@ namespace KGySoft.CoreLibraries
         }
 #endif
 
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+        /// <summary>
+        /// Ensures the type in native AOT mode (expected to be called on a typeof() expression).
+        /// The call itself is a NOP, and will be eliminated by the compiler (except the .NET Framework JIT compiler in 32 bit mode, so always called in #if to exclude .NET Framework).
+        /// </summary>
+        internal static void EnsureType(this Type type) { } 
+#endif
+
         #endregion
 
         #region Private Methods
@@ -1244,8 +1254,8 @@ namespace KGySoft.CoreLibraries
             #endregion
         }
 
-        [UnconditionalSuppressMessage("TrimAnalysis", "IL2075:DynamicallyAccessedMembersReturnValueAnnotationMismatch",
-            Justification = "False alarm, ICollection<> is a well-known BCL interface that won't be trimmed.")]
+        [RequiresUnreferencedCode("GetProperty")] // [DynamicDependency] may help, only if the element type is also preserved
+        [DynamicDependency(nameof(ICollection<>.IsReadOnly), typeof(ICollection<>))]
         private static bool IsGenericReadWriteCollection([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]Type type,
             object instance)
         {
@@ -1255,8 +1265,8 @@ namespace KGySoft.CoreLibraries
                     continue;
                 if (i.IsGenericTypeOf(Reflector.ICollectionGenType))
                 {
-                    PropertyInfo pi = i.GetProperty(nameof(ICollection<>.IsReadOnly))!;
-                    return !(bool)pi.Get(instance)!;
+                    PropertyInfo? pi = i.GetProperty(nameof(ICollection<>.IsReadOnly));
+                    return (bool?)pi?.Get(instance) == false;
                 }
             }
 

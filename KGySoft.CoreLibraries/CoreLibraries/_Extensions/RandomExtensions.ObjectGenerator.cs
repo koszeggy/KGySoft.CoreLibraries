@@ -940,7 +940,7 @@ namespace KGySoft.CoreLibraries
 
             [SecurityCritical]
             [RequiresDynamicCode("IsSupportedCollectionForReflection (though it is alright if it simply returns false), GenerateCollectionByCtor")]
-            [RequiresUnreferencedCode("IsSupportedCollectionForReflection, GenerateCollectionByCtor")]
+            [RequiresUnreferencedCode("IsSupportedCollectionForReflection, GenerateCollectionByCtor, IsReadWriteCollection")]
             private static bool TryGenerateCollection([DynamicallyAccessedMembers(NeededMembers)]Type type,
                 ref GeneratorContext context, out object? result)
             {
@@ -1060,7 +1060,7 @@ namespace KGySoft.CoreLibraries
 
             [SecurityCritical]
             [RequiresDynamicCode("IsSupportedCollectionForReflection")]
-            [RequiresUnreferencedCode("IsSupportedCollectionForReflection, GetFields, GetProperties")]
+            [RequiresUnreferencedCode("IsSupportedCollectionForReflection, GetFields, GetProperties, IsReadWriteCollection")]
             private static void InitializeMembers(object obj, ref GeneratorContext context)
             {
                 IList<PropertyInfo> properties = Reflector.EmptyArray<PropertyInfo>();

@@ -22,13 +22,14 @@ using System.Linq;
 using KGySoft.Reflection;
 
 using NUnit.Framework;
+using NUnit.Framework.Internal;
 
 #endregion
 
 namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
 {
     [TestFixture]
-    public class StringSegmentTest
+    public class StringSegmentTest : TestBase
     {
         #region Methods
 
@@ -62,7 +63,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             Assert.IsTrue(ss.Equals(""));
             Assert.IsTrue(ss.Equals((object)""));
 
-            Assert.AreNotEqual(StringSegment.Null, StringSegment.Empty);
+            AssertAreNotEqual(StringSegment.Null, StringSegment.Empty);
         }
 
         [Test]
@@ -81,31 +82,31 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
         [TestCase("alphabet", "alpha")]
         public void ComparisonsTest(string a, string b)
         {
-            Assert.AreEqual(a == b, a.AsSegment() == b.AsSegment());
+            AssertAreEqual(a == b, a.AsSegment() == b.AsSegment());
 
             foreach (StringComparison comparison in Enum<StringComparison>.GetValues())
             {
-                Assert.AreEqual(String.Equals(a, b, comparison), StringSegment.Equals(a, b, comparison));
+                AssertAreEqual(String.Equals(a, b, comparison), StringSegment.Equals(a, b, comparison));
                 Assert.AreEqual(Math.Sign(String.Compare(a, b, comparison)), Math.Sign(StringSegment.Compare(a, b, comparison)));
             }
 
-            Assert.AreEqual(StringComparer.Ordinal.Equals(a, b), StringSegmentComparer.Ordinal.Equals(a, b));
-            Assert.AreEqual(StringComparer.Ordinal.Equals(a, b), StringSegmentComparer.Ordinal.Equals((object)a, b));
-            Assert.AreEqual(StringComparer.Ordinal.Equals(a, b), StringSegmentComparer.Ordinal.Equals((object)a, (StringSegment)b));
-            Assert.AreEqual(StringComparer.Ordinal.Equals(a, b), StringSegmentComparer.OrdinalRandomized.Equals(a, b));
-            Assert.AreEqual(StringComparer.Ordinal.Equals(a, b), StringSegmentComparer.OrdinalRandomized.Equals((object)a, b));
-            Assert.AreEqual(StringComparer.Ordinal.Equals(a, b), StringSegmentComparer.OrdinalRandomized.Equals((object)a, (StringSegment)b));
-            Assert.AreEqual(StringComparer.Ordinal.Equals(a, b), StringSegmentComparer.OrdinalNonRandomized.Equals(a, b));
-            Assert.AreEqual(StringComparer.Ordinal.Equals(a, b), StringSegmentComparer.OrdinalNonRandomized.Equals((object)a, b));
-            Assert.AreEqual(StringComparer.Ordinal.Equals(a, b), StringSegmentComparer.OrdinalNonRandomized.Equals((object)a, (StringSegment)b));
+            AssertAreEqual(StringComparer.Ordinal.Equals(a, b), StringSegmentComparer.Ordinal.Equals(a, b));
+            AssertAreEqual(StringComparer.Ordinal.Equals(a, b), StringSegmentComparer.Ordinal.Equals((object)a, b));
+            AssertAreEqual(StringComparer.Ordinal.Equals(a, b), StringSegmentComparer.Ordinal.Equals((object)a, (StringSegment)b));
+            AssertAreEqual(StringComparer.Ordinal.Equals(a, b), StringSegmentComparer.OrdinalRandomized.Equals(a, b));
+            AssertAreEqual(StringComparer.Ordinal.Equals(a, b), StringSegmentComparer.OrdinalRandomized.Equals((object)a, b));
+            AssertAreEqual(StringComparer.Ordinal.Equals(a, b), StringSegmentComparer.OrdinalRandomized.Equals((object)a, (StringSegment)b));
+            AssertAreEqual(StringComparer.Ordinal.Equals(a, b), StringSegmentComparer.OrdinalNonRandomized.Equals(a, b));
+            AssertAreEqual(StringComparer.Ordinal.Equals(a, b), StringSegmentComparer.OrdinalNonRandomized.Equals((object)a, b));
+            AssertAreEqual(StringComparer.Ordinal.Equals(a, b), StringSegmentComparer.OrdinalNonRandomized.Equals((object)a, (StringSegment)b));
             Assert.AreEqual(Math.Sign(StringComparer.Ordinal.Compare(a, b)), Math.Sign(StringSegmentComparer.Ordinal.Compare(a, b)));
             Assert.AreEqual(Math.Sign(StringComparer.Ordinal.Compare(a, b)), Math.Sign(StringSegmentComparer.Ordinal.Compare((object)a, b)));
             Assert.AreEqual(Math.Sign(StringComparer.Ordinal.Compare(a, b)), Math.Sign(StringSegmentComparer.Ordinal.Compare((object)a, (StringSegment)b)));
-            Assert.AreEqual(StringComparer.OrdinalIgnoreCase.Equals(a, b), StringSegmentComparer.OrdinalIgnoreCase.Equals(a, b));
+            AssertAreEqual(StringComparer.OrdinalIgnoreCase.Equals(a, b), StringSegmentComparer.OrdinalIgnoreCase.Equals(a, b));
             Assert.AreEqual(Math.Sign(StringComparer.OrdinalIgnoreCase.Compare(a, b)), Math.Sign(StringSegmentComparer.OrdinalIgnoreCase.Compare(a, b)));
-            Assert.AreEqual(StringComparer.CurrentCulture.Equals(a, b), StringSegmentComparer.CurrentCulture.Equals(a, b));
+            AssertAreEqual(StringComparer.CurrentCulture.Equals(a, b), StringSegmentComparer.CurrentCulture.Equals(a, b));
             Assert.AreEqual(Math.Sign(StringComparer.CurrentCulture.Compare(a, b)), Math.Sign(StringSegmentComparer.CurrentCulture.Compare(a, b)));
-            Assert.AreEqual(StringComparer.CurrentCultureIgnoreCase.Equals(a, b), StringSegmentComparer.CurrentCultureIgnoreCase.Equals(a, b));
+            AssertAreEqual(StringComparer.CurrentCultureIgnoreCase.Equals(a, b), StringSegmentComparer.CurrentCultureIgnoreCase.Equals(a, b));
             Assert.AreEqual(Math.Sign(StringComparer.CurrentCultureIgnoreCase.Compare(a, b)), Math.Sign(StringSegmentComparer.CurrentCultureIgnoreCase.Compare(a, b)));
         }
 
@@ -121,9 +122,9 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
         public void IndexOf(int expectedResult, string s, string toSearch)
         {
             Assert.AreEqual(expectedResult, s.AsSegment().IndexOf(toSearch));
-            Assert.AreEqual(expectedResult >= 0, s.AsSegment().Contains(toSearch));
+            AssertAreEqual(expectedResult >= 0, s.AsSegment().Contains(toSearch));
             Assert.AreEqual(expectedResult, s.AsSegment().IndexOf(toSearch.AsSegment()));
-            Assert.AreEqual(expectedResult >= 0, s.AsSegment().Contains(toSearch.AsSegment()));
+            AssertAreEqual(expectedResult >= 0, s.AsSegment().Contains(toSearch.AsSegment()));
             Assert.AreEqual(expectedResult, s.AsSegment().IndexOf(toSearch, 0, s?.Length ?? 0));
             Assert.AreEqual(expectedResult, s.AsSegment().IndexOf(toSearch.AsSegment(), 0, s?.Length ?? 0));
             Assert.AreEqual(expectedResult, s.AsSegment().IndexOf((" " + toSearch).AsSegment(1), 0, s?.Length ?? 0));
@@ -137,7 +138,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             if (toSearch.Length == 1)
             {
                 Assert.AreEqual(expectedResult, s.AsSegment().IndexOf(toSearch[0]));
-                Assert.AreEqual(expectedResult >= 0, s.AsSegment().Contains(toSearch[0]));
+                AssertAreEqual(expectedResult >= 0, s.AsSegment().Contains(toSearch[0]));
                 Assert.AreEqual(expectedResult, s.AsSegment().IndexOf(toSearch[0], 0));
                 Assert.AreEqual(expectedResult, s.AsSegment().IndexOf(toSearch[0], 0, s?.Length ?? 0));
             }
@@ -157,13 +158,13 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
                 Assert.AreEqual(expectedResult, (" " + s).AsSegment(1).IndexOf(toSearch.AsSegment(), 0, s.Length, stringComparison));
                 Assert.AreEqual(expectedResult, (" " + s + " ").AsSegment(1, s.Length).IndexOf(toSearch, 0, s.Length, stringComparison));
                 Assert.AreEqual(expectedResult, (" " + s + " ").AsSegment(1, s.Length).IndexOf(toSearch.AsSegment(), 0, s.Length, stringComparison));
-                Assert.AreEqual(expectedResult >= 0, (" " + s + " ").AsSegment(1, s.Length).Contains(toSearch, stringComparison));
-                Assert.AreEqual(expectedResult >= 0, (" " + s + " ").AsSegment(1, s.Length).Contains(toSearch.AsSegment(), stringComparison));
+                AssertAreEqual(expectedResult >= 0, (" " + s + " ").AsSegment(1, s.Length).Contains(toSearch, stringComparison));
+                AssertAreEqual(expectedResult >= 0, (" " + s + " ").AsSegment(1, s.Length).Contains(toSearch.AsSegment(), stringComparison));
 
                 if (toSearch.Length == 1)
                 {
                     Assert.AreEqual(expectedResult, (" " + s + " ").AsSegment(1, s.Length).IndexOf(toSearch[0], stringComparison));
-                    Assert.AreEqual(expectedResult >= 0, (" " + s + " ").AsSegment(1, s.Length).Contains(toSearch[0], stringComparison));
+                    AssertAreEqual(expectedResult >= 0, (" " + s + " ").AsSegment(1, s.Length).Contains(toSearch[0], stringComparison));
                     Assert.AreEqual(expectedResult, (" " + s + " ").AsSegment(1, s.Length).IndexOf(toSearch[0], 0, stringComparison));
                     Assert.AreEqual(expectedResult, (" " + s + " ").AsSegment(1, s.Length).IndexOf(toSearch[0], 0, s.Length, stringComparison));
                 }
@@ -224,14 +225,14 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
         {
             foreach (StringComparison stringComparison in Enum<StringComparison>.GetValues())
             {
-                Assert.AreEqual(expectedResult, s.AsSegment().StartsWith(value, stringComparison));
+                AssertAreEqual(expectedResult, s.AsSegment().StartsWith(value, stringComparison));
 #if NETCOREAPP2_1_OR_GREATER
-                Assert.AreEqual(expectedResult, s.AsSegment().StartsWith(value.AsSpan(), stringComparison));
+                AssertAreEqual(expectedResult, s.AsSegment().StartsWith(value.AsSpan(), stringComparison));
 #endif
             }
 
             if (value.Length == 1)
-                Assert.AreEqual(expectedResult, s.AsSegment().StartsWith(value[0]));
+                AssertAreEqual(expectedResult, s.AsSegment().StartsWith(value[0]));
         }
 
         [TestCase(true, " ", "")]
@@ -244,14 +245,14 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
         {
             foreach (StringComparison stringComparison in Enum<StringComparison>.GetValues())
             {
-                Assert.AreEqual(expectedResult, s.AsSegment().EndsWith(value.AsSegment(), stringComparison));
+                AssertAreEqual(expectedResult, s.AsSegment().EndsWith(value.AsSegment(), stringComparison));
 #if NETCOREAPP2_1_OR_GREATER
-                Assert.AreEqual(expectedResult, s.AsSegment().EndsWith(value.AsSpan(), stringComparison));
+                AssertAreEqual(expectedResult, s.AsSegment().EndsWith(value.AsSpan(), stringComparison));
 #endif
             }
 
             if (value.Length == 1)
-                Assert.AreEqual(expectedResult, s.AsSegment().EndsWith(value[0]));
+                AssertAreEqual(expectedResult, s.AsSegment().EndsWith(value[0]));
         }
 
         [TestCase("", "x")]
@@ -493,9 +494,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
         {
             Assert.AreEqual(s.Substring(1), s.AsSegment().Substring(1).ToString());
             Assert.AreEqual(s.Substring(1).Substring(1), s.AsSegment().Substring(1).Substring(1).ToString());
-#if NETCOREAPP2_1_OR_GREATER
-            Assert.AreEqual(s.Substring(1, s.Length - 2), s.AsSegment().Substring(1, s.Length - 2));
-#endif
+            AssertAreEqual(s.Substring(1, s.Length - 2), s.AsSegment().Substring(1, s.Length - 2));
         }
 
         [TestCase(null, null)]
@@ -515,19 +514,19 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             // no reference case
             if (s == null)
             {
-                Assert.AreEqual(segment, segment.Trim(chars));
+                AssertAreEqual(segment, segment.Trim(chars));
 #if NETCOREAPP2_1_OR_GREATER
-                Assert.AreEqual(segment, segment.Trim(chars.AsSpan()));
+                AssertAreEqual(segment, segment.Trim(chars.AsSpan()));
 #endif
                 return;
             }
 
             string expected = s.Trim(chars);
-            Assert.AreEqual(expected, segment.Trim(chars));
+            AssertAreEqual(expected, segment.Trim(chars));
             if (chars?.Length == 1)
-                Assert.AreEqual(expected, segment.Trim(chars[0]));
+                AssertAreEqual(expected, segment.Trim(chars[0]));
 #if NETCOREAPP2_1_OR_GREATER
-            Assert.AreEqual(expected, segment.Trim(chars.AsSpan()));
+            AssertAreEqual(expected, segment.Trim(chars.AsSpan()));
 #endif
         }
 
@@ -541,8 +540,8 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
 
             var dictCustom = new Dictionary<string, string>(dictDefault, StringSegmentComparer.Ordinal);
 
-            var dictDefaultSpan = dictDefault.GetAlternateLookup<ReadOnlySpan<char>>();
-            var dictCustomSpan = dictCustom.GetAlternateLookup<ReadOnlySpan<char>>();
+            Dictionary<string, string>.AlternateLookup<ReadOnlySpan<char>> dictDefaultSpan = dictDefault.GetAlternateLookup<ReadOnlySpan<char>>();
+            Dictionary<string, string>.AlternateLookup<ReadOnlySpan<char>> dictCustomSpan = dictCustom.GetAlternateLookup<ReadOnlySpan<char>>();
 
             // Span: empty string and null are considered equal
             Assert.AreEqual("Empty", dictDefaultSpan[""]);

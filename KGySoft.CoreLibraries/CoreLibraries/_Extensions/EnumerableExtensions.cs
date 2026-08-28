@@ -203,19 +203,22 @@ namespace KGySoft.CoreLibraries
                 Type collType = collection.GetType();
                 if (collType.IsImplementationOfGenericType(typeof(ICollection<>), out Type? genericCollectionInterface))
                 {
-                    if (checkReadOnly && collection.IsReadOnly(genericCollectionInterface))
+                    if (checkReadOnly && collection.IsReadOnly(genericCollectionInterface) == true)
                         return false;
                     var genericArgument = genericCollectionInterface.GetGenericArguments()[0];
                     if (!genericArgument.CanAcceptValue(item))
                         return false;
-                    collection.Add(genericCollectionInterface, item);
-                    return true;
+                    if (collection.DoTryAdd(genericCollectionInterface, item))
+                        return true;
                 }
 
 #if !NET35
                 // 6.) IProducerConsumerCollection<T>
-                if (collType.IsImplementationOfGenericType(typeof(IProducerConsumerCollection<>), out genericCollectionInterface))
-                    return collection.TryAddToProducerConsumerCollection(genericCollectionInterface, item);
+                if (collType.IsImplementationOfGenericType(typeof(IProducerConsumerCollection<>), out genericCollectionInterface)
+                    && collection.TryAddToProducerConsumerCollection(genericCollectionInterface, item) is bool result)
+                {
+                    return result;
+                }
 #endif
 
 #if NET35
@@ -298,6 +301,7 @@ namespace KGySoft.CoreLibraries
         /// </remarks>
         [RequiresUnreferencedCode("If the collection can only be added by using a generic interface, the required code might be removed by the trimmer. Try to use the generic overload if possible.")]
         [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "In AOT mode avoiding the path that requires dynamic code.")]
+        [SuppressMessage("ReSharper", "PossibleMultipleEnumeration", Justification = "If DoTryAddRange manages to enumerate it, it returns with true, so the fallback will not be executed.")]
         public static bool TryAddRange([NoEnumeration]this IEnumerable target, IEnumerable collection, bool checkReadOnly = true, bool throwError = true)
         {
             if (target == null!)
@@ -328,10 +332,10 @@ namespace KGySoft.CoreLibraries
                             if (!collection.IsGenericEnumerableOf(t))
                                 break;
 
-                            if (checkReadOnly && target.IsReadOnly(genericCollectionInterface))
+                            if (checkReadOnly && target.IsReadOnly(genericCollectionInterface) == true)
                                 return false;
-                            target.AddRange(t, collection);
-                            return true;
+                            if (target.DoTryAddRange(t, collection))
+                                return true;
                         }
 
                         break;
@@ -436,10 +440,9 @@ namespace KGySoft.CoreLibraries
                     default:
                         if (collection.GetType().IsImplementationOfGenericType(typeof(ICollection<>), out Type? genericCollectionInterface))
                         {
-                            if (checkReadOnly && collection.IsReadOnly(genericCollectionInterface))
+                            if (checkReadOnly && collection.IsReadOnly(genericCollectionInterface) == true)
                                 return false;
-                            collection.Clear(genericCollectionInterface);
-                            return true;
+                            return collection.DoTryClear(genericCollectionInterface);
                         }
 
                         return false;
@@ -560,13 +563,13 @@ namespace KGySoft.CoreLibraries
                         if (index < 0)
                             return false;
                         Type genericCollectionInterface = genericListInterface.GetInterface(typeof(ICollection<>).Name)!;
-                        int count = collection is ICollection coll ? coll.Count : collection.Count(genericCollectionInterface);
-                        if (index > count || collection.IsReadOnly(genericCollectionInterface))
+                        int count = collection is ICollection coll ? coll.Count : collection.Count(genericCollectionInterface) ?? -1;
+                        if (index > count || collection.IsReadOnly(genericCollectionInterface) == true)
                             return false;
                     }
 
-                    collection.Insert(genericListInterface, index, item);
-                    return true;
+                    if (collection.DoTryInsert(genericListInterface, index, item))
+                        return true;
                 }
 
 #if NET35
@@ -651,6 +654,7 @@ namespace KGySoft.CoreLibraries
         /// </remarks>
         [RequiresUnreferencedCode("If the collection can only be inserted by using a generic interface, the required code might be removed by the trimmer. Try to use the generic overload if possible.")]
         [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "In AOT mode avoiding the path that requires dynamic code.")]
+        [SuppressMessage("ReSharper", "PossibleMultipleEnumeration", Justification = "If DoTryInsertRange manages to enumerate it, it returns with true, so the fallback will not be executed.")]
         public static bool TryInsertRange([NoEnumeration]this IEnumerable target, int index, IEnumerable collection, bool checkReadOnlyAndBounds = true, bool throwError = true)
         {
             if (target == null!)
@@ -686,13 +690,13 @@ namespace KGySoft.CoreLibraries
                                 if (index < 0)
                                     return false;
                                 Type genericCollectionInterface = genericListInterface.GetInterface(typeof(ICollection<>).Name)!;
-                                int count = target is ICollection coll ? coll.Count : target.Count(genericCollectionInterface);
-                                if (index > count || target.IsReadOnly(genericCollectionInterface))
+                                int count = target is ICollection coll ? coll.Count : target.Count(genericCollectionInterface) ?? -1;
+                                if (index > count || target.IsReadOnly(genericCollectionInterface) == true)
                                     return false;
                             }
 
-                            target.InsertRange(t, index, collection);
-                            return true;
+                            if (target.DoTryInsertRange(t, index, collection))
+                                return true;
                         }
 
                         break;
@@ -810,12 +814,13 @@ namespace KGySoft.CoreLibraries
 
                 if (collection.GetType().IsImplementationOfGenericType(typeof(ICollection<>), out Type? genericCollectionInterface))
                 {
-                    if (checkReadOnly && collection.IsReadOnly(genericCollectionInterface))
+                    if (checkReadOnly && collection.IsReadOnly(genericCollectionInterface) == true)
                         return false;
                     var genericArgument = genericCollectionInterface.GetGenericArguments()[0];
                     if (!genericArgument.CanAcceptValue(item))
                         return false;
-                    return collection.Remove(genericCollectionInterface, item);
+                    if (collection.Remove(genericCollectionInterface, item) is bool result)
+                        return result;
                 }
 
 #if NET35
@@ -930,13 +935,13 @@ namespace KGySoft.CoreLibraries
                         if (index < 0)
                             return false;
                         Type genericCollectionInterface = genericListInterface.GetInterface(typeof(ICollection<>).Name)!;
-                        int count = collection is ICollection coll ? coll.Count : collection.Count(genericCollectionInterface);
-                        if (index >= count || collection.IsReadOnly(genericCollectionInterface))
+                        int count = collection is ICollection coll ? coll.Count : collection.Count(genericCollectionInterface) ?? -1;
+                        if (index >= count || collection.IsReadOnly(genericCollectionInterface) == true)
                             return false;
                     }
 
-                    collection.RemoveAt(genericListInterface, index);
-                    return true;
+                    if (collection.DoTryRemoveAt(genericListInterface, index))
+                        return true;
                 }
 
                 return false;
@@ -1014,6 +1019,7 @@ namespace KGySoft.CoreLibraries
         /// </remarks>
         [RequiresUnreferencedCode("If the items can only be removed by using a generic interface, the required code might be removed by the trimmer. Try to use the generic overload if possible.")]
         [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "In AOT mode avoiding the path that requires dynamic code.")]
+        [SuppressMessage("ReSharper", "PossibleMultipleEnumeration", Justification = "If DoTryRemoveRange manages to enumerate it, it returns with true, so the fallback will not be executed.")]
         public static bool TryRemoveRange([NoEnumeration]this IEnumerable collection, int index, int count, bool checkReadOnlyAndBounds = true, bool throwError = true)
         {
             if (collection == null!)
@@ -1045,13 +1051,13 @@ namespace KGySoft.CoreLibraries
                                 if (index < 0)
                                     return false;
                                 Type genericCollectionInterface = genericListInterface.GetInterface(typeof(ICollection<>).Name)!;
-                                int collCount = collection is ICollection coll ? coll.Count : collection.Count(genericCollectionInterface);
-                                if ((uint)index >= (uint)collCount || index + count > collCount || collection.IsReadOnly(genericCollectionInterface))
+                                int collCount = collection is ICollection coll ? coll.Count : collection.Count(genericCollectionInterface) ?? -1;
+                                if ((uint)index >= (uint)collCount || index + count > collCount || collection.IsReadOnly(genericCollectionInterface) == true)
                                     return false;
                             }
 
-                            collection.RemoveRange(genericListInterface.GetGenericArguments()[0], index, count);
-                            return true;
+                            if (collection.DoTryRemoveRange(genericListInterface.GetGenericArguments()[0], index, count))
+                                return true;
                         }
 
                         break;
@@ -1189,19 +1195,19 @@ namespace KGySoft.CoreLibraries
                         if (index < 0)
                             return false;
                         Type genericCollectionInterface = genericListInterface.GetInterface(typeof(ICollection<>).Name)!;
-                        int count = collection is ICollection coll ? coll.Count : collection.Count(genericCollectionInterface);
+                        int count = collection is ICollection coll ? coll.Count : collection.Count(genericCollectionInterface) ?? -1;
                         if (index >= count || (
 #if NET35
                             collection is not Array && 
 #endif
-                            collection.IsReadOnly(genericCollectionInterface)))
+                            collection.IsReadOnly(genericCollectionInterface)) == true)
                         {
                             return false;
                         }
                     }
 
-                    collection.SetElementAt(genericListInterface, index, item);
-                    return true;
+                    if (collection.DoTrySetElementAt(genericListInterface, index, item))
+                        return true;
                 }
 
 #if NET35
@@ -1316,6 +1322,7 @@ namespace KGySoft.CoreLibraries
         /// </remarks>
         [RequiresUnreferencedCode("If the items can only be replaced by using a generic interface, the required code might be removed by the trimmer. Try to use the generic overload if possible.")]
         [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "In AOT mode avoiding the path that requires dynamic code.")]
+        [SuppressMessage("ReSharper", "PossibleMultipleEnumeration", Justification = "If DoTryReplaceRange manages to enumerate it, it returns with true, so the fallback will not be executed.")]
         public static bool TryReplaceRange([NoEnumeration]this IEnumerable target, int index, int count, IEnumerable collection, bool checkReadOnlyAndBounds = true, bool throwError = true)
         {
             if (count == 0)
@@ -1354,13 +1361,13 @@ namespace KGySoft.CoreLibraries
                                 if (index < 0)
                                     return false;
                                 Type genericCollectionInterface = genericListInterface.GetInterface(typeof(ICollection<>).Name)!;
-                                int targetCount = target is ICollection coll ? coll.Count : target.Count(genericCollectionInterface);
-                                if ((uint)index >= (uint)targetCount || index + count > targetCount || target.IsReadOnly(genericCollectionInterface))
+                                int targetCount = target is ICollection coll ? coll.Count : target.Count(genericCollectionInterface) ?? -1;
+                                if ((uint)index >= (uint)targetCount || index + count > targetCount || target.IsReadOnly(genericCollectionInterface) == true)
                                     return false;
                             }
 
-                            target.ReplaceRange(t, index, count, collection);
-                            return true;
+                            if (!target.DoTryReplaceRange(t, index, count, collection))
+                                return true;
                         }
 
                         break;
@@ -1774,20 +1781,26 @@ namespace KGySoft.CoreLibraries
                     return genericCollection.TryGetCount(out count);
 
                 default:
+                    int? result;
+
                     // ICollection<T>
                     if (source.GetType().IsImplementationOfGenericType(typeof(ICollection<>), out Type? collectionType))
                     {
-                        count = source.Count(collectionType);
-                        return true;
+                        result = source.Count(collectionType);
+                        if (result.HasValue)
+                        {
+                            count = result.Value;
+                            return true;
+                        }
                     }
 
 #if NET9_0_OR_GREATER
                     // Iterator<T>.GetCount() (IIListProvider<T>)
-                    int? result = source.GetIteratorCount() ?? source.GetListProviderCount();
+                    result = source.GetIteratorCount() ?? source.GetListProviderCount();
 
 #else
                     // IIListProvider<T>
-                    int? result = source.GetListProviderCount();
+                    result = source.GetListProviderCount();
 #endif
 
                     count = result >= 0 ? result.Value : default;

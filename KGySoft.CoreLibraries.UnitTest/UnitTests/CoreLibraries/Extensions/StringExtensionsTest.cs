@@ -31,6 +31,7 @@ using System.Text;
 #if !NETCOREAPP3_0_OR_GREATER
 using KGySoft.ComponentModel;
 #endif
+using KGySoft.Reflection;
 
 using NUnit.Framework;
 
@@ -59,6 +60,14 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
         #endregion
 
         #region Methods
+
+#if AOT
+        [OneTimeSetUp]
+        public void EnsureAotGenericTests()
+        {
+            Reflector.MemberOf(() => ToEnumTest<ConsoleColor>(default, default));
+        }
+#endif
 
         [TestCase(null, null)]
         [TestCase("", "")]

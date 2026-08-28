@@ -28,7 +28,7 @@ using NUnit.Framework;
 namespace KGySoft.CoreLibraries.UnitTests.Collections
 {
     [TestFixture]
-    public class CacheTest
+    public class CacheTest : TestBase
     {
         #region Methods
 
@@ -300,8 +300,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Assert.AreEqual(cache.Count, cacheCopy.Count);
             Assert.AreEqual(cache.Capacity, cacheCopy.Capacity);
             Assert.AreEqual(cache.Behavior, cacheCopy.Behavior);
-            Assert.IsTrue(cache.DisposeDroppedValues == cacheCopy.DisposeDroppedValues, "diff in DisposeDroppedValues"); // Assert.AreEqual throws IndexOutOfRangeException for bool values with trimming
-            Assert.IsTrue(cache.EnsureCapacity == cacheCopy.EnsureCapacity, "diff in EnsureCapacity"); // Assert.AreEqual throws IndexOutOfRangeException for bool values with trimming
+            AssertAreEqual(cache.DisposeDroppedValues, cacheCopy.DisposeDroppedValues, "diff in DisposeDroppedValues");
+            AssertAreEqual(cache.EnsureCapacity, cacheCopy.EnsureCapacity, "diff in EnsureCapacity");
 
             CollectionAssert.AreEqual(cache, cacheCopy);
             CollectionAssert.AreEqual(cache.Keys, cacheCopy.Keys);

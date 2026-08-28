@@ -23,6 +23,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 #if NETFRAMEWORK
 using System.Security;
@@ -62,7 +63,8 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
         [Test]
         public void IsSupportedCollectionForReflectionTest()
         {
-            void Test<T>(bool expectedResult, bool expectedDefaultCtor, Type expectedCollCtorParam, Type expectedElementType, bool expectedIsDictionary)
+            void Test<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]T>(
+                bool expectedResult, bool expectedDefaultCtor, Type expectedCollCtorParam, Type expectedElementType, bool expectedIsDictionary)
             {
                 bool result = typeof(T).IsSupportedCollectionForReflection(out ConstructorInfo defCtor, out ConstructorInfo collCtor, out Type elementType, out bool isDictionary);
                 Console.WriteLine($"{typeof(T)} is {(result ? String.Empty : "NOT ")}supported.");
@@ -74,11 +76,11 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
                     Console.WriteLine($"  Dictionary: {isDictionary}");
                 }
 
-                Assert.AreEqual(expectedResult, result);
-                Assert.AreEqual(expectedDefaultCtor, defCtor != null);
+                AssertAreEqual(expectedResult, result);
+                AssertAreEqual(expectedDefaultCtor, defCtor != null);
                 Assert.AreEqual(expectedCollCtorParam, collCtor?.GetParameters()[0]?.ParameterType);
                 Assert.AreEqual(expectedElementType, elementType);
-                Assert.AreEqual(expectedIsDictionary, isDictionary);
+                AssertAreEqual(expectedIsDictionary, isDictionary);
             }
 
             Test<object>(false, false, null, null, false);

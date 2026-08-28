@@ -38,6 +38,14 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
     {
         #region Methods
 
+#if AOT
+        [OneTimeSetUp]
+        public void EnsureAotGenericTests()
+        {
+            Reflector.MemberOf(() => ToEnumTest<ConsoleColor>(default, default));
+        }
+#endif
+
         [Test]
         public void ReadToWhiteSpaceTest()
         {

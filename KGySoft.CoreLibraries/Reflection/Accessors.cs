@@ -64,27 +64,27 @@ namespace KGySoft.Reflection
 
         #region ICollection<T>
 
-        private static LockFreeCache<Type, PropertyAccessor>? propertiesICollection_IsReadOnly;
-        private static LockFreeCache<Type, MethodAccessor>? methodsICollection_Add;
-        private static LockFreeCache<Type, MethodAccessor>? methodsICollection_Clear;
-        private static LockFreeCache<Type, PropertyAccessor>? propertiesICollection_Count;
-        private static LockFreeCache<Type, MethodAccessor>? methodsICollection_Remove;
+        private static LockFreeCache<Type, PropertyAccessor?>? propertiesICollection_IsReadOnly;
+        private static LockFreeCache<Type, MethodAccessor?>? methodsICollection_Add;
+        private static LockFreeCache<Type, MethodAccessor?>? methodsICollection_Clear;
+        private static LockFreeCache<Type, PropertyAccessor?>? propertiesICollection_Count;
+        private static LockFreeCache<Type, MethodAccessor?>? methodsICollection_Remove;
 
         #endregion
 
         #region IProducerConsumerCollection<T>
 
 #if !NET35
-        private static LockFreeCache<Type, MethodAccessor>? methodsIProducerConsumerCollection_TryAdd;
+        private static LockFreeCache<Type, MethodAccessor?>? methodsIProducerConsumerCollection_TryAdd;
 #endif
 
         #endregion
 
         #region IList<T>
 
-        private static LockFreeCache<Type, MethodAccessor>? methodsIList_Insert;
-        private static LockFreeCache<Type, MethodAccessor>? methodsIList_RemoveAt;
-        private static LockFreeCache<Type, PropertyAccessor>? propertiesIList_Item;
+        private static LockFreeCache<Type, MethodAccessor?>? methodsIList_Insert;
+        private static LockFreeCache<Type, MethodAccessor?>? methodsIList_RemoveAt;
+        private static LockFreeCache<Type, PropertyAccessor?>? propertiesIList_Item;
 
         #endregion
 
@@ -133,7 +133,7 @@ namespace KGySoft.Reflection
         private static LockFreeCache<(Type DeclaringType, Type? FieldType, string? FieldNamePattern), FieldAccessor?>? fields;
         private static LockFreeCache<(Type DeclaringType, string MethodName), MethodAccessor?>? methodsByName;
         private static LockFreeCache<(Type DeclaringType, string MethodName, TypesKey ParameterTypes), MethodAccessor>? methodsByTypes;
-        private static LockFreeCache<(Type DeclaringType, Type T, string MethodName), MethodAccessor>? staticGenericMethodsByName;
+        private static LockFreeCache<(Type DeclaringType, Type T, string MethodName), MethodAccessor?>? staticGenericMethodsByName;
         private static LockFreeCache<(Type DeclaringType, TypesKey GenericArguments, string MethodName, TypesKey ParameterTypes), MethodAccessor>? staticGenericMethodsByTypes;
         private static LockFreeCache<(Type DeclaringType, TypesKey ParameterTypes), CreateInstanceAccessor>? constructors;
         private static LockFreeCache<(Type DeclaringType, TypesKey ParameterTypes), ActionMethodAccessor?>? ctorMethods;
@@ -150,12 +150,12 @@ namespace KGySoft.Reflection
 
         [UnconditionalSuppressMessage("TrimAnalysis", "IL2070:TypeDynamicallyAccessedMemberTypesAnnotationMismatch",
             Justification = "We could annotate the lambda parameter accordingly, but that would then cause IL2111. And it is called with collectionInterface, which is annotated anyway.")]
-        private static PropertyAccessor ICollection_IsReadOnly([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]Type collectionInterface)
+        private static PropertyAccessor? ICollection_IsReadOnly([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]Type collectionInterface)
         {
             if (propertiesICollection_IsReadOnly == null)
             {
                 Interlocked.CompareExchange(ref propertiesICollection_IsReadOnly,
-                    new LockFreeCache<Type, PropertyAccessor>(i => PropertyAccessor.GetAccessor(i.GetProperty(nameof(ICollection<>.IsReadOnly))!), null, LockFreeCacheOptions.Profile16),
+                    new LockFreeCache<Type, PropertyAccessor?>(i => i.GetProperty(nameof(ICollection<>.IsReadOnly)) is PropertyInfo pi ? PropertyAccessor.GetAccessor(pi) : null, null, LockFreeCacheOptions.Profile16),
                     null);
             }
 
@@ -164,12 +164,12 @@ namespace KGySoft.Reflection
 
         [UnconditionalSuppressMessage("TrimAnalysis", "IL2070:TypeDynamicallyAccessedMemberTypesAnnotationMismatch",
             Justification = "We could annotate the lambda parameter accordingly, but that would then cause IL2111. And it is called with collectionInterface, which is annotated anyway.")]
-        private static MethodAccessor ICollection_Add([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]Type collectionInterface)
+        private static MethodAccessor? ICollection_Add([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]Type collectionInterface)
         {
             if (methodsICollection_Add == null)
             {
                 Interlocked.CompareExchange(ref methodsICollection_Add,
-                    new LockFreeCache<Type, MethodAccessor>(i => MethodAccessor.GetAccessor(i.GetMethod(nameof(ICollection<>.Add))!), null, LockFreeCacheOptions.Profile16),
+                    new LockFreeCache<Type, MethodAccessor?>(i => i.GetMethod(nameof(ICollection<>.Add)) is MethodInfo mi ? MethodAccessor.GetAccessor(mi) : null, null, LockFreeCacheOptions.Profile16),
                     null);
             }
 
@@ -178,12 +178,12 @@ namespace KGySoft.Reflection
 
         [UnconditionalSuppressMessage("TrimAnalysis", "IL2070:TypeDynamicallyAccessedMemberTypesAnnotationMismatch",
             Justification = "We could annotate the lambda parameter accordingly, but that would then cause IL2111. And it is called with collectionInterface, which is annotated anyway.")]
-        private static MethodAccessor ICollection_Clear([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]Type collectionInterface)
+        private static MethodAccessor? ICollection_Clear([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]Type collectionInterface)
         {
             if (methodsICollection_Clear == null)
             {
                 Interlocked.CompareExchange(ref methodsICollection_Clear,
-                    new LockFreeCache<Type, MethodAccessor>(i => MethodAccessor.GetAccessor(i.GetMethod(nameof(ICollection<>.Clear))!), null, LockFreeCacheOptions.Profile16),
+                    new LockFreeCache<Type, MethodAccessor?>(i => i.GetMethod(nameof(ICollection<>.Clear)) is MethodInfo mi ? MethodAccessor.GetAccessor(mi) : null, null, LockFreeCacheOptions.Profile16),
                     null);
             }
 
@@ -192,12 +192,12 @@ namespace KGySoft.Reflection
 
         [UnconditionalSuppressMessage("TrimAnalysis", "IL2070:TypeDynamicallyAccessedMemberTypesAnnotationMismatch",
             Justification = "We could annotate the lambda parameter accordingly, but that would then cause IL2111. And it is called with collectionInterface, which is annotated anyway.")]
-        private static PropertyAccessor ICollection_Count([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]Type collectionInterface)
+        private static PropertyAccessor? ICollection_Count([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]Type collectionInterface)
         {
             if (propertiesICollection_Count == null)
             {
                 Interlocked.CompareExchange(ref propertiesICollection_Count,
-                    new LockFreeCache<Type, PropertyAccessor>(i => PropertyAccessor.GetAccessor(i.GetProperty(nameof(ICollection<>.Count))!), null, LockFreeCacheOptions.Profile16),
+                    new LockFreeCache<Type, PropertyAccessor?>(i => i.GetProperty(nameof(ICollection<>.Count)) is PropertyInfo pi ? PropertyAccessor.GetAccessor(pi) : null, null, LockFreeCacheOptions.Profile16),
                     null);
             }
 
@@ -206,12 +206,12 @@ namespace KGySoft.Reflection
 
         [UnconditionalSuppressMessage("TrimAnalysis", "IL2070:TypeDynamicallyAccessedMemberTypesAnnotationMismatch",
             Justification = "We could annotate the lambda parameter accordingly, but that would then cause IL2111. And it is called with collectionInterface, which is annotated anyway.")]
-        private static MethodAccessor ICollection_Remove([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]Type collectionInterface)
+        private static MethodAccessor? ICollection_Remove([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]Type collectionInterface)
         {
             if (methodsICollection_Remove == null)
             {
                 Interlocked.CompareExchange(ref methodsICollection_Remove,
-                    new LockFreeCache<Type, MethodAccessor>(i => MethodAccessor.GetAccessor(i.GetMethod(nameof(ICollection<>.Remove))!), null, LockFreeCacheOptions.Profile16),
+                    new LockFreeCache<Type, MethodAccessor?>(i => i.GetMethod(nameof(ICollection<>.Remove)) is MethodInfo mi ? MethodAccessor.GetAccessor(mi) : null, null, LockFreeCacheOptions.Profile16),
                     null);
             }
 
@@ -225,12 +225,12 @@ namespace KGySoft.Reflection
 #if !NET35
         [UnconditionalSuppressMessage("TrimAnalysis", "IL2070:TypeDynamicallyAccessedMemberTypesAnnotationMismatch",
             Justification = "We could annotate the lambda parameter accordingly, but that would then cause IL2111. And it is called with collectionInterface, which is annotated anyway.")]
-        private static MethodAccessor IProducerConsumerCollection_TryAdd([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]Type collectionInterface)
+        private static MethodAccessor? IProducerConsumerCollection_TryAdd([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]Type collectionInterface)
         {
             if (methodsIProducerConsumerCollection_TryAdd == null)
             {
                 Interlocked.CompareExchange(ref methodsIProducerConsumerCollection_TryAdd,
-                    new LockFreeCache<Type, MethodAccessor>(i => MethodAccessor.GetAccessor(i.GetMethod(nameof(IProducerConsumerCollection<>.TryAdd))!), null, LockFreeCacheOptions.Profile16),
+                    new LockFreeCache<Type, MethodAccessor?>(i => i.GetMethod(nameof(IProducerConsumerCollection<>.TryAdd)) is MethodInfo mi ? MethodAccessor.GetAccessor(mi) : null, null, LockFreeCacheOptions.Profile16),
                     null);
             }
 
@@ -244,12 +244,12 @@ namespace KGySoft.Reflection
 
         [UnconditionalSuppressMessage("TrimAnalysis", "IL2070:TypeDynamicallyAccessedMemberTypesAnnotationMismatch",
             Justification = "We could annotate the lambda parameter accordingly, but that would then cause IL2111. And it is called with listInterface, which is annotated anyway.")]
-        private static MethodAccessor IList_Insert([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]Type listInterface)
+        private static MethodAccessor? IList_Insert([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]Type listInterface)
         {
             if (methodsIList_Insert == null)
             {
                 Interlocked.CompareExchange(ref methodsIList_Insert,
-                    new LockFreeCache<Type, MethodAccessor>(i => MethodAccessor.GetAccessor(i.GetMethod(nameof(IList<>.Insert))!), null, LockFreeCacheOptions.Profile16),
+                    new LockFreeCache<Type, MethodAccessor?>(i => i.GetMethod(nameof(IList<>.Insert)) is MethodInfo mi ? MethodAccessor.GetAccessor(mi) : null, null, LockFreeCacheOptions.Profile16),
                     null);
             }
 
@@ -258,12 +258,12 @@ namespace KGySoft.Reflection
 
         [UnconditionalSuppressMessage("TrimAnalysis", "IL2070:TypeDynamicallyAccessedMemberTypesAnnotationMismatch",
             Justification = "We could annotate the lambda parameter accordingly, but that would then cause IL2111. And it is called with listInterface, which is annotated anyway.")]
-        private static MethodAccessor IList_RemoveAt([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]Type listInterface)
+        private static MethodAccessor? IList_RemoveAt([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]Type listInterface)
         {
             if (methodsIList_RemoveAt == null)
             {
                 Interlocked.CompareExchange(ref methodsIList_RemoveAt,
-                    new LockFreeCache<Type, MethodAccessor>(i => MethodAccessor.GetAccessor(i.GetMethod(nameof(IList<>.RemoveAt))!), null, LockFreeCacheOptions.Profile16),
+                    new LockFreeCache<Type, MethodAccessor?>(i => i.GetMethod(nameof(IList<>.RemoveAt)) is MethodInfo mi ? MethodAccessor.GetAccessor(mi) : null, null, LockFreeCacheOptions.Profile16),
                     null);
             }
 
@@ -272,12 +272,12 @@ namespace KGySoft.Reflection
 
         [UnconditionalSuppressMessage("TrimAnalysis", "IL2070:TypeDynamicallyAccessedMemberTypesAnnotationMismatch",
             Justification = "We could annotate the lambda parameter accordingly, but that would then cause IL2111. And it is called with listInterface, which is annotated anyway.")]
-        private static PropertyAccessor IList_Item([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]Type listInterface)
+        private static PropertyAccessor? IList_Item([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]Type listInterface)
         {
             if (propertiesIList_Item == null)
             {
                 Interlocked.CompareExchange(ref propertiesIList_Item,
-                    new LockFreeCache<Type, PropertyAccessor>(i => PropertyAccessor.GetAccessor(i.GetProperty("Item")!), null, LockFreeCacheOptions.Profile16),
+                    new LockFreeCache<Type, PropertyAccessor?>(i => i.GetProperty("Item") is PropertyInfo pi ? PropertyAccessor.GetAccessor(pi) : null, null, LockFreeCacheOptions.Profile16),
                     null);
             }
 
@@ -562,7 +562,8 @@ namespace KGySoft.Reflection
                 Justification = "False alarm, the tuple field gets its value from the type of the outer method, which is annotated, and it is enough to get the public methods only.")]
             static MethodAccessor GetMethodAccessor((Type DeclaringType, string MethodName, TypesKey ParameterTypes) key)
             {
-                // Unlike in GetMethodByName, here result is not nullable because we invoke public methods only
+                // Unlike in GetMethodByName, here result is not nullable because we invoke public methods only.
+                // The method still can be missing in native AOT mode, in which case we throw an exception.
                 MethodInfo[] methods = key.DeclaringType.GetMember(key.MethodName, MemberTypes.Method, BindingFlags.Instance | BindingFlags.Public)
                     .Cast<MethodInfo>()
                     .Where(m => !m.IsGenericMethodDefinition && m.GetParameters().Length == key.ParameterTypes.Types.Length)
@@ -576,7 +577,10 @@ namespace KGySoft.Reflection
                     return MethodAccessor.GetAccessor(mi);
                 }
 
-                return Throw.InternalError<MethodAccessor>($"No matching method found: {key}");
+                // Not returning null in AOT mode, because all callers are expected to have a valid method.
+                return RuntimeFeature.IsDynamicCodeSupported
+                    ? Throw.InternalError<MethodAccessor>($"No matching method found: {key}")
+                    : Throw.InvalidOperationException<MethodAccessor>(Res.ReflectionInstanceMethodNotFound(key.MethodName, key.DeclaringType));
             }
 
             #endregion
@@ -588,24 +592,24 @@ namespace KGySoft.Reflection
 
         [RequiresDynamicCode("GetGenericMethod")]
         [RequiresUnreferencedCode("GetGenericMethod")]
-        private static MethodAccessor GetStaticGenericMethodByName([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]Type type, // public generic method definitions
+        private static MethodAccessor? GetStaticGenericMethodByName([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]Type type, // public generic method definitions
             Type typeArgument, string methodName)
         {
             #region Local Methods
 
             [RequiresDynamicCode("GetGenericMethod")]
             [RequiresUnreferencedCode("GetGenericMethod")]
-            static MethodAccessor GetMethodAccessor((Type DeclaringType, Type T, string MethodName) key)
+            static MethodAccessor? GetMethodAccessor((Type DeclaringType, Type T, string MethodName) key)
             {
                 // Unlike in GetMethodByName, here result is not nullable because we invoke public methods only
-                MethodInfo method = key.DeclaringType.GetMethod(key.MethodName, BindingFlags.Static | BindingFlags.Public)!.GetGenericMethod(key.T);
-                return MethodAccessor.GetAccessor(method);
+                MethodInfo? method = key.DeclaringType.GetMethod(key.MethodName, BindingFlags.Static | BindingFlags.Public)?.GetGenericMethod(key.T);
+                return method == null ? null : MethodAccessor.GetAccessor(method);
             }
 
             #endregion
 
             if (staticGenericMethodsByName == null)
-                Interlocked.CompareExchange(ref staticGenericMethodsByName, new LockFreeCache<(Type, Type, string), MethodAccessor>(GetMethodAccessor, null, LockFreeCacheOptions.Profile128), null);
+                Interlocked.CompareExchange(ref staticGenericMethodsByName, new LockFreeCache<(Type, Type, string), MethodAccessor?>(GetMethodAccessor, null, LockFreeCacheOptions.Profile128), null);
             return staticGenericMethodsByName[(type, typeArgument, methodName)];
         }
 
@@ -620,7 +624,8 @@ namespace KGySoft.Reflection
             [RequiresUnreferencedCode("MakeGenericMethod")]
             static MethodAccessor GetMethodAccessor((Type DeclaringType, TypesKey GenericArguments, string MethodName, TypesKey ParameterTypes) key)
             {
-                // Unlike in GetMethodByName, here result is not nullable because we invoke public methods only
+                // Unlike in GetMethodByName, here result is not nullable because we invoke public methods only.
+                // The method still can be missing in native AOT mode, in which case we throw an exception.
                 MethodInfo[] methods = key.DeclaringType.GetMember(key.MethodName, MemberTypes.Method, BindingFlags.Static | BindingFlags.Public)
                     .Cast<MethodInfo>()
                     .Where(m => m.IsGenericMethodDefinition && m.GetGenericArguments().Length == key.GenericArguments.Types.Length && m.GetParameters().Length == key.ParameterTypes.Types.Length)
@@ -644,7 +649,10 @@ namespace KGySoft.Reflection
                     return MethodAccessor.GetAccessor(constructedMethod);
                 }
 
-                return Throw.InternalError<MethodAccessor>($"No matching method found: {key}");
+                // Not returning null in AOT mode, because all callers are expected to have a valid method.
+                return RuntimeFeature.IsDynamicCodeSupported
+                    ? Throw.InternalError<MethodAccessor>($"No matching method found: {key}")
+                    : Throw.InvalidOperationException<MethodAccessor>(Res.ReflectionStaticMethodNotFound(key.MethodName, key.DeclaringType));
             }
 
             #endregion
@@ -662,11 +670,18 @@ namespace KGySoft.Reflection
             
             static CreateInstanceAccessor GetCreateInstanceAccessor((Type DeclaringType, TypesKey ParameterTypes) key)
             {
-                // Here we accept non-public constructors, too. They should be really well-known at least internal members.
+                // Here we accept non-public constructors, too. They should be really well-known (at least internal) members.
                 ConstructorInfo? ci = key.DeclaringType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
                     null, key.ParameterTypes.Types, null);
-                Debug.Assert(ci != null, "Constructor was not found for the specified parameter types");
-                return CreateInstanceAccessor.GetAccessor(ci!);
+
+                if (ci == null)
+                {
+                    return RuntimeFeature.IsDynamicCodeSupported
+                        ? Throw.InternalError<CreateInstanceAccessor>($"Constructor was not found for the specified parameter types: {key}")
+                        : Throw.InvalidOperationException<CreateInstanceAccessor>(Res.ReflectionCtorNotFound(key.DeclaringType));
+                }
+
+                return CreateInstanceAccessor.GetAccessor(ci);
             }
 
             #endregion
@@ -714,8 +729,8 @@ namespace KGySoft.Reflection
         [RequiresDynamicCode("InvokeMethod/GetStaticGenericMethodByName")]
         [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
             Justification = "MakeGenericMethod has RequiresUnreferencedCode because the constraints cannot be validated, but CollectionExtensions.AddRange has no constraints.")]
-        internal static void AddRange(this IEnumerable target, Type genericArgument, IEnumerable collection)
-            => InvokeMethod(typeof(CollectionExtensions), nameof(CollectionExtensions.AddRange), genericArgument, target, collection);
+        internal static bool DoTryAddRange([NoEnumeration]this IEnumerable target, Type genericArgument, IEnumerable collection)
+            => TryInvokeMethod(typeof(CollectionExtensions), nameof(CollectionExtensions.AddRange), genericArgument, target, collection);
 
         #endregion
 
@@ -724,62 +739,101 @@ namespace KGySoft.Reflection
         [RequiresDynamicCode("InvokeMethod/GetStaticGenericMethodByName")]
         [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
             Justification = "MakeGenericMethod has RequiresUnreferencedCode because the constraints cannot be validated, but ListExtensions.InsertRange has no constraints.")]
-        internal static void InsertRange(this IEnumerable target, Type genericArgument, int index, IEnumerable collection)
-            => typeof(ListExtensions).InvokeMethod(nameof(ListExtensions.InsertRange), genericArgument, target, index, collection);
+        internal static bool DoTryInsertRange([NoEnumeration]this IEnumerable target, Type genericArgument, int index, IEnumerable collection)
+            => typeof(ListExtensions).TryInvokeMethod(nameof(ListExtensions.InsertRange), genericArgument, target, index, collection);
 
         [RequiresDynamicCode("InvokeMethod/GetStaticGenericMethodByName")]
         [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
             Justification = "MakeGenericMethod has RequiresUnreferencedCode because the constraints cannot be validated, but ListExtensions.RemoveRange has no constraints.")]
-        internal static void RemoveRange(this IEnumerable collection, Type genericArgument, int index, int count)
-            => typeof(ListExtensions).InvokeMethod(nameof(ListExtensions.RemoveRange), genericArgument, collection, index, count);
+        internal static bool DoTryRemoveRange([NoEnumeration]this IEnumerable collection, Type genericArgument, int index, int count)
+            => typeof(ListExtensions).TryInvokeMethod(nameof(ListExtensions.RemoveRange), genericArgument, collection, index, count);
 
         [RequiresDynamicCode("InvokeMethod/GetStaticGenericMethodByName")]
         [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
             Justification = "MakeGenericMethod has RequiresUnreferencedCode because the constraints cannot be validated, but ListExtensions.ReplaceRange has no constraints.")]
-        internal static void ReplaceRange(this IEnumerable target, Type genericArgument, int index, int count, IEnumerable collection)
-            => typeof(ListExtensions).InvokeMethod(nameof(ListExtensions.ReplaceRange), genericArgument, target, index, count, collection);
+        internal static bool DoTryReplaceRange([NoEnumeration]this IEnumerable target, Type genericArgument, int index, int count, IEnumerable collection)
+            => typeof(ListExtensions).TryInvokeMethod(nameof(ListExtensions.ReplaceRange), genericArgument, target, index, count, collection);
 
         #endregion
 
         #region ICollection<T>
 
-        internal static bool IsReadOnly([NoEnumeration]this IEnumerable collection, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]Type collectionInterface)
-            => (bool)ICollection_IsReadOnly(collectionInterface).Get(collection)!;
+        [DynamicDependency(nameof(ICollection<>.Count), typeof(ICollection<>))]
+        internal static bool? IsReadOnly([NoEnumeration]this IEnumerable collection, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]Type collectionInterface)
+            => (bool?)ICollection_IsReadOnly(collectionInterface)?.Get(collection);
 
-        internal static void Add([NoEnumeration]this IEnumerable collection, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]Type collectionInterface, object? item)
-            => ICollection_Add(collectionInterface).Invoke(collection, item);
-        
-        internal static void Clear([NoEnumeration]this IEnumerable collection, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]Type collectionInterface)
-            => ICollection_Clear(collectionInterface).Invoke(collection);
-        
-        internal static int Count([NoEnumeration]this IEnumerable collection, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]Type collectionInterface)
-            => (int)ICollection_Count(collectionInterface).Get(collection)!;
-        
-        internal static bool Remove([NoEnumeration]this IEnumerable collection, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]Type collectionInterface, object? item)
-            => (bool)ICollection_Remove(collectionInterface).Invoke(collection, item)!;
+        [DynamicDependency(nameof(ICollection<>.Add), typeof(ICollection<>))]
+        internal static bool DoTryAdd([NoEnumeration]this IEnumerable collection, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]Type collectionInterface, object? item)
+        {
+            MethodAccessor? addMethod = ICollection_Add(collectionInterface);
+            if (addMethod == null)
+                return false;
+            addMethod.Invoke(collection, item);
+            return true;
+        }
+
+        [DynamicDependency(nameof(ICollection<>.Clear), typeof(ICollection<>))]
+        internal static bool DoTryClear([NoEnumeration]this IEnumerable collection, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]Type collectionInterface)
+        {
+            MethodAccessor? clearMethod = ICollection_Clear(collectionInterface);
+            if (clearMethod == null)
+                return false;
+            clearMethod.Invoke(collection);
+            return true;
+        }
+
+        [DynamicDependency(nameof(ICollection<>.Count), typeof(ICollection<>))]
+        internal static int? Count([NoEnumeration]this IEnumerable collection, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]Type collectionInterface)
+            => (int?)ICollection_Count(collectionInterface)?.Get(collection);
+
+        [DynamicDependency(nameof(ICollection<>.Remove), typeof(ICollection<>))]
+        internal static bool? Remove([NoEnumeration]this IEnumerable collection, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]Type collectionInterface, object? item)
+            => (bool?)ICollection_Remove(collectionInterface)?.Invoke(collection, item);
 
         #endregion
 
         #region IProducerConsumerCollection<T>
 
 #if !NET35
-        internal static bool TryAddToProducerConsumerCollection([NoEnumeration]this IEnumerable collection,
+        [DynamicDependency(nameof(IProducerConsumerCollection<>.TryAdd), typeof(IProducerConsumerCollection<>))]
+        internal static bool? TryAddToProducerConsumerCollection([NoEnumeration]this IEnumerable collection,
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]Type collectionInterface, object? item)
-            => (bool)IProducerConsumerCollection_TryAdd(collectionInterface).Invoke(collection, item)!;
+            => (bool?)IProducerConsumerCollection_TryAdd(collectionInterface)?.Invoke(collection, item);
 #endif
 
         #endregion
 
         #region IList<T>
 
-        internal static void Insert([NoEnumeration]this IEnumerable list, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]Type listInterface, int index, object? item)
-            => IList_Insert(listInterface).Invoke(list, index, item);
+        [DynamicDependency(nameof(IList<>.Insert), typeof(IList<>))]
+        internal static bool DoTryInsert([NoEnumeration]this IEnumerable list, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]Type listInterface, int index, object? item)
+        {
+            MethodAccessor? insertMethod = IList_Insert(listInterface);
+            if (insertMethod == null)
+                return false;
+            insertMethod.Invoke(list, index, item);
+            return true;
+        }
 
-        internal static void RemoveAt([NoEnumeration]this IEnumerable list, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]Type listInterface, int index)
-            => IList_RemoveAt(listInterface).Invoke(list, index);
-        
-        internal static void SetElementAt([NoEnumeration]this IEnumerable list, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]Type listInterface, int index, object? item)
-            => IList_Item(listInterface).Set(list, item, index);
+        [DynamicDependency(nameof(IList<>.RemoveAt), typeof(IList<>))]
+        internal static bool DoTryRemoveAt([NoEnumeration]this IEnumerable list, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]Type listInterface, int index)
+        {
+            MethodAccessor? removeMethod = IList_RemoveAt(listInterface);
+            if (removeMethod == null)
+                return false;
+            removeMethod.Invoke(list, index);
+            return true;
+        }
+
+        [DynamicDependency("Item", typeof(IList<>))]
+        internal static bool DoTrySetElementAt([NoEnumeration]this IEnumerable list, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]Type listInterface, int index, object? item)
+        {
+            PropertyAccessor? indexer = IList_Item(listInterface);
+            if (indexer == null)
+                return false;
+            indexer.Set(list, item, index);
+            return true;
+        }
 
         #endregion
 
@@ -1075,6 +1129,8 @@ namespace KGySoft.Reflection
             => GetFieldValueOrDefault<bool>(collection, false, "caseInsensitive"); // HybridDictionary
 
         [RequiresUnreferencedCode("GetFieldValue")]
+        [DynamicDependency("bitwiseAndHash", typeof(ThreadSafeHashSet<>))]
+        [DynamicDependency("bitwiseAndHash", typeof(ThreadSafeDictionary<,>))]
         internal static bool UsesBitwiseAndHash([NoEnumeration]this IEnumerable collection)
         {
             Debug.Assert(collection.GetType().IsGenericTypeOf(typeof(ThreadSafeHashSet<>)) || collection.GetType().IsGenericTypeOf(typeof(ThreadSafeDictionary<,>)));
@@ -1159,6 +1215,8 @@ namespace KGySoft.Reflection
         #region DictionaryEntry/KeyValuePair
 
         [RequiresUnreferencedCode("GetProperty, SetFieldValue")]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(DictionaryEntry))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.NonPublicFields, typeof(KeyValuePair<,>))]
         internal static void SetKeyValue(object instance, object? key, object? value)
         {
             // Though DictionaryEntry.Key/Value have setters they must be set by reflection because of the boxed struct
@@ -1343,17 +1401,34 @@ namespace KGySoft.Reflection
         }
 
         /// <summary>
-        /// For unambiguous generic static methods by name.
+        /// For unambiguous generic static methods by name that must exist. Throws an exception in AOT mode if the method is not found.
         /// </summary>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [RequiresDynamicCode("GetStaticGenericMethodByName")]
         [RequiresUnreferencedCode("GetStaticGenericMethodByName")]
         internal static object? InvokeMethod([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]this Type type,
             string methodName, Type genericArgument, params object?[] parameters)
-            => GetStaticGenericMethodByName(type, genericArgument, methodName).Invoke(null, parameters);
+            => GetStaticGenericMethodByName(type, genericArgument, methodName)?.Invoke(null, parameters);
 
         /// <summary>
-        /// For static methods by name and parameter types.
+        /// For unambiguous generic static methods by name. The method may be missing in AOT mode only.
+        /// All caller use it for void methods now. If a non-void method will be required, change the return value to StrongBox{object?}? and return null if the method is missing.
+        /// </summary>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        [RequiresDynamicCode("GetStaticGenericMethodByName")]
+        [RequiresUnreferencedCode("GetStaticGenericMethodByName")]
+        internal static bool TryInvokeMethod([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]this Type type,
+            string methodName, Type genericArgument, params object?[] parameters)
+        {
+            MethodAccessor? method = GetStaticGenericMethodByName(type, genericArgument, methodName);
+            if (method == null)
+                return false;
+            method.Invoke(null, parameters);
+            return true;
+        }
+
+        /// <summary>
+        /// For generic static methods by name and parameter types. All callers expect the method to exist. Throws an exception in AOT mode if the method is not found.
         /// </summary>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [RequiresDynamicCode("GetStaticGenericMethodByTypes")]
@@ -1367,7 +1442,7 @@ namespace KGySoft.Reflection
         }
 
         /// <summary>
-        /// For static methods by name and parameter type.
+        /// For generic static methods by name and parameter type. All callers expect the method to exist. Throws an exception in AOT mode if the method is not found.
         /// </summary>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [RequiresDynamicCode("InvokeMethod/GetStaticGenericMethodByTypes")]
@@ -1377,7 +1452,7 @@ namespace KGySoft.Reflection
             => InvokeMethod(type, methodName, [genericArgument], [parameterType], parameters);
 
         /// <summary>
-        /// For static methods by name and parameter types.
+        /// For generic static methods by name and parameter type. All callers expect the method to exist. Throws an exception in AOT mode if the method is not found.
         /// </summary>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [RequiresDynamicCode("InvokeMethod/GetStaticGenericMethodByTypes")]
@@ -1387,7 +1462,7 @@ namespace KGySoft.Reflection
             => InvokeMethod(type, methodName, [genericArgument], parameterTypes, parameters);
 
         /// <summary>
-        /// For constructors by exact parameter types.
+        /// For constructors by exact parameter types. All callers expect the constructor to exist. Throws an exception in AOT mode if the constructor is not found.
         /// </summary>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static object CreateInstance([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors)]this Type type,
@@ -1398,21 +1473,21 @@ namespace KGySoft.Reflection
         }
 
         /// <summary>
-        /// For constructors for exactly one parameter.
+        /// For constructors for exactly one parameter. All callers expect the constructor to exist. Throws an exception in AOT mode if the constructor is not found.
         /// </summary>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static object CreateInstance([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors)]this Type type, Type parameterType, object? parameter)
             => CreateInstance(type, [parameterType], parameter);
 
         /// <summary>
-        /// For constructors with exactly one non-derived parameter.
+        /// For constructors with exactly one non-derived parameter. All callers expect the constructor to exist. Throws an exception in AOT mode if the constructor is not found.
         /// </summary>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static object CreateInstance([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors)]this Type type, object parameter)
             => CreateInstance(type, [parameter.GetType()], parameter);
 
         /// <summary>
-        /// For constructors with non-derived parameters.
+        /// For constructors with non-derived parameters. All callers expect the constructor to exist. Throws an exception in AOT mode if the constructor is not found.
         /// </summary>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static object CreateInstance([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors)]this Type type, params object[] parameters)

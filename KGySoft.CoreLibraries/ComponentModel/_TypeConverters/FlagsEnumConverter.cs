@@ -41,7 +41,6 @@ namespace KGySoft.ComponentModel
         private class EnumFlagDescriptor : SimplePropertyDescriptor
         {
             #region Fields
-
             private readonly ulong flagValue;
             private readonly ulong defaultValue;
             private readonly FieldInfo valueField;
@@ -154,13 +153,20 @@ namespace KGySoft.ComponentModel
 
         #endregion
 
+        #region Constants
+
+        internal const DynamicallyAccessedMemberTypes NeededMembers = DynamicallyAccessedMemberTypes.PublicParameterlessConstructor
+            | DynamicallyAccessedMembers.AllFields; // public: the named values; private: the underlying value field
+
+        #endregion
+
         #region Constructors
 
         /// <summary>
         /// Creates an instance of the <see cref="FlagsEnumConverter"/> class.
         /// </summary>
         /// <param name="type">The type of the enumeration.</param>
-        public FlagsEnumConverter([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor | DynamicallyAccessedMemberTypes.PublicFields)]Type type)
+        public FlagsEnumConverter([DynamicallyAccessedMembers(NeededMembers)]Type type)
             : base(type)
         {
         }
@@ -194,7 +200,10 @@ namespace KGySoft.ComponentModel
                 return base.GetProperties(context, value, attributes!);
 
             // this is how value field is obtained in Type.GetEnumUnderlyingType
-            FieldInfo valueField = enumType.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)[0];
+            FieldInfo? valueField = enumType.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance).FirstOrDefault();
+            if (valueField == null) // can happen in AOT mode if the value field is trimmed
+                return base.GetProperties(context, value, attributes!);
+
             DefaultValueAttribute? defaultAttr = context?.PropertyDescriptor?.Attributes[typeof(DefaultValueAttribute)] as DefaultValueAttribute;
             ulong defaultValue = defaultAttr?.Value?.GetType() == enumType ? ((Enum)defaultAttr.Value).ToUInt64() : 0UL;
             PropertyDescriptorCollection enumFields = new PropertyDescriptorCollection(null);

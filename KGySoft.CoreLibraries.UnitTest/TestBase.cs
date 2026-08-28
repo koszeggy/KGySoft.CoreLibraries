@@ -15,6 +15,10 @@
 
 #region Usings
 
+using System.Diagnostics.CodeAnalysis;
+
+using KGySoft.Annotations;
+
 #region Used Namespaces
 
 using System;
@@ -115,6 +119,65 @@ namespace KGySoft.CoreLibraries
         #region Methods
 
         #region Protected Methods
+
+        protected static void AssertAreEqual([CanBeNull]object expected, [CanBeNull]object actual, [CanBeNull]string message = null)
+        {
+            if (RuntimeFeature.IsDynamicCodeSupported)
+            {
+                Assert.AreEqual(expected, actual, message);
+                return;
+            }
+
+            // In AOT Assert.AreEqual throws an IndexOutOfRange exception in a lot of cases, such as comparing bool values, IEnumerable types, etc.
+            if (ReferenceEquals(expected, actual))
+                return;
+
+            if (expected == null || actual == null)
+            {
+                Assert.Fail(message ?? $"Expected: {expected ?? "null"}{Environment.NewLine}Actual: {actual ?? "null"}");
+                return;
+            }
+
+            if (expected.GetType() != actual.GetType() && actual.TryConvert(expected.GetType(), out var converted))
+                actual = converted;
+
+            if (expected is IEnumerable expectedCollection && actual is IEnumerable actualCollection)
+            {
+                if (expectedCollection.GetType() != actualCollection.GetType())
+                    Assert.Fail(message ?? $"Expected: {expected}{Environment.NewLine}Actual: {actual}");
+
+                AssertItemsEqual(expectedCollection, actualCollection);
+                return;
+            }
+
+            if (!expected.Equals(actual))
+                Assert.Fail(message ?? $"Expected: {expected}{Environment.NewLine}Actual: {actual}");
+        }
+
+        protected static void AssertAreNotEqual([CanBeNull]object expected, [CanBeNull]object actual, [CanBeNull]string message = null)
+        {
+            if (RuntimeFeature.IsDynamicCodeSupported)
+            {
+                Assert.AreNotEqual(expected, actual, message);
+                return;
+            }
+
+            if (Equals(expected, actual))
+                Assert.Fail(message ?? $"Not expected: {expected}{Environment.NewLine}Actual: {actual}");
+        }
+
+        protected static void AssertDoesNotContain(IEnumerable collection, [CanBeNull]object actual, [CanBeNull] string message = null)
+        {
+            if (RuntimeFeature.IsDynamicCodeSupported)
+            {
+                CollectionAssert.DoesNotContain(collection, actual, message);
+                return;
+            }
+
+            // CollectionAssert.DoesNotContain throws an IndexOutOfRangeException in some cases (e.g. for bool items) when the tests are published in AOT mode
+            if (collection.Cast<object>().Contains(actual))
+                Assert.Fail(message ?? $"Not expected in the collection: {actual}");
+        }
 
         /// <summary>
         /// Asserts whether <paramref name="check"/> and <paramref name="reference"/> (can also be simple objects) are equal in depth.
@@ -254,6 +317,9 @@ namespace KGySoft.CoreLibraries
 
         #region Private Methods
 
+#if NETCOREAPP3_0_OR_GREATER
+        [DynamicDependency(nameof(Memory<>.ToArray), typeof(Memory<>))]
+#endif
         private static bool CheckDeepEquals(object reference, object check, bool forceEqualityByMembers, List<string> errors, HashSet<object> checkedObjects)
         {
             if (ReferenceEquals(reference, check))
@@ -318,7 +384,7 @@ namespace KGySoft.CoreLibraries
                 }
 #endif
 
-#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP2_1_OR_GREATER
                 if (typeRef.IsGenericTypeOf(typeof(Memory<>)) || typeRef.IsGenericTypeOf(typeof(ReadOnlyMemory<>)))
                 {
                     // Length, IsEmpty

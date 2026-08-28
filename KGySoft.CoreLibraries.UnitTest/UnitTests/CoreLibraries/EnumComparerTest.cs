@@ -88,8 +88,8 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             Assert.AreEqual(d1.Compare(v1[0], v1[1]), c1.Compare(v1[0], v1[1]));
             Assert.AreEqual(d1.Compare(v1[1], v1[0]), c1.Compare(v1[1], v1[0]));
             Assert.AreEqual(d1.Compare(v1[1], v1[1]), c1.Compare(v1[1], v1[1]));
-            Assert.AreEqual(e1.Equals(v1[0], v1[1]), c1.Equals(v1[0], v1[1]));
-            Assert.AreEqual(e1.Equals(v1[1], v1[1]), c1.Equals(v1[1], v1[1]));
+            AssertAreEqual(e1.Equals(v1[0], v1[1]), c1.Equals(v1[0], v1[1]));
+            AssertAreEqual(e1.Equals(v1[1], v1[1]), c1.Equals(v1[1], v1[1]));
             Assert.AreEqual(e1.GetHashCode(v1[0]), c1.GetHashCode(v1[0]));
             Assert.AreNotEqual(c1.GetHashCode(v1[0]), c1.GetHashCode(v1[1]));
             Assert.AreEqual(-1L, c1.ToInt64(v1[0]));
@@ -105,8 +105,8 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             Assert.AreEqual(d2.Compare(v2[0], v2[1]), c2.Compare(v2[0], v2[1]));
             Assert.AreEqual(d2.Compare(v2[1], v2[0]), c2.Compare(v2[1], v2[0]));
             Assert.AreEqual(d2.Compare(v2[1], v2[1]), c2.Compare(v2[1], v2[1]));
-            Assert.AreEqual(e2.Equals(v2[0], v2[1]), c2.Equals(v2[0], v2[1]));
-            Assert.AreEqual(e2.Equals(v2[1], v2[1]), c2.Equals(v2[1], v2[1]));
+            AssertAreEqual(e2.Equals(v2[0], v2[1]), c2.Equals(v2[0], v2[1]));
+            AssertAreEqual(e2.Equals(v2[1], v2[1]), c2.Equals(v2[1], v2[1]));
 
             var c3 = EnumComparer<TestUlongEnum>.Comparer;
             var d3 = Comparer<TestUlongEnum>.Default;
@@ -116,8 +116,8 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             Assert.AreEqual(d3.Compare(v3[0], v3[1]), c3.Compare(v3[0], v3[1]));
             Assert.AreEqual(d3.Compare(v3[1], v3[0]), c3.Compare(v3[1], v3[0]));
             Assert.AreEqual(d3.Compare(v3[1], v3[1]), c3.Compare(v3[1], v3[1]));
-            Assert.AreEqual(e3.Equals(v3[0], v3[1]), c3.Equals(v3[0], v3[1]));
-            Assert.AreEqual(e3.Equals(v3[1], v3[1]), c3.Equals(v3[1], v3[1]));
+            AssertAreEqual(e3.Equals(v3[0], v3[1]), c3.Equals(v3[0], v3[1]));
+            AssertAreEqual(e3.Equals(v3[1], v3[1]), c3.Equals(v3[1], v3[1]));
             Assert.AreNotEqual(c3.GetHashCode(v3[0]), c3.GetHashCode(v3[1]));
         }
 

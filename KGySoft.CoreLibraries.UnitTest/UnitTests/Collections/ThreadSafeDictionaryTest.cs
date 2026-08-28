@@ -31,7 +31,7 @@ using NUnit.Framework;
 namespace KGySoft.CoreLibraries.UnitTests.Collections
 {
     [TestFixture]
-    public class ThreadSafeDictionaryTest
+    public class ThreadSafeDictionaryTest : TestBase
     {
         #region Fields
 
@@ -458,7 +458,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             };
 
             ThreadSafeDictionary<string, int> clone = dict.DeepClone(false);
-            Assert.IsTrue(dict.SequenceEqual(clone));
+            CollectionAssert.AreEqual(dict, clone);
         }
 
         [TestCase(false)]
@@ -506,7 +506,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             ParallelHelper.For(0, results.Length,
                 y => results[y] = dict.ContainsKey(key));
 
-            Assert.IsFalse(results.Contains(false)); // CollectionAssert.DoesNotContain throws an IndexOutOfRangeException when the tests are published in AOT mode
+            AssertDoesNotContain(results, false);
         }
 
         [Test]
@@ -524,7 +524,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             ParallelHelper.For(0, results.Length,
                 y => results[y] = dict.TryAdd(key, false));
 
-            Assert.IsFalse(results.Contains(true)); // CollectionAssert.DoesNotContain throws an IndexOutOfRangeException when the tests are published in AOT mode
+            AssertDoesNotContain(results, true);
         }
 
         [Test]
@@ -542,7 +542,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             ParallelHelper.For(0, results.Length,
                 y => results[y] = dict.TryUpdate(key, true, false));
 
-            Assert.IsFalse(results.Contains(true)); // CollectionAssert.DoesNotContain throws an IndexOutOfRangeException when the tests are published in AOT mode
+            AssertDoesNotContain(results, true);
         }
 
         [Test]

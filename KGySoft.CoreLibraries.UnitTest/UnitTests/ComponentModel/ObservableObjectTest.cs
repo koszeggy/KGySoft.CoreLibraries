@@ -18,7 +18,6 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 
-using KGySoft.Collections;
 using KGySoft.ComponentModel;
 using NUnit.Framework;
 
@@ -38,6 +37,7 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
             #region Properties
 
             [SuppressMessage("CodeQuality", "IDE0052:Remove unread private members", Justification = "Intended, test")]
+            [SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "Intended, test")]
             private bool PrivateProperty { get => Get<bool>(); set => Set(value); }
 
             #endregion
@@ -60,7 +60,7 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
         {
             #region Properties
 
-            public bool PublicProperty { get => Get<bool>(); set => Set(value); }
+            public int PublicProperty { get => Get<int>(); set => Set(value); }
 
             #endregion
 
@@ -111,23 +111,23 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
         public void UsageTest()
         {
             // Setting a property for the first time adds it in the underlying storage
-            var obj = new Derived(false) { PublicProperty = true };
-            Assert.IsTrue(obj.PublicProperty);
+            var obj = new Derived(false) { PublicProperty = 42 };
+            Assert.AreEqual(42, obj.PublicProperty);
 
             // changing triggers the changed event
             bool changed = false;
             obj.PropertyChanged += (sender, args) => changed = true;
-            obj.PublicProperty = false;
-            Assert.IsFalse(obj.PublicProperty);
+            obj.PublicProperty = -42;
+            Assert.AreEqual(-42, obj.PublicProperty);
             Assert.IsTrue(changed);
 
             // resetting the property
-            Assert.IsTrue(obj.TryReplaceProperty(nameof(obj.PublicProperty), true, ObservableObjectBase.MissingProperty, true));
-            Assert.IsFalse(obj.PublicProperty);
+            Assert.IsTrue(obj.TryReplaceProperty(nameof(obj.PublicProperty), -42, ObservableObjectBase.MissingProperty, true));
+            Assert.AreEqual(0, obj.PublicProperty);
 
             // disposing makes the properties unavailable
             obj.Dispose();
-            Assert.Throws<ObjectDisposedException>(() => changed = obj.PublicProperty);
+            Assert.Throws<ObjectDisposedException>(() => { int _ = obj.PublicProperty; });
         }
 
 #if !NETFRAMEWORK
@@ -145,9 +145,9 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
         [TestCase(true)]
         public void AllowReadingDisposedObjectTest(bool allowReadingDisposedObject)
         {
-            var test = new AdjustableDisposeHandling(allowReadingDisposedObject) { PublicProperty = true };
+            var test = new AdjustableDisposeHandling(allowReadingDisposedObject) { PublicProperty = 42 };
             test.Dispose();
-            Assert.That(() => test.PublicProperty, allowReadingDisposedObject ? Is.False : Throws.Exception.InstanceOf<ObjectDisposedException>());
+            Assert.That(() => test.PublicProperty, allowReadingDisposedObject ? Is.EqualTo(0) : Throws.Exception.InstanceOf<ObjectDisposedException>());
         }
 
         #endregion

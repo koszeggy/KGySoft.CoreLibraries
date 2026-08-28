@@ -100,13 +100,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Assert.IsNull(array.ToArray());
 
             array = Reflector.EmptyArray<int>();
-            CollectionAssert.AreEqual(CastArray<int, byte>.Empty, array);
+            AssertAreEqual(CastArray<int, byte>.Empty, array);
             Assert.IsTrue(array == CastArray<int, byte>.Empty);
             Assert.IsFalse(array.IsNull);
             Assert.IsTrue(array.IsNullOrEmpty);
             Assert.IsTrue(array.Length == 0);
 
-            Assert.IsFalse(CastArray<int, byte>.Null.Equals(CastArray<int, byte>.Empty)); // Assert.AreNotEqual throws IndexOutOfRangeException in AOT mode
+            AssertAreNotEqual(CastArray<int, byte>.Null, CastArray<int, byte>.Empty);
             CollectionAssert.AreEqual(CastArray<int, byte>.Null, CastArray<int, byte>.Empty);
         }
 
@@ -261,7 +261,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
         public void SerializationTest()
         {
             var castArray = CastArray<int, byte>.Null;
-            Assert.IsTrue(castArray.Equals(castArray.DeepClone(false))); // Assert.AreEqual throws IndexOutOfRangeException in AOT mode, and CollectionAssert.AreEqual checks only that both are empty
+            AssertAreEqual(castArray, castArray.DeepClone(false));
 
             castArray = new[] { 1, 2, 3, 4, 5 }.Cast<int, byte>();
             CollectionAssert.AreEqual(castArray, castArray.DeepClone(false));
