@@ -17,6 +17,9 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+using System.Linq.Expressions;
+#endif
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
@@ -536,6 +539,9 @@ namespace KGySoft.Reflection
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public void SetStaticValue<TProperty>(TProperty value)
         {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<Action<TProperty>>).EnsureType();
+#endif
             if (GenericSetter is Action<TProperty> action)
                 action.Invoke(value);
             else
@@ -559,7 +565,13 @@ namespace KGySoft.Reflection
         /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="PropertyAccessor"/>
         /// represents a <see langword="ref"/> property.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        public TProperty GetStaticValue<TProperty>() => GenericGetter is Func<TProperty> func ? func.Invoke() : ThrowStatic<TProperty>();
+        public TProperty GetStaticValue<TProperty>()
+        {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<Func<TProperty>>).EnsureType();
+#endif
+            return GenericGetter is Func<TProperty> func ? func.Invoke() : ThrowStatic<TProperty>();
+        }
 
         /// <summary>
         /// Sets the strongly typed value of a non-indexed instance property in a reference type. If the type of the property or the declaring instance is not
@@ -584,6 +596,9 @@ namespace KGySoft.Reflection
         [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public void SetInstanceValue<TInstance, TProperty>(TInstance instance, TProperty value) where TInstance : class
         {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<ReferenceTypeAction<TInstance, TProperty>>).EnsureType();
+#endif
             if (GenericSetter is ReferenceTypeAction<TInstance, TProperty> action)
                 action.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance), value);
             else
@@ -612,9 +627,14 @@ namespace KGySoft.Reflection
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public TProperty GetInstanceValue<TInstance, TProperty>(TInstance instance) where TInstance : class
-            => GenericGetter is ReferenceTypeFunction<TInstance, TProperty> func
+        {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<ReferenceTypeFunction<TInstance, TProperty>>).EnsureType();
+#endif
+            return GenericGetter is ReferenceTypeFunction<TInstance, TProperty> func
                 ? func.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance))
                 : ThrowInstance<TProperty>();
+        }
 
         /// <summary>
         /// Sets the strongly typed value of a non-indexed instance property in a value type. If the type of the property or the declaring instance is not
@@ -637,6 +657,9 @@ namespace KGySoft.Reflection
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public void SetInstanceValue<TInstance, TProperty>(in TInstance instance, TProperty value) where TInstance : struct
         {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<ValueTypeAction<TInstance, TProperty>>).EnsureType();
+#endif
             if (GenericSetter is ValueTypeAction<TInstance, TProperty> action)
                 action.Invoke(instance, value);
             else
@@ -663,7 +686,12 @@ namespace KGySoft.Reflection
         /// represents a <see langword="ref"/> property.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public TProperty GetInstanceValue<TInstance, TProperty>(in TInstance instance) where TInstance : struct
-            => GenericGetter is ValueTypeFunction<TInstance, TProperty> func ? func.Invoke(instance) : ThrowInstance<TProperty>();
+        {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<ValueTypeFunction<TInstance, TProperty>>).EnsureType();
+#endif
+            return GenericGetter is ValueTypeFunction<TInstance, TProperty> func ? func.Invoke(instance) : ThrowInstance<TProperty>();
+        }
 
         /// <summary>
         /// Sets the strongly typed value of a single-parameter indexed property in a reference type. If the type of the property, the declaring instance or the index parameter is not
@@ -691,6 +719,9 @@ namespace KGySoft.Reflection
         [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public void SetInstanceValue<TInstance, TProperty, TIndex>(TInstance instance, TProperty value, TIndex index) where TInstance : class
         {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<ReferenceTypeAction<TInstance, TProperty, TIndex>>).EnsureType();
+#endif
             if (GenericSetter is ReferenceTypeAction<TInstance, TProperty, TIndex> action)
                 action.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance), value, index);
             else
@@ -722,9 +753,14 @@ namespace KGySoft.Reflection
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public TProperty GetInstanceValue<TInstance, TProperty, TIndex>(TInstance instance, TIndex index) where TInstance : class
-            => GenericGetter is ReferenceTypeFunction<TInstance, TIndex, TProperty> func
+        {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<ReferenceTypeFunction<TInstance, TIndex, TProperty>>).EnsureType();
+#endif
+            return GenericGetter is ReferenceTypeFunction<TInstance, TIndex, TProperty> func
                 ? func.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance), index)
                 : ThrowInstance<TProperty>();
+        }
 
         /// <summary>
         /// Sets the strongly typed value of a single-parameter indexed property in a value type. If the type of the property,
@@ -750,6 +786,9 @@ namespace KGySoft.Reflection
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public void SetInstanceValue<TInstance, TProperty, TIndex>(in TInstance instance, TProperty value, TIndex index) where TInstance : struct
         {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<ValueTypeAction<TInstance, TProperty, TIndex>>).EnsureType();
+#endif
             if (GenericSetter is ValueTypeAction<TInstance, TProperty, TIndex> action)
                 action.Invoke(in instance, value, index);
             else
@@ -779,7 +818,12 @@ namespace KGySoft.Reflection
         /// represents a <see langword="ref"/> property.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public TProperty GetInstanceValue<TInstance, TProperty, TIndex>(in TInstance instance, TIndex index) where TInstance : struct
-            => GenericGetter is ValueTypeFunction<TInstance, TIndex, TProperty> func ? func.Invoke(instance, index) : ThrowInstance<TProperty>();
+        {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<ValueTypeFunction<TInstance, TIndex, TProperty>>).EnsureType();
+#endif
+            return GenericGetter is ValueTypeFunction<TInstance, TIndex, TProperty> func ? func.Invoke(instance, index) : ThrowInstance<TProperty>();
+        }
 
         #endregion
 

@@ -16,7 +16,7 @@
 #region Usings
 
 using System;
-#if NETFRAMEWORK
+#if NETFRAMEWORK || !AOT
 using System.Collections;
 #endif
 using System.Diagnostics.CodeAnalysis;

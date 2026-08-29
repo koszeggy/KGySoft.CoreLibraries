@@ -126,7 +126,7 @@ namespace KGySoft.CoreLibraries
         #region Constructors
 
         internal FallbackTestRunner(TestRunConfig config)
-#if NETCOREAPP3_0_OR_GREATER
+#if NETCOREAPP3_0_OR_GREATER && AOT
                     : this() // to ensure the [DynamicDependency] attributes take effect
 #endif
         {

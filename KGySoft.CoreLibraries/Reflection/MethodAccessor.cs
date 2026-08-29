@@ -17,6 +17,9 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+using System.Linq.Expressions;
+#endif
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
@@ -456,6 +459,9 @@ namespace KGySoft.Reflection
         /// type arguments should be specified (use the generic invoker method with matching type arguments).</exception>
         public void InvokeStaticAction()
         {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<Action>).EnsureType();
+#endif
             if (GenericInvoker is Action action)
                 action.Invoke();
             else
@@ -477,6 +483,9 @@ namespace KGySoft.Reflection
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         public void InvokeStaticAction<T>(T param)
         {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<Action<T>>).EnsureType();
+#endif
             if (GenericInvoker is Action<T> action)
                 action.Invoke(param);
             else
@@ -500,6 +509,9 @@ namespace KGySoft.Reflection
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         public void InvokeStaticAction<T1, T2>(T1 param1, T2 param2)
         {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<Action<T1, T2>>).EnsureType();
+#endif
             if (GenericInvoker is Action<T1, T2> action)
                 action.Invoke(param1, param2);
             else
@@ -525,6 +537,9 @@ namespace KGySoft.Reflection
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         public void InvokeStaticAction<T1, T2, T3>(T1 param1, T2 param2, T3 param3)
         {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<Action<T1, T2, T3>>).EnsureType();
+#endif
             if (GenericInvoker is Action<T1, T2, T3> action)
                 action.Invoke(param1, param2, param3);
             else
@@ -552,6 +567,9 @@ namespace KGySoft.Reflection
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         public void InvokeStaticAction<T1, T2, T3, T4>(T1 param1, T2 param2, T3 param3, T4 param4)
         {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<Action<T1, T2, T3, T4>>).EnsureType();
+#endif
             if (GenericInvoker is Action<T1, T2, T3, T4> action)
                 action.Invoke(param1, param2, param3, param4);
             else
@@ -574,7 +592,12 @@ namespace KGySoft.Reflection
         /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="MethodAccessor"/>
         /// represents a <see langword="ref"/>-returning method.</exception>
         public TResult InvokeStaticFunction<TResult>()
-            => GenericInvoker is Func<TResult> func ? func.Invoke() : ThrowStatic<TResult>();
+        {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<Func<TResult>>).EnsureType();
+#endif
+            return GenericInvoker is Func<TResult> func ? func.Invoke() : ThrowStatic<TResult>();
+        }
 
         /// <summary>
         /// Invokes a static function method with one parameter. If the type of the parameter or the return value
@@ -594,7 +617,12 @@ namespace KGySoft.Reflection
         /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="MethodAccessor"/>
         /// represents a <see langword="ref"/>-returning method.</exception>
         public TResult InvokeStaticFunction<T, TResult>(T param)
-            => GenericInvoker is Func<T, TResult> func ? func.Invoke(param) : ThrowStatic<TResult>();
+        {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<Func<T, TResult>>).EnsureType();
+#endif
+            return GenericInvoker is Func<T, TResult> func ? func.Invoke(param) : ThrowStatic<TResult>();
+        }
 
         /// <summary>
         /// Invokes a static function method with two parameters. If the type of the parameters or the return value
@@ -616,7 +644,12 @@ namespace KGySoft.Reflection
         /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="MethodAccessor"/>
         /// represents a <see langword="ref"/>-returning method.</exception>
         public TResult InvokeStaticFunction<T1, T2, TResult>(T1 param1, T2 param2)
-            => GenericInvoker is Func<T1, T2, TResult> func ? func.Invoke(param1, param2) : ThrowStatic<TResult>();
+        {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<Func<T1, T2, TResult>>).EnsureType();
+#endif
+            return GenericInvoker is Func<T1, T2, TResult> func ? func.Invoke(param1, param2) : ThrowStatic<TResult>();
+        }
 
         /// <summary>
         /// Invokes a static function method with three parameters. If the type of the parameters or the return value
@@ -640,7 +673,12 @@ namespace KGySoft.Reflection
         /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="MethodAccessor"/>
         /// represents a <see langword="ref"/>-returning method.</exception>
         public TResult InvokeStaticFunction<T1, T2, T3, TResult>(T1 param1, T2 param2, T3 param3)
-            => GenericInvoker is Func<T1, T2, T3, TResult> func ? func.Invoke(param1, param2, param3) : ThrowStatic<TResult>();
+        {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<Func<T1, T2, T3, TResult>>).EnsureType();
+#endif
+            return GenericInvoker is Func<T1, T2, T3, TResult> func ? func.Invoke(param1, param2, param3) : ThrowStatic<TResult>();
+        }
 
         /// <summary>
         /// Invokes a static function method with four parameters. If the type of the parameters or the return value
@@ -666,7 +704,12 @@ namespace KGySoft.Reflection
         /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="MethodAccessor"/>
         /// represents a <see langword="ref"/>-returning method.</exception>
         public TResult InvokeStaticFunction<T1, T2, T3, T4, TResult>(T1 param1, T2 param2, T3 param3, T4 param4)
-            => GenericInvoker is Func<T1, T2, T3, T4, TResult> func ? func.Invoke(param1, param2, param3, param4) : ThrowStatic<TResult>();
+        {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<Func<T1, T2, T3, T4, TResult>>).EnsureType();
+#endif
+            return GenericInvoker is Func<T1, T2, T3, T4, TResult> func ? func.Invoke(param1, param2, param3, param4) : ThrowStatic<TResult>();
+        }
 
         /// <summary>
         /// Invokes a parameterless instance action method in a reference type. If the type of the declaring instance
@@ -685,6 +728,9 @@ namespace KGySoft.Reflection
         [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public void InvokeInstanceAction<TInstance>(TInstance instance) where TInstance : class
         {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<ReferenceTypeAction<TInstance>>).EnsureType();
+#endif
             if (GenericInvoker is ReferenceTypeAction<TInstance> action)
                 action.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance));
             else
@@ -710,6 +756,9 @@ namespace KGySoft.Reflection
         [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public void InvokeInstanceAction<TInstance, T>(TInstance instance, T param) where TInstance : class
         {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<ReferenceTypeAction<TInstance, T>>).EnsureType();
+#endif
             if (GenericInvoker is ReferenceTypeAction<TInstance, T> action)
                 action.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance), param);
             else
@@ -737,6 +786,9 @@ namespace KGySoft.Reflection
         [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public void InvokeInstanceAction<TInstance, T1, T2>(TInstance instance, T1 param1, T2 param2) where TInstance : class
         {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<ReferenceTypeAction<TInstance, T1, T2>>).EnsureType();
+#endif
             if (GenericInvoker is ReferenceTypeAction<TInstance, T1, T2> action)
                 action.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance), param1, param2);
             else
@@ -766,6 +818,9 @@ namespace KGySoft.Reflection
         [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public void InvokeInstanceAction<TInstance, T1, T2, T3>(TInstance instance, T1 param1, T2 param2, T3 param3) where TInstance : class
         {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<ReferenceTypeAction<TInstance, T1, T2, T3>>).EnsureType();
+#endif
             if (GenericInvoker is ReferenceTypeAction<TInstance, T1, T2, T3> action)
                 action.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance), param1, param2, param3);
             else
@@ -797,6 +852,9 @@ namespace KGySoft.Reflection
         [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public void InvokeInstanceAction<TInstance, T1, T2, T3, T4>(TInstance instance, T1 param1, T2 param2, T3 param3, T4 param4) where TInstance : class
         {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<ReferenceTypeAction<TInstance, T1, T2, T3, T4>>).EnsureType();
+#endif
             if (GenericInvoker is ReferenceTypeAction<TInstance, T1, T2, T3, T4> action)
                 action.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance), param1, param2, param3, param4);
             else
@@ -823,9 +881,14 @@ namespace KGySoft.Reflection
         /// represents a <see langword="ref"/>-returning method.</exception>
         [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public TResult InvokeInstanceFunction<TInstance, TResult>(TInstance instance) where TInstance : class
-            => GenericInvoker is ReferenceTypeFunction<TInstance, TResult> func
+        {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<ReferenceTypeFunction<TInstance, TResult>>).EnsureType();
+#endif
+            return GenericInvoker is ReferenceTypeFunction<TInstance, TResult> func
                 ? func.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance))
                 : ThrowInstance<TResult>();
+        }
 
         /// <summary>
         /// Invokes an instance function method with one parameter in a reference type. If the type of the parameter, the return value
@@ -849,9 +912,14 @@ namespace KGySoft.Reflection
         /// represents a <see langword="ref"/>-returning method.</exception>
         [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public TResult InvokeInstanceFunction<TInstance, T, TResult>(TInstance instance, T param) where TInstance : class
-            => GenericInvoker is ReferenceTypeFunction<TInstance, T, TResult> func
+        {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<ReferenceTypeFunction<TInstance, T, TResult>>).EnsureType();
+#endif
+            return GenericInvoker is ReferenceTypeFunction<TInstance, T, TResult> func
                 ? func.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance), param)
                 : ThrowInstance<TResult>();
+        }
 
         /// <summary>
         /// Invokes an instance function method with two parameters in a reference type. If the type of the parameters, the return value
@@ -877,9 +945,14 @@ namespace KGySoft.Reflection
         /// represents a <see langword="ref"/>-returning method.</exception>
         [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public TResult InvokeInstanceFunction<TInstance, T1, T2, TResult>(TInstance instance, T1 param1, T2 param2) where TInstance : class
-            => GenericInvoker is ReferenceTypeFunction<TInstance, T1, T2, TResult> func
+        {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<ReferenceTypeFunction<TInstance, T1, T2, TResult>>).EnsureType();
+#endif
+            return GenericInvoker is ReferenceTypeFunction<TInstance, T1, T2, TResult> func
                 ? func.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance), param1, param2)
                 : ThrowInstance<TResult>();
+        }
 
         /// <summary>
         /// Invokes an instance function method with three parameters in a reference type. If the type of the parameters, the return value
@@ -907,9 +980,14 @@ namespace KGySoft.Reflection
         /// represents a <see langword="ref"/>-returning method.</exception>
         [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public TResult InvokeInstanceFunction<TInstance, T1, T2, T3, TResult>(TInstance instance, T1 param1, T2 param2, T3 param3) where TInstance : class
-            => GenericInvoker is ReferenceTypeFunction<TInstance, T1, T2, T3, TResult> func
+        {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<ReferenceTypeFunction<TInstance, T1, T2, T3, TResult>>).EnsureType();
+#endif
+            return GenericInvoker is ReferenceTypeFunction<TInstance, T1, T2, T3, TResult> func
                 ? func.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance), param1, param2, param3)
                 : ThrowInstance<TResult>();
+        }
 
         /// <summary>
         /// Invokes an instance function method with four parameters in a reference type. If the type of the parameters, the return value
@@ -939,9 +1017,14 @@ namespace KGySoft.Reflection
         /// represents a <see langword="ref"/>-returning method.</exception>
         [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public TResult InvokeInstanceFunction<TInstance, T1, T2, T3, T4, TResult>(TInstance instance, T1 param1, T2 param2, T3 param3, T4 param4) where TInstance : class
-            => GenericInvoker is ReferenceTypeFunction<TInstance, T1, T2, T3, T4, TResult> func
+        {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<ReferenceTypeFunction<TInstance, T1, T2, T3, T4, TResult>>).EnsureType();
+#endif
+            return GenericInvoker is ReferenceTypeFunction<TInstance, T1, T2, T3, T4, TResult> func
                 ? func.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance), param1, param2, param3, param4)
                 : ThrowInstance<TResult>();
+        }
 
         /// <summary>
         /// Invokes a parameterless instance action method in a value type. If the type of the declaring instance
@@ -958,6 +1041,9 @@ namespace KGySoft.Reflection
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         public void InvokeInstanceAction<TInstance>(in TInstance instance) where TInstance : struct
         {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<ValueTypeAction<TInstance>>).EnsureType();
+#endif
             if (GenericInvoker is ValueTypeAction<TInstance> action)
                 action.Invoke(instance);
             else
@@ -981,6 +1067,9 @@ namespace KGySoft.Reflection
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         public void InvokeInstanceAction<TInstance, T>(in TInstance instance, T param) where TInstance : struct
         {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<ValueTypeAction<TInstance, T>>).EnsureType();
+#endif
             if (GenericInvoker is ValueTypeAction<TInstance, T> action)
                 action.Invoke(instance, param);
             else
@@ -1006,6 +1095,9 @@ namespace KGySoft.Reflection
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         public void InvokeInstanceAction<TInstance, T1, T2>(in TInstance instance, T1 param1, T2 param2) where TInstance : struct
         {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<ValueTypeAction<TInstance, T1, T2>>).EnsureType();
+#endif
             if (GenericInvoker is ValueTypeAction<TInstance, T1, T2> action)
                 action.Invoke(instance, param1, param2);
             else
@@ -1033,6 +1125,9 @@ namespace KGySoft.Reflection
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         public void InvokeInstanceAction<TInstance, T1, T2, T3>(in TInstance instance, T1 param1, T2 param2, T3 param3) where TInstance : struct
         {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<ValueTypeAction<TInstance, T1, T2, T3>>).EnsureType();
+#endif
             if (GenericInvoker is ValueTypeAction<TInstance, T1, T2, T3> action)
                 action.Invoke(instance, param1, param2, param3);
             else
@@ -1062,6 +1157,9 @@ namespace KGySoft.Reflection
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         public void InvokeInstanceAction<TInstance, T1, T2, T3, T4>(in TInstance instance, T1 param1, T2 param2, T3 param3, T4 param4) where TInstance : struct
         {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<ValueTypeAction<TInstance, T1, T2, T3, T4>>).EnsureType();
+#endif
             if (GenericInvoker is ValueTypeAction<TInstance, T1, T2, T3, T4> action)
                 action.Invoke(instance, param1, param2, param3, param4);
             else
@@ -1086,7 +1184,12 @@ namespace KGySoft.Reflection
         /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="MethodAccessor"/>
         /// represents a <see langword="ref"/>-returning method.</exception>
         public TResult InvokeInstanceFunction<TInstance, TResult>(in TInstance instance) where TInstance : struct
-            => GenericInvoker is ValueTypeFunction<TInstance, TResult> func ? func.Invoke(instance) : ThrowInstance<TResult>();
+        {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<ValueTypeFunction<TInstance, TResult>>).EnsureType();
+#endif
+            return GenericInvoker is ValueTypeFunction<TInstance, TResult> func ? func.Invoke(instance) : ThrowInstance<TResult>();
+        }
 
         /// <summary>
         /// Invokes an instance function method with one parameter in a value type. If the type of the parameter, the return value
@@ -1108,7 +1211,12 @@ namespace KGySoft.Reflection
         /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="MethodAccessor"/>
         /// represents a <see langword="ref"/>-returning method.</exception>
         public TResult InvokeInstanceFunction<TInstance, T, TResult>(in TInstance instance, T param) where TInstance : struct
-            => GenericInvoker is ValueTypeFunction<TInstance, T, TResult> func ? func.Invoke(instance, param) : ThrowInstance<TResult>();
+        {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<ValueTypeFunction<TInstance, T, TResult>>).EnsureType();
+#endif
+            return GenericInvoker is ValueTypeFunction<TInstance, T, TResult> func ? func.Invoke(instance, param) : ThrowInstance<TResult>();
+        }
 
         /// <summary>
         /// Invokes an instance function method with two parameters in a value type. If the type of the parameters, the return value
@@ -1132,7 +1240,12 @@ namespace KGySoft.Reflection
         /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="MethodAccessor"/>
         /// represents a <see langword="ref"/>-returning method.</exception>
         public TResult InvokeInstanceFunction<TInstance, T1, T2, TResult>(in TInstance instance, T1 param1, T2 param2) where TInstance : struct
-            => GenericInvoker is ValueTypeFunction<TInstance, T1, T2, TResult> func ? func.Invoke(instance, param1, param2) : ThrowInstance<TResult>();
+        {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<ValueTypeFunction<TInstance, T1, T2, TResult>>).EnsureType();
+#endif
+            return GenericInvoker is ValueTypeFunction<TInstance, T1, T2, TResult> func ? func.Invoke(instance, param1, param2) : ThrowInstance<TResult>();
+        }
 
         /// <summary>
         /// Invokes an instance function method with three parameters in a value type. If the type of the parameters, the return value
@@ -1158,7 +1271,12 @@ namespace KGySoft.Reflection
         /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="MethodAccessor"/>
         /// represents a <see langword="ref"/>-returning method.</exception>
         public TResult InvokeInstanceFunction<TInstance, T1, T2, T3, TResult>(in TInstance instance, T1 param1, T2 param2, T3 param3) where TInstance : struct
-            => GenericInvoker is ValueTypeFunction<TInstance, T1, T2, T3, TResult> func ? func.Invoke(instance, param1, param2, param3) : ThrowInstance<TResult>();
+        {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<ValueTypeFunction<TInstance, T1, T2, T3, TResult>>).EnsureType();
+#endif
+            return GenericInvoker is ValueTypeFunction<TInstance, T1, T2, T3, TResult> func ? func.Invoke(instance, param1, param2, param3) : ThrowInstance<TResult>();
+        }
 
         /// <summary>
         /// Invokes an instance function method with four parameters in a value type. If the type of the parameters, the return value
@@ -1186,7 +1304,12 @@ namespace KGySoft.Reflection
         /// <exception cref="PlatformNotSupportedException">You use the .NET Standard 2.0 build of <c>KGySoft.CoreLibraries</c> and this <see cref="MethodAccessor"/>
         /// represents a <see langword="ref"/>-returning method.</exception>
         public TResult InvokeInstanceFunction<TInstance, T1, T2, T3, T4, TResult>(in TInstance instance, T1 param1, T2 param2, T3 param3, T4 param4) where TInstance : struct
-            => GenericInvoker is ValueTypeFunction<TInstance, T1, T2, T3, T4, TResult> func ? func.Invoke(instance, param1, param2, param3, param4) : ThrowInstance<TResult>();
+        {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<ValueTypeFunction<TInstance, T1, T2, T3, T4, TResult>>).EnsureType();
+#endif        
+            return GenericInvoker is ValueTypeFunction<TInstance, T1, T2, T3, T4, TResult> func ? func.Invoke(instance, param1, param2, param3, param4) : ThrowInstance<TResult>();
+        }
 
         #endregion
 

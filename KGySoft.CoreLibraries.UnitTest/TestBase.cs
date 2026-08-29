@@ -15,10 +15,6 @@
 
 #region Usings
 
-using System.Diagnostics.CodeAnalysis;
-
-using KGySoft.Annotations;
-
 #region Used Namespaces
 
 using System;
@@ -41,14 +37,15 @@ using System.Collections.Specialized;
 using System.ComponentModel.Design;
 #endif
 using System.Data;
+#if NETCOREAPP3_0_OR_GREATER
+using System.Diagnostics.CodeAnalysis;
+#endif
 using System.Drawing;
 using System.Drawing.Imaging; 
 using System.IO;
 using System.Linq;
 using System.Reflection;
-#if NETCOREAPP3_0_OR_GREATER
 using System.Runtime.CompilerServices;
-#endif
 #if NETFRAMEWORK
 using System.Security;
 using System.Security.Permissions;
@@ -59,6 +56,7 @@ using System.Text;
 using System.Windows.Forms;
 #endif
 
+using KGySoft.Annotations;
 using KGySoft.Collections;
 using KGySoft.Reflection;
 using KGySoft.Resources;
@@ -70,7 +68,6 @@ using NUnit.Framework;
 
 #region Used Aliases
 
-using Assert = NUnit.Framework.Assert;
 #if NETFRAMEWORK
 using SystemDataNode = System.Resources.ResXDataNode;
 using SystemFileRef = System.Resources.ResXFileRef; 
@@ -98,7 +95,7 @@ namespace KGySoft.CoreLibraries
         #region Properties
 
         protected static TargetFramework TestedFramework =>
-#if NETCOREAPP
+#if NETCOREAPP && !AOT
             typeof(PublicResources).Assembly.GetReferencedAssemblies().FirstOrDefault(asm => asm.Name == "netstandard") is AssemblyName an
                 ? an.Version == new Version(2, 0, 0, 0) ? TargetFramework.NetStandard20
                     : an.Version == new Version(2, 1, 0, 0) ? TargetFramework.NetStandard21
@@ -128,7 +125,7 @@ namespace KGySoft.CoreLibraries
                 return;
             }
 
-            // In AOT Assert.AreEqual throws an IndexOutOfRange exception in a lot of cases, such as comparing bool values, IEnumerable types, etc.
+            // In AOT mode Assert.AreEqual throws an IndexOutOfRange exception in a lot of cases, like comparing bool values, IntPtr, custom structs, IEnumerable types, etc.
             if (ReferenceEquals(expected, actual))
                 return;
 
@@ -162,6 +159,7 @@ namespace KGySoft.CoreLibraries
                 return;
             }
 
+            // In AOT mode Assert.AreNotEqual throws an IndexOutOfRange exception in a lot of cases, e.g. comparing bool values
             if (Equals(expected, actual))
                 Assert.Fail(message ?? $"Not expected: {expected}{Environment.NewLine}Actual: {actual}");
         }

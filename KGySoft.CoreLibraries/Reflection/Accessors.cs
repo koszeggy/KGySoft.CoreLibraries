@@ -1105,17 +1105,27 @@ namespace KGySoft.Reflection
         #region IEnumerable
 
         [RequiresUnreferencedCode("GetProperty")]
+        [DynamicDependency(nameof(HashSet<>.Count), typeof(HashSet<>))]
         internal static int Count([NoEnumeration]this IEnumerable collection)
         {
             if (collection is ICollection c)
                 return c.Count;
-            PropertyAccessor? property = GetProperty(collection.GetType(), "Count"); // StringDictionary
+            PropertyAccessor? property = GetProperty(collection.GetType(), "Count"); // StringDictionary, and supported ICollections in AOT when the interfaces are removed
             if (property == null)
                 Throw.InvalidOperationException(Res.ReflectionInstancePropertyDoesNotExist("Count", collection.GetType()));
             return (int)property.Get(collection)!;
         }
 
         [RequiresUnreferencedCode("GetProperty")]
+        [DynamicDependency(nameof(List<>.Capacity), typeof(List<>))]
+        [DynamicDependency(nameof(CircularList<>.Capacity), typeof(CircularList<>))]
+        [DynamicDependency(nameof(SortedList<,>.Capacity), typeof(SortedList<,>))]
+        [DynamicDependency(nameof(SortedList.Capacity), typeof(SortedList))]
+        [DynamicDependency(nameof(CircularSortedList<,>.Capacity), typeof(CircularSortedList<,>))]
+        [DynamicDependency(nameof(ArrayList.Capacity), typeof(ArrayList))]
+#if NET9_0_OR_GREATER
+        [DynamicDependency(nameof(OrderedDictionary<,>.Capacity), typeof(OrderedDictionary<,>))]
+#endif
         internal static int Capacity([NoEnumeration]this IEnumerable collection)
         {
             PropertyAccessor? property = GetProperty(collection.GetType(), "Capacity"); // List<T>, CircularList<T>, SortedList<TKey, TValue>, SortedList, CircularSortedList<TKey, TValue>, ArrayList, OrderedDictionary<TKey, TValue>

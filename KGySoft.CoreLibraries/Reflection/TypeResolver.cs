@@ -21,6 +21,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 #if NET9_0_OR_GREATER
 using System.Reflection.Metadata;
 #endif
@@ -1652,9 +1653,9 @@ namespace KGySoft.Reflection
             Type? result;
 
             // 1.) By resolver
+            AssemblyName? asmName = null;
             if (typeResolver != null)
             {
-                AssemblyName? asmName = null;
                 try
                 {
                     if (assemblyName != null)
@@ -1685,7 +1686,15 @@ namespace KGySoft.Reflection
                     resolveAssemblyOptions &= ~ResolveAssemblyOptions.ThrowError;
                 assembly = AssemblyResolver.ResolveAssembly(assemblyName, resolveAssemblyOptions);
                 if (assembly == null && (options & ResolveTypeOptions.AllowIgnoreAssemblyName) == ResolveTypeOptions.None)
-                    return null;
+                {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+                    // Not returning yet if we are in native AOT mode and the assembly name is mscorlib - we will try to resolve the type from MscorlibAssembly (= System.Private.CoreLib)
+                    if (RuntimeFeature.IsDynamicCodeSupported || (asmName ?? new AssemblyName(assemblyName)).Name != AssemblyResolver.MscorlibName)
+#endif
+                    {
+                        return null;
+                    }
+                }
             }
 
             // 3/a. Resolving the type from a specific assembly

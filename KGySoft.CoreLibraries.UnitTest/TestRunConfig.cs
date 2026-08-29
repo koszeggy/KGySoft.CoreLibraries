@@ -50,7 +50,7 @@ namespace KGySoft.CoreLibraries
         internal bool FallbackRunnerRequired => forceFallbackRunner
             || !RuntimeFeature.IsDynamicCodeSupported // AOT mode
             || (TestName != null && ClassName != null) // Both filters are set, but NUnit does not support combining them
-            || ClassName?.Contains('.') == false; // ClassName is set without namespace
+            || ClassName?.IndexOf('.') < 0; // ClassName is set without namespace
 
         #endregion
 

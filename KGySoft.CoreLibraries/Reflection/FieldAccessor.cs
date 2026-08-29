@@ -383,6 +383,9 @@ namespace KGySoft.Reflection
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public void SetStaticValue<TField>(TField value)
         {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<Action<TField>>).EnsureType();
+#endif
             if (GenericSetter is not Action<TField> action)
             {
                 ThrowStatic<TField>();
@@ -422,6 +425,9 @@ namespace KGySoft.Reflection
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public TField GetStaticValue<TField>()
         {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<Func<TField>>).EnsureType();
+#endif
             if (GenericGetter is not Func<TField> func)
                 return ThrowStatic<TField>();
 #if NET35
@@ -462,6 +468,9 @@ namespace KGySoft.Reflection
         [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public void SetInstanceValue<TInstance, TField>(TInstance instance, TField value) where TInstance : class
         {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<ReferenceTypeAction<TInstance, TField>>).EnsureType();
+#endif
             if (GenericSetter is ReferenceTypeAction<TInstance, TField> action)
                 action.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance), value);
             else
@@ -487,9 +496,14 @@ namespace KGySoft.Reflection
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("ReSharper", "NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract", Justification = "False alarm, instance CAN be null even though it MUST NOT be null.")]
         public TField GetInstanceValue<TInstance, TField>(TInstance instance) where TInstance : class
-            => GenericGetter is ReferenceTypeFunction<TInstance, TField> func
+        {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<ReferenceTypeFunction<TInstance, TField>>).EnsureType();
+#endif
+            return GenericGetter is ReferenceTypeFunction<TInstance, TField> func
                 ? func.Invoke(instance ?? Throw.ArgumentNullException<TInstance>(Argument.instance))
                 : ThrowInstance<TField>();
+        }
 
         /// <summary>
         /// Sets the strongly typed value of an instance field in a value type.
@@ -511,6 +525,9 @@ namespace KGySoft.Reflection
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public void SetInstanceValue<TInstance, TField>(in TInstance instance, TField value) where TInstance : struct
         {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<ValueTypeAction<TInstance, TField>>).EnsureType();
+#endif
             if (GenericSetter is ValueTypeAction<TInstance, TField> action)
                 action.Invoke(instance, value);
             else
@@ -534,7 +551,12 @@ namespace KGySoft.Reflection
         /// <exception cref="NotSupportedException">On .NET Framework the code is executed in a partially trusted domain with insufficient permissions.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         public TField GetInstanceValue<TInstance, TField>(in TInstance instance) where TInstance : struct
-            => GenericGetter is ValueTypeFunction<TInstance, TField> func ? func.Invoke(instance) : ThrowInstance<TField>();
+        {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<ValueTypeFunction<TInstance, TField>>).EnsureType();
+#endif
+            return GenericGetter is ValueTypeFunction<TInstance, TField> func ? func.Invoke(instance) : ThrowInstance<TField>();
+        }
 
         #endregion
 

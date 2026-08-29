@@ -1200,7 +1200,7 @@ namespace KGySoft.CoreLibraries
 #if NET35
                             collection is not Array && 
 #endif
-                            collection.IsReadOnly(genericCollectionInterface)) == true)
+                            collection.IsReadOnly(genericCollectionInterface) == true))
                         {
                             return false;
                         }

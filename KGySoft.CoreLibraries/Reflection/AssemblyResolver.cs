@@ -57,7 +57,7 @@ namespace KGySoft.Reflection
         #region Constants
 
 #if !NETFRAMEWORK
-        private const string mscorlibName = "mscorlib";
+        internal const string MscorlibName = "mscorlib";
 #endif
 
         #endregion
@@ -84,7 +84,7 @@ namespace KGySoft.Reflection
         {
             CoreLibrariesAssembly.FullName!.Split([','], 2)[0], // could be by GetName but that requires FileIOPermission
 #if !NETFRAMEWORK
-            mscorlibName
+            MscorlibName
 #endif
         };
 
@@ -98,7 +98,7 @@ namespace KGySoft.Reflection
 
         internal static Assembly MscorlibAssembly => mscorlibAssembly ??=
 #if !NETFRAMEWORK
-            ResolveAssembly(mscorlibName, ResolveAssemblyOptions.TryToLoadAssembly) ??
+            ResolveAssembly(MscorlibName, ResolveAssemblyOptions.TryToLoadAssembly) ??
 #endif
             typeof(object).Assembly;
 

@@ -19,15 +19,16 @@ using System;
 #if NETCOREAPP && !NETCOREAPP3_0_OR_GREATER
 using System.Drawing;
 #endif
-#if NETCOREAPP3_0_OR_GREATER
-#if !AOT
+#if NETCOREAPP3_0_OR_GREATER && !AOT
 using System.IO;
-#else
+#endif
+#if NETCOREAPP3_0_OR_GREATER
 using System.Runtime.CompilerServices;
 #endif
+#if AOT
+using System.Runtime.Versioning;
 #endif
 #if !NETFRAMEWORK
-using System.Runtime.Versioning;
 using System.Text;
 #endif
 

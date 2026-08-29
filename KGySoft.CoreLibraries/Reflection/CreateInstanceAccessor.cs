@@ -17,6 +17,9 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+using System.Linq.Expressions;
+#endif
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
@@ -302,7 +305,7 @@ namespace KGySoft.Reflection
         /// <br/>-or-
         /// <br/><paramref name="parameters"/> has too few elements.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="CreateInstanceAccessor"/> represents a static constructor, a constructor of an abstract class,
-        /// or.a constructor of an open generic type.</exception>
+        /// or a constructor of an open generic type.</exception>
         /// <exception cref="NotSupportedException">On .NET Framework the code is executed in a partially trusted domain with insufficient permissions.</exception>
         /// <overloads>The <see cref="CreateInstance(object[])"/> overload can be used for any number of parameters or for constructors
         /// with <see langword="ref"/>/<see langword="out"/> parameters. The other non-generic overloads can be used for constructors with no more than four parameters.
@@ -332,7 +335,7 @@ namespace KGySoft.Reflection
         /// <returns>The created instance.</returns>
         /// <exception cref="ArgumentException">The constructor expects parameters.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="CreateInstanceAccessor"/> represents a static constructor, a constructor of an abstract class,
-        /// or.a constructor of an open generic type.</exception>
+        /// or a constructor of an open generic type.</exception>
         /// <exception cref="NotSupportedException">On .NET Framework the code is executed in a partially trusted domain with insufficient permissions.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("Design", "CA1031:Do not catch general exception types",
@@ -361,7 +364,7 @@ namespace KGySoft.Reflection
         /// <br/>-or-
         /// <br/>The constructor cannot be invoked with one parameter.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="CreateInstanceAccessor"/> represents a static constructor, a constructor of an abstract class,
-        /// or.a constructor of an open generic type.</exception>
+        /// or a constructor of an open generic type.</exception>
         /// <exception cref="NotSupportedException">On .NET Framework the code is executed in a partially trusted domain with insufficient permissions.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("Design", "CA1031:Do not catch general exception types",
@@ -391,7 +394,7 @@ namespace KGySoft.Reflection
         /// <br/>-or-
         /// <br/>The constructor cannot be invoked with two parameters.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="CreateInstanceAccessor"/> represents a static constructor, a constructor of an abstract class,
-        /// or.a constructor of an open generic type.</exception>
+        /// or a constructor of an open generic type.</exception>
         /// <exception cref="NotSupportedException">On .NET Framework the code is executed in a partially trusted domain with insufficient permissions.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("Design", "CA1031:Do not catch general exception types",
@@ -422,7 +425,7 @@ namespace KGySoft.Reflection
         /// <br/>-or-
         /// <br/>The constructor cannot be invoked with three parameters.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="CreateInstanceAccessor"/> represents a static constructor, a constructor of an abstract class,
-        /// or.a constructor of an open generic type.</exception>
+        /// or a constructor of an open generic type.</exception>
         /// <exception cref="NotSupportedException">On .NET Framework the code is executed in a partially trusted domain with insufficient permissions.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("Design", "CA1031:Do not catch general exception types",
@@ -454,7 +457,7 @@ namespace KGySoft.Reflection
         /// <br/>-or-
         /// <br/>The constructor cannot be invoked with four parameters.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="CreateInstanceAccessor"/> represents a static constructor, a constructor of an abstract class,
-        /// or.a constructor of an open generic type.</exception>
+        /// or a constructor of an open generic type.</exception>
         /// <exception cref="NotSupportedException">On .NET Framework the code is executed in a partially trusted domain with insufficient permissions.</exception>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SuppressMessage("Design", "CA1031:Do not catch general exception types",
@@ -485,9 +488,14 @@ namespace KGySoft.Reflection
         /// <exception cref="NotSupportedException">This <see cref="CreateInstanceAccessor"/> represents a constructor with more than four parameters.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="CreateInstanceAccessor"/> represents a static constructor, a constructor of an abstract class,
-        /// or.a constructor of an open generic type.</exception>
+        /// or a constructor of an open generic type.</exception>
         public TInstance CreateInstance<TInstance>()
-            => GenericInitializer is Func<TInstance> func ? func.Invoke() : ThrowGeneric<TInstance>();
+        {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<Func<TInstance>>).EnsureType();
+#endif
+            return GenericInitializer is Func<TInstance> func ? func.Invoke() : ThrowGeneric<TInstance>();
+        }
 
         /// <summary>
         /// Creates a new instance using the associated constructor with one parameter.
@@ -503,9 +511,14 @@ namespace KGySoft.Reflection
         /// <exception cref="NotSupportedException">This <see cref="CreateInstanceAccessor"/> represents a constructor with more than four parameters.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="CreateInstanceAccessor"/> represents a static constructor, a constructor of an abstract class,
-        /// or.a constructor of an open generic type.</exception>
+        /// or a constructor of an open generic type.</exception>
         public TInstance CreateInstance<TInstance, T>(T param)
-            => GenericInitializer is Func<T, TInstance> func ? func.Invoke(param) : ThrowGeneric<TInstance>();
+        {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<Func<T, TInstance>>).EnsureType();
+#endif
+            return GenericInitializer is Func<T, TInstance> func ? func.Invoke(param) : ThrowGeneric<TInstance>();
+        }
 
         /// <summary>
         /// Creates a new instance using the associated constructor with two parameters.
@@ -523,9 +536,14 @@ namespace KGySoft.Reflection
         /// <exception cref="NotSupportedException">This <see cref="CreateInstanceAccessor"/> represents a constructor with more than four parameters.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="CreateInstanceAccessor"/> represents a static constructor, a constructor of an abstract class,
-        /// or.a constructor of an open generic type.</exception>
+        /// or a constructor of an open generic type.</exception>
         public TInstance CreateInstance<TInstance, T1, T2>(T1 param1, T2 param2)
-            => GenericInitializer is Func<T1, T2, TInstance> func ? func.Invoke(param1, param2) : ThrowGeneric<TInstance>();
+        {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<Func<T1, T2, TInstance>>).EnsureType();
+#endif
+            return GenericInitializer is Func<T1, T2, TInstance> func ? func.Invoke(param1, param2) : ThrowGeneric<TInstance>();
+        }
 
         /// <summary>
         /// Creates a new instance using the associated constructor with three parameters.
@@ -545,9 +563,14 @@ namespace KGySoft.Reflection
         /// <exception cref="NotSupportedException">This <see cref="CreateInstanceAccessor"/> represents a constructor with more than four parameters.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="CreateInstanceAccessor"/> represents a static constructor, a constructor of an abstract class,
-        /// or.a constructor of an open generic type.</exception>
+        /// or a constructor of an open generic type.</exception>
         public TInstance CreateInstance<TInstance, T1, T2, T3>(T1 param1, T2 param2, T3 param3)
-            => GenericInitializer is Func<T1, T2, T3, TInstance> func ? func.Invoke(param1, param2, param3) : ThrowGeneric<TInstance>();
+        {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<Func<T1, T2, T3, TInstance>>).EnsureType();
+#endif
+            return GenericInitializer is Func<T1, T2, T3, TInstance> func ? func.Invoke(param1, param2, param3) : ThrowGeneric<TInstance>();
+        }
 
         /// <summary>
         /// Creates a new instance using the associated constructor with four parameters.
@@ -569,9 +592,14 @@ namespace KGySoft.Reflection
         /// <exception cref="NotSupportedException">This <see cref="CreateInstanceAccessor"/> represents a constructor with more than four parameters.</exception>
         /// <exception cref="ArgumentException">The number or types of the type arguments are invalid.</exception>
         /// <exception cref="InvalidOperationException">This <see cref="CreateInstanceAccessor"/> represents a static constructor, a constructor of an abstract class,
-        /// or.a constructor of an open generic type.</exception>
+        /// or a constructor of an open generic type.</exception>
         public TInstance CreateInstance<TInstance, T1, T2, T3, T4>(T1 param1, T2 param2, T3 param3, T4 param4)
-            => GenericInitializer is Func<T1, T2, T3, T4, TInstance> func ? func.Invoke(param1, param2, param3, param4) : ThrowGeneric<TInstance>();
+        {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            typeof(Expression<Func<T1, T2, T3, T4, TInstance>>).EnsureType();
+#endif
+            return GenericInitializer is Func<T1, T2, T3, T4, TInstance> func ? func.Invoke(param1, param2, param3, param4) : ThrowGeneric<TInstance>();
+        }
 
         #endregion
 
