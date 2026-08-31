@@ -17,6 +17,8 @@
 
 using System;
 using System.Collections;
+using System.Diagnostics.CodeAnalysis;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 #if !NETFRAMEWORK
@@ -137,6 +139,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         }
 
         [Test]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(Bitmap))]
         public void TestDataTypes()
         {
             string path = Combine(Files.GetExecutingPath(), "Resources", "TestResourceResX.resx");

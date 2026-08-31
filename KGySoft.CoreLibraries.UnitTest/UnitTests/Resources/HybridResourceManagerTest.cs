@@ -15,8 +15,10 @@
 
 #region Usings
 
+#region Used Namespaces
+
 using System;
-using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -29,7 +31,15 @@ using KGySoft.Resources;
 
 using NUnit.Framework;
 
+#endregion
+
+#region Used Aliases
+
+#if NETFRAMEWORK
 using ResXResourceSet = KGySoft.Resources.ResXResourceSet;
+#endif 
+
+#endregion
 
 #endregion
 
@@ -55,6 +65,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
         #endregion
 
+        #region Properties
+
+        private string CompiledBaseName => $"KGySoft.CoreLibraries.Resources.TestCompiledResource{(IsAot ? "_AOT" : null)}";
+
+        #endregion
+
         #region Methods
 
         #region Public Methods
@@ -62,21 +78,26 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         [Test]
         public void GetStringTest()
         {
-            var manager = new HybridResourceManager("KGySoft.CoreLibraries.Resources.TestCompiledResource", GetType().Assembly, resXBaseName);
+            Console.WriteLine(Res.ArgumentContainsNull);
+
+            var manager = new HybridResourceManager(CompiledBaseName, GetType().Assembly, resXBaseName);
 
             // When a resource exists in both compiled and resx: resx is taken first
-            var resName = "TestString";
+            string resName = "TestString";
 
             manager.Source = ResourceManagerSources.CompiledAndResX;
-            var hybrid = manager.GetString(resName, inv);
+            Console.WriteLine($"{resName} ({manager.Source})");
+            string hybrid = manager.GetString(resName, inv);
 
             manager.ReleaseAllResources();
             manager.Source = ResourceManagerSources.CompiledOnly;
-            var compiled = manager.GetString(resName, inv);
+            Console.WriteLine($"{resName} ({manager.Source})");
+            string compiled = manager.GetString(resName, inv);
 
             manager.ReleaseAllResources();
             manager.Source = ResourceManagerSources.ResXOnly;
-            var resx = manager.GetString(resName, inv);
+            Console.WriteLine($"{resName} ({manager.Source})");
+            string resx = manager.GetString(resName, inv);
 
             Assert.AreEqual(resx, hybrid);
             Assert.AreNotEqual(resx, compiled);
@@ -87,14 +108,17 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
             manager.ReleaseAllResources();
             manager.Source = ResourceManagerSources.CompiledAndResX;
+            Console.WriteLine($"{resName} ({manager.Source})");
             hybrid = manager.GetString(resName, inv);
 
             manager.ReleaseAllResources();
             manager.Source = ResourceManagerSources.CompiledOnly;
+            Console.WriteLine($"{resName} ({manager.Source})");
             compiled = manager.GetString(resName, inv);
 
             manager.ReleaseAllResources();
             manager.Source = ResourceManagerSources.ResXOnly;
+            Console.WriteLine($"{resName} ({manager.Source})");
             resx = manager.GetString(resName, inv);
 
             Assert.AreEqual(compiled, hybrid);
@@ -105,14 +129,17 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
             manager.ReleaseAllResources();
             manager.Source = ResourceManagerSources.CompiledAndResX;
+            Console.WriteLine($"{resName} ({manager.Source})");
             hybrid = manager.GetString(resName, inv);
 
             manager.ReleaseAllResources();
             manager.Source = ResourceManagerSources.CompiledOnly;
+            Console.WriteLine($"{resName} ({manager.Source})");
             compiled = manager.GetString(resName, inv);
 
             manager.ReleaseAllResources();
             manager.Source = ResourceManagerSources.ResXOnly;
+            Console.WriteLine($"{resName} ({manager.Source})");
             resx = manager.GetString(resName, inv);
 
             Assert.AreEqual(resx, hybrid);
@@ -122,16 +149,20 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             resName = "TestBinFile";
             Assert.IsFalse(manager.SafeMode);
             manager.Source = ResourceManagerSources.CompiledOnly;
+            Console.WriteLine($"{resName} ({manager.Source})");
             Throws<InvalidOperationException>(() => manager.GetString(resName, inv));
             manager.Source = ResourceManagerSources.ResXOnly;
+            Console.WriteLine($"{resName} ({manager.Source})");
             Throws<InvalidOperationException>(() => manager.GetString(resName, inv));
 
             // but in safe mode they succeed - the content is different though: ToString vs. raw XML content
             manager.SafeMode = true;
             manager.Source = ResourceManagerSources.CompiledOnly;
+            Console.WriteLine($"{resName} ({manager.Source})");
             compiled = manager.GetString(resName, inv);
             Assert.AreEqual(manager.GetObject(resName, inv).ToString(), compiled);
             manager.Source = ResourceManagerSources.ResXOnly;
+            Console.WriteLine($"{resName} ({manager.Source})");
             resx = manager.GetString(resName, inv);
             Assert.AreEqual(manager.GetObject(resName, inv).ToString(), resx);
             Assert.AreNotEqual(compiled, resx);
@@ -140,7 +171,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         [Test]
         public void GetMetaStringTest()
         {
-            var manager = new HybridResourceManager("KGySoft.CoreLibraries.Resources.TestCompiledResource", GetType().Assembly, resXBaseName);
+            var manager = new HybridResourceManager(CompiledBaseName, GetType().Assembly, resXBaseName);
             var resName = "TestString";
 
             manager.Source = ResourceManagerSources.CompiledAndResX;
@@ -179,7 +210,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         [Test]
         public void GetObjectTest()
         {
-            var manager = new HybridResourceManager("KGySoft.CoreLibraries.Resources.TestCompiledResource", GetType().Assembly, resXBaseName);
+            var manager = new HybridResourceManager(CompiledBaseName, GetType().Assembly, resXBaseName);
 
             // When a resource exists in both compiled and resx: resx is taken first
             var resName = "TestString";
@@ -260,7 +291,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         [Test]
         public void GetStreamTest()
         {
-            var manager = new HybridResourceManager("KGySoft.CoreLibraries.Resources.TestCompiledResource", GetType().Assembly, resXBaseName);
+            var manager = new HybridResourceManager(CompiledBaseName, GetType().Assembly, resXBaseName);
 
             // Memory stream can be obtained from both compiled and resx, compiled is an unmanaged memory stream
             var resName = "TestSound";
@@ -301,7 +332,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.IsInstanceOf<MemoryStream>(resx);
             Assert.AreEqual(manager.GetString(resName, inv), new StreamReader(resx, Encoding.Unicode).ReadToEnd());
 
-#if !(NETCOREAPP2_0 || NETCOREAPP2_1) && WINDOWS // System.NotSupportedException : Cannot read resources that depend on serialization.
+#if !(NETCOREAPP2_0 || NETCOREAPP2_1) && WINDOWS && !AOT // .NET Core 2.x: System.NotSupportedException : Cannot read resources that depend on serialization; AOT: FileNotFoundException: Could not resolve assembly 'System.Reflection.Metadata.AssemblyNameInfo'
             // even for non-string resources
             resName = "TestImage";
             manager.Source = ResourceManagerSources.CompiledOnly;
@@ -316,9 +347,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         }
 
         [Test]
+        [DynamicDependency("resourceSets", typeof(HybridResourceManager))]
         public void GetResourceSetTest()
         {
-            var manager = new HybridResourceManager("KGySoft.CoreLibraries.Resources.TestCompiledResource", GetType().Assembly, resXBaseName);
+            var manager = new HybridResourceManager(CompiledBaseName, GetType().Assembly, resXBaseName);
 
             // checking that invariant exists in all strategies and it has the correct type
             manager.Source = ResourceManagerSources.ResXOnly;
@@ -362,7 +394,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.IsNull(manager.GetResourceSet(inv, loadIfExists: true, tryParents: false));
 
             // loading a resource set where there are more compiled ones and just invariant resx
-            manager = new HybridResourceManager("KGySoft.CoreLibraries.Resources.TestCompiledResource", GetType().Assembly, "TestRes");
+            manager = new HybridResourceManager(CompiledBaseName, GetType().Assembly, "TestRes");
             Assert.AreEqual("HybridResourceSet", manager.GetResourceSet(inv, true, false).GetType().Name);
 
             // enUS exists only in compiled
@@ -556,7 +588,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         [Test]
         public void SetNullAndRemoveTest()
         {
-            var manager = new HybridResourceManager("KGySoft.CoreLibraries.Resources.TestCompiledResource", GetType().Assembly, resXBaseName);
+            var manager = new HybridResourceManager(CompiledBaseName, GetType().Assembly, resXBaseName);
             var resName = "TestString";
             var resEnUs = manager.GetObject(resName, enUS);
 
@@ -598,7 +630,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         [Test]
         public void EnumeratorTest()
         {
-            var manager = new HybridResourceManager("KGySoft.CoreLibraries.Resources.TestCompiledResource", GetType().Assembly, resXBaseName);
+            var manager = new HybridResourceManager(CompiledBaseName, GetType().Assembly, resXBaseName);
             var resName = "TestString";
 
             manager.Source = ResourceManagerSources.CompiledOnly;
@@ -651,7 +683,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         [Test]
         public void SaveTest()
         {
-            var manager = new HybridResourceManager("KGySoft.CoreLibraries.Resources.TestCompiledResource", GetType().Assembly, resXBaseName);
+            var manager = new HybridResourceManager(CompiledBaseName, GetType().Assembly, resXBaseName);
 
             // empty manager: save all is false even if forcing
             Assert.IsFalse(manager.IsModified);
@@ -702,7 +734,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         public void SerializationTest()
         {
             var refManager = new ResourceManager("KGySoft.CoreLibraries.Resources.TestResourceResX", GetType().Assembly);
-            var manager = new HybridResourceManager("KGySoft.CoreLibraries.Resources.TestCompiledResource", GetType().Assembly, resXBaseName);
+            var manager = new HybridResourceManager(CompiledBaseName, GetType().Assembly, resXBaseName);
             var resName = "TestString";
 
             // serializing and de-serializing removes the unchanged resources
@@ -730,13 +762,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         [Test]
         public void DisposeTest()
         {
-            var manager = new HybridResourceManager("KGySoft.CoreLibraries.Resources.TestCompiledResource", GetType().Assembly, resXBaseName);
+            var manager = new HybridResourceManager(CompiledBaseName, GetType().Assembly, resXBaseName);
             manager.Dispose();
             Throws<ObjectDisposedException>(() => manager.ReleaseAllResources());
             Throws<ObjectDisposedException>(() => manager.GetString("TestString"));
             manager.Dispose(); // this will not throw anything
 
-            manager = new HybridResourceManager("KGySoft.CoreLibraries.Resources.TestCompiledResource", GetType().Assembly, resXBaseName);
+            manager = new HybridResourceManager(CompiledBaseName, GetType().Assembly, resXBaseName);
             manager.Source = ResourceManagerSources.CompiledOnly;
             manager.Dispose();
             Throws<ObjectDisposedException>(() => manager.ReleaseAllResources());

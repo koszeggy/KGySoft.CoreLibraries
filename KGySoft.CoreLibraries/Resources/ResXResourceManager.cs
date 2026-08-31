@@ -24,15 +24,14 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Resources;
-#if !NET35
 using System.Runtime.CompilerServices;
-
-using KGySoft.Collections;
-#endif
 using System.Runtime.Serialization;
 using System.Text;
 using System.Threading;
 
+#if !NET35
+using KGySoft.Collections;
+#endif
 using KGySoft.CoreLibraries;
 
 #endregion

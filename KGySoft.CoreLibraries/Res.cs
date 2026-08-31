@@ -459,6 +459,11 @@ namespace KGySoft
         /// <summary>In safe mode it is not supported to resolve types by a type resolution service.</summary>
         internal static string ResourcesTypeResolverInSafeModeNotSupported => Get("Resources_TypeResolverInSafeModeNotSupported");
 
+        /// <summary>The HybridResourceManager and DynamicResourceManager use System.ResourceManager for compiled resources, which is very limited in native AOT mode.
+        /// The compiled resources must not contain any types other than string, byte array, memory stream or primitive types, whereas other types still can be used from .resx resource files.
+        /// Please also note that for embedded byte arrays and memory streams the compiled resources tolerate assembly qualified names only (with no alias), using the mscorlib identity.</summary>
+        internal static string ResourcesUnsupportedCompiledResourcesAot => Get("Resources_UnsupportedCompiledResourcesAot");
+
         #endregion
 
         #region Serialization (any ways)

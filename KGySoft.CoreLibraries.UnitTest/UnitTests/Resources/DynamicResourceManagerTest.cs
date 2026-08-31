@@ -16,15 +16,20 @@
 #region Usings
 
 using System;
-using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+#if NETFRAMEWORK
 using System.Reflection;
+#endif
 using System.Resources;
+#if NETFRAMEWORK
 using System.Runtime.CompilerServices;
 using System.Security;
 using System.Security.Policy;
+#endif
+
 using System.Xml;
 
 using KGySoft.Collections;
@@ -60,7 +65,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
             internal void UseDrmRemotely(bool useLanguageSettings, CultureInfo testCulture)
             {
-                var manager = new DynamicResourceManager("KGySoft.CoreLibraries.Resources.TestCompiledResource", GetType().Assembly, resXBaseName)
+                var manager = new DynamicResourceManager(CompiledBaseName, GetType().Assembly, resXBaseName)
                 {
                     AutoAppend = AutoAppendOptions.None,
                     UseLanguageSettings = useLanguageSettings,
@@ -108,6 +113,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         private CultureInfo huRunicHULowland = default!; // hu-Runic-HU-lowland: specific under hu-Runic-HU    
 
         #endregion
+
+        #endregion
+
+        #region Properties
+
+        private static string CompiledBaseName => $"KGySoft.CoreLibraries.Resources.TestCompiledResource{(IsAot ? "_AOT" : null)}";
 
         #endregion
 
@@ -208,7 +219,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         [Test]
         public void MergeNeutralTest()
         {
-            var manager = new DynamicResourceManager("KGySoft.CoreLibraries.Resources.TestCompiledResource", GetType().Assembly, resXBaseName)
+            var manager = new DynamicResourceManager(CompiledBaseName, GetType().Assembly, resXBaseName)
             {
                 AutoSave = AutoSaveOptions.None,
                 AutoAppend = AutoAppendOptions.AppendLastNeutralCulture
@@ -276,7 +287,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         [Test]
         public void MergeNeutralOnLoadTest()
         {
-            var manager = new DynamicResourceManager("KGySoft.CoreLibraries.Resources.TestCompiledResource", GetType().Assembly, resXBaseName)
+            var manager = new DynamicResourceManager(CompiledBaseName, GetType().Assembly, resXBaseName)
             {
                 AutoSave = AutoSaveOptions.None,
                 AutoAppend = AutoAppendOptions.AppendLastNeutralCulture | AutoAppendOptions.AppendOnLoad
@@ -335,7 +346,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         [Test]
         public void MergeSpecificTest()
         {
-            var manager = new DynamicResourceManager("KGySoft.CoreLibraries.Resources.TestCompiledResource", GetType().Assembly, resXBaseName)
+            var manager = new DynamicResourceManager(CompiledBaseName, GetType().Assembly, resXBaseName)
             {
                 AutoSave = AutoSaveOptions.None,
                 AutoAppend = AutoAppendOptions.AppendLastSpecificCulture
@@ -380,7 +391,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         [Test]
         public void MergeSpecificOnLoadTest()
         {
-            var manager = new DynamicResourceManager("KGySoft.CoreLibraries.Resources.TestCompiledResource", GetType().Assembly, resXBaseName)
+            var manager = new DynamicResourceManager(CompiledBaseName, GetType().Assembly, resXBaseName)
             {
                 AutoSave = AutoSaveOptions.None,
                 AutoAppend = AutoAppendOptions.AppendLastSpecificCulture | AutoAppendOptions.AppendOnLoad
@@ -443,10 +454,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         }
 
         [Test]
+        [DynamicDependency("resourceSets", typeof(HybridResourceManager))]
         public void NonContiguousProxyTest()
         {
             // now it is like HRM
-            var manager = new DynamicResourceManager("KGySoft.CoreLibraries.Resources.TestCompiledResource", GetType().Assembly, resXBaseName)
+            var manager = new DynamicResourceManager(CompiledBaseName, GetType().Assembly, resXBaseName)
             {
                 AutoSave = AutoSaveOptions.None,
                 AutoAppend = AutoAppendOptions.None
@@ -568,7 +580,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             LanguageSettings.DynamicResourceManagersAutoAppend = AutoAppendOptions.None;
             string key = "testKey";
             string value = "test value";
-            var manager = new DynamicResourceManager("KGySoft.CoreLibraries.Resources.TestCompiledResource", GetType().Assembly, resXBaseName)
+            var manager = new DynamicResourceManager(CompiledBaseName, GetType().Assembly, resXBaseName)
             {
                 AutoAppend = AutoAppendOptions.None,
             };
@@ -676,7 +688,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 // Dispose, central
                 LanguageSettings.DynamicResourceManagersSource = ResourceManagerSources.CompiledAndResX;
                 LanguageSettings.DynamicResourceManagersAutoSave = AutoSaveOptions.Dispose;
-                manager = new DynamicResourceManager("KGySoft.CoreLibraries.Resources.TestCompiledResource", GetType().Assembly, resXBaseName)
+                manager = new DynamicResourceManager(CompiledBaseName, GetType().Assembly, resXBaseName)
                 {
                     UseLanguageSettings = true
                 };
@@ -702,7 +714,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         public void SerializationTest()
         {
             var refManager = new ResourceManager("KGySoft.CoreLibraries.Resources.TestResourceResX", GetType().Assembly);
-            var manager = new DynamicResourceManager("KGySoft.CoreLibraries.Resources.TestCompiledResource", GetType().Assembly, resXBaseName)
+            var manager = new DynamicResourceManager(CompiledBaseName, GetType().Assembly, resXBaseName)
             {
                 AutoAppend = AutoAppendOptions.None,
                 AutoSave = AutoSaveOptions.None
@@ -735,7 +747,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         [Test]
         public void DisposeTest()
         {
-            var manager = new DynamicResourceManager("KGySoft.CoreLibraries.Resources.TestCompiledResource", GetType().Assembly, resXBaseName)
+            var manager = new DynamicResourceManager(CompiledBaseName, GetType().Assembly, resXBaseName)
             {
                 AutoSave = AutoSaveOptions.None
             };
@@ -744,7 +756,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Throws<ObjectDisposedException>(() => manager.GetString("TestString"));
             manager.Dispose(); // this will not throw anything
 
-            manager = new DynamicResourceManager("KGySoft.CoreLibraries.Resources.TestCompiledResource", GetType().Assembly, resXBaseName);
+            manager = new DynamicResourceManager(CompiledBaseName, GetType().Assembly, resXBaseName);
             manager.Source = ResourceManagerSources.CompiledOnly;
             manager.Dispose();
             Throws<ObjectDisposedException>(() => manager.ReleaseAllResources());
@@ -755,7 +767,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         [Test]
         public void EnsureResourcesGeneratedTest()
         {
-            using var manager = new DynamicResourceManager("KGySoft.CoreLibraries.Resources.TestCompiledResource", GetType().Assembly, resXBaseName)
+            using var manager = new DynamicResourceManager(CompiledBaseName, GetType().Assembly, resXBaseName)
             {
                 AutoAppend = AutoAppendOptions.AppendFirstNeutralCulture,
                 Source = ResourceManagerSources.CompiledAndResX
@@ -786,7 +798,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         [Test]
         public void EnsureInvariantEntriesMergedTest()
         {
-            using var manager = new DynamicResourceManager("KGySoft.CoreLibraries.Resources.TestCompiledResource", GetType().Assembly, resXBaseName)
+            using var manager = new DynamicResourceManager(CompiledBaseName, GetType().Assembly, resXBaseName)
             {
                 AutoAppend = AutoAppendOptions.AppendFirstNeutralCulture,
                 Source = ResourceManagerSources.CompiledAndResX
@@ -813,7 +825,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         [Test]
         public void IgnoreResXParseErrorsTest()
         {
-            using var manager = new DynamicResourceManager("KGySoft.CoreLibraries.Resources.TestCompiledResource", GetType().Assembly, resXBaseName)
+            using var manager = new DynamicResourceManager(CompiledBaseName, GetType().Assembly, resXBaseName)
             {
                 Source = ResourceManagerSources.CompiledAndResX,
                 IgnoreResXParseErrors = false

@@ -1023,6 +1023,11 @@ If the collection has an initializer constructor, then using XmlSerializer.Seria
   <data name="Resources_TypeResolverInSafeModeNotSupported" xml:space="preserve">
     <value>In safe mode it is not supported to resolve types by a type resolution service.</value>
   </data>
+  <data name="Resources_UnsupportedCompiledResourcesAot" xml:space="preserve">
+    <value>The HybridResourceManager and DynamicResourceManager use System.ResourceManager for compiled resources, which is very limited in native AOT mode.
+The compiled resources must not contain any types other than string, byte array, memory stream or primitive types, whereas other types still can be used from .resx resource files.
+Please also note that for embedded byte arrays and memory streams the compiled resources tolerate assembly qualified names only (with no alias), using the mscorlib identity.</value>
+  </data>
   <data name="Resources_ResXReaderNotSupportedFormat" xml:space="preserve">
     <value>Unsupported ResX reader "{0}" at line {1}, position {2}.</value>
   </data>

@@ -18,6 +18,7 @@
 using System;
 using System.Collections;
 using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.Globalization;
 using System.IO;
@@ -111,6 +112,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         /// Tests whether the different kinds of objects can be deserialized.
         /// </summary>
         [Test]
+#if !NETCOREAPP2_0 && WINDOWS
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(Bitmap))]
+#endif
         public void GetObject()
         {
             var path = Combine(Files.GetExecutingPath(), "Resources", "TestResourceResX.resx");
@@ -120,7 +124,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.IsInstanceOf<string>(rs.GetObject("TestString"));
             Assert.IsInstanceOf<string>(rs.GetMetaObject("TestString"));
             Assert.AreNotEqual(rs.GetObject("TestString"), rs.GetMetaObject("TestString"));
-            Assert.IsTrue(rs.GetString("MultilineString").Contains(Environment.NewLine), "MultilineString should contain the NewLine string");
+            Assert.IsTrue(rs.GetString("MultilineString")!.Contains(Environment.NewLine), "MultilineString should contain the NewLine string");
 
             // WinForms.FileRef/string
             Assert.IsInstanceOf<string>(rs.GetObject("TestTextFile"));
@@ -201,12 +205,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
             // in safe mode, raw value is expected
             rs.SafeMode = true;
-            Assert.AreEqual("576, 17", rs.GetString("TestPoint"));
+            AssertAreEqual("576, 17", rs.GetString("TestPoint"));
 
             // in non-safe mode, raw value is cleared once an object is generated
             var point = new Point(576, 17);
             rs.SafeMode = false;
-            Assert.AreEqual(point, rs.GetObject("TestPoint"));
+            AssertAreEqual(point, rs.GetObject("TestPoint"));
 
             // when safe mode is turned on again, raw value is re-generated for GetString, except in AOT mode, which just returns the cached ToString
             rs.SafeMode = true;

@@ -132,6 +132,7 @@
     <EmbeddedResource Update="Resources\TestRes.resx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
+  
     <None Update="Resources\TestBinFile.bin">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -147,6 +148,23 @@
     <None Update="Resources\TestTextFile.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+
+  <!--These resources are compiled only in AOT mode-->
+  <ItemGroup Condition="'$(PublishAot)'!='true'">
+    <EmbeddedResource Remove="Resources\TestResourceResX_AOT.resx" />
+    <None Include="Resources\TestResourceResX_AOT.resx" />
+    <EmbeddedResource Remove="Resources\TestResourceResX_AOT.en.resx" />
+    <None Include="Resources\TestResourceResX_AOT.en.resx" />
+    <EmbeddedResource Remove="Resources\TestResourceResX_AOT.en-US.resx" />
+    <None Include="Resources\TestResourceResX_AOT.en-US.resx" />
+
+    <EmbeddedResource Remove="Resources\TestCompiledResource_AOT.resx" />
+    <None Include="Resources\TestCompiledResource_AOT.resx" />
+    <EmbeddedResource Remove="Resources\TestCompiledResource_AOT.en.resx" />
+    <None Include="Resources\TestCompiledResource_AOT.en.resx" />
+    <EmbeddedResource Remove="Resources\TestCompiledResource_AOT.en-US.resx" />
+    <None Include="Resources\TestCompiledResource_AOT.en-US.resx" />
   </ItemGroup>
 
 </Project>

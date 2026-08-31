@@ -15,8 +15,6 @@
 
 #region Usings
 
-using System.Runtime.CompilerServices;
-
 #region Used Namespaces
 
 using System;
@@ -24,18 +22,23 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.Design;
-#if NET
 using System.Diagnostics.CodeAnalysis;
-#endif
 using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 #if !NET35
 using System.Numerics;
 #endif
+#if NETCOREAPP
+using System.Reflection;
+#endif
+#if NETFRAMEWORK
+using System.Runtime.CompilerServices;
+#endif
+#if !NET8_0_OR_GREATER
 using System.Runtime.Serialization;
+#endif
 using System.Text;
 #if NETFRAMEWORK
 using System.Windows.Forms; 
@@ -660,7 +663,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 typeof(char[]), // 1D zero based array
                 typeof(float[,]), // multi-dim array
                 typeof(bool[][,]), // mixed jagged array
-                Array.CreateInstance(typeof(object), new[] { 3 }, new[] { -1 }).GetType(), // nonzero based 1D array
+#if !AOT
+                Array.CreateInstance(typeof(object), new[] { 3 }, new[] { -1 }).GetType(), // nonzero based 1D array 
+#endif
             };
 
 #if NETFRAMEWORK
@@ -754,8 +759,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 new byte[][,] { new byte[,] { { 11, 12, 13 }, { 21, 22, 23 } }, new byte[,] { { 11, 12, 13, 14 }, { 21, 22, 23, 24 }, { 31, 32, 33, 34 } } }, // crazy jagged byte array 1 (2D matrix of 1D arrays)
                 new byte[,][] { { new byte[] { 11, 12, 13 }, new byte[] { 21, 22, 23 } }, { new byte[] { 11, 12, 13, 14 }, new byte[] { 21, 22, 23, 24 } } }, // crazy jagged byte array 2 (1D array of 2D matrices)
                 new byte[][,,] { new byte[,,] { { { 11, 12, 13 }, { 21, 21, 23 } } }, null }, // crazy jagged byte array containing null reference
+#if !AOT
                 Array.CreateInstance(typeof(byte), new int[] { 3 }, new int[] { -1 }), // array with -1..1 index interval
                 Array.CreateInstance(typeof(byte), new int[] { 3, 3 }, new int[] { -1, 1 }) // array with [-1..1 and 1..3] index interval
+#endif
             };
 
 #if NETFRAMEWORK
@@ -793,6 +800,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 #endif
             KGySerializeObjects(referenceObjects, false);
 
+#if !AOT
             // system serializer (and also compatible mode) fails here: cannot cast string[*] to object[]
             referenceObjects = new[]
             {
@@ -800,6 +808,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             };
 
             KGySerializeObjects(referenceObjects, false);
+#endif
         }
 
         [Test]
@@ -896,6 +905,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
         [Test]
         [Obsolete]
+        [DynamicDependency(BinarySerializer.NeededMembers, typeof(AnyObjectSerializerWrapper))]
         public void SerializeSpecialTypes()
         {
             // these types will be transformed to their wrapped representations

@@ -1343,7 +1343,14 @@ namespace KGySoft.Resources
                         // otherwise, disposed state is checked by ResXResourceSet
                         if (source == ResourceManagerSources.CompiledOnly && resxResources.IsDisposed)
                             Throw.ObjectDisposedException();
-                        compiled = base.InternalGetResourceSet(currentCultureInfo, ctx.Behavior != ResourceSetRetrieval.GetIfAlreadyLoaded, false);
+                        try
+                        {
+                            compiled = base.InternalGetResourceSet(currentCultureInfo, ctx.Behavior != ResourceSetRetrieval.GetIfAlreadyLoaded, false);
+                        }
+                        catch (FileNotFoundException) when (!RuntimeFeature.IsDynamicCodeSupported)
+                        {
+                            Throw.PlatformNotSupportedException(Res.ResourcesUnsupportedCompiledResourcesAot);
+                        }
                     }
 
                     // result found
