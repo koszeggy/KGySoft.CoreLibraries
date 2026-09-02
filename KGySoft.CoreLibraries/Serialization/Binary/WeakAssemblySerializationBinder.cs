@@ -146,10 +146,15 @@ namespace KGySoft.Serialization.Binary
             if (!OmitAssemblyNameOnSerialize)
                 return;
 
-            // mscorlib/System.Private.CoreLib/netstandard is handled natively so is not omitted
-            // when assembly is omitted, a non-empty string should be returned so returning a symbol, which is not a valid name
-            if (!AssemblyResolver.IsCoreLibAssemblyName(serializedType.Assembly.FullName))
+            // mscorlib/System.Private.CoreLib/netstandard is handled natively so they are not omitted (the caller omits it naturally)
+            if (!AssemblyResolver.IsCoreLibAssemblyName(serializedType.Assembly.FullName)
+                // if the actual name is a core assembly, but has a forwarded non-code assembly, then omitting the assembly to prevent the caller from using the forwarded name
+                || AssemblyResolver.GetForwardedAssemblyName(serializedType, true) != null)
+            {
+                // when assembly is omitted, a non-empty string should be returned so returning a symbol, which is not a valid name
                 assemblyName = omittedAssemblyName;
+            }
+
 
             // generic type arguments contains assembly info as well so stripping name for generics
             if (serializedType.IsGenericType && !serializedType.IsGenericTypeDefinition)

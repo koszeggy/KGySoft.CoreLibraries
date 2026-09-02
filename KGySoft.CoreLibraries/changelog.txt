@@ -46,6 +46,12 @@
   - Next(int, int): maxValue was not allowed to be the same as minValue via the SecureRandom instance returned by
     the static SecureRandom.Instance property, though a regular Random instance allows this case.
 
+- KGySoft.Serialization.Binary
+==============================
+- WeakAssemblySerializationBinder class:
+  - OmitAssemblyNameOnSerialize property: Omitting the assembly name did not work if the type had been forwarded
+    into the core assembly from a non-core one.
+
 
 ~~~~~~~~~~
 - v10.5.1:
