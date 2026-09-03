@@ -196,7 +196,7 @@ namespace KGySoft.Serialization.Binary
             if (fullName == null || !type.IsRuntimeType() || type.HasElementType
                 || type.IsConstructedGenericType()
                 || type.IsGenericParameter)
-                Throw.ArgumentException(Argument.type, Res.SerializationRootTypeExpected);
+                Throw.ArgumentException(Argument.type, Res.SerializationRootTypeExpected(type));
             Debug.Assert(type == type.GetRootType(), "Root type expected");
 
             // getting/creating the map by type of the same full names

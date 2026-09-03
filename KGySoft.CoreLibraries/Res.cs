@@ -468,11 +468,11 @@ namespace KGySoft
 
         #region Serialization (any ways)
 
-        /// <summary>Simple runtime element types or generic type definitions are expected.</summary>
-        internal static string SerializationRootTypeExpected => Get("Serialization_RootTypeExpected");
-
         /// <summary>Serialization of function pointer types is not supported on this platform.</summary>
         internal static string SerializationFunctionPointerTypeNotSupported => Get("Serialization_FunctionPointerTypeNotSupported");
+
+        /// <summary>In native AOT mode it is not supported to deserialize arrays with non-zero lower bounds.</summary>
+        internal static string SerializationNonZeroBasedArrayAotNotSupported => Get("Serialization_NonZeroBasedArrayAotNotSupported");
 
         #endregion
 
@@ -635,6 +635,12 @@ namespace KGySoft
         /// <summary>Type '{0}' cannot be the type argument of this method because it contains references.</summary>
         internal static string UnmanagedMethodTypeArgumentExpected<T>() => Get("General_UnmanagedMethodTypeArgumentExpectedFormat", typeof(T).GetName(TypeNameKind.LongName));
 
+        /// <summary>Native code of the generic method '{0}' is missing for the followng type argument(s): {2}.
+        /// In native AOT mode you need to reference the constructed method in your code. You can fix it by adding the following snippet to your application initialization (apply the type arguments):
+        /// {1}</summary>
+        internal static string GenericMethodMissingAot(string methodName, string preserveExample, Type[] typeArguments)
+            => Get("General_GenericMethodMissingAotFormat", methodName, preserveExample, typeArguments.Select(t => t.GetName(TypeNameKind.LongName)).Join(", "));
+
         #endregion
 
         #region BinarySerialization
@@ -664,11 +670,27 @@ namespace KGySoft
         /// <summary>Type "{0}" cannot be deserialized because it has no field "{1}". To call the deserialization constructor implement the ISerializable interface. Use IgnoreObjectChanges option to suppress this exception.</summary>
         internal static string BinarySerializationMissingField(Type type, string field) => Get("BinarySerialization_MissingFieldFormat", type.GetName(TypeNameKind.LongName), field);
 
+        /// <summary>Type "{0}" cannot be deserialized because field "{1}" is missing. Use the IgnoreObjectChanges option to suppress this exception.
+        /// You can prevent trimming the fields of a type by adding the following snippet to your application initialization:
+        /// SerializedType _ = typeof(MySerializedType);
+        ///
+        /// Alternatively, you can include the type in the expectedTypes parameter at the deserialization methods, using the overloads where the element type of expectedTypes is SerializedType.
+        /// </summary>
+        internal static string BinarySerializationMissingFieldAot(Type type, string field) => Get("BinarySerialization_MissingFieldAotFormat", type.GetName(TypeNameKind.LongName), field);
+
         /// <summary>Type "{0}" cannot be deserialized because field "{1}" not found in type "{2}". Use IgnoreObjectChanges option to suppress this exception.</summary>
         internal static string BinarySerializationMissingFieldBase(Type type, string field, Type baseType) => Get("BinarySerialization_MissingFieldBaseFormat", type.GetName(TypeNameKind.LongName), field, baseType);
 
-        /// <summary>Type "{0}" does not have a special constructor to deserialize it as ISerializable</summary>
+        /// <summary>Type "{0}" does not have a special constructor to deserialize it as ISerializable.</summary>
         internal static string BinarySerializationMissingISerializableCtor(Type type) => Get("BinarySerialization_MissingISerializableCtorFormat", type.GetName(TypeNameKind.LongName));
+
+        /// <summary>ISerializable special constructor was not found on type "{0}". 
+        /// You can prevent trimming the special constructor of a type by adding the following snippet to your application initialization:
+        /// SerializedType _ = typeof(MySerializedType);
+        ///
+        /// Alternatively, you can include the type in the expectedTypes parameter at the deserialization methods, using the overloads where the element type of expectedTypes is SerializedType.
+        /// </summary>
+        internal static string BinarySerializationMissingISerializableCtorAot(Type type) => Get("BinarySerialization_MissingISerializableCtorAotFormat", type.GetName(TypeNameKind.LongName));
 
         /// <summary>The serialization surrogate has changed the reference of the result object, which prevented resolving circular references to itself. Object type: {0}</summary>
         internal static string BinarySerializationSurrogateChangedObject(Type type) => Get("BinarySerialization_SurrogateChangedObjectFormat", type.GetName(TypeNameKind.LongName));
@@ -727,6 +749,14 @@ namespace KGySoft
         /// <summary>The current domain has insufficient permissions to create an empty instance of type "{0}" without a default constructor.</summary>
         internal static string BinarySerializationCannotCreateUninitializedObject(Type type) => Get("BinarySerialization_CannotCreateUninitializedObjectFormat", type.GetName(TypeNameKind.LongName));
 
+        /// <summary>Could not create an empty instance of type "{0}" because the metadata is missing in AOT mode.
+        /// You can prevent trimming the metafata of a type by adding the following snippet to your application initialization:
+        /// SerializedType _ = typeof(MySerializedType);
+        ///
+        /// Alternatively, you can include the type in the expectedTypes parameter at the deserialization methods, using the overloads where the element type of expectedTypes is SerializedType.
+        /// </summary>
+        internal static string BinarySerializationCannotCreateUninitializedObjectAot(Type type) => Get("BinarySerialization_CannotCreateUninitializedObjectAotFormat", type.GetName(TypeNameKind.LongName));
+
         /// <summary>In safe mode it is not supported to deserialize type "{0}". If it's because it is not marked by the SerializableAttribute you can try to enable the AllowNonSerializableExpectedCustomTypes option.</summary>
         internal static string BinarySerializationCannotCreateSerializableObjectSafe(Type type) => Get("BinarySerialization_CannotCreateSerializableObjectSafe", type.GetName(TypeNameKind.LongName));
 
@@ -754,6 +784,9 @@ namespace KGySoft
 
         /// <summary>In safe mode it is not supported to set pointer field '{0}.{1}' to a non-null value by default object graph deserialization.</summary>
         internal static string BinarySerializationPointerFieldSafe(Type type, string fieldName) => Get("BinarySerialization_PointerFieldSafeFormat", type.GetName(TypeNameKind.LongName), fieldName);
+
+        /// <summary>Type is not a simple runtime element type or generic type definition: {0}</summary>
+        internal static string SerializationRootTypeExpected(Type t) => Get("Serialization_RootTypeExpectedFormat", t.GetName(TypeNameKind.LongName));
 
         #endregion
 

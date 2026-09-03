@@ -491,11 +491,14 @@ Hit rate: {8:P2}</value>
   <data name="Reflection_SetPropertyTypeDescriptorNotSupported" xml:space="preserve">
     <value>Setting property via TypeDescriptor is not supported in this overload of SetProperty method.</value>
   </data>
-  <data name="Serialization_RootTypeExpected" xml:space="preserve">
-    <value>Simple runtime element types or generic type definitions are expected.</value>
+  <data name="Serialization_RootTypeExpectedFormat" xml:space="preserve">
+    <value>Type is not a simple runtime element type or generic type definition: {0}</value>
   </data>
   <data name="Serialization_FunctionPointerTypeNotSupported" xml:space="preserve">
     <value>Serialization of function pointer types is not supported on this platform.</value>
+  </data>
+  <data name="Serialization_NonZeroBasedArrayAotNotSupported" xml:space="preserve">
+    <value>In native AOT mode it is not supported to deserialize arrays with non-zero lower bounds</value>
   </data>
   <data name="Serialization_MissingFieldFormat" xml:space="preserve">
     <value>Type "{0}" cannot be deserialized because it has no field "{1}". Set IgnoreNonExistingFields to true to suppress this exception.</value>
@@ -547,6 +550,11 @@ Hit rate: {8:P2}</value>
   </data>
   <data name="General_UnmanagedMethodTypeArgumentExpectedFormat" xml:space="preserve">
     <value>Type '{0}' cannot be the type argument of this method because it contains references.</value>
+  </data>
+  <data name="General_GenericMethodMissingAotFormat" xml:space="preserve">
+    <value>Native code of the generic method '{0}' is missing for the followng type argument(s): {2}.
+In native AOT mode you need to reference the constructed method in your code. You can fix it by adding the following snippet to your application initialization (apply the type arguments):
+{1}</value>
   </data>
   <data name="Reflection_CannotCreateGenericMethod" xml:space="preserve">
     <value>Could not create generic method. For details see inner exception.</value>
@@ -635,11 +643,23 @@ Hit rate: {8:P2}</value>
   <data name="BinarySerialization_MissingFieldFormat" xml:space="preserve">
     <value>Type "{0}" cannot be deserialized because it has no field "{1}". To call the deserialization constructor implement the ISerializable interface. Use IgnoreObjectChanges option to suppress this exception.</value>
   </data>
+  <data name="BinarySerialization_MissingFieldAotFormat" xml:space="preserve">
+    <value>Type "{0}" cannot be deserialized because field "{1}" is missing. Use the IgnoreObjectChanges option to suppress this exception. You can prevent trimming the fields of a type by adding the following snippet to your application initialization:
+SerializedType _ = typeof(MySerializedType);
+
+Alternatively, you can include the type in the expectedTypes parameter at the deserialization methods, using the overloads where the element type of expectedTypes is SerializedType.</value>
+  </data>
   <data name="BinarySerialization_MissingFieldBaseFormat" xml:space="preserve">
     <value>Type "{0}" cannot be deserialized because field "{1}" not found in type "{2}". Use IgnoreObjectChanges option to suppress this exception.</value>
   </data>
   <data name="BinarySerialization_MissingISerializableCtorFormat" xml:space="preserve">
-    <value>Type "{0}" does not have a special constructor to deserialize it as ISerializable</value>
+    <value>Type "{0}" does not have a special constructor to deserialize it as ISerializable.</value>
+  </data>
+  <data name="BinarySerialization_MissingISerializableCtorAotFormat" xml:space="preserve">
+    <value>ISerializable special constructor was not found on type "{0}". You can prevent trimming the special constructor of a type by adding the following snippet to your application initialization:
+SerializedType _ = typeof(MySerializedType);
+
+Alternatively, you can include the type in the expectedTypes parameter at the deserialization methods, using the overloads where the element type of expectedTypes is SerializedType.</value>
   </data>
   <data name="BinarySerialization_ObjectHierarchyChangedFormat" xml:space="preserve">
     <value>Type "{0}" cannot be deserialized because its type hierarchy has been changed since serialization. Use IgnoreObjectChanges option to suppress this exception.</value>
@@ -812,6 +832,12 @@ Either try to use the ForceRecursiveSerializationOfSupportedTypes option on seri
   </data>
   <data name="BinarySerialization_CannotCreateUninitializedObjectFormat" xml:space="preserve">
     <value>The current domain has insufficient permissions to create an empty instance of type "{0}" without a default constructor.</value>
+  </data>
+  <data name="BinarySerialization_CannotCreateUninitializedObjectAotFormat" xml:space="preserve">
+    <value>Could not create an empty instance of type "{0}" because the metadata is missing in AOT mode. You can prevent trimming the metadata of a type by adding the following snippet to your application initialization:
+SerializedType _ = typeof(MySerializedType);
+
+Alternatively, you can include the type in the expectedTypes parameter at the deserialization methods, using the overloads where the element type of expectedTypes is SerializedType.</value>
   </data>
   <data name="BinarySerialization_CannotCreateSerializableObjectSafe" xml:space="preserve">
     <value>In safe mode it is not supported to deserialize type "{0}". If it's because it is not marked by the SerializableAttribute you can try to enable the AllowNonSerializableExpectedCustomTypes option.</value>
