@@ -13,6 +13,11 @@
 ==================
 + Supporting Native AOT (Ahead of Time) deployment mode.
 
++ KGySoft.Collections namespace:
+================================
++ AllowNullDictionary<TKey, TValue> class:
+  + New Comparer property.
+
 ! KGySoft.ComponentModel namespace:
 ===================================
 ! ICommandBinding interface:

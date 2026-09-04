@@ -629,6 +629,11 @@ namespace KGySoft.Collections
         /// </summary>
         public int Count => hasNullKey ? dict.Count + 1 : dict.Count;
 
+        /// <summary>
+        /// Gets the <see cref="IEqualityComparer{T}"/> that is used to determine equality of keys for this <see cref="AllowNullDictionary{TKey,TValue}"/>.
+        /// </summary>
+        public IEqualityComparer<TKey> Comparer => dict.Comparer;
+
         #endregion
 
         #region Explicitly Implemented Interface Properties
