@@ -38,7 +38,17 @@ namespace KGySoft.Serialization
 
         #region Properties
 
+        #region Public Properties
+
         public Type Current { get; private set; } = default!;
+
+        #endregion
+
+        #region Internal Properties
+
+        internal bool IsEmpty { get; }
+
+        #endregion
 
         #endregion
 
@@ -50,6 +60,7 @@ namespace KGySoft.Serialization
             types = new Queue<Type>(expectedCustomTypes ?? Reflector.EmptyArray<Type>());
             if (expectedType is not null)
                 types.Enqueue(expectedType);
+            IsEmpty = types.Count == 0;
         }
 
         #endregion

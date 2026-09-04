@@ -619,6 +619,7 @@ namespace KGySoft.Serialization.Binary
 
                 #region Private Methods
 
+                [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
                 private Array CreateInstance(Type elementType)
                 {
                     try
@@ -703,7 +704,7 @@ namespace KGySoft.Serialization.Binary
             #region Constructors
 
             internal DeserializationManager(StreamingContext context, BinarySerializationOptions options, SerializationBinder? binder, ISurrogateSelector? surrogateSelector,
-                IEnumerable<Type>? expectedCustomTypes, Type rootType)
+                IEnumerable<Type>? expectedCustomTypes, Type? rootType)
                 : base(context,
                     // Considering only deserialization flags. Other info must be read from the stream.
                     options & (BinarySerializationOptions.IgnoreSerializationMethods 
@@ -716,7 +717,7 @@ namespace KGySoft.Serialization.Binary
                         | BinarySerializationOptions.PreferInvokingDefaultConstructor),
                     binder, surrogateSelector)
             {
-                this.rootType = rootType == Reflector.ObjectType ? null : rootType;
+                this.rootType = rootType;
 
                 if (SafeModeStrict)
                 {
@@ -732,14 +733,19 @@ namespace KGySoft.Serialization.Binary
                         return;
                 }
 
-                if (this.rootType is null && expectedCustomTypes is null or ICollection<Type> { Count: 0 })
+                if (rootType is null && expectedCustomTypes is null or ICollection<Type> { Count: 0 })
+                    return;
+
+                // Adding allowed types resolved by name. Including also possible object root in case supported types were forced to be saved recursively.
+                var enumerator = new RootTypeEnumerator(rootType, expectedCustomTypes);
+                if (enumerator.IsEmpty)
                     return;
 
                 expectedTypes = new Dictionary<(string?, string), Type>();
-
-                // Adding allowed types resolved by name. Including also possible object root in case supported types were forced to be saved recursively.
-                foreach (Type type in new RootTypeEnumerator(rootType, expectedCustomTypes))
+                while (enumerator.MoveNext())
                 {
+                    Type type = enumerator.Current;
+
                     // skipping primitive types that are never resolved by name
                     if (primitiveTypes.ContainsKey(type))
                         continue;

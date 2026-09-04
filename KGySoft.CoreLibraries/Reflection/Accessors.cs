@@ -1104,8 +1104,10 @@ namespace KGySoft.Reflection
 
         [RequiresUnreferencedCode("GetProperty")]
         [DynamicDependency(nameof(HashSet<>.Count), typeof(HashSet<>))]
+#if NETCOREAPP
         [DynamicDependency(nameof(ImmutableArray<>.Builder.Count), typeof(ImmutableArray<>.Builder))]
         [DynamicDependency(nameof(ImmutableHashSet<>.Builder.Count), typeof(ImmutableHashSet<>.Builder))]
+#endif
         [DynamicDependency(nameof(StringDictionary.Count), typeof(StringDictionary))]
         internal static int Count([NoEnumeration]this IEnumerable collection)
         {
@@ -1213,10 +1215,12 @@ namespace KGySoft.Reflection
         }
 
         [RequiresUnreferencedCode("GetPropertyValue")]
+#if NETCOREAPP
         [DynamicDependency(nameof(ImmutableDictionary<,>.ValueComparer), typeof(ImmutableDictionary<,>))]
         [DynamicDependency(nameof(ImmutableDictionary<,>.Builder.ValueComparer), typeof(ImmutableDictionary<,>.Builder))]
         [DynamicDependency(nameof(ImmutableSortedDictionary<,>.ValueComparer), typeof(ImmutableSortedDictionary<,>))]
         [DynamicDependency(nameof(ImmutableSortedDictionary<,>.Builder.ValueComparer), typeof(ImmutableSortedDictionary<,>.Builder))]
+#endif
         internal static object? GetValueComparer([NoEnumeration]this IEnumerable collection)
             => GetPropertyValue(collection, "ValueComparer");
 

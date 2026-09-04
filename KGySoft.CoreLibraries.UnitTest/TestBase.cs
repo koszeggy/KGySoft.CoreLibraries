@@ -317,6 +317,7 @@ namespace KGySoft.CoreLibraries
 
 #if NETCOREAPP3_0_OR_GREATER
         [DynamicDependency(nameof(Memory<>.ToArray), typeof(Memory<>))]
+        [DynamicDependency(nameof(ReadOnlyMemory<>.ToArray), typeof(ReadOnlyMemory<>))]
 #endif
         private static bool CheckDeepEquals(object reference, object check, bool forceEqualityByMembers, List<string> errors, HashSet<object> checkedObjects)
         {

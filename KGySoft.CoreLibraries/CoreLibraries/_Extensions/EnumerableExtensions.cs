@@ -1157,7 +1157,7 @@ namespace KGySoft.CoreLibraries
                 if (collection is IList list)
 #endif
                 {
-                    if (checkReadOnlyAndBounds && (list.IsReadOnly || index < 0 || index >= list.Count || list is Array array && array.Rank != 1))
+                    if (checkReadOnlyAndBounds && (list.IsReadOnly || index < 0 || index >= list.Count || list is Array { Rank: not 1 }))
                         return false;
 #if NET35
                     // IList with null element: defer because generic collections in .NET 3.5 don't really support null elements of nullable types via non-generic implementation
@@ -1195,7 +1195,7 @@ namespace KGySoft.CoreLibraries
                         if (index < 0)
                             return false;
                         Type genericCollectionInterface = genericListInterface.GetInterface(typeof(ICollection<>).Name)!;
-                        int count = collection is ICollection coll ? coll.Count : collection.Count(genericCollectionInterface) ?? -1;
+                        int count = collection is ICollection coll ? coll.Count : collection.Count(genericCollectionInterface).GetValueOrDefault(-1);
                         if (index >= count || (
 #if NET35
                             collection is not Array && 

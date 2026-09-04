@@ -638,8 +638,8 @@ namespace KGySoft
         /// <summary>Native code of the generic method '{0}' is missing for the followng type argument(s): {2}.
         /// In native AOT mode you need to reference the constructed method in your code. You can fix it by adding the following snippet to your application initialization (apply the type arguments):
         /// {1}</summary>
-        internal static string GenericMethodMissingAot(string methodName, string preserveExample, Type[] typeArguments)
-            => Get("General_GenericMethodMissingAotFormat", methodName, preserveExample, typeArguments.Select(t => t.GetName(TypeNameKind.LongName)).Join(", "));
+        internal static string GenericMethodMissingAot(string methodName, string preserveExample, string typeArguments)
+            => Get("General_GenericMethodMissingAotFormat", methodName, preserveExample, typeArguments);
 
         #endregion
 

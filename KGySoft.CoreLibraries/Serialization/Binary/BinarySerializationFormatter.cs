@@ -31,9 +31,7 @@ using System.Collections.Specialized;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
-#if NETCOREAPP
 using System.Linq;
-#endif
 #if !NET35
 using System.Numerics;
 #endif
@@ -1854,7 +1852,8 @@ namespace KGySoft.Serialization.Binary
                             }
                             catch (NotSupportedException e) when (!RuntimeFeature.IsDynamicCodeSupported)
                             {
-                                return Throw.SerializationException<object>(Res.GenericMethodMissingAot($"{typeof(FrozenSet).FullName}.{nameof(FrozenSet.ToFrozenSet)}<T>", "FrozenSet<MyElementType>.Empty.ToFrozenSet();", [genericArg]), e);
+                                return Throw.SerializationException<object>(Res.GenericMethodMissingAot($"{typeof(FrozenSet).FullName}.{nameof(FrozenSet.ToFrozenSet)}<T>",
+                                    "FrozenSet<MyElementType>.Empty.ToFrozenSet();", genericArg.GetName(TypeNameKind.LongName)), e);
                             }
                         },
                 }
@@ -2050,7 +2049,7 @@ namespace KGySoft.Serialization.Binary
                             catch (NotSupportedException e) when (!RuntimeFeature.IsDynamicCodeSupported)
                             {
                                 return Throw.SerializationException<object>(Res.GenericMethodMissingAot($"{typeof(FrozenDictionary).FullName}.{nameof(FrozenDictionary.ToFrozenDictionary)}<TKey, TValue>",
-                                    "FrozenDictionary<MyKeyType, MyValueType>.Empty.ToFrozenDictionary();", genericArgs), e);
+                                    "FrozenDictionary<MyKeyType, MyValueType>.Empty.ToFrozenDictionary();", genericArgs.Select(a => a.GetName(TypeNameKind.LongName)).Join(", ")), e);
                             }
                         }
                 }
@@ -2702,7 +2701,7 @@ namespace KGySoft.Serialization.Binary
         [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
         [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
         public object? Deserialize(byte[] rawData, int offset = 0)
-            => Deserialize<object?>(rawData, offset, (IEnumerable<Type>?)null);
+            => Deserialize(rawData, offset, (IEnumerable<Type>?)null);
 
         /// <summary>
         /// Deserializes the specified part of a byte array into an object.
@@ -2710,28 +2709,28 @@ namespace KGySoft.Serialization.Binary
         /// </summary>
         /// <param name="rawData">Contains the raw data representation of the object to deserialize.</param>
         /// <param name="offset">Points to the starting position of the object data in <paramref name="rawData"/>.</param>
-        /// <param name="expectedCustomTypes">The types that are expected to present in <paramref name="rawData"/> by name.
+        /// <param name="expectedCustomTypes">The types that are expected to be present in <paramref name="rawData"/> by name.
         /// If <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <see cref="Options"/>
         /// or <paramref name="rawData"/> does not contain any types by name, then this parameter is optional.</param>
         /// <returns>The deserialized object.</returns>
         [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
         [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
         public object? Deserialize(byte[] rawData, int offset, params Type[]? expectedCustomTypes)
-            => Deserialize<object?>(rawData, offset, (IEnumerable<Type>?)expectedCustomTypes);
+            => Deserialize(rawData, offset, (IEnumerable<Type>?)expectedCustomTypes);
 
         /// <summary>
         /// Deserializes a byte array into an object.
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="Deserialize{T}(byte[], int, Type[])"/> overload for details.
         /// </summary>
         /// <param name="rawData">Contains the raw data representation of the object to deserialize.</param>
-        /// <param name="expectedCustomTypes">The types that are expected to present in <paramref name="rawData"/> by name.
+        /// <param name="expectedCustomTypes">The types that are expected to be present in <paramref name="rawData"/> by name.
         /// If <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <see cref="Options"/>
         /// or <paramref name="rawData"/> does not contain any types by name, then this parameter is optional.</param>
         /// <returns>The deserialized object.</returns>
         [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
         [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
         public object? Deserialize(byte[] rawData, params Type[]? expectedCustomTypes)
-            => Deserialize<object?>(rawData, 0, (IEnumerable<Type>?)expectedCustomTypes);
+            => Deserialize(rawData, 0, (IEnumerable<Type>?)expectedCustomTypes);
 
         /// <summary>
         /// Deserializes the specified part of a byte array into an instance of <typeparamref name="T"/>.
@@ -2739,7 +2738,7 @@ namespace KGySoft.Serialization.Binary
         /// <typeparam name="T">The expected type of the result.</typeparam>
         /// <param name="rawData">Contains the raw data representation of the object to deserialize.</param>
         /// <param name="offset">Points to the starting position of the object data in <paramref name="rawData"/>.</param>
-        /// <param name="expectedCustomTypes">The types that are expected to present in <paramref name="rawData"/> by name.
+        /// <param name="expectedCustomTypes">The types that are expected to be present in <paramref name="rawData"/> by name.
         /// If <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <see cref="Options"/>
         /// or <paramref name="rawData"/> does not contain any types by name, then this parameter is optional.</param>
         /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
@@ -2747,6 +2746,8 @@ namespace KGySoft.Serialization.Binary
         /// <para><paramref name="expectedCustomTypes"/> must be specified if <see cref="BinarySerializationOptions.SafeMode"/> is enabled in <see cref="Options"/>
         /// and <paramref name="rawData"/> contains types encoded by their names. Natively supported types are not needed to be included
         /// unless the original object was serialized with the <see cref="BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes"/> option enabled.</para>
+        /// <note>When using native AOT deployment mode it is recommended to use the overload where the elements of the <paramref name="expectedCustomTypes"/>
+        /// parameter is <see cref="SerializedType"/>. See the <strong>Remarks</strong> section of the <see cref="SerializedType"/> struct for details.</note>
         /// <para><typeparamref name="T"/> is allowed to be an interface or abstract type but if it's different from the actual type of the result,
         /// then the actual type also might be needed to be included in <paramref name="expectedCustomTypes"/>.</para>
         /// <para>You can specify <paramref name="expectedCustomTypes"/> even if <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <see cref="Options"/>
@@ -2771,7 +2772,7 @@ namespace KGySoft.Serialization.Binary
         /// </summary>
         /// <typeparam name="T">The expected type of the result.</typeparam>
         /// <param name="rawData">Contains the raw data representation of the object to deserialize.</param>
-        /// <param name="expectedCustomTypes">The types that are expected to present in <paramref name="rawData"/> by name.
+        /// <param name="expectedCustomTypes">The types that are expected to be present in <paramref name="rawData"/> by name.
         /// If <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <see cref="Options"/>
         /// or <paramref name="rawData"/> does not contain any types by name, then this parameter is optional.</param>
         /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
@@ -2786,28 +2787,31 @@ namespace KGySoft.Serialization.Binary
         /// </summary>
         /// <param name="rawData">Contains the raw data representation of the object to deserialize.</param>
         /// <param name="offset">Points to the starting position of the object data in <paramref name="rawData"/>.</param>
-        /// <param name="expectedCustomTypes">The types that are expected to present in <paramref name="rawData"/> by name.
+        /// <param name="expectedCustomTypes">The types that are expected to be present in <paramref name="rawData"/> by name.
         /// If <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <see cref="Options"/>
         /// or <paramref name="rawData"/> does not contain any types by name, then this parameter can be <see langword="null"/>.</param>
         /// <returns>The deserialized object.</returns>
         [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
         [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
         public object? Deserialize(byte[] rawData, int offset, IEnumerable<Type>? expectedCustomTypes)
-            => Deserialize<object?>(rawData, offset, expectedCustomTypes);
+        {
+            using var br = new BinaryReader(offset == 0 ? new MemoryStream(rawData) : new MemoryStream(rawData, offset, rawData.Length - offset));
+            return DeserializeByReader(br, expectedCustomTypes);
+        }
 
         /// <summary>
         /// Deserializes a byte array into an object.
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="Deserialize{T}(byte[], int, Type[])"/> overload for details.
         /// </summary>
         /// <param name="rawData">Contains the raw data representation of the object to deserialize.</param>
-        /// <param name="expectedCustomTypes">The types that are expected to present in <paramref name="rawData"/> by name.
+        /// <param name="expectedCustomTypes">The types that are expected to be present in <paramref name="rawData"/> by name.
         /// If <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <see cref="Options"/>
         /// or <paramref name="rawData"/> does not contain any types by name, then this parameter can be <see langword="null"/>.</param>
         /// <returns>The deserialized object.</returns>
         [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
         [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
         public object? Deserialize(byte[] rawData, IEnumerable<Type>? expectedCustomTypes)
-            => Deserialize<object?>(rawData, 0, expectedCustomTypes);
+            => Deserialize(rawData, 0, expectedCustomTypes);
 
         /// <summary>
         /// Deserializes the specified part of a byte array into an instance of <typeparamref name="T"/>.
@@ -2816,7 +2820,7 @@ namespace KGySoft.Serialization.Binary
         /// <typeparam name="T">The expected type of the result.</typeparam>
         /// <param name="rawData">Contains the raw data representation of the object to deserialize.</param>
         /// <param name="offset">Points to the starting position of the object data in <paramref name="rawData"/>.</param>
-        /// <param name="expectedCustomTypes">The types that are expected to present in <paramref name="rawData"/> by name.
+        /// <param name="expectedCustomTypes">The types that are expected to be present in <paramref name="rawData"/> by name.
         /// If <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <see cref="Options"/>
         /// or <paramref name="rawData"/> does not contain any types by name, then this parameter can be <see langword="null"/>.</param>
         /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
@@ -2834,7 +2838,7 @@ namespace KGySoft.Serialization.Binary
         /// </summary>
         /// <typeparam name="T">The expected type of the result.</typeparam>
         /// <param name="rawData">Contains the raw data representation of the object to deserialize.</param>
-        /// <param name="expectedCustomTypes">The types that are expected to present in <paramref name="rawData"/> by name.
+        /// <param name="expectedCustomTypes">The types that are expected to be present in <paramref name="rawData"/> by name.
         /// If <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <see cref="Options"/>
         /// or <paramref name="rawData"/> does not contain any types by name, then this parameter can be <see langword="null"/>.</param>
         /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
@@ -2842,6 +2846,70 @@ namespace KGySoft.Serialization.Binary
         [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
         public T Deserialize<[DynamicallyAccessedMembers(BinarySerializer.NeededMembers)]T>(byte[] rawData, IEnumerable<Type>? expectedCustomTypes)
             => Deserialize<T>(rawData, 0, expectedCustomTypes);
+
+        /// <summary>
+        /// Deserializes the specified part of a byte array into an object.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="Deserialize{T}(byte[], int, Type[])"/> overload for details.
+        /// </summary>
+        /// <param name="rawData">Contains the raw data representation of the object to deserialize.</param>
+        /// <param name="offset">Points to the starting position of the object data in <paramref name="rawData"/>.</param>
+        /// <param name="expectedCustomTypes">The types that are expected to be present in <paramref name="rawData"/> by name.
+        /// As the elements are <see cref="SerializedType"/> instances, the types specified by <c>typeof()</c> expressions can be deserialized
+        /// even if the consumer project uses native AOT deployment mode with trimming.</param>
+        /// <returns>The deserialized object.</returns>
+        [OverloadResolutionPriority(BinarySerializer.SerializedTypePriority)]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "SerializedType is annotated")]
+        [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+        public object? Deserialize(byte[] rawData, int offset, params IEnumerable<SerializedType>? expectedCustomTypes)
+            => Deserialize(rawData, offset, expectedCustomTypes?.Select(t => t.Type));
+
+        /// <summary>
+        /// Deserializes a byte array into an object.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="Deserialize{T}(byte[], int, Type[])"/> overload for details.
+        /// </summary>
+        /// <param name="rawData">Contains the raw data representation of the object to deserialize.</param>
+        /// <param name="expectedCustomTypes">The types that are expected to be present in <paramref name="rawData"/> by name.
+        /// As the elements are <see cref="SerializedType"/> instances, the types specified by <c>typeof()</c> expressions can be deserialized
+        /// even if the consumer project uses native AOT deployment mode with trimming.</param>
+        /// <returns>The deserialized object.</returns>
+        [OverloadResolutionPriority(BinarySerializer.SerializedTypePriority)]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "SerializedType is annotated")]
+        [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+        public object? Deserialize(byte[] rawData, params IEnumerable<SerializedType>? expectedCustomTypes)
+            => Deserialize(rawData, 0, expectedCustomTypes?.Select(t => t.Type));
+
+        /// <summary>
+        /// Deserializes the specified part of a byte array into an instance of <typeparamref name="T"/>.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="Deserialize{T}(byte[], int, Type[])"/> overload for details.
+        /// </summary>
+        /// <typeparam name="T">The expected type of the result.</typeparam>
+        /// <param name="rawData">Contains the raw data representation of the object to deserialize.</param>
+        /// <param name="offset">Points to the starting position of the object data in <paramref name="rawData"/>.</param>
+        /// <param name="expectedCustomTypes">The types that are expected to be present in <paramref name="rawData"/> by name.
+        /// As the elements are <see cref="SerializedType"/> instances, the types specified by <c>typeof()</c> expressions can be deserialized
+        /// even if the consumer project uses native AOT deployment mode with trimming.</param>
+        /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
+        [OverloadResolutionPriority(BinarySerializer.SerializedTypePriority)]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "T and SerializedType are annotated")]
+        [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+        public T Deserialize<[DynamicallyAccessedMembers(BinarySerializer.NeededMembers)] T>(byte[] rawData, int offset, params IEnumerable<SerializedType>? expectedCustomTypes)
+            => Deserialize<T>(rawData, offset, expectedCustomTypes?.Select(t => t.Type));
+
+        /// <summary>
+        /// Deserializes a byte array into an instance of <typeparamref name="T"/>.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="Deserialize{T}(byte[], int, Type[])"/> overload for details.
+        /// </summary>
+        /// <typeparam name="T">The expected type of the result.</typeparam>
+        /// <param name="rawData">Contains the raw data representation of the object to deserialize.</param>
+        /// <param name="expectedCustomTypes">The types that are expected to be present in <paramref name="rawData"/> by name.
+        /// As the elements are <see cref="SerializedType"/> instances, the types specified by <c>typeof()</c> expressions can be deserialized
+        /// even if the consumer project uses native AOT deployment mode with trimming.</param>
+        /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
+        [OverloadResolutionPriority(BinarySerializer.SerializedTypePriority)]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "T and SerializedType are annotated")]
+        [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+        public T Deserialize<[DynamicallyAccessedMembers(BinarySerializer.NeededMembers)] T>(byte[] rawData, params IEnumerable<SerializedType>? expectedCustomTypes)
+            => Deserialize<T>(rawData, 0, expectedCustomTypes?.Select(t => t.Type));
 
         /// <summary>
         /// Serializes the given <paramref name="data"/> into a <paramref name="stream"/>.
@@ -2864,28 +2932,28 @@ namespace KGySoft.Serialization.Binary
         [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
         [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
         public object? DeserializeFromStream(Stream stream)
-            => DeserializeByReader<object?>(new BinaryReader(stream), (IEnumerable<Type>?)null);
+            => DeserializeByReader(new BinaryReader(stream), (IEnumerable<Type>?)null);
 
         /// <summary>
         /// Deserializes the content of the specified serialization <paramref name="stream"/> from its current position into an object.
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeFromStream{T}(Stream, Type[])"/> overload for details.
         /// </summary>
         /// <param name="stream">The <see cref="Stream"/> containing the serialized data. The stream must support reading and will remain open after deserialization.</param>
-        /// <param name="expectedCustomTypes">The types that are expected to present in the serialization <paramref name="stream"/> by name.
+        /// <param name="expectedCustomTypes">The types that are expected to be present in the serialization <paramref name="stream"/> by name.
         /// If <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <see cref="Options"/>
         /// or <paramref name="stream"/> does not contain any types by name, then this parameter is optional.</param>
         /// <returns>The deserialized object.</returns>
         [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
         [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
         public object? DeserializeFromStream(Stream stream, params Type[]? expectedCustomTypes)
-            => DeserializeByReader<object?>(new BinaryReader(stream), (IEnumerable<Type>?)expectedCustomTypes);
+            => DeserializeByReader(new BinaryReader(stream), (IEnumerable<Type>?)expectedCustomTypes);
 
         /// <summary>
         /// Deserializes the content of the specified serialization <paramref name="stream"/> from its current position into an instance of <typeparamref name="T"/>.
         /// </summary>
         /// <typeparam name="T">The expected type of the result.</typeparam>
         /// <param name="stream">The <see cref="Stream"/> containing the serialized data. The stream must support reading and will remain open after deserialization.</param>
-        /// <param name="expectedCustomTypes">The types that are expected to present in the serialization <paramref name="stream"/> by name.
+        /// <param name="expectedCustomTypes">The types that are expected to be present in the serialization <paramref name="stream"/> by name.
         /// If <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <see cref="Options"/>
         /// or <paramref name="stream"/> does not contain any types by name, then this parameter is optional.</param>
         /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
@@ -2893,6 +2961,8 @@ namespace KGySoft.Serialization.Binary
         /// <para><paramref name="expectedCustomTypes"/> must be specified if <see cref="BinarySerializationOptions.SafeMode"/> is enabled in <see cref="Options"/>
         /// and the serialization <paramref name="stream"/> contains types encoded by their names. Natively supported types are not needed to be included
         /// unless the original object was serialized with the <see cref="BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes"/> option enabled.</para>
+        /// <note>When using native AOT deployment mode it is recommended to use the overload where the elements of the <paramref name="expectedCustomTypes"/>
+        /// parameter is <see cref="SerializedType"/>. See the <strong>Remarks</strong> section of the <see cref="SerializedType"/> struct for details.</note>
         /// <para><typeparamref name="T"/> is allowed to be an interface or abstract type but if it's different from the actual type of the result,
         /// then the actual type also might be needed to be included in <paramref name="expectedCustomTypes"/>.</para>
         /// <para>You can specify <paramref name="expectedCustomTypes"/> even if <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <see cref="Options"/>
@@ -2916,14 +2986,14 @@ namespace KGySoft.Serialization.Binary
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeFromStream{T}(Stream, Type[])"/> overload for details.
         /// </summary>
         /// <param name="stream">The <see cref="Stream"/> containing the serialized data. The stream must support reading and will remain open after deserialization.</param>
-        /// <param name="expectedCustomTypes">The types that are expected to present in the serialization <paramref name="stream"/> by name.
+        /// <param name="expectedCustomTypes">The types that are expected to be present in the serialization <paramref name="stream"/> by name.
         /// If <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <see cref="Options"/>
         /// or <paramref name="stream"/> does not contain any types by name, then this parameter can be <see langword="null"/>.</param>
         /// <returns>The deserialized object.</returns>
         [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
         [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
         public object? DeserializeFromStream(Stream stream, IEnumerable<Type>? expectedCustomTypes)
-            => DeserializeByReader<object?>(new BinaryReader(stream), expectedCustomTypes);
+            => DeserializeByReader(new BinaryReader(stream), expectedCustomTypes);
 
         /// <summary>
         /// Deserializes the content of the specified serialization <paramref name="stream"/> from its current position into an instance of <typeparamref name="T"/>.
@@ -2931,7 +3001,7 @@ namespace KGySoft.Serialization.Binary
         /// </summary>
         /// <typeparam name="T">The expected type of the result.</typeparam>
         /// <param name="stream">The <see cref="Stream"/> containing the serialized data. The stream must support reading and will remain open after deserialization.</param>
-        /// <param name="expectedCustomTypes">The types that are expected to present in the serialization <paramref name="stream"/> by name.
+        /// <param name="expectedCustomTypes">The types that are expected to be present in the serialization <paramref name="stream"/> by name.
         /// If <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <see cref="Options"/>
         /// or <paramref name="stream"/> does not contain any types by name, then this parameter can be <see langword="null"/>.</param>
         /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
@@ -2939,6 +3009,37 @@ namespace KGySoft.Serialization.Binary
         [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
         public T DeserializeFromStream<[DynamicallyAccessedMembers(BinarySerializer.NeededMembers)]T>(Stream stream, IEnumerable<Type>? expectedCustomTypes)
             => DeserializeByReader<T>(new BinaryReader(stream), expectedCustomTypes);
+
+        /// <summary>
+        /// Deserializes the content of the specified serialization <paramref name="stream"/> from its current position into an object.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeFromStream{T}(Stream, Type[])"/> overload for details.
+        /// </summary>
+        /// <param name="stream">The <see cref="Stream"/> containing the serialized data. The stream must support reading and will remain open after deserialization.</param>
+        /// <param name="expectedCustomTypes">The types that are expected to be present in the serialization <paramref name="stream"/> by name.
+        /// As the elements are <see cref="SerializedType"/> instances, the types specified by <c>typeof()</c> expressions can be deserialized
+        /// even if the consumer project uses native AOT deployment mode with trimming.</param>
+        /// <returns>The deserialized object.</returns>
+        [OverloadResolutionPriority(BinarySerializer.SerializedTypePriority)]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "SerializedType is annotated")]
+        [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+        public object? DeserializeFromStream(Stream stream, params IEnumerable<SerializedType>? expectedCustomTypes)
+            => DeserializeFromStream(stream, expectedCustomTypes?.Select(t => t.Type));
+
+        /// <summary>
+        /// Deserializes the content of the specified serialization <paramref name="stream"/> from its current position into an instance of <typeparamref name="T"/>.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeFromStream{T}(Stream, Type[])"/> overload for details.
+        /// </summary>
+        /// <typeparam name="T">The expected type of the result.</typeparam>
+        /// <param name="stream">The <see cref="Stream"/> containing the serialized data. The stream must support reading and will remain open after deserialization.</param>
+        /// <param name="expectedCustomTypes">The types that are expected to be present in the serialization <paramref name="stream"/> by name.
+        /// As the elements are <see cref="SerializedType"/> instances, the types specified by <c>typeof()</c> expressions can be deserialized
+        /// even if the consumer project uses native AOT deployment mode with trimming.</param>
+        /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
+        [OverloadResolutionPriority(BinarySerializer.SerializedTypePriority)]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "T and SerializedType are annotated")]
+        [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+        public T DeserializeFromStream<[DynamicallyAccessedMembers(BinarySerializer.NeededMembers)]T>(Stream stream, params IEnumerable<SerializedType>? expectedCustomTypes)
+            => DeserializeFromStream<T>(stream, expectedCustomTypes?.Select(t => t.Type));
 
         /// <summary>
         /// Serializes the given <paramref name="data"/> by using the provided <paramref name="writer"/>.
@@ -2972,21 +3073,21 @@ namespace KGySoft.Serialization.Binary
         [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
         [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
         public object? DeserializeByReader(BinaryReader reader)
-            => DeserializeByReader<object?>(reader, (IEnumerable<Type>?)null);
+            => DeserializeByReader(reader, (IEnumerable<Type>?)null);
 
         /// <summary>
         /// Deserializes the content of a serialization stream wrapped by the specified <paramref name="reader"/> from its current position into an object.
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeByReader{T}(BinaryReader, Type[])"/> overload for details.
         /// </summary>
         /// <param name="reader">The reader that wraps the stream containing the serialized data. The reader will remain open after deserialization.</param>
-        /// <param name="expectedCustomTypes">The types that are expected to present in the serialization stream by name.
+        /// <param name="expectedCustomTypes">The types that are expected to be present in the serialization stream by name.
         /// If <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <see cref="Options"/>
         /// or the stream does not contain any types by name, then this parameter is optional.</param>
         /// <returns>The deserialized object.</returns>
         [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
         [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
         public object? DeserializeByReader(BinaryReader reader, params Type[]? expectedCustomTypes)
-            => DeserializeByReader<object?>(reader, (IEnumerable<Type>?)expectedCustomTypes);
+            => DeserializeByReader(reader, (IEnumerable<Type>?)expectedCustomTypes);
 
         /// <summary>
         /// Deserializes the content of a serialization stream wrapped by the specified <paramref name="reader"/> from its current position
@@ -2994,7 +3095,7 @@ namespace KGySoft.Serialization.Binary
         /// </summary>
         /// <typeparam name="T">The expected type of the result.</typeparam>
         /// <param name="reader">The reader that wraps the stream containing the serialized data. The reader will remain open after deserialization.</param>
-        /// <param name="expectedCustomTypes">The types that are expected to present in the serialization stream by name.
+        /// <param name="expectedCustomTypes">The types that are expected to be present in the serialization stream by name.
         /// If <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <see cref="Options"/>
         /// or the stream does not contain any types by name, then this parameter is optional.</param>
         /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
@@ -3005,6 +3106,8 @@ namespace KGySoft.Serialization.Binary
         /// <para><paramref name="expectedCustomTypes"/> must be specified if <see cref="BinarySerializationOptions.SafeMode"/> is enabled in <see cref="Options"/>
         /// and the serialization stream contains types encoded by their names. Natively supported types are not needed to be included
         /// unless the original object was serialized with the <see cref="BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes"/> option enabled.</para>
+        /// <note>When using native AOT deployment mode it is recommended to use the overload where the elements of the <paramref name="expectedCustomTypes"/>
+        /// parameter is <see cref="SerializedType"/>. See the <strong>Remarks</strong> section of the <see cref="SerializedType"/> struct for details.</note>
         /// <para><typeparamref name="T"/> is allowed to be an interface or abstract type but if it's different from the actual type of the result,
         /// then the actual type also might be needed to be included in <paramref name="expectedCustomTypes"/>.</para>
         /// <para>You can specify <paramref name="expectedCustomTypes"/> even if <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <see cref="Options"/>
@@ -3028,14 +3131,19 @@ namespace KGySoft.Serialization.Binary
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeByReader{T}(BinaryReader, Type[])"/> overload for details.
         /// </summary>
         /// <param name="reader">The reader that wraps the stream containing the serialized data. The reader will remain open after deserialization.</param>
-        /// <param name="expectedCustomTypes">The types that are expected to present in the serialization stream by name.
+        /// <param name="expectedCustomTypes">The types that are expected to be present in the serialization stream by name.
         /// If <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <see cref="Options"/>
         /// or the stream does not contain any types by name, then this parameter can be <see langword="null"/>.</param>
         /// <returns>The deserialized object.</returns>
         [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
         [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
         public object? DeserializeByReader(BinaryReader reader, IEnumerable<Type>? expectedCustomTypes)
-            => DeserializeByReader<object?>(reader, expectedCustomTypes);
+        {
+            if (reader == null!)
+                Throw.ArgumentNullException(Argument.reader);
+            var manager = new DeserializationManager(Context, Options, Binder, SurrogateSelector, expectedCustomTypes, null);
+            return manager.Deserialize(reader);
+        }
 
         /// <summary>
         /// Deserializes the content of a serialization stream wrapped by the specified <paramref name="reader"/> from its current position
@@ -3044,7 +3152,7 @@ namespace KGySoft.Serialization.Binary
         /// </summary>
         /// <typeparam name="T">The expected type of the result.</typeparam>
         /// <param name="reader">The reader that wraps the stream containing the serialized data. The reader will remain open after deserialization.</param>
-        /// <param name="expectedCustomTypes">The types that are expected to present in the serialization stream by name.
+        /// <param name="expectedCustomTypes">The types that are expected to be present in the serialization stream by name.
         /// If <see cref="BinarySerializationOptions.SafeMode"/> is not enabled in <see cref="Options"/>
         /// or the stream does not contain any types by name, then this parameter can be <see langword="null"/>.</param>
         /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
@@ -3058,6 +3166,38 @@ namespace KGySoft.Serialization.Binary
             var manager = new DeserializationManager(Context, Options, Binder, SurrogateSelector, expectedCustomTypes, typeof(T));
             return (T)manager.Deserialize(reader)!;
         }
+
+        /// <summary>
+        /// Deserializes the content of a serialization stream wrapped by the specified <paramref name="reader"/> from its current position into an object.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeByReader{T}(BinaryReader, Type[])"/> overload for details.
+        /// </summary>
+        /// <param name="reader">The reader that wraps the stream containing the serialized data. The reader will remain open after deserialization.</param>
+        /// <param name="expectedCustomTypes">The types that are expected to be present in the serialization stream by name.
+        /// As the elements are <see cref="SerializedType"/> instances, the types specified by <c>typeof()</c> expressions can be deserialized
+        /// even if the consumer project uses native AOT deployment mode with trimming.</param>
+        /// <returns>The deserialized object.</returns>
+        [OverloadResolutionPriority(BinarySerializer.SerializedTypePriority)]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "SerializedType is annotated")]
+        [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+        public object? DeserializeByReader(BinaryReader reader, params IEnumerable<SerializedType>? expectedCustomTypes)
+            => DeserializeByReader(reader, expectedCustomTypes?.Select(t => t.Type));
+
+        /// <summary>
+        /// Deserializes the content of a serialization stream wrapped by the specified <paramref name="reader"/> from its current position
+        /// into an instance of <typeparamref name="T"/>.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeByReader{T}(BinaryReader, Type[])"/> overload for details.
+        /// </summary>
+        /// <typeparam name="T">The expected type of the result.</typeparam>
+        /// <param name="reader">The reader that wraps the stream containing the serialized data. The reader will remain open after deserialization.</param>
+        /// <param name="expectedCustomTypes">The types that are expected to be present in the serialization stream by name.
+        /// As the elements are <see cref="SerializedType"/> instances, the types specified by <c>typeof()</c> expressions can be deserialized
+        /// even if the consumer project uses native AOT deployment mode with trimming.</param>
+        /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
+        [OverloadResolutionPriority(BinarySerializer.SerializedTypePriority)]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "T and SerializedType are annotated")]
+        [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
+        public T DeserializeByReader<[DynamicallyAccessedMembers(BinarySerializer.NeededMembers)] T>(BinaryReader reader, params IEnumerable<SerializedType>? expectedCustomTypes)
+            => DeserializeByReader<T>(reader, expectedCustomTypes?.Select(t => t.Type));
 
         #endregion
 

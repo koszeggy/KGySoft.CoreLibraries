@@ -38,8 +38,8 @@ namespace KGySoft.Serialization
     /// <para>If a type has to be preserved along with its nested types, you can use the <see cref="WithNestedTypes">WithNestedTypes</see> method:
     /// <code lang="C#">var _ = SerializedType.WithNestedTypes(typeof(MySerializedTypeToPeserve));</code></para>
     /// <note>The safe mode deserialization methods of this library have overloads with <see cref="SerializedType"/> element type in their <c>expectedTypes</c> parameter.
-    /// If you use them, no separate initialization is required in AOT mode. Please note though that unlike the no-op initializations above, the expected types are processed,
-    /// which affects the performance.</note>
+    /// If you use them, no separate initialization is required in AOT mode. Please note though that unlike the no-op initializations above, the expected types are processed
+    /// by the deserialization methods.</note>
     /// </remarks>
     public readonly struct SerializedType
     {

@@ -2502,7 +2502,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, title, surrogateSelector: selector));
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.LegacySafeMode, title, surrogateSelector: selector);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, title, surrogateSelector: selector);
-            if (alsoForSupportedTypes && !isa)
+            if (alsoForSupportedTypes && !IsAot)
                 KGySerializeObjects(referenceObjects, BinarySerializationOptions.TryUseSurrogateSelectorForAnyType, title, surrogateSelector: selector);
         }
 
@@ -2659,7 +2659,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new NonSerializableClass { IntProp = 13, StringProp = "alpha" },
 
                 // not serializable in .NET Core but otherwise they are compatible
-                new MemoryStream(new byte[] { 1, 2, 3 }),
+                new MemoryStream([1, 2, 3]),
                 new Collection<Encoding> { Encoding.ASCII, Encoding.Unicode },
 
                 // pointer fields
@@ -2679,13 +2679,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.LegacySafeMode, title, surrogateSelector: selector, safeCompare: IsAot);
 
             title = "Forcing field-based serialization";
-            referenceObjects.AddRange(new object[]
-            {
+            referenceObjects.AddRange([
                 // Type is not serializable in .NET Core but in .NET Core 2 it still implements ISerializable throwing PlatformNotSupportedException
                 typeof(List<int>),
                 typeof(List<>),
-                typeof(List<>).GetGenericArguments()[0],
-            });
+                typeof(List<>).GetGenericArguments()[0]
+            ]);
             selector.IgnoreISerializable = true;
             selector.IgnoreNonSerializedAttribute = true;
 

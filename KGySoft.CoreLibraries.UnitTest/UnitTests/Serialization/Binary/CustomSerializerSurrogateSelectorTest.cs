@@ -25,6 +25,7 @@ using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 
 using KGySoft.Reflection;
+using KGySoft.Serialization;
 using KGySoft.Serialization.Binary;
 
 using NUnit.Framework;
@@ -121,7 +122,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             {
                 ConflictNameChild other;
                 return base.Equals(obj) &&
-                    (other = (ConflictNameChild)obj).ConflictingFieldPublic == ConflictingFieldPublic
+                    (other = (ConflictNameChild)obj!).ConflictingFieldPublic == ConflictingFieldPublic
                     && other.ConflictingFieldInternal == ConflictingFieldInternal
                     && other.conflictingFieldPrivate == conflictingFieldPrivate;
             }
@@ -204,8 +205,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             public override bool Equals(object obj)
             {
-                if (!(obj is SerializationEventsClass other))
-                    return base.Equals(obj);
+                if (obj is not SerializationEventsClass other)
+                    return false;
 
                 return Id == other.Id
                     && privatePointer == other.privatePointer
@@ -352,7 +353,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         #region Fields
 
         private static readonly object[] testCases =
-        {
+        [
             // primitive types
             1,
             "alpha",
@@ -384,8 +385,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new BinarySerializable { IntProp = 42 },
                 new Point(1, 2),
                 new List<object> { 1 }
-            },
-        };
+            }
+        ];
 
         #endregion
 
@@ -445,6 +446,21 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         #endregion
 
         #region Instance Methods
+
+#if AOT
+        [OneTimeSetUp]
+        public void EnsureAotTests()
+        {
+            ReadOnlySpan<SerializedType> _ =
+            [
+                typeof(List<>), // needed because of ForceRecursiveSerializationOfSupportedTypes
+                typeof(Collection<>), // to prevent NullReferenceException in SerializationEventsClass.OnDeserialized/children.Count (for some reason SerializationEventsClass is not needed to be listed here)
+                typeof(Exception), // special ctor
+                typeof(DateTime), // special ctor needed only because of ForceRecursiveSerializationOfSupportedTypes
+                typeof(ConsoleColor), // only because of ForceRecursiveSerializationOfSupportedTypes
+            ];
+        }
+#endif
 
         [TestCaseSource(nameof(testCases))]
         public void BaselineTestWithoutUsingSurrogate(object obj)
@@ -563,14 +579,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             static void Serializing(object sender, SerializingEventArgs e)
             {
                 var instance = (CustomSerializerSurrogateSelector)sender;
-                Assert.AreEqual(instance.IgnoreISerializable, e.IgnoreISerializable);
+                AssertAreEqual(instance.IgnoreISerializable, e.IgnoreISerializable);
                 e.IgnoreISerializable = true;
             }
 
             static void GettingField(object sender, GettingFieldEventArgs e)
             {
                 var instance = (CustomSerializerSurrogateSelector)sender;
-                Assert.AreEqual(!instance.IgnoreNonSerializedAttribute && e.Field.IsNotSerialized, e.Handled);
+                AssertAreEqual(!instance.IgnoreNonSerializedAttribute && e.Field.IsNotSerialized, e.Handled);
                 e.Handled = false; // forcing to save non-serialized fields, too
                 e.Name = e.Name.Reverse().Convert<string>();
             }
@@ -578,7 +594,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             static void Deserializing(object sender, DeserializingEventArgs e)
             {
                 var instance = (CustomSerializerSurrogateSelector)sender;
-                Assert.AreEqual(instance.IgnoreISerializable, e.IgnoreISerializable);
+                AssertAreEqual(instance.IgnoreISerializable, e.IgnoreISerializable);
                 e.IgnoreISerializable = true;
             }
 
