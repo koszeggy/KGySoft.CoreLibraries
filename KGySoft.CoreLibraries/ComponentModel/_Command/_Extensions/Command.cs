@@ -243,7 +243,7 @@ namespace KGySoft.ComponentModel
             => command.CreateBinding<T>(eventName, null, targets);
 
         /// <summary>
-        /// Creates a binding for a <paramref name="command"/> without any sources and targets. At least one source must be added by the <see cref="ICommandBinding.AddSource">ICommandBinding.AddSource</see> method to make the command invokable.
+        /// Creates a binding for a <paramref name="command"/> without any sources and targets. At least one source must be added by the <see cref="O:KGySoft.ComponentModel.ICommandBinding.AddSource">ICommandBinding.AddSource</see> method to make the command invokable.
         /// Targets can be added by the <see cref="ICommandBinding.AddTarget(object)">ICommandBinding.AddTarget</see> method.
         /// </summary>
         /// <param name="command">The command to bind.</param>
@@ -252,7 +252,7 @@ namespace KGySoft.ComponentModel
         /// Use <see langword="true"/> only if the command will not be re-used elsewhere. This parameter is optional.
         /// <br/>Default value: <see langword="false"/>.</param>
         /// <returns>An <see cref="ICommandBinding"/> instance, whose <see cref="ICommandBinding.State"/> is initialized by the provided <paramref name="initialState"/>.
-        /// To make the <paramref name="command"/> invokable by this binding, at least one source must be added by the <see cref="ICommandBinding.AddSource">AddSource</see> method on the result.
+        /// To make the <paramref name="command"/> invokable by this binding, at least one source must be added by the <see cref="O:KGySoft.ComponentModel.ICommandBinding.AddSource">AddSource</see> method on the result.
         /// Targets can be added by the <see cref="ICommandBinding.AddTarget(object)">AddTarget</see> method on the result.
         /// </returns>
         public static ICommandBinding CreateBinding(this ICommand command, IDictionary<string, object?>? initialState = null, bool disposeCommand = false)
