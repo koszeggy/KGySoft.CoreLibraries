@@ -242,6 +242,8 @@ namespace KGySoft.Serialization.Binary
 
                 #region Constructors
 
+                [DynamicDependency(nameof(LinkedList<>.AddAfter), typeof(LinkedList<>))] // actually it should be applied for SetValue, but that is virtual, and the base is not annotated
+                [DynamicDependency(nameof(LinkedList<>.Remove), typeof(LinkedList<>))]
                 internal LinkedListUsage(IEnumerable target, object referenceNode)
                 {
                     this.target = target;
@@ -491,7 +493,7 @@ namespace KGySoft.Serialization.Binary
                     int elementSize;
                     if (!safeMode || ((elementSize = elementType.SizeOf()) * (long)TotalLength) <= ArrayAllocationThreshold)
                     {
-                        array = Array.CreateInstance(elementType, lengths, lowerBounds);
+                        array = CreateInstance(elementType);
                         if (rank > 1)
                             arrayIndexer = new ArrayIndexer(lengths, lowerBounds);
                         return;
@@ -507,7 +509,7 @@ namespace KGySoft.Serialization.Binary
                        )
                     {
                         // for primitive types and non-IObjectReference value type we use a strictly typed list
-                        builder = (IList)Reflector.ListGenType.GetGenericType(elementType).CreateInstance(Reflector.IntType, capacity);
+                        builder = (IList)typeof(List<>).GetGenericType(elementType).CreateInstance(Reflector.IntType, capacity);
                         return;
                     }
 
@@ -569,7 +571,7 @@ namespace KGySoft.Serialization.Binary
                         return array;
                     }
 
-                    array = Array.CreateInstance(descriptor.GetElementDescriptor().Type!, lengths, lowerBounds);
+                    array = CreateInstance(descriptor.GetElementDescriptor().Type!);
 
                     // 1D array
                     if (lengths.Length == 1)
@@ -616,7 +618,19 @@ namespace KGySoft.Serialization.Binary
                 #endregion
 
                 #region Private Methods
-                
+
+                private Array CreateInstance(Type elementType)
+                {
+                    try
+                    {
+                        return Array.CreateInstance(elementType, lengths, lowerBounds);
+                    }
+                    catch (PlatformNotSupportedException e) when (!RuntimeFeature.IsDynamicCodeSupported)
+                    {
+                        return Throw.SerializationException<Array>(Res.SerializationNonZeroBasedArrayAotNotSupported, e);
+                    }
+                }
+
                 private void SetArrayElement(object? value, int[] indices)
                 {
                     Debug.Assert(indices.Length > 1);
@@ -944,7 +958,7 @@ namespace KGySoft.Serialization.Binary
                     DeserializationCallback();
                     return result;
                 }
-                catch (Exception e) when (!e.IsCriticalOr(e is SerializationException || e is NotSupportedException))
+                catch (Exception e) when (!e.IsCriticalOr(e is SerializationException or NotSupportedException))
                 {
                     return Throw.SerializationException<object>(Res.BinarySerializationInvalidStreamData, e);
                 }
@@ -2152,6 +2166,8 @@ namespace KGySoft.Serialization.Binary
                         {
                             if (!IgnoreObjectChanges)
                             {
+                                if (!RuntimeFeature.IsDynamicCodeSupported)
+                                    Throw.SerializationException(Res.BinarySerializationMissingFieldAot(type, name));
                                 if (t == type)
                                     Throw.SerializationException(Res.BinarySerializationMissingField(type, name));
                                 Throw.SerializationException(Res.BinarySerializationMissingFieldBase(type, name, t));
@@ -2210,7 +2226,12 @@ namespace KGySoft.Serialization.Binary
                 if (surrogate == null)
                 {
                     if (!Accessors.TryInvokeCtor(obj, si, Context))
-                        Throw.SerializationException(Res.BinarySerializationMissingISerializableCtor(type));
+                    {
+                        if (RuntimeFeature.IsDynamicCodeSupported)
+                            Throw.SerializationException(Res.BinarySerializationMissingISerializableCtor(type));
+                        Throw.SerializationException(Res.BinarySerializationMissingISerializableCtorAot(type));
+                    }
+
                     return obj;
                 }
 
@@ -2358,7 +2379,12 @@ namespace KGySoft.Serialization.Binary
                 }
 
                 if (!Reflector.TryCreateEmptyObject(type, false, true, out object? obj))
-                    Throw.SerializationException(Res.BinarySerializationCannotCreateUninitializedObject(type));
+                {
+                    if (RuntimeFeature.IsDynamicCodeSupported)
+                        Throw.SerializationException(Res.BinarySerializationCannotCreateUninitializedObject(type));
+                    Throw.SerializationException(Res.BinarySerializationCannotCreateUninitializedObjectAot(type));
+                }
+
                 return obj;
             }
 
@@ -2471,6 +2497,23 @@ namespace KGySoft.Serialization.Binary
             [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private void AddCollectionElement([NoEnumeration]IEnumerable collection, DataTypeDescriptor collectionDescriptor, MethodAccessor addMethod, object? value, bool isTrackedProxyCollection)
             {
+                #region Local Methods
+
+                [RequiresDynamicCode("GetGenericType")]
+                [RequiresUnreferencedCode("GetGenericType")]
+                [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(LinkedListNode<>))]
+                void AddLinkedListUsage(Type linkedListType, UsageReferences usageReferences)
+                {
+                    Debug.Assert(!isTrackedProxyCollection);
+                    Type genericArg = linkedListType.GetGenericArguments()[0];
+                    Type nodeType = typeof(LinkedListNode<>).GetGenericType(genericArg);
+                    object node = nodeType.CreateInstance(genericArg, GetPlaceholderValue(value, collection));
+                    Accessors.InvokeMethod(collection, nameof(LinkedList<>.AddLast), [nodeType], node);
+                    usageReferences.Add(new LinkedListUsage(collection, node));
+                }
+
+                #endregion
+
                 UsageReferences? trackedUsages = value == null ? null : objectsBeingDeserialized?.GetValueOrDefault(value);
                 if (trackedUsages == null)
                 {
@@ -2484,12 +2527,7 @@ namespace KGySoft.Serialization.Binary
                 // LinkedList: adding a placeholder node that can be replaced later
                 if (collectionDataType == DataTypes.LinkedList)
                 {
-                    Debug.Assert(!isTrackedProxyCollection);
-                    Type genericArg = type.GetGenericArguments()[0];
-                    Type nodeType = typeof(LinkedListNode<>).GetGenericType(genericArg);
-                    object node = nodeType.CreateInstance(genericArg, GetPlaceholderValue(value, collection));
-                    Accessors.InvokeMethod(collection, nameof(LinkedList<>.AddLast), [nodeType], node);
-                    trackedUsages.Add(new LinkedListUsage(collection, node));
+                    AddLinkedListUsage(type, trackedUsages);
                     return;
                 }
 
@@ -2623,6 +2661,7 @@ namespace KGySoft.Serialization.Binary
             }
 
             [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
+            [DynamicDependency(DynamicallyAccessedMemberTypes.NonPublicFields, typeof(DictionaryEntry))] // unlike in Accessors.SetKeyValue, we use fields if usages are tracked
             private void SetKeyValue(object obj, object? key, object? value)
             {
                 UsageReferences? keyUsages = key == null ? null : objectsBeingDeserialized?.GetValueOrDefault(key);

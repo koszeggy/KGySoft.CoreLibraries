@@ -15,7 +15,7 @@ namespace System.Diagnostics.CodeAnalysis
         /// <summary>
         /// Specifies no members.
         /// </summary>
-        None = 0,
+        None = 0,   
 
         /// <summary>
         /// Specifies the default, parameterless public constructor.

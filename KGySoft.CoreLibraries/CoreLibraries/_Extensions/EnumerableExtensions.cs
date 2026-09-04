@@ -2156,6 +2156,26 @@ namespace KGySoft.CoreLibraries
 #endif
             => source.Concat([item]);
 
+        [SuppressMessage("ReSharper", "PossibleMultipleEnumeration", Justification = "Only when TryGetCount fails, and yes, intended.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "It is handled if TryGetCount returns false.")]
+        internal static object?[] ToObjectArray(this IEnumerable source)
+        {
+            // NOTE: This always must return a new copy, so not checking if source is already an object[].
+            // We could always just return source.Cast<object>().ToArray(), but that may allocate a lot more.
+            if (!source.TryGetCount(out int count))
+                return source.Cast<object?>().ToArray();
+
+            var result = new object?[count];
+            int i = 0;
+            foreach (object? o in source)
+            {
+                result[i] = o;
+                i += 1;
+            }
+
+            return result;
+        }
+
         #endregion
 
         #region Private Methods

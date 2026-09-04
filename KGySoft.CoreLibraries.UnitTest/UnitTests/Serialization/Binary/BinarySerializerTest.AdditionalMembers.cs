@@ -108,7 +108,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 {
                     string valueStr = value.ToString("X2");
                     var frames = new StackTrace().GetFrames();
-                    string name = frames[1].GetMethod().Name;
+                    string name = frames[1].GetMethod()?.Name;
                     if (name == "WriteDataType")
                         valueStr += $" [{Reflector.InvokeMethod(typeof(BinarySerializationFormatter), "DataTypeToString", (uint)value)}]";
                     else if (name == "WriteTypeAttributes")
@@ -133,7 +133,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 {
                     string valueStr = buffer.Skip(index).Take(count).ToArray().ToHexValuesString(",");
                     var frames = new StackTrace().GetFrames();
-                    string name = frames.First(f => !f.GetMethod()!.DeclaringType!.IsInstanceOfType(this)).GetMethod()!.Name; // because can be called from Write(ReadOnlySpan<byte>)
+                    string name = frames.First(f => !f.GetMethod()?.DeclaringType!.IsInstanceOfType(this) == true).GetMethod()!.Name; // because can be called from Write(ReadOnlySpan<byte>)
                     if (name == "WriteDataType")
                     {
                         int i = index;
@@ -252,7 +252,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 if (log)
                 {
                     var frames = new StackTrace().GetFrames();
-                    string name = frames[1].GetMethod().Name;
+                    string name = frames[1].GetMethod()?.Name;
                     string valueStr = value.ToString("X8");
                     if (name == "WriteDataType")
                         valueStr += $" [{Reflector.InvokeMethod(typeof(BinarySerializationFormatter), "DataTypeToString", value)}]";
@@ -321,7 +321,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 pos += offset;
             }
 
-            private static string GetStack() => new StackTrace().GetFrames().Skip(2).Select(f => f.GetMethod().Name).TakeWhile(s => s != "SerializeByWriter").Join(" < ");
+            private static string GetStack() => new StackTrace().GetFrames().Skip(2)
+                .Select(f => f.GetMethod()?.Name)
+                .Where(n => n != null)
+                .TakeWhile(s => s != "WriteRoot")
+                .Join(" < ");
 
             #endregion
 
@@ -415,7 +419,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 {
                     string valueStr = result.ToString("X2");
                     var frames = new StackTrace().GetFrames();
-                    string name = frames[1].GetMethod().Name;
+                    string name = frames[1].GetMethod()?.Name;
                     if (name == "ReadDataType")
                     {
                         uint dataType = result;
@@ -628,7 +632,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 pos += offset;
             }
 
-            private static string GetStack() => new StackTrace().GetFrames().Skip(2).Select(f => f.GetMethod().Name).TakeWhile(s => s != "Deserialize").Join(" < ");
+            private static string GetStack() => new StackTrace().GetFrames().Skip(2)
+                .Select(f => f.GetMethod()?.Name)
+                .Where(n => n != null)
+                .TakeWhile(s => s != "ReadRoot")
+                .Join(" < ");
 
             #endregion
 

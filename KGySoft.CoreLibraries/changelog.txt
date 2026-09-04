@@ -16,7 +16,7 @@
 + KGySoft.Collections namespace:
 ================================
 + AllowNullDictionary<TKey, TValue> class:
-  + New Comparer property.
+  + New public Comparer property.
 
 ! KGySoft.ComponentModel namespace:
 ===================================
@@ -50,6 +50,10 @@
     SecureRandom.Instance property, though a regular Random instance allows this case.
   - Next(int, int): maxValue was not allowed to be the same as minValue via the SecureRandom instance returned by
     the static SecureRandom.Instance property, though a regular Random instance allows this case.
+
++ KGySoft.Serialization
+=======================
++ New SerializedType struct to help preserving metadata in native AOT mode.
 
 - KGySoft.Serialization.Binary
 ==============================

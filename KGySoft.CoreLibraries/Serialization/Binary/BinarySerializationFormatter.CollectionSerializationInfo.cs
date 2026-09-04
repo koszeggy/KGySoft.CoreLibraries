@@ -165,7 +165,7 @@ namespace KGySoft.Serialization.Binary
             /// If <see cref="CreateInstanceCallback"/> returns a proxy type, then this delegate can return the final result from the builder collection.
             /// NOTE: Using this property may prevent deserialization of circular references.
             /// </summary>
-            internal Func<object, object>? CreateFinalCollectionCallback
+            internal Func<Type, object, object>? CreateFinalCollectionCallback
             {
                 [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)] // GetGenericType usages in the callback methods
                 [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
@@ -308,7 +308,7 @@ namespace KGySoft.Serialization.Binary
 
                     if (HasValueComparer)
                     {
-                        comparer = Accessors.GetPropertyValue(collection, "ValueComparer");
+                        comparer = collection.GetValueComparer();
                         isDefaultComparer = comparer == null || IsDefaultValueComparer(collection, comparer);
                         bw.Write(isDefaultComparer);
                         if (!isDefaultComparer)
@@ -431,7 +431,7 @@ namespace KGySoft.Serialization.Binary
             {
                 if (descriptor.IsReadOnly)
                     result = descriptor.GetAsReadOnly(result);
-                return CreateFinalCollectionCallback?.Invoke(result) ?? result;
+                return CreateFinalCollectionCallback?.Invoke(descriptor.Type!, result) ?? result;
             }
 
             internal Type GetStoredType(Type type)
@@ -477,6 +477,10 @@ namespace KGySoft.Serialization.Binary
 
             [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
             [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
+            [DynamicDependency(nameof(ComparerHelper<>.EqualityComparer), typeof(ComparerHelper<>))]
+            [DynamicDependency(nameof(ComparerHelper<>.Comparer), typeof(ComparerHelper<>))]
+            [DynamicDependency(nameof(EqualityComparer<>.Default), typeof(EqualityComparer<>))]
+            [DynamicDependency(nameof(Comparer<>.Default), typeof(Comparer<>))]
             private object? GetDefaultComparer(Type type)
             {
                 if (!IsGeneric)
@@ -496,6 +500,7 @@ namespace KGySoft.Serialization.Binary
 
             [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
             [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
+            [DynamicDependency(nameof(EqualityComparer<>.Default), typeof(EqualityComparer<>))]
             private object? GetDefaultValueComparer(Type type)
             {
                 Debug.Assert(IsGeneric && IsDictionary && !UsesComparerHelper && !HasStringSegmentComparer);

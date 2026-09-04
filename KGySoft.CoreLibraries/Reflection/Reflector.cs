@@ -2708,7 +2708,7 @@ namespace KGySoft.Reflection
                     canCreateUninitializedObject = true;
                     return true;
                 }
-                catch (Exception e) when (e is SecurityException)
+                catch (SecurityException)
                 {
                     canCreateUninitializedObject = false;
                 }
@@ -2730,8 +2730,16 @@ namespace KGySoft.Reflection
                 return false;
             }
 #else
-            result = RuntimeHelpers.GetUninitializedObject(type);
-            return true;
+            try
+            {
+                result = RuntimeHelpers.GetUninitializedObject(type);
+                return true;
+            }
+            catch (NotSupportedException) when (!RuntimeFeature.IsDynamicCodeSupported)
+            {
+                result = null;
+                return false;
+            }
 #endif
         }
 

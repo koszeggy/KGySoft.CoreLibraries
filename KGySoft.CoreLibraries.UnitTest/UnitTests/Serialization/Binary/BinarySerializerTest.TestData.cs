@@ -2061,7 +2061,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             public void Deserialize(BinarySerializationOptions options, byte[] serData)
             {
-                throw new InvalidOperationException("This method never will be called");
+                throw new InvalidOperationException("This method will never be called");
             }
 
             #endregion

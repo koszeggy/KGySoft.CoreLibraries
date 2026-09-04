@@ -148,7 +148,7 @@ namespace KGySoft.Serialization.Binary
     ///         IntProp = reader.ReadInt32();
     ///         bool isStringPropNull = reader.ReadBoolean();
     ///         StringProp = isStringPropNull ? null : reader.ReadString();
-    ///         // TODO: Read rest if version changes
+    ///         // TODO: Read the rest if version changes
     ///     }
     /// }
     ///

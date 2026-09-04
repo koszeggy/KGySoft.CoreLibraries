@@ -890,7 +890,7 @@ namespace KGySoft.Serialization.Binary
             private void WriteUri(BinaryWriter bw, Uri uri, bool isRoot)
             {
                 bw.Write(uri.IsAbsoluteUri);
-                WriteStringValue(bw, uri.GetComponents(UriComponents.SerializationInfoString, UriFormat.UriEscaped), isRoot);
+                WriteStringValue(bw, uri.OriginalString.Length == 0 ? uri.GetComponents(UriComponents.SerializationInfoString, UriFormat.UriEscaped) : uri.OriginalString, isRoot);
             }
 
             private void WriteStringBuilder(BinaryWriter bw, StringBuilder sb, bool isRoot)
@@ -1586,6 +1586,8 @@ namespace KGySoft.Serialization.Binary
             [SecurityCritical]
             [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
             [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
+            [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(DictionaryEntry))] // e.g. when collection is an object[] with a single DictionaryEntry
+            [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(KeyValuePair<,>))]
             private void WriteDictionaryElements(BinaryWriter bw, IEnumerable collection, CollectionSerializationInfo dictionaryInfo,
                 DataTypesEnumerator keyValueCollectionDataTypes, Type collectionKeyType, Type collectionValueType)
             {

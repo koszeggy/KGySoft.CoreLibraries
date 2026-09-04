@@ -1123,6 +1123,8 @@ namespace KGySoft.Serialization.Binary
             Justification = "CreateInstance in CreateArrayBackedCollectionInstanceFromArray, GetBackingArray. Cannot apply RequiresUnreferencedCode to a field, but the usages are annotated.")]
         [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode",
             Justification = "GetGenericType in CreateArrayBackedCollectionInstanceFromArray, CreateInstanceCallback, GetBackingArray, CreateFinalCollectionCallback. Cannot apply RequiresDynamicCode to a field, but the usages are annotated.")]
+        // NOTE: in the callback delegates avoid generic method calls in order to AOT compatibility. Whereas we can assume that the used generic types are referenced by the caller
+        // (and even if not, it can be fixed easily by referencing the constructed types as expectedTypes), forcing the caller to reference the required generic methods should be avoided.
         private static readonly Dictionary<DataTypes, CollectionSerializationInfo> serializationInfo = new Dictionary<DataTypes, CollectionSerializationInfo>(ComparerHelper<DataTypes>.EqualityComparer)
         {
             #region Generic collections (DataTypes 1..15 << 8)
@@ -1139,7 +1141,9 @@ namespace KGySoft.Serialization.Binary
                 DataTypes.LinkedList, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric,
-                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(LinkedList<>.AddLast), [t.GetGenericArguments()[0]])!),
+                    GetSpecificAddMethod =
+                        [DynamicDependency(nameof(LinkedList<>.AddLast), typeof(LinkedList<>))]
+                        (t) => MethodAccessor.GetAccessor(t.GetMethod(nameof(LinkedList<>.AddLast), [t.GetGenericArguments()[0]])!)
                 }
             },
             {
@@ -1151,7 +1155,9 @@ namespace KGySoft.Serialization.Binary
 #else
                     CtorArguments = [CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer],
 #endif
-                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(HashSet<>.Add))!),
+                    GetSpecificAddMethod =
+                        [DynamicDependency(nameof(HashSet<>.Add), typeof(HashSet<>))]
+                        (t) => MethodAccessor.GetAccessor(t.GetMethod(nameof(HashSet<>.Add))!),
                 }
             },
             {
@@ -1159,7 +1165,9 @@ namespace KGySoft.Serialization.Binary
                 {
                     Info = CollectionInfo.IsGeneric,
                     CtorArguments = [CollectionCtorArguments.Capacity],
-                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(Queue<>.Enqueue))!),
+                    GetSpecificAddMethod =
+                        [DynamicDependency(nameof(Queue<>.Enqueue), typeof(Queue<>))]
+                        (t) => MethodAccessor.GetAccessor(t.GetMethod(nameof(Queue<>.Enqueue))!),
                 }
             },
             {
@@ -1167,7 +1175,9 @@ namespace KGySoft.Serialization.Binary
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.ReverseElements,
                     CtorArguments = [CollectionCtorArguments.Capacity],
-                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(Stack<>.Push))!),
+                    GetSpecificAddMethod =
+                        [DynamicDependency(nameof(Stack<>.Push), typeof(Stack<>))]
+                        (t) => MethodAccessor.GetAccessor(t.GetMethod(nameof(Stack<>.Push))!),
                 }
             },
             {
@@ -1182,17 +1192,25 @@ namespace KGySoft.Serialization.Binary
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.HasEqualityComparer | CollectionInfo.UsesComparerHelper | CollectionInfo.HasBitwiseAndHash,
                     CtorArguments = [CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer, CollectionCtorArguments.HashingStrategy],
-                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(ThreadSafeHashSet<>.Add))!),
-                    WriteSpecificPropertiesCallback = (bw, o) =>
-                    {
-                        bw.Write((bool)Accessors.GetPropertyValue(o, nameof(ThreadSafeHashSet<>.PreserveMergedItems))!);
-                        Write7BitLong(bw, (ulong)((TimeSpan)Accessors.GetPropertyValue(o, nameof(ThreadSafeHashSet<>.MergeInterval))!).Ticks);
-                    },
-                    RestoreSpecificPropertiesCallback = (br, o) =>
-                    {
-                        Accessors.SetPropertyValue(o, nameof(ThreadSafeHashSet<>.PreserveMergedItems), br.ReadBoolean());
-                        Accessors.SetPropertyValue(o, nameof(ThreadSafeHashSet<>.MergeInterval), TimeSpan.FromTicks(Read7BitLong(br)));
-                    }
+                    GetSpecificAddMethod =
+                        [DynamicDependency(nameof(ThreadSafeHashSet<>.Add), typeof(ThreadSafeHashSet<>))]
+                        (t) => MethodAccessor.GetAccessor(t.GetMethod(nameof(ThreadSafeHashSet<>.Add))!),
+                    WriteSpecificPropertiesCallback =
+                        [DynamicDependency(nameof(ThreadSafeHashSet<>.PreserveMergedItems), typeof(ThreadSafeHashSet<>))]
+                        [DynamicDependency(nameof(ThreadSafeHashSet<>.MergeInterval), typeof(ThreadSafeHashSet<>))]
+                        (bw, o) =>
+                        {
+                            bw.Write((bool)Accessors.GetPropertyValue(o, nameof(ThreadSafeHashSet<>.PreserveMergedItems))!);
+                            Write7BitLong(bw, (ulong)((TimeSpan)Accessors.GetPropertyValue(o, nameof(ThreadSafeHashSet<>.MergeInterval))!).Ticks);
+                        },
+                    RestoreSpecificPropertiesCallback =
+                        [DynamicDependency(nameof(ThreadSafeHashSet<>.PreserveMergedItems), typeof(ThreadSafeHashSet<>))]
+                        [DynamicDependency(nameof(ThreadSafeHashSet<>.MergeInterval), typeof(ThreadSafeHashSet<>))]
+                        (br, o) =>
+                        {
+                            Accessors.SetPropertyValue(o, nameof(ThreadSafeHashSet<>.PreserveMergedItems), br.ReadBoolean());
+                            Accessors.SetPropertyValue(o, nameof(ThreadSafeHashSet<>.MergeInterval), TimeSpan.FromTicks(Read7BitLong(br)));
+                        }
                 }
             },
 #if !NET35
@@ -1201,28 +1219,36 @@ namespace KGySoft.Serialization.Binary
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.HasComparer,
                     CtorArguments = [CollectionCtorArguments.Comparer],
-                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(SortedSet<>.Add))!),
+                    GetSpecificAddMethod =
+                        [DynamicDependency(nameof(SortedSet<>.Add), typeof(SortedSet<>))]
+                        (t) => MethodAccessor.GetAccessor(t.GetMethod(nameof(SortedSet<>.Add))!),
                 }
             },
             {
                 DataTypes.ConcurrentBag, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric,
-                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(ConcurrentBag<>.Add))!),
+                    GetSpecificAddMethod =
+                        [DynamicDependency(nameof(ConcurrentBag<>.Add), typeof(ConcurrentBag<>))]
+                        (t) => MethodAccessor.GetAccessor(t.GetMethod(nameof(ConcurrentBag<>.Add))!),
                 }
             },
             {
                 DataTypes.ConcurrentQueue, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric,
-                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(ConcurrentQueue<>.Enqueue))!),
+                    GetSpecificAddMethod =
+                        [DynamicDependency(nameof(ConcurrentQueue<>.Enqueue), typeof(ConcurrentQueue<>))]
+                        (t) => MethodAccessor.GetAccessor(t.GetMethod(nameof(ConcurrentQueue<>.Enqueue))!),
                 }
             },
             {
                 DataTypes.ConcurrentStack, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.ReverseElements,
-                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(ConcurrentStack<>.Push))!),
+                    GetSpecificAddMethod =
+                        [DynamicDependency(nameof(ConcurrentStack<>.Push), typeof(ConcurrentStack<>))]
+                        (t) => MethodAccessor.GetAccessor(t.GetMethod(nameof(ConcurrentStack<>.Push))!),
                 }
             },
 #endif
@@ -1231,7 +1257,9 @@ namespace KGySoft.Serialization.Binary
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsComparer,
                     ReferenceAbstractGenericType = typeof(EqualityComparer<>),
-                    CreateInstanceCallback = (t, _) => t.GetPropertyValue(nameof(EqualityComparer<>.Default))!
+                    CreateInstanceCallback =
+                        [DynamicDependency(nameof(EqualityComparer<>.Default), typeof(EqualityComparer<>))]
+                        (t, _) => t.GetPropertyValue(nameof(EqualityComparer<>.Default))!
                 }
             },
             {
@@ -1239,7 +1267,9 @@ namespace KGySoft.Serialization.Binary
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsComparer,
                     ReferenceAbstractGenericType = typeof(Comparer<>),
-                    CreateInstanceCallback = (t, _) => t.GetPropertyValue(nameof(Comparer<>.Default))!
+                    CreateInstanceCallback =
+                        [DynamicDependency(nameof(Comparer<>.Default), typeof(Comparer<>))]
+                        (t, _) => t.GetPropertyValue(nameof(Comparer<>.Default))!
                 }
             },
             {
@@ -1247,7 +1277,9 @@ namespace KGySoft.Serialization.Binary
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsComparer,
                     ReferenceAbstractGenericType = typeof(EnumComparer<>),
-                    CreateInstanceCallback = (t, _) => t.GetPropertyValue(nameof(EnumComparer<>.Comparer))!
+                    CreateInstanceCallback =
+                        [DynamicDependency(nameof(EnumComparer<>.Comparer), typeof(EnumComparer<>))]
+                        (t, _) => t.GetPropertyValue(nameof(EnumComparer<>.Comparer))!
                 }
             },
 
@@ -1267,7 +1299,9 @@ namespace KGySoft.Serialization.Binary
                 {
                     Info = CollectionInfo.None,
                     CtorArguments = [CollectionCtorArguments.Capacity],
-                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(Queue.Enqueue))!),
+                    GetSpecificAddMethod =
+                        [DynamicDependency(nameof(Queue.Enqueue), typeof(Queue))]
+                        (t) => MethodAccessor.GetAccessor(t.GetMethod(nameof(Queue.Enqueue))!),
                 }
             },
             {
@@ -1275,7 +1309,9 @@ namespace KGySoft.Serialization.Binary
                 {
                     Info = CollectionInfo.ReverseElements,
                     CtorArguments = [CollectionCtorArguments.Capacity],
-                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(Stack.Push))!),
+                    GetSpecificAddMethod =
+                        [DynamicDependency(nameof(Stack.Push), typeof(Stack))]
+                        (t) => MethodAccessor.GetAccessor(t.GetMethod(nameof(Stack.Push))!),
                 }
             },
             { DataTypes.StringCollection, new CollectionSerializationInfo { Info = CollectionInfo.HasStringItemsOrKeys } },
@@ -1343,16 +1379,22 @@ namespace KGySoft.Serialization.Binary
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer | CollectionInfo.UsesComparerHelper | CollectionInfo.HasBitwiseAndHash,
                     CtorArguments = [CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer, CollectionCtorArguments.HashingStrategy],
-                    WriteSpecificPropertiesCallback = (bw, o) =>
-                    {
-                        bw.Write((bool)Accessors.GetPropertyValue(o, nameof(ThreadSafeDictionary<,>.PreserveMergedKeys))!);
-                        Write7BitLong(bw, (ulong)((TimeSpan)Accessors.GetPropertyValue(o, nameof(ThreadSafeDictionary<,>.MergeInterval))!).Ticks);
-                    },
-                    RestoreSpecificPropertiesCallback = (br, o) =>
-                    {
-                        Accessors.SetPropertyValue(o, nameof(ThreadSafeDictionary<,>.PreserveMergedKeys), br.ReadBoolean());
-                        Accessors.SetPropertyValue(o, nameof(ThreadSafeDictionary<,>.MergeInterval), TimeSpan.FromTicks(Read7BitLong(br)));
-                    }
+                    WriteSpecificPropertiesCallback =
+                        [DynamicDependency(nameof(ThreadSafeDictionary<,>.PreserveMergedKeys), typeof(ThreadSafeDictionary<,>))]
+                        [DynamicDependency(nameof(ThreadSafeDictionary<,>.MergeInterval), typeof(ThreadSafeDictionary<,>))]
+                        (bw, o) =>
+                        {
+                            bw.Write((bool)Accessors.GetPropertyValue(o, nameof(ThreadSafeDictionary<,>.PreserveMergedKeys))!);
+                            Write7BitLong(bw, (ulong)((TimeSpan)Accessors.GetPropertyValue(o, nameof(ThreadSafeDictionary<,>.MergeInterval))!).Ticks);
+                        },
+                    RestoreSpecificPropertiesCallback =
+                        [DynamicDependency(nameof(ThreadSafeDictionary<,>.PreserveMergedKeys), typeof(ThreadSafeDictionary<,>))]
+                        [DynamicDependency(nameof(ThreadSafeDictionary<,>.MergeInterval), typeof(ThreadSafeDictionary<,>))]
+                        (br, o) =>
+                        {
+                            Accessors.SetPropertyValue(o, nameof(ThreadSafeDictionary<,>.PreserveMergedKeys), br.ReadBoolean());
+                            Accessors.SetPropertyValue(o, nameof(ThreadSafeDictionary<,>.MergeInterval), TimeSpan.FromTicks(Read7BitLong(br)));
+                        }
                 }
             },
             {
@@ -1368,7 +1410,9 @@ namespace KGySoft.Serialization.Binary
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.IsOrdered | CollectionInfo.HasEqualityComparer | CollectionInfo.HasCapacity,
                     CtorArguments = [CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer],
-                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(OrderedDictionary<,>.Insert))!),
+                    GetSpecificAddMethod =
+                        [DynamicDependency(nameof(OrderedDictionary<,>.Insert), typeof(OrderedDictionary<,>))]
+                        (t) => MethodAccessor.GetAccessor(t.GetMethod(nameof(OrderedDictionary<,>.Insert))!),
                 }
             },
 #endif
@@ -1416,7 +1460,9 @@ namespace KGySoft.Serialization.Binary
                 DataTypes.StringDictionary, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsDictionary | CollectionInfo.HasStringItemsOrKeys,
-                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(StringDictionary.Add))!),
+                    GetSpecificAddMethod =
+                        [DynamicDependency(nameof(StringDictionary.Add), typeof(StringDictionary))]
+                        (t) => MethodAccessor.GetAccessor(t.GetMethod(nameof(StringDictionary.Add))!),
                 }
             },
             {
@@ -1447,12 +1493,17 @@ namespace KGySoft.Serialization.Binary
                 DataTypes.ArraySegment, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsBackingArrayActuallyStored,
-                    GetBackingArray = o => (Array?)Accessors.GetPropertyValue(o, nameof(ArraySegment<>.Array)),
-                    WriteSpecificPropertiesCallback = (bw, o) =>
-                    {
-                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(ArraySegment<>.Offset))!);
-                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(ArraySegment<>.Count))!);
-                    },
+                    GetBackingArray =
+                        [DynamicDependency(nameof(ArraySegment<>.Array), typeof(ArraySegment<>))]
+                        (o) => (Array?)Accessors.GetPropertyValue(o, nameof(ArraySegment<>.Array)),
+                    WriteSpecificPropertiesCallback =
+                        [DynamicDependency(nameof(ArraySegment<>.Offset), typeof(ArraySegment<>))]
+                        [DynamicDependency(nameof(ArraySegment<>.Count), typeof(ArraySegment<>))]
+                        (bw, o) =>
+                        {
+                            Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(ArraySegment<>.Offset))!);
+                            Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(ArraySegment<>.Count))!);
+                        },
                     CreateArrayBackedCollectionInstanceFromArray = (br, t, a) =>
                     {
                         Type[] args = [a.GetType(), Reflector.IntType, Reflector.IntType];
@@ -1465,12 +1516,17 @@ namespace KGySoft.Serialization.Binary
                 DataTypes.ArraySection, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsBackingArrayActuallyStored,
-                    GetBackingArray = o => (Array?)Accessors.GetPropertyValue(o, nameof(ArraySection<>.UnderlyingArray)),
-                    WriteSpecificPropertiesCallback = (bw, o) =>
-                    {
-                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(ArraySection<>.Offset))!);
-                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(ArraySection<>.Length))!);
-                    },
+                    GetBackingArray =
+                        [DynamicDependency(nameof(ArraySection<>.UnderlyingArray), typeof(ArraySection<>))]
+                        (o) => (Array?)Accessors.GetPropertyValue(o, nameof(ArraySection<>.UnderlyingArray)),
+                    WriteSpecificPropertiesCallback =
+                        [DynamicDependency(nameof(ArraySection<>.Offset), typeof(ArraySection<>))]
+                        [DynamicDependency(nameof(ArraySection<>.Length), typeof(ArraySection<>))]
+                        (bw, o) =>
+                        {
+                            Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(ArraySection<>.Offset))!);
+                            Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(ArraySection<>.Length))!);
+                        },
                     CreateArrayBackedCollectionInstanceFromArray = (br, t, a)
                         => t.CreateInstance([a.GetType(), Reflector.IntType, Reflector.IntType], a, Read7BitInt(br), Read7BitInt(br)),
                 }
@@ -1479,13 +1535,18 @@ namespace KGySoft.Serialization.Binary
                 DataTypes.Array2D, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsBackingArrayActuallyStored,
-                    GetBackingArray = o => (Array?)Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(Array2D<>.Buffer))!, nameof(ArraySection<>.UnderlyingArray)),
-                    WriteSpecificPropertiesCallback = (bw, o) =>
-                    {
-                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(Array2D<>.Buffer))!, nameof(ArraySection<>.Offset))!);
-                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(Array2D<>.Height))!);
-                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(Array2D<>.Width))!);
-                    },
+                    GetBackingArray =
+                        [DynamicDependency(nameof(Array2D<>.Buffer), typeof(Array2D<>))]
+                        (o) => (Array?)Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(Array2D<>.Buffer))!, nameof(ArraySection<>.UnderlyingArray)),
+                    WriteSpecificPropertiesCallback =
+                        [DynamicDependency(nameof(Array2D<>.Height), typeof(Array2D<>))]
+                        [DynamicDependency(nameof(Array2D<>.Width), typeof(Array2D<>))]
+                        (bw, o) =>
+                        {
+                            Write7BitInt(bw, (int)Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(Array2D<>.Buffer))!, nameof(ArraySection<>.Offset))!);
+                            Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(Array2D<>.Height))!);
+                            Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(Array2D<>.Width))!);
+                        },
                     CreateArrayBackedCollectionInstanceFromArray = (br, t, a) =>
                     {
                         Type bufferType = typeof(ArraySection<>).GetGenericType(t.GetGenericArguments()[0]);
@@ -1498,14 +1559,20 @@ namespace KGySoft.Serialization.Binary
                 DataTypes.Array3D, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsBackingArrayActuallyStored,
-                    GetBackingArray = o => (Array?)Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(Array3D<>.Buffer))!, nameof(ArraySection<>.UnderlyingArray)),
-                    WriteSpecificPropertiesCallback = (bw, o) =>
-                    {
-                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(Array3D<>.Buffer))!, nameof(ArraySection<>.Offset))!);
-                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(Array3D<>.Depth))!);
-                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(Array3D<>.Height))!);
-                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(Array3D<>.Width))!);
-                    },
+                    GetBackingArray =
+                        [DynamicDependency(nameof(Array3D<>.Buffer), typeof(Array3D<>))]
+                        (o) => (Array?)Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(Array3D<>.Buffer))!, nameof(ArraySection<>.UnderlyingArray)),
+                    WriteSpecificPropertiesCallback =
+                        [DynamicDependency(nameof(Array3D<>.Depth), typeof(Array3D<>))]
+                        [DynamicDependency(nameof(Array3D<>.Height), typeof(Array3D<>))]
+                        [DynamicDependency(nameof(Array3D<>.Width), typeof(Array3D<>))]
+                        (bw, o) =>
+                        {
+                            Write7BitInt(bw, (int)Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(Array3D<>.Buffer))!, nameof(ArraySection<>.Offset))!);
+                            Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(Array3D<>.Depth))!);
+                            Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(Array3D<>.Height))!);
+                            Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(Array3D<>.Width))!);
+                        },
                     CreateArrayBackedCollectionInstanceFromArray = (br, t, a) =>
                     {
                         Type bufferType = typeof(ArraySection<>).GetGenericType(t.GetGenericArguments()[0]);
@@ -1531,7 +1598,10 @@ namespace KGySoft.Serialization.Binary
                 DataTypes.ImmutableArray, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsBackingArrayActuallyStored,
-                    GetBackingArray = o => (bool)Accessors.GetPropertyValue(o, nameof(ImmutableArray<>.IsDefault))! ? null : (Array)typeof(Enumerable).InvokeMethod(nameof(Enumerable.ToArray), o.GetType().GetGenericArguments()[0], o)!,
+                    GetBackingArray = // The public way would be by Enumerable.ToArray, but that is not AOT friendly due to the generic method call for value type elements (and that copies the array)
+                        [DynamicDependency(nameof(ImmutableArray<>.IsDefault), typeof(ImmutableArray<>))]
+                        [DynamicDependency(DynamicallyAccessedMemberTypes.NonPublicFields, typeof(ImmutableArray<>))]
+                        (o) => (bool)Accessors.GetPropertyValue(o, nameof(ImmutableArray<>.IsDefault))! ? null : (Array)Accessors.GetFieldValue(o, "array")!,
                     CreateArrayBackedCollectionInstanceFromArray = (_, t, a) => t.CreateInstance(a),
                 }
             },
@@ -1540,26 +1610,41 @@ namespace KGySoft.Serialization.Binary
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.HasCapacity,
                     CtorArguments = [CollectionCtorArguments.Capacity],
-                    CreateInstanceCallback = (t, args)
-                        => typeof(ImmutableArray).InvokeMethod(nameof(ImmutableArray.CreateBuilder), t.GetGenericArguments()[0], Reflector.IntType, args)!,
-                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(ImmutableArray<>.Builder.Add))!),
+                    CreateInstanceCallback = (t, args) => t.CreateInstance(args!), // the public way would be by ImmutableArray.CreateBuilder<T>(args), but that is not AOT friendly for value type elements
+                    GetSpecificAddMethod =
+                        [DynamicDependency(nameof(ImmutableArray<>.Builder.Add), typeof(ImmutableArray<>.Builder))]
+                        (t) => MethodAccessor.GetAccessor(t.GetMethod(nameof(ImmutableArray<>.Builder.Add))!),
                 }
             },
             {
                 DataTypes.ImmutableList, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric,
-                    CreateInstanceCallback = (t, _)
-                        => typeof(ImmutableList).InvokeMethod(nameof(ImmutableList.CreateBuilder), t.GetGenericArguments()[0])!,
-                    CreateFinalCollectionCallback = o => Accessors.InvokeMethod(o, nameof(ImmutableList<>.Builder.ToImmutable))!,
+                    CreateInstanceCallback =
+                        [DynamicDependency(nameof(ImmutableList<>.Empty), typeof(ImmutableList<>))]
+                        [DynamicDependency(nameof(ImmutableList<>.ToBuilder), typeof(ImmutableList<>))]
+                        (t, _) => // we could just return ImmutableList.CreateBuilder<t.GenericTypeArguments[0]>, but the generic method call is not AOT friendly for value type arguments
+                        {
+                            object empty = t.GetFieldValue(nameof(ImmutableList<>.Empty))!;
+                            return Accessors.InvokeMethod(empty, nameof(ImmutableList<>.ToBuilder))!;
+                        },
+                    CreateFinalCollectionCallback =
+                        [DynamicDependency(nameof(ImmutableList<>.Builder.ToImmutable), typeof(ImmutableList<>.Builder))]
+                        (_, o) => Accessors.InvokeMethod(o, nameof(ImmutableList<>.Builder.ToImmutable))!,
                 }
             },
             {
                 DataTypes.ImmutableListBuilder, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric,
-                    CreateInstanceCallback = (t, _)
-                        => typeof(ImmutableList).InvokeMethod(nameof(ImmutableList.CreateBuilder), t.GetGenericArguments()[0])!,
+                    CreateInstanceCallback =
+                        [DynamicDependency(nameof(ImmutableList<>.Empty), typeof(ImmutableList<>))]
+                        [DynamicDependency(nameof(ImmutableList<>.ToBuilder), typeof(ImmutableList<>))]
+                        (t, _) => // we could just return ImmutableList.CreateBuilder<t.GenericTypeArguments[0]>, but the generic method call is not AOT friendly for value type arguments
+                        {
+                            object empty = typeof(ImmutableList<>).GetGenericType(t.GenericTypeArguments[0]).GetFieldValue(nameof(ImmutableList<>.Empty))!;
+                            return Accessors.InvokeMethod(empty, nameof(ImmutableList<>.ToBuilder))!;
+                        }
                 }
             },
             {
@@ -1567,13 +1652,20 @@ namespace KGySoft.Serialization.Binary
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.HasEqualityComparer,
                     CtorArguments = [CollectionCtorArguments.Comparer],
-                    CreateInstanceCallback = (t, args) =>
-                    {
-                        Type genericArg = t.GetGenericArguments()[0];
-                        return typeof(ImmutableHashSet).InvokeMethod(nameof(ImmutableHashSet.CreateBuilder), genericArg, typeof(IEqualityComparer<>).GetGenericType(genericArg), args)!;
-                    },
-                    CreateFinalCollectionCallback = o => Accessors.InvokeMethod(o, nameof(ImmutableHashSet<>.Builder.ToImmutable))!,
-                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(ImmutableHashSet<>.Builder.Add))!),
+                    CreateInstanceCallback =
+                        [DynamicDependency(nameof(ImmutableHashSet<>.Empty), typeof(ImmutableHashSet<>))]
+                        [DynamicDependency(nameof(ImmutableHashSet<>.ToBuilder), typeof(ImmutableHashSet<>))]
+                        (t, args) => // we could just return ImmutableHashSet.CreateBuilder<t.GenericArguments[0]>, but the generic method call is not AOT friendly for value type arguments
+                        {
+                            object empty = t.GetFieldValue(nameof(ImmutableHashSet<>.Empty))!;
+                            return Accessors.InvokeMethod(empty, nameof(ImmutableHashSet<>.ToBuilder))!;
+                        },
+                    CreateFinalCollectionCallback =
+                        [DynamicDependency(nameof(ImmutableHashSet<>.Builder.ToImmutable), typeof(ImmutableHashSet<>.Builder))]
+                        (_, o) => Accessors.InvokeMethod(o, nameof(ImmutableHashSet<>.Builder.ToImmutable))!,
+                    GetSpecificAddMethod =
+                        [DynamicDependency(nameof(ImmutableHashSet<>.Builder.Add), typeof(ImmutableHashSet<>.Builder))]
+                        (t) => MethodAccessor.GetAccessor(t.GetMethod(nameof(ImmutableHashSet<>.Builder.Add))!),
                 }
             },
             {
@@ -1581,12 +1673,17 @@ namespace KGySoft.Serialization.Binary
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.HasEqualityComparer,
                     CtorArguments = [CollectionCtorArguments.Comparer],
-                    CreateInstanceCallback = (t, args) =>
-                    {
-                        Type genericArg = t.GetGenericArguments()[0];
-                        return typeof(ImmutableHashSet).InvokeMethod(nameof(ImmutableHashSet.CreateBuilder), genericArg, typeof(IEqualityComparer<>).GetGenericType(genericArg), args)!;
-                    },
-                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(ImmutableHashSet<>.Builder.Add))!),
+                    CreateInstanceCallback =
+                        [DynamicDependency(nameof(ImmutableHashSet<>.Empty), typeof(ImmutableHashSet<>))]
+                        [DynamicDependency(nameof(ImmutableHashSet<>.ToBuilder), typeof(ImmutableHashSet<>))]
+                        (t, args) => // we could just return ImmutableHashSet.CreateBuilder<t.GenericArguments[0]>, but the generic method call is not AOT friendly for value type arguments
+                        {
+                            object empty = typeof(ImmutableHashSet<>).GetGenericType(t.GenericTypeArguments[0]).GetFieldValue(nameof(ImmutableHashSet<>.Empty))!;
+                            return Accessors.InvokeMethod(empty, nameof(ImmutableHashSet<>.ToBuilder))!;
+                        },
+                    GetSpecificAddMethod =
+                        [DynamicDependency(nameof(ImmutableHashSet<>.Builder.Add), typeof(ImmutableHashSet<>.Builder))]
+                        (t) => MethodAccessor.GetAccessor(t.GetMethod(nameof(ImmutableHashSet<>.Builder.Add))!),
                 }
             },
             {
@@ -1594,13 +1691,20 @@ namespace KGySoft.Serialization.Binary
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.HasComparer,
                     CtorArguments = [CollectionCtorArguments.Comparer],
-                    CreateInstanceCallback = (t, args) =>
-                    {
-                        Type genericArg = t.GetGenericArguments()[0];
-                        return typeof(ImmutableSortedSet).InvokeMethod(nameof(ImmutableSortedSet.CreateBuilder), genericArg, typeof(IComparer<>).GetGenericType(genericArg), args)!;
-                    },
-                    CreateFinalCollectionCallback = o => Accessors.InvokeMethod(o, nameof(ImmutableSortedSet<>.Builder.ToImmutable))!,
-                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(ImmutableSortedSet<>.Builder.Add))!),
+                    CreateInstanceCallback =
+                        [DynamicDependency(nameof(ImmutableSortedSet<>.Empty), typeof(ImmutableSortedSet<>))]
+                        [DynamicDependency(nameof(ImmutableSortedSet<>.ToBuilder), typeof(ImmutableSortedSet<>))]
+                        (t, args) => // we could just return ImmutableSortedSet.CreateBuilder<t.GenericArguments[0]>, but the generic method call is not AOT friendly for value type arguments
+                        {
+                            object empty = t.GetFieldValue(nameof(ImmutableSortedSet<>.Empty))!;
+                            return Accessors.InvokeMethod(empty, nameof(ImmutableSortedSet<>.ToBuilder))!;
+                        },
+                    CreateFinalCollectionCallback =
+                        [DynamicDependency(nameof(ImmutableSortedSet<>.Builder.ToImmutable), typeof(ImmutableSortedSet<>.Builder))]
+                        (_, o) => Accessors.InvokeMethod(o, nameof(ImmutableSortedSet<>.Builder.ToImmutable))!,
+                    GetSpecificAddMethod =
+                        [DynamicDependency(nameof(ImmutableSortedSet<>.Builder.Add), typeof(ImmutableSortedSet<>.Builder))]
+                        (t) => MethodAccessor.GetAccessor(t.GetMethod(nameof(ImmutableSortedSet<>.Builder.Add))!),
                 }
             },
             {
@@ -1608,16 +1712,21 @@ namespace KGySoft.Serialization.Binary
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.HasComparer,
                     CtorArguments = [CollectionCtorArguments.Comparer],
-                    CreateInstanceCallback = (t, args) =>
-                    {
-                        Type genericArg = t.GetGenericArguments()[0];
-                        return typeof(ImmutableSortedSet).InvokeMethod(nameof(ImmutableSortedSet.CreateBuilder), genericArg, typeof(IComparer<>).GetGenericType(genericArg), args)!;
-                    },
-                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(ImmutableSortedSet<>.Builder.Add))!),
+                    CreateInstanceCallback =
+                        [DynamicDependency(nameof(ImmutableSortedSet<>.Empty), typeof(ImmutableSortedSet<>))]
+                        [DynamicDependency(nameof(ImmutableSortedSet<>.ToBuilder), typeof(ImmutableSortedSet<>))]
+                        (t, args) => // we could just return ImmutableSortedSet.CreateBuilder<t.GenericArguments[0]>, but the generic method call is not AOT friendly for value type arguments
+                        {
+                            object empty = typeof(ImmutableSortedSet<>).GetGenericType(t.GenericTypeArguments[0]).GetFieldValue(nameof(ImmutableSortedSet<>.Empty))!;
+                            return Accessors.InvokeMethod(empty, nameof(ImmutableSortedSet<>.ToBuilder))!;
+                        },
+                    GetSpecificAddMethod =
+                        [DynamicDependency(nameof(ImmutableSortedSet<>.Builder.Add), typeof(ImmutableSortedSet<>.Builder))]
+                        (t) => MethodAccessor.GetAccessor(t.GetMethod(nameof(ImmutableSortedSet<>.Builder.Add))!),
                 }
             },
             {
-                // Trick: Serializing as array (because ImmutableQueue has no Count, and we want to avoid double enumeration of the queue)
+                // Trick: Serializing as array (because ImmutableQueue has no Count, and we want to avoid double enumeration of the queue - at least in non-AOT mode),
                 //        but deserializing from List (because CreateArrayBackedCollectionInstanceFromArray would allow resolving circular references
                 //        to the backing array itself, which should not be allowed as ImmutableQueue does not actually wrap the array)
                 DataTypes.ImmutableQueue, new CollectionSerializationInfo
@@ -1625,38 +1734,93 @@ namespace KGySoft.Serialization.Binary
                     Info = CollectionInfo.IsGeneric,
                     GetBackingArray = o =>
                     {
+#if NETCOREAPP3_0_OR_GREATER
+                        // In AOT mode avoiding the generic Enumerable.ToArray<> method. Unlike for most immutable types, the AOT-friendly way is used in AOT-mode only,
+                        // because it uses multiple enumeration. We could also create a List<T> and call ToArray(), but it would actually use more copies and array reallocations.
+                        // Also, returning object[] here, so the code does not rely on an array type that might not be referenced elsewhere.
+                        if (!RuntimeFeature.IsDynamicCodeSupported)
+                            return ((IEnumerable)o).ToObjectArray();
+#endif
                         Type genericArg = o.GetType().GetGenericArguments()[0];
                         return (Array)typeof(Enumerable).InvokeMethod(nameof(Enumerable.ToArray), genericArg, Reflector.IEnumerableGenType.GetGenericType(genericArg), o)!;
                     },
                     CtorArguments = [CollectionCtorArguments.Capacity],
-                    CreateInstanceCallback = (t, args) => Reflector.ListGenType.GetGenericType(t.GetGenericArguments()[0]).CreateInstance(args!),
-                    CreateFinalCollectionCallback = o =>
+                    CreateInstanceCallback = (t, args) =>
                     {
-                        Type genericArg = o.GetType().GetGenericArguments()[0];
-                        return typeof(ImmutableQueue).InvokeMethod(nameof(ImmutableQueue.CreateRange), genericArg, Reflector.IEnumerableGenType.GetGenericType(genericArg), o)!;
+#if NETCOREAPP3_0_OR_GREATER
+                        if (!RuntimeFeature.IsDynamicCodeSupported)
+                            return new List<object?>((int)args[0]!);
+#endif
+                        return Reflector.ListGenType.GetGenericType(t.GetGenericArguments()[0]).CreateInstance(args!);
                     },
+                    CreateFinalCollectionCallback =
+                        [DynamicDependency(nameof(ImmutableQueue<>.Empty), typeof(ImmutableQueue<>))]
+                        [DynamicDependency(nameof(ImmutableQueue<>.Enqueue), typeof(ImmutableQueue<>))]
+                        (t, o) =>
+                        {
+#if NETCOREAPP3_0_OR_GREATER
+                            // In AOT mode avoiding the generic ImmutableQueue.CreateRange<> method. Unlike for most immutable types,
+                            // the AOT-friendly way is used in AOT-mode only, because it is much slower than the normal way.
+                            if (!RuntimeFeature.IsDynamicCodeSupported)
+                            {
+                                object result = t.GetPropertyValue(nameof(ImmutableQueue<>.Empty))!;
+                                Type elementType = t.GenericTypeArguments[0];
+                                foreach (object? item in (IEnumerable)o)
+                                    result = Accessors.InvokeMethod(result, nameof(ImmutableQueue<>.Enqueue), [elementType], item)!;
+                                return result;
+                            }
+#endif
+                            Type genericArg = t.GenericTypeArguments[0];
+                            return typeof(ImmutableQueue).InvokeMethod(nameof(ImmutableQueue.CreateRange), genericArg, Reflector.IEnumerableGenType.GetGenericType(genericArg), o)!;
+                        }
                 }
             },
             {
-                // Trick: Serializing as array (because ImmutableStack has no Count, and we want to avoid double enumeration of the stack)
-                //        but deserializing from List after reserving elements (because CreateArrayBackedCollectionInstanceFromArray would allow resolving circular references
-                //        to the backing array itself, which should not be allowed as ImmutableStack does not actually wrap the array)
                 DataTypes.ImmutableStack, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric, // | CollectionInfo.ReverseElements - would be ignored here because serialized as an array. We reverse the elements on deserialization instead.
                     GetBackingArray = o =>
                     {
+#if NETCOREAPP3_0_OR_GREATER
+                        // See ImmutableQueue
+                        if (!RuntimeFeature.IsDynamicCodeSupported)
+                            return ((IEnumerable)o).ToObjectArray();
+#endif
                         Type genericArg = o.GetType().GetGenericArguments()[0];
                         return (Array)typeof(Enumerable).InvokeMethod(nameof(Enumerable.ToArray), genericArg, Reflector.IEnumerableGenType.GetGenericType(genericArg), o)!;
                     },
                     CtorArguments = [CollectionCtorArguments.Capacity],
-                    CreateInstanceCallback = (t, args) => Reflector.ListGenType.GetGenericType(t.GetGenericArguments()[0]).CreateInstance(args!),
-                    CreateFinalCollectionCallback = o =>
+                    CreateInstanceCallback = (t, args) =>
                     {
-                        Accessors.InvokeMethod(o, nameof(List<>.Reverse), Type.EmptyTypes);
-                        Type genericArg = o.GetType().GetGenericArguments()[0];
-                        return typeof(ImmutableStack).InvokeMethod(nameof(ImmutableStack.CreateRange), genericArg, Reflector.IEnumerableGenType.GetGenericType(genericArg), o)!;
+#if NETCOREAPP3_0_OR_GREATER
+                        if (!RuntimeFeature.IsDynamicCodeSupported)
+                            return new List<object?>((int)args[0]!);
+#endif
+                        return Reflector.ListGenType.GetGenericType(t.GetGenericArguments()[0]).CreateInstance(args!);
                     },
+                    CreateFinalCollectionCallback =
+                        [DynamicDependency(nameof(ImmutableStack<>.Empty), typeof(ImmutableStack<>))]
+                        [DynamicDependency(nameof(ImmutableStack<>.Push), typeof(ImmutableStack<>))]
+                        (t, o) =>
+                        {
+#if NETCOREAPP3_0_OR_GREATER
+                            // In AOT mode avoiding the generic ImmutableStack.CreateRange<> method. Unlike for most immutable types,
+                            // the AOT-friendly way is used in AOT-mode only, because it is much slower than the normal way.
+                            if (!RuntimeFeature.IsDynamicCodeSupported)
+                            {
+                                object result = t.GetPropertyValue(nameof(ImmutableStack<>.Empty))!;
+                                Type elementType = t.GenericTypeArguments[0];
+                                var list = (List<object?>)o;
+                                for (int i = list.Count - 1; i >= 0; i--)
+                                    result = Accessors.InvokeMethod(result, nameof(ImmutableStack<>.Push), [elementType], list[i])!;
+                                return result;
+                            }
+#endif
+
+                            Accessors.InvokeMethod(o, nameof(List<>.Reverse), Type.EmptyTypes);
+                            Type genericArg = t.GenericTypeArguments[0];
+                            return typeof(ImmutableStack).InvokeMethod(nameof(ImmutableStack.CreateRange), genericArg, Reflector.IEnumerableGenType.GetGenericType(genericArg), o)!;
+                        }
                 }
             },
 #endif
@@ -1666,30 +1830,33 @@ namespace KGySoft.Serialization.Binary
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.HasEqualityComparer,
                     ReferenceAbstractGenericType = typeof(FrozenSet<>),
-#if NET35 || NET40 || NET45 || NETSTANDARD2_0
-                    CtorArguments = [CollectionCtorArguments.Comparer],
-#else
                     CtorArguments = [CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer],
-#endif
-                    GetSpecificAddMethod = t => MethodAccessor.GetAccessor(t.GetMethod(nameof(HashSet<>.Add))!),
-                    CreateInstanceCallback = (t, args) =>
+                    GetSpecificAddMethod =
+                        [DynamicDependency(nameof(HashSet<>.Add), typeof(HashSet<>))]
+                        (t) => MethodAccessor.GetAccessor(t.GetMethod(nameof(HashSet<>.Add))!),
+                    CreateInstanceCallback = (t, args) => // Using a HashSet<T> as a builder with the actual comparer
                     {
-                        // Using a HashSet<T> as a builder with the actual comparer
+                            
                         Type genericArg = t.GetGenericArguments()[0];
-#if NET35 || NET40 || NET45 || NETSTANDARD2_0
-                        return typeof(HashSet<>).GetGenericType(genericArg).CreateInstance(new[] { typeof(IEqualityComparer<>).GetGenericType(genericArg) }, args);
-#else
                         return typeof(HashSet<>).GetGenericType(genericArg).CreateInstance([Reflector.IntType, typeof(IEqualityComparer<>).GetGenericType(genericArg)], args);
-#endif
                     },
-                    CreateFinalCollectionCallback = o =>
-                    {
-                        Type genericArg = o.GetType().GetGenericArguments()[0];
-                        return typeof(FrozenSet).InvokeMethod(nameof(FrozenSet.ToFrozenSet),
-                            [genericArg],
-                            [Reflector.IEnumerableGenType.GetGenericType(genericArg), typeof(IEqualityComparer<>).GetGenericType(genericArg)],
-                            o, ((IEnumerable)o).GetComparer())!;
-                    },
+                    CreateFinalCollectionCallback = // unfortunately we must use the ToFrozenSet<> generic method, so we handle the possible exception in AOT mode
+                        [DynamicDependency(nameof(FrozenSet.ToFrozenSet), typeof(FrozenSet))]
+                        (t, o) =>
+                        {
+                            Type genericArg = t.GenericTypeArguments[0];
+                            try
+                            {
+                                return typeof(FrozenSet).InvokeMethod(nameof(FrozenSet.ToFrozenSet),
+                                    [genericArg],
+                                    [Reflector.IEnumerableGenType.GetGenericType(genericArg), typeof(IEqualityComparer<>).GetGenericType(genericArg)],
+                                    o, ((IEnumerable)o).GetComparer())!;
+                            }
+                            catch (NotSupportedException e) when (!RuntimeFeature.IsDynamicCodeSupported)
+                            {
+                                return Throw.SerializationException<object>(Res.GenericMethodMissingAot($"{typeof(FrozenSet).FullName}.{nameof(FrozenSet.ToFrozenSet)}<T>", "FrozenSet<MyElementType>.Empty.ToFrozenSet();", [genericArg]), e);
+                            }
+                        },
                 }
             },
 #endif
@@ -1697,7 +1864,9 @@ namespace KGySoft.Serialization.Binary
                 DataTypes.CastArray, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsBackingArrayActuallyStored,
-                    GetBackingArray = o => (Array?)Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(CastArray<,>.Buffer))!, nameof(ArraySection<>.UnderlyingArray)),
+                    GetBackingArray =
+                        [DynamicDependency(nameof(CastArray<,>.Buffer), typeof(CastArray<,>))] // UnderlyingArray is already annotated at ArraySection
+                        (o) => (Array?)Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(CastArray<,>.Buffer))!, nameof(ArraySection<>.UnderlyingArray)),
                     WriteSpecificPropertiesCallback = (bw, o) =>
                     {
                         var buffer = Accessors.GetPropertyValue(o, nameof(CastArray<,>.Buffer))!;
@@ -1716,13 +1885,18 @@ namespace KGySoft.Serialization.Binary
                 DataTypes.CastArray2D, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsBackingArrayActuallyStored,
-                    GetBackingArray = o => (Array?)Accessors.GetPropertyValue(Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(CastArray2D<,>.Buffer))!, nameof(CastArray<,>.Buffer))!, nameof(ArraySection<>.UnderlyingArray)),
-                    WriteSpecificPropertiesCallback = (bw, o) =>
-                    {
-                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(CastArray2D<,>.Buffer))!, nameof(CastArray<,>.Buffer))!, nameof(ArraySection<>.Offset))!);
-                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(CastArray2D<,>.Height))!);
-                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(CastArray2D<,>.Width))!);
-                    },
+                    GetBackingArray =
+                        [DynamicDependency(nameof(CastArray2D<,>.Buffer), typeof(CastArray2D<,>))]
+                        (o) => (Array?)Accessors.GetPropertyValue(Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(CastArray2D<,>.Buffer))!, nameof(CastArray<,>.Buffer))!, nameof(ArraySection<>.UnderlyingArray)),
+                    WriteSpecificPropertiesCallback =
+                        [DynamicDependency(nameof(CastArray2D<,>.Height), typeof(CastArray2D<,>))]
+                        [DynamicDependency(nameof(CastArray2D<,>.Width), typeof(CastArray2D<,>))]
+                        (bw, o) =>
+                        {
+                            Write7BitInt(bw, (int)Accessors.GetPropertyValue(Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(CastArray2D<,>.Buffer))!, nameof(CastArray<,>.Buffer))!, nameof(ArraySection<>.Offset))!);
+                            Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(CastArray2D<,>.Height))!);
+                            Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(CastArray2D<,>.Width))!);
+                        },
                     CreateArrayBackedCollectionInstanceFromArray = (br, t, a) =>
                     {
                         Type arrayType = a.GetType();
@@ -1735,14 +1909,20 @@ namespace KGySoft.Serialization.Binary
                 DataTypes.CastArray3D, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsBackingArrayActuallyStored,
-                    GetBackingArray = o => (Array?)Accessors.GetPropertyValue(Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(CastArray3D<,>.Buffer))!, nameof(CastArray<,>.Buffer))!, nameof(ArraySection<>.UnderlyingArray)),
-                    WriteSpecificPropertiesCallback = (bw, o) =>
-                    {
-                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(CastArray3D<,>.Buffer))!, nameof(CastArray<,>.Buffer))!, nameof(ArraySection<>.Offset))!);
-                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(CastArray3D<,>.Depth))!);
-                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(CastArray3D<,>.Height))!);
-                        Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(CastArray3D<,>.Width))!);
-                    },
+                    GetBackingArray =
+                        [DynamicDependency(nameof(CastArray3D<,>.Buffer), typeof(CastArray3D<,>))]
+                        (o) => (Array?)Accessors.GetPropertyValue(Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(CastArray3D<,>.Buffer))!, nameof(CastArray<,>.Buffer))!, nameof(ArraySection<>.UnderlyingArray)),
+                    WriteSpecificPropertiesCallback =
+                        [DynamicDependency(nameof(CastArray3D<,>.Depth), typeof(CastArray3D<,>))]
+                        [DynamicDependency(nameof(CastArray3D<,>.Height), typeof(CastArray3D<,>))]
+                        [DynamicDependency(nameof(CastArray3D<,>.Width), typeof(CastArray3D<,>))]
+                        (bw, o) =>
+                        {
+                            Write7BitInt(bw, (int)Accessors.GetPropertyValue(Accessors.GetPropertyValue(Accessors.GetPropertyValue(o, nameof(CastArray3D<,>.Buffer))!, nameof(CastArray<,>.Buffer))!, nameof(ArraySection<>.Offset))!);
+                            Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(CastArray3D<,>.Depth))!);
+                            Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(CastArray3D<,>.Height))!);
+                            Write7BitInt(bw, (int)Accessors.GetPropertyValue(o, nameof(CastArray3D<,>.Width))!);
+                        },
                     CreateArrayBackedCollectionInstanceFromArray = (br, t, a) =>
                     {
                         Type arrayType = a.GetType();
@@ -1766,13 +1946,20 @@ namespace KGySoft.Serialization.Binary
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer | CollectionInfo.HasValueComparer,
                     CtorArguments = [CollectionCtorArguments.Comparer, CollectionCtorArguments.ValueComparer],
-                    CreateInstanceCallback = (t, args) =>
-                    {
-                        Type[] genericArgs = t.GetGenericArguments();
-                        return typeof(ImmutableDictionary).InvokeMethod(nameof(ImmutableDictionary.CreateBuilder), genericArgs,
-                            [typeof(IEqualityComparer<>).GetGenericType(genericArgs[0]), typeof(IEqualityComparer<>).GetGenericType(genericArgs[1])], args)!;
-                    },
-                    CreateFinalCollectionCallback = o => Accessors.InvokeMethod(o, nameof(ImmutableDictionary<,>.Builder.ToImmutable))!,
+                    CreateInstanceCallback =
+                        [DynamicDependency(nameof(ImmutableDictionary<,>.Empty), typeof(ImmutableDictionary<,>))]
+                        [DynamicDependency(nameof(ImmutableDictionary<,>.WithComparers), typeof(ImmutableDictionary<,>))]
+                        [DynamicDependency(nameof(ImmutableDictionary<,>.ToBuilder), typeof(ImmutableDictionary<,>))]
+                        (t, args) => // we could just return ImmutableDictionary.CreateBuilder<genericArgs[0], genericArgs[1]>, but the generic method call is not AOT friendly for value type arguments
+                        {
+                            Type[] genericArgs = t.GenericTypeArguments;
+                            object result = t.GetFieldValue(nameof(ImmutableDictionary<,>.Empty))!;
+                            result = Accessors.InvokeMethod(result, nameof(ImmutableDictionary<,>.WithComparers), [typeof(IEqualityComparer<>).GetGenericType(genericArgs[0]), typeof(IEqualityComparer<>).GetGenericType(genericArgs[1])], args)!;
+                            return Accessors.InvokeMethod(result, nameof(ImmutableDictionary<,>.ToBuilder))!;
+                        },
+                    CreateFinalCollectionCallback =
+                        [DynamicDependency(nameof(ImmutableDictionary<,>.Builder.ToImmutable), typeof(ImmutableDictionary<,>.Builder))]
+                        (_, o) => Accessors.InvokeMethod(o, nameof(ImmutableDictionary<,>.Builder.ToImmutable))!,
                 }
             },
             {
@@ -1780,12 +1967,18 @@ namespace KGySoft.Serialization.Binary
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasEqualityComparer | CollectionInfo.HasValueComparer,
                     CtorArguments = [CollectionCtorArguments.Comparer, CollectionCtorArguments.ValueComparer],
-                    CreateInstanceCallback = (t, args) =>
-                    {
-                        Type[] genericArgs = t.GetGenericArguments();
-                        return typeof(ImmutableDictionary).InvokeMethod(nameof(ImmutableDictionary.CreateBuilder), genericArgs,
-                            [typeof(IEqualityComparer<>).GetGenericType(genericArgs[0]), typeof(IEqualityComparer<>).GetGenericType(genericArgs[1])], args)!;
-                    },
+                    CreateInstanceCallback =
+                        [DynamicDependency(nameof(ImmutableDictionary<,>.Empty), typeof(ImmutableDictionary<,>))]
+                        [DynamicDependency(nameof(ImmutableDictionary<,>.WithComparers), typeof(ImmutableDictionary<,>))]
+                        [DynamicDependency(nameof(ImmutableDictionary<,>.ToBuilder), typeof(ImmutableDictionary<,>))]
+                        (t, args) => // we could just return ImmutableDictionary.CreateBuilder<genericArgs[0], genericArgs[1]>, but the generic method call is not AOT friendly for value type arguments
+                        {
+                            Type[] genericArgs = t.GenericTypeArguments;
+                            t = typeof(ImmutableDictionary<,>).GetGenericType(genericArgs);
+                            object result = t.GetFieldValue(nameof(ImmutableDictionary<,>.Empty))!;
+                            result = Accessors.InvokeMethod(result, nameof(ImmutableDictionary<,>.WithComparers), [typeof(IEqualityComparer<>).GetGenericType(genericArgs[0]), typeof(IEqualityComparer<>).GetGenericType(genericArgs[1])], args)!;
+                            return Accessors.InvokeMethod(result, nameof(ImmutableDictionary<,>.ToBuilder))!;
+                        },
                 }
             },
             {
@@ -1793,13 +1986,20 @@ namespace KGySoft.Serialization.Binary
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasComparer | CollectionInfo.HasValueComparer,
                     CtorArguments = [CollectionCtorArguments.Comparer, CollectionCtorArguments.ValueComparer],
-                    CreateInstanceCallback = (t, args) =>
-                    {
-                        Type[] genericArgs = t.GetGenericArguments();
-                        return typeof(ImmutableSortedDictionary).InvokeMethod(nameof(ImmutableSortedDictionary.CreateBuilder), genericArgs,
-                            [typeof(IComparer<>).GetGenericType(genericArgs[0]), typeof(IEqualityComparer<>).GetGenericType(genericArgs[1])], args)!;
-                    },
-                    CreateFinalCollectionCallback = o => Accessors.InvokeMethod(o, nameof(ImmutableSortedDictionary<,>.Builder.ToImmutable))!,
+                    CreateInstanceCallback =
+                        [DynamicDependency(nameof(ImmutableSortedDictionary<,>.Empty), typeof(ImmutableSortedDictionary<,>))]
+                        [DynamicDependency(nameof(ImmutableSortedDictionary<,>.WithComparers), typeof(ImmutableSortedDictionary<,>))]
+                        [DynamicDependency(nameof(ImmutableSortedDictionary<,>.ToBuilder), typeof(ImmutableSortedDictionary<,>))]
+                        (t, args) => // we could just return ImmutableSortedDictionary.CreateBuilder<genericArgs[0], genericArgs[1]>, but the generic method call is not AOT friendly for value type arguments
+                        {
+                            Type[] genericArgs = t.GenericTypeArguments;
+                            object result = t.GetFieldValue(nameof(ImmutableSortedDictionary<,>.Empty))!;
+                            result = Accessors.InvokeMethod(result, nameof(ImmutableSortedDictionary<,>.WithComparers), [typeof(IComparer<>).GetGenericType(genericArgs[0]), typeof(IEqualityComparer<>).GetGenericType(genericArgs[1])], args)!;
+                            return Accessors.InvokeMethod(result, nameof(ImmutableSortedDictionary<,>.ToBuilder))!;
+                        },
+                    CreateFinalCollectionCallback =
+                        [DynamicDependency(nameof(ImmutableSortedDictionary<,>.Builder.ToImmutable), typeof(ImmutableSortedDictionary<,>.Builder))]
+                        (_, o) => Accessors.InvokeMethod(o, nameof(ImmutableSortedDictionary<,>.Builder.ToImmutable))!,
                 }
             },
             {
@@ -1807,12 +2007,18 @@ namespace KGySoft.Serialization.Binary
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasComparer | CollectionInfo.HasValueComparer,
                     CtorArguments = [CollectionCtorArguments.Comparer, CollectionCtorArguments.ValueComparer],
-                    CreateInstanceCallback = (t, args) =>
-                    {
-                        Type[] genericArgs = t.GetGenericArguments();
-                        return typeof(ImmutableSortedDictionary).InvokeMethod(nameof(ImmutableSortedDictionary.CreateBuilder), genericArgs,
-                            [typeof(IComparer<>).GetGenericType(genericArgs[0]), typeof(IEqualityComparer<>).GetGenericType(genericArgs[1])], args)!;
-                    },
+                    CreateInstanceCallback =
+                        [DynamicDependency(nameof(ImmutableSortedDictionary<,>.Empty), typeof(ImmutableSortedDictionary<,>))]
+                        [DynamicDependency(nameof(ImmutableSortedDictionary<,>.WithComparers), typeof(ImmutableSortedDictionary<,>))]
+                        [DynamicDependency(nameof(ImmutableSortedDictionary<,>.ToBuilder), typeof(ImmutableSortedDictionary<,>))]
+                        (t, args) => // we could just return ImmutableSortedDictionary.CreateBuilder<genericArgs[0], genericArgs[1]>, but the generic method call is not AOT friendly for value type arguments
+                        {
+                            Type[] genericArgs = t.GenericTypeArguments;
+                            t = typeof(ImmutableSortedDictionary<,>).GetGenericType(genericArgs);
+                            object result = t.GetFieldValue(nameof(ImmutableSortedDictionary<,>.Empty))!;
+                            result = Accessors.InvokeMethod(result, nameof(ImmutableSortedDictionary<,>.WithComparers), [typeof(IComparer<>).GetGenericType(genericArgs[0]), typeof(IEqualityComparer<>).GetGenericType(genericArgs[1])], args)!;
+                            return Accessors.InvokeMethod(result, nameof(ImmutableSortedDictionary<,>.ToBuilder))!;
+                        },
                 }
             },
 #endif
@@ -1829,14 +2035,24 @@ namespace KGySoft.Serialization.Binary
                         Type[] genericArgs = t.GetGenericArguments();
                         return typeof(Dictionary<,>).GetGenericType(genericArgs).CreateInstance([Reflector.IntType, typeof(IEqualityComparer<>).GetGenericType(genericArgs[0])], args);
                     },
-                    CreateFinalCollectionCallback = o =>
-                    {
-                        Type[] genericArgs = o.GetType().GetGenericArguments();
-                        return typeof(FrozenDictionary).InvokeMethod(nameof(FrozenDictionary.ToFrozenDictionary),
-                            genericArgs,
-                            [Reflector.IEnumerableGenType.GetGenericType(Reflector.KeyValuePairType.GetGenericType(genericArgs)), typeof(IEqualityComparer<>).GetGenericType(genericArgs[0])],
-                            o, ((IDictionary)o).GetComparer())!;
-                    },
+                    CreateFinalCollectionCallback = // unfortunately we must use the ToFrozenDictionary<,> generic method, so we handle the possible exception in AOT mode
+                        [DynamicDependency(nameof(FrozenDictionary.ToFrozenDictionary), typeof(FrozenDictionary))]
+                        (t, o) =>
+                        {
+                            Type[] genericArgs = t.GenericTypeArguments;
+                            try
+                            {
+                                return typeof(FrozenDictionary).InvokeMethod(nameof(FrozenDictionary.ToFrozenDictionary),
+                                    genericArgs,
+                                    [Reflector.IEnumerableGenType.GetGenericType(Reflector.KeyValuePairType.GetGenericType(genericArgs)), typeof(IEqualityComparer<>).GetGenericType(genericArgs[0])],
+                                    o, ((IDictionary)o).GetComparer())!;
+                            }
+                            catch (NotSupportedException e) when (!RuntimeFeature.IsDynamicCodeSupported)
+                            {
+                                return Throw.SerializationException<object>(Res.GenericMethodMissingAot($"{typeof(FrozenDictionary).FullName}.{nameof(FrozenDictionary.ToFrozenDictionary)}<TKey, TValue>",
+                                    "FrozenDictionary<MyKeyType, MyValueType>.Empty.ToFrozenDictionary();", genericArgs), e);
+                            }
+                        }
                 }
             },
 #endif
@@ -1933,6 +2149,74 @@ namespace KGySoft.Serialization.Binary
         /// <summary>
         /// Supported collection types, including some types that are not collections but their elements can be encoded similar to collections.
         /// </summary>
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(List<>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(Queue<>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(Stack<>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(LinkedList<>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(HashSet<>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(CircularList<>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(ThreadSafeHashSet<>))]
+#if !NET35
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(SortedSet<>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(ConcurrentBag<>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(ConcurrentQueue<>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(ConcurrentStack<>))]
+#endif
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(ArrayList))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(Queue))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(Stack))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(StringCollection))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(Dictionary<,>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(SortedList<,>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(SortedDictionary<,>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(CircularSortedList<,>))]
+#if !NET35
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(ConcurrentDictionary<,>))]
+#endif
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(ThreadSafeDictionary<,>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(AllowNullDictionary<,>))]
+#if NET9_0_OR_GREATER
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(OrderedDictionary<,>))]
+#endif
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(Hashtable))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(SortedList))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(ListDictionary))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(HybridDictionary))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(OrderedDictionary))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(StringDictionary))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(StringKeyedDictionary<>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(ArraySegment<>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(ArraySection<>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(Array2D<>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(Array3D<>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(CastArray<,>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(CastArray2D<,>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(CastArray3D<,>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(StrongBox<>))]
+#if !NET35
+        [DynamicDependency(DynamicallyAccessedMemberTypes.NonPublicFields, typeof(Tuple<>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.NonPublicFields, typeof(Tuple<,>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.NonPublicFields, typeof(Tuple<,,>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.NonPublicFields, typeof(Tuple<,,,>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.NonPublicFields, typeof(Tuple<,,,,>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.NonPublicFields, typeof(Tuple<,,,,,>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.NonPublicFields, typeof(Tuple<,,,,,,>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.NonPublicFields, typeof(Tuple<,,,,,,,>))]
+#endif
+#if NET47_OR_GREATER || !NETFRAMEWORK
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicFields, typeof(ValueTuple<>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicFields, typeof(ValueTuple<,>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicFields, typeof(ValueTuple<,,>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicFields, typeof(ValueTuple<,,,>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicFields, typeof(ValueTuple<,,,,>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicFields, typeof(ValueTuple<,,,,,>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicFields, typeof(ValueTuple<,,,,,,>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicFields, typeof(ValueTuple<,,,,,,,>))]
+#endif
+#if NETCOREAPP
+        [DynamicDependency(DynamicallyAccessedMemberTypes.NonPublicConstructors, typeof(ImmutableArray))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.NonPublicConstructors, typeof(ImmutableArray<>.Builder))]
+#endif
         private static readonly Dictionary<Type, DataTypes> supportedCollections = new()
         {
             // Array is not here because that is an abstract type. Arrays are handled separately.

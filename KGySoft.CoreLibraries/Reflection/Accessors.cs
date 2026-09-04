@@ -22,6 +22,13 @@ using System.Collections;
 #if !NET35
 using System.Collections.Concurrent;
 #endif
+#if NET8_0_OR_GREATER
+using System.Collections.Frozen;
+#endif
+#if NETCOREAPP
+using System.Collections.Immutable;
+#endif
+using System.Collections.Specialized;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
@@ -462,7 +469,7 @@ namespace KGySoft.Reflection
             {
                 for (Type? t = key.DeclaringType; t != Reflector.ObjectType; t = t.BaseType)
                 {
-                    FieldInfo[] fieldArray = t!.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+                    FieldInfo[] fieldArray = t!.GetFields(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
                     FieldInfo? field = fieldArray.FirstOrDefault(f => (key.FieldType == null || f.FieldType == key.FieldType) && f.Name == key.FieldNamePattern) // exact name first
                         ?? fieldArray.FirstOrDefault(f => (key.FieldType == null || f.FieldType == key.FieldType)
                             && (key.FieldNamePattern == null || f.Name.Contains(key.FieldNamePattern, StringComparison.OrdinalIgnoreCase)));
@@ -479,15 +486,6 @@ namespace KGySoft.Reflection
             if (fields == null)
                 Interlocked.CompareExchange(ref fields, new LockFreeCache<(Type, Type?, string?), FieldAccessor?>(GetFieldAccessor, null, LockFreeCacheOptions.Profile128), null);
             return fields[(type, fieldType, fieldNamePattern)];
-        }
-
-        [RequiresUnreferencedCode("GetField")]
-        private static object? GetFieldValue(object obj, string fieldName)
-        {
-            FieldAccessor? field = GetField(obj.GetType(), null, fieldName);
-            if (field == null)
-                Throw.InvalidOperationException(Res.ReflectionInstanceFieldDoesNotExist(fieldName, obj.GetType()));
-            return field.Get(obj);
         }
 
         [RequiresUnreferencedCode("GetField")]
@@ -1106,11 +1104,14 @@ namespace KGySoft.Reflection
 
         [RequiresUnreferencedCode("GetProperty")]
         [DynamicDependency(nameof(HashSet<>.Count), typeof(HashSet<>))]
+        [DynamicDependency(nameof(ImmutableArray<>.Builder.Count), typeof(ImmutableArray<>.Builder))]
+        [DynamicDependency(nameof(ImmutableHashSet<>.Builder.Count), typeof(ImmutableHashSet<>.Builder))]
+        [DynamicDependency(nameof(StringDictionary.Count), typeof(StringDictionary))]
         internal static int Count([NoEnumeration]this IEnumerable collection)
         {
             if (collection is ICollection c)
                 return c.Count;
-            PropertyAccessor? property = GetProperty(collection.GetType(), "Count"); // StringDictionary, and supported ICollections in AOT when the interfaces are removed
+            PropertyAccessor? property = GetProperty(collection.GetType(), "Count");
             if (property == null)
                 Throw.InvalidOperationException(Res.ReflectionInstancePropertyDoesNotExist("Count", collection.GetType()));
             return (int)property.Get(collection)!;
@@ -1126,9 +1127,12 @@ namespace KGySoft.Reflection
 #if NET9_0_OR_GREATER
         [DynamicDependency(nameof(OrderedDictionary<,>.Capacity), typeof(OrderedDictionary<,>))]
 #endif
+#if NETCOREAPP
+        [DynamicDependency(nameof(ImmutableArray<>.Builder.Capacity), typeof(ImmutableArray<>.Builder))]
+#endif
         internal static int Capacity([NoEnumeration]this IEnumerable collection)
         {
-            PropertyAccessor? property = GetProperty(collection.GetType(), "Capacity"); // List<T>, CircularList<T>, SortedList<TKey, TValue>, SortedList, CircularSortedList<TKey, TValue>, ArrayList, OrderedDictionary<TKey, TValue>
+            PropertyAccessor? property = GetProperty(collection.GetType(), "Capacity");
             if (property == null)
                 Throw.InvalidOperationException(Res.ReflectionInstancePropertyDoesNotExist("Capacity", collection.GetType()));
             return (int)property.Get(collection)!;
@@ -1148,6 +1152,44 @@ namespace KGySoft.Reflection
         }
 
         [RequiresUnreferencedCode("GetProperty, GetField")]
+        [DynamicDependency(nameof(HashSet<>.Comparer), typeof(HashSet<>))]
+        [DynamicDependency(nameof(ThreadSafeHashSet<>.Comparer), typeof(ThreadSafeHashSet<>))]
+#if !NET35
+        [DynamicDependency(nameof(SortedSet<>.Comparer), typeof(SortedSet<>))]
+#endif
+        [DynamicDependency(nameof(Dictionary<,>.Comparer), typeof(Dictionary<,>))]
+        [DynamicDependency(nameof(SortedList<,>.Comparer), typeof(SortedList<,>))]
+        [DynamicDependency(nameof(SortedDictionary<,>.Comparer), typeof(SortedDictionary<,>))]
+        [DynamicDependency(nameof(CircularSortedList<,>.Comparer), typeof(CircularSortedList<,>))]
+#if NET6_0_OR_GREATER
+        [DynamicDependency(nameof(ConcurrentDictionary<,>.Comparer), typeof(ConcurrentDictionary<,>))]
+#elif !NET35
+        [DynamicDependency("_comparer", typeof(ConcurrentDictionary<,>))]
+#endif
+        [DynamicDependency(nameof(ThreadSafeDictionary<,>.Comparer), typeof(ThreadSafeDictionary<,>))]
+        [DynamicDependency(nameof(AllowNullDictionary<,>.Comparer), typeof(AllowNullDictionary<,>))]
+#if NET9_0_OR_GREATER
+        [DynamicDependency(nameof(OrderedDictionary<,>.Comparer), typeof(OrderedDictionary<,>))]
+#endif
+        [DynamicDependency("EqualityComparer", typeof(Hashtable))]
+        [DynamicDependency("comparer", typeof(SortedList))]
+        [DynamicDependency("comparer", typeof(ListDictionary))]
+        [DynamicDependency("_comparer", typeof(OrderedDictionary))]
+        [DynamicDependency(nameof(StringKeyedDictionary<>.Comparer), typeof(StringKeyedDictionary<>))]
+#if NETCOREAPP
+        [DynamicDependency(nameof(ImmutableHashSet<>.KeyComparer), typeof(ImmutableHashSet<>))]
+        [DynamicDependency(nameof(ImmutableHashSet<>.Builder.KeyComparer), typeof(ImmutableHashSet<>.Builder))]
+        [DynamicDependency(nameof(ImmutableSortedSet<>.KeyComparer), typeof(ImmutableSortedSet<>))]
+        [DynamicDependency(nameof(ImmutableSortedSet<>.Builder.KeyComparer), typeof(ImmutableSortedSet<>.Builder))]
+        [DynamicDependency(nameof(ImmutableDictionary<,>.KeyComparer), typeof(ImmutableDictionary<,>))]
+        [DynamicDependency(nameof(ImmutableDictionary<,>.Builder.KeyComparer), typeof(ImmutableDictionary<,>.Builder))]
+        [DynamicDependency(nameof(ImmutableSortedDictionary<,>.KeyComparer), typeof(ImmutableSortedDictionary<,>))]
+        [DynamicDependency(nameof(ImmutableSortedDictionary<,>.Builder.KeyComparer), typeof(ImmutableSortedDictionary<,>.Builder))]
+#endif
+#if NET8_0_OR_GREATER
+        [DynamicDependency(nameof(FrozenSet<>.Comparer), typeof(FrozenSet<>))]
+        [DynamicDependency(nameof(FrozenDictionary<,>.Comparer), typeof(FrozenDictionary<,>))]
+#endif
         internal static object? GetComparer([NoEnumeration]this IEnumerable collection)
         {
             // 1.) By Comparer/EqualityComparer/KeyComparer property
@@ -1163,8 +1205,20 @@ namespace KGySoft.Reflection
                 return property.Get(collection);
 
             // 2.) By *comparer* field
-            return GetField(type, null, "comparer")?.Get(collection); // SortedList, ListDictionary, OrderedDictionary, ConcurrentDictionary (< .NET 6)
+            FieldAccessor? field = GetField(type, null, "comparer");
+            if (field != null)
+                return field.Get(collection); // SortedList, ListDictionary, OrderedDictionary, ConcurrentDictionary (< .NET 6)
+
+            return Throw.SerializationException<object>(Res.ReflectionInstanceFieldDoesNotExist("comparer", type));
         }
+
+        [RequiresUnreferencedCode("GetPropertyValue")]
+        [DynamicDependency(nameof(ImmutableDictionary<,>.ValueComparer), typeof(ImmutableDictionary<,>))]
+        [DynamicDependency(nameof(ImmutableDictionary<,>.Builder.ValueComparer), typeof(ImmutableDictionary<,>.Builder))]
+        [DynamicDependency(nameof(ImmutableSortedDictionary<,>.ValueComparer), typeof(ImmutableSortedDictionary<,>))]
+        [DynamicDependency(nameof(ImmutableSortedDictionary<,>.Builder.ValueComparer), typeof(ImmutableSortedDictionary<,>.Builder))]
+        internal static object? GetValueComparer([NoEnumeration]this IEnumerable collection)
+            => GetPropertyValue(collection, "ValueComparer");
 
         #endregion
 
@@ -1284,6 +1338,24 @@ namespace KGySoft.Reflection
             if (field == null)
                 Throw.InvalidOperationException(Res.ReflectionInstanceFieldDoesNotExist(fieldNamePattern, type));
             return field;
+        }
+
+        [RequiresUnreferencedCode("GetField")]
+        internal static object? GetFieldValue(object obj, string fieldName)
+        {
+            FieldAccessor? field = GetField(obj.GetType(), null, fieldName);
+            if (field == null)
+                Throw.InvalidOperationException(Res.ReflectionInstanceFieldDoesNotExist(fieldName, obj.GetType()));
+            return field.Get(obj);
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        internal static object? GetFieldValue([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllFields)]this Type t, string fieldNamePattern)
+        {
+            FieldAccessor? field = GetField(t, null, fieldNamePattern);
+            if (field == null)
+                Throw.InvalidOperationException(Res.ReflectionStaticFieldDoesNotExist(fieldNamePattern, t));
+            return field.Get(null);
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
@@ -1422,7 +1494,7 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// For unambiguous generic static methods by name. The method may be missing in AOT mode only.
-        /// All caller use it for void methods now. If a non-void method will be required, change the return value to StrongBox{object?}? and return null if the method is missing.
+        /// All callers use it for void methods now. If a non-void method will be required, change the return value to StrongBox{object?}? and return null if the method is missing.
         /// </summary>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [RequiresDynamicCode("GetStaticGenericMethodByName")]

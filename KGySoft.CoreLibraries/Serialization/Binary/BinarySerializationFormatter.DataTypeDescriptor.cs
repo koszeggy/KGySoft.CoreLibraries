@@ -248,6 +248,7 @@ namespace KGySoft.Serialization.Binary
                 if (collectionDataType == DataTypes.Null)
                 {
                     Type = GetElementType(ElementDataType, br, manager, allowOpenTypes, out existingDescriptor);
+                    IsNullable = IsNullable(ElementDataType);
                     StoredType = existingDescriptor?.StoredType;
                     return Type;
                 }
@@ -265,6 +266,7 @@ namespace KGySoft.Serialization.Binary
                     {
                         ArgumentDescriptors[0] = new DataTypeDescriptor(ElementDataType, GetElementType(ElementDataType, br, manager, allowOpenTypes, out existingDescriptor), this)
                         {
+                            IsNullable = IsNullable(ElementDataType),
                             StoredType = existingDescriptor?.StoredType
                         };
                     }
@@ -286,15 +288,11 @@ namespace KGySoft.Serialization.Binary
                     }
 
                     result = GetCollectionType(collectionDataType);
-                    bool isNullable = IsNullable = result.IsNullable();
-                    if (!result.ContainsGenericParameters)
-                        return Type = result;
-
-                    Type typeDef = isNullable ? result.GetGenericArguments()[0] : result;
-                    result = typeDef.GetGenericType(ArgumentDescriptors.Select(d => d.Type!).ToArray());
-                    result = isNullable ? Reflector.NullableType.GetGenericType(result) : result;
+                    if (result.ContainsGenericParameters)
+                        result = result.GetGenericType(ArgumentDescriptors.Select(d => d.Type!).ToArray());
                 }
 
+                result = IsNullable ? Reflector.NullableType.GetGenericType(result) : result;
                 if (result.IsGenericTypeDefinition)
                     result = manager.HandleGenericTypeDef(br, new DataTypeDescriptor(result), allowOpenTypes, false).Type!;
                 return Type = result;
@@ -391,6 +389,9 @@ namespace KGySoft.Serialization.Binary
             [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private Type GetElementType(DataTypes dt, BinaryReader br, DeserializationManager manager, bool allowOpenTypes, out DataTypeDescriptor? existingDescriptor)
             {
+                // NOTE: Unlike in GetCollectionType, we return the actual nullable type if dt is nullable.
+                // Also, we don't set IsNullable (should be adjusted by the caller), because this method can be called by the parent descriptor where
+                // nullability refers to the child descriptor.
                 existingDescriptor = null;
                 switch (dt & ~DataTypes.Store7BitEncoded)
                 {
@@ -579,7 +580,6 @@ namespace KGySoft.Serialization.Binary
                         // nullable
                         if (IsNullable(dt))
                         {
-                            IsNullable = true;
                             Type underlyingType = GetElementType(dt & ~DataTypes.Nullable, br, manager, allowOpenTypes, out existingDescriptor);
                             return Reflector.NullableType.GetGenericType(underlyingType);
                         }
@@ -600,6 +600,10 @@ namespace KGySoft.Serialization.Binary
             [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private Type GetCollectionType(DataTypes collectionDataType)
             {
+                // NOTE: for nullable struct collection types we set the IsNullable property and return the non-nullable actual type.
+                // We could return a constructed open generic (e.g. System.Nullable`1[System.ValueTuple`2[T1,T2]]), but it would cause
+                // an issue in AOT mode where the IsGenericTypeDefinition of the extracted parameter returns false. Also, extracting
+                // the argument and then reconstructing the closed nullable type would be an overkill in non-AOT mode as well.
                 switch (collectionDataType)
                 {
                     case DataTypes.List:
@@ -706,11 +710,13 @@ namespace KGySoft.Serialization.Binary
                     case DataTypes.DictionaryEntry:
                         return Reflector.DictionaryEntryType;
                     case DataTypes.DictionaryEntryNullable:
-                        return typeof(DictionaryEntry?);
+                        IsNullable = true;
+                        return typeof(DictionaryEntry);
                     case DataTypes.KeyValuePair:
                         return Reflector.KeyValuePairType;
                     case DataTypes.KeyValuePairNullable:
-                        return Reflector.NullableType.GetGenericType(Reflector.KeyValuePairType);
+                        IsNullable = true;
+                        return Reflector.KeyValuePairType;
 
                     case DataTypes.ArraySegment:
                         return typeof(ArraySegment<>);
@@ -868,8 +874,7 @@ namespace KGySoft.Serialization.Binary
                         if (IsNullable(collectionDataType))
                         {
                             IsNullable = true;
-                            Type underlyingType = GetCollectionType(collectionDataType & ~DataTypes.NullableExtendedCollection);
-                            return Reflector.NullableType.GetGenericType(underlyingType);
+                            return GetCollectionType(collectionDataType & ~DataTypes.NullableExtendedCollection);
                         }
 
                         return Throw.SerializationException<Type>(Res.BinarySerializationCannotDecodeCollectionType(DataTypeToString(collectionDataType)));

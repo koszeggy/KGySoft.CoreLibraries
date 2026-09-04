@@ -15,16 +15,15 @@
 
 #region Usings
 
-using System.Collections.Generic;
-using System.Data;
-
 #region Used Namespaces
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 #if NETFRAMEWORK
 using System.CodeDom.Compiler;
 #endif
+using System.Collections.Generic;
+using System.Data;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 #if !NET35
 using System.Collections;
@@ -42,6 +41,7 @@ using KGySoft.Reflection;
 #region Used Aliases
 
 using TypeExtensions = KGySoft.CoreLibraries.TypeExtensions;
+using System.Runtime.CompilerServices;
 
 #endregion
 
@@ -61,12 +61,13 @@ namespace KGySoft.Serialization
     {
         #region Fields
 
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+            Justification = "Cannot apply RequiresUnreferencedCode to a field, but it's used in GetSerializableFields, which is annotated.")]
         [UnconditionalSuppressMessage("TrimAnalysis", "IL2070:TypeDynamicallyAccessedMemberTypesAnnotationMismatch",
             Justification = "Accessed via GetSerializableFields, where the type parameter is annotated.")]
-        private static readonly LockFreeCache<Type, FieldInfo[]> serializableFieldsCache = new(t =>
-            t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly)
-                .Where(f => !f.IsNotSerialized)
-                .OrderBy(f => f.MetadataToken).ToArray(), null, LockFreeCacheOptions.Profile1K);
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2111:DynamicallyAccessedMembersAttributeViaReflection",
+            Justification = "Cannot apply RequiresUnreferencedCode to a field, but it's used in GetSerializableFields, which is annotated.")]
+        private static readonly LockFreeCache<Type, FieldInfo[]> serializableFieldsCache = new(DoGetSerializableFields, null, LockFreeCacheOptions.Profile1K);
 
         private static readonly HashSet<Type> unsafeTypes =
         [
@@ -112,6 +113,8 @@ namespace KGySoft.Serialization
         #endregion
 
         #region Methods
+        
+        #region Internal Methods
 
         internal static FieldInfo[] GetSerializableFields([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllFields)]Type t) => serializableFieldsCache[t];
 
@@ -198,6 +201,28 @@ namespace KGySoft.Serialization
             Debug.Assert(!typeName.Contains(']') || typeName.IndexOf(',', typeName.LastIndexOf(']')) < 0, "Non-assembly qualified name expected");
             return KnownSimpleTypes.TryGetValue(typeName, out result);
         }
+
+        #endregion
+
+        #region Private Methods
+
+        private static FieldInfo[] DoGetSerializableFields([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllFields)]Type t)
+        {
+            IEnumerable<FieldInfo> fields = t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+                .Where(f => !f.IsNotSerialized);
+
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            // In native AOT mode the MetadataToken property throws an InvalidOperationException.
+            // Starting with .NET 7 the ordering is deterministic based upon the metadata ordering anyway.
+            // When trimming is used between .NET Core 3.0 and .NET 6, the ordering not deterministic. This is not necessarily a problem,
+            // because fields are identified by name, but the output of the serialization stream might not be identical between different builds.
+            if (!RuntimeFeature.IsDynamicCodeSupported)
+                return fields.ToArray();
+#endif
+            return fields.OrderBy(f => f.MetadataToken).ToArray();
+        }
+
+        #endregion
 
         #endregion
     }
