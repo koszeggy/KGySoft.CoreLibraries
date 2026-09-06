@@ -1256,11 +1256,19 @@ namespace KGySoft
         /// To force the recursive serialization of the collection enable both RecursiveSerializationAsFallback and ForcedSerializationOfReadOnlyMembersAndCollections options; however, deserialization will likely fail in this case. Using BinarySerializationAsFallback option may also work.</summary>
         internal static string XmlSerializationCannotSerializeUnsupportedCollection(Type type, XmlSerializationOptions options) => Get("XmlSerialization_CannotSerializeUnsupportedCollectionFormat", type.GetName(TypeNameKind.LongName), options.ToString<XmlSerializationOptions>());
 
+        /// <summary>Could not serialize collection "{0}" in native AOT mode with the following options: "{1}". If it is because the required members have been trimmed, you can prevent that from happening by adding the following snippet to your application initialization:
+        /// SerializedType _ = typeof(MySerializedType);</summary>
+        internal static string XmlSerializationCannotSerializeUnsupportedCollectionAot(Type type, XmlSerializationOptions options) => Get("XmlSerialization_CannotSerializeUnsupportedCollectionAotFormat", type.GetName(TypeNameKind.LongName), options.ToString<XmlSerializationOptions>());
+
         /// <summary>Type "{0}" does not implement IXmlSerializable.</summary>
         internal static string XmlSerializationNotAnIXmlSerializable(Type type) => Get("XmlSerialization_NotAnIXmlSerializableFormat", type.GetName(TypeNameKind.LongName));
 
         /// <summary>Type "{0}" does not have a parameterless constructor so it can be (de-)serialized either as a root element by SerializeContent and DeserializeContent or as a public property/field value in a parent object if the member value is not null after creating the parent object.</summary>
         internal static string XmlSerializationNoDefaultCtor(Type type) => Get("XmlSerialization_NoDefaultCtorFormat", type.GetName(TypeNameKind.LongName));
+
+        /// <summary>Parameterless constructor of collection "{0}" is either missing or has been trimmed in native AOT mode. You can prevent trimming the required members of a type by adding the following snippet to your application initialization:
+        /// SerializedType _ = typeof(MySerializedType);</summary>
+        internal static string XmlSerializationNoDefaultCtorAot(Type type) => Get("XmlSerialization_NoDefaultCtorAotFormat", type.GetName(TypeNameKind.LongName));
 
         /// <summary>Property value of "{0}.{1}" is expected to be a type of "{2}" but was "{3}".</summary>
         internal static string XmlSerializationPropertyTypeMismatch(Type declaringType, string propertyName, Type expectedType, Type actualType) => Get("XmlSerialization_PropertyTypeMismatchFormat", declaringType, propertyName, expectedType, actualType);

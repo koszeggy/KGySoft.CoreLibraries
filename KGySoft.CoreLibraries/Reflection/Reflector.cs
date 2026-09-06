@@ -4120,6 +4120,12 @@ namespace KGySoft.Reflection
             return interfaceEvent != null;
         }
 
+        // In AOT mode using just an educated guess (private property with a point in the name), because the interfaces and their methods can be trimmed
+        // Not a big deal if returns a wrong result: in worst case we must use fallback options or a SerializedType configuration to be able to serialize a type in XML.
+        internal static bool IsExplicitInterfaceImplementationInternal(this PropertyInfo property) => RuntimeFeature.IsDynamicCodeSupported
+            ? IsExplicitInterfaceImplementation(property)
+            : (property.CanRead ? property.GetGetMethod(true)! : property.GetSetMethod(true)!).IsPrivate && property.Name.IndexOf('.') >= 0;
+
         internal static Attribute[] GetAttributes(MemberInfo member, Type attributeType, bool inherit)
         {
             if (attributesCache == null)

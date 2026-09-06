@@ -23,6 +23,7 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Xml;
@@ -364,13 +365,18 @@ namespace KGySoft.Serialization.Xml
                     }
 
                     if (ctx.Visibility == DesignerSerializationVisibility.Content || RecursiveSerializationAsFallback)
-                        Throw.SerializationException(Res.XmlSerializationCannotSerializeUnsupportedCollection(ctx.Type, Options));
+                    {
+                        if (RuntimeFeature.IsDynamicCodeSupported)
+                            Throw.SerializationException(Res.XmlSerializationCannotSerializeUnsupportedCollection(ctx.Type, Options));
+                        Throw.SerializationException(Res.XmlSerializationCannotSerializeUnsupportedCollectionAot(ctx.Type, Options));
+                    }
+
                     Throw.SerializationException(Res.XmlSerializationCannotSerializeCollection(ctx.Type, Options));
                 }
 
                 // 2.) recursive serialization of any object, if requested
                 if (RecursiveSerializationAsFallback || ctx.Visibility == DesignerSerializationVisibility.Content
-                    // or when it has public properties/fields only
+                    // or when it has public properties/fields only with a parameterless constructor
                     || IsTrustedType(ctx.Type))
                 {
                     if (ctx.TypeNeeded)

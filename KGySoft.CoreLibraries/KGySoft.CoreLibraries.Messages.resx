@@ -863,6 +863,10 @@ Alternatively, you can include the type in the expectedTypes parameter at the de
   <data name="XmlSerialization_NoDefaultCtorFormat" xml:space="preserve">
     <value>Type "{0}" does not have a parameterless constructor so it can be (de-)serialized either as a root element by SerializeContent and DeserializeContent or as a public property/field value in a parent object if the member value is not null after creating the parent object.</value>
   </data>
+  <data name="XmlSerialization_NoDefaultCtorAotFormat" xml:space="preserve">
+    <value>Parameterless constructor of collection "{0}" is either missing or has been trimmed in native AOT mode. You can prevent trimming the required members of a type by adding the following snippet to your application initialization:
+SerializedType _ = typeof(MySerializedType);</value>
+  </data>
   <data name="XmlSerialization_ArrayDimensionSizeMismatchFormat" xml:space="preserve">
     <value>Cannot restore array "{0}" because length of the {1}. dimension does not match.</value>
   </data>
@@ -908,6 +912,10 @@ You can also use the BinarySerializationAsFallback option, which serializes also
   <data name="XmlSerialization_CannotSerializeUnsupportedCollectionFormat" xml:space="preserve">
     <value>Serialization of collection "{0}" is not supported with following options: "{1}", because it does not implement IList, IDictionary or ICollection&lt;T&gt; interfaces and has no initializer constructor that can accept an array or list.
 To force the recursive serialization of the collection enable both RecursiveSerializationAsFallback and ForcedSerializationOfReadOnlyMembersAndCollections options; however, deserialization will likely fail in this case. Using BinarySerializationAsFallback option may also work.</value>
+  </data>
+  <data name="XmlSerialization_CannotSerializeUnsupportedCollectionAotFormat" xml:space="preserve">
+    <value>Could not serialize collection "{0}" in native AOT mode with the following options: "{1}". If it is because the required members have been trimmed, you can prevent that from happening by adding the following snippet to your application initialization:
+SerializedType _ = typeof(MySerializedType);</value>
   </data>
   <data name="XmlSerialization_CrcError" xml:space="preserve">
     <value>Corrupt array data: Bad CRC.</value>

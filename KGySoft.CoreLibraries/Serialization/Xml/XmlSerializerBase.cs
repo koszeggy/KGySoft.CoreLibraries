@@ -112,6 +112,24 @@ namespace KGySoft.Serialization.Xml
 
         #region Static Fields
 
+        // PublicConstructors: if a collection initializer ctor or a ctor with comparer is used
+        // AllFields: required for collections with no regular [Try]Add method by interface. If such collections are returned by a read-only property,
+        //            the colection initializer constructor cannot be used, in which case the fields are copied instead.
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(List<>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(LinkedList<>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMembers.AllFields, typeof(Queue<>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMembers.AllFields, typeof(Stack<>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(ArrayList))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMembers.AllFields, typeof(Queue))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMembers.AllFields, typeof(Stack))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMembers.AllFields, typeof(BitArray))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(StringCollection))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(CircularList<>))]
+#if !NET35
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(ConcurrentBag<>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMembers.AllFields, typeof(ConcurrentQueue<>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMembers.AllFields, typeof(ConcurrentStack<>))]
+#endif
         private static readonly HashSet<Type> trustedCollections = new HashSet<Type>
         {
             Reflector.ListGenType,
@@ -134,6 +152,7 @@ namespace KGySoft.Serialization.Xml
 #endif
         };
 
+        // The required annotations are in XmlDeserializerBase
         private static readonly Dictionary<Type, ComparerType> knownCollectionsWithComparer = new()
         {
             { typeof(HashSet<>), ComparerType.Default },
@@ -359,7 +378,7 @@ namespace KGySoft.Serialization.Xml
                         || typeof(IXmlSerializable).IsAssignableFrom(p.PropertyType)
                         || IsTrustedCollection(p.PropertyType) || IsKnownCollection(p.PropertyType)))
                 // or, if it is an explicit interface implementation, we just ignore it
-                || Reflector.IsExplicitInterfaceImplementation(p))
+                || Reflector.IsExplicitInterfaceImplementationInternal(p))
             // fields:
             && type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).All(f =>
                 // must be public

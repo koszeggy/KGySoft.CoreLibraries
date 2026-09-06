@@ -239,6 +239,27 @@ namespace KGySoft.Serialization.Xml
             [nameof(BitArray.Length)] = [typeof(BitArray)],
         };
 
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(Dictionary<,>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(HashSet<>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(ThreadSafeHashSet<>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(SortedList<,>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(SortedDictionary<,>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(CircularSortedList<,>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(ThreadSafeDictionary<,>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(StringKeyedDictionary<>))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(AllowNullDictionary<,>))]
+#if !NET35
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(SortedSet<>))] 
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(ConcurrentDictionary<,>))]
+#endif
+#if NET9_0_OR_GREATER
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(OrderedDictionary<,>))]
+#endif
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(Hashtable))] // parameterless is required when no comparer is specified
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(SortedList))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(ListDictionary))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(HybridDictionary))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(OrderedDictionary))]
         [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
             Justification = "Cannot apply RequiresUnreferencedCode to a field, but the public entry points are annotated anyway.")]
         [UnconditionalSuppressMessage("TrimAnalysis", "IL2072:ParameterDynamicallyAccessedMemberTypesCannotBeDetermined",

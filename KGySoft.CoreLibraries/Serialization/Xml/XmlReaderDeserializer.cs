@@ -22,6 +22,7 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Security;
 using System.Text;
 using System.Xml;
@@ -469,7 +470,8 @@ namespace KGySoft.Serialization.Xml
                     string? attrComparer = ctx.Reader[XmlSerializer.AttributeComparer];
                     ctx.Result = attrComparer != null ? CreateKnownCollectionWithComparer(ctx.Type, attrComparer)
                         : ctx.Type.CanBeCreatedWithoutParameters() ? CreateInstanceAccessor.GetAccessor(ctx.Type).CreateInstance()
-                        : Throw.ReflectionException<object>(Res.XmlSerializationNoDefaultCtor(ctx.Type));
+                        : RuntimeFeature.IsDynamicCodeSupported ? Throw.ReflectionException<object>(Res.XmlSerializationNoDefaultCtor(ctx.Type))
+                        : Throw.ReflectionException<object>(Res.XmlSerializationNoDefaultCtorAot(ctx.Type));
                 }
 
                 // 5.) New collection by collectionCtor again (there IS defaultCtor but the new instance is read-only so falling back to collectionCtor)

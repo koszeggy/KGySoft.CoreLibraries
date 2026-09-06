@@ -562,7 +562,7 @@ namespace KGySoft.Serialization.Xml
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeSafe{T}(XElement, Type[])"/> overload for details.
         /// </summary>
         /// <param name="content">XML content of the object.</param>
-        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML <paramref name="content"/>.
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to be present in the XML <paramref name="content"/>.
         /// If <paramref name="content"/> does not contain any natively not supported types, then this parameter is optional.</param>
         /// <returns>The deserialized object.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="content"/> must not be <see langword="null"/>.</exception>
@@ -580,7 +580,7 @@ namespace KGySoft.Serialization.Xml
         /// </summary>
         /// <typeparam name="T">The expected type of the result.</typeparam>
         /// <param name="content">XML content of the object.</param>
-        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML <paramref name="content"/>.
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to be present in the XML <paramref name="content"/>.
         /// If <paramref name="content"/> does not contain any natively not supported types, then this parameter is optional.</param>
         /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="content"/> must not be <see langword="null"/>.</exception>
@@ -609,7 +609,7 @@ namespace KGySoft.Serialization.Xml
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeSafe{T}(XElement, Type[])"/> overload for details.
         /// </summary>
         /// <param name="content">XML content of the object.</param>
-        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML <paramref name="content"/>.
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to be present in the XML <paramref name="content"/>.
         /// If <paramref name="content"/> does not contain any natively not supported types, then this parameter can be <see langword="null"/>.</param>
         /// <returns>The deserialized object.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="content"/> must not be <see langword="null"/>.</exception>
@@ -628,7 +628,7 @@ namespace KGySoft.Serialization.Xml
         /// </summary>
         /// <typeparam name="T">The expected type of the result.</typeparam>
         /// <param name="content">XML content of the object.</param>
-        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML <paramref name="content"/>.
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to be present in the XML <paramref name="content"/>.
         /// If <paramref name="content"/> does not contain any natively not supported types, then this parameter can be <see langword="null"/>.</param>
         /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="content"/> must not be <see langword="null"/>.</exception>
@@ -706,7 +706,7 @@ namespace KGySoft.Serialization.Xml
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeSafe{T}(XmlReader, Type[])"/> overload for details.
         /// </summary>
         /// <param name="reader">An <see cref="XmlReader"/> object to be used for the deserialization.</param>
-        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML data.
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to be present in the XML data.
         /// If the serialization stream does not contain any natively not supported types, then this parameter is optional.</param>
         /// <returns>The deserialized object.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="reader"/> must not be <see langword="null"/>.</exception>
@@ -724,7 +724,7 @@ namespace KGySoft.Serialization.Xml
         /// </summary>
         /// <typeparam name="T">The expected type of the result.</typeparam>
         /// <param name="reader">An <see cref="XmlReader"/> object to be used for the deserialization.</param>
-        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML data.
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to be present in the XML data.
         /// If the serialization stream does not contain any natively not supported types, then this parameter is optional.</param>
         /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="reader"/> must not be <see langword="null"/>.</exception>
@@ -753,7 +753,7 @@ namespace KGySoft.Serialization.Xml
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeSafe{T}(XmlReader, Type[])"/> overload for details.
         /// </summary>
         /// <param name="reader">An <see cref="XmlReader"/> object to be used for the deserialization.</param>
-        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML data.
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to be present in the XML data.
         /// If the serialization stream does not contain any natively not supported types, then this parameter can be <see langword="null"/>.</param>
         /// <returns>The deserialized object.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="reader"/> must not be <see langword="null"/>.</exception>
@@ -772,7 +772,7 @@ namespace KGySoft.Serialization.Xml
         /// </summary>
         /// <typeparam name="T">The expected type of the result.</typeparam>
         /// <param name="reader">An <see cref="XmlReader"/> object to be used for the deserialization.</param>
-        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML data.
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to be present in the XML data.
         /// If the serialization stream does not contain any natively not supported types, then this parameter can be <see langword="null"/>.</param>
         /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="reader"/> must not be <see langword="null"/>.</exception>
@@ -878,7 +878,7 @@ namespace KGySoft.Serialization.Xml
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeSafe{T}(XmlReader, Type[])"/> overload for details.
         /// </summary>
         /// <param name="reader">A <see cref="TextReader"/> object to be used for the deserialization. The reader is not closed after the deserialization.</param>
-        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML data.
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to be present in the XML data.
         /// If the serialization stream does not contain any natively not supported types, then this parameter is optional.</param>
         /// <returns>The deserialized object.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="reader"/> must not be <see langword="null"/>.</exception>
@@ -897,7 +897,7 @@ namespace KGySoft.Serialization.Xml
         /// </summary>
         /// <typeparam name="T">The expected type of the result.</typeparam>
         /// <param name="reader">A <see cref="TextReader"/> object to be used for the deserialization. The reader is not closed after the deserialization.</param>
-        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML data.
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to be present in the XML data.
         /// If the serialization stream does not contain any natively not supported types, then this parameter is optional.</param>
         /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="reader"/> must not be <see langword="null"/>.</exception>
@@ -915,7 +915,7 @@ namespace KGySoft.Serialization.Xml
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeSafe{T}(XmlReader, Type[])"/> overload for details.
         /// </summary>
         /// <param name="reader">A <see cref="TextReader"/> object to be used for the deserialization. The reader is not closed after the deserialization.</param>
-        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML data.
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to be present in the XML data.
         /// If the serialization stream does not contain any natively not supported types, then this parameter can be <see langword="null"/>.</param>
         /// <returns>The deserialized object.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="reader"/> must not be <see langword="null"/>.</exception>
@@ -934,7 +934,7 @@ namespace KGySoft.Serialization.Xml
         /// </summary>
         /// <typeparam name="T">The expected type of the result.</typeparam>
         /// <param name="reader">A <see cref="TextReader"/> object to be used for the deserialization. The reader is not closed after the deserialization.</param>
-        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML data.
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to be present in the XML data.
         /// If the serialization stream does not contain any natively not supported types, then this parameter can be <see langword="null"/>.</param>
         /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="reader"/> must not be <see langword="null"/>.</exception>
@@ -1061,7 +1061,7 @@ namespace KGySoft.Serialization.Xml
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeSafe{T}(XmlReader, Type[])"/> overload for details.
         /// </summary>
         /// <param name="fileName">The path to the file that contains the serialized content.</param>
-        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML data.
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to be present in the XML data.
         /// If the serialization stream does not contain any natively not supported types, then this parameter is optional.</param>
         /// <returns>The deserialized object.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="fileName"/> must not be <see langword="null"/>.</exception>
@@ -1080,7 +1080,7 @@ namespace KGySoft.Serialization.Xml
         /// </summary>
         /// <typeparam name="T">The expected type of the result.</typeparam>
         /// <param name="fileName">The path to the file that contains the serialized content.</param>
-        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML data.
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to be present in the XML data.
         /// If the serialization stream does not contain any natively not supported types, then this parameter is optional.</param>
         /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="fileName"/> must not be <see langword="null"/>.</exception>
@@ -1098,7 +1098,7 @@ namespace KGySoft.Serialization.Xml
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeSafe{T}(XmlReader, Type[])"/> overload for details.
         /// </summary>
         /// <param name="fileName">The path to the file that contains the serialized content.</param>
-        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML data.
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to be present in the XML data.
         /// If the serialization stream does not contain any natively not supported types, then this parameter can be <see langword="null"/>.</param>
         /// <returns>The deserialized object.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="fileName"/> must not be <see langword="null"/>.</exception>
@@ -1117,7 +1117,7 @@ namespace KGySoft.Serialization.Xml
         /// </summary>
         /// <typeparam name="T">The expected type of the result.</typeparam>
         /// <param name="fileName">The path to the file that contains the serialized content.</param>
-        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML data.
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to be present in the XML data.
         /// If the serialization stream does not contain any natively not supported types, then this parameter can be <see langword="null"/>.</param>
         /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="fileName"/> must not be <see langword="null"/>.</exception>
@@ -1249,7 +1249,7 @@ namespace KGySoft.Serialization.Xml
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeSafe{T}(XmlReader, Type[])"/> overload for details.
         /// </summary>
         /// <param name="stream">A <see cref="Stream"/> object to be used for the deserialization. The stream is not closed after the deserialization.</param>
-        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML <paramref name="stream"/>.
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to be present in the XML <paramref name="stream"/>.
         /// If the serialization stream does not contain any natively not supported types, then this parameter is optional.</param>
         /// <returns>The deserialized object.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="stream"/> must not be <see langword="null"/>.</exception>
@@ -1268,7 +1268,7 @@ namespace KGySoft.Serialization.Xml
         /// </summary>
         /// <typeparam name="T">The expected type of the result.</typeparam>
         /// <param name="stream">A <see cref="Stream"/> object to be used for the deserialization. The stream is not closed after the deserialization.</param>
-        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML <paramref name="stream"/>.
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to be present in the XML <paramref name="stream"/>.
         /// If the serialization stream does not contain any natively not supported types, then this parameter is optional.</param>
         /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="stream"/> must not be <see langword="null"/>.</exception>
@@ -1286,7 +1286,7 @@ namespace KGySoft.Serialization.Xml
         /// <br/>See the <strong>Remarks</strong> section of the <see cref="DeserializeSafe{T}(XmlReader, Type[])"/> overload for details.
         /// </summary>
         /// <param name="stream">A <see cref="Stream"/> object to be used for the deserialization. The stream is not closed after the deserialization.</param>
-        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML <paramref name="stream"/>.
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to be present in the XML <paramref name="stream"/>.
         /// If the serialization stream does not contain any natively not supported types, then this parameter can be <see langword="null"/>.</param>
         /// <returns>The deserialized object.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="stream"/> must not be <see langword="null"/>.</exception>
@@ -1305,7 +1305,7 @@ namespace KGySoft.Serialization.Xml
         /// </summary>
         /// <typeparam name="T">The expected type of the result.</typeparam>
         /// <param name="stream">A <see cref="Stream"/> object to be used for the deserialization. The stream is not closed after the deserialization.</param>
-        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML <paramref name="stream"/>.
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to be present in the XML <paramref name="stream"/>.
         /// If the serialization stream does not contain any natively not supported types, then this parameter can be <see langword="null"/>.</param>
         /// <returns>The deserialized instance of <typeparamref name="T"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="stream"/> must not be <see langword="null"/>.</exception>
@@ -1390,7 +1390,7 @@ namespace KGySoft.Serialization.Xml
         /// </summary>
         /// <param name="obj">The already constructed object whose inner state has to be deserialized.</param>
         /// <param name="content">XML content of the object.</param>
-        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML <paramref name="content"/>.
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to be present in the XML <paramref name="content"/>.
         /// If <paramref name="content"/> does not contain any natively not supported types, then this parameter is optional.</param>
         /// <returns>The deserialized object.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="obj"/> and <paramref name="content"/> must not be <see langword="null"/>.</exception>
@@ -1418,7 +1418,7 @@ namespace KGySoft.Serialization.Xml
         /// </summary>
         /// <param name="obj">The already constructed object whose inner state has to be deserialized.</param>
         /// <param name="content">XML content of the object.</param>
-        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML <paramref name="content"/>.
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to be present in the XML <paramref name="content"/>.
         /// If <paramref name="content"/> does not contain any natively not supported types, then this parameter can be <see langword="null"/>.</param>
         /// <returns>The deserialized object.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="obj"/> and <paramref name="content"/> must not be <see langword="null"/>.</exception>
@@ -1485,7 +1485,7 @@ namespace KGySoft.Serialization.Xml
         /// </summary>
         /// <param name="obj">The already constructed object whose inner state has to be deserialized.</param>
         /// <param name="reader">An <see cref="XmlReader"/> instance to be used to read the XML content. The reader must be at the correct position for a successful deserialization.</param>
-        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML data.
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to be present in the XML data.
         /// If the serialization stream does not contain any natively not supported types, then this parameter is optional.</param>
         /// <returns>The deserialized object.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="obj"/> and <paramref name="reader"/> must not be <see langword="null"/>.</exception>
@@ -1512,7 +1512,7 @@ namespace KGySoft.Serialization.Xml
         /// </summary>
         /// <param name="obj">The already constructed object whose inner state has to be deserialized.</param>
         /// <param name="reader">An <see cref="XmlReader"/> instance to be used to read the XML content. The reader must be at the correct position for a successful deserialization.</param>
-        /// <param name="expectedCustomTypes">The natively not supported types that are expected to present in the XML data.
+        /// <param name="expectedCustomTypes">The natively not supported types that are expected to be present in the XML data.
         /// If the serialization stream does not contain any natively not supported types, then this parameter can be <see langword="null"/>.</param>
         /// <returns>The deserialized object.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="obj"/> and <paramref name="reader"/> must not be <see langword="null"/>.</exception>

@@ -24,6 +24,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Xml;
@@ -370,7 +371,12 @@ namespace KGySoft.Serialization.Xml
                     if (comparer == ComparerType.Unknown)
                         Throw.SerializationException(Res.XmlSerializationCannotSerializeUnsupportedComparer(ctx.Type, Options));
                     if (ctx.Visibility == DesignerSerializationVisibility.Content || RecursiveSerializationAsFallback)
-                        Throw.SerializationException(Res.XmlSerializationCannotSerializeUnsupportedCollection(ctx.Type, Options));
+                    {
+                        if (RuntimeFeature.IsDynamicCodeSupported)
+                            Throw.SerializationException(Res.XmlSerializationCannotSerializeUnsupportedCollection(ctx.Type, Options));
+                        Throw.SerializationException(Res.XmlSerializationCannotSerializeUnsupportedCollectionAot(ctx.Type, Options));
+                    }
+
                     Throw.SerializationException(Res.XmlSerializationCannotSerializeCollection(ctx.Type, Options));
                 }
 

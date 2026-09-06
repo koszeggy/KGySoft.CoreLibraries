@@ -759,7 +759,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 new byte[][,] { new byte[,] { { 11, 12, 13 }, { 21, 22, 23 } }, new byte[,] { { 11, 12, 13, 14 }, { 21, 22, 23, 24 }, { 31, 32, 33, 34 } } }, // crazy jagged byte array 1 (2D matrix of 1D arrays)
                 new byte[,][] { { new byte[] { 11, 12, 13 }, new byte[] { 21, 22, 23 } }, { new byte[] { 11, 12, 13, 14 }, new byte[] { 21, 22, 23, 24 } } }, // crazy jagged byte array 2 (1D array of 2D matrices)
                 new byte[][,,] { new byte[,,] { { { 11, 12, 13 }, { 21, 21, 23 } } }, null }, // crazy jagged byte array containing null reference
-#if !AOT
+#if !AOT // PlatformNotSupportedException: Arrays with non-zero lower bounds are not supported.
                 Array.CreateInstance(typeof(byte), new int[] { 3 }, new int[] { -1 }), // array with -1..1 index interval
                 Array.CreateInstance(typeof(byte), new int[] { 3, 3 }, new int[] { -1, 1 }) // array with [-1..1 and 1..3] index interval
 #endif
@@ -800,7 +800,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 #endif
             KGySerializeObjects(referenceObjects, false);
 
-#if !AOT
+#if !AOT // PlatformNotSupportedException: Arrays with non-zero lower bounds are not supported.
             // system serializer (and also compatible mode) fails here: cannot cast string[*] to object[]
             referenceObjects = new[]
             {
