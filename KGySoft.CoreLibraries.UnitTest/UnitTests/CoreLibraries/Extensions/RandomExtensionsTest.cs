@@ -135,7 +135,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             var rnd = new FastRandom();
 
             // min > max
-            Throws<ArgumentOutOfRangeException>(() => rnd.NextInt32(1, 0));
+            AssertThrows<ArgumentOutOfRangeException>(() => rnd.NextInt32(1, 0));
 
             var result = rnd.NextInt32(1, 2);
             Assert.AreEqual(1, result);
@@ -171,7 +171,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             var rnd = new Random();
 
             // min > max
-            Throws<ArgumentOutOfRangeException>(() => rnd.NextUInt32(1, 0));
+            AssertThrows<ArgumentOutOfRangeException>(() => rnd.NextUInt32(1, 0));
 
             // no range
             uint result = rnd.NextUInt32(1, 1);
@@ -208,7 +208,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             var rnd = new Random();
 
             // min > max
-            Throws<ArgumentOutOfRangeException>(() => RandomExtensions.NextInt64(rnd, 1, 0));
+            AssertThrows<ArgumentOutOfRangeException>(() => RandomExtensions.NextInt64(rnd, 1, 0));
 
             // no range
             long result = RandomExtensions.NextInt64(rnd, 0);
@@ -250,7 +250,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             var rnd = new Random();
 
             // min > max
-            Throws<ArgumentOutOfRangeException>(() => rnd.NextUInt64(1, 0));
+            AssertThrows<ArgumentOutOfRangeException>(() => rnd.NextUInt64(1, 0));
 
             // no range
             ulong result = rnd.NextUInt64(0);
@@ -293,7 +293,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             var rnd = new Random();
 
             // min > max
-            Throws<ArgumentOutOfRangeException>(() => rnd.NextBigInteger(BigInteger.One, BigInteger.Zero));
+            AssertThrows<ArgumentOutOfRangeException>(() => rnd.NextBigInteger(BigInteger.One, BigInteger.Zero));
 
             // no range
             BigInteger result = rnd.SampleBigInteger(0);
@@ -348,7 +348,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             var rnd = new Random();
 
             // min > max
-            Throws<ArgumentOutOfRangeException>(() => rnd.NextInt128(1, 0));
+            AssertThrows<ArgumentOutOfRangeException>(() => rnd.NextInt128(1, 0));
 
             // no range
             Int128 result = rnd.NextInt128(0);
@@ -390,7 +390,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             var rnd = new Random();
 
             // min > max
-            Throws<ArgumentOutOfRangeException>(() => rnd.NextUInt128(1, 0));
+            AssertThrows<ArgumentOutOfRangeException>(() => rnd.NextUInt128(1, 0));
 
             // no range
             UInt128 result = rnd.NextUInt128(0);
@@ -460,9 +460,9 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test(rnd, Double.MaxValue, Double.PositiveInfinity);
             Test(rnd, Double.NegativeInfinity, Double.MinValue);
             Test(rnd, 1.7976931348623155E+308, Double.MaxValue);
-            Throws<ArgumentOutOfRangeException>(() => Test(rnd, Double.PositiveInfinity, Double.PositiveInfinity));
-            Throws<ArgumentOutOfRangeException>(() => Test(rnd, Double.NegativeInfinity, Double.NegativeInfinity));
-            Throws<ArgumentOutOfRangeException>(() => Test(rnd, 0, Double.NaN));
+            AssertThrows<ArgumentOutOfRangeException>(() => Test(rnd, Double.PositiveInfinity, Double.PositiveInfinity));
+            AssertThrows<ArgumentOutOfRangeException>(() => Test(rnd, Double.NegativeInfinity, Double.NegativeInfinity));
+            AssertThrows<ArgumentOutOfRangeException>(() => Test(rnd, 0, Double.NaN));
             Test(rnd, 0, Double.Epsilon);
             Test(rnd, Double.Epsilon, Double.Epsilon * 4);
             Test(rnd, Double.MaxValue / 4, Double.MaxValue);
@@ -819,10 +819,10 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             AssertAreEqual((Rune)0, result);
 
             // min > max
-            Throws<ArgumentOutOfRangeException>(() => rnd.NextRune((Rune)2, (Rune)1));
+            AssertThrows<ArgumentOutOfRangeException>(() => rnd.NextRune((Rune)2, (Rune)1));
 
             // Surrogate Rune is invalid
-            Throws<ArgumentOutOfRangeException>(() => rnd.NextRune(UnicodeCategory.Surrogate));
+            AssertThrows<ArgumentOutOfRangeException>(() => rnd.NextRune(UnicodeCategory.Surrogate));
 
             // But other categories are valid
             foreach (UnicodeCategory category in Enum<UnicodeCategory>.GetValues())

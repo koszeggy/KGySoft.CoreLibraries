@@ -165,7 +165,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
                 if (i % 2 == 0)
                     Assert.AreEqual(wordAsByte.Length - i, SliceAndGetLength());
                 else
-                    Throws<ArgumentException>(() => SliceAndGetLength(), Res.CastArraySliceWrongStartIndex(i, typeof(ushort), typeof(byte)));
+                    AssertThrows<ArgumentException>(() => SliceAndGetLength(), Res.CastArraySliceWrongStartIndex(i, typeof(ushort), typeof(byte)));
 
                 // but Span/Memory always works
 #if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER

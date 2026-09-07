@@ -417,8 +417,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             //KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: [typeof(Type), typeof(CallConvCdecl), typeof(CallConvStdcall)]);
             //KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: [typeof(Type), typeof(CallConvCdecl), typeof(CallConvStdcall)]);
 #else
-            Throws<ReflectionException>(() => KGySerializeObject(referenceObjects, XmlSerializationOptions.None, safeMode: XmlSafeMode.Unsafe), "Could not resolve type");
-            Throws<ReflectionException>(() => KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, false, safeMode: XmlSafeMode.Unsafe), "Could not resolve type");
+            AssertThrows<ReflectionException>(() => KGySerializeObject(referenceObjects, XmlSerializationOptions.None, safeMode: XmlSafeMode.Unsafe), "Could not resolve type");
+            AssertThrows<ReflectionException>(() => KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, false, safeMode: XmlSafeMode.Unsafe), "Could not resolve type");
 #endif
 #endif
         }
@@ -1126,7 +1126,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             string message = IsAot
                 ? Res.XmlSerializationCannotSerializeUnsupportedCollectionAot(typeof(StringDictionary), XmlSerializationOptions.RecursiveSerializationAsFallback)
                 : Res.XmlSerializationCannotSerializeUnsupportedCollection(typeof(StringDictionary), XmlSerializationOptions.RecursiveSerializationAsFallback);
-            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback), message);
+            AssertThrows<SerializationException>(() => KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback), message);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, false, expectedTypes: Reflector.EmptyArray<Type>());
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, expectedTypes: Reflector.EmptyArray<Type>());
         }
@@ -1221,10 +1221,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             ];
 
             // Default: serialization denied
-            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, alsoAsContent: false), "unsupported comparer");
+            AssertThrows<SerializationException>(() => KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, alsoAsContent: false), "unsupported comparer");
 
             // Forced recursive: the deserialized instance uses a default comparer
-            Throws<AssertionException>(() => KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback, alsoAsContent: false),
+            AssertThrows<AssertionException>(() => KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback, alsoAsContent: false),
 #if NET9_0_OR_GREATER
                 "Types are different. System.CultureAwareComparer <-> System.Collections.Generic.StringEqualityComparer"
 #else
@@ -1287,7 +1287,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             string message = IsAot
                 ? Res.XmlSerializationCannotSerializeUnsupportedCollectionAot(typeof(ReadOnlyCollectionWithoutInitCtorAndReadOnlyProperties), XmlSerializationOptions.RecursiveSerializationAsFallback)
                 : Res.XmlSerializationCannotSerializeUnsupportedCollection(typeof(ReadOnlyCollectionWithoutInitCtorAndReadOnlyProperties), XmlSerializationOptions.RecursiveSerializationAsFallback);
-            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback), message);
+            AssertThrows<SerializationException>(() => KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback), message);
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, safeMode: XmlSafeMode.Medium);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, false, XmlSafeMode.Medium);
         }
@@ -1360,7 +1360,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
 
-            Throws<AssertionException>(() => KGySerializeObjects(referenceObjects, XmlSerializationOptions.ExcludeFields), "Equality check failed");
+            AssertThrows<AssertionException>(() => KGySerializeObjects(referenceObjects, XmlSerializationOptions.ExcludeFields), "Equality check failed");
         }
 
         /// <summary>
@@ -1578,12 +1578,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             // In safe mode setting pointer fields are supported only if they are set to null
             KGySerializeObject(referenceObjects[0], XmlSerializationOptions.RecursiveSerializationAsFallback, safeMode: XmlSafeMode.Medium);
             KGySerializeObject(referenceObjects[0], XmlSerializationOptions.RecursiveSerializationAsFallback, safeMode: XmlSafeMode.Strict);
-            Throws<SerializationException>(() => KGySerializeObject(referenceObjects[1], XmlSerializationOptions.RecursiveSerializationAsFallback, safeMode: XmlSafeMode.Medium));
-            Throws<SerializationException>(() => KGySerializeObject(referenceObjects[1], XmlSerializationOptions.RecursiveSerializationAsFallback, safeMode: XmlSafeMode.Strict, expectedTypes: [unsafeTypeStruct]));
+            AssertThrows<SerializationException>(() => KGySerializeObject(referenceObjects[1], XmlSerializationOptions.RecursiveSerializationAsFallback, safeMode: XmlSafeMode.Medium));
+            AssertThrows<SerializationException>(() => KGySerializeObject(referenceObjects[1], XmlSerializationOptions.RecursiveSerializationAsFallback, safeMode: XmlSafeMode.Strict, expectedTypes: [unsafeTypeStruct]));
 
             // But as a compact struct, pointer fields are not supported at all in safe mode
-            Throws<ArgumentException>(() => KGySerializeObject(referenceObjects[0], XmlSerializationOptions.CompactSerializationOfStructures, safeMode: XmlSafeMode.Medium), Res.XmlSerializationValueTypeContainsReferenceOrPointerSafe(unsafeTypeStruct));
-            Throws<ArgumentException>(() => KGySerializeObject(referenceObjects[0], XmlSerializationOptions.CompactSerializationOfStructures, safeMode: XmlSafeMode.Strict, expectedTypes: [unsafeTypeStruct]), Res.XmlSerializationValueTypeContainsReferenceOrPointerSafe(unsafeTypeStruct));
+            AssertThrows<ArgumentException>(() => KGySerializeObject(referenceObjects[0], XmlSerializationOptions.CompactSerializationOfStructures, safeMode: XmlSafeMode.Medium), Res.XmlSerializationValueTypeContainsReferenceOrPointerSafe(unsafeTypeStruct));
+            AssertThrows<ArgumentException>(() => KGySerializeObject(referenceObjects[0], XmlSerializationOptions.CompactSerializationOfStructures, safeMode: XmlSafeMode.Strict, expectedTypes: [unsafeTypeStruct]), Res.XmlSerializationValueTypeContainsReferenceOrPointerSafe(unsafeTypeStruct));
 
             int intValue = 1;
             referenceObjects =
@@ -1593,9 +1593,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 GetFunctionPointerArray()
             ];
 
-            Throws<NotSupportedException>(() => KGySerializeObject(referenceObjects[0], XmlSerializationOptions.RecursiveSerializationAsFallback), Res.SerializationPointerArrayTypeNotSupported(referenceObjects[0].GetType()));
+            AssertThrows<NotSupportedException>(() => KGySerializeObject(referenceObjects[0], XmlSerializationOptions.RecursiveSerializationAsFallback), Res.SerializationPointerArrayTypeNotSupported(referenceObjects[0].GetType()));
 #if NET8_0_OR_GREATER
-            Throws<NotSupportedException>(() => KGySerializeObject(referenceObjects[1], XmlSerializationOptions.RecursiveSerializationAsFallback), Res.SerializationPointerArrayTypeNotSupported(referenceObjects[1].GetType()));
+            AssertThrows<NotSupportedException>(() => KGySerializeObject(referenceObjects[1], XmlSerializationOptions.RecursiveSerializationAsFallback), Res.SerializationPointerArrayTypeNotSupported(referenceObjects[1].GetType()));
 #else
             Throws<NotSupportedException>(() => KGySerializeObject(referenceObjects[1], XmlSerializationOptions.RecursiveSerializationAsFallback), Res.SerializationFunctionPointerTypeNotSupported);
 #endif
@@ -1666,17 +1666,17 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             };
 
             // Ref properties are ignored by default
-            Throws<AssertionException>(() => KGySerializeObject(testObj, XmlSerializationOptions.RecursiveSerializationAsFallback), "Equality check failed");
+            AssertThrows<AssertionException>(() => KGySerializeObject(testObj, XmlSerializationOptions.RecursiveSerializationAsFallback), "Equality check failed");
 
             // But they can be included. Ref readonly is handled as normal read-only: they are considered for collections
             if (IsAot)
-                Throws<PlatformNotSupportedException>(() => KGySerializeObject(testObj, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.IncludeRefProperties));
+                AssertThrows<PlatformNotSupportedException>(() => KGySerializeObject(testObj, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.IncludeRefProperties));
             else
                 KGySerializeObject(testObj, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.IncludeRefProperties);
 
             // Binary: IncludeRefProperties is needed for content serialization
             if (IsAot)
-                Throws<PlatformNotSupportedException>(() => KGySerializeObject(testObj, XmlSerializationOptions.BinarySerializationAsFallback | XmlSerializationOptions.IncludeRefProperties, safeMode: XmlSafeMode.Medium));
+                AssertThrows<PlatformNotSupportedException>(() => KGySerializeObject(testObj, XmlSerializationOptions.BinarySerializationAsFallback | XmlSerializationOptions.IncludeRefProperties, safeMode: XmlSafeMode.Medium));
             else
                 KGySerializeObject(testObj, XmlSerializationOptions.BinarySerializationAsFallback | XmlSerializationOptions.IncludeRefProperties, safeMode: XmlSafeMode.Medium);
         }
@@ -1742,7 +1742,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         {
             var xml = @"<object type=""MyNamespace.DangerousType, DangerousAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null""></object>";
             Console.WriteLine(xml);
-            Throws<InvalidOperationException>(() => XmlSerializer.DeserializeSafe(new StringReader(xml)));
+            AssertThrows<InvalidOperationException>(() => XmlSerializer.DeserializeSafe(new StringReader(xml)));
         }
 
         [Test]
@@ -1755,11 +1755,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 
             // in safe mode, expected types must be specified
             // 1.) by XElement
-            Throws<SerializationException>(() => XmlSerializer.DeserializeSafe(xml), "In safe mode you should specify the expected types in the expectedCustomTypes parameter of the deserialization methods.");
+            AssertThrows<SerializationException>(() => XmlSerializer.DeserializeSafe(xml), "In safe mode you should specify the expected types in the expectedCustomTypes parameter of the deserialization methods.");
 
             // 2.) by reader
             using (var reader = XmlReader.Create(new StringReader(xml.ToString()), new XmlReaderSettings { CloseInput = true }))
-                Throws<SerializationException>(() => XmlSerializer.DeserializeSafe(reader), "In safe mode you should specify the expected types in the expectedCustomTypes parameter of the deserialization methods.");
+                AssertThrows<SerializationException>(() => XmlSerializer.DeserializeSafe(reader), "In safe mode you should specify the expected types in the expectedCustomTypes parameter of the deserialization methods.");
 
             // but it works if the expected type (or root type if no other is needed) is specified
             object deserialized = XmlSerializer.DeserializeSafe<CustomGenericCollection<int>>(xml);
@@ -1803,19 +1803,19 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 
             // 1.) by XElement
             if (!EnvironmentHelper.IsMono) // In Mono the array is simply allocated so no exception occurs
-                Throws<OutOfMemoryException>(() => XmlSerializer.DeserializeUnsafe(xml));
-            Throws<ArgumentException>(() => XmlSerializer.DeserializeSafe(xml), "Array items length mismatch. Expected items: 2147483647, found items: 3.");
-            Throws<ArgumentException>(() => XmlSerializer.Deserialize(xml), "Array items length mismatch. Expected items: 2147483647, found items: 3.");
+                AssertThrows<OutOfMemoryException>(() => XmlSerializer.DeserializeUnsafe(xml));
+            AssertThrows<ArgumentException>(() => XmlSerializer.DeserializeSafe(xml), "Array items length mismatch. Expected items: 2147483647, found items: 3.");
+            AssertThrows<ArgumentException>(() => XmlSerializer.Deserialize(xml), "Array items length mismatch. Expected items: 2147483647, found items: 3.");
 
             // 2.) by reader
             if (!EnvironmentHelper.IsMono) // In Mono the array is simply allocated so no exception occurs
             {
                 using var reader = XmlReader.Create(new StringReader(xml.ToString()), new XmlReaderSettings { CloseInput = true });
-                Throws<OutOfMemoryException>(() => XmlSerializer.DeserializeUnsafe(reader));
+                AssertThrows<OutOfMemoryException>(() => XmlSerializer.DeserializeUnsafe(reader));
             }
 
             using (var reader = XmlReader.Create(new StringReader(xml.ToString()), new XmlReaderSettings { CloseInput = true }))
-                Throws<ArgumentException>(() => XmlSerializer.DeserializeSafe(reader), "Array items length mismatch. Expected items: 2147483647, found items: 3.");
+                AssertThrows<ArgumentException>(() => XmlSerializer.DeserializeSafe(reader), "Array items length mismatch. Expected items: 2147483647, found items: 3.");
         }
 
         [Test]
@@ -1836,7 +1836,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 
             // 1.) by XElement
             if (!EnvironmentHelper.IsMono) // In Mono the list is simply allocated so no exception occurs
-                Throws<OutOfMemoryException>(() => XmlSerializer.DeserializeUnsafe(xml));
+                AssertThrows<OutOfMemoryException>(() => XmlSerializer.DeserializeUnsafe(xml));
             var list = XmlSerializer.DeserializeSafe<List<int>>(xml);
             AssertItemsEqual(obj, list);
 
@@ -1844,7 +1844,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             if (!EnvironmentHelper.IsMono) // In Mono the list is simply allocated so no exception occurs
             {
                 using var reader = XmlReader.Create(new StringReader(xml.ToString()), new XmlReaderSettings { CloseInput = true });
-                Throws<OutOfMemoryException>(() => XmlSerializer.DeserializeUnsafe(reader));
+                AssertThrows<OutOfMemoryException>(() => XmlSerializer.DeserializeUnsafe(reader));
             }
 
             using (var reader = XmlReader.Create(new StringReader(xml.ToString()), new XmlReaderSettings { CloseInput = true }))
@@ -1877,7 +1877,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 
             // But throws an exception in SafeMode, even when expected types are specified
             var expectedTypes = new[] { typeof(DataSet), typeof(DataTable) };
-            Throws<InvalidOperationException>(() => KGySerializeObject(dataSet, XmlSerializationOptions.None, expectedTypes: expectedTypes), "In safe mode it is not supported to deserialize type");
+            AssertThrows<InvalidOperationException>(() => KGySerializeObject(dataSet, XmlSerializationOptions.None, expectedTypes: expectedTypes), "In safe mode it is not supported to deserialize type");
         }
 
         #endregion

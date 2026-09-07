@@ -131,7 +131,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             };
 
             var nodeRaw = new ResXDataNode(nodeInfo, null);
-            Throws<NotSupportedException>(() => nodeRaw.GetValueSafe(new TestTypeResolver()));
+            AssertThrows<NotSupportedException>(() => nodeRaw.GetValueSafe(new TestTypeResolver()));
         }
 
         [Test]
@@ -139,7 +139,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         {
             var fileRef = new ResXFileRef("fileName", "MyNamespace.DangerousType, DangerousAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null", null);
             var nodeRaw = new ResXDataNode("dangerous", fileRef);
-            Throws<NotSupportedException>(() => nodeRaw.GetValueSafe(), Res.ResourcesFileRefFileNotSupportedSafeMode(nodeRaw.Name));
+            AssertThrows<NotSupportedException>(() => nodeRaw.GetValueSafe(), Res.ResourcesFileRefFileNotSupportedSafeMode(nodeRaw.Name));
         }
 
         [Test]
@@ -149,7 +149,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             var fileRef = new ResXFileRef("fileName", "MyNamespace.DangerousType, DangerousAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null", null);
             var nodeRaw = new ResXDataNode("dangerous", fileRef);
 
-            Throws<NotSupportedException>(() => nodeRaw.GetValueSafe(new TestTypeResolver()), Res.ResourcesTypeResolverInSafeModeNotSupported);
+            AssertThrows<NotSupportedException>(() => nodeRaw.GetValueSafe(new TestTypeResolver()), Res.ResourcesTypeResolverInSafeModeNotSupported);
         }
 
         [TestCase(false)]
@@ -185,8 +185,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             var resolver = customResolver ? new TestTypeResolver() : null;
             var nodeRaw = new ResXDataNode(info, null);
 
-            Throws<SerializationException>(() => nodeRaw.GetValue(resolver), asmName);
-            Throws<SerializationException>(() => nodeRaw.GetValueSafe(), Res.ResourcesBinaryFormatterSafeModeNotSupported(nodeRaw.Name, 0, 0));
+            AssertThrows<SerializationException>(() => nodeRaw.GetValue(resolver), asmName);
+            AssertThrows<SerializationException>(() => nodeRaw.GetValueSafe(), Res.ResourcesBinaryFormatterSafeModeNotSupported(nodeRaw.Name, 0, 0));
         }
 
         [TestCase(false)]
@@ -217,8 +217,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             var resolver = customResolver ? new TestTypeResolver() : null;
             var nodeRaw = new ResXDataNode(info, null);
 
-            Throws<SerializationException>(() => nodeRaw.GetValue(resolver), asmName);
-            Throws<SerializationException>(() => nodeRaw.GetValueSafe(), "Unexpected type name in safe mode: MyNamespace.DangerousType, DangerousAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null.");
+            AssertThrows<SerializationException>(() => nodeRaw.GetValue(resolver), asmName);
+            AssertThrows<SerializationException>(() => nodeRaw.GetValueSafe(), "Unexpected type name in safe mode: MyNamespace.DangerousType, DangerousAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null.");
         }
 
         [Test]
@@ -235,7 +235,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             var clone = new ResXDataNode(nodeInfoNonCompatible, null);
 
             // Trying to convert the clone to a compatible-format: deserialization occurs without an expected type so safe mode should fail here to prevent a security hole
-            Throws<SerializationException>(() => clone.GetDataNodeInfo(null, true), "System.ConsoleColor");
+            AssertThrows<SerializationException>(() => clone.GetDataNodeInfo(null, true), "System.ConsoleColor");
 
 #if !NET8_0_OR_GREATER
             // but it works in non-safe mode (when BinaryFormatter is available)

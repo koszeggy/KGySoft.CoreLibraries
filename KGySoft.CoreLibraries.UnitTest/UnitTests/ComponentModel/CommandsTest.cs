@@ -316,7 +316,7 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
 
             // removing the subscription will not handle the error anymore
             binding.Error -= HandleBindingError;
-            Throws<ArgumentException>(() => source.StringProp = "x", bindingFormatErrorTestMessage);
+            AssertThrows<ArgumentException>(() => source.StringProp = "x", bindingFormatErrorTestMessage);
         }
 
         [Test]

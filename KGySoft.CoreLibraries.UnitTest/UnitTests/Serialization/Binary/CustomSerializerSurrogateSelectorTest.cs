@@ -35,8 +35,9 @@ using NUnit.Framework.Internal;
 
 #region Suppressions
 
-#if NET5_0 || NET6_0 || NET7_0
-#pragma warning disable SYSLIB0011 // Type or member is obsolete - Using BinaryFormatter for .NET 5-7 only for comparison tests
+#if NET5_0_OR_GREATER
+#pragma warning disable SYSLIB0011 // Type or member is obsolete - IFormatter: not only BinaryFormatter uses it
+#pragma warning disable SYSLIB0050 // Formatter-based serialization is obsolete: it still should be tested
 #endif
 
 #endregion
@@ -44,9 +45,6 @@ using NUnit.Framework.Internal;
 namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 {
     [TestFixture]
-#if NET8_0_OR_GREATER
-    [Obsolete]
-#endif
     public class CustomSerializerSurrogateSelectorTest : TestBase
     {
         #region Nested classes
@@ -419,6 +417,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                     Console.WriteLine($"{ms.Length} bytes.");
                     if (dumpSerContent)
 #pragma warning disable 162
+                        // ReSharper disable once HeuristicUnreachableCode
                         Console.WriteLine(ms.ToArray().ToRawString());
 #pragma warning restore 162
 
@@ -473,6 +472,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         }
 
         [TestCaseSource(nameof(testCases))]
+#if NET8_0_OR_GREATER
+        [Obsolete]
+#endif
         public void ReadAndWriteWithSurrogate(object obj)
         {
             ISurrogateSelector surrogate = new CustomSerializerSurrogateSelector();
@@ -486,6 +488,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
 
         [TestCaseSource(nameof(testCases))]
+#if NET8_0_OR_GREATER
+        [Obsolete]
+#endif
         public void ReadWithSurrogate(object obj)
         {
             ISurrogateSelector surrogate = new CustomSerializerSurrogateSelector();
@@ -498,6 +503,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         }
 
         [TestCaseSource(nameof(testCases))]
+#if NET8_0_OR_GREATER
+        [Obsolete]
+#endif
         public void WriteWithSurrogate(object obj)
         {
             ISurrogateSelector surrogate = new CustomSerializerSurrogateSelector();
@@ -510,6 +518,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         }
 
         [Test]
+#if NET8_0_OR_GREATER
+        [Obsolete]
+#endif
         public void SerializeClassWithConflictingFields()
         {
             object obj = new ConflictNameChild(1, 2, 3, "Public Base", "Protected Base", "Private Base");
@@ -543,6 +554,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         }
 
         [Test]
+#if NET8_0_OR_GREATER
+        [Obsolete]
+#endif
         public void IgnoreNonSerializedAttributeTest()
         {
             object obj = new SerializationEventsClass { Name = "Parent" }.AddChild("Child").Parent;
@@ -550,7 +564,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             // Formatter now omits serialization methods. If the surrogate selector skips non-serialized fields, it will cause a problem.
             var formatter = new BinarySerializationFormatter(BinarySerializationOptions.IgnoreSerializationMethods) { SurrogateSelector = surrogate };
-            Throws<AssertionException>(() => DoTest(formatter, surrogate, obj, true, true, true),
+            AssertThrows<AssertionException>(() => DoTest(formatter, surrogate, obj, true, true, true),
                 "Equality check failed");
 
             // But if we force to serialize all fields, even non-serialized ones, the clones will be identical.
@@ -559,6 +573,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         }
 
         [Test]
+#if NET8_0_OR_GREATER
+        [Obsolete]
+#endif
         public void IgnoreISerializableTest()
         {
             var obj = new Exception("message");
@@ -572,6 +589,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         }
 
         [TestCaseSource(nameof(testCases))]
+#if NET8_0_OR_GREATER
+        [Obsolete]
+#endif
         public void CustomizationTest(object obj)
         {
             #region Local Methods
@@ -622,6 +642,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         }
 
         [Test]
+#if NET8_0_OR_GREATER
+        [Obsolete]
+#endif
         public void UpdatingSerializationInfoTest()
         {
             #region Local Methods
@@ -655,6 +678,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         }
 
         [Test]
+#if NET8_0_OR_GREATER
+        [Obsolete]
+#endif
         public void SafeModeTest()
         {
 #if !NET9_0_OR_GREATER
@@ -678,7 +704,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             Throws<SerializationException>(() => DoTest(bf, surrogate, obj, true, true, true), "is not marked as serializable");
 #endif
             // BinarySerializationFormatter: serialization is not supported with the provided options
-            Throws<NotSupportedException>(() => DoTest(bsf, surrogate, obj, true, true, true), Res.BinarySerializationNotSupported(typeof(NonSerializableClass), bsf.Options));
+            AssertThrows<NotSupportedException>(() => DoTest(bsf, surrogate, obj, true, true, true), Res.BinarySerializationNotSupported(typeof(NonSerializableClass), bsf.Options));
 
             // Enabling RecursiveSerializationAsFallback: the serialization works indeed, so the SafeMode setting on the surrogate selector didn't matter
             bsf.Options |= BinarySerializationOptions.RecursiveSerializationAsFallback;
@@ -687,7 +713,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             // Enabling SafeMode on the formatter itself: not allowing any surrogate even if they would happily do the serialization
             bsf.Options |= BinarySerializationOptions.SafeMode;
             surrogate.SafeMode = false; // so the surrogate would support it again
-            Throws<SerializationException>(() => DoTest(bsf, surrogate, obj, true, true, true), Res.BinarySerializationSurrogateNotAllowedInSafeMode);
+            AssertThrows<SerializationException>(() => DoTest(bsf, surrogate, obj, true, true, true), Res.BinarySerializationSurrogateNotAllowedInSafeMode);
         }
 
         #endregion

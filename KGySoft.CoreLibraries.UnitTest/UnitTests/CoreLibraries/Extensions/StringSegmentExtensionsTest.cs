@@ -83,24 +83,24 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
         public void ReadToSeparatorStringSegmentTest()
         {
             StringSegment ss = null;
-            Throws<ArgumentNullException>(() => ss.ReadToSeparator(StringSegment.Null));
+            AssertThrows<ArgumentNullException>(() => ss.ReadToSeparator(StringSegment.Null));
             AssertAreEqual(StringSegment.Null, ss.ReadToSeparator(StringSegment.Empty));
             AssertAreEqual(StringSegment.Null, ss.ReadToSeparator(" ".AsSegment()));
             Assert.IsTrue(ss.IsNull);
           
             ss = StringSegment.Empty;
-            Throws<ArgumentNullException>(() => ss.ReadToSeparator(StringSegment.Null));
+            AssertThrows<ArgumentNullException>(() => ss.ReadToSeparator(StringSegment.Null));
             AssertAreEqual(StringSegment.Empty, ss.ReadToSeparator(StringSegment.Empty));
             Assert.IsTrue(ss.IsNull);
 
             ss = " ".AsSegment();
-            Throws<ArgumentNullException>(() => ss.ReadToSeparator(StringSegment.Null));
+            AssertThrows<ArgumentNullException>(() => ss.ReadToSeparator(StringSegment.Null));
             AssertAreEqual(" ", ss.ReadToSeparator(StringSegment.Empty));
             Assert.IsTrue(ss.IsNull);
 
             ss = "alpha, beta gamma  delta ";
             StringSegment sep = ", ";
-            Throws<ArgumentNullException>(() => ss.ReadToSeparator(StringSegment.Null));
+            AssertThrows<ArgumentNullException>(() => ss.ReadToSeparator(StringSegment.Null));
             AssertAreEqual("alpha", ss.ReadToSeparator(sep));
             AssertAreEqual("beta gamma  delta ", ss.ReadToSeparator(sep));
             Assert.IsTrue(ss.IsNull);
@@ -110,24 +110,24 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
         public void ReadToSeparatorStringTest()
         {
             StringSegment ss = null;
-            Throws<ArgumentNullException>(() => ss.ReadToSeparator((string)null));
+            AssertThrows<ArgumentNullException>(() => ss.ReadToSeparator((string)null));
             AssertAreEqual(StringSegment.Null, ss.ReadToSeparator(String.Empty));
             AssertAreEqual(StringSegment.Null, ss.ReadToSeparator(" "));
             Assert.IsTrue(ss.IsNull);
 
             ss = StringSegment.Empty;
-            Throws<ArgumentNullException>(() => ss.ReadToSeparator((string)null));
+            AssertThrows<ArgumentNullException>(() => ss.ReadToSeparator((string)null));
             AssertAreEqual(StringSegment.Empty, ss.ReadToSeparator(String.Empty));
             Assert.IsTrue(ss.IsNull);
 
             ss = " ".AsSegment();
-            Throws<ArgumentNullException>(() => ss.ReadToSeparator((string)null));
+            AssertThrows<ArgumentNullException>(() => ss.ReadToSeparator((string)null));
             AssertAreEqual(" ", ss.ReadToSeparator(String.Empty));
             Assert.IsTrue(ss.IsNull);
 
             ss = "alpha, beta gamma  delta ";
             string sep = ", ";
-            Throws<ArgumentNullException>(() => ss.ReadToSeparator((string)null));
+            AssertThrows<ArgumentNullException>(() => ss.ReadToSeparator((string)null));
             AssertAreEqual("alpha", ss.ReadToSeparator(sep));
             AssertAreEqual("beta gamma  delta ", ss.ReadToSeparator(sep));
             Assert.IsTrue(ss.IsNull);
@@ -139,23 +139,23 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             char[] sep = { ' ', ',' };
 
             StringSegment ss = null;
-            Throws<ArgumentNullException>(() => ss.ReadToSeparator((char[])null));
+            AssertThrows<ArgumentNullException>(() => ss.ReadToSeparator((char[])null));
             AssertAreEqual(StringSegment.Null, ss.ReadToSeparator(Reflector.EmptyArray<char>()));
             AssertAreEqual(StringSegment.Null, ss.ReadToSeparator(sep));
             Assert.IsTrue(ss.IsNull);
 
             ss = StringSegment.Empty;
-            Throws<ArgumentNullException>(() => ss.ReadToSeparator((char[])null));
+            AssertThrows<ArgumentNullException>(() => ss.ReadToSeparator((char[])null));
             AssertAreEqual(StringSegment.Empty, ss.ReadToSeparator(sep));
             Assert.IsTrue(ss.IsNull);
 
             ss = " ".AsSegment();
-            Throws<ArgumentNullException>(() => ss.ReadToSeparator((char[])null));
+            AssertThrows<ArgumentNullException>(() => ss.ReadToSeparator((char[])null));
             AssertAreEqual(" ", ss.ReadToSeparator(Reflector.EmptyArray<char>()));
             Assert.IsTrue(ss.IsNull);
 
             ss = "alpha, beta ";
-            Throws<ArgumentNullException>(() => ss.ReadToSeparator((char[])null));
+            AssertThrows<ArgumentNullException>(() => ss.ReadToSeparator((char[])null));
             AssertAreEqual("alpha", ss.ReadToSeparator(sep));
             AssertAreEqual(StringSegment.Empty, ss.ReadToSeparator(sep));
             AssertAreEqual("beta", ss.ReadToSeparator(sep));
@@ -169,18 +169,18 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             string[] sep = { ", ", " " };
 
             StringSegment ss = null;
-            Throws<ArgumentNullException>(() => ss.ReadToSeparator((string[])null));
+            AssertThrows<ArgumentNullException>(() => ss.ReadToSeparator((string[])null));
             AssertAreEqual(StringSegment.Null, ss.ReadToSeparator(Reflector.EmptyArray<string>()));
             AssertAreEqual(StringSegment.Null, ss.ReadToSeparator(sep));
             Assert.IsTrue(ss.IsNull);
 
             ss = StringSegment.Empty;
-            Throws<ArgumentNullException>(() => ss.ReadToSeparator((string[])null));
+            AssertThrows<ArgumentNullException>(() => ss.ReadToSeparator((string[])null));
             AssertAreEqual(StringSegment.Empty, ss.ReadToSeparator(sep));
             Assert.IsTrue(ss.IsNull);
 
             ss = " ".AsSegment();
-            Throws<ArgumentNullException>(() => ss.ReadToSeparator((string[])null));
+            AssertThrows<ArgumentNullException>(() => ss.ReadToSeparator((string[])null));
             AssertAreEqual(" ", ss.ReadToSeparator(Reflector.EmptyArray<string>()));
             Assert.IsTrue(ss.IsNull);
 
@@ -189,7 +189,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Assert.IsTrue(ss.IsNull);
 
             ss = "alpha, beta gamma,";
-            Throws<ArgumentNullException>(() => ss.ReadToSeparator((string[])null));
+            AssertThrows<ArgumentNullException>(() => ss.ReadToSeparator((string[])null));
             AssertAreEqual("alpha", ss.ReadToSeparator(sep));
             AssertAreEqual("beta", ss.ReadToSeparator(sep));
             AssertAreEqual("gamma,", ss.ReadToSeparator(sep));
@@ -202,18 +202,18 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             StringSegment[] sep = { ", ", " " };
 
             StringSegment ss = null;
-            Throws<ArgumentNullException>(() => ss.ReadToSeparator((StringSegment[])null));
+            AssertThrows<ArgumentNullException>(() => ss.ReadToSeparator((StringSegment[])null));
             AssertAreEqual(StringSegment.Null, ss.ReadToSeparator(Reflector.EmptyArray<StringSegment>()));
             AssertAreEqual(StringSegment.Null, ss.ReadToSeparator(sep));
             Assert.IsTrue(ss.IsNull);
 
             ss = StringSegment.Empty;
-            Throws<ArgumentNullException>(() => ss.ReadToSeparator((StringSegment[])null));
+            AssertThrows<ArgumentNullException>(() => ss.ReadToSeparator((StringSegment[])null));
             AssertAreEqual(StringSegment.Empty, ss.ReadToSeparator(sep));
             Assert.IsTrue(ss.IsNull);
 
             ss = " ".AsSegment();
-            Throws<ArgumentNullException>(() => ss.ReadToSeparator((StringSegment[])null));
+            AssertThrows<ArgumentNullException>(() => ss.ReadToSeparator((StringSegment[])null));
             AssertAreEqual(" ", ss.ReadToSeparator(Reflector.EmptyArray<StringSegment>()));
             Assert.IsTrue(ss.IsNull);
 
@@ -222,7 +222,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Assert.IsTrue(ss.IsNull);
 
             ss = "alpha, beta gamma,";
-            Throws<ArgumentNullException>(() => ss.ReadToSeparator((StringSegment[])null));
+            AssertThrows<ArgumentNullException>(() => ss.ReadToSeparator((StringSegment[])null));
             AssertAreEqual("alpha", ss.ReadToSeparator(sep));
             AssertAreEqual("beta", ss.ReadToSeparator(sep));
             AssertAreEqual("gamma,", ss.ReadToSeparator(sep));

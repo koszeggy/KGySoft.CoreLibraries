@@ -42,7 +42,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
         public void GuidSeedTest()
         {
             // ReSharper disable once ObjectCreationAsStatement
-            Throws<ArgumentException>(() => new FastRandom(Guid.Empty));
+            AssertThrows<ArgumentException>(() => new FastRandom(Guid.Empty));
 
             Guid seed = Guid.NewGuid();
             var rnd = new FastRandom(seed);
@@ -58,7 +58,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             var rnd = new FastRandom();
 
             // min > max
-            Throws<ArgumentOutOfRangeException>(() => rnd.Next(1, 0));
+            AssertThrows<ArgumentOutOfRangeException>(() => rnd.Next(1, 0));
 
             Assert.GreaterOrEqual(rnd.Next(), 0);
 
@@ -86,7 +86,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries
             var rnd = new FastRandom();
 
             // min > max
-            Throws<ArgumentOutOfRangeException>(() => rnd.NextInt64(1, 0));
+            AssertThrows<ArgumentOutOfRangeException>(() => rnd.NextInt64(1, 0));
 
             Assert.GreaterOrEqual(rnd.NextInt64(), 0L);
 

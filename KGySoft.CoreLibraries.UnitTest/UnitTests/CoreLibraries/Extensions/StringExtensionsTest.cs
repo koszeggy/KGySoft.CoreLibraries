@@ -117,7 +117,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             // null
             Test(null, (object)null);
             Test(null, (int?)null);
-            Throws<ArgumentNullException>(() => Test(null, 1));
+            AssertThrows<ArgumentNullException>(() => Test(null, 1));
 
             // string
             Test("1", "1");
@@ -232,7 +232,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
         public void IndexOfAnyTest()
         {
             const string s = "alpha, beta, gamma";
-            Throws<ArgumentException>(() => s.IndexOfAny("delta", null!), "Specified argument contains a null element.");
+            AssertThrows<ArgumentException>(() => s.IndexOfAny("delta", null!), "Specified argument contains a null element.");
             Assert.AreEqual(0, s.IndexOfAny("delta", ""));
             Assert.AreEqual(-1, s.IndexOfAny("delta", "epsilon"));
             Assert.AreEqual(13, s.IndexOfAny("delta", "gamma"));

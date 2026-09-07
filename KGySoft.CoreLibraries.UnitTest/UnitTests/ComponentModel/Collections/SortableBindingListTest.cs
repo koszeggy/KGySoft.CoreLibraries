@@ -218,7 +218,7 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel.Collections
             var coll = new SortableBindingList<KeyValuePair<int, string>> { new KeyValuePair<int, string>(1, "1"), new KeyValuePair<int, string>(2, "2") };
             coll.ApplySort(nameof(KeyValuePair<,>.Key), ListSortDirection.Ascending);
 
-            Throws<ArgumentException>(() => coll.Find("X", null), "No property descriptor found for property name 'X' in type 'System.Collections.Generic.KeyValuePair`2[System.Int32,System.String]'.");
+            AssertThrows<ArgumentException>(() => coll.Find("X", null), "No property descriptor found for property name 'X' in type 'System.Collections.Generic.KeyValuePair`2[System.Int32,System.String]'.");
             Assert.IsTrue(coll.Find(nameof(KeyValuePair<,>.Key), 0) < 0);
             Assert.AreEqual(0, coll.Find(nameof(KeyValuePair<,>.Key), 1));
 

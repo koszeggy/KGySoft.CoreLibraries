@@ -455,8 +455,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
-            Throws<SerializationException>(() => KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode), "In safe mode you should specify the expected types in the expectedCustomTypes parameter of the deserialization methods.");
-            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode), "In safe mode you should specify the expected types in the expectedCustomTypes parameter of the deserialization methods.");
+            AssertThrows<SerializationException>(() => KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode), "In safe mode you should specify the expected types in the expectedCustomTypes parameter of the deserialization methods.");
+            AssertThrows<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode), "In safe mode you should specify the expected types in the expectedCustomTypes parameter of the deserialization methods.");
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: GetExpectedTypes(referenceObjects));
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: GetExpectedTypes(referenceObjects));
@@ -723,14 +723,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: [typeof(Type), typeof(CallConvCdecl), typeof(CallConvStdcall)]);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: [typeof(Type), typeof(CallConvCdecl), typeof(CallConvStdcall)]);
 #else
-            Throws<PlatformNotSupportedException>(() => KGySerializeObject(referenceObjects, BinarySerializationOptions.None), Res.ReflectionFunctionPointersNotSupported);
-            Throws<PlatformNotSupportedException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.None), Res.ReflectionFunctionPointersNotSupported);
+            AssertThrows<PlatformNotSupportedException>(() => KGySerializeObject(referenceObjects, BinarySerializationOptions.None), Res.ReflectionFunctionPointersNotSupported);
+            AssertThrows<PlatformNotSupportedException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.None), Res.ReflectionFunctionPointersNotSupported);
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, safeCompare: true);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, safeCompare: true);
 
-            Throws<PlatformNotSupportedException>(() => KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: [typeof(Type)]), Res.ReflectionFunctionPointersNotSupported);
-            Throws<PlatformNotSupportedException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: [typeof(Type)]), Res.ReflectionFunctionPointersNotSupported);
+            AssertThrows<PlatformNotSupportedException>(() => KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: [typeof(Type)]), Res.ReflectionFunctionPointersNotSupported);
+            AssertThrows<PlatformNotSupportedException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: [typeof(Type)]), Res.ReflectionFunctionPointersNotSupported);
 #endif
 #endif
         }
@@ -2185,8 +2185,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None, title, binder: binder);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, title, binder: binder);
 
-            Throws<SerializationException>(() => KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, title, binder: binder), Res.BinarySerializationBinderNotAllowedInSafeMode);
-            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, title, binder: binder), Res.BinarySerializationBinderNotAllowedInSafeMode);
+            AssertThrows<SerializationException>(() => KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, title, binder: binder), Res.BinarySerializationBinderNotAllowedInSafeMode);
+            AssertThrows<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, title, binder: binder), Res.BinarySerializationBinderNotAllowedInSafeMode);
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.LegacySafeMode, title, binder: binder);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.LegacySafeMode, title, binder: binder);
@@ -2275,8 +2275,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None, title, binder: binder);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, title, binder: binder);
 
-            Throws<SerializationException>(() => KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, binder: binder), Res.BinarySerializationBinderNotAllowedInSafeMode);
-            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, binder: binder), Res.BinarySerializationBinderNotAllowedInSafeMode);
+            AssertThrows<SerializationException>(() => KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, binder: binder), Res.BinarySerializationBinderNotAllowedInSafeMode);
+            AssertThrows<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, binder: binder), Res.BinarySerializationBinderNotAllowedInSafeMode);
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.LegacySafeMode, title, binder: binder);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.LegacySafeMode, title, binder: binder);
@@ -2487,7 +2487,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             if (alsoForSupportedTypes && !IsAot)
                 KGySerializeObjects(referenceObjects, BinarySerializationOptions.TryUseSurrogateSelectorForAnyType, title, surrogateSelector: selector);
 
-            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, title, surrogateSelector: selector), Res.BinarySerializationSurrogateNotAllowedInSafeMode);
+            AssertThrows<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, title, surrogateSelector: selector), Res.BinarySerializationSurrogateNotAllowedInSafeMode);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.LegacySafeMode, title, surrogateSelector: selector);
 
             selector = new TestCloningSurrogateSelector();
@@ -2499,7 +2499,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 SystemSerializeObjects(referenceObjects, title, surrogateSelector: selector);
             }
 
-            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, title, surrogateSelector: selector));
+            AssertThrows<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, title, surrogateSelector: selector));
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.LegacySafeMode, title, surrogateSelector: selector);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, title, surrogateSelector: selector);
             if (alsoForSupportedTypes && !IsAot)
@@ -2620,7 +2620,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #if !AOT
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.TryUseSurrogateSelectorForAnyType, title, surrogateSelector: selector);
 #endif
-            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, title, surrogateSelector: selector), Res.BinarySerializationSurrogateNotAllowedInSafeMode);
+            AssertThrows<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, title, surrogateSelector: selector), Res.BinarySerializationSurrogateNotAllowedInSafeMode);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.LegacySafeMode, title, surrogateSelector: selector);
         }
 
@@ -2675,7 +2675,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #if !AOT
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.TryUseSurrogateSelectorForAnyType, title, surrogateSelector: selector);
 #endif
-            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, title, surrogateSelector: selector), Res.BinarySerializationSurrogateNotAllowedInSafeMode);
+            AssertThrows<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, title, surrogateSelector: selector), Res.BinarySerializationSurrogateNotAllowedInSafeMode);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.LegacySafeMode, title, surrogateSelector: selector, safeCompare: IsAot);
 
             title = "Forcing field-based serialization";
@@ -2963,7 +2963,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
 #if DEBUG && !(NET35 || NET40 || NET45 || NET46)
             // In Debug build the safe mode array allocation threshold is intentionally very small and the array builder proxy points to itself before the final array is created
-            Throws<SerializationException>(() => KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, safeCompare: true), Res.BinarySerializationCircularIObjectReference);
+            AssertThrows<SerializationException>(() => KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, safeCompare: true), Res.BinarySerializationCircularIObjectReference);
 
             // But it's alright if referenceObjects is not the outermost object, because when finding it inside first, its creation can be completed
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, safeCompare: true);
@@ -2989,7 +2989,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             //    SystemSerializeObject(referenceObject);
 
             foreach (object referenceObject in referenceObjects)
-                Throws<SerializationException>(() => KGySerializeObject(referenceObject, BinarySerializationOptions.None), Res.BinarySerializationCircularIObjectReference);
+                AssertThrows<SerializationException>(() => KGySerializeObject(referenceObject, BinarySerializationOptions.None), Res.BinarySerializationCircularIObjectReference);
         }
 
         [Test]
@@ -3039,7 +3039,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             SystemSerializeObjects(referenceObjects, title, surrogateSelector: selector);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None, title, surrogateSelector: selector);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, title, surrogateSelector: selector);
-            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, title, surrogateSelector: selector), Res.BinarySerializationSurrogateNotAllowedInSafeMode);
+            AssertThrows<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, title, surrogateSelector: selector), Res.BinarySerializationSurrogateNotAllowedInSafeMode);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.LegacySafeMode, title, surrogateSelector: selector);
 
             title = "Invalid cases using a replacing selector";
@@ -3063,7 +3063,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             foreach (object referenceObject in referenceObjects)
                 SystemSerializeObject(referenceObject, title, surrogateSelector: selector);
             foreach (object referenceObject in referenceObjects)
-                Throws<SerializationException>(() => KGySerializeObject(referenceObject, BinarySerializationOptions.None, title, surrogateSelector: selector),
+                AssertThrows<SerializationException>(() => KGySerializeObject(referenceObject, BinarySerializationOptions.None, title, surrogateSelector: selector),
                     "The serialization surrogate has changed the reference of the result object, which prevented resolving circular references to itself.");
         }
 
@@ -3132,12 +3132,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             // In safe mode setting pointer fields are supported only if they are set to null
             KGySerializeObject(referenceObjects[0], BinarySerializationOptions.LegacySafeMode);
             KGySerializeObject(referenceObjects[0], BinarySerializationOptions.SafeMode, expectedTypes: [unsafeTypeStruct]);
-            Throws<SerializationException>(() => KGySerializeObject(referenceObjects[1], BinarySerializationOptions.LegacySafeMode));
-            Throws<SerializationException>(() => KGySerializeObject(referenceObjects[1], BinarySerializationOptions.SafeMode, expectedTypes: [unsafeTypeStruct]));
+            AssertThrows<SerializationException>(() => KGySerializeObject(referenceObjects[1], BinarySerializationOptions.LegacySafeMode));
+            AssertThrows<SerializationException>(() => KGySerializeObject(referenceObjects[1], BinarySerializationOptions.SafeMode, expectedTypes: [unsafeTypeStruct]));
 
             // But as a compact struct, pointer fields are not supported at all in safe mode
-            Throws<SerializationException>(() => KGySerializeObject(referenceObjects[0], BinarySerializationOptions.LegacySafeMode | BinarySerializationOptions.CompactSerializationOfStructures), Res.BinarySerializationValueTypeContainsReferenceOrPointerSafe(unsafeTypeStruct));
-            Throws<SerializationException>(() => KGySerializeObject(referenceObjects[0], BinarySerializationOptions.SafeMode | BinarySerializationOptions.CompactSerializationOfStructures, expectedTypes: [unsafeTypeStruct]), Res.BinarySerializationValueTypeContainsReferenceOrPointerSafe(unsafeTypeStruct));
+            AssertThrows<SerializationException>(() => KGySerializeObject(referenceObjects[0], BinarySerializationOptions.LegacySafeMode | BinarySerializationOptions.CompactSerializationOfStructures), Res.BinarySerializationValueTypeContainsReferenceOrPointerSafe(unsafeTypeStruct));
+            AssertThrows<SerializationException>(() => KGySerializeObject(referenceObjects[0], BinarySerializationOptions.SafeMode | BinarySerializationOptions.CompactSerializationOfStructures, expectedTypes: [unsafeTypeStruct]), Res.BinarySerializationValueTypeContainsReferenceOrPointerSafe(unsafeTypeStruct));
 
             int intValue = 1;
             referenceObjects =
@@ -3150,9 +3150,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             //SystemSerializeObject(referenceObjects[0], safeCompare: true); // InvalidCastException: Unable to cast object of type 'System.Void*[]' to type 'System.Object[]'.
             //SystemSerializeObject(referenceObjects[1], safeCompare: true); // System.NotSupportedException: 'Type is not supported.' (at Array.GetItem)
 
-            Throws<NotSupportedException>(() => KGySerializeObject(referenceObjects[0], BinarySerializationOptions.None), Res.SerializationPointerArrayTypeNotSupported(referenceObjects[0].GetType()));
+            AssertThrows<NotSupportedException>(() => KGySerializeObject(referenceObjects[0], BinarySerializationOptions.None), Res.SerializationPointerArrayTypeNotSupported(referenceObjects[0].GetType()));
 #if NET8_0_OR_GREATER
-            Throws<NotSupportedException>(() => KGySerializeObject(referenceObjects[1], BinarySerializationOptions.None), Res.SerializationPointerArrayTypeNotSupported(referenceObjects[1].GetType()));
+            AssertThrows<NotSupportedException>(() => KGySerializeObject(referenceObjects[1], BinarySerializationOptions.None), Res.SerializationPointerArrayTypeNotSupported(referenceObjects[1].GetType()));
 #else
             Throws<NotSupportedException>(() => KGySerializeObject(referenceObjects[1], BinarySerializationOptions.None), Res.SerializationFunctionPointerTypeNotSupported);
 #endif
@@ -3348,10 +3348,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             // Singleton2 uses a weak assembly name identity without version, which cannot be resolved in SafeMode (not even in legacy mode) even if the type is specified
             var expectedTypes = new[] { typeof(Singleton1), typeof(Singleton2), typeof(Singleton3), typeof(SingletonDeserializer) };
-            Throws<SerializationException>(() => KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: expectedTypes), "in assembly \"KGySoft.CoreLibraries.UnitTest\"");
-            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: expectedTypes), "in assembly \"KGySoft.CoreLibraries.UnitTest\"");
-            Throws<SerializationException>(() => KGySerializeObject(referenceObjects, BinarySerializationOptions.LegacySafeMode, expectedTypes: expectedTypes), "Cannot resolve assembly in safe mode: \"KGySoft.CoreLibraries.UnitTest\"");
-            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.LegacySafeMode, expectedTypes: expectedTypes), "Cannot resolve assembly in safe mode: \"KGySoft.CoreLibraries.UnitTest\"");
+            AssertThrows<SerializationException>(() => KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: expectedTypes), "in assembly \"KGySoft.CoreLibraries.UnitTest\"");
+            AssertThrows<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: expectedTypes), "in assembly \"KGySoft.CoreLibraries.UnitTest\"");
+            AssertThrows<SerializationException>(() => KGySerializeObject(referenceObjects, BinarySerializationOptions.LegacySafeMode, expectedTypes: expectedTypes), "Cannot resolve assembly in safe mode: \"KGySoft.CoreLibraries.UnitTest\"");
+            AssertThrows<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.LegacySafeMode, expectedTypes: expectedTypes), "Cannot resolve assembly in safe mode: \"KGySoft.CoreLibraries.UnitTest\"");
 
             // But we can use the ForwardedTypesSerializationBinder in SafeMode
             var binder = new ForwardedTypesSerializationBinder { SafeMode = true };
@@ -3468,13 +3468,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             // In SafeMode expected types must be specified. In LegacySafeMode they can be omitted, but the types must be serializable.
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback);
-            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.SafeMode), "In safe mode you should specify the expected types in the expectedCustomTypes parameter of the deserialization methods.");
-            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.LegacySafeMode), Res.BinarySerializationCannotCreateSerializableObjectSafe(typeof(NonSerializableClass)));
+            AssertThrows<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.SafeMode), "In safe mode you should specify the expected types in the expectedCustomTypes parameter of the deserialization methods.");
+            AssertThrows<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.LegacySafeMode), Res.BinarySerializationCannotCreateSerializableObjectSafe(typeof(NonSerializableClass)));
 
             // But we can explicitly specify that an expected type can be non-serializable in both safe modes.
             var expectedTypes = new[] { typeof(NonSerializableClass) };
-            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.SafeMode, expectedTypes: expectedTypes), Res.BinarySerializationCannotCreateSerializableObjectSafe(typeof(NonSerializableClass)));
-            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.LegacySafeMode, expectedTypes: expectedTypes), Res.BinarySerializationCannotCreateSerializableObjectSafe(typeof(NonSerializableClass)));
+            AssertThrows<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.SafeMode, expectedTypes: expectedTypes), Res.BinarySerializationCannotCreateSerializableObjectSafe(typeof(NonSerializableClass)));
+            AssertThrows<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.LegacySafeMode, expectedTypes: expectedTypes), Res.BinarySerializationCannotCreateSerializableObjectSafe(typeof(NonSerializableClass)));
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.SafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes, expectedTypes: expectedTypes);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.LegacySafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes, expectedTypes: expectedTypes);
         }
@@ -3508,7 +3508,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             var formatter = new BinarySerializationFormatter(BinarySerializationOptions.SafeMode) { Binder = binder };
             var data = SerializeObject(Reflector.CreateInstance(proxyType), formatter);
             formatter.Binder = null;
-            Throws<SerializationException>(() => DeserializeObject(data, formatter), Res.BinarySerializationCannotResolveExpectedTypeInAssemblySafe(typeName, asmName));
+            AssertThrows<SerializationException>(() => DeserializeObject(data, formatter), Res.BinarySerializationCannotResolveExpectedTypeInAssemblySafe(typeName, asmName));
         }
 
         [Test]
@@ -3541,7 +3541,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             KGySerializeObject(referenceObject, BinarySerializationOptions.None);
 #if NET8_0_OR_GREATER
-            Throws<SerializationException>(() => KGySerializeObject(referenceObject, BinarySerializationOptions.SafeMode, expectedTypes: [typeof(FunctionPointerField)]), Res.BinarySerializationPointerFieldSafe(typeof(FunctionPointerField), "loggerFunction"));
+            AssertThrows<SerializationException>(() => KGySerializeObject(referenceObject, BinarySerializationOptions.SafeMode, expectedTypes: [typeof(FunctionPointerField)]), Res.BinarySerializationPointerFieldSafe(typeof(FunctionPointerField), "loggerFunction"));
 #else
             // In older frameworks the reported type of the function pointer field is IntPtr, which we don't restrict
             KGySerializeObject(referenceObject, BinarySerializationOptions.SafeMode, expectedTypes: [typeof(FunctionPointerField)]);
@@ -3558,7 +3558,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             object referenceObject = new NeedsDefaultCtor("Test");
 
             // BinarySerializationOptions.None: Equality check will fail because the delegate is initialized only in the default constructor
-            Throws<AssertionException>(() => KGySerializeObject(referenceObject, BinarySerializationOptions.None), "Equality check failed at type NeedsDefaultCtor");
+            AssertThrows<AssertionException>(() => KGySerializeObject(referenceObject, BinarySerializationOptions.None), "Equality check failed at type NeedsDefaultCtor");
 
             // Preferring default ctor call: The default constructor initializes not just the delegate, but also generates a random ID.
             // The equality check still passes because the fields (even read-only ones) are set after the constructor call
@@ -3566,7 +3566,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             // The same applies for custom object graphs, now forced by a surrogate selector
             var surrogate = new CustomSerializerSurrogateSelector();
-            Throws<AssertionException>(() => KGySerializeObject(referenceObject, BinarySerializationOptions.None, surrogateSelector: surrogate), "Equality check failed at type NeedsDefaultCtor");
+            AssertThrows<AssertionException>(() => KGySerializeObject(referenceObject, BinarySerializationOptions.None, surrogateSelector: surrogate), "Equality check failed at type NeedsDefaultCtor");
             KGySerializeObject(referenceObject, BinarySerializationOptions.PreferInvokingDefaultConstructor, surrogateSelector: surrogate);
         }
 
@@ -3624,8 +3624,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             // In SafeMode this cannot be deserialized even on .NET Framework, even if we allow StructuralEqualityComparer explicitly
             var expectedTypes = new[] { typeof(Hashtable), StructuralComparisons.StructuralEqualityComparer.GetType() };
-            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.SafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes, expectedTypes: expectedTypes), "In safe mode it is not supported to deserialize type \"System.Collections.StructuralEqualityComparer\"");
-            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.LegacySafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes, expectedTypes: expectedTypes), "In safe mode it is not supported to deserialize type \"System.Collections.StructuralEqualityComparer\"");
+            AssertThrows<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.SafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes, expectedTypes: expectedTypes), "In safe mode it is not supported to deserialize type \"System.Collections.StructuralEqualityComparer\"");
+            AssertThrows<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.LegacySafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes, expectedTypes: expectedTypes), "In safe mode it is not supported to deserialize type \"System.Collections.StructuralEqualityComparer\"");
 
 #if !AOT
             // But in non-safe mode actually it can be deserialized without any problem if ignoring the ISerializable implementation of the Hashtable
@@ -3665,8 +3665,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             // In SafeMode this cannot be deserialized even in .NET Framework, even if we allow StructuralEqualityComparer explicitly
             var expectedTypes = new[] { typeof(Hashtable), StructuralComparisons.StructuralEqualityComparer.GetType() };
-            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.SafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes, expectedTypes: expectedTypes), "In safe mode it is not supported to deserialize type \"System.Collections.StructuralEqualityComparer\"");
-            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.LegacySafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes, expectedTypes: expectedTypes), "In safe mode it is not supported to deserialize type \"System.Collections.StructuralEqualityComparer\"");
+            AssertThrows<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.SafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes, expectedTypes: expectedTypes), "In safe mode it is not supported to deserialize type \"System.Collections.StructuralEqualityComparer\"");
+            AssertThrows<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.LegacySafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes, expectedTypes: expectedTypes), "In safe mode it is not supported to deserialize type \"System.Collections.StructuralEqualityComparer\"");
 
 #if !AOT
             // But in non-safe mode actually it can be deserialized without any problem if ignoring the ISerializable implementation of the Hashtable
@@ -3693,13 +3693,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             // without safe mode a huge array is about to be allocated
             if (!EnvironmentHelper.IsMono) // In Mono the array is simply allocated so the same "SerializationException: Data length is too small." is thrown as in SafeMode
-                Throws<OutOfMemoryException>(() => DeserializeObject(manipulatedData, bsf));
+                AssertThrows<OutOfMemoryException>(() => DeserializeObject(manipulatedData, bsf));
 
             // in SafeMode the array is allocated in chunks and the stream simply ends unexpectedly
             bsf.Options = BinarySerializationOptions.SafeMode;
-            Throws<SerializationException>(() => DeserializeObject(manipulatedData, bsf));
+            AssertThrows<SerializationException>(() => DeserializeObject(manipulatedData, bsf));
             bsf.Options = BinarySerializationOptions.LegacySafeMode;
-            Throws<SerializationException>(() => DeserializeObject(manipulatedData, bsf));
+            AssertThrows<SerializationException>(() => DeserializeObject(manipulatedData, bsf));
         }
 
         [Test]
@@ -3723,7 +3723,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             // without safe mode the list is allocated with MaxInt capacity
             if (!EnvironmentHelper.IsMono) // In Mono the list is simply allocated so no exception occurs
-                Throws<OutOfMemoryException>(() => DeserializeObject(manipulatedData, bsf));
+                AssertThrows<OutOfMemoryException>(() => DeserializeObject(manipulatedData, bsf));
 
             // in SafeMode the too large capacity is ignored and the list simply can be deserialized
             bsf.Options = BinarySerializationOptions.SafeMode;
@@ -3758,13 +3758,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             // without safe mode the dictionary is allocated with MaxInt capacity
             if (!EnvironmentHelper.IsMono) // In Mono the dictionary is simply allocated so no exception occurs
-                Throws<OutOfMemoryException>(() => DeserializeObject(manipulatedData, bsf));
+                AssertThrows<OutOfMemoryException>(() => DeserializeObject(manipulatedData, bsf));
 
             // in SafeMode the capacity is not preallocated and the deserialization fails when the stream ends unexpectedly
             bsf.Options = BinarySerializationOptions.SafeMode;
-            Throws<SerializationException>(() => DeserializeObject(manipulatedData, bsf), "Invalid stream data.");
+            AssertThrows<SerializationException>(() => DeserializeObject(manipulatedData, bsf), "Invalid stream data.");
             bsf.Options = BinarySerializationOptions.LegacySafeMode;
-            Throws<SerializationException>(() => DeserializeObject(manipulatedData, bsf), "Invalid stream data.");
+            AssertThrows<SerializationException>(() => DeserializeObject(manipulatedData, bsf), "Invalid stream data.");
         }
 
         [Test]
@@ -3800,8 +3800,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             // But throws an exception in SafeMode, even when expected types are specified
             var expectedTypes = new[] { typeof(DataSet), typeof(DataTable) };
-            Throws<SerializationException>(() => KGySerializeObject(dataSet, BinarySerializationOptions.SafeMode | options, expectedTypes: expectedTypes), "In safe mode it is not supported to deserialize type");
-            Throws<SerializationException>(() => KGySerializeObject(dataSet, BinarySerializationOptions.LegacySafeMode | options, expectedTypes: expectedTypes), "In safe mode it is not supported to deserialize type");
+            AssertThrows<SerializationException>(() => KGySerializeObject(dataSet, BinarySerializationOptions.SafeMode | options, expectedTypes: expectedTypes), "In safe mode it is not supported to deserialize type");
+            AssertThrows<SerializationException>(() => KGySerializeObject(dataSet, BinarySerializationOptions.LegacySafeMode | options, expectedTypes: expectedTypes), "In safe mode it is not supported to deserialize type");
         }
 
 #if NETCOREAPP3_0_OR_GREATER

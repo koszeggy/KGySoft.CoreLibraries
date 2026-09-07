@@ -111,7 +111,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             // Non string throws an exception if not is in safe mode
             resName = "TestImage";
             Assert.IsFalse(manager.SafeMode);
-            Throws<InvalidOperationException>(() => manager.GetString(resName, inv));
+            AssertThrows<InvalidOperationException>(() => manager.GetString(resName, inv));
 
             // but in safe mode they succeed - the content is different though: ToString vs. raw XML content
             manager.SafeMode = true;
@@ -264,14 +264,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
             // works also for byte[] where the original ResourceManager throws an exception
             resName = "TestBytes";
-            Throws<InvalidOperationException>(() => refManager.GetStream(resName, inv));
+            AssertThrows<InvalidOperationException>(() => refManager.GetStream(resName, inv));
             Assert.IsInstanceOf<MemoryStream>(manager.GetStream(resName, inv));
 
             // when not in SafeMode, other types throw an exception
             resName = "TestString";
             Assert.IsFalse(manager.SafeMode);
-            Throws<InvalidOperationException>(() => refManager.GetStream(resName, inv));
-            Throws<InvalidOperationException>(() => manager.GetStream(resName, inv), Res.ResourcesNonStreamResourceWithType(resName, Reflector.StringType));
+            AssertThrows<InvalidOperationException>(() => refManager.GetStream(resName, inv));
+            AssertThrows<InvalidOperationException>(() => manager.GetStream(resName, inv), Res.ResourcesNonStreamResourceWithType(resName, Reflector.StringType));
 
             // but in SafeMode strings are returned as streams
             manager.SafeMode = true;
@@ -290,12 +290,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             var manager = new ResXResourceManager("UnknownBaseName", inv);
 
             // not existing base: an exception is thrown when an object is about to obtain
-            Throws<MissingManifestResourceException>(() => manager.GetObject("unknown"));
+            AssertThrows<MissingManifestResourceException>(() => manager.GetObject("unknown"));
 
             // setting something in display language creates a resource set but the invariant is still missing
             manager.SetObject("StringValue", "String " + LanguageSettings.DisplayLanguage.Name);
             Assert.IsNotNull(manager.GetObject("StringValue"));
-            Throws<MissingManifestResourceException>(() => manager.GetObject("unknown"));
+            AssertThrows<MissingManifestResourceException>(() => manager.GetObject("unknown"));
 
             // this creates the invariant resource set, no exception anymore for unknown values
             manager.SetObject("InvariantOnly", 42, inv);
@@ -311,7 +311,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
             // releasing everything re-enables the exception
             manager.ReleaseAllResources();
-            Throws<MissingManifestResourceException>(() => manager.GetObject("unknown"));
+            AssertThrows<MissingManifestResourceException>(() => manager.GetObject("unknown"));
         }
 
         [Test]
@@ -320,7 +320,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             var manager = new ResXResourceManager("UnknownBaseName");
 
             // not existing base: missing manifest exception
-            Throws<MissingManifestResourceException>(() => manager.GetMetaObject("unknown"));
+            AssertThrows<MissingManifestResourceException>(() => manager.GetMetaObject("unknown"));
 
             // setting something without culture sets the invariant language so there is no exception anymore
             manager.SetMetaObject("StringValue", "String invariant");
@@ -530,12 +530,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             // but for non-existing name even this will throw an exception
             refManager = CreateResourceManager("NonExisting", enUS);
             manager = new ResXResourceManager("NonExisting", typeof(object).Assembly); // typeof(object): mscorlib has en-US invariant resources language
-            Throws<MissingManifestResourceException>(() => refManager.GetResourceSet(inv, createIfNotExists: false, tryParents: true));
-            Throws<MissingManifestResourceException>(() => manager.GetResourceSet(inv, loadIfExists: false, tryParents: true));
+            AssertThrows<MissingManifestResourceException>(() => refManager.GetResourceSet(inv, createIfNotExists: false, tryParents: true));
+            AssertThrows<MissingManifestResourceException>(() => manager.GetResourceSet(inv, loadIfExists: false, tryParents: true));
 
             // createIfNotExists = true will throw an exception as well
-            Throws<MissingManifestResourceException>(() => refManager.GetResourceSet(inv, createIfNotExists: true, tryParents: true));
-            Throws<MissingManifestResourceException>(() => manager.GetResourceSet(inv, loadIfExists: true, tryParents: true));
+            AssertThrows<MissingManifestResourceException>(() => refManager.GetResourceSet(inv, createIfNotExists: true, tryParents: true));
+            AssertThrows<MissingManifestResourceException>(() => manager.GetResourceSet(inv, loadIfExists: true, tryParents: true));
 
             // except if tryParents=false, because in this case null will be returned
             Assert.IsNull(refManager.GetResourceSet(inv, createIfNotExists: true, tryParents: false));
@@ -718,8 +718,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         {
             var manager = new ResXResourceManager("TestResourceResX", GetType().Assembly);
             manager.Dispose();
-            Throws<ObjectDisposedException>(manager.ReleaseAllResources);
-            Throws<ObjectDisposedException>(() => manager.GetString("TestString"));
+            AssertThrows<ObjectDisposedException>(manager.ReleaseAllResources);
+            AssertThrows<ObjectDisposedException>(() => manager.GetString("TestString"));
             manager.Dispose(); // this will not throw anything
         }
 

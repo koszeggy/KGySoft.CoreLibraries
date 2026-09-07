@@ -78,7 +78,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
         public void ToHexString()
         {
             byte[] bytes = Enumerable.Range(1, 3).Select(i => (byte)i).ToArray();
-            Throws<ArgumentException>(() => bytes.ToHexValuesString("a"));
+            AssertThrows<ArgumentException>(() => bytes.ToHexValuesString("a"));
 
             Assert.AreEqual(bytes.Select(b => b.ToString("X2", CultureInfo.InvariantCulture)).Join(""), bytes.ToHexValuesString(""));
             Assert.AreEqual(bytes.Select(b => b.ToString("X2", CultureInfo.InvariantCulture)).Join(", "), bytes.ToHexValuesString(", "));
@@ -156,8 +156,8 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
         {
             byte[] bytes = Enumerable.Range(1, 1000).Select(i => (byte)i).ToArray();
 
-            Throws<ArgumentNullException>(() => bytes.ToDecimalValuesString(null!));
-            Throws<ArgumentException>(() => bytes.ToDecimalValuesString("0"));
+            AssertThrows<ArgumentNullException>(() => bytes.ToDecimalValuesString(null!));
+            AssertThrows<ArgumentException>(() => bytes.ToDecimalValuesString("0"));
             Assert.AreEqual(bytes.Select(b => b.ToString(CultureInfo.InvariantCulture)).Join(", "), bytes.ToDecimalValuesString());
         }
 

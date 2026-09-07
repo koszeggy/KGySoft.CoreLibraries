@@ -149,7 +149,7 @@ namespace KGySoft.CoreLibraries
 
             Console.ForegroundColor = result.FailCount > 0 ? ConsoleColor.Red
                 : result.InconclusiveCount > 0 || result.WarningCount > 0 ? ConsoleColor.Yellow
-                : result.PassCount == 0 ? ConsoleColor.DarkCyan
+                : result.PassCount == 0 ? ConsoleColor.Cyan
                 : ConsoleColor.Green;
 
             Console.WriteLine($"Passed: {result.PassCount}; Failed: {result.FailCount}; Inconclusive: {result.InconclusiveCount}; Skipped: {result.SkipCount}; Warnings: {result.WarningCount}");

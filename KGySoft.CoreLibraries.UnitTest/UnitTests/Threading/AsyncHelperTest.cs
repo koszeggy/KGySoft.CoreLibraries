@@ -32,7 +32,7 @@ using NUnit.Framework;
 namespace KGySoft.CoreLibraries.UnitTests.Threading
 {
     [TestFixture]
-    public class AsyncHelperTest
+    public class AsyncHelperTest : TestBase
     {
         #region Methods
 
@@ -378,7 +378,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Threading
                 canceled.Cancel();
             canLeaveSignal.Set();
 
-            Assert.That(async () => await task, cancel == true && throwIfCanceled ? Throws.InstanceOf<TaskCanceledException>() : Throws.Nothing);
+            AssertThrowsIf<TaskCanceledException>(async () => await task, cancel == true && throwIfCanceled);
             Assert.IsTrue(task.IsCompleted);
         }
 
@@ -390,7 +390,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Threading
 
             Task task = AsyncHelper.DoOperationAsync(ctx => TestAction(ctx, startedSignal, null), config);
             Assert.IsTrue(task.IsCompleted);
-            Assert.ThrowsAsync<TaskCanceledException>(async () => await task);
+            AssertThrows<TaskCanceledException>(async () => await task);
             Assert.IsFalse(startedSignal.WaitOne(0));
         }
 
@@ -407,7 +407,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Threading
             };
             Task task = AsyncHelper.FromCompleted(config);
             Assert.IsTrue(task.IsCompleted);
-            Assert.That(async () => await task, cancel == true && throwIfCanceled ? Throws.Exception.InstanceOf<TaskCanceledException>() : Throws.Nothing);
+            AssertThrowsIf<TaskCanceledException>(async () => await task, cancel == true && throwIfCanceled);
         }
 
         [TestCase(null, default(bool))]
@@ -437,7 +437,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Threading
             canLeaveSignal.Set();
 
             int? result = null;
-            Assert.That(async () => result = await task, cancel == true && throwIfCanceled ? Throws.InstanceOf<TaskCanceledException>() : Throws.Nothing);
+            AssertThrowsIf<TaskCanceledException>(async () => result = await task, cancel == true && throwIfCanceled);
             Assert.IsTrue(task.IsCompleted);
             Assert.That(result, cancel == true ? (throwIfCanceled ? Is.Null : Is.EqualTo(0)) : Is.EqualTo(1));
         }
@@ -450,7 +450,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Threading
 
             Task<int> task = AsyncHelper.DoOperationAsync(ctx => TestFunc(ctx, startedSignal, null), config);
             Assert.IsTrue(task.IsCompleted);
-            Assert.ThrowsAsync<TaskCanceledException>(async () => await task);
+            AssertThrows<TaskCanceledException>(async () => await task);
             Assert.IsFalse(startedSignal.WaitOne(0));
         }
 
@@ -469,13 +469,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Threading
             int? result = null;
             Task<int> task = AsyncHelper.FromResult(42, config);
             Assert.IsTrue(task.IsCompleted);
-            Assert.That(async () => result = await task, cancel == true && throwIfCanceled ? Throws.Exception.InstanceOf<OperationCanceledException>() : Throws.Nothing);
+            AssertThrowsIf<TaskCanceledException>(async () => result = await task, cancel == true && throwIfCanceled);
             Assert.That(result, cancel == true ? (throwIfCanceled ? Is.Null : Is.EqualTo(0)) : Is.EqualTo(42));
 
             result = null;
             task = AsyncHelper.FromResult(42, -42, config);
             Assert.IsTrue(task.IsCompleted);
-            Assert.That(async () => result = await task, cancel == true && throwIfCanceled ? Throws.Exception.InstanceOf<OperationCanceledException>() : Throws.Nothing);
+            AssertThrowsIf<TaskCanceledException>(async () => result = await task, cancel == true && throwIfCanceled);
             Assert.That(result, cancel == true ? (throwIfCanceled ? Is.Null : Is.EqualTo(-42)) : Is.EqualTo(42));
         }
 #endif

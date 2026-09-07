@@ -220,7 +220,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             // null
             Test(null, (object)null);
             Test(null, (int?)null);
-            Throws<ArgumentException>(() => Test(null, 1));
+            AssertThrows<ArgumentException>(() => Test(null, 1));
 
             // string
             Test("1", "1");

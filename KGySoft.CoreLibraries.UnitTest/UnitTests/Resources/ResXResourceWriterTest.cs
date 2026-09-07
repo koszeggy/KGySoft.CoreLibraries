@@ -943,7 +943,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             KGySerializeObjects(referenceObjects, true, safeMode: false);
             KGySerializeObjects(referenceObjects, false, safeMode: false);
 
-            Throws<NotSupportedException>(() => KGySerializeObjects(referenceObjects, false), "In safe mode it is not supported to deserialize file references. Resource name: 0_ResXFileRef.");
+            AssertThrows<NotSupportedException>(() => KGySerializeObjects(referenceObjects, false), "In safe mode it is not supported to deserialize file references. Resource name: 0_ResXFileRef.");
         }
 
         [Test]

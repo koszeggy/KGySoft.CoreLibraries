@@ -192,7 +192,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
         }
 
         [Test]
-        public void PowETestOverflow() => Throws<OverflowException>(() => PowETest(66.6m));
+        public void PowETestOverflow() => AssertThrows<OverflowException>(() => PowETest(66.6m));
 
         [TestCaseSource(nameof(powTestSource))]
         public void PowTest(decimal value)

@@ -258,16 +258,16 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
 #endif
 
             // Registered conversions
-            Throws<ArgumentException>(() => Test(now, now.Ticks));
-            Throws<ArgumentException>(() => Test(now, (double)now.Ticks));
+            AssertThrows<ArgumentException>(() => Test(now, now.Ticks));
+            AssertThrows<ArgumentException>(() => Test(now, (double)now.Ticks));
 
             typeof(DateTime).RegisterConversion(typeof(long), DateTimeToLongConversion);
             Test(now, now.Ticks);
             Test(now, (double)now.Ticks); // DateTime -> long -> double
             typeof(DateTime).UnregisterConversion(typeof(long), DateTimeToLongConversion);
 
-            Throws<ArgumentException>(() => Test(now, now.Ticks));
-            Throws<ArgumentException>(() => Test(now, (double)now.Ticks));
+            AssertThrows<ArgumentException>(() => Test(now, now.Ticks));
+            AssertThrows<ArgumentException>(() => Test(now, (double)now.Ticks));
         }
 
         [Test]

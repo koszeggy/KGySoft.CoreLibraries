@@ -162,6 +162,7 @@ namespace KGySoft.CoreLibraries
                 var testCase = new TestMethod(new MethodWrapper(invocationMethod.DeclaringType!, invocationMethod)) { Name = caseName };
                 listener.TestStarted(testCase);
                 var testResult = new TestCaseResult(testCase);
+                using var _ = new TestExecutionContext.IsolatedContext();
                 try
                 {
                     // [SetUp]

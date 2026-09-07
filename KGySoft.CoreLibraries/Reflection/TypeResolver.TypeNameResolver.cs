@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Reflection.Metadata;
+using System.Runtime.CompilerServices;
 
 using KGySoft.Collections;
 using KGySoft.CoreLibraries;
@@ -170,7 +171,15 @@ namespace KGySoft.Reflection
                         resolveAssemblyOptions &= ~ResolveAssemblyOptions.ThrowError;
                     assembly = AssemblyResolver.ResolveAssembly(rootName.AssemblyName, resolveAssemblyOptions);
                     if (assembly == null && (options & ResolveTypeOptions.AllowIgnoreAssemblyName) == ResolveTypeOptions.None)
-                        return null;
+                    {
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+                        // Not returning yet if we are in native AOT mode and the assembly name is mscorlib - we will try to resolve the type from MscorlibAssembly (= System.Private.CoreLib)
+                        if (RuntimeFeature.IsDynamicCodeSupported || rootName.AssemblyName.Name != AssemblyResolver.MscorlibName)
+#endif
+                        {
+                            return null;
+                        }
+                    }
                 }
 
                 // 3/a. Resolving the type from a specific assembly

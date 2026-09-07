@@ -66,7 +66,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Threading
             Action<int> callback = _ => executed = true;
             var config = new ParallelConfig { IsCancelRequestedCallback = isCanceled };
 
-            Throws<OperationCanceledException>(() => ParallelHelper.For(0, 1, config, callback), Res.OperationCanceled);
+            AssertThrows<OperationCanceledException>(() => ParallelHelper.For(0, 1, config, callback), Res.OperationCanceled);
             config.ThrowIfCanceled = false;
             Assert.IsFalse(ParallelHelper.For(0, 1, config, callback));
             Assert.IsFalse(executed);
@@ -142,7 +142,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Threading
             IAsyncResult ar = ParallelHelper.BeginFor(0, bools.Length, asyncConfig, i => bools[i] = true);
             Assert.IsTrue(ar.IsCompleted);
             Assert.IsTrue(ar.CompletedSynchronously);
-            Throws<OperationCanceledException>(() => ParallelHelper.EndFor(ar), Res.OperationCanceled);
+            AssertThrows<OperationCanceledException>(() => ParallelHelper.EndFor(ar), Res.OperationCanceled);
             Assert.IsTrue(bools.All(b => !b));
         }
 

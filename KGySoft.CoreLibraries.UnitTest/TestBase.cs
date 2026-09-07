@@ -52,6 +52,7 @@ using System.Security.Permissions;
 using System.Security.Policy; 
 #endif
 using System.Text;
+using System.Threading.Tasks;
 #if NETFRAMEWORK
 using System.Windows.Forms;
 #endif
@@ -246,7 +247,7 @@ namespace KGySoft.CoreLibraries
         protected static bool MembersAndItemsEqual(IEnumerable reference, IEnumerable check, bool forceNestedEqualityByMembers = false)
             => CheckMembersAndItemsEqual(reference, check, forceNestedEqualityByMembers, null, new HashSet<object>(ReferenceEqualityComparer.Comparer));
 
-        protected static void Throws<T>(TestDelegate code, string expectedMessageContent = null)
+        protected static void AssertThrows<T>(TestDelegate code, string expectedMessageContent = null)
             where T : Exception
         {
             var e = Assert.Throws<T>(code);
@@ -255,6 +256,55 @@ namespace KGySoft.CoreLibraries
             Console.WriteLine($"Expected exception {typeof(T)} has been thrown: {e.Message}");
         }
 
+        protected static void AssertThrows<T>(AsyncTestDelegate code, string message = null)
+            where T : Exception
+        {
+            if (!IsAot)
+            {
+                Assert.ThrowsAsync<T>(code, message);
+                return;
+            }
+
+            TestDelegate fallbackCode = () =>
+            {
+                try
+                {
+                    code.Invoke().Wait();
+                }
+                catch (AggregateException e)
+                {
+                    throw e.InnerExceptions[0];
+                }
+            };
+
+            AssertThrows<T>(fallbackCode, message);
+        }
+        protected static void AssertThrowsIf<T>(AsyncTestDelegate code, bool condition, string message = null)
+            where T : Exception
+        {
+            if (!IsAot)
+            {
+                Assert.That(code, condition ? Throws.InstanceOf<T>() : Throws.Nothing, message);
+                return;
+            }
+
+            TestDelegate fallbackCode = () =>
+            {
+                try
+                {
+                    code.Invoke().Wait();
+                }
+                catch (AggregateException e)
+                {
+                    throw e.InnerExceptions[0];
+                }
+            };
+
+            if (condition)
+                AssertThrows<T>(fallbackCode, message);
+            else
+                Assert.DoesNotThrow(fallbackCode);
+        }
         protected static void CopyContent(object target, object source)
         {
             if (target == null || source == null)

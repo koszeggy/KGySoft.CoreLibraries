@@ -150,10 +150,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             Assert.IsFalse(manager.SafeMode);
             manager.Source = ResourceManagerSources.CompiledOnly;
             Console.WriteLine($"{resName} ({manager.Source})");
-            Throws<InvalidOperationException>(() => manager.GetString(resName, inv));
+            AssertThrows<InvalidOperationException>(() => manager.GetString(resName, inv));
             manager.Source = ResourceManagerSources.ResXOnly;
             Console.WriteLine($"{resName} ({manager.Source})");
-            Throws<InvalidOperationException>(() => manager.GetString(resName, inv));
+            AssertThrows<InvalidOperationException>(() => manager.GetString(resName, inv));
 
             // but in safe mode they succeed - the content is different though: ToString vs. raw XML content
             manager.SafeMode = true;
@@ -319,7 +319,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             manager.Source = ResourceManagerSources.CompiledOnly;
             Assert.Throws<InvalidOperationException>(() => manager.GetStream(resName, inv));
             manager.Source = ResourceManagerSources.ResXOnly;
-            Throws<InvalidOperationException>(() => manager.GetStream(resName, inv), Res.ResourcesNonStreamResourceWithType(resName, Reflector.StringType));
+            AssertThrows<InvalidOperationException>(() => manager.GetStream(resName, inv), Res.ResourcesNonStreamResourceWithType(resName, Reflector.StringType));
 
             // but when SafeMode is true, a string stream is returned
             manager.SafeMode = true;
@@ -385,10 +385,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
             // but for for non-existing name even this will throw an exception
             manager = new HybridResourceManager("NonExisting", typeof(object).Assembly); // typeof(object): mscorlib has en-US invariant resources language
-            Throws<MissingManifestResourceException>(() => manager.GetResourceSet(inv, loadIfExists: false, tryParents: true));
+            AssertThrows<MissingManifestResourceException>(() => manager.GetResourceSet(inv, loadIfExists: false, tryParents: true));
 
             // createIfNotExists = true will throw an exception as well
-            Throws<MissingManifestResourceException>(() => manager.GetResourceSet(inv, loadIfExists: true, tryParents: true));
+            AssertThrows<MissingManifestResourceException>(() => manager.GetResourceSet(inv, loadIfExists: true, tryParents: true));
 
             // except if tryParents=false, because in this case null will be returned
             Assert.IsNull(manager.GetResourceSet(inv, loadIfExists: true, tryParents: false));
@@ -522,12 +522,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             var manager = new HybridResourceManager(GetType());
 
             // not existing base: an exception is thrown when an object is about to obtain
-            Throws<MissingManifestResourceException>(() => manager.GetObject("unknown"));
+            AssertThrows<MissingManifestResourceException>(() => manager.GetObject("unknown"));
 
             // setting something in display language creates a resource set but the invariant is still missing
             manager.SetObject("StringValue", "String " + LanguageSettings.DisplayLanguage.Name);
             Assert.IsNotNull(manager.GetObject("StringValue"));
-            Throws<MissingManifestResourceException>(() => manager.GetObject("unknown"));
+            AssertThrows<MissingManifestResourceException>(() => manager.GetObject("unknown"));
 
             // this creates the invariant resource set, no exception anymore for unknown values
             manager.SetObject("InvariantOnly", 42, inv);
@@ -544,9 +544,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
             // in compiled mode any set operation throws InvalidOperationException and the changes disappear
             manager.Source = ResourceManagerSources.CompiledOnly;
-            Throws<InvalidOperationException>(() => manager.SetObject("SetTest", "does not work"));
+            AssertThrows<InvalidOperationException>(() => manager.SetObject("SetTest", "does not work"));
             Assert.IsFalse(manager.IsModified);
-            Throws<MissingManifestResourceException>(() => manager.GetString("StringValue"));
+            AssertThrows<MissingManifestResourceException>(() => manager.GetString("StringValue"));
 
             // is we change to non-compiled mode, changes re-appear
             manager.Source = ResourceManagerSources.ResXOnly;
@@ -560,7 +560,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             var manager = new HybridResourceManager(GetType());
 
             // not existing base: missing manifest exception
-            Throws<MissingManifestResourceException>(() => manager.GetMetaObject("unknown"));
+            AssertThrows<MissingManifestResourceException>(() => manager.GetMetaObject("unknown"));
 
             // setting something without culture sets the invariant language so there is no exception anymore
             manager.SetMetaObject("StringValue", "String invariant");
@@ -575,7 +575,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
             // in compiled mode any set operation throws InvalidOperationException and the changes disappear
             manager.Source = ResourceManagerSources.CompiledOnly;
-            Throws<InvalidOperationException>(() => manager.SetMetaObject("SetTest", "does not work"));
+            AssertThrows<InvalidOperationException>(() => manager.SetMetaObject("SetTest", "does not work"));
             Assert.IsFalse(manager.IsModified);
             Assert.IsNull(manager.GetMetaString("StringValue"));
 
@@ -667,7 +667,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             enumHybrid.MoveNext();
             Assert.IsTrue(keysResx.Contains(enumHybrid.Key.ToString()));
             manager.SetObject("new", 42, inv);
-            Throws<InvalidOperationException>(() => enumHybrid.MoveNext());
+            AssertThrows<InvalidOperationException>(() => enumHybrid.MoveNext());
 
             // 2. during the compiled enumeration
             enumHybrid = manager.GetResourceSet(inv, true, false).GetEnumerator();
@@ -677,7 +677,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 enumHybrid.MoveNext();
             } while (enumHybrid.Key.ToString() != compiledOnlyKey);
             manager.SetObject("new", -42, inv);
-            Throws<InvalidOperationException>(() => enumHybrid.MoveNext());
+            AssertThrows<InvalidOperationException>(() => enumHybrid.MoveNext());
         }
 
         [Test]
@@ -764,15 +764,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         {
             var manager = new HybridResourceManager(CompiledBaseName, GetType().Assembly, resXBaseName);
             manager.Dispose();
-            Throws<ObjectDisposedException>(() => manager.ReleaseAllResources());
-            Throws<ObjectDisposedException>(() => manager.GetString("TestString"));
+            AssertThrows<ObjectDisposedException>(() => manager.ReleaseAllResources());
+            AssertThrows<ObjectDisposedException>(() => manager.GetString("TestString"));
             manager.Dispose(); // this will not throw anything
 
             manager = new HybridResourceManager(CompiledBaseName, GetType().Assembly, resXBaseName);
             manager.Source = ResourceManagerSources.CompiledOnly;
             manager.Dispose();
-            Throws<ObjectDisposedException>(() => manager.ReleaseAllResources());
-            Throws<ObjectDisposedException>(() => manager.GetString("TestString"));
+            AssertThrows<ObjectDisposedException>(() => manager.ReleaseAllResources());
+            AssertThrows<ObjectDisposedException>(() => manager.GetString("TestString"));
             manager.Dispose(); // this will not throw anything
         }
 

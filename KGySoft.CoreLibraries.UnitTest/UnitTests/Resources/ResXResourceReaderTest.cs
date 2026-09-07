@@ -194,7 +194,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 </root>";
             using var reader = new ResXResourceReader(new StringReader(resx));
 
-            Throws<XmlException>(() => reader.GetEnumerator().ToEnumerable().ToArray());
+            AssertThrows<XmlException>(() => reader.GetEnumerator().ToEnumerable().ToArray());
         }
 
 #endregion

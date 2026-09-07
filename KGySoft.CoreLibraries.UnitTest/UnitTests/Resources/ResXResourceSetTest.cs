@@ -367,7 +367,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             rsCheck = new ResXResourceSet(new StringReader(sb.ToString()));
 
             rsCheck.SafeMode = true;
-            Throws<SerializationException>(() => ((ResXDataNode)rsCheck.GetObject("x"))!.GetValueSafe(), "Unexpected type name in safe mode: KGySoft.CoreLibraries.UnitTests.Resources.ResXResourceSetTest+NonSerializableClass");
+            AssertThrows<SerializationException>(() => ((ResXDataNode)rsCheck.GetObject("x"))!.GetValueSafe(), "Unexpected type name in safe mode: KGySoft.CoreLibraries.UnitTests.Resources.ResXResourceSetTest+NonSerializableClass");
 
             rsCheck.SafeMode = false;
             Assert.AreEqual(rs.GetObject("x"), rsCheck.GetObject("x"));

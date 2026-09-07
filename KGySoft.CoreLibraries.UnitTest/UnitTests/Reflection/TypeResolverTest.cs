@@ -36,7 +36,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
     /// Use non-mscorlib types, otherwise <see cref="Type.GetType(string)"/> resolves the string as well.
     /// </summary>
     [TestFixture]
-    public class TypeResolverTest
+    public class TypeResolverTest : TestBase
     {
         #region Fields
 
@@ -148,9 +148,24 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             }
 
             Type bySystem = Type.GetType(typeName);
-            if (bySystem == null && EnvironmentHelper.IsMono)
+            if (bySystem == null)
             {
-                Assert.Inconclusive($"On Mono System.Type.GetType fails to resolve {typeName}");
+                if (EnvironmentHelper.IsMono)
+                    Assert.Inconclusive($"On Mono System.Type.GetType fails to resolve {typeName}");
+
+                // Type.GetType Could not resolve a type in AOT mode: it must have a legacy assembly identity
+                if (IsAot)
+                {
+                    bool hasAssembly = false;
+                    Reflector.ResolveType(typeName, (asmName, _) =>
+                    {
+                        hasAssembly |= asmName != null;
+                        return null;
+                    });
+
+                    Assert.IsTrue(hasAssembly);
+                }
+
                 return;
             }
 

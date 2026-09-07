@@ -162,11 +162,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             string key = "unknown";
 
             // Exception is thrown through base HRM
-            Throws<MissingManifestResourceException>(() => manager.GetString(key, inv));
+            AssertThrows<MissingManifestResourceException>(() => manager.GetString(key, inv));
 
             // Due to possible append options, exception is thrown through derived DRM
             // For the neutral en culture a resource set is created during the traversal
-            Throws<MissingManifestResourceException>(() => manager.GetString(key, enUS));
+            AssertThrows<MissingManifestResourceException>(() => manager.GetString(key, enUS));
             Assert.IsNull(manager.GetResourceSet(enUS, false, false));
             Assert.IsNotNull(manager.GetResourceSet(en, false, false));
 
@@ -213,7 +213,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
             // changing back to compiled only sources disables appending invariant so exception will be thrown again
             manager.Source = ResourceManagerSources.CompiledOnly;
-            Throws<MissingManifestResourceException>(() => manager.GetString(key, enUS));
+            AssertThrows<MissingManifestResourceException>(() => manager.GetString(key, enUS));
         }
 
         [Test]
@@ -682,7 +682,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
                 manager.SetObject(key, value, testCulture);
                 manager.Dispose(); // save occurs
-                Throws<ObjectDisposedException>(() => manager.GetResourceSet(testCulture, false, false));
+                AssertThrows<ObjectDisposedException>(() => manager.GetResourceSet(testCulture, false, false));
                 Assert.IsTrue(File.Exists(Path.Combine(Path.Combine(Files.GetExecutingPath(), manager.ResXResourcesDir), $"TestResourceResX.{testCulture.Name}.resx")));
 
                 // Dispose, central
@@ -697,7 +697,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 manager.SetObject(key, value, testCulture);
                 LanguageSettings.DisplayLanguage = inv; // save occurs
                 manager.Dispose(); // save occurs
-                Throws<ObjectDisposedException>(() => manager.GetResourceSet(testCulture, false, false));
+                AssertThrows<ObjectDisposedException>(() => manager.GetResourceSet(testCulture, false, false));
                 Assert.IsTrue(File.Exists(Path.Combine(Path.Combine(Files.GetExecutingPath(), manager.ResXResourcesDir), $"TestResourceResX.{testCulture.Name}.resx")));
 
                 // final cleanup
@@ -752,15 +752,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 AutoSave = AutoSaveOptions.None
             };
             manager.Dispose();
-            Throws<ObjectDisposedException>(() => manager.ReleaseAllResources());
-            Throws<ObjectDisposedException>(() => manager.GetString("TestString"));
+            AssertThrows<ObjectDisposedException>(() => manager.ReleaseAllResources());
+            AssertThrows<ObjectDisposedException>(() => manager.GetString("TestString"));
             manager.Dispose(); // this will not throw anything
 
             manager = new DynamicResourceManager(CompiledBaseName, GetType().Assembly, resXBaseName);
             manager.Source = ResourceManagerSources.CompiledOnly;
             manager.Dispose();
-            Throws<ObjectDisposedException>(() => manager.ReleaseAllResources());
-            Throws<ObjectDisposedException>(() => manager.GetString("TestString"));
+            AssertThrows<ObjectDisposedException>(() => manager.ReleaseAllResources());
+            AssertThrows<ObjectDisposedException>(() => manager.GetString("TestString"));
             manager.Dispose(); // this will not throw anything
         }
 
@@ -846,7 +846,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 manager.ReleaseAllResources();
 
                 // With IgnoreResXParseErrors = false an exception is thrown for the invalid content
-                Throws<XmlException>(() => manager.GetString("unknown", culture));
+                AssertThrows<XmlException>(() => manager.GetString("unknown", culture));
 
                 // But the invalid resource file is ignored if IgnoreResXParseErrors is true
                 manager.IgnoreResXParseErrors = true;
