@@ -66,7 +66,7 @@ namespace KGySoft.CoreLibraries
                 {
                     TestStatus.Failed => ConsoleColor.Red,
                     TestStatus.Passed => ConsoleColor.Green,
-                    TestStatus.Skipped => ConsoleColor.DarkCyan,
+                    TestStatus.Skipped => ConsoleColor.Cyan,
                     _ => ConsoleColor.Yellow
                 };
 
@@ -121,7 +121,7 @@ namespace KGySoft.CoreLibraries
 
         internal static void Main(string[] args)
         {
-            //args = ["TestName=SerializeSimpleTypes", "ClassName=BinarySerializerTest"];
+            //args = ["TestName=GenerateDynamicDependencies", /*"ClassName=BinarySerializerTest"*/];
 
             // This executes all tests. Can be useful for .NET 3.5, which is executed on .NET 4.x runtime otherwise.
             // It is useful also for testing the library in AOT mode after publishing with the PublishAot option.

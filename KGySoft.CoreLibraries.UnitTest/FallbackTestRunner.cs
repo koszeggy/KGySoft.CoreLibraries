@@ -127,7 +127,7 @@ namespace KGySoft.CoreLibraries
 
         internal FallbackTestRunner(TestRunConfig config)
 #if NETCOREAPP3_0_OR_GREATER && AOT
-                    : this() // to ensure the [DynamicDependency] attributes take effect
+            : this() // to ensure the [DynamicDependency] attributes take effect
 #endif
         {
             this.config = config;
@@ -138,86 +138,6 @@ namespace KGySoft.CoreLibraries
         #region Methods
 
         #region Static Methods
-
-#if NETCOREAPP3_0_OR_GREATER
-        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "All generic test type arguments are statically rooted by the AOT test runner.")]
-#endif
-        private static void RunTestCases(object instance, TestResultContainer classResult, ITestListener listener, MethodInfo method, ICollection<MethodInfo> setupMethods, ICollection<MethodInfo> tearDownMethods)
-        {
-            foreach ((object?[] Parameters, Type[]? TypeArguments) testCaseInfo in GetTestCases(method, instance))
-            {
-                string caseName = testCaseInfo.Parameters.Length == 0 ? method.Name : $"{method.Name}({testCaseInfo.Parameters.Select(p => p?.ToString() ?? "null").Join(", ")})";
-                MethodInfo invocationMethod = method;
-                try
-                {
-                    if (method.IsGenericMethodDefinition)
-                        invocationMethod = method.MakeGenericMethod(testCaseInfo.TypeArguments!);
-                }
-                catch (Exception e)
-                {
-                    classResult.AddResult(new TestCaseResult(method, ResultState.Error, caseName, e));
-                    return;
-                }
-
-                var testCase = new TestMethod(new MethodWrapper(invocationMethod.DeclaringType!, invocationMethod)) { Name = caseName };
-                listener.TestStarted(testCase);
-                var testResult = new TestCaseResult(testCase);
-                using var _ = new TestExecutionContext.IsolatedContext();
-                try
-                {
-                    // [SetUp]
-                    try
-                    {
-                        foreach (MethodInfo setup in setupMethods)
-                            setup.Invoke(instance, null);
-                    }
-                    catch (Exception e)
-                    {
-                        var state = e is AssertionException ? ResultState.SetUpFailure : ResultState.SetUpError;
-                        testResult.SetResult(state, e.Message, e.ToString());
-                        return;
-                    }
-
-                    try
-                    {
-                        invocationMethod.Invoke(instance, testCaseInfo.Parameters);
-                        testResult.SetResult(ResultState.Success);
-                    }
-                    catch (Exception e)
-                    {
-                        if (e is TargetInvocationException { InnerException: not null })
-                            e = e.InnerException!;
-                        var state = e switch
-                        {
-                            SuccessException => ResultState.Success,
-                            InconclusiveException => ResultState.Inconclusive,
-                            AssertionException => ResultState.Failure,
-                            _ => ResultState.Error
-                        };
-                        testResult.SetResult(state, e.Message, e.ToString());
-                    }
-                    finally
-                    {
-                        // [TearDown]
-                        try
-                        {
-                            foreach (MethodInfo tearDown in tearDownMethods)
-                                tearDown.Invoke(instance, null);
-                        }
-                        catch (Exception e)
-                        {
-                            if (testResult.ResultState == ResultState.Success || testResult.ResultState == ResultState.Inconclusive)
-                                testResult.SetResult(ResultState.TearDownError, e.Message, e.ToString());
-                        }
-                    }
-                }
-                finally
-                {
-                    listener.TestFinished(testResult);
-                    classResult.AddResult(testResult);
-                }
-            }
-        }
 
         private static IEnumerable<(object?[] Parameters, Type[]? TypeArguments)> GetTestCases(MethodInfo method, object fixtureInstance)
         {
@@ -384,16 +304,6 @@ namespace KGySoft.CoreLibraries
                 if (config.TestName != null && config.TestName != method.Name)
                     continue;
 
-                // [Explicit]: skipping, unless requested by the config
-                if (Attribute.GetCustomAttribute(method, typeof(ExplicitAttribute), false) != null)
-                {
-                    if (config.TestName != method.Name)
-                    {
-                        classResult.AddResult(new TestCaseResult(method, ResultState.Skipped));
-                        continue;
-                    }
-                }
-
                 RunTestCases(instance, classResult, listener, method, setupMethods, tearDownMethods);
             }
 
@@ -409,6 +319,96 @@ namespace KGySoft.CoreLibraries
             }
 
             return true;
+        }
+
+#if NETCOREAPP3_0_OR_GREATER
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "All generic test type arguments are statically rooted by the AOT test runner.")]
+#endif
+        private void RunTestCases(object instance, TestResultContainer classResult, ITestListener listener, MethodInfo method, ICollection<MethodInfo> setupMethods, ICollection<MethodInfo> tearDownMethods)
+        {
+            foreach ((object?[] Parameters, Type[]? TypeArguments) testCaseInfo in GetTestCases(method, instance))
+            {
+                string caseName = testCaseInfo.Parameters.Length == 0 ? method.Name : $"{method.Name}({testCaseInfo.Parameters.Select(p => p?.ToString() ?? "null").Join(", ")})";
+                MethodInfo invocationMethod = method;
+                try
+                {
+                    if (method.IsGenericMethodDefinition)
+                        invocationMethod = method.MakeGenericMethod(testCaseInfo.TypeArguments!);
+                }
+                catch (Exception e)
+                {
+                    classResult.AddResult(new TestCaseResult(method, ResultState.Error, caseName, e));
+                    return;
+                }
+
+                var testCase = new TestMethod(new MethodWrapper(invocationMethod.DeclaringType!, invocationMethod)) { Name = caseName };
+                listener.TestStarted(testCase);
+                var testResult = new TestCaseResult(testCase);
+                try
+                {
+                    // [Explicit]: skipping, unless requested by the config (could be processed in the caller, but this way it is reported to the listener)
+                    if (Attribute.GetCustomAttribute(method, typeof(ExplicitAttribute), false) != null)
+                    {
+                        if (config.TestName != method.Name)
+                        {
+                            testResult.SetResult(ResultState.Skipped);
+                            continue;
+                        }
+                    }
+
+                    using var _ = new TestExecutionContext.IsolatedContext();
+                    // [SetUp]
+                    try
+                    {
+                        foreach (MethodInfo setup in setupMethods)
+                            setup.Invoke(instance, null);
+                    }
+                    catch (Exception e)
+                    {
+                        var state = e is AssertionException ? ResultState.SetUpFailure : ResultState.SetUpError;
+                        testResult.SetResult(state, e.Message, e.ToString());
+                        return;
+                    }
+
+                    try
+                    {
+                        invocationMethod.Invoke(instance, testCaseInfo.Parameters);
+                        testResult.SetResult(ResultState.Success);
+                    }
+                    catch (Exception e)
+                    {
+                        if (e is TargetInvocationException { InnerException: not null })
+                            e = e.InnerException!;
+                        var state = e switch
+                        {
+                            SuccessException => ResultState.Success,
+                            InconclusiveException => ResultState.Inconclusive,
+                            AssertionException => ResultState.Failure,
+                            _ => ResultState.Error
+                        };
+                        testResult.SetResult(state, e.Message, e.ToString());
+                    }
+                    finally
+                    {
+                        // [TearDown]
+                        try
+                        {
+                            foreach (MethodInfo tearDown in tearDownMethods)
+                                tearDown.Invoke(instance, null);
+                        }
+                        catch (Exception e)
+                        {
+                            if (testResult.ResultState == ResultState.Success || testResult.ResultState == ResultState.Inconclusive)
+                                testResult.SetResult(ResultState.TearDownError, e.Message, e.ToString());
+                        }
+                    }
+                }
+                finally
+                {
+                    listener.TestFinished(testResult);
+                    classResult.AddResult(testResult);
+                }
+            }
         }
 
         #endregion
