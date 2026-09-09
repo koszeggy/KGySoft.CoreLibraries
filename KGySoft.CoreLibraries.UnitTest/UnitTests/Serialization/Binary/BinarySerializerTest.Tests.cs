@@ -1263,8 +1263,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new UInt128?[] { 1, null },
 #endif
 #if NETCOREAPP && !NETSTANDARD_TEST
-                new ImmutableArray<int>?[] { [1, 2, 3, 4], ImmutableArray<int>.Empty, new ImmutableArray<int>(), null },
-                new ImmutableArray<int?>?[] { [1, 2, 3, 4, null], ImmutableArray<int?>.Empty, new ImmutableArray<int?>(), null },
+                new ImmutableArray<int>?[] { ImmutableArray.Create(1, 2, 3, 4), ImmutableArray<int>.Empty, new ImmutableArray<int>(), null },
+                new ImmutableArray<int?>?[] { ImmutableArray.Create<int?>(1, 2, 3, 4, null), ImmutableArray<int?>.Empty, new ImmutableArray<int?>(), null },
 #endif
 #if NETCOREAPP2_1_OR_GREATER
                 new Memory<byte>?[] { new byte[10].AsMemory(1, 2), null },
@@ -3154,7 +3154,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #if NET8_0_OR_GREATER
             AssertThrows<NotSupportedException>(() => KGySerializeObject(referenceObjects[1], BinarySerializationOptions.None), Res.SerializationPointerArrayTypeNotSupported(referenceObjects[1].GetType()));
 #else
-            Throws<NotSupportedException>(() => KGySerializeObject(referenceObjects[1], BinarySerializationOptions.None), Res.SerializationFunctionPointerTypeNotSupported);
+            AssertThrows<NotSupportedException>(() => KGySerializeObject(referenceObjects[1], BinarySerializationOptions.None), Res.SerializationFunctionPointerTypeNotSupported);
 #endif
         }
 

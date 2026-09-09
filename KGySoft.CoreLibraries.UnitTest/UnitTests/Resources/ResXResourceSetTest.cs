@@ -355,7 +355,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             rsCheck = new ResXResourceSet(new StringReader(sb.ToString()));
 
             rsCheck.SafeMode = true;
-            Throws<SerializationException>(() => ((ResXDataNode)rsCheck.GetObject("x"))!.GetValueSafe(), "In safe mode it is not allowed to deserialize resource \"x\" because it was serialized by BinaryFormatter.");
+            AssertThrows<SerializationException>(() => ((ResXDataNode)rsCheck.GetObject("x"))!.GetValueSafe(), "In safe mode it is not allowed to deserialize resource \"x\" because it was serialized by BinaryFormatter.");
 
             rsCheck.SafeMode = false;
             Assert.AreEqual(rs.GetObject("x"), rsCheck.GetObject("x"));

@@ -250,7 +250,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
         [Test]
         public void ConstraintTest()
         {
-            Throws<TypeInitializationException>(() => Reflector.CreateInstance(typeof(CastArray<,>), [typeof(int), typeof(DictionaryEntry)], new int[1].AsSection()));
+            AssertThrows<TypeInitializationException>(() => Reflector.CreateInstance(typeof(CastArray<,>), [typeof(int), typeof(DictionaryEntry)], new int[1].AsSection()));
         }
 #endif
 

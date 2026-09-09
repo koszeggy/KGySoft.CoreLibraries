@@ -48,6 +48,9 @@ using KGySoft.Collections;
 using KGySoft.ComponentModel;
 using KGySoft.Reflection;
 using KGySoft.Resources;
+#if AOT
+using KGySoft.Serialization;
+#endif
 using KGySoft.Serialization.Binary;
 
 using NUnit.Framework;
@@ -172,7 +175,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             using (ResXResourceReader reader = new ResXResourceReader(path) { BasePath = basePath, SafeMode = true })
             {
                 // reference contains now string-ResXDataNode elements
-                reference = reader.Cast<DictionaryEntry>().ToList();
+                reference = [.. reader.Cast<DictionaryEntry>()];
             }
 
             // write to string: from ResXDataNodes without generated values
@@ -187,7 +190,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             {
                 reader.BasePath = basePath;
                 // check contains now string-object elements
-                check = reader.Cast<DictionaryEntry>().ToList();
+                check = [.. reader.Cast<DictionaryEntry>()];
             }
 
             // compare 1: check is from ResXDataNodes objects with original DataNodeInfos and without generated values
@@ -208,7 +211,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             {
                 // no base path is needed because there are no filerefs
                 // check contains now string-object elements
-                check = reader.Cast<DictionaryEntry>().ToList();
+                check = [.. reader.Cast<DictionaryEntry>()];
             }
 
             // compare 2: check is from objects so DataNodeInfos are generated, every object is embedded
@@ -229,7 +232,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             {
                 reader.BasePath = basePath;
                 // check contains now string-object elements
-                check = reader.Cast<DictionaryEntry>().ToList();
+                check = [.. reader.Cast<DictionaryEntry>()];
             }
 
             // compare 3: check is from ResXDataNodes objects with re-generated DataNodeInfos from values
@@ -310,7 +313,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             }
 
             Console.WriteLine(sb.ToString());
-            List<object> deserializedObjects = new List<object>();
+            List<object> deserializedObjects = [];
             using (ResXResourceReader reader = ResXResourceReader.FromFileContents(sb.ToString(), typeResolver))
             {
                 reader.SafeMode = safeMode;
@@ -546,7 +549,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         public void SerializeChars()
         {
             object[] referenceObjects =
-            {
+            [
                 'a',
                 'á',
                 ' ',
@@ -567,8 +570,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 '\xa0', // U+00a0 = NO-BREAK SPACE
                 '\xFDD0', // U+FDD0 - <noncharacter-FDD0>
                 '\xffff', // U+FFFF = <noncharacter-FFFF>
-                ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '​', '\u2028', '\u2029', '　', '﻿',
-            };
+                ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '​', '\u2028', '\u2029', '　', '﻿'
+            ];
 
 #if NETFRAMEWORK
             SystemSerializeObjects(referenceObjects);
@@ -577,10 +580,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             KGySerializeObjects(referenceObjects, false);
 
             // system serializer fails here
-            referenceObjects = new object[]
-            {
-                Char.ConvertFromUtf32(0x1D161)[0], // unpaired surrogate
-            };
+            referenceObjects =
+            [
+                Char.ConvertFromUtf32(0x1D161)[0] // unpaired surrogate
+            ];
 
             KGySerializeObjects(referenceObjects, true);
             KGySerializeObjects(referenceObjects, false);
@@ -590,7 +593,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         public void SerializeStrings()
         {
             string[] referenceObjects =
-            {
+            [
                 null,
                 String.Empty,
                 "One",
@@ -614,8 +617,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 "<>\\'\"&{}{{}}\0\\0000",
                 "\xffff", // U+FFFF = <noncharacter-FFFF>
                 "🏯", // paired surrogate
-                new string(new char[] { '\t', '\n', '\v', '\f', '\r', ' ', '\x0085', '\x00a0', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '​', '\u2028', '\u2029', '　', '﻿' }),
-            };
+                new string(new char[] { '\t', '\n', '\v', '\f', '\r', ' ', '\x0085', '\x00a0', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '​', '\u2028', '\u2029', '　', '﻿' })
+            ];
 
 #if NETFRAMEWORK
             SystemSerializeObjects(referenceObjects);
@@ -624,11 +627,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             KGySerializeObjects(referenceObjects, false);
 
             // These strings cannot be (de)serialized with system serializer
-            referenceObjects = new string[]
-            {
+            referenceObjects =
+            [
                 "🏯"[0].ToString(null), // unpaired surrogate
                 "🏯" + "🏯"[0].ToString(null) + " b 🏯 " + "🏯"[1].ToString(null) + "\xffff \0 <>'\"&" // string containing unpaired surrogates
-            };
+            ];
 
             KGySerializeObjects(referenceObjects, true);
             KGySerializeObjects(referenceObjects, false);
@@ -639,10 +642,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         public void SerializeRunes()
         {
             object[] referenceObjects =
-            {
+            [
                 new Rune('a'),
                 Rune.GetRuneAt("🏯", 0)
-            };
+            ];
 
 #if !NET8_0_OR_GREATER
             KGySerializeObjects(referenceObjects, true, safeMode: false);
@@ -664,7 +667,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 typeof(float[,]), // multi-dim array
                 typeof(bool[][,]), // mixed jagged array
 #if !AOT
-                Array.CreateInstance(typeof(object), new[] { 3 }, new[] { -1 }).GetType(), // nonzero based 1D array 
+                Array.CreateInstance(typeof(object), [3], [-1]).GetType(), // nonzero based 1D array 
 #endif
             };
 
@@ -674,15 +677,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 #endif
             KGySerializeObjects(referenceObjects, false);
 
-            referenceObjects = new[]
-            {
+            referenceObjects =
+            [
                 typeof(List<int>), // mscorlib
                 typeof(List<ICache>), // mixed
                 typeof(ICache), // custom
                 typeof(CircularList<int>), // mixed
                 typeof(CircularList<ICache>), // custom
-                typeof(List<>), // mscorlib, generic template,
-            };
+                typeof(List<>) // mscorlib, generic template,
+            ];
 
 #if NETFRAMEWORK
             SystemSerializeObjects(referenceObjects);
@@ -754,14 +757,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             {
                 new byte[0], // empty array
                 new byte[] { 1, 2, 3 }, // single byte array
-                new byte[][] { new byte[] { 11, 12, 13 }, new byte[] { 21, 22, 23, 24, 25 }, null }, // jagged byte array
+                new byte[][] { [11, 12, 13], [21, 22, 23, 24, 25], null }, // jagged byte array
                 new byte[,] { { 11, 12, 13 }, { 21, 22, 23 } }, // multidimensional byte array
                 new byte[][,] { new byte[,] { { 11, 12, 13 }, { 21, 22, 23 } }, new byte[,] { { 11, 12, 13, 14 }, { 21, 22, 23, 24 }, { 31, 32, 33, 34 } } }, // crazy jagged byte array 1 (2D matrix of 1D arrays)
-                new byte[,][] { { new byte[] { 11, 12, 13 }, new byte[] { 21, 22, 23 } }, { new byte[] { 11, 12, 13, 14 }, new byte[] { 21, 22, 23, 24 } } }, // crazy jagged byte array 2 (1D array of 2D matrices)
+                new byte[,][] { { [11, 12, 13], [21, 22, 23] }, { [11, 12, 13, 14], [21, 22, 23, 24] } }, // crazy jagged byte array 2 (1D array of 2D matrices)
                 new byte[][,,] { new byte[,,] { { { 11, 12, 13 }, { 21, 21, 23 } } }, null }, // crazy jagged byte array containing null reference
 #if !AOT // PlatformNotSupportedException: Arrays with non-zero lower bounds are not supported.
-                Array.CreateInstance(typeof(byte), new int[] { 3 }, new int[] { -1 }), // array with -1..1 index interval
-                Array.CreateInstance(typeof(byte), new int[] { 3, 3 }, new int[] { -1, 1 }) // array with [-1..1 and 1..3] index interval
+                Array.CreateInstance(typeof(byte), [3], [-1]), // array with -1..1 index interval
+                Array.CreateInstance(typeof(byte), [3, 3], [-1, 1]) // array with [-1..1 and 1..3] index interval
 #endif
             };
 
@@ -786,11 +789,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         public void SerializeStringArrays()
         {
             Array[] referenceObjects =
-            {
+            [
                 new string[] { "One", "Two" }, // single string array
-                new string[][] { new string[] { "One", "Two", "Three" }, new string[] { "One", "Two", null }, null }, // jagged string array with null values (first null as string, second null as array)
-                new string[,] { { "One", "Two" }, { "One", "Two" } }, // multidimensional string array
-            };
+                new string[][] { ["One", "Two", "Three"], ["One", "Two", null], null }, // jagged string array with null values (first null as string, second null as array)
+                new string[,] { { "One", "Two" }, { "One", "Two" } } // multidimensional string array
+            ];
 
 #if NETFRAMEWORK
             SystemSerializeObjects(referenceObjects);
@@ -802,10 +805,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
 #if !AOT // PlatformNotSupportedException: Arrays with non-zero lower bounds are not supported.
             // system serializer (and also compatible mode) fails here: cannot cast string[*] to object[]
-            referenceObjects = new[]
-            {
-                Array.CreateInstance(typeof(string), new int[] { 3 }, new int[] { -1 }) // array with -1..1 index interval
-            };
+            referenceObjects =
+            [
+                Array.CreateInstance(typeof(string), [3], [-1]) // array with -1..1 index interval
+            ];
 
             KGySerializeObjects(referenceObjects, false);
 #endif
@@ -818,7 +821,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         public void SerializeSimpleArrays()
         {
             IList[] referenceObjects =
-            {
+            [
                 new object[0],
                 new object[] {new object(), null},
                 new bool[] {true, false},
@@ -837,8 +840,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 new decimal[] {1, 2},
                 new DateTime[] {DateTime.UtcNow, DateTime.Now},
                 new IntPtr[] {new IntPtr(1), IntPtr.Zero},
-                new UIntPtr[] {new UIntPtr(1), UIntPtr.Zero},
-            };
+                new UIntPtr[] {new UIntPtr(1), UIntPtr.Zero}
+            ];
 
             // SystemSerializeObjects(referenceObjects); - system serialization fails for sbyte[] and char[]
             //KGySerializeObjects(referenceObjects); //- assert check fails for char[] because BinaryFormatter cannot handle it correctly
@@ -858,15 +861,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             try
             {
                 IEnumerable[] referenceObjects =
-                {
+                [
                     new List<int> { 1, 2, 3 }, // no converter - raw
                     new List<byte> { 1, 2, 3 }, // full mscorlib
                     new List<TestEnum> { (TestEnum)1, (TestEnum)2, (TestEnum)3 }, // mscorlib generic type with custom element
 
                     new HashSet<int> { 1, 2, 3 }, // no converter - raw
                     new HashSet<byte> { 1, 2, 3 }, // non-mscorlib type with mscorlib element
-                    new HashSet<TestEnum> { (TestEnum)1, (TestEnum)2, (TestEnum)3 }, // full non-mscorlib generic type
-                };
+                    new HashSet<TestEnum> { (TestEnum)1, (TestEnum)2, (TestEnum)3 } // full non-mscorlib generic type
+                ];
 
                 //SystemSerializeObjects(referenceObjects); // system serializer fails on generic types
 
@@ -892,12 +895,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         public void SerializeNonSerializableType()
         {
             object[] referenceObjects =
-            {
-                new NonSerializableClass(),
-            };
+            [
+                new NonSerializableClass()
+            ];
 
 #if !NET8_0_OR_GREATER
-            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, true), "In safe mode it is not allowed to deserialize resource \"0_NonSerializableClass\" because it was serialized by BinaryFormatter.");
+            AssertThrows<SerializationException>(() => KGySerializeObjects(referenceObjects, true), "In safe mode it is not allowed to deserialize resource \"0_NonSerializableClass\" because it was serialized by BinaryFormatter.");
             KGySerializeObjects(referenceObjects, true, safeMode: false);
 #endif
             KGySerializeObjects(referenceObjects, false);
@@ -905,9 +908,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
         [Test]
         [Obsolete]
-        [DynamicDependency(BinarySerializer.NeededMembers, typeof(AnyObjectSerializerWrapper))]
         public void SerializeSpecialTypes()
         {
+#if AOT
+            SerializedType _ = typeof(AnyObjectSerializerWrapper);
+#endif
+
             // these types will be transformed to their wrapped representations
             string path = Combine(Files.GetExecutingPath(), "Resources", "TestRes.resx");
             object[] referenceObjects =
@@ -952,9 +958,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             // Starting with .NET Core it is not serializable anymore but still has to be supported even in safe mode
             // to maintain compatibility (as even the VS designer embeds MemoryStream into .resx in some cases)
             object[] referenceObjects =
-            {
-                new MemoryStream(new byte[] { 1, 2, 3 }),
-            };
+            [
+                new MemoryStream([1, 2, 3])
+            ];
 
 #if NETFRAMEWORK
             SystemSerializeObjects(referenceObjects);

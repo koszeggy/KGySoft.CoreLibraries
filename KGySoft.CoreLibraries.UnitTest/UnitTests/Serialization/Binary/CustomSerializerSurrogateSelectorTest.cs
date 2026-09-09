@@ -701,7 +701,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             // in safe mode the surrogate denies serialization so it is passed back to the formatter
 #if !NET9_0_OR_GREATER
             // BinaryFormatter: denies serialization as it is not serializable
-            Throws<SerializationException>(() => DoTest(bf, surrogate, obj, true, true, true), "is not marked as serializable");
+            AssertThrows<SerializationException>(() => DoTest(bf, surrogate, obj, true, true, true), "is not marked as serializable");
 #endif
             // BinarySerializationFormatter: serialization is not supported with the provided options
             AssertThrows<NotSupportedException>(() => DoTest(bsf, surrogate, obj, true, true, true), Res.BinarySerializationNotSupported(typeof(NonSerializableClass), bsf.Options));

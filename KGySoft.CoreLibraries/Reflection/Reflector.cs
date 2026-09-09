@@ -4122,6 +4122,7 @@ namespace KGySoft.Reflection
 
         // In AOT mode using just an educated guess (private property with a point in the name), because the interfaces and their methods can be trimmed
         // Not a big deal if returns a wrong result: in worst case we must use fallback options or a SerializedType configuration to be able to serialize a type in XML.
+        [RequiresUnreferencedCode(interfaceImplementationReflectionRequiresUnreferencedCode)]
         internal static bool IsExplicitInterfaceImplementationInternal(this PropertyInfo property) => RuntimeFeature.IsDynamicCodeSupported
             ? IsExplicitInterfaceImplementation(property)
             : (property.CanRead ? property.GetGetMethod(true)! : property.GetSetMethod(true)!).IsPrivate && property.Name.IndexOf('.') >= 0;

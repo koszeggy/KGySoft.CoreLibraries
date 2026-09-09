@@ -147,7 +147,7 @@ namespace KGySoft.CoreLibraries
                                 memberTypes |= field.IsPublic ? DynamicallyAccessedMemberTypes.PublicFields : DynamicallyAccessedMemberTypes.NonPublicFields;
                                 break;
                             case PropertyInfo property:
-                                memberTypes |= property.GetMethod.IsPublic ? DynamicallyAccessedMemberTypes.PublicProperties : DynamicallyAccessedMemberTypes.NonPublicProperties;
+                                memberTypes |= property.GetMethod!.IsPublic ? DynamicallyAccessedMemberTypes.PublicProperties : DynamicallyAccessedMemberTypes.NonPublicProperties;
                                 break;
                             case MethodInfo method:
                                 memberTypes |= method.IsPublic ? DynamicallyAccessedMemberTypes.PublicProperties : DynamicallyAccessedMemberTypes.NonPublicProperties;
