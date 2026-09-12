@@ -16,7 +16,11 @@ namespace System.Runtime.CompilerServices
     {
         extension(RuntimeFeature)
         {
+            #region Properties
+
             internal static bool IsDynamicCodeSupported => true;
+            
+            #endregion
         }
     }
 #endif

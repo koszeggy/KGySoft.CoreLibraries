@@ -180,7 +180,7 @@ namespace KGySoft.Collections
         #region Private Fields
 
 #if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
-        private static readonly int poolingThreshold = Math.Max(2, 1024 / Reflector<T>.SizeOf);
+        private static readonly int poolingThreshold = Math.Max(2, 1024 / Reflector<T>.GetSize(true));
 #endif
 
         #endregion

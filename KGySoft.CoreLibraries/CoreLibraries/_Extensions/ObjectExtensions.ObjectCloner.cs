@@ -85,7 +85,7 @@ namespace KGySoft.CoreLibraries
                 && type != Reflector.StringType
                 && !type.IsEnum
                 && !type.IsDelegate()
-                && type != Reflector.RuntimeType
+                && !type.IsRuntimeType()
                 && type.IsManaged();
 
             #endregion

@@ -11,7 +11,9 @@
 
 + General changes:
 ==================
-+ Supporting Native AOT (Ahead of Time) deployment mode.
++ Supporting Native AOT (Ahead of Time) deployment mode when targeting .NET 8.0 or later.
+  NOTE: The libraries are prepared to detect if dynamic code is not available when targeting .NET Core 3.0 or later,
+        but actual trimming is not supported on targets between .NET Core 3.0 to .NET 7.0 because of a linker issue.
 
 + KGySoft.Collections namespace:
 ================================

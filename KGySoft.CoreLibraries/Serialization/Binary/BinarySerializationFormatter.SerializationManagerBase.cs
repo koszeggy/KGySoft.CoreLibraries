@@ -134,7 +134,8 @@ namespace KGySoft.Serialization.Binary
                 Reflector.CharType,
                 Reflector.StringType,
 
-                // Also for sparing. Other compressible types are added for the first time
+                // Also for sparing. Other compressible types are added for the first time.
+                // For native AOT mode the other non-enum compressible types are referenced in the static ctor.
                 typeof(Compressible<short>),
                 typeof(Compressible<ushort>),
                 typeof(Compressible<int>),
@@ -220,6 +221,19 @@ namespace KGySoft.Serialization.Binary
 
             #region Constructors
 
+            #region Static Constructors
+
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+            static SerializationManagerBase()
+            {
+                ReadOnlySpan<Type> _ = [typeof(Compressible<float>), typeof(Compressible<double>), typeof(Compressible<nint>), typeof(Compressible<nuint>)];
+            }
+#endif
+
+            #endregion
+
+            #region Instance Constructors
+
             private protected SerializationManagerBase(StreamingContext context, BinarySerializationOptions options, SerializationBinder? binder, ISurrogateSelector? surrogateSelector)
             {
                 Options = options;
@@ -232,6 +246,8 @@ namespace KGySoft.Serialization.Binary
                     surrogates = new Dictionary<Type, (ISerializationSurrogate?, ISurrogateSelector?)>();
             }
 
+            #endregion
+            
             #endregion
 
             #region Methods

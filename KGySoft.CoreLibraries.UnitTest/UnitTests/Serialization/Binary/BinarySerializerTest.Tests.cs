@@ -192,7 +192,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new Uri(@"x:\teszt"),
                 new DictionaryEntry(1, "alpha"),
                 new KeyValuePair<int, string>(1, "alpha"),
-                new BitArray(new[] { true, false, true }),
+                new BitArray([true, false, true]),
                 new StringBuilder("alpha"),
                 StringSegment.Null,
                 "123456".AsSegment(1, 2),
@@ -331,7 +331,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         public void SerializeCompressibleValues()
         {
             object[] referenceObjects =
-            {
+            [
                 // 1 bytes
                 SByte.MinValue,
                 SByte.MaxValue,
@@ -383,7 +383,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 Double.Epsilon,
                 IntPtr.Zero,
                 UIntPtr.Zero
-            };
+            ];
 
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
@@ -692,13 +692,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: referenceObjects.Where(IsValidExpectedType).Concat(new[] { typeof(OpenGenericDictionary<>), typeof(DictionaryExtensions) }));
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: referenceObjects.Where(IsValidExpectedType).Concat(new[] { typeof(OpenGenericDictionary<>), typeof(DictionaryExtensions) }));
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: referenceObjects.Where(IsValidExpectedType).Concat([typeof(OpenGenericDictionary<>), typeof(DictionaryExtensions)]));
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: referenceObjects.Where(IsValidExpectedType).Concat([typeof(OpenGenericDictionary<>), typeof(DictionaryExtensions)]));
 
 #if NETFRAMEWORK
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
-#elif NETCOREAPP3_0 // RuntimeType.GetObjectData throws PlatformNotSupportedException in .NET Core 2.0. In .NET Core 3.0 it works but the Equals fails for the clones, hence safeCompare
+#elif NETCOREAPP3_0_OR_GREATER && !AOT // RuntimeType.GetObjectData throws PlatformNotSupportedException in .NET Core 2.0. In .NET Core 3.0+ it works but the Equals fails for the clones, hence safeCompare
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, safeCompare: true);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, safeCompare: true);
 #endif
@@ -726,8 +726,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             AssertThrows<PlatformNotSupportedException>(() => KGySerializeObject(referenceObjects, BinarySerializationOptions.None), Res.ReflectionFunctionPointersNotSupported);
             AssertThrows<PlatformNotSupportedException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.None), Res.ReflectionFunctionPointersNotSupported);
 
+#if !AOT
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, safeCompare: true);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, safeCompare: true);
+#endif
 
             AssertThrows<PlatformNotSupportedException>(() => KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: [typeof(Type)]), Res.ReflectionFunctionPointersNotSupported);
             AssertThrows<PlatformNotSupportedException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: [typeof(Type)]), Res.ReflectionFunctionPointersNotSupported);
@@ -740,7 +742,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         public void SerializeMemory()
         {
             object[] referenceObjects =
-            {
+            [
                 new Memory<byte>(), // empty
                 new Memory<byte>(new byte[10], 1, 2), // array
                 MemoryMarshal.AsMemory("alpha".AsMemory(1, 2)), // string
@@ -748,7 +750,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new ReadOnlyMemory<byte>(), // empty
                 new ReadOnlyMemory<byte>(new byte[10], 1, 2), // array
                 "beta".AsMemory(1, 2) // string
-            };
+            ];
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
@@ -784,6 +786,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 typeof(BinarySerializableStruct), // To prevent calling Deserialize instead of the special ctor
                 typeof(Collection<>), // to serialize its items field in SerializationEventsClass.children
                 typeof(CustomSerializedClass), // special ctor
+                typeof(SerializationEventsClass), // required in .NET 8, otherwise, it's covered by CustomSerializedClass
                 typeof(CustomAdvancedSerializedClassHelper), // missing metadata
                 typeof(CustomGraphDefaultObjRefDeserializer), // missing metadata
                 typeof(NonSerializableStruct), // missing fields (equality fail)
@@ -817,7 +820,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
-            IEnumerable<Type> expectedTypes = GetExpectedTypes(referenceObjects).Concat(new[] { typeof(Collection<>), typeof(CustomAdvancedSerializedClassHelper), typeof(CustomGraphDefaultObjRefDeserializer) });
+            IEnumerable<Type> expectedTypes = GetExpectedTypes(referenceObjects).Concat([typeof(Collection<>), typeof(CustomAdvancedSerializedClassHelper), typeof(CustomGraphDefaultObjRefDeserializer)]);
             KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: expectedTypes);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: expectedTypes);
 
@@ -861,9 +864,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new byte[] { 1, 2, 3 }, // single byte array
                 Reflector.EmptyArray<byte>(), // empty array
                 new byte[,] { { 11, 12, 13 }, { 21, 22, 23 } }, // multidimensional byte array
-                new byte[][] { new byte[] { 11, 12, 13 }, new byte[] { 21, 22, 23, 24, 25 }, null }, // jagged byte array
+                new byte[][] { [11, 12, 13], [21, 22, 23, 24, 25], null }, // jagged byte array
                 new byte[][,] { new byte[,] { { 11, 12, 13 }, { 21, 22, 23 } }, new byte[,] { { 11, 12, 13, 14 }, { 21, 22, 23, 24 }, { 31, 32, 33, 34 } } }, // crazy jagged byte array 1 (2D matrix of 1D arrays)
-                new byte[,][] { { new byte[] { 11, 12, 13 }, new byte[] { 21, 22, 23 } }, { new byte[] { 11, 12, 13, 14 }, new byte[] { 21, 22, 23, 24 } } }, // crazy jagged byte array 2 (1D array of 2D matrices)
+                new byte[,][] { { [11, 12, 13], [21, 22, 23] }, { [11, 12, 13, 14], [21, 22, 23, 24] } }, // crazy jagged byte array 2 (1D array of 2D matrices)
                 new byte[][,,] { new byte[,,] { { { 11, 12, 13 }, { 21, 21, 23 } } }, null }, // crazy jagged byte array containing null reference
 #if !AOT // PlatformNotSupportedException: Arrays with non-zero lower bounds are not supported.
                 Array.CreateInstance(typeof(byte), new int[] { 3 }, new int[] { -1 }), // array with -1..1 index interval
@@ -912,7 +915,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new Uri[] { new Uri(@"x:\test"), new Uri("ftp://myUrl/%2E%2E/%2E%2E"), null },
                 new DictionaryEntry[] { new DictionaryEntry(1, "alpha") },
                 new KeyValuePair<int, string>[] { new KeyValuePair<int, string>(1, "alpha") },
-                new BitArray[] { new BitArray(new[] { true, false, true }), null },
+                new BitArray[] { new BitArray([true, false, true]), null },
                 new StringBuilder[] { new StringBuilder("alpha"), null },
                 new StringSegment[] { new StringSegment("alpha", 1, 2), null },
                 new Comparer[] { Comparer.DefaultInvariant, Comparer.Default, null },
@@ -932,8 +935,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: new[] { typeof(StringComparer), typeof(CustomStringComparer) });
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: new[] { typeof(StringComparer), typeof(CustomStringComparer) });
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: [typeof(StringComparer), typeof(CustomStringComparer)]);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: [typeof(StringComparer), typeof(CustomStringComparer)]);
 
 #if !AOT
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
@@ -987,8 +990,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: new[] { typeof(Type) });
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: new[] { typeof(Type) });
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: [typeof(Type)]);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: [typeof(Type)]);
 
 #if !NETCOREAPP2_0 && !AOT // .NET Core 2.0 throws NotSupportedException for DBNull and RuntimeType.GetObjectData. In .NET Core 3 they work but Equals fails for cloned RuntimeType, hence safeCompare
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, safeCompare: true);
@@ -1007,16 +1010,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         public void SerializeEnumArrays()
         {
             object[] referenceObjects =
-            {
+            [
                 new TestEnumByte[] { TestEnumByte.One, TestEnumByte.Two }, // single enum array
                 new TestEnumByte[,] { { TestEnumByte.One }, { TestEnumByte.Two } }, // multidimensional enum array
-                new TestEnumByte[][] { new TestEnumByte[] { TestEnumByte.One }, new TestEnumByte[] { TestEnumByte.Two } }, // jagged enum array
+                new TestEnumByte[][] { [TestEnumByte.One], [TestEnumByte.Two] }, // jagged enum array
 
                 new object[] { TestEnumByte.One, null },
                 new IConvertible[] { TestEnumByte.One, null },
                 new Enum[] { TestEnumByte.One, null },
-                new ValueType[] { TestEnumByte.One, null },
-            };
+                new ValueType[] { TestEnumByte.One, null }
+            ];
 
             SystemSerializeObject(referenceObjects);
             //SystemSerializeObjects(referenceObjects); // System serializer fails with IConvertible is not serializable
@@ -1263,8 +1266,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new UInt128?[] { 1, null },
 #endif
 #if NETCOREAPP && !NETSTANDARD_TEST
-                new ImmutableArray<int>?[] { ImmutableArray.Create(1, 2, 3, 4), ImmutableArray<int>.Empty, new ImmutableArray<int>(), null },
-                new ImmutableArray<int?>?[] { ImmutableArray.Create<int?>(1, 2, 3, 4, null), ImmutableArray<int?>.Empty, new ImmutableArray<int?>(), null },
+                new ImmutableArray<int>?[] { [1, 2, 3, 4], ImmutableArray<int>.Empty, new ImmutableArray<int>(), null },
+                new ImmutableArray<int?>?[] { [1, 2, 3, 4, null], ImmutableArray<int?>.Empty, new ImmutableArray<int?>(), null },
 #endif
 #if NETCOREAPP2_1_OR_GREATER
                 new Memory<byte>?[] { new byte[10].AsMemory(1, 2), null },
@@ -1300,8 +1303,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new List<int> { 1, 2, 3 },
                 new List<int[]> { new int[] { 1, 2, 3 }, null },
 
-                new LinkedList<int>(new[] { 1, 2, 3 }),
-                new LinkedList<int[]>(new int[][] { new int[] { 1, 2, 3 }, null }),
+                new LinkedList<int>([1, 2, 3]),
+                new LinkedList<int[]>(new int[][] { [1, 2, 3], null }),
 
                 new HashSet<int> { 1, 2, 3 },
                 new HashSet<int[]> { new int[] { 1, 2, 3 }, null },
@@ -1309,28 +1312,28 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "alpha", "Alpha", "ALPHA" },
                 new HashSet<TestEnumByte>(EnumComparer<TestEnumByte>.Comparer) { TestEnumByte.One, TestEnumByte.Two },
 
-                new Queue<int>(new[] { 1, 2, 3 }),
-                new Queue<int[]>(new int[][] { new int[] { 1, 2, 3 }, null }),
+                new Queue<int>([1, 2, 3]),
+                new Queue<int[]>(new int[][] { [1, 2, 3], null }),
 
-                new Stack<int>(new[] { 1, 2, 3 }),
-                new Stack<int[]>(new int[][] { new int[] { 1, 2, 3 }, null }),
+                new Stack<int>([1, 2, 3]),
+                new Stack<int[]>(new int[][] { [1, 2, 3], null }),
 
-                new CircularList<int>(new[] { 1, 2, 3 }),
-                new CircularList<int[]>(new int[][] { new int[] { 1, 2, 3 }, null }),
+                new CircularList<int>([1, 2, 3]),
+                new CircularList<int[]>(new int[][] { [1, 2, 3], null }),
 
-                new ThreadSafeHashSet<int>(new[] { 1, 2, 3 }),
-                new ThreadSafeHashSet<int[]>(new int[][] { new int[] { 1, 2, 3 }, null }),
+                new ThreadSafeHashSet<int>([1, 2, 3]),
+                new ThreadSafeHashSet<int[]>(new int[][] { [1, 2, 3], null }),
                 new ThreadSafeHashSet<TestEnumByte>(EnumComparer<TestEnumByte>.Comparer) { TestEnumByte.One, TestEnumByte.Two },
 
-                new ArraySegment<int>(new[] { 1, 2, 3 }, 1, 2),
-                new ArraySegment<int[]>(new int[][] { new int[] { 1, 2, 3 }, new int[] { 4, 5, 6 }, null }, 1, 2),
+                new ArraySegment<int>([1, 2, 3], 1, 2),
+                new ArraySegment<int[]>(new int[][] { [1, 2, 3], [4, 5, 6], null }, 1, 2),
                 new ArraySegment<int>(),
 #if !NET35
-                new ArraySegment<Complex>(new[] { new Complex(1.2, 3.4), new Complex(5.6, 7.8), default }, 1, 2),
+                new ArraySegment<Complex>([new Complex(1.2, 3.4), new Complex(5.6, 7.8), default], 1, 2),
 #endif
 
-                new ArraySection<int>(new[] { 1, 2, 3 }, 1, 2),
-                new ArraySection<int[]>(new int[][] { new int[] { 1, 2, 3 }, new int[] { 4, 5, 6 }, null }, 1, 2),
+                new ArraySection<int>([1, 2, 3], 1, 2),
+                new ArraySection<int[]>(new int[][] { [1, 2, 3], [4, 5, 6], null }, 1, 2),
                 new ArraySection<int>(),
 
                 new Array2D<int>(new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }.AsSection(1), 1, 2),
@@ -1349,33 +1352,33 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new CastArray3D<int, byte>(),
 
 #if !NET35
-                new SortedSet<int>(new[] { 1, 2, 3 }),
-                new SortedSet<int[]>(new int[][] { new int[] { 1, 2, 3 }, null }),
+                new SortedSet<int>([1, 2, 3]),
+                new SortedSet<int[]>(new int[][] { [1, 2, 3], null }),
                 new SortedSet<string>(StringComparer.CurrentCulture) { "alpha", "Alpha", "ALPHA" },
                 new SortedSet<string>(StringComparer.OrdinalIgnoreCase) { "alpha", "Alpha", "ALPHA" },
 #endif
 
                 new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } },
                 new Dictionary<int, TestEnumByte> { { 1, TestEnumByte.One }, { 2, TestEnumByte.Two } },
-                new Dictionary<int[], string[]> { { new int[] { 1 }, new string[] { "alpha" } }, { new int[] { 2 }, null } },
+                new Dictionary<int[], string[]> { { [1], ["alpha"] }, { [2], null } },
                 new Dictionary<string, int>(StringComparer.CurrentCulture) { { "alpha", 1 }, { "Alpha", 2 }, { "ALPHA", 3 } },
                 new Dictionary<TestEnumByte, int>(EnumComparer<TestEnumByte>.Comparer) { { TestEnumByte.One, 1 }, { TestEnumByte.Two, 2 } },
 
                 new SortedList<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } },
-                new SortedList<int, string[]> { { 1, new string[] { "alpha" } }, { 2, null } },
+                new SortedList<int, string[]> { { 1, ["alpha"] }, { 2, null } },
                 new SortedList<string, int>(StringComparer.OrdinalIgnoreCase) { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 }, { "delta", 4 } },
                 new SortedList<TestEnumByte, int>(Comparer<TestEnumByte>.Default) { { TestEnumByte.One, 1 }, { TestEnumByte.Two, 2 } },
                 new SortedList<TestEnumByte, int>(EnumComparer<TestEnumByte>.Comparer) { { TestEnumByte.One, 1 }, { TestEnumByte.Two, 2 } },
 
                 new SortedDictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } },
-                new SortedDictionary<int, string[]> { { 1, new string[] { "alpha" } }, { 2, null } },
+                new SortedDictionary<int, string[]> { { 1, ["alpha"] }, { 2, null } },
                 new SortedDictionary<string, int>(StringComparer.CurrentCulture) { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 }, { "delta", 4 } },
                 new SortedDictionary<string, int>(StringComparer.OrdinalIgnoreCase) { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 }, { "delta", 4 } },
                 new SortedDictionary<TestEnumByte, int>(Comparer<TestEnumByte>.Default) { { TestEnumByte.One, 1 }, { TestEnumByte.Two, 2 } },
                 new SortedDictionary<TestEnumByte, int>(EnumComparer<TestEnumByte>.Comparer) { { TestEnumByte.One, 1 }, { TestEnumByte.Two, 2 } },
 
                 new CircularSortedList<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } },
-                new CircularSortedList<int, string[]> { { 1, new string[] { "alpha" } }, { 2, null } },
+                new CircularSortedList<int, string[]> { { 1, ["alpha"] }, { 2, null } },
                 new CircularSortedList<string, int>(StringComparer.CurrentCulture) { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 }, { "delta", 4 } },
                 new CircularSortedList<string, int>(StringComparer.OrdinalIgnoreCase) { { "alpha", 1 }, { "beta", 2 }, { "gamma", 3 }, { "delta", 4 } },
                 new CircularSortedList<TestEnumByte, int>(Comparer<TestEnumByte>.Default) { { TestEnumByte.One, 1 }, { TestEnumByte.Two, 2 } },
@@ -1383,7 +1386,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
                 new ThreadSafeDictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } },
                 new ThreadSafeDictionary<int, TestEnumByte> { { 1, TestEnumByte.One }, { 2, TestEnumByte.Two } },
-                new ThreadSafeDictionary<int[], string[]> { { new int[] { 1 }, new string[] { "alpha" } }, { new int[] { 2 }, null } },
+                new ThreadSafeDictionary<int[], string[]> { { [1], ["alpha"] }, { [2], null } },
                 new ThreadSafeDictionary<string, int>(StringComparer.CurrentCulture) { { "alpha", 1 }, { "Alpha", 2 }, { "ALPHA", 3 } },
                 new ThreadSafeDictionary<TestEnumByte, int>(EnumComparer<TestEnumByte>.Comparer) { { TestEnumByte.One, 1 }, { TestEnumByte.Two, 2 } },
 
@@ -1408,7 +1411,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
-            IEnumerable<Type> expectedTypes = new[] { typeof(TestEnumByte), typeof(ConsoleColor) };
+            IEnumerable<Type> expectedTypes = [typeof(TestEnumByte), typeof(ConsoleColor)];
             KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: expectedTypes);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: expectedTypes);
 
@@ -1420,7 +1423,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             if (EnvironmentHelper.IsMono)
                 referenceObjects = referenceObjects.Where(o => !o.GetType().IsGenericTypeOf(typeof(HashSet<>))).ToArray();
 #endif
-#if !NET9_0_OR_GREATER // .NET 9+ changes StringEqualityComparer to GenericEqualityComparer<string>, which is intended: https://github.com/dotnet/runtime/blob/c87cbf63954f179785bb038c23352e60d3c0a933/src/libraries/System.Private.CoreLib/src/System/Collections/Generic/EqualityComparer.cs#L295
+#if !NET9_0_OR_GREATER && !AOT // .NET 9+ changes StringEqualityComparer to GenericEqualityComparer<string>, which is intended: https://github.com/dotnet/runtime/blob/c87cbf63954f179785bb038c23352e60d3c0a933/src/libraries/System.Private.CoreLib/src/System/Collections/Generic/EqualityComparer.cs#L295
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
 
@@ -1441,17 +1444,17 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             referenceObjects = new object[]
             {
                 new StrongBox<int>(1),
-                new StrongBox<int[]>(new[] { 1, 2, 3 }),
+                new StrongBox<int[]>([1, 2, 3]),
 
 #if !NET35
-                new ConcurrentBag<int>(new[] { 1, 2, 3 }),
-                new ConcurrentBag<int[]>(new int[][] { new int[] { 1, 2, 3 }, null }),
+                new ConcurrentBag<int>([1, 2, 3]),
+                new ConcurrentBag<int[]>(new int[][] { [1, 2, 3], null }),
 
-                new ConcurrentQueue<int>(new[] { 1, 2, 3 }),
-                new ConcurrentQueue<int[]>(new int[][] { new int[] { 1, 2, 3 }, null }),
+                new ConcurrentQueue<int>([1, 2, 3]),
+                new ConcurrentQueue<int[]>(new int[][] { [1, 2, 3], null }),
 
-                new ConcurrentStack<int>(new[] { 1, 2, 3 }),
-                new ConcurrentStack<int[]>(new int[][] { new int[] { 1, 2, 3 }, null }),
+                new ConcurrentStack<int>([1, 2, 3]),
+                new ConcurrentStack<int[]>(new int[][] { [1, 2, 3], null }),
 
                 new ConcurrentDictionary<int, string>(new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } }),
                 new ConcurrentDictionary<int, TestEnumByte>(new Dictionary<int, TestEnumByte> { { 1, TestEnumByte.One }, { 2, TestEnumByte.Two } }),
@@ -1542,7 +1545,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
-            expectedTypes = new[] { typeof(TestEnumByte), typeof(ConsoleColor) };
+            expectedTypes = [typeof(TestEnumByte), typeof(ConsoleColor)];
             KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: expectedTypes);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: expectedTypes);
 
@@ -1552,11 +1555,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #endif
 
             // collections with properties to restore
-            referenceObjects = new object[]
-            {
-                new ThreadSafeHashSet<int>(new[] { 1, 2, 3 }) { MergeInterval = TimeSpan.FromMinutes(1), PreserveMergedItems = true },
-                new ThreadSafeDictionary<int, string>(new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } }) { MergeInterval = TimeSpan.FromMinutes(1), PreserveMergedKeys = true },
-            };
+            referenceObjects =
+            [
+                new ThreadSafeHashSet<int>([1, 2, 3]) { MergeInterval = TimeSpan.FromMinutes(1), PreserveMergedItems = true },
+                new ThreadSafeDictionary<int, string>(new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } }) { MergeInterval = TimeSpan.FromMinutes(1), PreserveMergedKeys = true }
+            ];
 
             SystemSerializeObject(referenceObjects, forceEqualityByMembers: true);
             SystemSerializeObjects(referenceObjects, forceEqualityByMembers: true);
@@ -1701,18 +1704,18 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             object[] referenceObjects =
             {
                 // generic collection value
-                new Dictionary<int, int[]> { { 1, new[] { 1, 2 } }, { 2, null } }, // array
-                new Dictionary<int, List<int>> { { 1, new List<int> { 1, 2 } }, { 2, null } }, // List
-                new Dictionary<int, LinkedList<int>> { { 1, new LinkedList<int>(new[] { 1, 2 }) }, { 2, null } }, // LinkedList
-                new Dictionary<int, HashSet<int>> { { 1, new HashSet<int> { 1, 2 } }, { 2, null } }, // HashSet
-                new Dictionary<int, Queue<int>> { { 1, new Queue<int>(new[] { 1, 2 }) }, { 2, null } }, // Queue
-                new Dictionary<int, Stack<int>> { { 1, new Stack<int>(new[] { 1, 2 }) }, { 2, null } }, // Stack
-                new Dictionary<int, CircularList<int>> { { 1, new CircularList<int> { 1, 2 } }, { 2, null } }, // CircularList
-                new Dictionary<int, ThreadSafeHashSet<int>> { { 1, new ThreadSafeHashSet<int> { 1, 2 } }, { 2, null } }, // ThreadSafeHashSet
-                new Dictionary<int, ArraySegment<int>> { { 1, new ArraySegment<int>(new[] { 1, 2, 3 }, 1, 2) }, { 2, new ArraySegment<int>() } }, // ArraySegment
-                new Dictionary<int, ArraySegment<int?>?> { { 1, new ArraySegment<int?>(new int?[] { 1, 2, 3, null }, 1, 2) }, { 2, new ArraySegment<int?>() }, { 3, null } }, // ArraySegment?
-                new Dictionary<int, ArraySection<int>> { { 1, new ArraySection<int>(new[] { 1, 2, 3 }, 1, 2) }, { 2, new ArraySection<int>() } }, // ArraySection
-                new Dictionary<int, ArraySection<int?>?> { { 1, new ArraySection<int?>(new int?[] { 1, 2, 3, null }, 1, 2) }, { 2, new ArraySection<int?>() }, { 3, null } }, // ArraySection?
+                new Dictionary<int, int[]> { { 1, [1, 2] }, { 2, null } }, // array
+                new Dictionary<int, List<int>> { { 1, [1, 2] }, { 2, null } }, // List
+                new Dictionary<int, LinkedList<int>> { { 1, new LinkedList<int>([1, 2]) }, { 2, null } }, // LinkedList
+                new Dictionary<int, HashSet<int>> { { 1, [1, 2] }, { 2, null } }, // HashSet
+                new Dictionary<int, Queue<int>> { { 1, new Queue<int>([1, 2]) }, { 2, null } }, // Queue
+                new Dictionary<int, Stack<int>> { { 1, new Stack<int>([1, 2]) }, { 2, null } }, // Stack
+                new Dictionary<int, CircularList<int>> { { 1, [1, 2] }, { 2, null } }, // CircularList
+                new Dictionary<int, ThreadSafeHashSet<int>> { { 1, [1, 2] }, { 2, null } }, // ThreadSafeHashSet
+                new Dictionary<int, ArraySegment<int>> { { 1, new ArraySegment<int>([1, 2, 3], 1, 2) }, { 2, new ArraySegment<int>() } }, // ArraySegment
+                new Dictionary<int, ArraySegment<int?>?> { { 1, new ArraySegment<int?>([1, 2, 3, null], 1, 2) }, { 2, new ArraySegment<int?>() }, { 3, null } }, // ArraySegment?
+                new Dictionary<int, ArraySection<int>> { { 1, new ArraySection<int>([1, 2, 3], 1, 2) }, { 2, new ArraySection<int>() } }, // ArraySection
+                new Dictionary<int, ArraySection<int?>?> { { 1, new ArraySection<int?>([1, 2, 3, null], 1, 2) }, { 2, new ArraySection<int?>() }, { 3, null } }, // ArraySection?
                 new Dictionary<int, Array2D<int>> { { 1, new Array2D<int>(new[] { 1, 2, 3 }, 1, 2) }, { 2, new Array2D<int>() } }, // Array2D
                 new Dictionary<int, Array2D<int?>?> { { 1, new Array2D<int?>(new int?[] { 1, 2, 3, null }, 1, 2) }, { 2, new Array2D<int?>() }, { 3, null } }, // Array2D?
                 new Dictionary<int, Array3D<int>> { { 1, new Array3D<int>(new[] { 1, 2, 3 }, 1, 1, 2) }, { 2, new Array3D<int>() } }, // Array3D
@@ -1724,7 +1727,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new Dictionary<int, CastArray3D<int, byte>> { { 1, new CastArray3D<int, byte>(new[] { 1, 2, 3 }, 1, 1, 2) }, { 2, new CastArray3D<int, byte>() } }, // CastArray3D
                 new Dictionary<int, CastArray3D<int, byte>?> { { 1, new CastArray3D<int, byte>(new[] { 1, 2, 3 }, 1, 1, 2) }, { 2, new CastArray3D<int, byte>() }, { 3, null } }, // CastArray3D?
 #if !NET35
-                new Dictionary<int, SortedSet<int>> { { 1, new SortedSet<int> { 1, 2 } }, { 2, null } }, // SortedSet
+                new Dictionary<int, SortedSet<int>> { { 1, [1, 2] }, { 2, null } }, // SortedSet
 #endif
 
                 // generic dictionary value
@@ -1772,14 +1775,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #endif
 
                 // non-natively supported value: recursive
-                new Dictionary<int, Collection<int>> { { 1, new Collection<int> { 1, 2 } }, { 2, null } }, // Collection
+                new Dictionary<int, Collection<int>> { { 1, [1, 2] }, { 2, null } }, // Collection
                 new Dictionary<int, ReadOnlyCollection<int>> { { 1, new ReadOnlyCollection<int>(new[] { 1, 2 }) }, { 2, null } }, // ReadOnlyCollection
 
                 // other generic dictionary types as outer objects
-                new SortedList<int, int[]> { { 1, new[] { 1, 2 } }, { 2, null } },
-                new SortedDictionary<int, int[]> { { 1, new[] { 1, 2 } }, { 2, null } },
-                new KeyValuePair<int, int[]>(1, new[] { 1, 2 }),
-                new CircularSortedList<int, int[]> { { 1, new[] { 1, 2 } }, { 2, null } },
+                new SortedList<int, int[]> { { 1, [1, 2] }, { 2, null } },
+                new SortedDictionary<int, int[]> { { 1, [1, 2] }, { 2, null } },
+                new KeyValuePair<int, int[]>(1, [1, 2]),
+                new CircularSortedList<int, int[]> { { 1, [1, 2] }, { 2, null } },
                 new StringKeyedDictionary<int> { { "alpha", 1 }, { "beta", 2 } },
                 new AllowNullDictionary<string, int> { { null, 0 }, { "1", 1 } },
             };
@@ -1821,22 +1824,22 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             {
                 new Dictionary<int, StrongBox<int>> { { 1, new StrongBox<int>(1) }, { 2, null } },
 #if !NET35
-                new Dictionary<int, ConcurrentBag<int>> { { 1, new ConcurrentBag<int> { 1, 2 } }, { 2, null } },
-                new Dictionary<int, ConcurrentQueue<int>> { { 1, new ConcurrentQueue<int>(new[] { 1, 2 }) }, { 2, null } },
-                new Dictionary<int, ConcurrentStack<int>> { { 1, new ConcurrentStack<int>(new[] { 1, 2 }) }, { 2, null } },
+                new Dictionary<int, ConcurrentBag<int>> { { 1, [1, 2] }, { 2, null } },
+                new Dictionary<int, ConcurrentQueue<int>> { { 1, new ConcurrentQueue<int>([1, 2]) }, { 2, null } },
+                new Dictionary<int, ConcurrentStack<int>> { { 1, new ConcurrentStack<int>([1, 2]) }, { 2, null } },
 #endif
 
 #if NETCOREAPP3_0_OR_GREATER && !NETSTANDARD_TEST
                 new Dictionary<int, Vector128<int>> { { 1, Vector128.Create(1, 2, 3, 4) } },
 #endif
 #if NETCOREAPP && !NETSTANDARD_TEST
-                new Dictionary<int, ImmutableArray<int>> { { 1, new[] { 1, 2, 3, 4 }.ToImmutableArray() } },
+                new Dictionary<int, ImmutableArray<int>> { { 1, [1, 2, 3, 4] } },
                 new Dictionary<int, ImmutableArray<int>.Builder> { { 1, new[] { 1, 2, 3, 4 }.ToImmutableArray().ToBuilder() } },
-                new Dictionary<int, ImmutableList<int>> { { 1, new[] { 1, 2, 3, 4 }.ToImmutableList() } },
+                new Dictionary<int, ImmutableList<int>> { { 1, [1, 2, 3, 4] } },
                 new Dictionary<int, ImmutableList<int>.Builder> { { 1, new[] { 1, 2, 3, 4 }.ToImmutableList().ToBuilder() } },
-                new Dictionary<int, ImmutableHashSet<int>> { { 1, new[] { 1, 2, 3, 4 }.ToImmutableHashSet() } },
+                new Dictionary<int, ImmutableHashSet<int>> { { 1, [1, 2, 3, 4] } },
                 new Dictionary<int, ImmutableHashSet<int>.Builder> { { 1, new[] { 1, 2, 3, 4 }.ToImmutableHashSet().ToBuilder() } },
-                new Dictionary<int, ImmutableSortedSet<int>> { { 1, new[] { 1, 2, 3, 4 }.ToImmutableSortedSet() } },
+                new Dictionary<int, ImmutableSortedSet<int>> { { 1, [1, 2, 3, 4] } },
                 new Dictionary<int, ImmutableSortedSet<int>.Builder> { { 1, new[] { 1, 2, 3, 4 }.ToImmutableSortedSet().ToBuilder() } },
                 new Dictionary<int, ImmutableQueue<int>> { { 1, ImmutableQueue.Create(1, 2, 3, 4) } },
                 new Dictionary<int, ImmutableStack<int>> { { 1, ImmutableStack.Create(1, 2, 3, 4) } },
@@ -1853,11 +1856,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
                 // other generic dictionary types as outer objects
 #if !NET35
-                new ConcurrentDictionary<int, int[]>(new Dictionary<int, int[]> { { 1, new[] { 1, 2 } }, { 2, null } }),
+                new ConcurrentDictionary<int, int[]>(new Dictionary<int, int[]> { { 1, [1, 2] }, { 2, null } }),
 #endif
 #if NETCOREAPP && !NETSTANDARD_TEST
-                new Dictionary<int, int[]> { { 1, new[] { 1, 2 } }, { 2, null } }.ToImmutableDictionary(), // ImmutableDictionary
-                new Dictionary<int, int[]> { { 1, new[] { 1, 2 } }, { 2, null } }.ToImmutableSortedDictionary(), // ImmutableSortedDictionary
+                new Dictionary<int, int[]> { { 1, [1, 2] }, { 2, null } }.ToImmutableDictionary(), // ImmutableDictionary
+                new Dictionary<int, int[]> { { 1, [1, 2] }, { 2, null } }.ToImmutableSortedDictionary(), // ImmutableSortedDictionary
 #endif
 #if NET9_0_OR_GREATER
                 new OrderedDictionary<int, int> { { 0, 0 }, { 1, 1 } },
@@ -1895,14 +1898,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             object[] referenceObjects =
             [
-                new List<byte>[] { new List<byte> { 11, 12, 13 }, new List<byte> { 21, 22 } }, // array of byte lists
+                new List<byte>[] { [11, 12, 13], [21, 22] }, // array of byte lists
                 new List<byte[]> { new byte[] { 11, 12, 13 }, new byte[] { 21, 22 } }, // list of byte arrays
                 new List<Array> { new byte[] { 11, 12, 13 }, new short[] { 21, 22 } }, // list of any arrays
                 new List<Array[]> { null, new Array[] { new byte[] { 11, 12, 13 }, new short[] { 21, 22 } } }, // list of array of any arrays
-                new List<ArraySegment<int>?> { new ArraySegment<int>(new[] { 1, 2, 3 }, 1, 2), new ArraySegment<int>(), null },
-                new List<ArraySegment<int?>?> { new ArraySegment<int?>(new int?[] { 1, 2, 3, null }, 1, 2), new ArraySegment<int?>(), null },
-                new List<ArraySection<int>?> { new ArraySection<int>(new[] { 1, 2, 3 }, 1, 2), new ArraySection<int>(), null },
-                new List<ArraySection<int?>?> { new ArraySection<int?>(new int?[] { 1, 2, 3, null }, 1, 2), new ArraySection<int?>(), null },
+                new List<ArraySegment<int>?> { new ArraySegment<int>([1, 2, 3], 1, 2), new ArraySegment<int>(), null },
+                new List<ArraySegment<int?>?> { new ArraySegment<int?>([1, 2, 3, null], 1, 2), new ArraySegment<int?>(), null },
+                new List<ArraySection<int>?> { new ArraySection<int>([1, 2, 3], 1, 2), new ArraySection<int>(), null },
+                new List<ArraySection<int?>?> { new ArraySection<int?>([1, 2, 3, null], 1, 2), new ArraySection<int?>(), null },
                 new List<Array2D<int>?> { new Array2D<int>(new[] { 1, 2, 3 }, 1, 2), new Array2D<int>(), null },
                 new List<Array2D<int?>?> { new Array2D<int?>(new int?[] { 1, 2, 3, null }, 1, 2), new Array2D<int?>(), null },
 
@@ -1916,10 +1919,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new Dictionary<string, Dictionary<int, IBinarySerializable>> { { "alpha", new Dictionary<int, IBinarySerializable> { { 1, null }, { 2, new BinarySerializableClass { IntProp = 2, StringProp = "beta" } }, { 3, new BinarySerializableStruct { IntProp = 3, StringProp = "gamma" } } } }, { "en", null } },
 
                 // dictionary with array key
-                new Dictionary<string[], Dictionary<int, string>> { { new string[] { "hu" }, new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } } }, { new string[] { "en" }, new Dictionary<int, string> { { 1, "apple" }, { 2, "frog" }, { 3, "cat" } } } },
+                new Dictionary<string[], Dictionary<int, string>> { { ["hu"], new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } } }, { ["en"], new Dictionary<int, string> { { 1, "apple" }, { 2, "frog" }, { 3, "cat" } } } },
 
                 // dictionary with dictionary key and value
-                new Dictionary<Dictionary<int[], string>, Dictionary<int, string>> { { new Dictionary<int[], string> { { new int[] { 1 }, "key.value1" } }, new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } } }, { new Dictionary<int[], string> { { new int[] { 2 }, "key.value2" } }, new Dictionary<int, string> { { 1, "apple" }, { 2, "frog" }, { 3, "cat" } } } },
+                new Dictionary<Dictionary<int[], string>, Dictionary<int, string>> { { new Dictionary<int[], string> { { [1], "key.value1" } }, new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } } }, { new Dictionary<int[], string> { { [2], "key.value2" } }, new Dictionary<int, string> { { 1, "apple" }, { 2, "frog" }, { 3, "cat" } } } },
 
                 // dictionary with many non-system types
                 new SortedList<ConsoleColor, Dictionary<BinarySerializationOptions, IBinarySerializable>> { { ConsoleColor.White, new Dictionary<BinarySerializationOptions, IBinarySerializable> { { BinarySerializationOptions.ForcedSerializationValueTypesAsFallback, new BinarySerializableStruct { IntProp = 1, StringProp = "alpha" } } } } },
@@ -1953,7 +1956,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new List<CustomSerializedClass> { new CustomSerializedClass { Name = "alpha", Bool = true }, new CustomSerializedSealedClass("beta") { Bool = null }, null },
                 new List<CustomSerializedSealedClass> { new CustomSerializedSealedClass("alpha") { Bool = false }, null },
 
-                new IList<int>[] { new int[] { 1, 2, 3 }, new List<int> { 1, 2, 3 } },
+#pragma warning disable IDE0300 // Use collection initializer - it would change the type from array to List<>
+                new IList<int>[] { new[] { 1, 2, 3 }, new List<int> { 1, 2, 3 } },
+#pragma warning restore IDE0300
                 new List<IList<int>> { new int[] { 1, 2, 3 }, new List<int> { 1, 2, 3 } }
             ];
 
@@ -1963,7 +1968,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
-            var expectedTypes = GetExpectedTypes(referenceObjects).Concat(new[] { typeof(TestEnumByte), typeof(Collection<>), typeof(SerializationEventsClass), typeof(CustomAdvancedSerializedClassHelper) });
+            var expectedTypes = GetExpectedTypes(referenceObjects).Concat([typeof(TestEnumByte), typeof(Collection<>), typeof(SerializationEventsClass), typeof(CustomAdvancedSerializedClassHelper)]);
             KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: expectedTypes);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: expectedTypes);
 
@@ -1974,12 +1979,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
 #endif
 
-                referenceObjects = new object[]
-                {
+                referenceObjects =
+                [
                     new CastArray<ConsoleColor, ValueTuple<byte, byte, byte, byte>>(new[] { ConsoleColor.Red, ConsoleColor.Green, ConsoleColor.Blue }.AsSection(1, 2)),
                     new CastArray<(byte A, byte R, byte G, byte B), KeyValuePair<ushort, ushort>>(new (byte, byte, byte, byte)[3].AsSection(1, 2)),
-                    new CastArray<KeyValuePair<ushort, ushort>, (byte A, byte R, byte G, byte B)>(new KeyValuePair<ushort, ushort>[3].AsSection(1, 2)),
-                };
+                    new CastArray<KeyValuePair<ushort, ushort>, (byte A, byte R, byte G, byte B)>(new KeyValuePair<ushort, ushort>[3].AsSection(1, 2))
+                ];
 
                 SystemSerializeObject(referenceObjects);
                 SystemSerializeObjects(referenceObjects); // System deserialization fails at List<IBinarySerializable>: IBinarySerializable/IList is not marked as serializable.
@@ -2017,7 +2022,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             [
                 new List<List<int>> { new List<int> { 1 }, new CustomGenericCollection<int> { 2 }, null }, // unsealed outer and element
                 new List<int[]> { new[] { 1 }, null }, // sealed element type
-                new List<int>[] {  new List<int> { 1 }, new CustomGenericCollection<int> { 2 }, null }, // sealed outer collection
+                new List<int>[] { [1], new CustomGenericCollection<int> { 2 }, null }, // sealed outer collection
                 new List<ArrayList> { new ArrayList { 1 }, new CustomNonGenericCollection { 2 } },
                 new KeyValuePair<List<int>, ArrayList>(new CustomGenericCollection<int> { 2 }, new CustomNonGenericCollection { 2 }),
                 new ListField { IntListField = new CustomGenericCollection<int> { 1 } }
@@ -2029,7 +2034,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
 
-            var expectedTypes = GetExpectedTypes(referenceObjects).Concat(new[] { typeof(CustomGenericCollection<>), typeof(CustomNonGenericCollection) });
+            var expectedTypes = GetExpectedTypes(referenceObjects).Concat([typeof(CustomGenericCollection<>), typeof(CustomNonGenericCollection)]);
             KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: expectedTypes);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: expectedTypes);
 
@@ -2049,7 +2054,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             object[] referenceObjects =
             {
                 new Cache<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } },
-                new Cache<int[], string[]> { { new int[] { 1 }, new string[] { "alpha" } }, { new int[] { 2 }, null } },
+                new Cache<int[], string[]> { { [1], ["alpha"] }, { [2], null } },
                 new Cache<string, int>(StringComparer.CurrentCulture) { { "alpha", 1 }, { "Alpha", 2 }, { "ALPHA", 3 } },
                 new Cache<TestEnumByte, int> { { TestEnumByte.One, 1 }, { TestEnumByte.Two, 2 } },
 #if NETFRAMEWORK // SerializationException : Serializing delegates is not supported on this platform.
@@ -2191,7 +2196,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.LegacySafeMode, title, binder: binder);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.LegacySafeMode, title, binder: binder);
 
-#if NETCOREAPP
+#if NETCOREAPP && (!AOT || NET9_0_OR_GREATER) // .NET 8.0 AOT: RuntimeType is abstract (only with trimming)
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes
                 | BinarySerializationOptions.RecursiveSerializationAsFallback // .NET Core 2/3: RuntimeType is not serializable
                 | BinarySerializationOptions.IgnoreISerializable, // .NET Core 2: still, it has the GetObjectData that throws a PlatformNotSupportedException
@@ -2200,7 +2205,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 | BinarySerializationOptions.RecursiveSerializationAsFallback // .NET Core 2/3: RuntimeType is not serializable
                 | BinarySerializationOptions.IgnoreISerializable, // .NET Core 2: still, it has the GetObjectData that throws a PlatformNotSupportedException
                 title, safeCompare: true, binder: binder); // safeCompare: the cloned runtime types are not equal
-#else
+#elif !NETCOREAPP
             if (includeForcedRecursive && !EnvironmentHelper.IsMono) // Mono: HashSet<int> fails in OnDeserialization with InvalidCastException : Object must implement IConvertible
             {
                 KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes, title, binder:binder);
@@ -2281,7 +2286,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObjects, BinarySerializationOptions.LegacySafeMode, title, binder: binder);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.LegacySafeMode, title, binder: binder);
 
-#if NETCOREAPP
+#if NETCOREAPP && (!AOT || NET9_0_OR_GREATER) // .NET 8.0 AOT: RuntimeType is abstract (only with trimming)
             KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes
                 | BinarySerializationOptions.RecursiveSerializationAsFallback // .NET Core 2/3: RuntimeType is not serializable
                 | BinarySerializationOptions.IgnoreISerializable, // .NET Core 2: still, it has the GetObjectData that throws a PlatformNotSupportedException
@@ -2290,7 +2295,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 | BinarySerializationOptions.RecursiveSerializationAsFallback // .NET Core 2/3: RuntimeType is not serializable
                 | BinarySerializationOptions.IgnoreISerializable, // .NET Core 2: still, it has the GetObjectData that throws a PlatformNotSupportedException
                 title, safeCompare: true, binder: binder); // safeCompare: the cloned runtime types are not equal
-#else
+#elif !NETCOREAPP
             // Mono fails in HashSet.OnDeserialization with InvalidCastException: Object must implement IConvertible
             if (!EnvironmentHelper.IsMono)
             {
@@ -2557,7 +2562,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new Uri(@"x:\teszt"),
                 new DictionaryEntry(1, "alpha"),
                 new KeyValuePair<int, string>(1, "alpha"),
-                new BitArray(new[] { true, false, true }),
+                new BitArray([true, false, true]),
                 new StringBuilder("alpha"),
 #if !NETCOREAPP // works but Equals fails on the clone
                 typeof(int),
@@ -2609,8 +2614,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
                 new CircularSortedList<int, int> { { 1, 1 }, { 2, 2 }, { 3, 3 } },
 
+#if !AOT || NET9_0_OR_GREATER // .NET 8: FieldInfo.GetValue throws an exception for function pointers in AOT mode
                 // Pointer fields
-                EnvironmentHelper.IsMono ? null : GetUnsafeStruct(), // In Mono, it could cause stack overflow in System.Reflection.RuntimeMethodInfo.Invoke
+                EnvironmentHelper.IsMono ? null : GetUnsafeStruct(), // In Mono, it could cause stack overflow in System.Reflection.RuntimeMethodInfo.Invoke 
+#endif
             };
 
             ISurrogateSelector selector = new NameInvariantSurrogateSelector();
@@ -2635,6 +2642,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             [
                 typeof(Collection<>), // to prevent NullReferenceException from the GetEnumerator method
                 typeof(CustomSerializedClass), // special ctor
+                typeof(SerializationEventsClass), // required in .NET 8, otherwise, it's covered by CustomSerializedClass
                 typeof(MemoryStream), // fields
                 typeof(ASCIIEncoding), // though it is still needed to use safe compare, because equality would fail
                 typeof(UnicodeEncoding) // though it is still needed to use safe compare, because equality would fail
@@ -2662,8 +2670,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new MemoryStream([1, 2, 3]),
                 new Collection<Encoding> { Encoding.ASCII, Encoding.Unicode },
 
+#if !AOT || NET9_0_OR_GREATER // .NET 8: FieldInfo.GetValue throws an exception for function pointers in AOT mode
                 // pointer fields
                 EnvironmentHelper.IsMono ? null : GetUnsafeStruct(), // In Mono, it could cause stack overflow in System.Reflection.RuntimeMethodInfo.Invoke
+#endif
             };
 
             var selector = new CustomSerializerSurrogateSelector();
@@ -2714,9 +2724,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             string s2 = String.Format("{0}{1}", "al", "pha");
             SystemSerializableClass tc = new SystemSerializableClass { IntProp = 10, StringProp = "s1" };
             object ts = new SystemSerializableStruct { IntProp = 10, StringProp = "s1" };
-            byte[] array = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
+            byte[] array = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
             object[] referenceObjects =
-            {
+            [
                 // *: Id is generated on system serialization
                 new object[] { 1, 2, 3 }, // different objects
                 new object[] { 1, 1, 1 }, // same values but different instances
@@ -2749,8 +2759,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #if NETCOREAPP && !NETSTANDARD_TEST
                     typeof(ImmutableArray<byte>).CreateInstance(array)
 #endif
-                },
-            };
+                }
+            ];
 
 #if NETFRAMEWORK // Memory, ImmutableArray
             SystemSerializeObject(referenceObjects);
@@ -3093,6 +3103,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         }
 #endif
 
+#if !AOT || NET9_0_OR_GREATER // .NET 8: FieldInfo.GetValue throws an exception for function pointers in AOT mode
         [Test]
         public unsafe void SerializePointers()
         {
@@ -3157,16 +3168,19 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             AssertThrows<NotSupportedException>(() => KGySerializeObject(referenceObjects[1], BinarySerializationOptions.None), Res.SerializationFunctionPointerTypeNotSupported);
 #endif
         }
+#endif
 
         [TestCase(typeof(bool))]
         [TestCase(typeof(int))]
+#if !AOT || NET9_0_OR_GREATER // Could not determine the managed size of type '...'  in a nongeneric way
         [TestCase(typeof(decimal))]
+        [TestCase(typeof(KeyValuePair<int, int>))]
+        [TestCase(typeof(ValueTuple<int, int>))]
         [TestCase(typeof(LargeUnmanagedStruct))]
+#endif
 #if !AOT // LargeStructToBeMarshaled is missing structure marshalling data.
         [TestCase(typeof(LargeStructToBeMarshaled))]
 #endif
-        [TestCase(typeof(KeyValuePair<int, int>))]
-        [TestCase(typeof(ValueTuple<int, int>))]
         public void SerializeValueTypeNonGenericTest(Type type)
         {
             var settings = new GenerateObjectSettings
@@ -3329,7 +3343,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             SerializedType _ = typeof(SingletonDeserializer);
 #endif
 
-
             object[] referenceObjects =
             [
                 Singleton1.Instance, // SerializationInfo.SetType
@@ -3376,7 +3389,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             byte[] raw;
             object result;
 
-#if !NET9_0_OR_GREATER
+#if !NET9_0_OR_GREATER && !AOT
             Console.WriteLine("------------------System BinaryFormatter--------------------");
             BinaryFormatter bf = new BinaryFormatter();
             raw = SerializeObject(referenceObject, bf);
@@ -3527,6 +3540,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
         }
 
+#if !AOT || NET9_0_OR_GREATER // .NET 8: FieldInfo.GetValue throws an exception for function pointers in AOT mode
         [Test]
         public unsafe void SerializeFunctionPointers()
         {
@@ -3547,6 +3561,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObject(referenceObject, BinarySerializationOptions.SafeMode, expectedTypes: [typeof(FunctionPointerField)]);
 #endif
         }
+#endif
 
         [Test]
         public void NeedsDefaultCtorTest()
@@ -3657,9 +3672,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             key[0] = key;
 
             object[] referenceObjects =
-            {
+            [
                 obj
-            };
+            ];
 
             // SystemSerializeObjects(referenceObjects); // in .NET Framework this causes StackOverflowException
 
@@ -3678,7 +3693,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         [Test]
         public void SafeModeArrayOutOfMemoryAttackTest()
         {
-            byte[] array = { 1, 2, 3, 4, 5, 6, 7 };
+            byte[] array = [1, 2, 3, 4, 5, 6, 7];
             var bsf = new BinarySerializationFormatter(BinarySerializationOptions.None);
             var serData = new List<byte>(SerializeObject(array, bsf));
 

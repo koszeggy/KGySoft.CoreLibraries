@@ -60,7 +60,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         public void SerializeSimpleTypes()
         {
             object[] referenceObjects =
-            {
+            [
                 null,
                 new object(),
                 true,
@@ -79,8 +79,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 (decimal)1,
                 DateTime.UtcNow,
                 DateTime.Now,
-                Guid.NewGuid(),
-            };
+                Guid.NewGuid()
+            ];
 
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
@@ -126,7 +126,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         public void SerializeFloats()
         {
             object[] referenceObjects =
-            {
+            [
                 +0.0f,
                 -0.0f,
                 Single.NegativeInfinity,
@@ -148,8 +148,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 +0.0m,
                 -0.0m,
                 Decimal.MinValue,
-                Decimal.MaxValue,
-            };
+                Decimal.MaxValue
+            ];
 
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
@@ -158,16 +158,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, false);
 
 #if NET5_0_OR_GREATER
-            referenceObjects = new object[]
-            {
+            referenceObjects =
+            [
                 (Half)(+0.0f),
                 (Half)(-0.0f),
                 Half.NegativeInfinity,
                 Half.PositiveInfinity,
                 Half.NaN,
                 Half.MinValue,
-                Half.MaxValue,
-            };
+                Half.MaxValue
+            ];
 
             SystemSerializeObjects(referenceObjects);
 
@@ -180,7 +180,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         public void SerializeChars()
         {
             object[] referenceObjects =
-            {
+            [
                 'a',
                 'á',
                 ' ',
@@ -202,7 +202,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 '\xffff', // U+FFFF = <noncharacter-FFFF>
                 Char.ConvertFromUtf32(0x1D161)[0], // unpaired surrogate
                 ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '​', '\u2028', '\u2029', '　', '﻿'
-            };
+            ];
 
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
@@ -216,13 +216,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         public void SerializeRunes()
         {
             object[] referenceObjects =
-            {
+            [
                 new Rune('a'),
                 new Rune(' '),
                 new Rune('\r'),
                 new Rune('\n'),
                 Rune.GetRuneAt("🏯", 0)
-            };
+            ];
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.EscapeNewlineCharacters);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.EscapeNewlineCharacters, false);
@@ -233,7 +233,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         public void SerializeStrings()
         {
             string[] referenceObjects =
-            {
+            [
                 null,
                 String.Empty,
                 "One",
@@ -243,8 +243,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 "space  space",
                 "<>\\'\"&{}{{}}",
                 "tab\ttab",
-                "🏯", // paired surrogate
-            };
+                "🏯" // paired surrogate
+            ];
 
             SystemSerializeObject(referenceObjects);
             SystemSerializeObjects(referenceObjects);
@@ -253,8 +253,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, false);
 
             // These strings cannot be (de)serialized with system serializer
-            referenceObjects = new string[]
-            {
+            referenceObjects =
+            [
                 Environment.NewLine,
                 @"new
 
@@ -272,7 +272,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 "<>\\'\"&{}{{}}\0\\0000",
                 new string(new char[] { '\t', '\n', '\v', '\f', '\r', ' ', '\x0085', '\x00a0', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '​', '\u2028', '\u2029', '　', '﻿' }),
                 "🏯" + "🏯"[0].ToString(null) + " b 🏯 " + "🏯"[1].ToString(null) + "\xffff \0 <>'\"&" // string containing unpaired surrogates
-            };
+            ];
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.EscapeNewlineCharacters);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.EscapeNewlineCharacters, false);
@@ -297,7 +297,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             #endregion
 
             object[] referenceObjects =
-            {
+            [
                 // Simple types
                 typeof(int),
                 typeof(int?),
@@ -306,6 +306,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 typeof(int).MakePointerType(),
                 typeof(SystemSerializableClass),
                 typeof(SystemSerializableStruct?),
+                Reflector.Type,
                 Reflector.RuntimeType,
                 typeof(void),
                 typeof(TypedReference),
@@ -388,9 +389,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 typeof(Array).GetMethod(nameof(Array.Resize)).GetGenericArguments()[0], // T of Array.Resize, unique generic method definition argument
                 typeof(Array).GetMethod(nameof(Array.Resize)).GetGenericArguments()[0].MakeArrayType(), // T[] of Array.Resize, unique generic method definition argument - System and forced recursive serialization fails here
                 typeof(DictionaryExtensions).GetMethods().Where(mi => mi.Name == nameof(DictionaryExtensions.GetValueOrDefault)).ElementAt(2).GetGenericArguments()[0] // TKey of a GetValueOrDefault overload, ambiguous generic method definition argument
-            };
+            ];
 
-            var expectedTypes = referenceObjects.Cast<Type>().Where(IsValidExpectedType).Concat(new[] { typeof(OpenGenericDictionary<>), typeof(DictionaryExtensions) }).ToList();
+            var expectedTypes = referenceObjects.Cast<Type>().Where(IsValidExpectedType).Concat([typeof(OpenGenericDictionary<>), typeof(DictionaryExtensions)]).ToList();
             KGySerializeObject(referenceObjects, XmlSerializationOptions.None, expectedTypes: expectedTypes);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, false, expectedTypes: expectedTypes);
 
@@ -426,16 +427,20 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         [Test]
         public void SerializeByTypeConverter()
         {
+#if AOT
+            SerializedType _ = typeof(ExplicitTypeConverterHolder);
+#endif
+
 #if !NETCOREAPP3_0_OR_GREATER
             typeof(Version).RegisterTypeConverter<VersionConverter>();
 #endif
             typeof(Encoding).RegisterTypeConverter<EncodingConverter>();
 
             object[] referenceObjects =
-            {
+            [
                 new Guid("ca761232ed4211cebacd00aa0057b223"),
-                new Point(13, 13),
-            };
+                new Point(13, 13)
+            ];
 
             // SystemSerializeObject(referenceObjects); - InvalidOperationException: The type System.Drawing.Point was not expected.
             SystemSerializeObjects(referenceObjects);
@@ -459,11 +464,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, false);
 
             // Type converter as property
-            referenceObjects = new object[]
-            {
+            referenceObjects =
+            [
                 new BinarySerializableClass { ObjectProp = new Point(1, 2) }, // Point has self type converter
                 new ExplicitTypeConverterHolder { ExplicitTypeConverterProperty = 13 } // converter on property
-            };
+            ];
 
             // even escape can be omitted if deserialization is by XmlTextReader, which does not normalize newlines
             var expectedTypes = new[] { typeof(BinarySerializableClass), typeof(ExplicitTypeConverterHolder), typeof(Point) };
@@ -475,7 +480,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         public void SerializeEnums()
         {
             Enum[] referenceObjects =
-            {
+            [
                 TestEnum.One, // local enum
                 TestEnum.Two, // local enum
 
@@ -490,8 +495,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 ActionTargets.Default, // NUnit.Framework enum
 
                 BinarySerializationOptions.RecursiveSerializationAsFallback, // KGySoft.CoreLibraries enum
-                BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.IgnoreIObjectReference, // KGySoft.CoreLibraries enum, multiple flags
-            };
+                BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.IgnoreIObjectReference // KGySoft.CoreLibraries enum, multiple flags
+            ];
 
             // SystemSerializeObject(referenceObjects); - InvalidOperationException: The type _LibrariesTest.Libraries.Serialization.XmlSerializerTest+TestEnum may not be used in this context.
             SystemSerializeObjects(referenceObjects);
@@ -516,11 +521,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         public void SerializeKeyValues()
         {
             ValueType[] referenceObjects =
-            {
+            [
                 new DictionaryEntry(),
                 new DictionaryEntry(1, "alpha"),
-                new DictionaryEntry(new object(), "alpha"),
-            };
+                new DictionaryEntry(new object(), "alpha")
+            ];
 
             // SystemSerializeObject(referenceObjects); - NotSupportedException: System.ValueType is an unsupported type.
             SystemSerializeObjects(referenceObjects);
@@ -532,12 +537,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.AutoGenerateDefaultValuesAsFallback);
 
             // These types cannot be serialized with system serializer
-            referenceObjects = new ValueType[]
-            {
+            referenceObjects =
+            [
                 new KeyValuePair<object, string>(),
                 new KeyValuePair<int, string>(1, "alpha"),
-                new KeyValuePair<object, object>(1, " "),
-            };
+                new KeyValuePair<object, object>(1, " ")
+            ];
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, false);
@@ -549,6 +554,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 #if AOT
             ReadOnlySpan<SerializedType> _ =
             [
+                typeof(EmptyType),
                 typeof(BinarySerializableClass),
                 typeof(BinarySerializableStruct),
                 typeof(SystemSerializableClass),
@@ -710,7 +716,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             typeof(Version).RegisterTypeConverter<VersionConverter>();
 #endif
             IList[] referenceObjects =
-            {
+            [
                 Reflector.EmptyObjects,
                 new object[] { new object(), null },
                 new bool[] { true, false },
@@ -727,8 +733,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 new float[] { 1, 2 },
                 new double[] { 1, 2 },
                 new decimal[] { 1, 2 },
-                new DateTime[] { DateTime.UtcNow, DateTime.Now },
-            };
+                new DateTime[] { DateTime.UtcNow, DateTime.Now }
+            ];
 
             // SystemSerializeObject(referenceObjects); - InvalidOperationException: System.Collections.IList cannot be serialized because it does not have a parameterless constructor.
             SystemSerializeObjects(referenceObjects);
@@ -743,12 +749,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); // every element
 
             // these types cannot be serialized by system serializer
-            referenceObjects = new IList[]
-            {
+            referenceObjects =
+            [
                 new IntPtr[] { new IntPtr(1), IntPtr.Zero },
                 new UIntPtr[] { new UIntPtr(1), UIntPtr.Zero },
-                new Version[] { new Version(1, 2, 3, 4), null },
-            };
+                new Version[] { new Version(1, 2, 3, 4), null }
+            ];
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
@@ -766,10 +772,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         public void SerializeEnumArrays()
         {
             object[] referenceObjects =
-            {
+            [
                 new TestEnum[] { TestEnum.One, TestEnum.Two }, // single enum array
-                new TestEnum[][] { new TestEnum[] { TestEnum.One }, new TestEnum[] { TestEnum.Two } }, // jagged enum array
-            };
+                new TestEnum[][] { [TestEnum.One], [TestEnum.Two] } // jagged enum array
+            ];
 
             // SystemSerializeObject(referenceObjects); - InvalidOperationException: The type _LibrariesTest.Libraries.Serialization.XmlSerializerTest+TestEnum[] may not be used in this context.
             SystemSerializeObjects(referenceObjects);
@@ -777,14 +783,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
 
-            referenceObjects = new object[]
-            {
+            referenceObjects =
+            [
                 new TestEnum[,] { { TestEnum.One }, { TestEnum.Two } }, // multidimensional enum array
                 new object[] { TestEnum.One, null },
                 new IConvertible[] { TestEnum.One, null },
                 new Enum[] { TestEnum.One, null },
-                new ValueType[] { TestEnum.One, null },
-            };
+                new ValueType[] { TestEnum.One, null }
+            ];
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
@@ -835,8 +841,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 new NonSerializableStruct?[] { new NonSerializableStruct { IntProp = 10, Point = new(13, 43) }, null }
             ];
 
+#if !(AOT && NETCOREAPP3_0_OR_GREATER && !NET9_0_OR_GREATER) // AOT .NET 9-: Could not determine the managed size of type 'KGySoft.CoreLibraries.UnitTests.Serialization.Xml.XmlSerializerTest+SystemSerializableStruct'.
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // as content, SystemSerializableStruct; otherwise, all
                 | XmlSerializationOptions.CompactSerializationOfStructures); // as content, BinarySerializableStruct, NonSerializableStruct; otherwise, all
+#endif
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // SystemSerializableStruct
                 | XmlSerializationOptions.CompactSerializationOfStructures); // BinarySerializableStruct, NonSerializableStruct
@@ -911,7 +919,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         {
             IList<XmlSerializableClass>[] referenceObjects =
             [
-                new XmlSerializableClass[] { new XmlSerializableClass(1, 2, 3) },
+#pragma warning disable IDE0300 // Use collection initializer - it would change the type from array to List<>
+                new[] { new XmlSerializableClass(1, 2, 3) },
+#pragma warning restore IDE0300
                 new List<XmlSerializableClass> { new XmlSerializableClass(1, 2, 3) }
             ];
 
@@ -928,14 +938,24 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         [Test]
         public void SerializeComplexArrays()
         {
+#if AOT
+            ReadOnlySpan<SerializedType> _ =
+            [
+                typeof(BinarySerializableClass),
+                typeof(SystemSerializableSealedClass),
+                typeof(SystemSerializableClass),
+                typeof(NonSerializableStruct),
+            ];
+#endif
+
             IList[] referenceObjects =
-            {
+            [
                 new BinarySerializableStruct[] { new BinarySerializableStruct { IntProp = 1, StringProp = "alpha" }, new BinarySerializableStruct { IntProp = 2, StringProp = "beta" } }, // array of a BinarySerializable struct
                 new BinarySerializableClass[] { new BinarySerializableClass { IntProp = 1, StringProp = "alpha" }, new BinarySerializableClass { IntProp = 2, StringProp = "beta", ObjectProp = DateTime.Now } }, // array of a BinarySerializable non sealed class
                 new BinarySerializableSealedClass[] { new BinarySerializableSealedClass { IntProp = 1, StringProp = "alpha" }, new BinarySerializableSealedClass { IntProp = 2, StringProp = "beta" }, new BinarySerializableSealedClass { IntProp = 3, StringProp = "gamma" } }, // array of a BinarySerializable sealed class
                 new SystemSerializableClass[] { new SystemSerializableClass { IntProp = 1, StringProp = "alpha" }, new SystemSerializableClass { IntProp = 2, StringProp = "beta" } }, // array of a [Serializable] object - will be serialized by BinaryFormatter
-                new NonSerializableStruct[] { new NonSerializableStruct { IntProp = 1, Point = new(1, 2) }, new NonSerializableStruct { IntProp = 2, Bool = true, Point = new(3, 4) } }, // array of any struct
-            };
+                new NonSerializableStruct[] { new NonSerializableStruct { IntProp = 1, Point = new(1, 2) }, new NonSerializableStruct { IntProp = 2, Bool = true, Point = new(3, 4) } } // array of any struct
+            ];
 
             //SystemSerializeObject(referenceObjects); - InvalidOperationException: System.Collections.IList cannot be serialized because it does not have a parameterless constructor.
             SystemSerializeObjects(referenceObjects);
@@ -946,27 +966,29 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // NonSerializableStruct
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // NonSerializableStruct
 
+#if !(AOT && NETCOREAPP3_0_OR_GREATER && !NET9_0_OR_GREATER) // AOT .NET 9-: Could not determine the managed size of type 'KGySoft.CoreLibraries.UnitTests.Serialization.Xml.XmlSerializerTest+NonSerializableStruct'.
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // everything
                 | XmlSerializationOptions.CompactSerializationOfStructures); // nothing
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // as content, non-structs; otherwise everything
                 | XmlSerializationOptions.CompactSerializationOfStructures); // as content, NonSerializableStruct; otherwise, nothing
+#endif
 
             // These collections cannot be serialized with system serializer
-            referenceObjects = new IList[]
-            {
+            referenceObjects =
+            [
                 new BinarySerializableClass[] { new BinarySerializableSealedClass { IntProp = 1, StringProp = "alpha" }, new BinarySerializableSealedClass { IntProp = 2, StringProp = "beta" } }, // array of a BinarySerializable non sealed class with derived elements
                 new IBinarySerializable[] { new BinarySerializableStruct { IntProp = 1, StringProp = "alpha" }, new BinarySerializableClass { IntProp = 2, StringProp = "beta" }, new BinarySerializableSealedClass { IntProp = 3, StringProp = "gamma" } }, // IBinarySerializable array
                 new AbstractClass[] { new SystemSerializableClass { IntProp = 1, StringProp = "alpha" }, new SystemSerializableSealedClass { IntProp = 2, StringProp = "beta" } }, // array of a [Serializable] object
                 new AbstractClass[] { new BinarySerializableClass { IntProp = 1, StringProp = "alpha" }, new SystemSerializableSealedClass { IntProp = 2, StringProp = "beta" } }, // array of a [Serializable] object, with an IBinarySerializable element
-                new IBinarySerializable[][] { new IBinarySerializable[] { new BinarySerializableStruct { IntProp = 1, StringProp = "alpha" } }, null }, // IBinarySerializable array
+                new IBinarySerializable[][] { [new BinarySerializableStruct { IntProp = 1, StringProp = "alpha" }], null }, // IBinarySerializable array
                 new NonSerializableStruct[] { new NonSerializableStruct { IntProp = 1, Point = new(1, 2) }, new NonSerializableStruct { IntProp = 2, Bool = true, Point = new(3, 4) } }, // array of any struct
 
                 new ValueType[] { new BinarySerializableStruct { IntProp = 1, StringProp = "alpha" }, new SystemSerializableStruct { IntProp = 2, StringProp = "beta" }, null, 1 },
                 new IConvertible[] { null, 1 },
-                new IConvertible[][] { null, new IConvertible[] { null, 1 }, },
-            };
+                new IConvertible[][] { null, [null, 1], }
+            ];
 
-            var expectedTypes = GetExpectedTypes(referenceObjects).Concat(new[] { typeof(BinarySerializableSealedClass), typeof(BinarySerializableStruct), typeof(SystemSerializableClass), typeof(SystemSerializableSealedClass), typeof(SystemSerializableStruct) }).ToList();
+            var expectedTypes = GetExpectedTypes(referenceObjects).Concat([typeof(BinarySerializableSealedClass), typeof(BinarySerializableStruct), typeof(SystemSerializableClass), typeof(SystemSerializableSealedClass), typeof(SystemSerializableStruct)]).ToList();
             KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback, expectedTypes: expectedTypes); // BinarySerializableStruct, NonSerializableStruct, SystemSerializableStruct
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback, expectedTypes: expectedTypes); // BinarySerializableStruct, NonSerializableStruct, SystemSerializableStruct
 
@@ -975,10 +997,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // SystemSerializableStruct
                 | XmlSerializationOptions.CompactSerializationOfStructures, expectedTypes: expectedTypes); // BinarySerializableStruct, NonSerializableStruct
 
+#if !(AOT && NETCOREAPP3_0_OR_GREATER && !NET9_0_OR_GREATER) // AOT .NET 9-: Could not determine the managed size of type 'KGySoft.CoreLibraries.UnitTests.Serialization.Xml.XmlSerializerTest+SystemSerializableStruct'.
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // everything
-                | XmlSerializationOptions.CompactSerializationOfStructures, expectedTypes: expectedTypes); // nothing
+                | XmlSerializationOptions.CompactSerializationOfStructures, expectedTypes: expectedTypes); // NonSerializableStruct by the binary serializer
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // as content, non-structs; otherwise everything
-                | XmlSerializationOptions.CompactSerializationOfStructures, expectedTypes: expectedTypes); // as content, structs; otherwise, nothing
+                | XmlSerializationOptions.CompactSerializationOfStructures, expectedTypes:expectedTypes); // as content, structs; otherwise, nothing
+#endif
         }
 
         /// <summary>
@@ -1242,8 +1266,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 #if AOT
             ReadOnlySpan<SerializedType> _ =
             [
+                typeof(PopulatableCollectionWithReadOnlyProperties),
                 typeof(Cache<,>), // used in ReadOnlyProperties
                 typeof(ReadOnlyCollection<>),
+                typeof(ReadOnlyCollectionWithInitCtorAndReadOnlyProperties),
                 typeof(ReadOnlyCollectionWithoutInitCtorAndReadOnlyProperties), // though this does not help for this collection
             ];
 #endif
@@ -1296,7 +1322,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         public void SerializeObjectsWithMemberNameCollision()
         {
 #if AOT
-            SerializedType _ = typeof(ConflictingCollection<>); // derives from ConflictNameChild, which derives from ConflictNameBase, so they are alright now
+            ReadOnlySpan<SerializedType> _ =
+            [
+                typeof(ConflictNameBase),
+                typeof(ConflictNameChild),
+                typeof(ConflictingCollection<>),
+            ];
 #endif
 
             ConflictNameBase[] referenceObjects =
@@ -1383,8 +1414,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             typeof(Version).RegisterTypeConverter<VersionConverter>();
 #endif
             ICollection[] referenceObjects =
-            {
-                new List<byte>[] { new List<byte> { 11, 12, 13 }, new List<byte> { 21, 22 } }, // array of lists
+            [
+#pragma warning disable IDE0028 // Use collection initializer - it would cause a difference in Capacity when using safe mode
+                new List<byte>[] { new() { 11, 12, 13 }, new() { 21, 22 } }, // array of lists
+#pragma warning restore IDE0028
                 new List<byte[]> { new byte[] { 11, 12, 13 }, new byte[] { 21, 22 } }, // list of arrays
 
                 new Collection<KeyValuePair<int, object>> { new KeyValuePair<int, object>(1, "alpha"), new KeyValuePair<int, object>(2, DateTime.Now), new KeyValuePair<int, object>(3, new object()), new KeyValuePair<int, object>(4, new object[] { 1, "alpha", DateTime.Now, null }), new KeyValuePair<int, object>(5, null) },
@@ -1393,10 +1426,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 new Dictionary<string, Dictionary<int, string>> { { "hu", new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } } }, { "en", new Dictionary<int, string> { { 1, "apple" }, { 2, "frog" }, { 3, "cat" } } } },
 
                 // dictionary with array key
-                new Dictionary<string[], Dictionary<int, string>> { { new string[] { "hu" }, new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } } }, { new string[] { "en" }, new Dictionary<int, string> { { 1, "apple" }, { 2, "frog" }, { 3, "cat" } } } },
+                new Dictionary<string[], Dictionary<int, string>> { { ["hu"], new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } } }, { ["en"], new Dictionary<int, string> { { 1, "apple" }, { 2, "frog" }, { 3, "cat" } } } },
 
                 // dictionary with dictionary key and value
-                new Dictionary<Dictionary<int[], string>, Dictionary<int, string>> { { new Dictionary<int[], string> { { new int[] { 1 }, "key.value1" } }, new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } } }, { new Dictionary<int[], string> { { new int[] { 2 }, "key.value2" } }, new Dictionary<int, string> { { 1, "apple" }, { 2, "frog" }, { 3, "cat" } } } },
+                new Dictionary<Dictionary<int[], string>, Dictionary<int, string>> { { new Dictionary<int[], string> { { [1], "key.value1" } }, new Dictionary<int, string> { { 1, "alpha" }, { 2, "beta" }, { 3, "gamma" } } }, { new Dictionary<int[], string> { { [2], "key.value2" } }, new Dictionary<int, string> { { 1, "apple" }, { 2, "frog" }, { 3, "cat" } } } },
 
                 // object list with various elements
                 new List<object> { 1, "alpha", new Version(13, 0), new object[] { 3, "gamma", null }, new object(), null },
@@ -1408,14 +1441,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 new List<BinarySerializableClass> { new BinarySerializableSealedClass { IntProp = 1, StringProp = "alpha" }, new BinarySerializableSealedClass { IntProp = 2, StringProp = "beta" } },
                 new Dictionary<object, BinarySerializableClass> { { new object(), new BinarySerializableSealedClass { IntProp = 1, StringProp = "alpha" } }, { 2, new BinarySerializableSealedClass { IntProp = 2, StringProp = "beta" } } },
 
-                new IList<int>[] { new int[] { 1, 2, 3 }, new List<int> { 1, 2, 3 } },
+#pragma warning disable IDE0300 // Use collection initializer - it would change the array type to List<>
+                new IList<int>[] { new[] { 1, 2, 3 }, new List<int> { 1, 2, 3 } },
+#pragma warning restore IDE0300
                 new List<IList<int>> { new int[] { 1, 2, 3 }, new List<int> { 1, 2, 3 } }
-            };
+            ];
 
             //SystemSerializeObject(referenceObjects); - InvalidOperationException: You must implement a default accessor on System.Collections.ICollection because it inherits from ICollection.
             //SystemSerializeObjects(referenceObjects); - NullReferenceException
 
-            var expectedTypes = GetExpectedTypes(referenceObjects).Concat(new[] { typeof(Version), typeof(TestEnum), typeof(BinarySerializableSealedClass) }).ToList();
+            var expectedTypes = GetExpectedTypes(referenceObjects).Concat([typeof(Version), typeof(TestEnum), typeof(BinarySerializableSealedClass)]).ToList();
             KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback, expectedTypes: expectedTypes);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback, expectedTypes: expectedTypes);
 
@@ -1436,6 +1471,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 typeof(Cache<,>),
                 typeof(ReadOnlyCollection<>),
                 typeof(CustomGenericCollection<>),
+                typeof(CustomNonGenericCollection),
                 typeof(CustomGenericDictionary<,>),
                 typeof(CustomNonGenericDictionary),
                 typeof(ReadOnlyDictionary<,>),
@@ -1487,7 +1523,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         public void FullExtraComponentSerializationTest()
         {
 #if AOT
-            SerializedType _ = typeof(FullExtraComponent);
+            ReadOnlySpan<SerializedType> _ =
+            [
+                SerializedType.WithNestedTypes(typeof(FullExtraComponent)),
+                typeof(IntList),
+            ];
 #endif
 
             FullExtraComponent[] referenceObjects =
@@ -1504,7 +1544,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback, expectedTypes: expectedTypes);
 
             // validating [DefaultValue(0)] on IntProp and explicit null on IntArray
-            XElement[] xItems = [.. xml.Elements()];
+            XElement[] xItems = xml.Elements().ToArray();
             Assert.AreEqual(referenceObjects[0].IntProp.ToString(CultureInfo.InvariantCulture), xItems[0].Element(nameof(FullExtraComponent.IntProp))!.Value);
             Assert.IsFalse(xItems[0].Element(nameof(FullExtraComponent.IntArray))!.IsEmpty);
             Assert.IsNull(xItems[1].Element(nameof(FullExtraComponent.IntProp)));
@@ -1518,7 +1558,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 | XmlSerializationOptions.CompactSerializationOfPrimitiveArrays, expectedTypes: expectedTypes); // IntArray
 
             // validating auto generated default value on IntArray
-            xItems = [.. xml.Elements()];
+            xItems = xml.Elements().ToArray();
             Assert.IsFalse(xItems[0].Element(nameof(FullExtraComponent.IntArray))!.IsEmpty);
             Assert.IsNull(xItems[1].Element(nameof(FullExtraComponent.IntArray)));
 
@@ -1526,7 +1566,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback | XmlSerializationOptions.IgnoreDefaultValueAttribute, expectedTypes: expectedTypes);
 
             // validating ignored default value on IntProp
-            xItems = [.. xml.Elements()];
+            xItems = xml.Elements().ToArray();
             Assert.AreEqual(referenceObjects[0].IntProp.ToString(CultureInfo.InvariantCulture), xItems[0].Element(nameof(FullExtraComponent.IntProp))!.Value);
             Assert.AreEqual("0", xItems[1].Element(nameof(FullExtraComponent.IntProp))!.Value);
 
@@ -1556,6 +1596,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 
             #endregion
 
+            #region AOT
+
+            SerializedType _ = typeof(UnsafeStruct);
+
+            #endregion
+
             if (EnvironmentHelper.IsMono)
                 Assert.Inconclusive("Mono does not support serializing pointers and function pointers.");
 
@@ -1581,9 +1627,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             AssertThrows<SerializationException>(() => KGySerializeObject(referenceObjects[1], XmlSerializationOptions.RecursiveSerializationAsFallback, safeMode: XmlSafeMode.Medium));
             AssertThrows<SerializationException>(() => KGySerializeObject(referenceObjects[1], XmlSerializationOptions.RecursiveSerializationAsFallback, safeMode: XmlSafeMode.Strict, expectedTypes: [unsafeTypeStruct]));
 
+#if !AOT || NET9_0_OR_GREATER // in pre-.NET 8 AOT mode the compact struct serialization is not applied because nongeneric SizeOf is not reliable, and the fallback just works without throwing
             // But as a compact struct, pointer fields are not supported at all in safe mode
             AssertThrows<ArgumentException>(() => KGySerializeObject(referenceObjects[0], XmlSerializationOptions.CompactSerializationOfStructures, safeMode: XmlSafeMode.Medium), Res.XmlSerializationValueTypeContainsReferenceOrPointerSafe(unsafeTypeStruct));
             AssertThrows<ArgumentException>(() => KGySerializeObject(referenceObjects[0], XmlSerializationOptions.CompactSerializationOfStructures, safeMode: XmlSafeMode.Strict, expectedTypes: [unsafeTypeStruct]), Res.XmlSerializationValueTypeContainsReferenceOrPointerSafe(unsafeTypeStruct));
+#endif
 
             int intValue = 1;
             referenceObjects =
@@ -1628,6 +1676,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         [Test]
         public void SerializeRecords()
         {
+#if AOT
+            ReadOnlySpan<SerializedType> _ =
+            [
+                typeof(ClassRecord),
+                typeof(ValueRecord),
+            ];
+#endif
+
             object[] referenceObjects =
             [
                 new ClassRecord("alpha", 1),
@@ -1641,6 +1697,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         [Test]
         public void SerializeTrustedComplexObject()
         {
+#if AOT
+            SerializedType _ = typeof(TrustedComplexClass);
+#endif
+
             var testObj = new TrustedComplexClass
             {
                 DictionaryProperty = { { "alpha", 1 }, { "beta", 2 } }
@@ -1659,6 +1719,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         [Test]
         public void SerializeRefProperty()
         {
+#if AOT
+            SerializedType _ = typeof(RefPropertyClass);
+#endif
+
             var testObj = new RefPropertyClass
             {
                 RefProperty = 1,
@@ -1724,13 +1788,17 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
         [Test]
         public void UsePropertySetterIfPossibleTest()
         {
+#if AOT
+            SerializedType _ = typeof(PreInitializedProperties);
+#endif
+
             string referenceValue = ValueWithStaticMember.Predefined.Value;
             Assert.AreEqual(nameof(ValueWithStaticMember.Predefined), referenceValue);
 
             object[] referenceObjects =
-            {
+            [
                 new PreInitializedProperties { PreInitializedProperty = new ValueWithStaticMember { Value = "Custom value" } }
-            };
+            ];
 
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback);
 

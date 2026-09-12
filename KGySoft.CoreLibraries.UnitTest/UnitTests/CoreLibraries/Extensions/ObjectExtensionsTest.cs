@@ -81,7 +81,8 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
 #if !AOT // Equality check failed at type ASCIIEncodingSealed: System.Text.ASCIIEncoding+ASCIIEncodingSealed <-> System.Text.ASCIIEncoding+ASCIIEncodingSealed
 		    new Collection<Encoding> { Encoding.ASCII, Encoding.Unicode },  
 #endif
-            new MemoryStream(new byte[] { 1, 2, 3 }),
+#if !AOT || NET9_0_OR_GREATER
+		    new MemoryStream([1, 2, 3]), 
 
             // pointer fields
             new UnsafeStruct
@@ -91,6 +92,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
                 PointerArray = null, // new int*[] { (int*)new IntPtr(1), null }, // - not supported
                 PointerOfPointer = (void**)new IntPtr(1)
             },
+#endif
         };
 
         [DynamicDependency(DynamicallyAccessedMembers.AllFields, typeof(List<>))]
@@ -273,6 +275,8 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
         [Test]
         public void ToInvariantStringRoundtripTest()
         {
+            #region Local Methods
+
             static void Test(object source)
             {
                 Type type = source.GetType();
@@ -286,6 +290,8 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
                 AssertAreEqual(source, str.Convert(type));
                 AssertDeepEquals(source, parsed); // bitwise equality such as negative zero
             }
+
+            #endregion
 
             Test("alpha");
             Test('a');

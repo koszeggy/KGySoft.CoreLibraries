@@ -91,7 +91,7 @@ namespace KGySoft.Serialization.Xml
                     if (builder == null)
                     {
                         // allocating a List with limited initial capacity
-                        int capacity = Math.Min(TotalLength, allocationThreshold / ElementType.SizeOf());
+                        int capacity = Math.Min(TotalLength, allocationThreshold / ElementType.SizeOf(true));
                         if (ElementType.IsValueType)
                         {
                             // for value types we use a strictly typed list for less boxing (though the elements will be added boxed)
@@ -131,7 +131,7 @@ namespace KGySoft.Serialization.Xml
                     return;
                 }
 
-                if (safeMode && ElementType.SizeOf() * (long)TotalLength > allocationThreshold)
+                if (safeMode && ElementType.SizeOf(true) * (long)TotalLength > allocationThreshold)
                     return;
 
                 // it is safe to allocate the array here
@@ -150,7 +150,7 @@ namespace KGySoft.Serialization.Xml
                 if (current >= 0)
                     Throw.ArgumentException(Res.XmlSerializationMixedArrayFormats);
 
-                int count = data.Length / ElementType.SizeOf();
+                int count = data.Length / ElementType.SizeOf(true);
                 if (TotalLength != count)
                     Throw.ArgumentException(Res.XmlSerializationInconsistentArrayLength(TotalLength, count));
 

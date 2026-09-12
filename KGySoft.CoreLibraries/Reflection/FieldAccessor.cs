@@ -638,7 +638,7 @@ namespace KGySoft.Reflection
             // Pointer field: Fallback to reflection
             if (Field.FieldType.IsPointer())
             {
-                if (Field.FieldType.IsPointer) // only real pointers are returned as Reflection.Pointer
+                if (Field.FieldType.IsPointer) // not IsPointer(), because only real pointers are returned as Reflection.Pointer
                     unsafe { return instance => (IntPtr)Pointer.Unbox(Field.GetValue(instance)!); }
                 return Field.GetValue;
             }
@@ -687,7 +687,7 @@ namespace KGySoft.Reflection
                     return _ => rawConstant;
                 }
 
-                if (Field.FieldType.IsPointer) // only real pointers are returned as Reflection.Pointer, whereas function pointer fields are returned as IntPtr
+                if (Field.FieldType.IsPointer) // not IsPointer(), because only real pointers are returned as Reflection.Pointer, whereas function pointer fields are returned as IntPtr
                     unsafe { return instance => (IntPtr)Pointer.Unbox(Field.GetValue(instance)!); }
                 return Field.GetValue;
             }
@@ -1048,6 +1048,10 @@ namespace KGySoft.Reflection
                     Throw.ArgumentException(Argument.value, Res.NotAnInstanceOfType(valueParamType));
                 }
             }
+#if NET8_0 // in .NET 8.0 when deploying with trimming, FieldInfo.GetValue throws an exception for function pointers from Internal.Runtime.Augments.RuntimeAugments.LoadPointerTypeField
+            else if (Field.FieldType.IsFunctionPointer && !RuntimeFeature.IsDynamicCodeSupported)
+                Throw.PlatformNotSupportedException(Res.ReflectionFunctionPointersNotSupportedAot);
+#endif
 
             if (exception is null)
                 return;

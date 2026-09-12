@@ -265,6 +265,7 @@ namespace KGySoft.Reflection
         internal const string FunctionPointerUnmanagedPrefix = "*fn";
         internal const string RequiresUnreferencedCodeTypeResolver = "Unless typeResolver returns all possible types, the type might be removed by the trimmer.";
         internal const string RequiresUnreferencedCode = "The type might be removed by the trimmer. Also, allowing to load assemblies has no effect.";
+        internal const string RuntimeTypeFullName = "System.RuntimeType";
 
         #endregion
 
@@ -427,7 +428,12 @@ namespace KGySoft.Reflection
 #endif
 
             // root type
-            rootName = typeNameResolver?.Invoke(type) ?? type.FullName;
+            rootName = typeNameResolver?.Invoke(type)
+#if (NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER) && !NET9_0_OR_GREATER
+                ?? (RuntimeFeature.IsDynamicCodeSupported || !type.IsRuntimeType() ? type.FullName : RuntimeTypeFullName);
+#else
+                ?? type.FullName;
+#endif
             assembly = type.Assembly;
             if (kind is TypeNameKind.AssemblyQualifiedName or TypeNameKind.ForcedAssemblyQualifiedName)
                 assemblyName = assemblyNameResolver?.Invoke(type)?.FullName ?? assembly.FullName;

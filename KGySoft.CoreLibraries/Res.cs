@@ -189,7 +189,7 @@ namespace KGySoft
         /// <summary>Unexpected id on deserialization. Serialization stream corrupted?</summary>
         internal static string BinarySerializationDeserializeUnexpectedId => Get("BinarySerialization_DeserializeUnexpectedId");
 
-        /// <summary>Specified type must be a value type.</summary>
+        /// <summary>Specified type must be a non-nullable value type.</summary>
         internal static string BinarySerializationValueTypeExpected => Get("BinarySerialization_ValueTypeExpected");
 
         /// <summary>Data length is too small.</summary>
@@ -433,6 +433,9 @@ namespace KGySoft
 
         /// <summary>Resolving function pointers is not supported on this platform.</summary>
         internal static string ReflectionFunctionPointersNotSupported => Get("Reflection_FunctionPointersNotSupported");
+
+        /// <summary>Getting function pointer fields in AOT mode requires targeting .NET 9.0 or later.</summary>
+        internal static string ReflectionFunctionPointersNotSupportedAot => Get("Reflection_FunctionPointersNotSupportedAot");
 
         /// <summary>Setting static indexers with ref return value is not supported.</summary>
         internal static string ReflectionRefReturnStaticIndexerNotSupported => Get("Reflection_RefReturnStaticIndexerNotSupported");
@@ -787,6 +790,9 @@ namespace KGySoft
 
         /// <summary>Type is not a simple runtime element type or generic type definition: {0}</summary>
         internal static string SerializationRootTypeExpected(Type t) => Get("Serialization_RootTypeExpectedFormat", t.GetName(TypeNameKind.LongName));
+
+        /// <summary>Could not determine the managed size of type '{0}' in a nongeneric way. In native AOT mode it requires targeting .NET 9.0 or later.</summary>
+        internal static string BinarySerializationValueTypeSizeNotAvailableAot(Type t) => Get("BinarySerialization_ValueTypeSizeNotAvailableAotFormat", t.GetName(TypeNameKind.LongName));
 
         #endregion
 
@@ -1266,7 +1272,7 @@ namespace KGySoft
         /// <summary>Type "{0}" does not have a parameterless constructor so it can be (de-)serialized either as a root element by SerializeContent and DeserializeContent or as a public property/field value in a parent object if the member value is not null after creating the parent object.</summary>
         internal static string XmlSerializationNoDefaultCtor(Type type) => Get("XmlSerialization_NoDefaultCtorFormat", type.GetName(TypeNameKind.LongName));
 
-        /// <summary>Parameterless constructor of collection "{0}" is either missing or has been trimmed in native AOT mode. You can prevent trimming the required members of a type by adding the following snippet to your application initialization:
+        /// <summary>Parameterless constructor of type "{0}" is either missing or has been trimmed in native AOT mode. You can prevent trimming the required members of a type by adding the following snippet to your application initialization:
         /// SerializedType _ = typeof(MySerializedType);</summary>
         internal static string XmlSerializationNoDefaultCtorAot(Type type) => Get("XmlSerialization_NoDefaultCtorAotFormat", type.GetName(TypeNameKind.LongName));
 

@@ -82,7 +82,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
             // getting enumerator again: cached
             var resEnumCached = reader.GetEnumerator();
-            Assert.AreNotEqual(resEnumLazy.GetType(), resEnumCached.GetType());
+            AssertAreNotEqual(resEnumLazy.GetType(), resEnumCached.GetType());
             resEnumCached.MoveNext();
             Assert.AreEqual(firstRes, resEnumCached.Entry);
 
@@ -112,7 +112,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
             // getting enumerator again: cached
             aliasEnumCached = reader.GetAliasEnumerator();
-            Assert.AreNotEqual(aliasEnumLazy.GetType(), aliasEnumCached.GetType());
+            AssertAreNotEqual(aliasEnumLazy.GetType(), aliasEnumCached.GetType());
             aliasEnumCached.MoveNext();
             Assert.AreEqual(firstAlias, aliasEnumCached.Entry);
 

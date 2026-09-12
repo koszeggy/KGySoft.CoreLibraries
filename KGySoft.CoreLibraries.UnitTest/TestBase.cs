@@ -160,7 +160,7 @@ namespace KGySoft.CoreLibraries
                 return;
             }
 
-            // In AOT mode Assert.AreNotEqual throws an IndexOutOfRange exception in a lot of cases, e.g. comparing bool values
+            // In AOT mode Assert.AreNotEqual throws an IndexOutOfRange exception in a lot of cases, e.g. comparing bool values. Also, it may call GetInterfaceMap, which may fail.
             if (Equals(expected, actual))
                 Assert.Fail(message ?? $"Not expected: {expected}{Environment.NewLine}Actual: {actual}");
         }
@@ -607,6 +607,10 @@ namespace KGySoft.CoreLibraries
 
             if (!Check(typeRef == typeChk, $"Types are different. {typeRef} <-> {typeChk}", errors))
                 return false;
+
+            // not checking Type as instance, because getting its DeclaringType may throw an exception
+            if (reference is Type)
+                return true;
 
             bool result = true;
 

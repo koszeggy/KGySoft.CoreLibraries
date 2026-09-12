@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <!--<TargetFrameworks>net35;net40;net45;net47;net472;netcoreapp3.0;net5.0;net6.0;net7.0;net8.0;net9.0;net10.0</TargetFrameworks>-->
-    <TargetFrameworks>netcoreapp3.0;net8.0;net10.0</TargetFrameworks>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
 
     <!--For UnitTesting the .NET Standard versions-->
     <!--<TargetFrameworks>netcoreapp2.0;netcoreapp3.0</TargetFrameworks>
@@ -60,7 +60,7 @@
   <ItemGroup>
     <!--NUnit 4.x has major breaking changes and does not support Framework 4.6.2- and .NET 6-. -->
     <PackageReference Include="NUnit" Version="3.14" />
-    <TrimmerRootAssembly Include="nunit.framework" />
+    <TrimmerRootAssembly Include="nunit.framework" /> 
 
     <!-- Cannot use different adapter versions for the different frameworks, because the Test Explorer chooses the highest version for all platforms (even though build works).
          6.0.0 works with .NET Framework 4.6.2 and .NET 8+ only 
@@ -87,10 +87,11 @@
 
   <!-- Microsoft.NET.Test.Sdk -->
   <ItemGroup Condition="'$(TargetFramework)'=='net47' OR '$(TargetFramework)'=='net472' OR '$(TargetFramework)'=='net8.0' OR '$(TargetFramework)'=='net9.0' OR '$(TargetFramework)'=='net10.0'">
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.1"/>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)'=='net35' OR '$(TargetFramework)'=='net40' OR '$(TargetFramework)'=='net45' OR '$(TargetFramework)'=='netcoreapp2.0' OR '$(TargetFramework)'=='netcoreapp2.1' OR '$(TargetFramework)'=='netcoreapp3.0' OR '$(TargetFramework)'=='netcoreapp3.1' OR '$(TargetFramework)'=='net5.0' OR '$(TargetFramework)'=='net6.0' OR '$(TargetFramework)'=='net7.0'">
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.0"/>
+    <!-- This cannot be upgraded, not even to 17.14.1, because that is not compatible with net7.0 anymore -->
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.0" />
   </ItemGroup>
 
   <!-- System.Resources.Extensions. Required for non-string resources. On .NET Framework it is required on non-Windows platforms only, where it requires at least net462. -->

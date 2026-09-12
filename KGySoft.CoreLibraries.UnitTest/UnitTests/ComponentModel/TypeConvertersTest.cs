@@ -90,7 +90,14 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
             object retrieved = converter.ConvertFrom(result);
             Assert.AreEqual(testData, retrieved);
         }
-
+#if NETCOREAPP3_0_OR_GREATER // Normally TEnum can be inferred, except in .NET 8.0 with trimming, where it resolves to int, causing 'System.Int32', on 'Void FlagsEnumConverterTest[TEnum](TEnum, System.Type)' violates the constraint of type 'TEnum'.
+        [TestCase<ConsoleColor>(ConsoleColor.Blue, typeof(string))]
+        [TestCase<ConsoleColor>(ConsoleColor.Blue, typeof(Enum[]))]
+        [TestCase<ConsoleColor>(ConsoleColor.Blue, typeof(InstanceDescriptor))]
+        [TestCase<ConsoleModifiers>(ConsoleModifiers.Control | ConsoleModifiers.Shift, typeof(string))]
+        [TestCase<ConsoleModifiers>(ConsoleModifiers.Control | ConsoleModifiers.Shift, typeof(Enum[]))]
+        [TestCase<ConsoleModifiers>(ConsoleModifiers.Control | ConsoleModifiers.Shift, typeof(InstanceDescriptor))]
+#else
         [TestCase(ConsoleColor.Blue, typeof(string))]
         [TestCase(ConsoleColor.Blue, typeof(Enum[]))]
 #if !(NETCOREAPP2_0 || NETCOREAPP2_1)
@@ -100,6 +107,7 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
         [TestCase(ConsoleModifiers.Control | ConsoleModifiers.Shift, typeof(Enum[]))]
 #if !(NETCOREAPP2_0 || NETCOREAPP2_1)
         [TestCase(ConsoleModifiers.Control | ConsoleModifiers.Shift, typeof(InstanceDescriptor))]
+#endif
 #endif
         public void FlagsEnumConverterTest<[DynamicallyAccessedMembers(FlagsEnumConverter.NeededMembers)]TEnum>(TEnum testData, Type targetType)
             where TEnum : struct, Enum

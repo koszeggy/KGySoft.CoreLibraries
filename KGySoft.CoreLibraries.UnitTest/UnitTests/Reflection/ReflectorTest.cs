@@ -7432,6 +7432,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             AssertAreEqual(value, result);
         }
 
+#if !AOT || NET9_0_OR_GREATER // .NET 8: FieldInfo.GetValue throws an exception for function pointers in AOT mode (and FieldAccessor fallbacks to FieldInfo)
         [Test]
         public unsafe void ClassInstanceFunctionPointerFieldAccessUnsafe()
         {
@@ -7478,6 +7479,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             result = Reflector.GetField(test, nameof(UnsafeTestClass.InstanceFunctionPointerField).ToLowerInvariant(), true);
             AssertAreEqual(value, result);
         }
+#endif
 
         [Test]
         public unsafe void ClassInstanceReadOnlyValueFieldAccessUnsafe()
@@ -7569,6 +7571,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             AssertAreEqual(value, result);
         }
 
+#if !AOT || NET9_0_OR_GREATER // .NET 8: FieldInfo.GetValue throws an exception for function pointers in AOT mode (and FieldAccessor fallbacks to FieldInfo)
         [Test]
         public unsafe void ClassStaticFunctionPointerFieldAccessUnsafe()
         {
@@ -7615,6 +7618,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             result = Reflector.GetField(testType, nameof(UnsafeTestClass.StaticFunctionPointerField).ToLowerInvariant(), true);
             AssertAreEqual(value, result);
         }
+#endif
 
         #endregion
 
@@ -8005,7 +8009,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         [TestCase(typeof(double), nameof(Double.Epsilon), Double.Epsilon)]
         [TestCase(typeof(TestConstants), nameof(TestConstants.BoolValue), TestConstants.BoolValue)]
         [TestCase(typeof(TestConstants), nameof(TestConstants.StringValue), TestConstants.StringValue)]
-        [TestCase(typeof(TestConstants), nameof(TestConstants.EnumValue), TestConstants.EnumValue)]
+        [TestCaseGeneric(typeof(TestConstants), nameof(TestConstants.EnumValue), TestConstants.EnumValue, TypeArguments = [typeof(ConsoleColor)])] // In .NET 8 AOT the type argument would be int with inferring
         [TestCaseGeneric(typeof(TestConstants), nameof(TestConstants.NullValue), TestConstants.NullValue, TypeArguments = [typeof(string)])]
         [TestCaseGeneric(typeof(TestConstants), nameof(TestConstants.IntPtrValue), null, TypeArguments = [typeof(IntPtr)])] // null: to avoid CS1082
         [TestCaseGeneric(typeof(TestConstants), nameof(TestConstants.UIntPtrValue), null, TypeArguments = [typeof(UIntPtr)])] // null: to avoid CS1082

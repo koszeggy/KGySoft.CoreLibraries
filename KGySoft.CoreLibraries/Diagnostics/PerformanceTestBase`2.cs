@@ -405,7 +405,7 @@ namespace KGySoft.Diagnostics
                 case IEnumerable e:
                     return e.Cast<object>().Count();
                 default:
-                    return Reflector<TResult>.SizeOf;
+                    return Reflector<TResult>.GetSize(true);
             }
         }
 

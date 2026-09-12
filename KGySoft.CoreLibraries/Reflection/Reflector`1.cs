@@ -61,11 +61,18 @@ namespace KGySoft.Reflection
         {
             #region Fields
 
-            internal static readonly int Value =
+            internal static readonly int ValueExact =
 #if NETFRAMEWORK || NETSTANDARD2_0
-                EnvironmentHelper.IsPartiallyTrustedDomain ? typeof(T).SizeOf() : Initialize();
+                EnvironmentHelper.IsPartiallyTrustedDomain ? typeof(T).SizeOf(false) : Initialize();
 #else
                 Initialize(); 
+#endif
+
+            internal static readonly int ValueEstimated =
+#if NETFRAMEWORK || NETSTANDARD2_0
+                EnvironmentHelper.IsPartiallyTrustedDomain ? typeof(T).SizeOf(true) : ValueExact;
+#else
+                ValueExact; 
 #endif
 
             #endregion
@@ -118,7 +125,7 @@ namespace KGySoft.Reflection
         {
             #region Fields
 
-            internal static readonly int Value = IsPrimitive ? (int)Math.Log(SizeOf, 2) : 0;
+            internal static readonly int Value = IsPrimitive ? (int)Math.Log(GetSize(false), 2) : 0; // NOTE: SizeOf(false) is never 0 for primitive types
 
             #endregion
         }
@@ -153,12 +160,7 @@ namespace KGySoft.Reflection
 #pragma warning restore IDE0301 // Use collection expression syntax
 #endif
 
-        internal static int SizeOf =>
-#if NETCOREAPP3_0_OR_GREATER
-            Unsafe.SizeOf<T>();
-#else
-            SizeOfCache.Value;
-#endif
+        internal static int SizeOf => GetSize(false);
 
         internal static bool IsManaged =>
 #if NETFRAMEWORK || NETSTANDARD2_0
@@ -180,6 +182,20 @@ namespace KGySoft.Reflection
         internal static bool IsPrimitive => typeof(T).IsPrimitive; // intrinsic in .NET 9+
 #else
         internal static bool IsPrimitive => IsPrimitiveCache.Value;
+#endif
+
+        #endregion
+
+        #region Methods
+
+        /// <summary>
+        /// NOTE: The result can be 0 if allowEstimation is false, and the actual managed size cannot be determined.
+        /// </summary>
+        internal static int GetSize(bool allowEstimation) =>
+#if NETCOREAPP3_0_OR_GREATER
+            Unsafe.SizeOf<T>();
+#else
+            allowEstimation ? SizeOfCache.ValueEstimated : SizeOfCache.ValueExact;
 #endif
 
         #endregion

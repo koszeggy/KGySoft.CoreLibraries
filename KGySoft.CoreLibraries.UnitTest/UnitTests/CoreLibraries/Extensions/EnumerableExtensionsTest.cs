@@ -165,7 +165,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Assert.AreEqual(3, count);
 
             // IIListProvider<T>
-#if NET10_0_OR_GREATER // AppContext switch System.Linq.Enumerable.IsSizeOptimized
+#if NET10_0_OR_GREATER // .NET 10: AppContext switch System.Linq.Enumerable.IsSizeOptimized
             Assert.That(() => new int[5].Select(c => (byte)c).TryGetCount(out count), IsAot ? Is.False : Is.True);
             Assert.That(count, IsAot ? Is.Not.EqualTo(5) : Is.EqualTo(5));
 #elif !NETFRAMEWORK
@@ -178,10 +178,10 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Assert.AreEqual(8, count);
 
             // IIListProvider<T> via non-generic access
-#if NET10_0_OR_GREATER // AppContext switch System.Linq.Enumerable.IsSizeOptimized
+#if NET10_0_OR_GREATER // .NET 10: AppContext switch System.Linq.Enumerable.IsSizeOptimized
             Assert.That(() => ((IEnumerable)new int[13].Select(c => (byte)c)).TryGetCount(out count), IsAot ? Is.False : Is.True);
             Assert.That(count, IsAot ? Is.Not.EqualTo(13) : Is.EqualTo(13));
-#elif !NETFRAMEWORK
+#elif !NETFRAMEWORK && !AOT // .NET 10- AOT: TryGetCount stops working after deploying with trimming only
             Assert.IsTrue(((IEnumerable)new int[13].Select(c => (byte)c)).TryGetCount(out count));
             Assert.AreEqual(13, count);
 #endif

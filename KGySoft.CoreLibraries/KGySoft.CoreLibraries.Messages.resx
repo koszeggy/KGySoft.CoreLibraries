@@ -419,6 +419,9 @@ Hit rate: {8:P2}</value>
   <data name="Reflection_FunctionPointersNotSupported" xml:space="preserve">
     <value>Resolving function pointers is not supported on this platform.</value>
   </data>
+  <data name="Reflection_FunctionPointersNotSupportedAot" xml:space="preserve">
+    <value>Getting function pointer fields in AOT mode requires targeting .NET 9.0 or later.</value>
+  </data>
   <data name="Reflection_RefReturnStaticIndexerNotSupported" xml:space="preserve">
     <value>Setting static indexers with ref return value is not supported.</value>
   </data>
@@ -493,6 +496,9 @@ Hit rate: {8:P2}</value>
   </data>
   <data name="Serialization_RootTypeExpectedFormat" xml:space="preserve">
     <value>Type is not a simple runtime element type or generic type definition: {0}</value>
+  </data>
+  <data name="BinarySerialization_ValueTypeSizeNotAvailableAotFormat" xml:space="preserve">
+    <value>Could not determine the managed size of type '{0}' in a nongeneric way. In native AOT mode it requires targeting .NET 9.0 or later.</value>
   </data>
   <data name="Serialization_FunctionPointerTypeNotSupported" xml:space="preserve">
     <value>Serialization of function pointer types is not supported on this platform.</value>
@@ -855,7 +861,7 @@ Alternatively, you can include the type in the expectedTypes parameter at the de
     <value>Unexpected element in serialization info: {0}. Maybe the instance was not serialized by NameInvariantSurrogateSelector.</value>
   </data>
   <data name="BinarySerialization_ValueTypeExpected" xml:space="preserve">
-    <value>Specified type must be a value type.</value>
+    <value>Specified type must be a non-nullable value type.</value>
   </data>
   <data name="XmlSerialization_NotAnIXmlSerializableFormat" xml:space="preserve">
     <value>Type "{0}" does not implement IXmlSerializable.</value>
@@ -864,7 +870,7 @@ Alternatively, you can include the type in the expectedTypes parameter at the de
     <value>Type "{0}" does not have a parameterless constructor so it can be (de-)serialized either as a root element by SerializeContent and DeserializeContent or as a public property/field value in a parent object if the member value is not null after creating the parent object.</value>
   </data>
   <data name="XmlSerialization_NoDefaultCtorAotFormat" xml:space="preserve">
-    <value>Parameterless constructor of collection "{0}" is either missing or has been trimmed in native AOT mode. You can prevent trimming the required members of a type by adding the following snippet to your application initialization:
+    <value>Parameterless constructor of type "{0}" is either missing or has been trimmed in native AOT mode. You can prevent trimming the required members of a type by adding the following snippet to your application initialization:
 SerializedType _ = typeof(MySerializedType);</value>
   </data>
   <data name="XmlSerialization_ArrayDimensionSizeMismatchFormat" xml:space="preserve">

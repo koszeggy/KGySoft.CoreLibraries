@@ -1581,12 +1581,40 @@ namespace KGySoft.Serialization.Binary
             },
 
 #if NETCOREAPP3_0_OR_GREATER
-            { DataTypes.Vector64, CollectionSerializationInfo.FixedSizeGenericStruct },
-            { DataTypes.Vector128, CollectionSerializationInfo.FixedSizeGenericStruct },
-            { DataTypes.Vector256, CollectionSerializationInfo.FixedSizeGenericStruct },
+            {
+                DataTypes.Vector64, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.BackingArrayHasKnownSize | CollectionInfo.CreateResultFromByteArray,
+                    GetBackingArray = o => BinarySerializer.SerializeValueType(o.As<StrongBox<Vector64<byte>>>().Value),
+                    CreateArrayBackedCollectionInstanceFromArray = (_, t, a) => BinarySerializer.DeserializeValueTypeInternal(t, (byte[])a, Vector64<byte>.Count)
+                }
+            },
+            {
+                DataTypes.Vector128, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.BackingArrayHasKnownSize | CollectionInfo.CreateResultFromByteArray,
+                    GetBackingArray = o => BinarySerializer.SerializeValueType(o.As<StrongBox<Vector128<byte>>>().Value),
+                    CreateArrayBackedCollectionInstanceFromArray = (_, t, a) => BinarySerializer.DeserializeValueTypeInternal(t, (byte[])a, Vector128<byte>.Count)
+                }
+            },
+            {
+                DataTypes.Vector256, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.BackingArrayHasKnownSize | CollectionInfo.CreateResultFromByteArray,
+                    GetBackingArray = o => BinarySerializer.SerializeValueType(o.As<StrongBox<Vector256<byte>>>().Value),
+                    CreateArrayBackedCollectionInstanceFromArray = (_, t, a) => BinarySerializer.DeserializeValueTypeInternal(t, (byte[])a, Vector256<byte>.Count)
+                }
+            },
 #endif
 #if NET8_0_OR_GREATER
-            { DataTypes.Vector512, CollectionSerializationInfo.FixedSizeGenericStruct },
+            {
+                DataTypes.Vector512, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.BackingArrayHasKnownSize | CollectionInfo.CreateResultFromByteArray,
+                    GetBackingArray = o => BinarySerializer.SerializeValueType(o.As<StrongBox<Vector512<byte>>>().Value),
+                    CreateArrayBackedCollectionInstanceFromArray = (_, t, a) => BinarySerializer.DeserializeValueTypeInternal(t, (byte[])a, Vector512<byte>.Count)
+                }
+            },
 #endif
 
 #if NETCOREAPP

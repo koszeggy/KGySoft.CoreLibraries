@@ -301,7 +301,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             var resx = manager.GetStream(resName, inv);
             Assert.IsInstanceOf<MemoryStream>(compiled);
             Assert.IsInstanceOf<MemoryStream>(resx);
-            Assert.AreNotEqual(compiled.GetType(), resx.GetType());
+            AssertAreNotEqual(compiled.GetType(), resx.GetType());
 
             // Works also for byte[], now MemoryStream is returned for both
             resName = "TestBinFile";

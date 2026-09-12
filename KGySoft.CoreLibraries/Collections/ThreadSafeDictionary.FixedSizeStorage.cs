@@ -154,7 +154,7 @@ namespace KGySoft.Collections
 
             #region Private Fields
 
-            private static readonly bool isAtomic = Reflector<TValue>.SizeOf <= IntPtr.Size;
+            private static readonly bool isAtomic = Reflector<TValue>.GetSize(false) is int size and > 0 && size <= IntPtr.Size;
 
             #endregion
 

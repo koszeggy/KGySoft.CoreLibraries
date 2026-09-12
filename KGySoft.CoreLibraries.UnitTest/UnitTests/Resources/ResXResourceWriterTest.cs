@@ -320,7 +320,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 int i = 0;
                 foreach (DictionaryEntry item in reader)
                 {
-                    deserializedObjects.Add(safeMode ? ((ResXDataNode)item.Value)!.GetValueSafe(referenceObjects[i++]?.GetType()) : item.Value);
+                    Type expectedType = referenceObjects[i++]?.GetType();
+                    if (IsAot && expectedType?.IsRuntimeType() == true)
+                        expectedType = Reflector.RuntimeType;
+                    deserializedObjects.Add(safeMode ? ((ResXDataNode)item.Value)!.GetValueSafe(expectedType) : item.Value);
                 }
             }
 

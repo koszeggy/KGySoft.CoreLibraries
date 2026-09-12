@@ -16,6 +16,7 @@
 #region Usings
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 using KGySoft.ComponentModel;
 
@@ -44,6 +45,7 @@ namespace KGySoft.CoreLibraries.UnitTests.ComponentModel
         #region Methods
 
         [Test]
+        [DynamicDependency(nameof(TestClass.TestProperty), typeof(TestClass))] // so CanSetProperty can use the reflected properties in AOT mode
         public void TestUsage()
         {
             // The underlying storage is empty by default

@@ -59,21 +59,6 @@ namespace KGySoft.Serialization.Binary
             internal static readonly CollectionSerializationInfo Tuple = new() { Info = CollectionInfo.IsGeneric | CollectionInfo.IsTuple };
 #endif
 
-#if NETCOREAPP3_0_OR_GREATER
-            [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
-                Justification = "Cannot apply RequiresUnreferencedCode to a field, but the usages are annotated.")]
-            [UnconditionalSuppressMessage("TrimAnalysis", "IL2067:TargetArgumentDynamicallyAccessedMemberTypesAnnotationMismatch",
-                Justification = "We could annotate the lambda parameter accordingly, but that would then cause IL2111. And cannot apply RequiresUnreferencedCode to a field, but the public entry points are annotated anyway.")]
-            [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode",
-                Justification = "Cannot apply RequiresDynamicCode to a field, but the usages are annotated.")]
-            internal static readonly CollectionSerializationInfo FixedSizeGenericStruct = new()
-            {
-                Info = CollectionInfo.IsGeneric | CollectionInfo.BackingArrayHasKnownSize | CollectionInfo.CreateResultFromByteArray,
-                GetBackingArray = o => BinarySerializer.SerializeValueType((ValueType)o),
-                CreateArrayBackedCollectionInstanceFromArray = (_, t, a) => BinarySerializer.DeserializeValueType(t, (byte[])a)
-            };
-#endif
-
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             internal static readonly CollectionSerializationInfo Memory = new() { Info = CollectionInfo.IsGeneric | CollectionInfo.IsMemory };
 #endif
@@ -376,8 +361,8 @@ namespace KGySoft.Serialization.Binary
                 if (safeMode && (HasCapacity || CtorArguments?.Contains(CollectionCtorArguments.Capacity) == true))
                 {
                     int threshold = IsDictionary
-                        ? (capacityThreshold >> 1) / descriptor.GetKeyDescriptor().Type!.SizeOf()
-                        : capacityThreshold / descriptor.GetElementDescriptor().Type!.SizeOf();
+                        ? (capacityThreshold >> 1) / descriptor.GetKeyDescriptor().Type!.SizeOf(true)
+                        : capacityThreshold / descriptor.GetElementDescriptor().Type!.SizeOf(true);
 
                     if (capacity > threshold)
                         capacity = Math.Min(count, threshold);

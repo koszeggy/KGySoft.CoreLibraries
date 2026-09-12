@@ -452,6 +452,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
         {
             ReadOnlySpan<SerializedType> _ =
             [
+                typeof(SerializationEventsClass), // needed for .NET 8, but not for .NET 10
                 typeof(List<>), // needed because of ForceRecursiveSerializationOfSupportedTypes
                 typeof(Collection<>), // to prevent NullReferenceException in SerializationEventsClass.OnDeserialized/children.Count (for some reason SerializationEventsClass is not needed to be listed here)
                 typeof(Exception), // special ctor
@@ -660,6 +661,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             #endregion
 
+#if AOT
+            ReadOnlySpan<SerializedType> _ =
+            [
+                typeof(ChangedClassOld),
+                typeof(ChangedClassNew),
+            ];
+#endif
+
             var objOld = new ChangedClassOld { m_IntField = 42, m_StringField = "alpha" };
             var formatter = new BinarySerializationFormatter(BinarySerializationOptions.None);
             var rawDataOld = formatter.Serialize(objOld);
@@ -683,7 +692,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #endif
         public void SafeModeTest()
         {
-#if !NET9_0_OR_GREATER
+#if !NET9_0_OR_GREATER && !AOT
             var bf = new BinaryFormatter();
 #endif
             var bsf = new BinarySerializationFormatter(BinarySerializationOptions.None);
@@ -691,7 +700,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             var obj = new NonSerializableClass { IntProp = 42 };
 
             // in non-safe mode everything works
-#if !NET9_0_OR_GREATER
+#if !NET9_0_OR_GREATER && !AOT
             DoTest(bf, surrogate, obj, true, true, true);
 #endif
             DoTest(bsf, surrogate, obj, true, true, true);
@@ -699,7 +708,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             surrogate.SafeMode = true; // so the surrogate denies support
 
             // in safe mode the surrogate denies serialization so it is passed back to the formatter
-#if !NET9_0_OR_GREATER
+#if !NET9_0_OR_GREATER && !AOT
             // BinaryFormatter: denies serialization as it is not serializable
             AssertThrows<SerializationException>(() => DoTest(bf, surrogate, obj, true, true, true), "is not marked as serializable");
 #endif

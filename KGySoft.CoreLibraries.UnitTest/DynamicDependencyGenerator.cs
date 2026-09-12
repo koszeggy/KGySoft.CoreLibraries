@@ -132,7 +132,7 @@ namespace KGySoft.CoreLibraries
             if (testMethods.Length == 0)
                 return null;
 
-            DynamicallyAccessedMemberTypes memberTypes = DynamicallyAccessedMemberTypes.PublicMethods;
+            DynamicallyAccessedMemberTypes memberTypes = DynamicallyAccessedMemberTypes.PublicParameterlessConstructor | DynamicallyAccessedMemberTypes.PublicMethods;
             foreach (MethodInfo testMethod in testMethods)
             {
                 foreach (TestCaseSourceAttribute source in testMethod.GetCustomAttributes<TestCaseSourceAttribute>())

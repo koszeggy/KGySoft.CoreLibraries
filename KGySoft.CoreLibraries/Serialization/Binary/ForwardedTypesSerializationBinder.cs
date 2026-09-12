@@ -193,7 +193,8 @@ namespace KGySoft.Serialization.Binary
                 Throw.ArgumentNullException(Argument.type);
 
             string? fullName = type.FullName;
-            if (fullName == null || !type.IsRuntimeType() || type.HasElementType
+            // ReSharper disable once PossibleMistakenCallToGetType
+            if (fullName == null || !type.GetType().IsRuntimeType() || type.HasElementType
                 || type.IsConstructedGenericType()
                 || type.IsGenericParameter)
                 Throw.ArgumentException(Argument.type, Res.SerializationRootTypeExpected(type));

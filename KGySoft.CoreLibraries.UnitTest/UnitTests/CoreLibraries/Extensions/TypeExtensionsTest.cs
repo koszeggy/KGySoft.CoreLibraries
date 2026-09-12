@@ -112,18 +112,20 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
         [Test]
         public void SizeOfTest()
         {
-            Assert.AreEqual(4, typeof(int).SizeOf());
-            Assert.AreEqual(16, typeof(decimal).SizeOf());
-            Assert.AreEqual(1, typeof(_).SizeOf());
-            Assert.AreEqual(IntPtr.Size, typeof(int*).SizeOf());
+            Assert.AreEqual(4, typeof(int).SizeOf(true));
+            Assert.AreEqual(16, typeof(decimal).SizeOf(true));
+            Assert.AreEqual(1, typeof(_).SizeOf(true));
+            Assert.AreEqual(IntPtr.Size, typeof(int*).SizeOf(true));
 
             Assert.AreEqual(4, Reflector<int>.SizeOf);
             Assert.AreEqual(16, Reflector<decimal>.SizeOf);
             Assert.AreEqual(1, Reflector<_>.SizeOf);
             Assert.AreEqual(IntPtr.Size, Reflector<nint>.SizeOf);
 
-            Assert.AreEqual(Reflector<bool?>.SizeOf, typeof(bool?).SizeOf());
-            Assert.AreEqual(Reflector<(decimal?, DateTime)>.SizeOf, typeof((decimal?, DateTime)).SizeOf());
+#if !AOT || NET9_0_OR_GREATER
+            Assert.AreEqual(Reflector<bool?>.GetSize(true), typeof(bool?).SizeOf(true));
+            Assert.AreEqual(Reflector<(decimal?, DateTime)>.SizeOf, typeof((decimal?, DateTime)).SizeOf(true));
+#endif
         }
 
 #if NETFRAMEWORK

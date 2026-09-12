@@ -491,7 +491,7 @@ namespace KGySoft.Serialization.Binary
                     Type elementType = descriptor.CreateResultFromByteArray ? Reflector.ByteType : descriptor.GetElementDescriptor().Type!;
 
                     int elementSize;
-                    if (!safeMode || ((elementSize = elementType.SizeOf()) * (long)TotalLength) <= ArrayAllocationThreshold)
+                    if (!safeMode || ((elementSize = elementType.SizeOf(true)) * (long)TotalLength) <= ArrayAllocationThreshold)
                     {
                         array = CreateInstance(elementType);
                         if (rank > 1)

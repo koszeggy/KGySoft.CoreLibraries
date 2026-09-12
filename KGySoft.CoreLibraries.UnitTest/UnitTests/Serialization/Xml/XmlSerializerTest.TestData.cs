@@ -568,17 +568,17 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                     PointArray = new Point[] { new Point(1, 2), new Point(3, 4) };
                     InnerArray = new TestInner[] { new TestInner { InnerInt = 1, InnerString = "One" }, new TestInner { InnerInt = 2, InnerString = "Two" } };
                     Structure = new InnerStructure("InnerStructureString", 13);
-                    StructureArray = new InnerStructure[] { new InnerStructure("Egyeske", 1), new InnerStructure("Ketteske", 2), };
-                    StructureList = new List<InnerStructure> { new InnerStructure("Első", 1), new InnerStructure("Második", 2) };
+                    StructureArray = new InnerStructure[] { new InnerStructure("1st", 1), new InnerStructure("2nd", 2), };
+                    StructureList = new List<InnerStructure> { new InnerStructure("First", 1), new InnerStructure("Second", 2) };
                     StringValue = String.Empty;
                     StrObjDictionary = new Dictionary<string, object>
                     {
-                        {"Kulcs1", "Érték1"},
-                        {"Kulcs2", 15},
-                        {"Kulcs3", new Point(13, 10)},
-                        {"Kulcs4", new TestInner{InnerInt = 13, InnerString = "Trallala"}},
-                        {"Kulcs5", new InnerStructure("StructValue", 111)},
-                        {"Kulcs6", null}
+                        {"Key1", "Value"},
+                        {"Key2", 15},
+                        {"Key3", new Point(13, 10)},
+                        {"Key4", new TestInner{InnerInt = 13, InnerString = "Trallala"}},
+                        {"Key5", new InnerStructure("StructValue", 111)},
+                        {"Key6", null}
                     };
                 }
             }
@@ -958,7 +958,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 
             #region Properties
 
-            // Read-only property: the already existing instance will be used on deserialization so the unsupported comparer is no problem
+            // Read-only property: the already existing instance will be used on deserialization so the unsupported comparer is not a problem
             public Dictionary<string, int> DictionaryProperty { get; } = new(StringComparer.CurrentCulture);
 
             #endregion

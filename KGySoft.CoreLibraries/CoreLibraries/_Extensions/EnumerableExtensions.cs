@@ -1366,7 +1366,7 @@ namespace KGySoft.CoreLibraries
                                     return false;
                             }
 
-                            if (!target.DoTryReplaceRange(t, index, count, collection))
+                            if (target.DoTryReplaceRange(t, index, count, collection))
                                 return true;
                         }
 

@@ -71,7 +71,7 @@ namespace KGySoft.Serialization.Binary
 
         internal const string ValueTypeSerializationRequiresDynamicCodeMessage = "Serializing value types in the non-generic way require either size calculation or marshalling, for which the code might not be available. " +
             "In Native AOT mode try to use the generic overload instead.";
-        
+
         internal const string ValueTypeSerializationRequiresUnreferencedCodeMessage = "In native AOT mode the operation may unexpectedly succeed for managed types if the trimming removes fields with reference types. " +
             "In Native AOT mode try to use the generic overload instead.";
 
@@ -847,7 +847,7 @@ namespace KGySoft.Serialization.Binary
 #endif
             {
                 if (!obj.GetType().IsManaged())
-                    return SerializeValueTypeRaw(obj);
+                    return SerializeValueTypeRaw(obj, true)!;
 
                 // Fallback with marshaling. Throws an ArgumentException on error
                 return SerializeValueTypeByMarshal(obj);
@@ -888,7 +888,7 @@ namespace KGySoft.Serialization.Binary
             try
 #endif
             {
-                result = SerializeValueTypeRaw(obj);
+                result = SerializeValueTypeRaw(obj, false);
             }
 #if NETFRAMEWORK || NETSTANDARD2_0
             catch (VerificationException e) when (EnvironmentHelper.IsPartiallyTrustedDomain)
@@ -897,7 +897,7 @@ namespace KGySoft.Serialization.Binary
             }
 #endif
 
-            return true;
+            return result != null;
         }
 
         /// <summary>
@@ -1104,9 +1104,8 @@ namespace KGySoft.Serialization.Binary
         public static object DeserializeValueType([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor | DynamicallyAccessedMembers.AllFields)]Type type,
             byte[] data, int offset)
         {
-            if (type == null!)
-                Throw.ArgumentNullException(Argument.type);
-            if (!type.IsValueType)
+            // IsNullable validates type against null as well
+            if (type.IsNullable() || !type.IsValueType)
                 Throw.ArgumentException(Argument.type, Res.BinarySerializationValueTypeExpected);
             if (data == null!)
                 Throw.ArgumentNullException(Argument.data);
@@ -1446,9 +1445,24 @@ namespace KGySoft.Serialization.Binary
                     }
                 }
             }
-            
+
             return result;
         }
+
+        #endregion
+
+        #region Internal Methods
+
+        /// <summary>
+        /// This method is used to avoid calling the nongeneric SizeOf in AOT mode.
+        /// </summary>
+        [SecuritySafeCritical]
+#if !NET9_0_OR_GREATER
+        [RequiresDynamicCode("DeserializeValueTypeRaw")]
+#endif
+        [RequiresUnreferencedCode("DeserializeValueTypeRaw")]
+        internal static object DeserializeValueTypeInternal([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor | DynamicallyAccessedMembers.AllFields)]Type type,
+            byte[] data, int byteLength) => DeserializeValueTypeRaw(type, data, 0, byteLength);
 
         #endregion
 
@@ -1508,16 +1522,29 @@ namespace KGySoft.Serialization.Binary
         [RequiresDynamicCode("obj.GetType().SizeOf()")]
 #endif
         [RequiresUnreferencedCode("obj.GetType().IsManaged()")] // though in DEBUG build only (Assert)
-        private static byte[] SerializeValueTypeRaw(ValueType obj)
+        private static byte[]? SerializeValueTypeRaw(ValueType obj, bool throwOnSizeIssue)
         {
             Debug.Assert(!obj.GetType().IsManaged(), "Unmanaged type expected");
-
-#if NETSTANDARD2_0
-            // .NET Standard 2.0: cannot use GetRawData so calling the generic version by reflection
             Type type = obj.GetType();
-            return (byte[])typeof(BinarySerializer).InvokeMethod(nameof(SerializeValueType), type, type.MakeByRefType(), obj)!;
+            int len = type.SizeOf(false);
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_0_OR_GREATER
+            if (len == 0)
+            {
+                try
+                {
+                    // .NET Standard 2.0 or possible AOT mode with Marshal.SizeOf fallback: cannot use GetRawData with a possibly inaccurate size,
+                    // so trying to call the generic overload by reflection. Not calling SerializeValueTypeByMarshal, because here the type is recognized as unmanaged.
+                    return (byte[])typeof(BinarySerializer).InvokeMethod(nameof(SerializeValueType), type, type.MakeByRefType(), obj)!;
+                }
+                catch (Exception e) when (!e.IsCriticalOr(RuntimeFeature.IsDynamicCodeSupported))
+                {
+                    return throwOnSizeIssue ? Throw.PlatformNotSupportedException<byte[]>(Res.BinarySerializationValueTypeSizeNotAvailableAot(type)) : null;
+                }
+            }
 #else
-            int len = obj.GetType().SizeOf();
+            Debug.Assert(len > 0, "Non-estimated length should be available on this target");
+#endif
+
             byte[] result = new byte[len];
 
 #if NET5_0_OR_GREATER
@@ -1533,7 +1560,6 @@ namespace KGySoft.Serialization.Binary
 #endif
 
             return result;
-#endif
         }
 
         [SecurityCritical]
@@ -1553,16 +1579,31 @@ namespace KGySoft.Serialization.Binary
         [RequiresDynamicCode("type.SizeOf()")]
 #endif
         [RequiresUnreferencedCode("type.IsManaged()")] // though in DEBUG build only (Assert)
-        private static object DeserializeValueTypeRaw([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]Type type, byte[] data, int offset)
+        private static object DeserializeValueTypeRaw([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]Type type, byte[] data, int offset, int byteLength = 0)
         {
             Debug.Assert(!type.IsManaged(), "Unmanaged type expected");
             Debug.Assert(offset >= 0);
+            Debug.Assert(!type.IsNullable());
 
-#if NETSTANDARD2_0
-            // .NET Standard 2.0: cannot use GetRawData so calling the generic version by reflection
-            return typeof(BinarySerializer).InvokeMethod(nameof(DeserializeValueType), type, new[] { typeof(byte[]), typeof(int) }, data, offset)!;
+            int len = byteLength > 0 ? byteLength : type.SizeOf(false);
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_0_OR_GREATER
+            if (len == 0)
+            {
+                try
+                {
+                    // .NET Standard 2.0 or possible AOT mode with Marshal.SizeOf fallback: cannot use GetRawData with a possibly inaccurate size,
+                    // so trying to call the generic overload by reflection. Not calling DeserializeValueTypeByMarshal, because here the type is recognized as unmanaged.
+                    return typeof(BinarySerializer).InvokeMethod(nameof(DeserializeValueType), type, [typeof(byte[]), typeof(int)], data, offset)!;
+                }
+                catch (Exception e) when (!e.IsCriticalOr(RuntimeFeature.IsDynamicCodeSupported))
+                {
+                    return Throw.PlatformNotSupportedException<byte[]>(Res.BinarySerializationValueTypeSizeNotAvailableAot(type));
+                }
+            }
 #else
-            int len = type.SizeOf();
+            Debug.Assert(len > 0, "Non-estimated length should be available on this target");
+#endif
+
             if (offset + len > data.Length)
                 Throw.ArgumentException(Argument.data, Res.BinarySerializationDataLengthTooSmall);
 
@@ -1585,7 +1626,6 @@ namespace KGySoft.Serialization.Binary
 #endif
 
             return result;
-#endif
         }
 
         [SecurityCritical]

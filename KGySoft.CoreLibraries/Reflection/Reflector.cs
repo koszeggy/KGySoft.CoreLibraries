@@ -166,10 +166,24 @@ namespace KGySoft.Reflection
         internal static readonly Type DictionaryGenType = typeof(Dictionary<,>);
 
         internal static readonly Type Type = typeof(Type);
-        // ReSharper disable once PossibleMistakenCallToGetType.2
-        internal static readonly Type RuntimeType = Type.GetType();
+        // ReSharper disable once PossibleMistakenCallToGetType
+        internal static readonly Type RuntimeType = Type.GetType(TypeResolver.RuntimeTypeFullName) ?? Type.GetType();
 #if !NET35 && !NET40
         internal static readonly Type TypeInfo = typeof(TypeInfo);
+#endif
+#if (NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER) && !NET9_0_OR_GREATER
+        // ReSharper disable PossibleMistakenCallToGetType
+        internal static readonly Type RuntimeTypeAot = Type.GetType(); // System.Reflection.Runtime.TypeInfos.NativeFormat.NativeFormatRuntimeNamedTypeInfo in .NET 8.0 AOT mode
+        internal static readonly Type RuntimeTypeGeneric = typeof(int?).GetType(); // System.Reflection.Runtime.TypeInfos.RuntimeConstructedGenericTypeInfo in AOT mode
+        internal static readonly Type RuntimeTypeArray = typeof(int[]).GetType(); // System.Reflection.Runtime.TypeInfos.RuntimeArrayTypeInfo in AOT mode
+        internal static readonly Type RuntimeTypeByRef = typeof(int).MakeByRefType().GetType(); // System.Reflection.Runtime.TypeInfos.RuntimeByRefTypeInfo in AOT mode
+        internal static readonly Type RuntimeTypePointer = typeof(int*).GetType(); // System.Reflection.Runtime.TypeInfos.RuntimePointerTypeInfo in AOT mode
+        internal static readonly Type RuntimeTypeGenericTypeArg = typeof(Nullable<>).GetGenericArguments()[0].GetType(); // System.Reflection.Runtime.TypeInfos.NativeFormat.NativeFormatRuntimeGenericParameterTypeInfoForTypes in AOT mode
+        internal static readonly Type RuntimeTypeGenericMethodArg = typeof(KeyValuePair).GetMethod(nameof(KeyValuePair.Create))!.GetGenericMethodDefinition().GetGenericArguments()[0].GetType(); // System.Reflection.Runtime.TypeInfos.NativeFormat.NativeFormatRuntimeGenericParameterTypeInfoForMethods in AOT mode
+#if NET8_0
+        internal static readonly Type RuntimeTypeFunctionPointer = typeof(delegate*<void>).GetType(); // System.Reflection.Runtime.TypeInfos.RuntimeFunctionPointerTypeInfo in AOT mode
+#endif
+        // ReSharper restore PossibleMistakenCallToGetType
 #endif
         #endregion
 
@@ -2735,7 +2749,7 @@ namespace KGySoft.Reflection
                 result = RuntimeHelpers.GetUninitializedObject(type);
                 return true;
             }
-            catch (NotSupportedException) when (!RuntimeFeature.IsDynamicCodeSupported)
+            catch (Exception e) when (!e.IsCriticalOr(RuntimeFeature.IsDynamicCodeSupported))
             {
                 result = null;
                 return false;
@@ -4156,12 +4170,12 @@ namespace KGySoft.Reflection
         #endregion
 
         #region TypedReference/Raw data access reflection
-#if !NETSTANDARD2_0
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SecurityCritical]
         internal static ref byte GetRawData(object obj) => ref obj.As<StrongBox<byte>>().Value;
 
+#if !NETSTANDARD2_0
         /// <summary>
         /// Gets a pointer to the actual value (first field if the struct has fields) of a reference created from a value type.
         /// If the value is on the heap it must be pinned before calling this method.

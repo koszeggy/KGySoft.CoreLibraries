@@ -32,6 +32,9 @@ using System.Linq;
 using System.Numerics;
 #endif
 using System.Reflection;
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+using System.Runtime.CompilerServices;
+#endif
 #if NET6_0_OR_GREATER
 using System.Runtime.InteropServices;
 #endif
@@ -149,6 +152,16 @@ namespace KGySoft.Serialization.Binary
 
             private static string GetTypeNameIndexCacheKey(Type type, string? binderAsmName, string? binderTypeName)
                 => binderAsmName + ":" + (binderTypeName ?? type.GetName(TypeNameKind.LongName));
+
+            private static Type GetType(object obj)
+            {
+#if (NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER) && !NET9_0_OR_GREATER
+                Type result = obj.GetType();
+                return RuntimeFeature.IsDynamicCodeSupported || !result.IsRuntimeType() ? result : Reflector.RuntimeType;
+#else
+                return obj.GetType();
+#endif
+            }
 
             private static void WriteDateTime(BinaryWriter bw, DateTime dateTime)
             {
@@ -350,7 +363,7 @@ namespace KGySoft.Serialization.Binary
                     return;
                 }
 
-                DataTypes dataType = GetDataType(obj.GetType());
+                DataTypes dataType = GetDataType(GetType(obj));
 
                 // b.) Pure simple types and enums
                 if (IsPureSimpleType(dataType) || IsEnum(dataType))
@@ -393,24 +406,24 @@ namespace KGySoft.Serialization.Binary
                 }
 
                 Debug.Assert(obj != null);
-                DataTypes dataType = GetDataType(obj!.GetType());
+                DataTypes dataType = GetDataType(GetType(obj!));
 
                 // Pure simple types and enums
                 if (IsPureSimpleType(dataType) || IsEnum(dataType))
                 {
-                    WritePureObjectOrEnum(bw, obj, dataType, false);
+                    WritePureObjectOrEnum(bw, obj!, dataType, false);
                     return;
                 }
 
                 // Supported collections
                 if (IsCollectionType(dataType))
                 {
-                    WriteNonRootCollection(bw, obj, dataType, knownElementType);
+                    WriteNonRootCollection(bw, obj!, dataType, knownElementType);
                     return;
                 }
 
                 // Impure types
-                WriteImpureObject(bw, obj, dataType, knownElementType, false);
+                WriteImpureObject(bw, obj!, dataType, knownElementType, false);
             }
 
             #endregion
@@ -571,7 +584,7 @@ namespace KGySoft.Serialization.Binary
                     return;
                 }
 
-                Type type = obj.GetType();
+                Type type = GetType(obj);
                 if (isRoot)
                 {
                     WriteDataType(bw, dataType);
@@ -632,9 +645,17 @@ namespace KGySoft.Serialization.Binary
                 #endregion
 
                 (int size, ulong value) = GetSizeAndValue(dataType, obj);
-                bool compress = size == 2 && value < (1UL << 7) // up to 7 bits
-                    || size == 4 && value < (1UL << 21) // up to 3*7 bits
-                    || size == 8 && value < (1UL << 49); // up to 7*7 bits
+                bool compress;
+#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+                if (!RuntimeFeature.IsDynamicCodeSupported && IsEnum(dataType))
+                    compress = false;
+                else
+#endif
+                {
+                    compress = size == 2 && value < (1UL << 7) // up to 7 bits
+                        || size == 4 && value < (1UL << 21) // up to 3*7 bits
+                        || size == 8 && value < (1UL << 49); // up to 7*7 bits
+                }
 
                 Type type = obj.GetType();
                 if (compress)
@@ -1687,7 +1708,7 @@ namespace KGySoft.Serialization.Binary
 
                 OnSerializing(data);
 
-                Type type = data.GetType();
+                Type type = GetType(data);
                 if (TryGetSurrogate(type, out ISerializationSurrogate? surrogate, out var _) || (!IgnoreISerializable && data is ISerializable))
                     WriteCustomObjectGraph(bw, data, surrogate, knownElementType);
                 else
@@ -1701,7 +1722,7 @@ namespace KGySoft.Serialization.Binary
             [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private void WriteDefaultObjectGraph(BinaryWriter bw, object data, Type? knownElementType)
             {
-                Type type = data.GetType();
+                Type type = GetType(data);
                 bool writeType = knownElementType == null || !knownElementType.IsSealed;
 
                 Debug.Assert(!type.IsArray, "Array cannot be serialized as object graph");
@@ -1750,7 +1771,7 @@ namespace KGySoft.Serialization.Binary
             [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private void WriteCustomObjectGraph(BinaryWriter bw, object data, ISerializationSurrogate? surrogate, Type? knownElementType)
             {
-                Type type = data.GetType();
+                Type type = GetType(data);
                 SerializationInfo si = new SerializationInfo(type, new FormatterConverter());
 
                 // Obtaining data to serialize
@@ -2340,7 +2361,7 @@ namespace KGySoft.Serialization.Binary
                     return true;
                 }
 
-                Type type = data.GetType();
+                Type type = GetType(data);
 
                 // some dedicated immutable types are compared by value
                 if (IsComparedByValue(type))

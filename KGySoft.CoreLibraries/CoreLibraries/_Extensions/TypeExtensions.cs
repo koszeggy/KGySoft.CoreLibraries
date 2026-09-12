@@ -561,7 +561,7 @@ namespace KGySoft.CoreLibraries
         /// Gets whether <paramref name="type"/> can be parsed by the Parse methods in the <see cref="StringExtensions"/> class.
         /// </summary>
         internal static bool CanBeParsedNatively(this Type type)
-            => type.IsEnum || nativelyParsedTypes.Contains(type) || type == Reflector.RuntimeType;
+            => type.IsEnum || nativelyParsedTypes.Contains(type) || type.IsRuntimeType();
 
         internal static Type? GetCollectionElementType([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]this Type type)
         {
@@ -580,7 +580,7 @@ namespace KGySoft.CoreLibraries
                 : type == typeof(StringCollection) ? typeof(string)
                 : typeof(object);
         }
-
+        
         /// <summary>
         /// Gets whether <paramref name="type"/> is supported collection to populate by reflection.
         /// If <see langword="true"/> is returned one of the constructors are not <see langword="null"/> or <paramref name="type"/> is an array or a value type.
@@ -702,11 +702,18 @@ namespace KGySoft.CoreLibraries
         internal static bool CanBeCreatedWithoutParameters([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors)]this Type type)
             => type.IsValueType || type.GetDefaultConstructor() != null;
 
+        /// <summary>
+        /// Gets the size of a type in a nongeneric way. 
+        /// </summary>
+        /// <param name="type">The type to get the size of.</param>
+        /// <param name="allowEstimation">When <see langword="true"/>, the result must not be trusted as the managed size of the type.
+        /// When <see langword="false"/>, and the actual managed runtime size cannot be determined on the current platform, the result will be 0.</param>
+        /// <returns>The size of the type, or 0 if the actual managed runtime size cannot be determined on the current platform, and <paramref name="allowEstimation"/> is <see langword="false"/>.</returns>
         [MethodImpl(MethodImpl.AggressiveInlining)]
 #if !NET9_0_OR_GREATER
         [RequiresDynamicCode(nameof(GetSize))]
 #endif
-        internal static int SizeOf(this Type type)
+        internal static int SizeOf(this Type type, bool allowEstimation)
         {
 #if NET9_0_OR_GREATER
             return RuntimeHelpers.SizeOf(type.TypeHandle);
@@ -714,7 +721,10 @@ namespace KGySoft.CoreLibraries
             if (sizeOfCache == null)
                 Interlocked.CompareExchange(ref sizeOfCache, new LockFreeCache<Type, int>(GetSize, null, LockFreeCacheOptions.Profile128), null);
 
-            return sizeOfCache[type];
+            int result = sizeOfCache[type];
+            return result > 0 ? result
+                : allowEstimation ? -result
+                : 0;
 #endif
         }
 
@@ -922,8 +932,23 @@ namespace KGySoft.CoreLibraries
             return type;
         }
 
-        [SuppressMessage("ReSharper", "PossibleMistakenCallToGetType.2")]
-        internal static bool IsRuntimeType(this Type type) => type.GetType() == Reflector.RuntimeType;
+        internal static bool IsRuntimeType(this Type type)
+        {
+            if (type == Reflector.RuntimeType)
+                return true;
+
+#if (NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER) && !NET9_0_OR_GREATER
+            // In AOT mode instead of System.RuntimeType there might be a lot of different actual types, e.g. in .NET 8.0 there are NativeFormatRuntimeNamedTypeInfo (for simple root types and generic type definitions),
+            // RuntimeConstructedGenericTypeInfo, RuntimeByRefTypeInfo, RuntimePointerTypeInfo, RuntimeArrayTypeInfo, NativeFormatRuntimeGenericParameterTypeInfoForTypes and NativeFormatRuntimeGenericParameterTypeInfoForMethods.
+            if (!RuntimeFeature.IsDynamicCodeSupported)
+            {
+                return type == Reflector.RuntimeTypeAot || type == Reflector.RuntimeTypeGeneric || type == Reflector.RuntimeTypeArray || type == Reflector.RuntimeTypeByRef || type == Reflector.RuntimeTypePointer
+                    || type == Reflector.RuntimeTypeGenericTypeArg || type == Reflector.RuntimeTypeGenericMethodArg || type == Reflector.RuntimeTypeFunctionPointer;
+            }
+#endif
+
+            return false;
+        }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static bool IsConstructedGenericType(this Type type) =>
@@ -1350,55 +1375,80 @@ namespace KGySoft.CoreLibraries
         [RequiresDynamicCode("typeof(SizeOfHelper<>).MakeGenericType(type)")]
         private static int GetSizeComplex(Type type)
         {
-            // Non-primitive struct: measuring the distance between two elements in a packed struct.
-            // Unlike in Reflector<T> we cannot use an array here because we cannot obtain the address of the non strongly-typed items.
-            Type helperType = typeof(SizeOfHelper<>).MakeGenericType(type); // not GetGenericType because GetSize result is also cached
-            object instance = Activator.CreateInstance(helperType)!;
-
-            // Pinning the created boxed object (not using GCHandle.Alloc because it is very slow and fails for non-blittable structs)
-            // NOTE: would not be needed if we could access the ref byte of a field or non-generic array element so we could use Unsafe.ByteOffset
-            unsafe
+            try
             {
-                fixed (byte* _ = &Reflector.GetRawData(instance))
-                {
-                    // Now we can access the address of the fields safely. MakeTypedReference works here because primitive types are handled in the caller
-                    TypedReference refItem1 = TypedReference.MakeTypedReference(instance, [helperType.GetField(nameof(SizeOfHelper<>.Item1))!]);
-                    TypedReference refItem2 = TypedReference.MakeTypedReference(instance, [helperType.GetField(nameof(SizeOfHelper<>.Item2))!]);
-                    Debug.Assert(__reftype(refItem1) == type && __reftype(refItem2) == type);
+                // Non-primitive struct: measuring the distance between two elements in a packed struct.
+                // Unlike in Reflector<T> we cannot use an array here because we cannot obtain the address of the non strongly-typed items.
+                Type helperType = typeof(SizeOfHelper<>).MakeGenericType(type); // not GetGenericType because GetSize result is also cached
+                object instance = Activator.CreateInstance(helperType)!;
 
-                    return (int)(Reflector.GetValueAddress(refItem2) - Reflector.GetValueAddress(refItem1));
+                // Pinning the created boxed object (not using GCHandle.Alloc because it is very slow and fails for non-blittable structs)
+                // NOTE: would not be needed if we could access the ref byte of a field or non-generic array element so we could use Unsafe.ByteOffset
+                unsafe
+                {
+                    fixed (byte* _ = &Reflector.GetRawData(instance))
+                    {
+                        // Now we can access the address of the fields safely. MakeTypedReference works here because primitive types are handled in the caller
+                        TypedReference refItem1 = TypedReference.MakeTypedReference(instance, [helperType.GetField(nameof(SizeOfHelper<>.Item1))!]);
+                        TypedReference refItem2 = TypedReference.MakeTypedReference(instance, [helperType.GetField(nameof(SizeOfHelper<>.Item2))!]);
+                        Debug.Assert(__reftype(refItem1) == type && __reftype(refItem2) == type);
+
+                        return (int)(Reflector.GetValueAddress(refItem2) - Reflector.GetValueAddress(refItem1));
+                    }
                 }
+            }
+            catch (Exception e) when (!e.IsCriticalOr(RuntimeFeature.IsDynamicCodeSupported))
+            {
+                return GetSizeFallback(type);
             }
         }
 #endif
 
         [SecurityCritical]
-        [RequiresDynamicCode("DynamicMethod")]
+        [RequiresDynamicCode("DynamicMethod, Marshal.SizeOf")]
         private static int GetSizeFallback(Type type)
         {
-#if NETSTANDARD2_0 // DynamicMethod is not available. Fallback: calling the generic Reflector<T>.SizeOf by reflection
+            Debug.Assert(type.IsValueType);
+#if NETSTANDARD2_0
             if (!EnvironmentHelper.IsPartiallyTrustedDomain)
-                return (int)typeof(Reflector<>).GetPropertyValue(type, nameof(Reflector<>.SizeOf))!;
+                return (int)typeof(Reflector<>).GetPropertyValue(type, nameof(Reflector<>.SizeOf))!; 
 
             // This can occur when the .NET Standard 2.0 build is used by .NET Framework in a partially trusted domain (not possible for NuGet references)
+            // Retuning a negative value to indicate that the result is not necessarily the actual managed size, and it can be used only for estimations.
             try
             {
                 // not SizeOf(Type) because that throws an exception for generics such as KeyValuePair<int, int>, whereas an instance of it works.
-                return Marshal.SizeOf(Activator.CreateInstance(type));
+                return -Marshal.SizeOf(Activator.CreateInstance(type)!);
             }
             catch (ArgumentException)
             {
-                // contains a reference or whatever
-                return default;
+                // contains a reference or whatever - the arbitrary return value is alright here: the negative value indicates that the size may not be accurate
+                return -IntPtr.Size;
             }
 #else
-            // Emitting the SizeOf OpCode for the type, compiling a delegate and execute it, which is quite slow
-            var dm = new DynamicMethod(nameof(GetSize), Reflector.UIntType, Type.EmptyTypes, typeof(TypeExtensions), true);
-            ILGenerator gen = dm.GetILGenerator();
-            gen.Emit(OpCodes.Sizeof, type);
-            gen.Emit(OpCodes.Ret);
-            var method = (Func<uint>)dm.CreateDelegate(typeof(Func<uint>));
-            return (int)method.Invoke();
+            try
+            {
+                // Emitting the SizeOf OpCode for the type, compiling a delegate and execute it, which is quite slow
+                var dm = new DynamicMethod(nameof(GetSize), Reflector.UIntType, Type.EmptyTypes, typeof(TypeExtensions), true);
+                ILGenerator gen = dm.GetILGenerator();
+                gen.Emit(OpCodes.Sizeof, type);
+                gen.Emit(OpCodes.Ret);
+                var method = (Func<uint>)dm.CreateDelegate(typeof(Func<uint>));
+                return (int)method.Invoke();
+            }
+            catch (Exception e) when (!e.IsCriticalOr(RuntimeFeature.IsDynamicCodeSupported))
+            {
+                try
+                {
+                    // AOT mode: fallback to MarshalSizeOf. The negative value indicates that the result must not be used when an exact managed size is expected.
+                    return -Marshal.SizeOf(type);
+                }
+                catch (Exception ex) when (!ex.IsCritical()) 
+                {
+                    // contains a reference or does not work in AOT mode - the arbitrary return value is alright here: the negative value indicates that the size may not be accurate
+                    return -IntPtr.Size;
+                }
+            }
 #endif
         }
 #endif

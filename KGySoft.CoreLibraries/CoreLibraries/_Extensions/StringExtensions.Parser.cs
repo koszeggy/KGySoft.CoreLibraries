@@ -24,6 +24,9 @@ using System.Linq;
 #if !NET35
 using System.Numerics;
 #endif
+#if !NET35 || !NET40
+using System.Reflection;
+#endif
 #if NETCOREAPP3_0_OR_GREATER
 using System.Text;
 #endif
@@ -151,11 +154,11 @@ namespace KGySoft.CoreLibraries
                     if (tryKnownTypes && knownTypes.TryGetValue(type, out var tryParseMethod) && tryParseMethod.Invoke(s, culture, out value))
                         return true;
 
-                    if (type.In(Reflector.Type, Reflector.RuntimeType
+                    if (type == typeof(Type)
 #if !NET35 && !NET40
-                        , Reflector.TypeInfo
+                        || type == typeof(TypeInfo)
 #endif
-                    ))
+                        || type.IsRuntimeType())
                     {
                         value = Reflector.ResolveType(s, ResolveTypeOptions.AllowPartialAssemblyMatch);
                         return value != null;
