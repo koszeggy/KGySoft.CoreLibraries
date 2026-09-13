@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>KGySoft.CoreLibraries</id>
-    <version>10.5.1</version>
+    <version>11.0.0-preview.1</version>
     <title>KGy SOFT Core Libraries</title>
     <authors>György Kőszeg</authors>
     <owners>György Kőszeg</owners>
@@ -83,7 +83,7 @@ Change Log: https://github.com/koszeggy/KGySoft.CoreLibraries/blob/master/KGySof
     <file src="..\bin\Release\net8.0\KGySoft.CoreLibraries.xml" target="lib\net8.0" />
     <file src="..\bin\Release\net9.0\KGySoft.CoreLibraries.dll" target="lib\net9.0" />
     <file src="..\bin\Release\net9.0\KGySoft.CoreLibraries.xml" target="lib\net9.0" />
-    <file src="..\bin\Release\net9.0\KGySoft.CoreLibraries.dll" target="lib\net10.0" />
-    <file src="..\bin\Release\net9.0\KGySoft.CoreLibraries.xml" target="lib\net10.0" />
+    <file src="..\bin\Release\net10.0\KGySoft.CoreLibraries.dll" target="lib\net10.0" />
+    <file src="..\bin\Release\net10.0\KGySoft.CoreLibraries.xml" target="lib\net10.0" />
   </files>
 </package>
