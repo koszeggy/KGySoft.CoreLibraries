@@ -12,8 +12,8 @@
 
     <!-- NOTE: <IsTrimmable> (and <PublishTrimmed> in the consumer projects) would be compatible with .NET Core 3.0+,
          but that causes a stack overflow in the linker, so in practice AOT deployment mode with trimming can be used only on .NET 8.0+ for KGy SOFT Core Libraries. -->
-    <!--<IsAotCompatible Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">true</IsAotCompatible>
-    <VerifyReferenceAotCompatibility>true</VerifyReferenceAotCompatibility>--><!--though not needed for this lib-->
+    <IsAotCompatible Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">true</IsAotCompatible>
+    <VerifyReferenceAotCompatibility>true</VerifyReferenceAotCompatibility><!--though not needed for this lib-->
 
     <RunAnalyzersDuringLiveAnalysis>false</RunAnalyzersDuringLiveAnalysis>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>

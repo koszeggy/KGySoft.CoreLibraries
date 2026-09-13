@@ -14,10 +14,11 @@
     <!--For testing in a 32-bit process-->
     <!--<PlatformTarget>x86</PlatformTarget>-->
 
-    <!--To test AOT mode-->
-    <PublishAot Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">true</PublishAot>
+    <!-- To test AOT mode - the suppressions are alright, the unit test has been made compatible with AOT deployment mode -->
+    <!--<PublishAot Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">true</PublishAot>
     <CustomResourceTypesSupport Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">true</CustomResourceTypesSupport>
     <DefineConstants>$(DefineConstants);AOT</DefineConstants>
+    <NoWarn>$(NoWarn);IL2026;IL2057;IL2060;IL2067;IL2070;IL2072;IL2075;IL2077;IL2087;IL2091;IL2092;IL2093;IL2111;IL3050</NoWarn>-->
 
     <IsWindows Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' == 'true'">true</IsWindows>
     <RunAnalyzersDuringLiveAnalysis>false</RunAnalyzersDuringLiveAnalysis>

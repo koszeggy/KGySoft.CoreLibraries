@@ -52,7 +52,6 @@ using System.Security.Permissions;
 using System.Security.Policy; 
 #endif
 using System.Text;
-using System.Threading.Tasks;
 #if NETFRAMEWORK
 using System.Windows.Forms;
 #endif
@@ -120,7 +119,7 @@ namespace KGySoft.CoreLibraries
 
         protected static void AssertAreEqual([CanBeNull]object expected, [CanBeNull]object actual, [CanBeNull]string message = null)
         {
-            if (RuntimeFeature.IsDynamicCodeSupported)
+            if (!IsAot)
             {
                 Assert.AreEqual(expected, actual, message);
                 return;
@@ -154,7 +153,7 @@ namespace KGySoft.CoreLibraries
 
         protected static void AssertAreNotEqual([CanBeNull]object expected, [CanBeNull]object actual, [CanBeNull]string message = null)
         {
-            if (RuntimeFeature.IsDynamicCodeSupported)
+            if (!IsAot)
             {
                 Assert.AreNotEqual(expected, actual, message);
                 return;
@@ -167,7 +166,7 @@ namespace KGySoft.CoreLibraries
 
         protected static void AssertDoesNotContain(IEnumerable collection, [CanBeNull]object actual, [CanBeNull] string message = null)
         {
-            if (RuntimeFeature.IsDynamicCodeSupported)
+            if (!IsAot)
             {
                 CollectionAssert.DoesNotContain(collection, actual, message);
                 return;
@@ -256,6 +255,7 @@ namespace KGySoft.CoreLibraries
             Console.WriteLine($"Expected exception {typeof(T)} has been thrown: {e.Message}");
         }
 
+#if !NET35
         protected static void AssertThrows<T>(AsyncTestDelegate code, string message = null)
             where T : Exception
         {
@@ -279,6 +279,7 @@ namespace KGySoft.CoreLibraries
 
             AssertThrows<T>(fallbackCode, message);
         }
+
         protected static void AssertThrowsIf<T>(AsyncTestDelegate code, bool condition, string message = null)
             where T : Exception
         {
@@ -305,6 +306,8 @@ namespace KGySoft.CoreLibraries
             else
                 Assert.DoesNotThrow(fallbackCode);
         }
+#endif
+
         protected static void CopyContent(object target, object source)
         {
             if (target == null || source == null)

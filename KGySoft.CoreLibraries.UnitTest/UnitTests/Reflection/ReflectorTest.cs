@@ -21,7 +21,6 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 #if NETFRAMEWORK
 using System.Security;
 using System.Security.Permissions;
@@ -8248,7 +8247,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             AssertThrows<InvalidOperationException>(() => accessor.CreateInstance<object>(), Res.ReflectionInstanceCtorExpected);
 
             // module constructor
-            if (EnvironmentHelper.IsMono || !RuntimeFeature.IsDynamicCodeSupported)
+            if (EnvironmentHelper.IsMono || IsAot)
                 return;
             ci = ((Type)Reflector.GetProperty(typeof(Module).Module, "RuntimeType"))!.GetConstructor(BindingFlags.NonPublic | BindingFlags.Static, null, Type.EmptyTypes, null)!;
             accessor = CreateInstanceAccessor.GetAccessor(ci);

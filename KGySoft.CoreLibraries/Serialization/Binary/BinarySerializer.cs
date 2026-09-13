@@ -1522,12 +1522,14 @@ namespace KGySoft.Serialization.Binary
         [RequiresDynamicCode("obj.GetType().SizeOf()")]
 #endif
         [RequiresUnreferencedCode("obj.GetType().IsManaged()")] // though in DEBUG build only (Assert)
+        [SuppressMessage("ReSharper", "ReturnTypeCanBeNotNullable", Justification = "Depends on target")]
+        [SuppressMessage("ReSharper", "UnusedParameter.Local", Justification = "Needed for specific targets")]
         private static byte[]? SerializeValueTypeRaw(ValueType obj, bool throwOnSizeIssue)
         {
             Debug.Assert(!obj.GetType().IsManaged(), "Unmanaged type expected");
             Type type = obj.GetType();
             int len = type.SizeOf(false);
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_0_OR_GREATER
+#if (NETCOREAPP3_0_OR_GREATER && !NET9_0_OR_GREATER) || NETSTANDARD2_0_OR_GREATER
             if (len == 0)
             {
                 try
@@ -1586,7 +1588,7 @@ namespace KGySoft.Serialization.Binary
             Debug.Assert(!type.IsNullable());
 
             int len = byteLength > 0 ? byteLength : type.SizeOf(false);
-#if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_0_OR_GREATER
+#if (NETCOREAPP3_0_OR_GREATER && !NET9_0_OR_GREATER) || NETSTANDARD2_0_OR_GREATER
             if (len == 0)
             {
                 try

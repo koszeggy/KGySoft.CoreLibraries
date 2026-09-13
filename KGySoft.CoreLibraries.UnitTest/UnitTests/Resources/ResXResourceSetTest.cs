@@ -214,7 +214,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
             // when safe mode is turned on again, raw value is re-generated for GetString, except in AOT mode, which just returns the cached ToString
             rs.SafeMode = true;
-            Assert.AreEqual(RuntimeFeature.IsDynamicCodeSupported ? "576, 17" : point.ToString(), rs.GetString("TestPoint"));
+            Assert.AreEqual(IsAot ? point.ToString() : "576, 17", rs.GetString("TestPoint"));
 
             // for fileref, in safe mode, path/type is expected
             Assert.IsTrue(rs.GetString("TestBinFile").StartsWith("TestBinFile.bin;System.Byte[], mscorlib", StringComparison.Ordinal));

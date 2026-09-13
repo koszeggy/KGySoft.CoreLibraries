@@ -1235,7 +1235,7 @@ namespace KGySoft.Reflection
         internal static CompareInfo? CompareInfo(this StringComparer comparer)
         {
             Debug.Assert(comparer.GetType() == StringComparer.CurrentCulture.GetType(), "Not a culture aware string comparer.");
-            return GetFieldValueOrDefault<StringComparer, CompareInfo>(comparer);
+            return GetFieldValueOrDefault<CompareInfo>(comparer); // not GetFieldValueOrDefault<StringComparer, CompareInfo>, because the field is in the derived CultureAwareComparer
         }
 
         [RequiresUnreferencedCode("GetField")]

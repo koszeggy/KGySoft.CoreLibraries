@@ -194,11 +194,11 @@ namespace KGySoft.CoreLibraries
                 if (source is not IEnumerable cases)
                     continue;
 
-                foreach (object testCase in cases)
+                foreach (object? testCase in cases)
                 {
                     object?[] arguments = testCase is TestCaseData data ? data.Arguments
                         : testCase is object[] args && parameters.Length > 1 ? args
-                        : [testCase];
+                        : [testCase!];
                     Type[]? typeArguments = (attribute as TestCaseSourceGenericAttribute)?.TypeArguments;
                     yield return (arguments, typeArguments);
                 }

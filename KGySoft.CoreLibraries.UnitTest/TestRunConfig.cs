@@ -16,7 +16,9 @@
 #region Usings
 
 using System;
+#if !NETSTANDARD_TEST
 using System.Runtime.CompilerServices;
+#endif
 
 using KGySoft.Reflection;
 
@@ -48,7 +50,9 @@ namespace KGySoft.CoreLibraries
             : TestFilter.Empty;
 
         internal bool FallbackRunnerRequired => forceFallbackRunner
+#if !NETSTANDARD_TEST
             || !RuntimeFeature.IsDynamicCodeSupported // AOT mode
+#endif
             || (TestName != null && ClassName != null) // Both filters are set, but NUnit does not support combining them
             || ClassName?.IndexOf('.') < 0; // ClassName is set without namespace
 

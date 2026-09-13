@@ -75,6 +75,9 @@ using NUnit.Framework;
 
 #pragma warning disable SYSLIB0011 // Type or member is obsolete - this class uses BinaryFormatter for comparisons. It's safe because both serialization and deserialization is in the same process.
 #pragma warning disable CS0618 // Use of obsolete symbol - as above, as well as indicating some obsolete types as expected ones when deserializing a Hashtable or other non-generic collections
+#if NET8_0_OR_GREATER
+#pragma warning disable IDE0303 // Use collection expression - cannout use collection expressions where it is not compatible with older frameworks (e.g. immutable collections) 
+#endif
 
 #endregion
 
@@ -1266,8 +1269,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new UInt128?[] { 1, null },
 #endif
 #if NETCOREAPP && !NETSTANDARD_TEST
-                new ImmutableArray<int>?[] { [1, 2, 3, 4], ImmutableArray<int>.Empty, new ImmutableArray<int>(), null },
-                new ImmutableArray<int?>?[] { [1, 2, 3, 4, null], ImmutableArray<int?>.Empty, new ImmutableArray<int?>(), null },
+               new ImmutableArray<int>?[] { ImmutableArray.Create(1, 2, 3, 4), ImmutableArray<int>.Empty, new ImmutableArray<int>(), null },
+               new ImmutableArray<int?>?[] { ImmutableArray.Create<int?>(1, 2, 3, 4, null), ImmutableArray<int?>.Empty, new ImmutableArray<int?>(), null },
 #endif
 #if NETCOREAPP2_1_OR_GREATER
                 new Memory<byte>?[] { new byte[10].AsMemory(1, 2), null },
@@ -1833,13 +1836,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new Dictionary<int, Vector128<int>> { { 1, Vector128.Create(1, 2, 3, 4) } },
 #endif
 #if NETCOREAPP && !NETSTANDARD_TEST
-                new Dictionary<int, ImmutableArray<int>> { { 1, [1, 2, 3, 4] } },
+                new Dictionary<int, ImmutableArray<int>> { { 1, ImmutableArray.Create(1, 2, 3, 4) } },
                 new Dictionary<int, ImmutableArray<int>.Builder> { { 1, new[] { 1, 2, 3, 4 }.ToImmutableArray().ToBuilder() } },
-                new Dictionary<int, ImmutableList<int>> { { 1, [1, 2, 3, 4] } },
+                new Dictionary<int, ImmutableList<int>> { { 1, ImmutableList.Create(1, 2, 3, 4) } },
                 new Dictionary<int, ImmutableList<int>.Builder> { { 1, new[] { 1, 2, 3, 4 }.ToImmutableList().ToBuilder() } },
-                new Dictionary<int, ImmutableHashSet<int>> { { 1, [1, 2, 3, 4] } },
+                new Dictionary<int, ImmutableHashSet<int>> { { 1, ImmutableHashSet.Create(1, 2, 3, 4) } },
                 new Dictionary<int, ImmutableHashSet<int>.Builder> { { 1, new[] { 1, 2, 3, 4 }.ToImmutableHashSet().ToBuilder() } },
-                new Dictionary<int, ImmutableSortedSet<int>> { { 1, [1, 2, 3, 4] } },
+                new Dictionary<int, ImmutableSortedSet<int>> { { 1, ImmutableSortedSet.Create(1, 2, 3, 4) } },
                 new Dictionary<int, ImmutableSortedSet<int>.Builder> { { 1, new[] { 1, 2, 3, 4 }.ToImmutableSortedSet().ToBuilder() } },
                 new Dictionary<int, ImmutableQueue<int>> { { 1, ImmutableQueue.Create(1, 2, 3, 4) } },
                 new Dictionary<int, ImmutableStack<int>> { { 1, ImmutableStack.Create(1, 2, 3, 4) } },
@@ -3601,7 +3604,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 
             // But throws an exception in SafeMode
             var expectedTypes = new[] { typeof(TempFileCollection) };
-            Throws<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: expectedTypes), "In safe mode it is not supported to deserialize type \"System.CodeDom.Compiler.TempFileCollection\"");
+            AssertThrows<SerializationException>(() => KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: expectedTypes), "In safe mode it is not supported to deserialize type \"System.CodeDom.Compiler.TempFileCollection\"");
         }
 #endif
 

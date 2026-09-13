@@ -943,7 +943,11 @@ namespace KGySoft.CoreLibraries
             if (!RuntimeFeature.IsDynamicCodeSupported)
             {
                 return type == Reflector.RuntimeTypeAot || type == Reflector.RuntimeTypeGeneric || type == Reflector.RuntimeTypeArray || type == Reflector.RuntimeTypeByRef || type == Reflector.RuntimeTypePointer
-                    || type == Reflector.RuntimeTypeGenericTypeArg || type == Reflector.RuntimeTypeGenericMethodArg || type == Reflector.RuntimeTypeFunctionPointer;
+                    || type == Reflector.RuntimeTypeGenericTypeArg || type == Reflector.RuntimeTypeGenericMethodArg
+#if NET8_0
+                    || type == Reflector.RuntimeTypeFunctionPointer
+#endif
+                    ;
             }
 #endif
 

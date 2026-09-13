@@ -22,7 +22,6 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Resources;
-using System.Runtime.CompilerServices;
 
 using KGySoft.Reflection;
 using KGySoft.Resources;
@@ -34,7 +33,7 @@ using NUnit.Framework;
 namespace KGySoft.CoreLibraries.UnitTests
 {
     [TestFixture]
-    public class ResTests
+    public class ResTests : TestBase
     {
         #region Constants
 
@@ -71,7 +70,7 @@ namespace KGySoft.CoreLibraries.UnitTests
             var generateSettings = new GenerateObjectSettings { AllowCreateObjectWithoutConstructor = true }; // for PropertyDescriptors
             foreach (MethodInfo mi in methods)
             {
-                var enumType = RuntimeFeature.IsDynamicCodeSupported ? random.NextObject(typeof(Enum))!.GetType() : typeof(ConsoleColor);
+                var enumType = IsAot ? typeof(ConsoleColor) : random.NextObject(typeof(Enum))!.GetType();
                 var method = mi.IsGenericMethodDefinition ? mi.MakeGenericMethod(enumType) : mi;
                 if (method.ReturnType == typeof(void))
                     continue;
@@ -137,7 +136,7 @@ namespace KGySoft.CoreLibraries.UnitTests
         public void Initialize()
         {
             LanguageSettings.DynamicResourceManagersSource = ResourceManagerSources.CompiledOnly;
-            if (RuntimeFeature.IsDynamicCodeSupported)
+            if (!IsAot)
                 return;
 
             Reflector.MemberOf(() => Res.ArgumentMustBeGreaterThan<ConsoleColor>(default));

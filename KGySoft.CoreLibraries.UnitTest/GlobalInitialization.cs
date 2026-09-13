@@ -19,7 +19,7 @@ using System;
 #if NETCOREAPP && !NETCOREAPP3_0_OR_GREATER
 using System.Drawing;
 #endif
-#if NETCOREAPP3_0_OR_GREATER && !AOT
+#if NETCOREAPP
 using System.IO;
 #endif
 #if NETCOREAPP3_0_OR_GREATER
