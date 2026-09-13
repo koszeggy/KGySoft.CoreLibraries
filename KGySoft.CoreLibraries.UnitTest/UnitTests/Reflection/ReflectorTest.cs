@@ -1853,7 +1853,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             object[] parameters;
 
             // System Reflection does not support initializing the ref pointer parameter - ArgumentException: Object of type 'System.IntPtr' cannot be converted to type 'System.Void*&'
-#if NET11_0_OR_GREATER // increase version number if it's not fixed
+#if NET12_0_OR_GREATER // increase version number if it's not fixed
             Console.Write("System Reflection...");
             parameters = (object[])args.Clone();
             mi.Invoke(test, parameters);
@@ -1939,7 +1939,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             // System Reflection does not support initializing the ref pointer parameter (ArgumentException : Object of type 'System.IntPtr' cannot be converted to type 'System.Void*&'),
             // and crashes when attempts to set back the out pointer parameter
-#if NET11_0_OR_GREATER // increase version number if it's not fixed
+#if NET12_0_OR_GREATER // increase version number if it's not fixed
             Console.Write("System Reflection...");
             parameters = (object[])args.Clone();
             mi.Invoke(test, parameters);
@@ -2037,7 +2037,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             object[] parameters;
 
             // System Reflection does not support initializing the ref pointer parameter and crashes when attempts to set back the out pointer parameter
-#if NET11_0_OR_GREATER // increase version number if it's not fixed
+#if NET12_0_OR_GREATER // increase version number if it's not fixed
             Console.Write("System Reflection.MethodInfo...");
             parameters = (object[])args.Clone();
             mi.Invoke(null, parameters);
@@ -2280,7 +2280,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             AssertAreEqual(arg, (IntPtr)test.InstanceField);
             AssertAreEqual(IntPtr.Zero, (IntPtr)ptr);
 
-#if NET11_0_OR_GREATER
+#if NET12_0_OR_GREATER
             Console.Write("System Reflection...");
             parameters = (object[])args.Clone();
             result = mi.Invoke(test, parameters);
@@ -2555,7 +2555,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             object result;
 
             // System Reflection does not support initializing the ref pointer parameter: ArgumentException: 'Object of type 'System.IntPtr' cannot be converted to type 'System.Void*&'
-#if NET11_0_OR_GREATER // increase version number if it's not fixed
+#if NET12_0_OR_GREATER // increase version number if it's not fixed
             Console.Write("System Reflection...");
             parameters = (object[])args.Clone();
             result = (IntPtr)Pointer.Unbox(mi.Invoke(test, parameters));
@@ -2662,7 +2662,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             object result;
 
             // System Reflection does not support initializing the ref pointer parameter and crashes when attempts to set back the out pointer parameter
-#if NET11_0_OR_GREATER // increase version number if it's not fixed
+#if NET12_0_OR_GREATER // increase version number if it's not fixed
             Console.Write("System Reflection...");
             parameters = (object[])args.Clone();
             result = (IntPtr)Pointer.Unbox(mi.Invoke(null, parameters));
@@ -3437,7 +3437,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             object[] parameters;
 
             // System Reflection does not support initializing the ref pointer parameter and crashes when attempts to set back the out pointer parameter
-#if NET11_0_OR_GREATER // increase version number if it's not fixed
+#if NET12_0_OR_GREATER // increase version number if it's not fixed
             Console.Write("System Reflection...");
             parameters = (object[])args.Clone();
             mi.Invoke(test, parameters);
@@ -3535,7 +3535,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             object[] parameters;
 
             // System Reflection does not support initializing the ref pointer parameter and crashes when attempts to set back the out pointer parameter
-#if NET11_0_OR_GREATER // increase version number if it's not fixed
+#if NET12_0_OR_GREATER // increase version number if it's not fixed
             Console.Write("System Reflection...");
             parameters = (object[])args.Clone();
             mi.Invoke(null, parameters);
@@ -3762,7 +3762,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             object result;
 
             // System Reflection does not support initializing the ref pointer parameter and crashes when attempts to set back the out pointer parameter
-#if NET11_0_OR_GREATER // increase version number if it's not fixed
+#if NET12_0_OR_GREATER // increase version number if it's not fixed
             Console.Write("System Reflection...");
             parameters = (object[])args.Clone();
             result = (IntPtr)Pointer.Unbox(mi.Invoke(test, parameters));
@@ -3869,7 +3869,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             object result;
 
             // System Reflection does not support initializing the ref pointer parameter and crashes when attempts to set back the out pointer parameter
-#if NET11_0_OR_GREATER // increase version number if it's not fixed
+#if NET12_0_OR_GREATER // increase version number if it's not fixed
             Console.Write("System Reflection...");
             parameters = (object[])args.Clone();
             result = (IntPtr)Pointer.Unbox(mi.Invoke(null, parameters));
@@ -4063,7 +4063,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             int value = 1;
 
             Console.Write("System Reflection...");
-#if NET11_0_OR_GREATER // ArgumentException : Property set method not found.
+#if NET12_0_OR_GREATER // ArgumentException : Property set method not found.
             pi.SetValue(test, value, null);
 #else
             test.RefIntProperty = value;
@@ -4177,7 +4177,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             int value = 1;
 
             Console.Write("System Reflection...");
-#if NET11_0_OR_GREATER // ArgumentException : Property set method not found.
+#if NET12_0_OR_GREATER // ArgumentException : Property set method not found.
             pi.SetValue(test, value, null);
 #else
             typeof(TestClass).GetField(nameof(TestClass.ReadOnlyValueField))!.SetValue(test, value);
@@ -4358,7 +4358,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             object result, value = 1;
 
             Console.Write("System Reflection...");
-#if NET11_0_OR_GREATER // ArgumentException : Property set method not found.
+#if NET12_0_OR_GREATER // ArgumentException : Property set method not found.
             pi.SetValue(null, value, null);
 #else
             TestClass.StaticRefProperty = 1;
@@ -4456,7 +4456,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             object result, value = 1;
 
             Console.Write("System Reflection...");
-#if NET11_0_OR_GREATER // ArgumentException : Property set method not found.
+#if NET12_0_OR_GREATER // ArgumentException : Property set method not found.
             pi.SetValue(null, value, null);
 #else
             TestClass.StaticIntField = 1;
@@ -4788,7 +4788,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             string value = "alpha";
 
             Console.Write("System Reflection...");
-#if NET11_0_OR_GREATER // ArgumentException : Property set method not found.
+#if NET12_0_OR_GREATER // ArgumentException : Property set method not found.
             pi.SetValue(test, value, indexParameters);
 #else
             test[index] = value;
@@ -4923,7 +4923,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             int value = 13;
 
             Console.Write("System Reflection...");
-#if NET11_0_OR_GREATER // ArgumentException : Property set method not found.
+#if NET12_0_OR_GREATER // ArgumentException : Property set method not found.
             pi.SetValue(test, value, indexParameters);
 #else
             test[index] = value;
@@ -5173,7 +5173,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             var value = new IntPtr(1);
 
             Console.Write("System Reflection...");
-#if NET11_0_OR_GREATER // ArgumentException : Property set method not found.
+#if NET12_0_OR_GREATER // ArgumentException : Property set method not found.
             pi.SetValue(test, value, null);
 #else
             test.RefInstanceProperty = (void*)value;
@@ -5262,7 +5262,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             if (!EnvironmentHelper.IsMono) // (IntPtr)((UnsafeTestClass)test).RefReadonlyProperty returns some random value on Mono
             {
                 Console.Write("System Reflection...");
-#if NET11_0_OR_GREATER // ArgumentException : Property set method not found.
+#if NET12_0_OR_GREATER // ArgumentException : Property set method not found.
                 pi.SetValue(test, value, null);
 #else
                 typeof(UnsafeTestClass).GetField(nameof(UnsafeTestClass.ReadOnlyInstanceField))!.SetValue(test, value);
@@ -5462,7 +5462,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             object value = new IntPtr(1);
 
             Console.Write("System Reflection...");
-#if NET11_0_OR_GREATER // ArgumentException : Property set method not found.
+#if NET12_0_OR_GREATER // ArgumentException : Property set method not found.
             pi.SetValue(null, value, null);
 #else
             UnsafeTestClass.StaticRefProperty = (void*)(IntPtr)value;
@@ -5550,7 +5550,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             object value = new IntPtr(1);
 
             Console.Write("System Reflection...");
-#if NET11_0_OR_GREATER // ArgumentException : Property set method not found.
+#if NET12_0_OR_GREATER // ArgumentException : Property set method not found.
             pi.SetValue(null, value, null);
 #else
             UnsafeTestClass.StaticField = (void*)(IntPtr)value;
@@ -5705,7 +5705,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             AssertAreEqual(value, result);
 
             // System Reflection does not support initializing the ref pointer parameter - ArgumentException: Object of type 'System.IntPtr' cannot be converted to type 'System.Void*&'
-#if NET11_0_OR_GREATER // increase version number if it's not fixed
+#if NET12_0_OR_GREATER // increase version number if it's not fixed
             Console.Write("System Reflection...");
             pi.SetValue(test, value, indexParameters);
             result = pi.GetValue(test, indexParameters);
@@ -5850,7 +5850,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             var value = new IntPtr(13);
 
             Console.Write("System Reflection...");
-#if NET11_0_OR_GREATER // ArgumentException : Property set method not found.
+#if NET12_0_OR_GREATER // ArgumentException : Property set method not found.
             pi.SetValue(test, value, indexParameters);
 #else
             test[(int*)index] = (int*)value;
@@ -5941,7 +5941,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
 
             Console.Write("System Reflection...");
             // System Reflection does not support initializing the ref pointer parameter - ArgumentException: Object of type 'System.IntPtr' cannot be converted to type 'System.Void*&'
-#if NET11_0_OR_GREATER // increase version number if it's not fixed
+#if NET12_0_OR_GREATER // increase version number if it's not fixed
             test = new UnsafeTestClass();
             indexParameters = [index];
             pi.SetValue(test, value, indexParameters);
@@ -6107,7 +6107,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             int value = 1;
 
             Console.Write("System Reflection...");
-#if NET11_0_OR_GREATER // ArgumentException : Property set method not found.
+#if NET12_0_OR_GREATER // ArgumentException : Property set method not found.
             pi.SetValue(test, value, null);
 #else
             ((TestStruct)test).RefIntProperty = 1;
@@ -6224,7 +6224,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             object result, value = 1;
 
             Console.Write("System Reflection...");
-#if NET11_0_OR_GREATER // ArgumentException : Property set method not found.
+#if NET12_0_OR_GREATER // ArgumentException : Property set method not found.
             pi.SetValue(test, value, null);
 #else
             typeof(TestStruct).GetField(nameof(TestStruct.StaticIntField))!.SetValue(null, value);
@@ -6522,7 +6522,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             string value = "alpha";
 
             Console.Write("System Reflection...");
-#if NET11_0_OR_GREATER // ArgumentException : Property set method not found.
+#if NET12_0_OR_GREATER // ArgumentException : Property set method not found.
             pi.SetValue(test, value, indexParameters);
 #else
             ((TestStruct)test)[index] = value;
@@ -6720,7 +6720,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             var value = new IntPtr(1);
 
             Console.Write("System Reflection...");
-#if NET11_0_OR_GREATER // ArgumentException : Property set method not found.
+#if NET12_0_OR_GREATER // ArgumentException : Property set method not found.
             pi.SetValue(test, value, null);
 #else
             ((UnsafeTestStruct)test).RefProperty = (int*)value;
@@ -6814,7 +6814,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             if (!EnvironmentHelper.IsMono) // (IntPtr)((UnsafeTestStruct)test).RefReadonlyProperty returns some random value on Mono
             {
                 Console.Write("System Reflection...");
-#if NET11_0_OR_GREATER // ArgumentException : Property set method not found.
+#if NET12_0_OR_GREATER // ArgumentException : Property set method not found.
                 pi.SetValue(test, value, null);
 #else
                 typeof(UnsafeTestStruct).GetField(nameof(UnsafeTestStruct.StaticField))!.SetValue(null, value);
@@ -7029,7 +7029,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             var value = new IntPtr(13);
 
             Console.Write("System Reflection...");
-#if NET11_0_OR_GREATER // ArgumentException : Property set method not found.
+#if NET12_0_OR_GREATER // ArgumentException : Property set method not found.
             pi.SetValue(test, value, indexParameters);
 #else
             ((UnsafeTestStruct)test)[(long*)index] = (int*)value;
@@ -8316,7 +8316,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             AssertAreEqual(IntPtr.Zero, (IntPtr)ptr);
 
             // System Reflection does not support initializing the ref pointer parameter - ArgumentException : Object of type 'System.IntPtr' cannot be converted to type 'System.Void*&'
-#if NET11_0_OR_GREATER // increase version number if it's not fixed
+#if NET12_0_OR_GREATER // increase version number if it's not fixed
             Console.Write("System Reflection...");
             parameters = (object[])args.Clone();
             result = (UnsafeTestClass)ci.Invoke(parameters);
@@ -8386,7 +8386,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             UnsafeTestClass result;
 
             // System Reflection does not support initializing the ref pointer parameter and crashes when attempts to set back the out pointer parameter
-#if NET11_0_OR_GREATER // increase version number if it's not fixed
+#if NET12_0_OR_GREATER // increase version number if it's not fixed
             Console.Write("System Reflection...");
             parameters = (object[])args.Clone();
             result = (UnsafeTestClass)ci.Invoke(parameters);
@@ -8674,7 +8674,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             UnsafeTestStruct result;
 
             // System Reflection does not support initializing the ref pointer parameter and crashes when attempts to set back the out pointer parameter
-#if NET11_0_OR_GREATER // increase version number if it's not fixed
+#if NET12_0_OR_GREATER // increase version number if it's not fixed
             Console.Write("System Reflection...");
             parameters = (object[])args.Clone();
             result = (UnsafeTestStruct)ci.Invoke(parameters);

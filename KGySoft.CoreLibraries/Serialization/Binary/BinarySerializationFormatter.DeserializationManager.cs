@@ -1168,10 +1168,13 @@ namespace KGySoft.Serialization.Binary
 #endif
             internal DataTypeDescriptor HandleFunctionPointer(BinaryReader br, bool allowOpenTypes, bool addToCache = true)
             {
+#if NET11_0_OR_GREATER
+#warning Implement this - https://github.com/dotnet/runtime/issues/75348
                 // TODO: now it is called only from 2 places, because that is how it's resolved for the 1st time (directly from string, and as an array element),
                 // but when it finally will be supported it should be called from wherever HandleGenericTypeDef is also called.
                 // See the expected format in WriteFunctionPointer.
-#if !NET11_0_OR_GREATER
+                return Throw.PlatformNotSupportedException<DataTypeDescriptor>(Res.ReflectionFunctionPointersNotSupported);
+#else
                 return Throw.PlatformNotSupportedException<DataTypeDescriptor>(Res.ReflectionFunctionPointersNotSupported);
 #endif
             }
@@ -1979,7 +1982,7 @@ namespace KGySoft.Serialization.Binary
 #else
                 ComparerType.CultureSpecific => StringComparer.Create(CultureInfo.GetCultureInfo(ReadStringValue(br, addToCache)), (CompareOptions)Read7BitInt(br) == CompareOptions.IgnoreCase),
 #endif
-#if NET11_0_OR_GREATER
+#if NET12_0_OR_GREATER // see if already available - https://github.com/dotnet/runtime/issues/77679
                 ComparerType.OrdinalNonRandomized => NonRandomizedStringEqualityComparer.Ordinal,
                 ComparerType.OrdinalIgnoreCaseNonRandomized => NonRandomizedStringEqualityComparer.OrdinalIgnoreCase,
 #else

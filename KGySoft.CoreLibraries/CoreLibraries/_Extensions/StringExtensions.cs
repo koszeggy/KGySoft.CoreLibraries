@@ -15,6 +15,8 @@
 
 #region Usings
 
+#region Used Namesapces
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -31,9 +33,21 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 
+#if !NET11_0_OR_GREATER
 using KGySoft.IO;
+#endif
 using KGySoft.Reflection;
 using KGySoft.Security.Cryptography;
+
+#endregion
+
+#region Used Aliases
+
+#if NET11_0_OR_GREATER
+using StringStream = KGySoft.IO.StringStream;
+#endif
+
+#endregion
 
 #endregion
 

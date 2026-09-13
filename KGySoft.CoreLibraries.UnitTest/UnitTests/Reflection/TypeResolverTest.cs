@@ -309,7 +309,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             if (expected == null)
                 Assert.IsNull(type);
 
-#if NET11_0_OR_GREATER // - see https://github.com/dotnet/runtime/issues/75348
+#if NET12_0_OR_GREATER // - see https://github.com/dotnet/runtime/issues/75348
             Assert.AreEqual(TypeResolver.GetName(typeName, TypeNameKind.ShortName), type!.GetName(TypeNameKind.ShortName));
 #endif
         }

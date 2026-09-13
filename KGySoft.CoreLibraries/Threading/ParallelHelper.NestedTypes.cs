@@ -92,11 +92,13 @@ namespace KGySoft.Threading
                 {
                     if (field == null)
                     {
+#if NET12_0_OR_GREATER
+#error Check if the generic bridge feature is already available. It would help AOT mode (and [DynamicDependency]  can be removed) - https://github.com/dotnet/csharplang/discussions/6308
+                        if (T is IComparable<T> TComparable)
+                            field = new ComparableSortHelper<TComparable>();
+#else
                         if (typeof(IComparable<T>).IsAssignableFrom(typeof(T)))
                         {
-#if NET11_0_OR_GREATER
-#error Check if the generic bridge feature is already available. It would help AOT mode - https://github.com/dotnet/csharplang/discussions/6308
-#endif
                             try
                             {
                                 field = (ISortHelper<T>)Activator.CreateInstance(typeof(ComparableSortHelper<>).MakeGenericType(typeof(T)), true)!;
@@ -107,6 +109,7 @@ namespace KGySoft.Threading
                                 field = new SortHelper<T>();
                             }
                         }
+#endif
                         else
                             field = new SortHelper<T>();
                     }
@@ -1036,11 +1039,13 @@ namespace KGySoft.Threading
                 {
                     if (field == null)
                     {
+#if NET12_0_OR_GREATER
+#error Check if the generic bridge feature is already available. It would help AOT mode (and [DynamicDependency]  can be removed) - https://github.com/dotnet/csharplang/discussions/6308
+                        if (TKey is IComparable<TKey> TComparable)
+                            field = new ComparableSortHelper<TComparable, TValue>();
+#else
                         if (typeof(IComparable<TKey>).IsAssignableFrom(typeof(TKey)))
                         {
-#if NET11_0_OR_GREATER
-#error Check if the generic bridge feature is already available. It would help AOT mode - https://github.com/dotnet/csharplang/discussions/6308
-#endif
 
                             try
                             {
@@ -1052,6 +1057,7 @@ namespace KGySoft.Threading
                                 field = new SortHelper<TKey, TValue>();
                             }
                         }
+#endif
                         else
                             field = new SortHelper<TKey, TValue>();
                     }

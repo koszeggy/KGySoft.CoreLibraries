@@ -454,11 +454,13 @@ namespace KGySoft.Collections
             {
                 if (binarySearchHelper == null)
                 {
+#if NET12_0_OR_GREATER
+#error Check if the generic bridge feature is already available. It would help AOT mode (and [DynamicDependency]  can be removed) - https://github.com/dotnet/csharplang/discussions/6308
+                    if (T is IComparable<T> TComparable)
+                        binarySearchHelper = new ComparableBinarySearchHelper<TComparable>();
+#else
                     if (typeof(IComparable<T>).IsAssignableFrom(typeof(T)))
                     {
-#if NET11_0_OR_GREATER
-#error Check if the generic bridge feature is already available. It would help AOT mode - https://github.com/dotnet/csharplang/discussions/6308
-#endif
                         try
                         {
                             binarySearchHelper = (BinarySearchHelper<T>)Activator.CreateInstance(typeof(ComparableBinarySearchHelper<>).MakeGenericType(typeof(T)), true)!;
@@ -469,6 +471,7 @@ namespace KGySoft.Collections
                             binarySearchHelper = new BinarySearchHelper<T>();
                         }
                     }
+#endif
                     else
                         binarySearchHelper = new BinarySearchHelper<T>();
                 }

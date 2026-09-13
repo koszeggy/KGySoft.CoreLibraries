@@ -1774,7 +1774,7 @@ namespace KGySoft.Reflection
             }
 
 #if NET11_0_OR_GREATER
-#error Implement if API is already available - https://github.com/dotnet/runtime/issues/75348
+#warning Already available, implement this - https://github.com/dotnet/runtime/issues/75348
 #endif
             if (!throwError)
                 return null;

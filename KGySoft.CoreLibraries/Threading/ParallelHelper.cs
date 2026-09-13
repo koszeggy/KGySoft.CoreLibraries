@@ -2259,7 +2259,7 @@ namespace KGySoft.Threading
 
                 default:
                     // From here the slow fallback path for IList<T> with virtual calls
-#if NET11_0_OR_GREATER // TODO: https://github.com/dotnet/runtime/issues/76375 - only if the fallback is not implemented by copying the elements to a new array, and then back
+#if NET12_0_OR_GREATER // TODO: https://github.com/dotnet/runtime/issues/76375 - only if the fallback is not implemented by copying the elements to a new array, and then back
                     if (isSingleThread)
                     {
                         CollectionExtensions.Sort(list, startIndex, count, comparer);
@@ -2372,7 +2372,7 @@ namespace KGySoft.Threading
 
                 default:
                     // From here the slow fallback path for IList<T> with virtual calls
-#if NET11_0_OR_GREATER // TODO: https://github.com/dotnet/runtime/issues/76375 - only if the fallback is not implemented by copying the elements to a new array, and then back
+#if NET12_0_OR_GREATER // TODO: https://github.com/dotnet/runtime/issues/76375 - only if the fallback is not implemented by copying the elements to a new array, and then back
                     if (isSingleThread)
                     {
                         CollectionExtensions.Sort(list, keys, arrays, startIndex, count, comparer);

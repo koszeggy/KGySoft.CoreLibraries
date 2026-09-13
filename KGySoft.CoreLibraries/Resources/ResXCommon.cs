@@ -15,6 +15,8 @@
 
 #region Usings
 
+#region Used Namespaces
+
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
@@ -26,8 +28,20 @@ using System.Runtime.Serialization;
 using System.Xml;
 
 using KGySoft.CoreLibraries;
+#if !NET11_0_OR_GREATER
 using KGySoft.IO;
+#endif
 using KGySoft.Reflection;
+
+#endregion
+
+#region Used Aliases
+
+#if NET11_0_OR_GREATER
+using StringStream = KGySoft.IO.StringStream;
+#endif
+
+#endregion
 
 #endregion
 
