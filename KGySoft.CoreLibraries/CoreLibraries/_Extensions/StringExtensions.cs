@@ -339,7 +339,7 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentException">Parameter <paramref name="s"/> cannot be parsed as <typeparamref name="T"/>.</exception>
         [return:NotNullIfNotNull(nameof(s))]
         [RequiresUnreferencedCode(parseRequiresUnreferencedCode)]
-        public static T? Parse<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]T>(
+        public static T? Parse<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMembers.Interfaces)]T>(
             this string? s, CultureInfo? culture = null)
         {
             if (!Parser.TryParse(s, culture, out T? value, out Exception? error))
@@ -363,7 +363,7 @@ namespace KGySoft.CoreLibraries
         /// <exception cref="ArgumentException">Parameter <paramref name="s"/> cannot be parsed as <paramref name="type"/>.</exception>
         [return:NotNullIfNotNull(nameof(s))]
         [RequiresUnreferencedCode(parseRequiresUnreferencedCode)]
-        public static object? Parse(this string? s, [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]Type type,
+        public static object? Parse(this string? s, [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMembers.Interfaces)]Type type,
             CultureInfo? culture = null)
         {
             if (!Parser.TryParse(s, type, culture, true, out object? value, out Exception? error) || !type.CanAcceptValue(value))
@@ -385,7 +385,7 @@ namespace KGySoft.CoreLibraries
         /// <returns><see langword="true"/>, if <paramref name="s"/> could be parsed as <typeparamref name="T"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><typeparamref name="T"/> is not nullable and <paramref name="s"/> is <see langword="null"/>.</exception>
         [RequiresUnreferencedCode(parseRequiresUnreferencedCode)]
-        public static bool TryParse<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]T>(
+        public static bool TryParse<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMembers.Interfaces)]T>(
             this string? s, CultureInfo? culture, out T? value) => Parser.TryParse(s, culture, out value, out var _);
 
         /// <summary>
@@ -401,7 +401,7 @@ namespace KGySoft.CoreLibraries
         /// <returns><see langword="true"/>, if <paramref name="s"/> could be parsed as <typeparamref name="T"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><typeparamref name="T"/> is not nullable and <paramref name="s"/> is <see langword="null"/>.</exception>
         [RequiresUnreferencedCode(parseRequiresUnreferencedCode)]
-        public static bool TryParse<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]T>(
+        public static bool TryParse<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMembers.Interfaces)]T>(
             this string? s, out T? value) => TryParse(s, null, out value);
 
         /// <summary>
@@ -418,7 +418,7 @@ namespace KGySoft.CoreLibraries
         /// <returns><see langword="true"/>, if <paramref name="s"/> could be parsed as <paramref name="type"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> is null, or <paramref name="type"/> is not nullable and <paramref name="s"/> is <see langword="null"/>.</exception>
         [RequiresUnreferencedCode(parseRequiresUnreferencedCode)]
-        public static bool TryParse(this string? s, [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]Type type,
+        public static bool TryParse(this string? s, [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMembers.Interfaces)]Type type,
             CultureInfo? culture, out object? value) => Parser.TryParse(s, type, culture, true,  out value, out var _);
 
         /// <summary>
@@ -434,7 +434,7 @@ namespace KGySoft.CoreLibraries
         /// <returns><see langword="true"/>, if <paramref name="s"/> could be parsed as <paramref name="type"/>, which is returned in the <paramref name="value"/> parameter; otherwise, <see langword="false"/>.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> is null, or <paramref name="type"/> is not nullable and <paramref name="s"/> is <see langword="null"/>.</exception>
         [RequiresUnreferencedCode(parseRequiresUnreferencedCode)]
-        public static bool TryParse(this string? s, [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]Type type,
+        public static bool TryParse(this string? s, [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMembers.Interfaces)]Type type,
             out object? value) => Parser.TryParse(s, type, null, true,  out value, out var _);
 
         #endregion

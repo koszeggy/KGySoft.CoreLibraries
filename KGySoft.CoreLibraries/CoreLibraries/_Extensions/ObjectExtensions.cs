@@ -436,7 +436,7 @@ namespace KGySoft.CoreLibraries
         /// // DateTime => Double: 10/11/2021 7:45:46 PM => 6.37695783464721787E+17]]></code>
         /// </example>
         [RequiresUnreferencedCode(ObjectConverter.RequiresUnreferencedCode)]
-        public static TTarget Convert<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]TTarget>(
+        public static TTarget Convert<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMembers.Interfaces)]TTarget>(
             this object? obj, CultureInfo? culture = null)
         {
             if (!ObjectConverter.TryConvert(obj, typeof(TTarget), culture, out object? result, out Exception? error) || (result is not TTarget && !typeof(TTarget).CanAcceptValue(result)))
@@ -465,7 +465,7 @@ namespace KGySoft.CoreLibraries
         /// </remarks>
         [RequiresUnreferencedCode(ObjectConverter.RequiresUnreferencedCode)]
         public static object? Convert(this object? obj,
-            [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]Type targetType,
+            [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMembers.Interfaces)]Type targetType,
             CultureInfo? culture = null)
         {
             if (!ObjectConverter.TryConvert(obj, targetType, culture, out object? result, out Exception? error) || !targetType.CanAcceptValue(result))
@@ -490,7 +490,7 @@ namespace KGySoft.CoreLibraries
         /// then conversions from <see cref="DateTime"/> to <see cref="double"/> becomes automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
         /// </remarks>
         [RequiresUnreferencedCode(ObjectConverter.RequiresUnreferencedCode)]
-        public static bool TryConvert<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]TTarget>(
+        public static bool TryConvert<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMembers.Interfaces)]TTarget>(
             this object? obj, CultureInfo? culture, [MaybeNullWhen(false)]out TTarget value)
         {
             if (TryConvert(obj, typeof(TTarget), culture, out object? result) && (result is TTarget || typeof(TTarget).CanAcceptValue(result)))
@@ -519,7 +519,7 @@ namespace KGySoft.CoreLibraries
         /// then conversions from <see cref="DateTime"/> to <see cref="double"/> becomes automatically available using the <see cref="long"/> type as an intermediate conversion step.</note>
         /// </remarks>
         [RequiresUnreferencedCode(ObjectConverter.RequiresUnreferencedCode)]
-        public static bool TryConvert<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]TTarget>(
+        public static bool TryConvert<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMembers.Interfaces)]TTarget>(
             this object? obj, [MaybeNullWhen(false)]out TTarget value) => TryConvert(obj, null, out value);
 
         /// <summary>
@@ -539,7 +539,7 @@ namespace KGySoft.CoreLibraries
         /// </remarks>
         [RequiresUnreferencedCode(ObjectConverter.RequiresUnreferencedCode)]
         public static bool TryConvert(this object? obj,
-            [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]Type targetType,
+            [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMembers.Interfaces)]Type targetType,
             out object? value) => TryConvert(obj, targetType, null, out value);
 
         /// <summary>
@@ -560,7 +560,7 @@ namespace KGySoft.CoreLibraries
         /// </remarks>
         [RequiresUnreferencedCode(ObjectConverter.RequiresUnreferencedCode)]
         public static bool TryConvert(this object? obj,
-            [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]Type targetType,
+            [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMembers.Interfaces)]Type targetType,
             CultureInfo? culture, out object? value) => ObjectConverter.TryConvert(obj, targetType, culture, out value, out var _);
 
         #endregion

@@ -42,7 +42,9 @@ namespace KGySoft.CoreLibraries
     /// <br/>This class is a replacement of the old RecompILer logic and can be used also for .NET Core/Standard platforms.
     /// </summary>
     [RequiresDynamicCode("This class uses IL code generation, and is not compatible with AOT mode.")]
+#if !NET5_0 // in .NET 5.0 it's not valid on class level
     [RequiresUnreferencedCode("This class generates statically non-referencable types, and is not compatible with trimming.")]
+#endif
     internal static class EnumComparerBuilder
     {
         #region Fields

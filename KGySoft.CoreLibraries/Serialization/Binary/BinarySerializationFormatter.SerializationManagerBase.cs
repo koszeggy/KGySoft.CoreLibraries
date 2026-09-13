@@ -312,7 +312,7 @@ namespace KGySoft.Serialization.Binary
             [DynamicDependency(nameof(EqualityComparer<>.Default), typeof(EqualityComparer<>))]
             [DynamicDependency(nameof(Comparer<>.Default), typeof(Comparer<>))]
             [DynamicDependency(nameof(EnumComparer<>.Comparer), typeof(EnumComparer<>))]
-            private static DataTypes DetermineSpecialSupport([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]Type type)
+            private static DataTypes DetermineSpecialSupport([DynamicallyAccessedMembers(DynamicallyAccessedMembers.Interfaces)]Type type)
             {
                 // When this method is called with an abstract type, then the result represents the abstract type itself
                 // that can be used in type encodings, such as generic type arguments. We allow this only when every possible instance is supported.

@@ -318,7 +318,7 @@ namespace KGySoft.Serialization.Xml
             | DynamicallyAccessedMembers.AllFields // public: serialized; non-public: CopyFields, IsTypeTrusted needs to check whether there are non-backing non-public fields
             | DynamicallyAccessedMembers.AllEvents // IsTrustedType returns false if a type has events
             | DynamicallyAccessedMembers.AllMethods // ShouldSerialize... methods
-            | DynamicallyAccessedMemberTypes.Interfaces; // e.g. IXmlSerializable
+            | DynamicallyAccessedMembers.Interfaces; // e.g. IXmlSerializable
 
         #endregion
 

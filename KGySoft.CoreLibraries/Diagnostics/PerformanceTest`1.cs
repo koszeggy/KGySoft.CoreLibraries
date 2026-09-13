@@ -90,7 +90,7 @@ namespace KGySoft.Diagnostics
     /// <note type="tip">See also the <strong>Examples</strong> section of the <see cref="PerformanceTestBase{TDelegate,TResult}"/> class to see how to create a custom type for parameterized performance tests.</note>
     /// </example>
     /// <seealso cref="PerformanceTest" />
-    public class PerformanceTest<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]TResult> : PerformanceTestBase<Func<TResult>, TResult>
+    public class PerformanceTest<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.Interfaces)]TResult> : PerformanceTestBase<Func<TResult>, TResult>
     {
         #region Methods
 

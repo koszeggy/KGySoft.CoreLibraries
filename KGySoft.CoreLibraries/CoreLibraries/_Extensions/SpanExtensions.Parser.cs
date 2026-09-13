@@ -112,7 +112,7 @@ namespace KGySoft.CoreLibraries
             #region Internal Methods
 
             [RequiresUnreferencedCode("Reflector.ResolveType, TypeDescriptor.GetConverter")]
-            internal static bool TryParse(ReadOnlySpan<char> s, [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]Type type,
+            internal static bool TryParse(ReadOnlySpan<char> s, [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMembers.Interfaces)]Type type,
                 CultureInfo? culture, bool tryKnownTypes, out object? value, out Exception? error)
             {
                 if (type == null!)
@@ -192,7 +192,7 @@ namespace KGySoft.CoreLibraries
             }
 
             [RequiresUnreferencedCode(parseRequiresUnreferencedCode)]
-            internal static bool TryParse<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMemberTypes.Interfaces)]T>(
+            internal static bool TryParse<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMembers.Interfaces)]T>(
                 ReadOnlySpan<char> s, CultureInfo? culture, out T? value, out Exception? error)
             {
                 error = null;

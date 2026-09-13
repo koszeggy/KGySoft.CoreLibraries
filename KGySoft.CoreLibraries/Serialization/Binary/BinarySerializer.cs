@@ -78,7 +78,7 @@ namespace KGySoft.Serialization.Binary
         internal const DynamicallyAccessedMemberTypes NeededMembers = DynamicallyAccessedMembers.AllConstructors // parameterless constructors, special constructors
             | DynamicallyAccessedMembers.AllFields // default object graph
             | DynamicallyAccessedMembers.AllMethods // attribute-annotated serializing methods
-            | DynamicallyAccessedMemberTypes.Interfaces;
+            | DynamicallyAccessedMembers.Interfaces;
 
         internal const int SerializedTypePriority =
 #if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER

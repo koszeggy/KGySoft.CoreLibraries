@@ -439,7 +439,7 @@ namespace KGySoft.Serialization.Binary
             [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity",
                 Justification = "False alarm, the new analyzer includes the complexity of local methods.")]
             [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
-            private DataTypes GetDataType([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]Type type)
+            private DataTypes GetDataType([DynamicallyAccessedMembers(DynamicallyAccessedMembers.Interfaces)]Type type)
             {
                 #region Local methods to reduce complexity
 
@@ -1164,7 +1164,7 @@ namespace KGySoft.Serialization.Binary
             /// </summary>
             [SecurityCritical]
             [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
-            private void WriteTypeNamesAndRanks(BinaryWriter bw, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]Type type,
+            private void WriteTypeNamesAndRanks(BinaryWriter bw, [DynamicallyAccessedMembers(DynamicallyAccessedMembers.Interfaces)]Type type,
                 DataTypesEnumerator enumerator, bool allowOpenTypes)
             {
                 while (enumerator.MoveNextExtracted())
@@ -1881,12 +1881,12 @@ namespace KGySoft.Serialization.Binary
 
             [SecurityCritical]
             [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
-            private void WriteType(BinaryWriter bw, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]Type type, bool allowOpenTypes = false)
+            private void WriteType(BinaryWriter bw, [DynamicallyAccessedMembers(DynamicallyAccessedMembers.Interfaces)]Type type, bool allowOpenTypes = false)
                 => WriteType(bw, type, null, allowOpenTypes);
 
             [SecurityCritical]
             [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
-            private void WriteType(BinaryWriter bw, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]Type type,
+            private void WriteType(BinaryWriter bw, [DynamicallyAccessedMembers(DynamicallyAccessedMembers.Interfaces)]Type type,
                 DataTypes dataType, bool allowOpenTypes = false)
             {
                 // WriteType writes compressed as Compressible<T>
@@ -1906,7 +1906,7 @@ namespace KGySoft.Serialization.Binary
             /// </summary>
             [SecurityCritical]
             [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
-            private void WriteType(BinaryWriter bw, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]Type type,
+            private void WriteType(BinaryWriter bw, [DynamicallyAccessedMembers(DynamicallyAccessedMembers.Interfaces)]Type type,
                 DataTypesEnumerator? encodedDataType, bool allowOpenTypes = false)
             {
                 Debug.Assert(allowOpenTypes || !(type.IsGenericTypeDefinition || type.IsGenericParameter),
@@ -2035,7 +2035,7 @@ namespace KGySoft.Serialization.Binary
             /// </summary>
             [SecurityCritical]
             [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
-            private bool TryWriteTypeByDataType(BinaryWriter bw, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)]Type type,
+            private bool TryWriteTypeByDataType(BinaryWriter bw, [DynamicallyAccessedMembers(DynamicallyAccessedMembers.Interfaces)]Type type,
                 bool allowOpenTypes, DataTypesEnumerator? encodedDataTypes)
             {
                 #region Local Methods

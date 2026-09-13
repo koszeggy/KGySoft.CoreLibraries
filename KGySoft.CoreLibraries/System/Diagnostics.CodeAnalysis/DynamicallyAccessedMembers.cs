@@ -27,10 +27,12 @@ namespace System.Diagnostics.CodeAnalysis
 
         internal const DynamicallyAccessedMemberTypes NonPublicEventsWithInherited = DynamicallyAccessedMemberTypes.NonPublicEvents | (DynamicallyAccessedMemberTypes)0x_0008_0000;
         internal const DynamicallyAccessedMemberTypes AllEvents = DynamicallyAccessedMemberTypes.PublicEvents | NonPublicEventsWithInherited;
+        
+        internal const DynamicallyAccessedMemberTypes Interfaces = (DynamicallyAccessedMemberTypes)0x2000; // does not exist in .NET 5.0
 
         internal const DynamicallyAccessedMemberTypes AllMembersAndInterfaces =
 #if NET10_0_OR_GREATER
-            AllConstructors | AllEvents | AllFields | AllMethods | AllNestedTypes | AllProperties | DynamicallyAccessedMemberTypes.Interfaces;
+            AllConstructors | AllEvents | AllFields | AllMethods | AllNestedTypes | AllProperties | Interfaces;
 #else
             DynamicallyAccessedMemberTypes.All; // Needed to avoid IL2087 on older versions
 #endif

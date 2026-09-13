@@ -54,7 +54,7 @@ namespace KGySoft.CoreLibraries
             | DynamicallyAccessedMemberTypes.PublicProperties
             | DynamicallyAccessedMembers.AllFields
             | DynamicallyAccessedMembers.AllNestedTypes
-            | DynamicallyAccessedMemberTypes.Interfaces;
+            | DynamicallyAccessedMembers.Interfaces;
 
         #endregion
 

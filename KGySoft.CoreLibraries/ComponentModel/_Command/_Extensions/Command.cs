@@ -52,7 +52,7 @@ namespace KGySoft.ComponentModel
 
         internal const DynamicallyAccessedMemberTypes NeededSourceMembers = DynamicallyAccessedMembers.AllEvents
             | DynamicallyAccessedMembers.AllProperties // not just for property bindings, but also for command source state updaters
-            | DynamicallyAccessedMemberTypes.Interfaces; // so possible explicit interface event implementations remain discoverable when mapping simple event names
+            | DynamicallyAccessedMembers.Interfaces; // so possible explicit interface event implementations remain discoverable when mapping simple event names
 
         #endregion
 
