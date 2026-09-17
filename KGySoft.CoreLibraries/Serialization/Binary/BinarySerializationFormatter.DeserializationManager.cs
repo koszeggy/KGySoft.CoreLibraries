@@ -1066,6 +1066,8 @@ namespace KGySoft.Serialization.Binary
                         result = HandleGenericTypeDef(br, result, allowOpenTypes);
                     else if (type == genericMethodDefinitionPlaceholderType)
                         result = HandleGenericMethodParameter(br);
+                    else if (type == managedFunctionPointerPlaceholderType || type == unmanagedFunctionPointerPlaceholderType)
+                        result = HandleFunctionPointer(br, type == managedFunctionPointerPlaceholderType, allowOpenTypes);
                     return result;
                 }
 
@@ -1097,10 +1099,16 @@ namespace KGySoft.Serialization.Binary
                 string typeName = br.ReadString();
                 type = ResolveType(assembly, typeName);
                 if (type == managedFunctionPointerPlaceholderType || type == unmanagedFunctionPointerPlaceholderType)
+                {
+                    CachedTypes.Add(new DataTypeDescriptor(type, typeName));
                     result = HandleFunctionPointer(br, type == managedFunctionPointerPlaceholderType, allowOpenTypes);
+                }
                 else
+                {
                     result = new DataTypeDescriptor(type, $"{assembly.StoredName}, {typeName}");
-                CachedTypes.Add(result);
+                    CachedTypes.Add(result);
+                }
+
                 if (type.IsGenericTypeDefinition)
                     result = HandleGenericTypeDef(br, result, allowOpenTypes);
 
@@ -1166,14 +1174,36 @@ namespace KGySoft.Serialization.Binary
 #if !NET11_0_OR_GREATER
             [SuppressMessage("ReSharper", "UnusedParameter.Local", Justification = "Target platform dependent")]
 #endif
-            internal DataTypeDescriptor HandleFunctionPointer(BinaryReader br, bool allowOpenTypes, bool addToCache = true)
+            internal DataTypeDescriptor HandleFunctionPointer(BinaryReader br, bool isManaged, bool allowOpenTypes)
             {
 #if NET11_0_OR_GREATER
-#warning Implement this - https://github.com/dotnet/runtime/issues/75348
-                // TODO: now it is called only from 2 places, because that is how it's resolved for the 1st time (directly from string, and as an array element),
-                // but when it finally will be supported it should be called from wherever HandleGenericTypeDef is also called.
-                // See the expected format in WriteFunctionPointer.
-                return Throw.PlatformNotSupportedException<DataTypeDescriptor>(Res.ReflectionFunctionPointersNotSupported);
+                // Strictly the data type for Type[] would be DataTypes.Array | DataTypes.RecursiveObjectGraph if the array was actually deserialized.
+                // Here we use it for the ArrayBuilder only to prevent possible length attacks in safe mode.
+                var parameterTypes = new ArrayBuilder(br, new DataTypeDescriptor(DataTypes.Array | DataTypes.RuntimeType, typeof(Type[])), SafeMode);
+                int paramsCount = parameterTypes.TotalLength;
+                for (int i = 0; i < paramsCount; i++)
+                    parameterTypes.Add(ReadType(br, allowOpenTypes).Type!);
+                Type returnType = ReadType(br, allowOpenTypes).Type!;
+
+                // NOTE: FunctionPointer serialization is supported in .NET 8.0+, but deserialization was made possible in .NET 11 only.
+                // It turns out that a RuntimeType (e.g. by a typeof(delegate* unmanaged[Cdecl]<int, int>) expression) never returns the calling conventions,
+                // and .NET 11 did not add any API to recreate them in MakeFunctionPointerType. They present only in SignatureType instances,
+                // but they are not supported at the moment. WriteFunctionPointer was implemented in an earlier version, so to provide compatibility
+                // we always expect a (zero) calling conventions length for unmanaged function pointers. Supporting SignatureType would make it actually useful though.
+                ArrayBuilder callingConventions = isManaged ? default : new ArrayBuilder(br, new DataTypeDescriptor(DataTypes.Array | DataTypes.RuntimeType, typeof(Type[])), SafeMode);
+                if (!isManaged)
+                {
+                    for (int i = 0; i < callingConventions.TotalLength; i++)
+                        callingConventions.Add(ReadType(br, allowOpenTypes).Type!);
+                }
+
+                // As of now, MakeFunctionPointerSignatureType will never execute (see the comments above).
+                var result = callingConventions.TotalLength > 0
+                    ? new DataTypeDescriptor(Type.MakeFunctionPointerSignatureType(returnType, (Type[])parameterTypes.ToArray(), true, (Type[])callingConventions.ToArray()))
+                    : new DataTypeDescriptor(returnType.MakeFunctionPointerType((Type[])parameterTypes.ToArray(), !isManaged));
+
+                CachedTypes.Add(result);
+                return result;
 #else
                 return Throw.PlatformNotSupportedException<DataTypeDescriptor>(Res.ReflectionFunctionPointersNotSupported);
 #endif

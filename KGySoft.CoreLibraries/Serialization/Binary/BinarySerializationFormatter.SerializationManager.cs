@@ -2160,14 +2160,6 @@ namespace KGySoft.Serialization.Binary
             {
                 Debug.Assert(allowOpenTypes || !(type.IsGenericTypeDefinition || type.IsGenericParameter), $"Generic type definitions and generic parameters are allowed only when {nameof(allowOpenTypes)} is true.");
                 Debug.Assert(!type.IsFunctionPointer(), "FunctionPointer types should be handled in caller");
-//#if NET8_0_OR_GREATER // TODO
-//                if (type.IsFunctionPointer)
-//                {
-//                    // TODO: #if NET11_0_OR_GREATER - see https://github.com/dotnet/runtime/issues/75348
-//                    // Though in .NET 8+ we can get the parameter/return types and the calling conventions, there is no API to restore a function pointer type.
-//                    Throw.NotSupportedException(Res.SerializationFunctionPointerTypeNotSupported);
-//                }
-//#endif
                 Type rootType = type.IsConstructedGenericType() ? type.GetGenericTypeDefinition()
                     : type.IsGenericParameter ? type.DeclaringType!
                     : type;
@@ -2316,7 +2308,9 @@ namespace KGySoft.Serialization.Binary
                 // 2.) return type
                 WriteType(bw, type.GetFunctionPointerReturnType(), allowOpenTypes);
 
-                // 3.) calling conventions
+                // 3.) calling conventions - NOTE: calling conventions are not retrievable for simple RuntimeTypes by typeof() expressions
+                // They would work for modified types only (e.g. by ParameterInfo.GetModifiedParameterType), which returns a SignatureFunctionPointerType, which is not supported now.
+                // Still, leaving as it is due to compatibility reasons (the 0 for no calling conventions is expected), and it can be used if signature types will be supported.
                 if (isUnmanaged)
                 {
                     types = type.GetFunctionPointerCallingConventions();

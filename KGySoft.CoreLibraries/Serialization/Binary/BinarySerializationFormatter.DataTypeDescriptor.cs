@@ -203,19 +203,21 @@ namespace KGySoft.Serialization.Binary
                 StoredType = storedType;
             }
 
-            #endregion
-
-            #region Private Constructors
-
             /// <summary>
-            /// Constructor for explicitly setting already known values.
+            /// Constructor for explicitly setting already known values. As of now, element types and simple arrays are supported.
             /// </summary>
-            private DataTypeDescriptor(DataTypes elementDataType, Type type, DataTypeDescriptor parent)
+            internal DataTypeDescriptor(DataTypes explicitDataType, Type type, DataTypeDescriptor? parent = null)
             {
-                Debug.Assert(IsElementType(elementDataType));
                 ParentDescriptor = parent;
-                dataType = elementDataType;
+                dataType = explicitDataType;
                 Type = type;
+                if (!IsCollectionType(explicitDataType))
+                    return;
+
+                int elements = GetNumberOfElementDataTypes(explicitDataType);
+                Debug.Assert(elements == 1 && type.HasElementType);
+                ArgumentDescriptors = new DataTypeDescriptor[elements];
+                ArgumentDescriptors[0] = new DataTypeDescriptor(GetElementDataType(explicitDataType), type.GetElementType()!, this);
             }
 
             #endregion
@@ -569,11 +571,8 @@ namespace KGySoft.Serialization.Binary
                     case DataTypes.BinarySerializable:
                     case DataTypes.RawStruct:
                     case DataTypes.RecursiveObjectGraph:
-                        existingDescriptor = manager.ReadType(br, allowOpenTypes);
-                        return existingDescriptor.Type!;
-
                     case DataTypes.FunctionPointer:
-                        existingDescriptor = manager.HandleFunctionPointer(br, true, allowOpenTypes);
+                        existingDescriptor = manager.ReadType(br, allowOpenTypes);
                         return existingDescriptor.Type!;
 
                     default:

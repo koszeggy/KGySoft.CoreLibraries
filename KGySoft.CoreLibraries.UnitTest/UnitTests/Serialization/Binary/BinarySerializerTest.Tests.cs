@@ -605,7 +605,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 typeof(int[]).MakePointerType().MakePointerType(), // int[]** - actually not a valid type
                 typeof(int[]).MakePointerType().MakePointerType().MakeByRefType(), // int[]**& - actually not a valid type
 
-//                // Closed Constructed Generics
+                // Closed Constructed Generics
                 typeof(List<int>), // supported generic
                 typeof(CustomGenericCollection<CustomSerializedClass>), // custom generic
                 typeof(CustomGenericCollection<int>), // custom generic with supported parameter
@@ -711,12 +711,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             [
                 // Function pointers
                 typeof(delegate*<int, void>),
+                typeof(delegate*<int, void>*),
                 typeof(delegate*<int, void>[]),
                 typeof(delegate*<int, void*>*[]),
                 typeof(delegate* managed<int, int>),
+                typeof(delegate* managed<int, int>*),
                 typeof(delegate* unmanaged<int, int>),
-                typeof(delegate* unmanaged[Cdecl]<int, int>),
-                typeof(delegate* unmanaged[Cdecl, Stdcall]<int, int>),
+                typeof(delegate* unmanaged[Cdecl]<int, int>), // NOTE: the calling conventions are lost
+                typeof(delegate* unmanaged[Cdecl, Stdcall]<int, int>), // NOTE: the calling conventions are lost
+                //Type.MakeFunctionPointerSignatureType(typeof(void), [typeof(int)], true, [typeof(CallConvCdecl)]) // returns an unsupported SignatureFunctionPointerType
             ];
 
 #if NET11_0_OR_GREATER // TODO: See https://github.com/dotnet/runtime/issues/75348

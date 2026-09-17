@@ -57,11 +57,21 @@
 =======================
 + New SerializedType struct to help preserving metadata in native AOT mode.
 
-- KGySoft.Serialization.Binary
+* KGySoft.Serialization.Binary
 ==============================
++ BinarySerializer/BinarySerializationFormatter classes:
+  + New Deserialize/DeserializeFromStream/DeserializeByReader overloads where the element type of the expectedTypes
+    parameter is SerializedType for better compatibility with AOT mode.
+  + Supporting function pointer runtime types (.NET 11.0 and above)
 - WeakAssemblySerializationBinder class:
   - OmitAssemblyNameOnSerialize property: Omitting the assembly name did not work if the type had been forwarded
     into the core assembly from a non-core one.
+
++ KGySoft.Serialization.Xml
+===========================
++ XmlSerializer class:
+  + New Deserialize/DeserializeFromStream/DeserializeByReader overloads where the element type of the expectedTypes
+    parameter is SerializedType for better compatibility with AOT mode.
 
 
 ~~~~~~~~~~
