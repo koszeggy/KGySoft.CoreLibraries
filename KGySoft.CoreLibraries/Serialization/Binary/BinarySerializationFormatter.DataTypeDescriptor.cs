@@ -36,6 +36,9 @@ using System.Linq;
 using System.Numerics;
 #endif
 using System.Runtime.CompilerServices;
+#if NET6_0_OR_GREATER
+using System.Runtime.InteropServices;
+#endif
 #if NETCOREAPP3_0_OR_GREATER
 using System.Runtime.Intrinsics;
 #endif
@@ -546,9 +549,12 @@ namespace KGySoft.Serialization.Binary
                         return Reflector.DateOnlyType;
                     case DataTypes.TimeOnly:
                         return Reflector.TimeOnlyType;
+                    case DataTypes.NFloat:
+                        return typeof(NFloat);
 #else
                     case DataTypes.DateOnly:
                     case DataTypes.TimeOnly:
+                    case DataTypes.NFloat:
                         return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypePlatformNotSupported(DataTypeToString(ElementDataType)));
 #endif
 
@@ -560,6 +566,23 @@ namespace KGySoft.Serialization.Binary
 #else
                     case DataTypes.Int128:
                     case DataTypes.UInt128:
+                        return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypePlatformNotSupported(DataTypeToString(ElementDataType)));
+#endif
+
+#if NET11_0_OR_GREATER
+                    case DataTypes.BFloat16:
+                        return typeof(BFloat16);
+                    case DataTypes.Decimal32:
+                        return typeof(Decimal32);
+                    case DataTypes.Decimal64:
+                        return typeof(Decimal64);
+                    case DataTypes.Decimal128:
+                        return typeof(Decimal128);
+#else
+                    case DataTypes.BFloat16:
+                    case DataTypes.Decimal32:
+                    case DataTypes.Decimal64:
+                    case DataTypes.Decimal128:
                         return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypePlatformNotSupported(DataTypeToString(ElementDataType)));
 #endif
 

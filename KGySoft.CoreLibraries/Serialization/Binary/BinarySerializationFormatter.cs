@@ -40,6 +40,9 @@ using System.Numerics;
 #endif
 using System.Reflection;
 using System.Runtime.CompilerServices;
+#if NET6_0_OR_GREATER
+using System.Runtime.InteropServices;
+#endif
 #if NETCOREAPP3_0_OR_GREATER
 using System.Runtime.Intrinsics;
 #endif
@@ -57,7 +60,7 @@ using KGySoft.Serialization.Xml;
 
 #region Suppressions
 
-#if !NET9_0_OR_GREATER
+#if !NET11_0_OR_GREATER
 #pragma warning disable CS1574 // the documentation contains types that are not available in every target
 #endif
 #if NET5_0_OR_GREATER
@@ -433,8 +436,14 @@ namespace KGySoft.Serialization.Binary
     /// <item><see cref="Half"/> (in .NET 5.0 and above)</item>
     /// <item><see cref="DateOnly"/> (in .NET 6.0 and above)</item>
     /// <item><see cref="TimeOnly"/> (in .NET 6.0 and above)</item>
+    /// <item><see cref="TimeOnly"/> (in .NET 6.0 and above)</item>
+    /// <item><see cref="NFloat"/> (in .NET 6.0 and above)</item>
     /// <item><see cref="Int128"/> (in .NET 7.0 and above)</item>
     /// <item><see cref="UInt128"/> (in .NET 7.0 and above)</item>
+    /// <item><see cref="BFloat16"/> (in .NET 11.0 and above)</item>
+    /// <item><see cref="Decimal32"/> (in .NET 11.0 and above)</item>
+    /// <item><see cref="Decimal64"/> (in .NET 11.0 and above)</item>
+    /// <item><see cref="Decimal128"/> (in .NET 11.0 and above)</item>
     /// <item><see cref="Tuple"/> types if generic arguments are any of the supported types (in .NET Framework 4.0 and above)</item>
     /// <item><see cref="ValueTuple"/> types if generic arguments are any of the supported types (in .NET Standard 2.0 and above)</item>
     /// <item>Any object that implements the <see cref="IBinarySerializable"/> interface.</item>
@@ -639,11 +648,13 @@ namespace KGySoft.Serialization.Binary
             Int128 = 39, // .NET 7 and above
             UInt128 = 40, // .NET 7 and above
             ValueTuple0 = 41, // .NET Standard 2.0 and above - note: generic value tuples are on byte 3. as special collections
+            BFloat16 = 42, // .NET 11 and above
+            Decimal32 = 43, // .NET 11 and above
+            Decimal64 = 44, // .NET 11 and above
+            Decimal128 = 45,  // .NET 11 and above
 
-            // 42-47: 6 reserved values
-            // TODO: Some candidates:
-            //Int256 = 41, UInt256 = 42, // https://github.com/dotnet/runtime/issues/80663
-            //Decimal32 = 43, Decimal64 = 44, Decimal128 = 45, // https://github.com/dotnet/runtime/issues/81376
+            // 46: 1 reserved value
+            // A possible candidate:
             //Float8 = 46, // if it will be added, better to add to non-extended types due to its small size - https://github.com/dotnet/runtime/issues/25004
 
             ExtendedSimpleType = 47, // Indicates that byte 2. is also included. It allows additional 255 simple types (excluding zero).
@@ -663,7 +674,7 @@ namespace KGySoft.Serialization.Binary
             //SerializationEnd = 59, // Planned technical type for IAdvancedBinarySerializable (refers to a static object)
             BinarySerializable = 60, // IBinarySerializable implementation. Can be combined.
             RawStruct = 61, // Any ValueType. Can be combined only with Nullable but not with collections.
-            RecursiveObjectGraph = 62, // Represents a recursively serialized object graph. As a type, represents any unspecified type. Can be combined.
+            RecursiveObjectGraph = 62, // Represents any unspecified type. Instances indicated by this data type can only be serialized as a recursive object graph. Can be combined.
             // 63: Reserved (though it would have has the same value as the SimpleTypesLow mask or ExtendedSimpleType | ImpureType that can indicate extended impure types if running out of reserved values)
 
             // ----- flags: -----
@@ -776,8 +787,10 @@ namespace KGySoft.Serialization.Binary
             StringComparer = 13 << 16,
             StringSegmentComparer = 14 << 16,
 
+            NFloat = 15 << 16, // .NET 6.0 and above
+
             // TODO candidates:
-            //Quad = // float128: to extended types - https://github.com/dotnet/csharplang/issues/1252
+            //Quad = // float128: to extended types - https://github.com/dotnet/csharplang/issues/1252, https://github.com/dotnet/csharplang/discussions/8199
             //BigNumber/BigRational, // https://source.dot.net/#System.Runtime.Numerics/System/Numerics/BigNumber.cs,969928e529663ace / https://github.com/dotnet/runtime/issues/71791
             //BigDecimal, // https://github.com/dotnet/runtime/issues/20681
 
@@ -2169,10 +2182,17 @@ namespace KGySoft.Serialization.Binary
 #if NET6_0_OR_GREATER
             { Reflector.DateOnlyType, DataTypes.DateOnly },
             { Reflector.TimeOnlyType, DataTypes.TimeOnly },
+            { typeof(NFloat), DataTypes.NFloat },
 #endif
 #if NET7_0_OR_GREATER
             { Reflector.Int128Type, DataTypes.Int128 },
             { Reflector.UInt128Type, DataTypes.UInt128 },
+#endif
+#if NET11_0_OR_GREATER
+            { typeof(BFloat16), DataTypes.BFloat16 },
+            { typeof(Decimal32), DataTypes.Decimal32 },
+            { typeof(Decimal64), DataTypes.Decimal64 },
+            { typeof(Decimal128), DataTypes.Decimal128 },
 #endif
         };
 

@@ -319,16 +319,21 @@ namespace KGySoft.Serialization.Binary
             private static void WriteUInt128(BinaryWriter bw, in UInt128 value)
             {
                 if (BitConverter.IsLittleEndian)
-            {
-                Span<byte> bytes = stackalloc byte[sizeof(UInt128)];
-                MemoryMarshal.GetReference(bytes).As<byte, UInt128>() = value;
-                bw.Write(bytes);
+                {
+                    Span<byte> bytes = stackalloc byte[sizeof(UInt128)];
+                    MemoryMarshal.GetReference(bytes).As<byte, UInt128>() = value;
+                    bw.Write(bytes);
                     return;
-            }
+                }
 
                 bw.Write(Unsafe.AsRef(in value).As<UInt128, ulong>().At(1));
                 bw.Write(Unsafe.AsRef(in value).As<UInt128, ulong>());
             }
+#endif
+
+#if NET11_0_OR_GREATER
+            [SecuritySafeCritical]
+            private static void WriteBFloat16(BinaryWriter bw, BFloat16 value) => bw.Write(value.As<BFloat16, ushort>());
 #endif
 
             private static void WriteGenericSpecifier(BinaryWriter bw, Type type)
@@ -891,6 +896,9 @@ namespace KGySoft.Serialization.Binary
                     case DataTypes.TimeOnly:
                         bw.Write(((TimeOnly)obj).Ticks);
                         return;
+                    case DataTypes.NFloat:
+                        bw.Write(((NFloat)obj).Value); // NFloat.Value is always a double, so this is alright
+                        return;
 #endif
 
 #if NET7_0_OR_GREATER
@@ -900,6 +908,21 @@ namespace KGySoft.Serialization.Binary
                     case DataTypes.UInt128:
                         WriteUInt128(bw, (UInt128)obj);
                         return;
+#endif
+
+#if NET11_0_OR_GREATER
+                    case DataTypes.BFloat16:
+                        WriteBFloat16(bw, (BFloat16)obj);
+                        return;
+                    case DataTypes.Decimal32:
+                        bw.Write(Decimal32.EncodeBinary((Decimal32)obj));
+                        return;
+                    case DataTypes.Decimal64:
+                        bw.Write(Decimal64.EncodeBinary((Decimal64)obj));
+                        break;
+                    case DataTypes.Decimal128:
+                        WriteUInt128(bw, Decimal128.EncodeBinary((Decimal128)obj));
+                        break;
 #endif
 
                     default:

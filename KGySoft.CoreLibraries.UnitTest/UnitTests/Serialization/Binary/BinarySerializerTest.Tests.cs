@@ -290,11 +290,18 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #if NET6_0_OR_GREATER
                 DateOnly.FromDateTime(DateTime.Today),
                 TimeOnly.FromDateTime(DateTime.Now),
+                (NFloat)1,
 #endif
 
 #if NET7_0_OR_GREATER
                 (Int128)1,
                 (UInt128)1,
+#endif
+#if NET11_0_OR_GREATER
+		        (Decimal32)1,
+                (Decimal64)1,
+                (Decimal128)1,
+                (BFloat16)1,
 #endif
             };
 
@@ -949,6 +956,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
 #endif
 
+            // non-everywhere-serializable types
             referenceObjects = new object[]
             {
                 new DBNull[] { DBNull.Value, null },
@@ -982,11 +990,19 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #if NET6_0_OR_GREATER
                 new DateOnly[] { DateOnly.FromDateTime(DateTime.Today), DateOnly.MaxValue },
                 new TimeOnly[] { TimeOnly.FromDateTime(DateTime.Now), TimeOnly.MaxValue },
+                new NFloat[] { NFloat.Epsilon, NFloat.MaxValue },
 #endif
 
 #if NET7_0_OR_GREATER
                 new Int128[] { 1, 2 },
                 new UInt128[] { 1, 2 },
+#endif
+
+#if NET11_0_OR_GREATER
+                new BFloat16[] { BFloat16.Epsilon, BFloat16.MaxValue },
+                new Decimal32[] { Decimal32.Epsilon, Decimal32.MaxValue },
+                new Decimal64[] { Decimal64.Epsilon, Decimal64.MaxValue },
+                new Decimal128[] { Decimal128.Epsilon, Decimal128.MaxValue },
 #endif
             };
 
@@ -1232,7 +1248,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes);
 #endif
 
-           // non - serializable types
+           // non-serializable types
            referenceObjects = new object[]
            {
                 new NonSerializableStruct?[] { new NonSerializableStruct { Bytes3 = [1, 2, 3], IntProp = 10, Str10 = "alpha" }, null },
@@ -1265,6 +1281,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #if NET6_0_OR_GREATER
                 new DateOnly?[] { DateOnly.FromDateTime(DateTime.Today), null },
                 new TimeOnly?[] { TimeOnly.FromDateTime(DateTime.Now), null },
+                new NFloat?[] { NFloat.Epsilon, null },
 #endif
 
 #if NET7_0_OR_GREATER
@@ -1278,6 +1295,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #if NETCOREAPP2_1_OR_GREATER
                 new Memory<byte>?[] { new byte[10].AsMemory(1, 2), null },
                 new Memory<byte?>?[] { new byte?[10].AsMemory(1, 2), null },
+#endif
+#if NET11_0_OR_GREATER
+               new BFloat16?[] { BFloat16.One, null },
+               new Decimal32?[] { Decimal32.One, null },
+               new Decimal64?[] { Decimal64.One, null },
+               new Decimal128?[] { Decimal128.One, null },
 #endif
            };
 
@@ -2421,11 +2444,19 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #if NET6_0_OR_GREATER
                 DateOnly.FromDateTime(DateTime.Today),
                 TimeOnly.FromDateTime(DateTime.Now),
+                //NFloat.Epsilon,
 #endif
 
 #if NET7_0_OR_GREATER
                 (Int128)1,
                 (UInt128)1,
+#endif
+
+#if NET11_0_OR_GREATER
+                //BFloat16.One,
+                //Decimal32.One,
+                //Decimal64.One,
+                //Decimal128.One,
 #endif
 
                 // dictionary with any object key and read-only collection value

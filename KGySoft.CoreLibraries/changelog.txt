@@ -45,20 +45,20 @@
 ==============================
 + ResXDataNode class: new constructor overload
 
-- KGySoft.Security.Cryptography
-===============================
+- KGySoft.Security.Cryptography namespace:
+==========================================
 - SecureRandom class:
   - Next(int): maxValue was not allowed to be zero via the SecureRandom instance returned by the static
     SecureRandom.Instance property, though a regular Random instance allows this case.
   - Next(int, int): maxValue was not allowed to be the same as minValue via the SecureRandom instance returned by
     the static SecureRandom.Instance property, though a regular Random instance allows this case.
 
-+ KGySoft.Serialization
-=======================
++ KGySoft.Serialization namespace:
+==================================
 + New SerializedType struct to help preserving metadata in native AOT mode.
 
-! KGySoft.Serialization.Binary
-==============================
+! KGySoft.Serialization.Binary namespace:
+=========================================
 ! BinarySerializer/BinarySerializationFormatter classes:
   ! Ensuring binary compatibility between little and big endian CPU architectures (does not apply when the
     CompactSerializationOfStructures option is enabled, or when a custom-serialized type ignores endianness).
@@ -67,13 +67,18 @@
     primitive types. Non-array collections of primitive types are not affected by this change.
   + New Deserialize/DeserializeFromStream/DeserializeByReader overloads where the element type of the expectedTypes
     parameter is SerializedType for better compatibility with AOT mode.
+  + Supporting the NFloat struct natively (.NET 6.0 and above)
+  + Supporting the BFloat16 struct natively (.NET 11.0 and above)
+  + Supporting the Decimal32 struct natively (.NET 11.0 and above)
+  + Supporting the Decimal64 struct natively (.NET 11.0 and above)
+  + Supporting the Decimal128 struct natively (.NET 11.0 and above)
   + Supporting function pointer runtime types (.NET 11.0 and above)
 - WeakAssemblySerializationBinder class:
   - OmitAssemblyNameOnSerialize property: Omitting the assembly name did not work if the type had been forwarded
     into the core assembly from a non-core one.
 
-+ KGySoft.Serialization.Xml
-===========================
++ KGySoft.Serialization.Xml namespace:
+======================================
 + XmlSerializer class:
   + New Deserialize/DeserializeFromStream/DeserializeByReader overloads where the element type of the expectedTypes
     parameter is SerializedType for better compatibility with AOT mode.

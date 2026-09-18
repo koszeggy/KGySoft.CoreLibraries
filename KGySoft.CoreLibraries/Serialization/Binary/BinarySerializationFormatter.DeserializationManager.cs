@@ -924,6 +924,15 @@ namespace KGySoft.Serialization.Binary
             }
 #endif
 
+#if NET11_0_OR_GREATER
+            [SecuritySafeCritical]
+            private static BFloat16 ReadBFloat16(BinaryReader br)
+            {
+                ushort value = br.ReadUInt16();
+                return value.As<ushort, BFloat16>();
+            }
+#endif
+
             [RequiresUnreferencedCode("SetValue")]
             private static void ApplyPendingUsages(UsageReferences usages, object origObject, object? finalObject)
             {
@@ -1908,9 +1917,12 @@ namespace KGySoft.Serialization.Binary
                             return createdResult = DateOnly.FromDayNumber(br.ReadInt32());
                         case DataTypes.TimeOnly:
                             return createdResult = new TimeOnly(br.ReadInt64());
+                        case DataTypes.NFloat:
+                            return createdResult = new NFloat(br.ReadDouble());
 #else
                         case DataTypes.DateOnly:
                         case DataTypes.TimeOnly:
+                        case DataTypes.NFloat:
                             return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypePlatformNotSupported(DataTypeToString(dataType)));
 #endif
 
@@ -1922,6 +1934,23 @@ namespace KGySoft.Serialization.Binary
 #else
                         case DataTypes.Int128:
                         case DataTypes.UInt128:
+                            return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypePlatformNotSupported(DataTypeToString(dataType)));
+#endif
+
+#if NET11_0_OR_GREATER
+                        case DataTypes.BFloat16:
+                            return createdResult = ReadBFloat16(br);
+                        case DataTypes.Decimal32:
+                            return createdResult = Decimal32.DecodeBinary(br.ReadUInt32());
+                        case DataTypes.Decimal64:
+                            return createdResult = Decimal64.DecodeBinary(br.ReadUInt64());
+                        case DataTypes.Decimal128:
+                            return createdResult = Decimal128.DecodeBinary(ReadUInt128(br));
+#else
+                        case DataTypes.BFloat16:
+                        case DataTypes.Decimal32:
+                        case DataTypes.Decimal64:
+                        case DataTypes.Decimal128:
                             return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationTypePlatformNotSupported(DataTypeToString(dataType)));
 #endif
 
