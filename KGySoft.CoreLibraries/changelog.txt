@@ -57,9 +57,14 @@
 =======================
 + New SerializedType struct to help preserving metadata in native AOT mode.
 
-* KGySoft.Serialization.Binary
+! KGySoft.Serialization.Binary
 ==============================
-+ BinarySerializer/BinarySerializationFormatter classes:
+! BinarySerializer/BinarySerializationFormatter classes:
+  ! Ensuring binary compatibility between little and big endian CPU architectures (does not apply when the
+    CompactSerializationOfStructures option is enabled, or when a custom-serialized type ignores endianness).
+    May be a breaking change on big endian platforms when deserializing a stream produced by a previous version.
+    Affects the serialization of some non-primitive types (e.g. Int128/UInt128, Vector<T>), and arrays of non-byte
+    primitive types. Non-array collections of primitive types are not affected by this change.
   + New Deserialize/DeserializeFromStream/DeserializeByReader overloads where the element type of the expectedTypes
     parameter is SerializedType for better compatibility with AOT mode.
   + Supporting function pointer runtime types (.NET 11.0 and above)

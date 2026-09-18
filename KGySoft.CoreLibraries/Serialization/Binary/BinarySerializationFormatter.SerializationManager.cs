@@ -298,25 +298,36 @@ namespace KGySoft.Serialization.Binary
 #endif
 
 #if NET5_0_OR_GREATER
+#if !NET6_0_OR_GREATER
             [SecuritySafeCritical]
-            private static void WriteHalf(BinaryWriter bw, Half value) => bw.Write(value.As<Half, ushort>());
+#endif
+            private static void WriteHalf(BinaryWriter bw, Half value)
+            {
+#if NET6_0_OR_GREATER
+                bw.Write(value);
+#else
+                bw.Write(value.As<Half, ushort>());
+#endif
+            }
 #endif
 
 #if NET7_0_OR_GREATER
             [SecuritySafeCritical]
-            private unsafe static void WriteInt128(BinaryWriter bw, in Int128 value)
-            {
-                Span<byte> bytes = stackalloc byte[sizeof(Int128)];
-                MemoryMarshal.GetReference(bytes).As<byte, Int128>() = value;
-                bw.Write(bytes);
-            }
+            private static void WriteInt128(BinaryWriter bw, in Int128 value) => WriteUInt128(bw, Unsafe.AsRef(in value).As<Int128, UInt128>());
 
             [SecuritySafeCritical]
-            private unsafe static void WriteUInt128(BinaryWriter bw, in UInt128 value)
+            private static void WriteUInt128(BinaryWriter bw, in UInt128 value)
+            {
+                if (BitConverter.IsLittleEndian)
             {
                 Span<byte> bytes = stackalloc byte[sizeof(UInt128)];
                 MemoryMarshal.GetReference(bytes).As<byte, UInt128>() = value;
                 bw.Write(bytes);
+                    return;
+            }
+
+                bw.Write(Unsafe.AsRef(in value).As<UInt128, ulong>().At(1));
+                bw.Write(Unsafe.AsRef(in value).As<UInt128, ulong>());
             }
 #endif
 
@@ -1440,11 +1451,12 @@ namespace KGySoft.Serialization.Binary
                 // 2. Write elements
                 Type elementType = type.GetElementType()!;
 
-                // 2.a.) Primitive array
-                if (elementType.IsPrimitive)
+                // 2.a. Primitive array
+                byte[]? rawData;
+                if (elementType.IsPrimitive && ((rawData = array as byte[]) != null || BitConverter.IsLittleEndian))
                 {
                     // due to CLR behavior this works also for sbyte but this is ok here
-                    if (array is byte[] rawData)
+                    if (rawData != null)
                     {
                         bw.Write(rawData);
                         return;
@@ -1511,7 +1523,7 @@ namespace KGySoft.Serialization.Binary
 #endif
                 }
 
-                // 2.b.) Complex array
+                // 2.b. Complex array or non-byte primitive array on a big endian architecture
                 if (elementType.IsPointer())
                     Throw.NotSupportedException(Res.SerializationPointerArrayTypeNotSupported(type));
                 collectionDataTypes.MoveNextExtracted();

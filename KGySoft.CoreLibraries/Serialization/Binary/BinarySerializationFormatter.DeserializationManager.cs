@@ -525,7 +525,8 @@ namespace KGySoft.Serialization.Binary
                 
                 internal bool TryReadPrimitive()
                 {
-                    if (array == null || !descriptor.GetElementDescriptor().Type!.IsPrimitive)
+                    Type elementType = descriptor.GetElementDescriptor().Type!;
+                    if (array == null || !elementType.IsPrimitive)
                     {
                         if (!descriptor.CreateResultFromByteArray)
                             return false;
@@ -536,6 +537,9 @@ namespace KGySoft.Serialization.Binary
                             Add(reader.ReadByte());
                         return true;
                     }
+
+                    if (!BitConverter.IsLittleEndian && (elementType != typeof(byte) || elementType != typeof(sbyte)))
+                        return false;
 
                     int byteLength = Buffer.ByteLength(array);
 #if NET6_0_OR_GREATER
@@ -881,29 +885,42 @@ namespace KGySoft.Serialization.Binary
 #endif
 
 #if NET5_0_OR_GREATER
+#if !NET6_0_OR_GREATER
             [SecuritySafeCritical]
+#endif
             private static Half ReadHalf(BinaryReader br)
             {
+#if NET6_0_OR_GREATER
+                return br.ReadHalf();
+#else
                 ushort value = br.ReadUInt16();
                 return value.As<ushort, Half>();
+#endif
             }
 #endif
 
 #if NET7_0_OR_GREATER
             [SecuritySafeCritical]
-            private unsafe static Int128 ReadInt128(BinaryReader br)
+            private static Int128 ReadInt128(BinaryReader br)
             {
-                Span<byte> bytes = stackalloc byte[sizeof(Int128)];
-                br.BaseStream.ReadExactly(bytes);
-                return MemoryMarshal.GetReference(bytes).As<byte, Int128>();
+                UInt128 result = ReadUInt128(br);
+                return result.As<UInt128, Int128>();
             }
 
             [SecuritySafeCritical]
-            private unsafe static UInt128 ReadUInt128(BinaryReader br)
+            private static UInt128 ReadUInt128(BinaryReader br)
             {
-                Span<byte> bytes = stackalloc byte[sizeof(UInt128)];
-                br.BaseStream.ReadExactly(bytes);
-                return MemoryMarshal.GetReference(bytes).As<byte, UInt128>();
+                if (BitConverter.IsLittleEndian)
+                {
+                    Span<byte> bytes = stackalloc byte[sizeof(UInt128)];
+                    br.BaseStream.ReadExactly(bytes);
+                    return MemoryMarshal.GetReference(bytes).As<byte, UInt128>();
+                }
+
+                Span<ulong> halves = stackalloc ulong[2];
+                halves[1] = br.ReadUInt64();
+                halves[0] = br.ReadUInt64();
+                return MemoryMarshal.GetReference(halves).As<ulong, UInt128>();
             }
 #endif
 
