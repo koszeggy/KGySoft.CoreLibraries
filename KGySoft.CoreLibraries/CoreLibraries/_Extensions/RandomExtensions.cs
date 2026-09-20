@@ -1847,7 +1847,6 @@ namespace KGySoft.CoreLibraries
         /// such as when <paramref name="maxValue"/> is near <see cref="Decimal32.Epsilon"/>.</para>
         /// <para>If <paramref name="scale"/> is <see cref="FloatScale.Auto"/>, then the <see cref="FloatScale.ForceLinear"/> option is used
         /// if <paramref name="maxValue"/> is less than or equal to 65535. For larger range the <see cref="FloatScale.ForceLogarithmic"/> option is used.</para>
-        /// <para>Generating random numbers by this method on the logarithmic scale is about 25-50 times slower than on the linear scale.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than 0.0
@@ -1910,7 +1909,6 @@ namespace KGySoft.CoreLibraries
         /// if the absolute value of both <paramref name="minValue"/> and <paramref name="maxValue"/> are less than or equal to 65535, or when they have the same sign
         /// and the absolute value of <paramref name="maxValue"/> is less than 16 times greater than the absolute value of <paramref name="minValue"/>.
         /// For larger ranges the <see cref="FloatScale.ForceLogarithmic"/> option is used.</para>
-        /// <para>Generating random numbers by this method on the logarithmic scale is about 25-50 times slower than on the linear scale.</para>
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than <paramref name="minValue"/>
@@ -1980,6 +1978,354 @@ namespace KGySoft.CoreLibraries
                 minExponent = maxExponent - Decimal32.Four;
 
             Decimal32 result = Decimal32.Pow(Decimal32.Ten, NextDecimal32Linear(random, minExponent, maxExponent));
+            if (isNeg)
+                result = -result;
+
+            // protecting ourselves against inaccurate calculations; however, in practice result is always in range.
+            return result < minValue ? minValue : (result > maxValue ? maxValue : result);
+        }
+#endif
+
+        #endregion
+
+        #region Decimal64
+
+#if NET11_0_OR_GREATER
+        /// <summary>
+        /// Returns a random <see cref="Decimal64"/> value that is greater than or equal to 0.0 and less than 1.0.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <returns>A <see cref="Decimal64"/> floating point number that is greater than or equal to 0.0 and less than 1.0.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        public static Decimal64 NextDecimal64(this Random random)
+        {
+            if (random == null!)
+                Throw.ArgumentNullException(Argument.random);
+
+            // To generate values in range [0..1), we could just return GenerateSampleUInt64(random) / UInt64.MaxValue,
+            // but generating the sample within the max significand provides the best performance. Btw. this is similar to FastRandom's NextSingle/NextDouble approach.
+            // See also https://github.com/dotnet/runtime/blob/9e26c34ece8d75f049f6990a2a4160d0297ab949/src/libraries/System.Private.CoreLib/src/System/Number.DecimalIeee754.cs#L3612-L3618
+            return (Decimal64)random.NextInt64(Decimal64.MaxSignificand + 1) * Decimal64.NormalizationFactor;
+        }
+
+        /// <summary>
+        /// Returns a non-negative random <see cref="Decimal64"/> value that is less than or equal to the specified <paramref name="maxValue"/>.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <param name="maxValue">The upper bound of the random number returned.</param>
+        /// <param name="scale">The scale to use to generate the random number. This parameter is optional.
+        /// <br/>Default value: <see cref="FloatScale.Auto"/>.</param>
+        /// <returns>A <see cref="Decimal64"/> floating point number that is greater than or equal to 0.0 and less than or equal to <paramref name="maxValue"/>.</returns>
+        /// <remarks>
+        /// <para>In most cases return value is less than <paramref name="maxValue"/>. Return value can be equal to <paramref name="maxValue"/> in very edge cases,
+        /// such as when <paramref name="maxValue"/> is near <see cref="Decimal64.Epsilon"/>.</para>
+        /// <para>If <paramref name="scale"/> is <see cref="FloatScale.Auto"/>, then the <see cref="FloatScale.ForceLinear"/> option is used
+        /// if <paramref name="maxValue"/> is less than or equal to 65535. For larger range the <see cref="FloatScale.ForceLogarithmic"/> option is used.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than 0.0
+        /// <br/>-or-
+        /// <br/><paramref name="scale"/> is not a valid value of <see cref="FloatScale"/>.</exception>
+        public static Decimal64 NextDecimal64(this Random random, Decimal64 maxValue, FloatScale scale = FloatScale.Auto)
+        {
+            if (random == null!)
+                Throw.ArgumentNullException(Argument.random);
+            if ((uint)scale > (uint)FloatScale.ForceLogarithmic)
+                Throw.EnumArgumentOutOfRange(Argument.scale, scale);
+            if (maxValue <= Decimal64.Zero)
+            {
+                if (maxValue < Decimal64.Zero)
+                    Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
+                return Decimal64.Zero;
+            }
+
+            if (Decimal64.IsNaN(maxValue))
+                Throw.ArgumentOutOfRangeException(Argument.maxValue);
+            if (Decimal64.IsPositiveInfinity(maxValue))
+                maxValue = Decimal64.MaxValue;
+
+            // if linear scaling is forced...
+            if (scale == FloatScale.ForceLinear
+                // or we use auto-scaling and maximum is not larger than MaxUInt16
+                || (scale == FloatScale.Auto && maxValue <= Decimal64.MaxUInt16))
+            {
+                return random.NextDecimal64() * maxValue;
+            }
+
+            // Possible Decimal64 exponents are -383..384, but we don't generate too small exponents for big ranges because
+            // that would cause too many almost zero results, which are much smaller than the original NextDecimal64 values.
+            Decimal64 minExponent = Decimal64.NegativeFive;
+            Decimal64 maxExponent = Decimal64.Log10(maxValue);
+
+            // We decrease exponents only if the given range is already small.
+            if (maxExponent < minExponent)
+                minExponent = maxExponent - Decimal64.Four;
+
+            Decimal64 result = Decimal64.Pow(Decimal64.Ten, NextDecimal64Linear(random, minExponent, maxExponent));
+
+            // protecting ourselves against inaccurate calculations; however, in practice result is always in range.
+            return result > maxValue ? maxValue : result;
+        }
+
+        /// <summary>
+        /// Returns a random <see cref="Decimal64"/> value that is within a specified range.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <param name="minValue">The lower bound of the random number returned.</param>
+        /// <param name="maxValue">The upper bound of the random number returned. Must be greater or equal to <paramref name="minValue"/>.</param>
+        /// <param name="scale">The scale to use to generate the random number. This parameter is optional.
+        /// <br/>Default value: <see cref="FloatScale.Auto"/>.</param>
+        /// <returns>A <see cref="Decimal64"/> floating point number that is greater than or equal to <paramref name="minValue"/> and less than or equal to <paramref name="maxValue"/>.</returns>
+        /// <remarks>
+        /// <para>In most cases return value is less than <paramref name="maxValue"/>. Return value can be equal to <paramref name="maxValue"/> in very edge cases such as
+        /// when <paramref name="minValue"/> is equal to <paramref name="maxValue"/> or when the range is near <see cref="Decimal64.Epsilon"/>.</para>
+        /// <para>If <paramref name="scale"/> is <see cref="FloatScale.Auto"/>, then the <see cref="FloatScale.ForceLinear"/> option is used
+        /// if the absolute value of both <paramref name="minValue"/> and <paramref name="maxValue"/> are less than or equal to 65535, or when they have the same sign
+        /// and the absolute value of <paramref name="maxValue"/> is less than 16 times greater than the absolute value of <paramref name="minValue"/>.
+        /// For larger ranges the <see cref="FloatScale.ForceLogarithmic"/> option is used.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than <paramref name="minValue"/>
+        /// <br/>-or-
+        /// <br/><paramref name="scale"/> is not a valid value of <see cref="FloatScale"/>.</exception>
+        public static Decimal64 NextDecimal64(this Random random, Decimal64 minValue, Decimal64 maxValue, FloatScale scale = FloatScale.Auto)
+        {
+            #region Local Methods
+            
+            static Decimal64 AdjustValue(Decimal64 value) => Decimal64.IsNegativeInfinity(value) ? Decimal64.MinValue : (Decimal64.IsPositiveInfinity(value) ? Decimal64.MaxValue : value);
+            
+            #endregion
+
+            if (random == null!)
+                Throw.ArgumentNullException(Argument.random);
+            if (Decimal64.IsPositiveInfinity(minValue) && Decimal64.IsPositiveInfinity(maxValue) || Decimal64.IsNegativeInfinity(minValue) && Decimal64.IsNegativeInfinity(maxValue))
+                Throw.ArgumentOutOfRangeException(Argument.minValue);
+            if (Decimal64.IsNaN(minValue) || Decimal64.IsNaN(maxValue))
+                Throw.ArgumentOutOfRangeException(Decimal64.IsNaN(minValue) ? Argument.minValue : Argument.maxValue);
+            if (maxValue < minValue)
+                Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.MaxValueLessThanMinValue);
+            if ((uint)scale > (uint)FloatScale.ForceLogarithmic)
+                Throw.EnumArgumentOutOfRange(Argument.scale, scale);
+            minValue = AdjustValue(minValue);
+            maxValue = AdjustValue(maxValue);
+
+            if (minValue == maxValue)
+                return minValue;
+            if (scale == FloatScale.ForceLinear)
+                return NextDecimal64Linear(random, minValue, maxValue);
+
+            bool posAndNeg = minValue < Decimal64.Zero && maxValue > Decimal64.Zero;
+            Decimal64 minAbs = Decimal64.Min(Decimal64.Abs(minValue), Decimal64.Abs(maxValue));
+            Decimal64 maxAbs = Decimal64.Max(Decimal64.Abs(minValue), Decimal64.Abs(maxValue));
+
+            // choosing linear scaling if maximum is not larger than MaxUInt16 or when the difference of order of magnitude (in binary) is smaller than 4
+            if (scale == FloatScale.Auto && (maxAbs <= Decimal64.MaxUInt16 || !posAndNeg && maxAbs * Decimal64.Sixteenth < minAbs))
+                return NextDecimal64Linear(random, minValue, maxValue);
+
+            bool isNeg;
+            if (!posAndNeg)
+                isNeg = minValue < Decimal64.Zero;
+            else
+            {
+                // if both negative and positive results are expected we select the sign based on the size of the ranges
+                Decimal64 sample = random.NextDecimal64();
+                Decimal64 rate = minAbs / maxAbs;
+                Decimal64 absMinValue = Decimal64.Abs(minValue);
+                isNeg = absMinValue <= maxValue
+                    ? rate * Decimal64.Half > sample
+                    : rate * Decimal64.Half < sample;
+
+                // now adjusting the limits for 0...[selected range]
+                minAbs = Decimal64.Zero;
+                maxAbs = isNeg ? absMinValue : Decimal64.Abs(maxValue);
+            }
+
+            // We don't generate too small exponents for big ranges because
+            // that would cause too many almost zero results
+            Decimal64 minExponent = minAbs == Decimal64.Zero ? Decimal64.NegativeFive : Decimal64.Log10(minAbs);
+            Decimal64 maxExponent = Decimal64.Log10(maxAbs);
+            if (minExponent.Equals(maxExponent))
+                return minValue;
+
+            // We decrease exponents only if the given range is already small.
+            if (maxExponent < minExponent)
+                minExponent = maxExponent - Decimal64.Four;
+
+            Decimal64 result = Decimal64.Pow(Decimal64.Ten, NextDecimal64Linear(random, minExponent, maxExponent));
+            if (isNeg)
+                result = -result;
+
+            // protecting ourselves against inaccurate calculations; however, in practice result is always in range.
+            return result < minValue ? minValue : (result > maxValue ? maxValue : result);
+        }
+#endif
+
+        #endregion
+
+        #region Decimal128
+
+#if NET11_0_OR_GREATER
+        /// <summary>
+        /// Returns a random <see cref="Decimal128"/> value that is greater than or equal to 0.0 and less than 1.0.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <returns>A <see cref="Decimal128"/> floating point number that is greater than or equal to 0.0 and less than 1.0.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        public static Decimal128 NextDecimal128(this Random random)
+        {
+            if (random == null!)
+                Throw.ArgumentNullException(Argument.random);
+
+            // To generate values in range [0..1), we could just return GenerateSampleUInt128(random) / UInt128.MaxValue,
+            // but generating the sample within the max significand provides the best performance. Btw. this is similar to FastRandom's NextSingle/NextDouble approach.
+            // See also https://github.com/dotnet/runtime/blob/9e26c34ece8d75f049f6990a2a4160d0297ab949/src/libraries/System.Private.CoreLib/src/System/Number.DecimalIeee754.cs#L3612-L3618
+            return (Decimal128)random.NextUInt128(Decimal128.MaxSignificandP1) * Decimal128.NormalizationFactor;
+        }
+
+        /// <summary>
+        /// Returns a non-negative random <see cref="Decimal128"/> value that is less than or equal to the specified <paramref name="maxValue"/>.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <param name="maxValue">The upper bound of the random number returned.</param>
+        /// <param name="scale">The scale to use to generate the random number. This parameter is optional.
+        /// <br/>Default value: <see cref="FloatScale.Auto"/>.</param>
+        /// <returns>A <see cref="Decimal128"/> floating point number that is greater than or equal to 0.0 and less than or equal to <paramref name="maxValue"/>.</returns>
+        /// <remarks>
+        /// <para>In most cases return value is less than <paramref name="maxValue"/>. Return value can be equal to <paramref name="maxValue"/> in very edge cases,
+        /// such as when <paramref name="maxValue"/> is near <see cref="Decimal128.Epsilon"/>.</para>
+        /// <para>If <paramref name="scale"/> is <see cref="FloatScale.Auto"/>, then the <see cref="FloatScale.ForceLinear"/> option is used
+        /// if <paramref name="maxValue"/> is less than or equal to 65535. For larger range the <see cref="FloatScale.ForceLogarithmic"/> option is used.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than 0.0
+        /// <br/>-or-
+        /// <br/><paramref name="scale"/> is not a valid value of <see cref="FloatScale"/>.</exception>
+        public static Decimal128 NextDecimal128(this Random random, Decimal128 maxValue, FloatScale scale = FloatScale.Auto)
+        {
+            if (random == null!)
+                Throw.ArgumentNullException(Argument.random);
+            if ((uint)scale > (uint)FloatScale.ForceLogarithmic)
+                Throw.EnumArgumentOutOfRange(Argument.scale, scale);
+            if (maxValue <= Decimal128.Zero)
+            {
+                if (maxValue < Decimal128.Zero)
+                    Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
+                return Decimal128.Zero;
+            }
+
+            if (Decimal128.IsNaN(maxValue))
+                Throw.ArgumentOutOfRangeException(Argument.maxValue);
+            if (Decimal128.IsPositiveInfinity(maxValue))
+                maxValue = Decimal128.MaxValue;
+
+            // if linear scaling is forced...
+            if (scale == FloatScale.ForceLinear
+                // or we use auto-scaling and maximum is not larger than MaxUInt16
+                || (scale == FloatScale.Auto && maxValue <= Decimal128.MaxUInt16))
+            {
+                return random.NextDecimal128() * maxValue;
+            }
+
+            // Possible Decimal128 exponents are -6143..6144, but we don't generate too small exponents for big ranges because
+            // that would cause too many almost zero results, which are much smaller than the original NextDecimal128 values.
+            Decimal128 minExponent = Decimal128.NegativeFive;
+            Decimal128 maxExponent = Decimal128.Log10(maxValue);
+
+            // We decrease exponents only if the given range is already small.
+            if (maxExponent < minExponent)
+                minExponent = maxExponent - Decimal128.Four;
+
+            Decimal128 result = Decimal128.Pow(Decimal128.Ten, NextDecimal128Linear(random, minExponent, maxExponent));
+
+            // protecting ourselves against inaccurate calculations; however, in practice result is always in range.
+            return result > maxValue ? maxValue : result;
+        }
+
+        /// <summary>
+        /// Returns a random <see cref="Decimal128"/> value that is within a specified range.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <param name="minValue">The lower bound of the random number returned.</param>
+        /// <param name="maxValue">The upper bound of the random number returned. Must be greater or equal to <paramref name="minValue"/>.</param>
+        /// <param name="scale">The scale to use to generate the random number. This parameter is optional.
+        /// <br/>Default value: <see cref="FloatScale.Auto"/>.</param>
+        /// <returns>A <see cref="Decimal128"/> floating point number that is greater than or equal to <paramref name="minValue"/> and less than or equal to <paramref name="maxValue"/>.</returns>
+        /// <remarks>
+        /// <para>In most cases return value is less than <paramref name="maxValue"/>. Return value can be equal to <paramref name="maxValue"/> in very edge cases such as
+        /// when <paramref name="minValue"/> is equal to <paramref name="maxValue"/> or when the range is near <see cref="Decimal128.Epsilon"/>.</para>
+        /// <para>If <paramref name="scale"/> is <see cref="FloatScale.Auto"/>, then the <see cref="FloatScale.ForceLinear"/> option is used
+        /// if the absolute value of both <paramref name="minValue"/> and <paramref name="maxValue"/> are less than or equal to 65535, or when they have the same sign
+        /// and the absolute value of <paramref name="maxValue"/> is less than 16 times greater than the absolute value of <paramref name="minValue"/>.
+        /// For larger ranges the <see cref="FloatScale.ForceLogarithmic"/> option is used.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than <paramref name="minValue"/>
+        /// <br/>-or-
+        /// <br/><paramref name="scale"/> is not a valid value of <see cref="FloatScale"/>.</exception>
+        public static Decimal128 NextDecimal128(this Random random, Decimal128 minValue, Decimal128 maxValue, FloatScale scale = FloatScale.Auto)
+        {
+            #region Local Methods
+            
+            static Decimal128 AdjustValue(Decimal128 value) => Decimal128.IsNegativeInfinity(value) ? Decimal128.MinValue : (Decimal128.IsPositiveInfinity(value) ? Decimal128.MaxValue : value);
+            
+            #endregion
+
+            if (random == null!)
+                Throw.ArgumentNullException(Argument.random);
+            if (Decimal128.IsPositiveInfinity(minValue) && Decimal128.IsPositiveInfinity(maxValue) || Decimal128.IsNegativeInfinity(minValue) && Decimal128.IsNegativeInfinity(maxValue))
+                Throw.ArgumentOutOfRangeException(Argument.minValue);
+            if (Decimal128.IsNaN(minValue) || Decimal128.IsNaN(maxValue))
+                Throw.ArgumentOutOfRangeException(Decimal128.IsNaN(minValue) ? Argument.minValue : Argument.maxValue);
+            if (maxValue < minValue)
+                Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.MaxValueLessThanMinValue);
+            if ((uint)scale > (uint)FloatScale.ForceLogarithmic)
+                Throw.EnumArgumentOutOfRange(Argument.scale, scale);
+            minValue = AdjustValue(minValue);
+            maxValue = AdjustValue(maxValue);
+
+            if (minValue == maxValue)
+                return minValue;
+            if (scale == FloatScale.ForceLinear)
+                return NextDecimal128Linear(random, minValue, maxValue);
+
+            bool posAndNeg = minValue < Decimal128.Zero && maxValue > Decimal128.Zero;
+            Decimal128 minAbs = Decimal128.Min(Decimal128.Abs(minValue), Decimal128.Abs(maxValue));
+            Decimal128 maxAbs = Decimal128.Max(Decimal128.Abs(minValue), Decimal128.Abs(maxValue));
+
+            // choosing linear scaling if maximum is not larger than MaxUInt16 or when the difference of order of magnitude (in binary) is smaller than 4
+            if (scale == FloatScale.Auto && (maxAbs <= Decimal128.MaxUInt16 || !posAndNeg && maxAbs * Decimal128.Sixteenth < minAbs))
+                return NextDecimal128Linear(random, minValue, maxValue);
+
+            bool isNeg;
+            if (!posAndNeg)
+                isNeg = minValue < Decimal128.Zero;
+            else
+            {
+                // if both negative and positive results are expected we select the sign based on the size of the ranges
+                Decimal128 sample = random.NextDecimal128();
+                Decimal128 rate = minAbs / maxAbs;
+                Decimal128 absMinValue = Decimal128.Abs(minValue);
+                isNeg = absMinValue <= maxValue
+                    ? rate * Decimal128.Half > sample
+                    : rate * Decimal128.Half < sample;
+
+                // now adjusting the limits for 0...[selected range]
+                minAbs = Decimal128.Zero;
+                maxAbs = isNeg ? absMinValue : Decimal128.Abs(maxValue);
+            }
+
+            // We don't generate too small exponents for big ranges because
+            // that would cause too many almost zero results
+            Decimal128 minExponent = minAbs == Decimal128.Zero ? Decimal128.NegativeFive : Decimal128.Log10(minAbs);
+            Decimal128 maxExponent = Decimal128.Log10(maxAbs);
+            if (minExponent.Equals(maxExponent))
+                return minValue;
+
+            // We decrease exponents only if the given range is already small.
+            if (maxExponent < minExponent)
+                minExponent = maxExponent - Decimal128.Four;
+
+            Decimal128 result = Decimal128.Pow(Decimal128.Ten, NextDecimal128Linear(random, minExponent, maxExponent));
             if (isNeg)
                 result = -result;
 
@@ -3269,6 +3615,26 @@ namespace KGySoft.CoreLibraries
         {
             Decimal32 sample = random.NextDecimal32();
             Decimal32 result = (maxValue * sample) + (minValue * (Decimal32.One - sample));
+
+            // protecting ourselves against inaccurate calculations; occurs only near maxValue.
+            return result < minValue ? minValue : (result > maxValue ? maxValue : result);
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        private static Decimal64 NextDecimal64Linear(Random random, Decimal64 minValue, Decimal64 maxValue)
+        {
+            Decimal64 sample = random.NextDecimal64();
+            Decimal64 result = (maxValue * sample) + (minValue * (Decimal64.One - sample));
+
+            // protecting ourselves against inaccurate calculations; occurs only near maxValue.
+            return result < minValue ? minValue : (result > maxValue ? maxValue : result);
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        private static Decimal128 NextDecimal128Linear(Random random, Decimal128 minValue, Decimal128 maxValue)
+        {
+            Decimal128 sample = random.NextDecimal128();
+            Decimal128 result = (maxValue * sample) + (minValue * (Decimal128.One - sample));
 
             // protecting ourselves against inaccurate calculations; occurs only near maxValue.
             return result < minValue ? minValue : (result > maxValue ? maxValue : result);

@@ -24,6 +24,8 @@
 + RandomExtensions class:
   + New NextBFloat16 methods (.NET 11.0 and above)
   + New NextDecimal32 methods (.NET 11.0 and above)
+  + New NextDecimal64 methods (.NET 11.0 and above)
+  + New NextDecimal128 methods (.NET 11.0 and above)
 
 + KGySoft.Collections namespace:
 ================================

@@ -713,7 +713,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             var rnd = new Random();
             void Test(Decimal32 min, Decimal32 max)
             {
-                for (FloatScale scale = FloatScale.Auto; scale <= /*FloatScale.ForceLogarithmic*/0; scale++)
+                for (FloatScale scale = FloatScale.Auto; scale <= FloatScale.ForceLogarithmic; scale++)
                 {
                     Console.Write($"Random Decimal32 {min:R}..{max:R} ({scale}): ");
                     Decimal32 result;
@@ -761,6 +761,118 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test((Decimal32)Int128.MaxValue, ((Decimal32)Int128.MaxValue) * (Decimal32)4);
             Test((Decimal32)Int128.MaxValue * (Decimal32)1024, (Decimal32)Int128.MaxValue * (Decimal32)4100);
             Test((Decimal32)Int128.MinValue * (Decimal32)4100, (Decimal32)Int128.MinValue * (Decimal32)1024);
+        }
+
+        [Test]
+        public void NextDecimal64Test()
+        {
+            var rnd = new Random();
+            void Test(Decimal64 min, Decimal64 max)
+            {
+                for (FloatScale scale = FloatScale.Auto; scale <= FloatScale.ForceLogarithmic; scale++)
+                {
+                    Console.Write($"Random Decimal64 {min:R}..{max:R} ({scale}): ");
+                    Decimal64 result;
+                    try
+                    {
+                        result = min.Equals(Decimal64.Zero) ? rnd.NextDecimal64(max, scale) : rnd.NextDecimal64(min, max, scale);
+                        Console.WriteLine(result);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine($"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
+                        throw;
+                    }
+
+                    Assert.IsTrue(result >= min && result <= max && !Decimal64.IsInfinity(result));
+                }
+            }
+
+            // edge cases
+            Test(Decimal64.MinValue, Decimal64.MaxValue);
+            Test(Decimal64.NegativeInfinity, Decimal64.PositiveInfinity);
+            Test(Decimal64.Zero, Decimal64.PositiveInfinity);
+            Test(Decimal64.MaxValue, Decimal64.PositiveInfinity);
+            Test(Decimal64.NegativeInfinity, Decimal64.MinValue);
+            Test(Decimal64.BitDecrement(Decimal64.MaxValue), Decimal64.MaxValue);
+            AssertThrows<ArgumentOutOfRangeException>(() => Test(Decimal64.PositiveInfinity, Decimal64.PositiveInfinity));
+            AssertThrows<ArgumentOutOfRangeException>(() => Test(Decimal64.NegativeInfinity, Decimal64.NegativeInfinity));
+            AssertThrows<ArgumentOutOfRangeException>(() => Test(Decimal64.Zero, Decimal64.NaN));
+            Test(Decimal64.Zero, Decimal64.Epsilon);
+            Test(Decimal64.Epsilon, Decimal64.Epsilon * Decimal64.Four);
+            Test(Decimal64.MaxValue / 2, Decimal64.MaxValue);
+            Test(-Decimal64.Epsilon, Decimal64.Epsilon);
+            Test((Decimal64)Decimal64.MaxSignificand, (Decimal64)(Decimal64.MaxSignificand + 10));
+
+            // log auto scale
+            Test((Decimal64)Int128.MinValue, (Decimal64)Int128.MaxValue);
+            Test((Decimal64)Int128.MinValue, Decimal64.Zero);
+            Test((Decimal64)Int128.MaxValue, Decimal64.MaxValue);
+            Test((Decimal64)(-0.1m), (Decimal64)UInt128.MaxValue); // very imbalanced positive-negative ranges
+
+            // linear auto scale
+            Test((Decimal64)0.000000001m, (Decimal64)0.0000000011m);
+            Test(10000, 11000);
+            Test((Decimal64)Decimal64.MaxSignificand, (Decimal64)(Decimal64.MaxSignificand << 1));
+            Test((Decimal64)Int128.MaxValue, ((Decimal64)Int128.MaxValue) * 4);
+            Test((Decimal64)Int128.MaxValue * 1024, (Decimal64)Int128.MaxValue * 4100);
+            Test((Decimal64)Int128.MinValue * 4100, (Decimal64)Int128.MinValue * 1024);
+        }
+
+        [Test]
+        public void NextDecimal128Test()
+        {
+            var rnd = new Random();
+            void Test(Decimal128 min, Decimal128 max)
+            {
+                for (FloatScale scale = FloatScale.Auto; scale <= FloatScale.ForceLogarithmic; scale++)
+                {
+                    Console.Write($"Random Decimal128 {min:R}..{max:R} ({scale}): ");
+                    Decimal128 result;
+                    try
+                    {
+                        result = min.Equals(Decimal128.Zero) ? rnd.NextDecimal128(max, scale) : rnd.NextDecimal128(min, max, scale);
+                        Console.WriteLine(result);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine($"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
+                        throw;
+                    }
+
+                    Assert.IsTrue(result >= min && result <= max && !Decimal128.IsInfinity(result));
+                }
+            }
+
+            // edge cases
+            Test(Decimal128.MinValue, Decimal128.MaxValue);
+            Test(Decimal128.NegativeInfinity, Decimal128.PositiveInfinity);
+            Test(Decimal128.Zero, Decimal128.PositiveInfinity);
+            Test(Decimal128.MaxValue, Decimal128.PositiveInfinity);
+            Test(Decimal128.NegativeInfinity, Decimal128.MinValue);
+            Test(Decimal128.BitDecrement(Decimal128.MaxValue), Decimal128.MaxValue);
+            AssertThrows<ArgumentOutOfRangeException>(() => Test(Decimal128.PositiveInfinity, Decimal128.PositiveInfinity));
+            AssertThrows<ArgumentOutOfRangeException>(() => Test(Decimal128.NegativeInfinity, Decimal128.NegativeInfinity));
+            AssertThrows<ArgumentOutOfRangeException>(() => Test(Decimal128.Zero, Decimal128.NaN));
+            Test(Decimal128.Zero, Decimal128.Epsilon);
+            Test(Decimal128.Epsilon, Decimal128.Epsilon * Decimal128.Four);
+            Test(Decimal128.MaxValue / 2, Decimal128.MaxValue);
+            Test(-Decimal128.Epsilon, Decimal128.Epsilon);
+            Test((Decimal128)Decimal128.MaxSignificandP1, (Decimal128)(Decimal128.MaxSignificandP1 + 10));
+
+            // log auto scale
+            Test((Decimal128)Int128.MinValue, (Decimal128)Int128.MaxValue);
+            Test((Decimal128)Int128.MinValue, Decimal128.Zero);
+            Test((Decimal128)Int128.MaxValue, Decimal128.MaxValue);
+            Test((Decimal128)(-0.1m), (Decimal128)UInt128.MaxValue); // very imbalanced positive-negative ranges
+
+            // linear auto scale
+            Test((Decimal128)0.000000001m, (Decimal128)0.0000000011m);
+            Test(10000, 11000);
+            Test((Decimal128)Decimal128.MaxSignificandP1, (Decimal128)(Decimal128.MaxSignificandP1 << 1));
+            Test((Decimal128)Int128.MaxValue, ((Decimal128)Int128.MaxValue) * 4);
+            Test((Decimal128)Int128.MaxValue * 1024, (Decimal128)Int128.MaxValue * 4100);
+            Test((Decimal128)Int128.MinValue * 4100, (Decimal128)Int128.MinValue * 1024);
         }
 #endif
 

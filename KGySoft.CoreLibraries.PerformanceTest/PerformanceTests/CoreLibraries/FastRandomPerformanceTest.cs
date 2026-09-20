@@ -40,8 +40,8 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
             var rnd = new Random(0);
             var fastRnd = new FastRandom(0);
             new PerformanceTest<int> { TestName = "Next()", Iterations = iterations }
-                .AddCase(() => rnd.Next(), nameof(Random))
-                .AddCase(() => fastRnd.Next(), nameof(FastRandom))
+                .AddCase(rnd.Next, nameof(Random))
+                .AddCase(fastRnd.Next, nameof(FastRandom))
                 .DoTest()
                 .DumpResults(Console.Out);
 
@@ -71,8 +71,8 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
             var rnd = new Random();
             var fastRnd = new FastRandom();
             new PerformanceTest<int> { TestName = "Next()", Iterations = iterations }
-                .AddCase(() => rnd.Next(), nameof(Random))
-                .AddCase(() => fastRnd.Next(), nameof(FastRandom))
+                .AddCase(rnd.Next, nameof(Random))
+                .AddCase(fastRnd.Next, nameof(FastRandom))
                 .DoTest()
                 .DumpResults(Console.Out);
 
@@ -109,8 +109,8 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
             var fastRnd = new FastRandom(0);
 
             new PerformanceTest<double> { TestName = "NextDouble()", Iterations = iterations }
-                .AddCase(() => rnd.NextDouble(), nameof(Random))
-                .AddCase(() => fastRnd.NextDouble(), nameof(FastRandom))
+                .AddCase(rnd.NextDouble, nameof(Random))
+                .AddCase(fastRnd.NextDouble, nameof(FastRandom))
                 .DoTest()
                 .DumpResults(Console.Out);
         }
@@ -123,8 +123,8 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
             var fastRnd = new FastRandom();
 
             new PerformanceTest<double> { TestName = "NextDouble()", Iterations = iterations }
-                .AddCase(() => rnd.NextDouble(), nameof(Random))
-                .AddCase(() => fastRnd.NextDouble(), nameof(FastRandom))
+                .AddCase(rnd.NextDouble, nameof(Random))
+                .AddCase(fastRnd.NextDouble, nameof(FastRandom))
                 .DoTest()
                 .DumpResults(Console.Out);
         }
@@ -165,8 +165,8 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
             var rnd = new Random();
             var fastRnd = new FastRandom();
             new PerformanceTest<long> { TestName = "NextInt64()", Iterations = iterations }
-                .AddCase(() => rnd.NextInt64(), nameof(Random))
-                .AddCase(() => fastRnd.NextInt64(), nameof(FastRandom))
+                .AddCase(rnd.NextInt64, nameof(Random))
+                .AddCase(fastRnd.NextInt64, nameof(FastRandom))
                 .DoTest()
                 .DumpResults(Console.Out);
 
@@ -257,6 +257,79 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
                 .AddCase(rnd.NextBinaryFloat<BFloat16>, "NextBinaryFloat<BFloat16>")
                 .DoTest()
                 .DumpResults(Console.Out);
+        }
+#endif
+
+        [Test]
+        public void FloatingPointSampleComparisonTest()
+        {
+            var rnd = new FastRandom();
+            new PerformanceTest { TestName = "Floating point sample comparison" }
+                .AddCase(() => rnd.NextDouble(), nameof(FastRandom.NextDouble))
+                .AddCase(() => rnd.NextSingle(), nameof(FastRandom.NextSingle))
+                .AddCase(() => rnd.NextDecimal(), nameof(RandomExtensions.NextDecimal))
+#if NET11_0_OR_GREATER
+                .AddCase(() => rnd.NextDecimal32(), nameof(RandomExtensions.NextDecimal32))
+                .AddCase(() => rnd.NextDecimal64(), nameof(RandomExtensions.NextDecimal64))
+                .AddCase(() => rnd.NextDecimal128(), nameof(RandomExtensions.NextDecimal128))
+#endif
+                .DoTest()
+                .DumpResults(Console.Out);
+        }
+
+#if NET7_0_OR_GREATER
+        [TestCase<float>]
+        [TestCase<double>]
+        [TestCase<decimal>]
+#if NET11_0_OR_GREATER
+        [TestCase<Decimal32>]
+        [TestCase<Decimal64>]
+        [TestCase<Decimal128>]
+#endif
+        public void LinearVsLogTest<T>()
+            where T : IFloatingPoint<T>
+        {
+            var rnd = new FastRandom();
+            var test = new PerformanceTest<T> { TestName = $"{nameof(LinearVsLogTest)}<{typeof(T).Name}>" }
+                .AddCase(() => rnd.NextObject<T>(), nameof(RandomExtensions.NextObject));
+            if (typeof(T) == typeof(float))
+            {
+                test.AddCase(() => (T)(object)rnd.NextSingle(), $"{nameof(FastRandom.NextSingle)}");
+                test.AddCase(() => (T)(object)rnd.NextSingle(0, 1f, FloatScale.ForceLinear), $"{nameof(RandomExtensions.NextSingle)} - linear");
+                test.AddCase(() => (T)(object)rnd.NextSingle(0, 1f, FloatScale.ForceLogarithmic), $"{nameof(RandomExtensions.NextSingle)} - logarithmic");
+            }
+            else if (typeof(T) == typeof(double))
+            {
+                test.AddCase(() => (T)(object)rnd.NextDouble(), $"{nameof(FastRandom.NextDouble)}");
+                test.AddCase(() => (T)(object)rnd.NextDouble(0, 1d, FloatScale.ForceLinear), $"{nameof(RandomExtensions.NextDouble)} - linear");
+                test.AddCase(() => (T)(object)rnd.NextDouble(0, 1d, FloatScale.ForceLogarithmic), $"{nameof(RandomExtensions.NextDouble)} - logarithmic");
+            }
+            else if (typeof(T) == typeof(decimal))
+            {
+                test.AddCase(() => (T)(object)rnd.NextDecimal(), $"{nameof(RandomExtensions.NextDecimal)}");
+                test.AddCase(() => (T)(object)rnd.NextDecimal(0, 1m, FloatScale.ForceLinear), $"{nameof(RandomExtensions.NextDecimal)} - linear");
+                test.AddCase(() => (T)(object)rnd.NextDecimal(0, 1m, FloatScale.ForceLogarithmic), $"{nameof(RandomExtensions.NextDecimal)} - logarithmic");
+            }
+            else if (typeof(T) == typeof(Decimal32))
+            {
+                test.AddCase(() => (T)(object)rnd.NextDecimal32(), $"{nameof(RandomExtensions.NextDecimal32)}");
+                test.AddCase(() => (T)(object)rnd.NextDecimal32(Decimal32.Zero, Decimal32.One, FloatScale.ForceLinear), $"{nameof(RandomExtensions.NextDecimal32)} - linear");
+                test.AddCase(() => (T)(object)rnd.NextDecimal32(Decimal32.Zero, Decimal32.One, FloatScale.ForceLogarithmic), $"{nameof(RandomExtensions.NextDecimal32)} - logarithmic");
+            }
+            else if (typeof(T) == typeof(Decimal64))
+            {
+                test.AddCase(() => (T)(object)rnd.NextDecimal64(), $"{nameof(RandomExtensions.NextDecimal64)}");
+                test.AddCase(() => (T)(object)rnd.NextDecimal64(Decimal64.Zero, Decimal64.One, FloatScale.ForceLinear), $"{nameof(RandomExtensions.NextDecimal64)} - linear");
+                test.AddCase(() => (T)(object)rnd.NextDecimal64(Decimal64.Zero, Decimal64.One, FloatScale.ForceLogarithmic), $"{nameof(RandomExtensions.NextDecimal64)} - logarithmic");
+            }
+            else if (typeof(T) == typeof(Decimal128))
+            {
+                test.AddCase(() => (T)(object)rnd.NextDecimal128(), $"{nameof(RandomExtensions.NextDecimal128)}");
+                test.AddCase(() => (T)(object)rnd.NextDecimal128(Decimal128.Zero, Decimal128.One, FloatScale.ForceLinear), $"{nameof(RandomExtensions.NextDecimal128)} - linear");
+                test.AddCase(() => (T)(object)rnd.NextDecimal128(Decimal128.Zero, Decimal128.One, FloatScale.ForceLogarithmic), $"{nameof(RandomExtensions.NextDecimal128)} - logarithmic");
+            }
+
+            test.DoTest().DumpResults(Console.Out);
         }
 #endif
 
