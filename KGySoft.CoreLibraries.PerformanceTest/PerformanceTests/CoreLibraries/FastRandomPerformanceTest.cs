@@ -16,6 +16,11 @@
 #region Usings
 
 using System;
+#if NET11_0_OR_GREATER
+using System.Collections.Generic;
+using System.Linq;
+using System.Numerics;
+#endif
 
 using NUnit.Framework;
 
@@ -200,6 +205,56 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
             new PerformanceTest<double> { TestName = "NextSingle()", Iterations = iterations }
                 .AddCase(() => rnd.NextSingle(), nameof(Random))
                 .AddCase(() => fastRnd.NextSingle(), nameof(FastRandom))
+                .DoTest()
+                .DumpResults(Console.Out);
+        }
+#endif
+
+#if NET11_0_OR_GREATER
+        [Test]
+        public void NextBinaryFloatTest()
+        {
+            static void WriteStats<T>(List<T> values, string name) where T : INumber<T>
+            {
+                T min = values.Min();
+                T max = values.Max();
+                Console.WriteLine($"{name}: {min}..{max} ({values.Distinct().Count()} values); Avg: {values.Average(Double.CreateTruncating)}; MinCount: {values.Count(v => v == min)}; MaxCount: {values.Count(v => v == max)}");
+            }
+
+            const int iterations = 100_000_000;
+            var rnd = new Random();
+
+            // Half
+            var values = new List<Half>(1 << 16);
+            for (int i = 0; i < iterations; i++)
+                values.Add(rnd.NextHalf());
+            WriteStats(values, "NextHalf");
+
+            values.Clear();
+            for (int i = 0; i < iterations; i++)
+                values.Add(rnd.NextBinaryFloat<Half>());
+            WriteStats(values, "NextBinaryFloat<Half>");
+
+            new PerformanceTest<Half> { TestName = "Half", Iterations = iterations }
+                .AddCase(rnd.NextHalf, "NextHalf")
+                .AddCase(rnd.NextBinaryFloat<Half>, "NextBinaryFloat<Half>")
+                .DoTest()
+                .DumpResults(Console.Out);
+
+            // BFloat16
+            var valuesBf = new List<BFloat16>(1 << 16);
+            for (int i = 0; i < iterations; i++)
+                valuesBf.Add(rnd.NextBFloat16());
+            WriteStats(valuesBf, "NextBFloat16");
+
+            valuesBf.Clear();
+            for (int i = 0; i < iterations; i++)
+                valuesBf.Add(rnd.NextBinaryFloat<BFloat16>());
+            WriteStats(valuesBf, "NextBinaryFloat<BFloat16>");
+
+            new PerformanceTest<BFloat16> { TestName = "BFloat16", Iterations = iterations }
+                .AddCase(rnd.NextBFloat16, "NextBFloat16")
+                .AddCase(rnd.NextBinaryFloat<BFloat16>, "NextBinaryFloat<BFloat16>")
                 .DoTest()
                 .DumpResults(Console.Out);
         }

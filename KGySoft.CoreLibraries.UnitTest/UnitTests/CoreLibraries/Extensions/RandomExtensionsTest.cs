@@ -30,6 +30,9 @@ using System.Globalization;
 using System.Numerics;
 #endif
 using System.Reflection;
+#if NET6_0_OR_GREATER
+using System.Runtime.InteropServices;
+#endif
 #if NETFRAMEWORK
 using System.Security;
 using System.Security.Permissions;
@@ -431,7 +434,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             {
                 for (FloatScale scale = 0; scale <= FloatScale.ForceLogarithmic; scale++)
                 {
-                    Console.Write($@"Random double {min.ToRoundtripString()}..{max.ToRoundtripString()} ({scale}): ");
+                    Console.Write($"Random double {min.ToRoundtripString()}..{max.ToRoundtripString()} ({scale}): ");
                     double result;
                     try
                     {
@@ -440,11 +443,11 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine($@"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
+                        Console.WriteLine($"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
                         throw;
                     }
 
-                    Assert.IsTrue(result >= min && result <= max);
+                    Assert.IsTrue(result >= min && result <= max && !Double.IsInfinity(result));
                 }
             }
 
@@ -456,33 +459,29 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test(rnd, 0, Double.PositiveInfinity);
             Test(rnd, Double.MaxValue, Double.PositiveInfinity);
             Test(rnd, Double.NegativeInfinity, Double.MinValue);
-            Test(rnd, 1.7976931348623155E+308, Double.MaxValue);
+            Test(rnd, 1.7976931348623155e+308, Double.MaxValue);
             AssertThrows<ArgumentOutOfRangeException>(() => Test(rnd, Double.PositiveInfinity, Double.PositiveInfinity));
             AssertThrows<ArgumentOutOfRangeException>(() => Test(rnd, Double.NegativeInfinity, Double.NegativeInfinity));
             AssertThrows<ArgumentOutOfRangeException>(() => Test(rnd, 0, Double.NaN));
             Test(rnd, 0, Double.Epsilon);
             Test(rnd, Double.Epsilon, Double.Epsilon * 4);
-            Test(rnd, Double.MaxValue / 4, Double.MaxValue);
             Test(rnd, Double.MaxValue / 2, Double.MaxValue);
             Test(rnd, -Double.Epsilon, Double.Epsilon);
-            Test(rnd, 0.000000001, 0.0000000011);
-            Test(rnd, 10000, 11000);
+            Test(rnd, 1L << 53, (1L << 53) + 2);
 
-            // big range
+            // log auto scale
             Test(rnd, Int64.MinValue, Int64.MaxValue);
             Test(rnd, Int64.MinValue, 0);
-            Test(rnd, Int64.MaxValue, float.MaxValue);
+            Test(rnd, Int64.MaxValue, Single.MaxValue);
             Test(rnd, -0.1, UInt64.MaxValue); // very imbalanced positive-negative ranges
-            Test(rnd, 1L << 52, (1L << 54) + 10); // narrow exponent range
-            Test(rnd, Int64.MaxValue, (double)Int64.MaxValue * 4 + 10000); // small exponent range
-            Test(rnd, (double)Int64.MaxValue * 1024, (double)Int64.MaxValue * 4100); // small exponent range
-            Test(rnd, (double)Int64.MinValue * 4100, (double)Int64.MinValue * 1024); // small exponent range
 
-            // small range
-            Test(rnd, Int64.MaxValue, (double)Int64.MaxValue * 4);
-            Test(rnd, Int64.MaxValue, (double)Int64.MaxValue * 4 + 1000);
-            Test(rnd, 1L << 53, (1L << 53) + 2);
+            // linear auto scale
+            Test(rnd, 0.000000001, 0.0000000011);
+            Test(rnd, 10000, 11000);
             Test(rnd, 1L << 52, 1L << 53);
+            Test(rnd, Int64.MaxValue, (double)Int64.MaxValue * 4);
+            Test(rnd, (double)Int64.MinValue * 4100, (double)Int64.MinValue * 1024);
+            Test(rnd, (double)Int64.MaxValue * 1024, (double)Int64.MaxValue * 4100);
         }
 
         [Test]
@@ -492,7 +491,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             {
                 for (FloatScale scale = 0; scale <= FloatScale.ForceLogarithmic; scale++)
                 {
-                    Console.Write($@"Random float {min.ToRoundtripString()}..{max.ToRoundtripString()} {scale}: ");
+                    Console.Write($"Random float {min.ToRoundtripString()}..{max.ToRoundtripString()} {scale}: ");
                     float result;
                     try
                     {
@@ -501,21 +500,45 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine($@"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
+                        Console.WriteLine($"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
                         throw;
                     }
 
-                    Assert.IsTrue(result >= min && result <= max);
+                    Assert.IsTrue(result >= min && result <= max && !Single.IsInfinity(result));
                 }
             }
 
             var rnd = new Random();
+
+            // edge cases
             Test(rnd, Single.MinValue, Single.MaxValue);
-            Test(rnd, 0, Single.Epsilon);
-            Test(rnd, Single.MaxValue, Single.PositiveInfinity);
             Test(rnd, Single.NegativeInfinity, Single.PositiveInfinity);
+            Test(rnd, 0, Single.PositiveInfinity);
+            Test(rnd, Single.MaxValue, Single.PositiveInfinity);
+            Test(rnd, Single.NegativeInfinity, Single.MinValue);
+            Test(rnd, 3.4028233e+38f, Single.MaxValue);
+            AssertThrows<ArgumentOutOfRangeException>(() => Test(rnd, Single.PositiveInfinity, Single.PositiveInfinity));
+            AssertThrows<ArgumentOutOfRangeException>(() => Test(rnd, Single.NegativeInfinity, Single.NegativeInfinity));
+            AssertThrows<ArgumentOutOfRangeException>(() => Test(rnd, 0, Single.NaN));
+            Test(rnd, 0f, Single.Epsilon);
+            Test(rnd, Single.Epsilon, Single.Epsilon * 4);
+            Test(rnd, Single.MaxValue / 2, Single.MaxValue);
+            Test(rnd, -Single.Epsilon, Single.Epsilon);
             Test(rnd, 1L << 24, (1L << 24) + 2);
+
+            // log auto scale
+            Test(rnd, Int64.MinValue, Int64.MaxValue);
+            Test(rnd, Int64.MinValue, 0);
+            Test(rnd, Int64.MaxValue, Single.MaxValue);
+            Test(rnd, -0.1f, UInt64.MaxValue); // very imbalanced positive-negative ranges
+
+            // linear auto scale
+            Test(rnd, 0.000000001f, 0.0000000011f);
+            Test(rnd, 10000, 11000);
             Test(rnd, 1L << 23, 1L << 24);
+            Test(rnd, Int64.MaxValue, (float)Int64.MaxValue * 4);
+            Test(rnd, (float)Int64.MinValue * 4100, (float)Int64.MinValue * 1024);
+            Test(rnd, (float)Int64.MaxValue * 1024, (float)Int64.MaxValue * 4100);
         }
 
 #if NET5_0_OR_GREATER
@@ -524,9 +547,9 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
         {
             static void Test(Random random, Half min, Half max)
             {
-                for (FloatScale scale = FloatScale.ForceLinear; scale <= FloatScale.ForceLogarithmic; scale++)
+                for (FloatScale scale = FloatScale.Auto; scale <= FloatScale.ForceLogarithmic; scale++)
                 {
-                    Console.Write($@"Random Half {min.ToStringInternal(CultureInfo.InvariantCulture)}..{max.ToStringInternal(CultureInfo.InvariantCulture)} {scale}: ");
+                    Console.Write($"Random Half {min.ToStringInternal(CultureInfo.InvariantCulture)}..{max.ToStringInternal(CultureInfo.InvariantCulture)} {scale}: ");
                     Half result;
                     try
                     {
@@ -535,19 +558,101 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine($@"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
+                        Console.WriteLine($"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
                         throw;
                     }
 
-                    Assert.IsTrue(result >= min && result <= max);
+                    Assert.IsTrue(result >= min && result <= max && !Half.IsInfinity(result));
                 }
             }
 
             var rnd = new Random();
+
+            // edge cases
             Test(rnd, Half.MinValue, Half.MaxValue);
-            Test(rnd, (Half)0f, Half.Epsilon);
-            Test(rnd, Half.MaxValue, Half.PositiveInfinity);
             Test(rnd, Half.NegativeInfinity, Half.PositiveInfinity);
+            Test(rnd, default, Half.PositiveInfinity);
+            Test(rnd, Half.MaxValue, Half.PositiveInfinity);
+            Test(rnd, Half.NegativeInfinity, Half.MinValue);
+            Test(rnd, (Half)65470, Half.MaxValue);
+            AssertThrows<ArgumentOutOfRangeException>(() => Test(rnd, Half.PositiveInfinity, Half.PositiveInfinity));
+            AssertThrows<ArgumentOutOfRangeException>(() => Test(rnd, Half.NegativeInfinity, Half.NegativeInfinity));
+            AssertThrows<ArgumentOutOfRangeException>(() => Test(rnd, default, Half.NaN));
+            Test(rnd, default, Half.Epsilon);
+            Test(rnd, Half.Epsilon, Half.Epsilon * (Half)4);
+            Test(rnd, Half.MaxValue / (Half)2, Half.MaxValue);
+            Test(rnd, -Half.Epsilon, Half.Epsilon);
+            Test(rnd, (Half)(1 << 11), (Half)((1 << 11) + 2));
+
+            // log auto scale
+            Test(rnd, (Half)Int16.MinValue, (Half)Int16.MaxValue);
+            Test(rnd, (Half)Int16.MinValue, default);
+            Test(rnd, (Half)(-0.1), (Half)Int16.MaxValue); // very imbalanced positive-negative ranges
+
+            // linear auto scale
+            Test(rnd, (Half)Int16.MaxValue, Half.MaxValue);
+            Test(rnd, (Half)0.000001f, (Half)0.0000011f);
+            Test(rnd, (Half)10000, (Half)11000);
+            Test(rnd, (Half)(1 << 11), (Half)(1 << 12));
+        }
+#endif
+
+#if NET11_0_OR_GREATER
+        [Test]
+        public void NextBFloat16Test()
+        {
+            static void Test(Random random, BFloat16 min, BFloat16 max)
+            {
+                for (FloatScale scale = FloatScale.Auto; scale <= FloatScale.ForceLogarithmic; scale++)
+                {
+                    Console.Write($"Random BFloat16 {min.ToStringInternal(CultureInfo.InvariantCulture)}..{max.ToStringInternal(CultureInfo.InvariantCulture)} {scale}: ");
+                    BFloat16 result;
+                    try
+                    {
+                        result = min.Equals((BFloat16)0f) ? random.NextBFloat16(max, scale) : random.NextBFloat16(min, max, scale);
+                        Console.WriteLine(result.ToStringInternal(CultureInfo.InvariantCulture));
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine($"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
+                        throw;
+                    }
+
+                    Assert.IsTrue(result >= min && result <= max && !BFloat16.IsInfinity(result));
+                }
+            }
+
+            var rnd = new Random();
+
+            // edge cases
+            Test(rnd, BFloat16.MinValue, BFloat16.MaxValue);
+            Test(rnd, BFloat16.NegativeInfinity, BFloat16.PositiveInfinity);
+            Test(rnd, (BFloat16)0, BFloat16.PositiveInfinity);
+            Test(rnd, BFloat16.MaxValue, BFloat16.PositiveInfinity);
+            Test(rnd, BFloat16.NegativeInfinity, BFloat16.MinValue);
+            Test(rnd, (BFloat16)3.38e+38f, BFloat16.MaxValue);
+            AssertThrows<ArgumentOutOfRangeException>(() => Test(rnd, BFloat16.PositiveInfinity, BFloat16.PositiveInfinity));
+            AssertThrows<ArgumentOutOfRangeException>(() => Test(rnd, BFloat16.NegativeInfinity, BFloat16.NegativeInfinity));
+            AssertThrows<ArgumentOutOfRangeException>(() => Test(rnd, BFloat16.Zero, BFloat16.NaN));
+            Test(rnd, BFloat16.Zero, BFloat16.Epsilon);
+            Test(rnd, BFloat16.Epsilon, BFloat16.Epsilon * (BFloat16)4);
+            Test(rnd, BFloat16.MaxValue / (BFloat16)2, BFloat16.MaxValue);
+            Test(rnd, -BFloat16.Epsilon, BFloat16.Epsilon);
+            Test(rnd, (BFloat16)(1L << 8), (BFloat16)((1L << 8) + 2));
+
+            // log auto scale
+            Test(rnd, (BFloat16)Int64.MinValue, (BFloat16)Int64.MaxValue);
+            Test(rnd, (BFloat16)Int64.MinValue, BFloat16.Zero);
+            Test(rnd, (BFloat16)Int64.MaxValue, BFloat16.MaxValue);
+            Test(rnd, (BFloat16)(-0.1f), (BFloat16)UInt64.MaxValue); // very imbalanced positive-negative ranges
+
+            // linear auto scale
+            Test(rnd, (BFloat16)0.000000001f, (BFloat16)0.0000000011f);
+            Test(rnd, (BFloat16)10000, (BFloat16)11000);
+            Test(rnd, (BFloat16)(1L << 23), (BFloat16)(1L << 24));
+            Test(rnd, (BFloat16)Int64.MaxValue, (BFloat16)(Int64.MaxValue * 4f));
+            Test(rnd, (BFloat16)((float)Int64.MinValue * 4100), (BFloat16)((float)Int64.MinValue * 1024));
+            Test(rnd, (BFloat16)(Int64.MaxValue * 1024f), (BFloat16)(Int64.MaxValue * 4100f));
         }
 #endif
 
@@ -559,7 +664,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             {
                 for (FloatScale scale = 0; scale <= FloatScale.ForceLogarithmic; scale++)
                 {
-                    Console.Write($@"Random decimal {min.ToRoundtripString()}..{max.ToRoundtripString()} ({scale}): ");
+                    Console.Write($"Random decimal {min.ToRoundtripString()}..{max.ToRoundtripString()} ({scale}): ");
                     decimal result;
                     try
                     {
@@ -568,7 +673,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine($@"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
+                        Console.WriteLine($"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
                         throw;
                     }
 
@@ -580,29 +685,84 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test(Decimal.MinValue, Decimal.MaxValue);
             Test(0, Decimal.MaxValue);
             Test(0, DecimalExtensions.Epsilon);
+            Test(DecimalExtensions.NegativeZero, DecimalExtensions.Epsilon);
             Test(DecimalExtensions.Epsilon, DecimalExtensions.Epsilon * 4);
             Test(Decimal.MaxValue / 2, Decimal.MaxValue);
             Test(Decimal.MaxValue - 1, Decimal.MaxValue);
             Test(Decimal.MaxValue - DecimalExtensions.Epsilon, Decimal.MaxValue);
             Test(-DecimalExtensions.Epsilon, DecimalExtensions.Epsilon);
-            Test(0.000000001m, 0.0000000011m);
-            Test(10000, 11000);
 
-            // big range
+            // log auto scale
             Test(Int64.MinValue, Int64.MaxValue);
             Test(Int64.MinValue, 0);
+            Test(Int64.MaxValue, Decimal.MaxValue);
             Test(-0.1m, UInt64.MaxValue); // very imbalanced positive-negative ranges
-            Test(1L << 52, (1L << 54) + 10); // narrow exponent range
-            Test(Int64.MaxValue, (decimal)Int64.MaxValue * 4 + 10000); // small exponent range
-            Test((decimal)Int64.MaxValue * 1024, (decimal)Int64.MaxValue * 4100); // small exponent range
-            Test((decimal)Int64.MinValue * 4100, (decimal)Int64.MinValue * 1024); // small exponent range
 
-            // small range
+            // linear auto scale
+            Test(0.000000001m, 0.0000000011m);
+            Test(10000, 11000);
             Test(Int64.MaxValue, (decimal)Int64.MaxValue * 4);
-            Test(Int64.MaxValue, (decimal)Int64.MaxValue * 4 + 1000);
-            Test(1L << 53, (1L << 53) + 2);
-            Test(1L << 52, 1L << 53);
+            Test((decimal)Int64.MaxValue * 1024, (decimal)Int64.MaxValue * 4100);
+            Test((decimal)Int64.MinValue * 4100, (decimal)Int64.MinValue * 1024);
         }
+
+#if NET11_0_OR_GREATER
+        [Test]
+        public void NextDecimal32Test()
+        {
+            var rnd = new Random();
+            void Test(Decimal32 min, Decimal32 max)
+            {
+                for (FloatScale scale = FloatScale.Auto; scale <= /*FloatScale.ForceLogarithmic*/0; scale++)
+                {
+                    Console.Write($"Random Decimal32 {min:R}..{max:R} ({scale}): ");
+                    Decimal32 result;
+                    try
+                    {
+                        result = min.Equals(Decimal32.Zero) ? rnd.NextDecimal32(max, scale) : rnd.NextDecimal32(min, max, scale);
+                        Console.WriteLine(result);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine($"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
+                        throw;
+                    }
+
+                    Assert.IsTrue(result >= min && result <= max && !Decimal32.IsInfinity(result));
+                }
+            }
+
+            // edge cases
+            Test(Decimal32.MinValue, Decimal32.MaxValue);
+            Test(Decimal32.NegativeInfinity, Decimal32.PositiveInfinity);
+            Test(Decimal32.Zero, Decimal32.PositiveInfinity);
+            Test(Decimal32.MaxValue, Decimal32.PositiveInfinity);
+            Test(Decimal32.NegativeInfinity, Decimal32.MinValue);
+            Test(Decimal32.BitDecrement(Decimal32.MaxValue), Decimal32.MaxValue);
+            AssertThrows<ArgumentOutOfRangeException>(() => Test(Decimal32.PositiveInfinity, Decimal32.PositiveInfinity));
+            AssertThrows<ArgumentOutOfRangeException>(() => Test(Decimal32.NegativeInfinity, Decimal32.NegativeInfinity));
+            AssertThrows<ArgumentOutOfRangeException>(() => Test(Decimal32.Zero, Decimal32.NaN));
+            Test(Decimal32.Zero, Decimal32.Epsilon);
+            Test(Decimal32.Epsilon, Decimal32.Epsilon * Decimal32.Four);
+            Test(Decimal32.MaxValue / (Decimal32)2, Decimal32.MaxValue);
+            Test(-Decimal32.Epsilon, Decimal32.Epsilon);
+            Test((Decimal32)Decimal32.MaxSignificand, (Decimal32)(Decimal32.MaxSignificand + 10));
+
+            // log auto scale
+            Test((Decimal32)Int128.MinValue, (Decimal32)Int128.MaxValue);
+            Test((Decimal32)Int128.MinValue, Decimal32.Zero);
+            Test((Decimal32)Int128.MaxValue, Decimal32.MaxValue);
+            Test((Decimal32)(-0.1m), (Decimal32)UInt128.MaxValue); // very imbalanced positive-negative ranges
+
+            // linear auto scale
+            Test((Decimal32)0.000000001m, (Decimal32)0.0000000011m);
+            Test((Decimal32)10000, (Decimal32)11000);
+            Test((Decimal32)Decimal32.MaxSignificand, (Decimal32)(Decimal32.MaxSignificand << 1));
+            Test((Decimal32)Int128.MaxValue, ((Decimal32)Int128.MaxValue) * (Decimal32)4);
+            Test((Decimal32)Int128.MaxValue * (Decimal32)1024, (Decimal32)Int128.MaxValue * (Decimal32)4100);
+            Test((Decimal32)Int128.MinValue * (Decimal32)4100, (Decimal32)Int128.MinValue * (Decimal32)1024);
+        }
+#endif
 
         [Test]
         public void NextDateTimeTest()
@@ -610,7 +770,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             var rnd = new Random();
             void Test(DateTime min, DateTime max)
             {
-                Console.Write($@"Random DateTime {min:O}..{max:O}: ");
+                Console.Write($"Random DateTime {min:O}..{max:O}: ");
                 DateTime result;
                 try
                 {
@@ -619,7 +779,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine($@"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
+                    Console.WriteLine($"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
                     throw;
                 }
 
@@ -642,7 +802,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             var rnd = new Random();
             void Test(DateTime min, DateTime max)
             {
-                Console.Write($@"Random date {min:yyyy-MM-dd}..{max:yyyy-MM-dd}: ");
+                Console.Write($"Random date {min:yyyy-MM-dd}..{max:yyyy-MM-dd}: ");
                 DateTime result;
                 try
                 {
@@ -651,7 +811,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine($@"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
+                    Console.WriteLine($"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
                     throw;
                 }
 
@@ -672,7 +832,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             var rnd = new Random();
             void Test(DateTimeOffset min, DateTimeOffset max)
             {
-                Console.Write($@"Random DateTimeOffset {min:O}..{max:O}: ");
+                Console.Write($"Random DateTimeOffset {min:O}..{max:O}: ");
                 DateTimeOffset result;
                 try
                 {
@@ -681,7 +841,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine($@"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
+                    Console.WriteLine($"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
                     throw;
                 }
 
@@ -704,7 +864,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             var rnd = new Random();
             void Test(TimeSpan min, TimeSpan max)
             {
-                Console.Write($@"Random TimeSpan {min}..{max}: ");
+                Console.Write($"Random TimeSpan {min}..{max}: ");
                 TimeSpan result;
                 try
                 {
@@ -713,7 +873,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine($@"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
+                    Console.WriteLine($"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
                     throw;
                 }
 
@@ -733,7 +893,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             var rnd = new Random();
             void Test(DateOnly min, DateOnly max)
             {
-                Console.Write($@"Random date {min:O}..{max:O}: ");
+                Console.Write($"Random date {min:O}..{max:O}: ");
                 DateOnly result;
                 try
                 {
@@ -742,7 +902,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine($@"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
+                    Console.WriteLine($"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
                     throw;
                 }
 
@@ -761,7 +921,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             var rnd = new Random();
             void Test(TimeOnly min, TimeOnly max)
             {
-                Console.Write($@"Random time {min:O}..{max:O}: ");
+                Console.Write($"Random time {min:O}..{max:O}: ");
                 TimeOnly result;
                 try
                 {
@@ -770,7 +930,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine($@"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
+                    Console.WriteLine($"{e.GetType().Name}: {e.Message}".Replace(Environment.NewLine, " "));
                     throw;
                 }
 
@@ -897,10 +1057,17 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
 #if NET6_0_OR_GREATER
             Test<DateOnly>();
             Test<TimeOnly>();
+            Test<NFloat>();
 #endif
 #if NET7_0_OR_GREATER
             Test<Int128>();
             Test<UInt128>();
+#endif
+#if NET11_0_OR_GREATER
+            Test<BFloat16>();
+            Test<Decimal32>();
+            Test<Decimal64>();
+            Test<Decimal128>();
 #endif
 
             // enums

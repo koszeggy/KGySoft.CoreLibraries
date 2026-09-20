@@ -9,11 +9,21 @@
 ! v11.0.0:
 ~~~~~~~~~~
 
++ Assembly changes:
+===================
++ Targeting also .NET 11.0.
+
 + General changes:
 ==================
 + Supporting Native AOT (Ahead of Time) deployment mode when targeting .NET 8.0 or later.
   NOTE: The libraries are prepared to detect if dynamic code is not available when targeting .NET Core 3.0 or later,
         but actual trimming is not supported on targets between .NET Core 3.0 to .NET 7.0 because of a linker issue.
+
++ KGySoft.CoreLibraries namespace:
+==================================
++ RandomExtensions class:
+  + New NextBFloat16 methods (.NET 11.0 and above)
+  + New NextDecimal32 methods (.NET 11.0 and above)
 
 + KGySoft.Collections namespace:
 ================================

@@ -1217,10 +1217,16 @@ namespace KGySoft.CoreLibraries
             Half one = (Half)1;
 #endif
 
+            // NOTE: Just like Random.NextSingle, and unlike FastRandom.NextSingle or .NET 11+ Random.NextBinaryFloat<Half>, this can return subnormal values.
+            // It means 15K+ possible values instead of just 2048. The average of the returned values is still around 0.5, it's just that close-to-zero values
+            // are more distributed, so there are less exactly zero results.
+            // Comparison of NextHalf vs. Random.NextBinaryFloat<Half> for 100M values (see NextBinaryFloatTest in performance tests):
+            // NextHalf: 0..0.9995 (15354 values); Avg: 0.4998941563481081; MinCount: 6; MaxCount: 48604
+            // NextBinaryFloat<Half>: 0..0.9995 (2048 values); Avg: 0.49971264688476563; MinCount: 48711; MaxCount: 48790
 #if NET6_0_OR_GREATER
             while (true)
             {
-                Half result = (Half)random.NextDouble();
+                Half result = (Half)random.NextSingle();
 #if NET7_0_OR_GREATER
                 if (result < Half.One)
 #else
@@ -1264,12 +1270,21 @@ namespace KGySoft.CoreLibraries
                 Throw.ArgumentNullException(Argument.random);
             if ((uint)scale > (uint)FloatScale.ForceLogarithmic)
                 Throw.EnumArgumentOutOfRange(Argument.scale, scale);
+#if NET7_0_OR_GREATER
+            if (maxValue <= Half.Zero)
+            {
+                if (maxValue < Half.Zero)
+                    Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.ArgumentMustBeGreaterThanOrEqualTo(Half.Zero));
+                return Half.Zero;
+            }
+#else
             if (maxValue <= (Half)0f)
             {
                 if (maxValue < (Half)0f)
                     Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.ArgumentMustBeGreaterThanOrEqualTo((Half)0f));
                 return (Half)0f;
             }
+#endif
 
             if (Half.IsNaN(maxValue))
                 Throw.ArgumentOutOfRangeException(Argument.maxValue);
@@ -1298,7 +1313,11 @@ namespace KGySoft.CoreLibraries
         /// <br/><paramref name="scale"/> is not a valid value of <see cref="FloatScale"/>.</exception>
         public static Half NextHalf(this Random random, Half minValue, Half maxValue, FloatScale scale = FloatScale.Auto)
         {
+            #region Local Methods
+
             static Half AdjustValue(Half value) => Half.IsNegativeInfinity(value) ? Half.MinValue : (Half.IsPositiveInfinity(value) ? Half.MaxValue : value);
+
+            #endregion
 
             if (random == null!)
                 Throw.ArgumentNullException(Argument.random);
@@ -1312,6 +1331,119 @@ namespace KGySoft.CoreLibraries
                 Throw.EnumArgumentOutOfRange(Argument.scale, scale);
 
             return (Half)DoGetNextSingle(random, (float)AdjustValue(minValue), (float)AdjustValue(maxValue), scale == FloatScale.Auto ? FloatScale.ForceLinear : scale);
+        }
+
+#endif
+        #endregion
+
+        #region BFloat16
+#if NET11_0_OR_GREATER
+
+        /// <summary>
+        /// Returns a random <see cref="BFloat16"/> value that is greater than or equal to 0.0 and less than 1.0.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <returns>A half-precision floating point number that is greater than or equal to 0.0 and less than 1.0.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        public static BFloat16 NextBFloat16(this Random random)
+        {
+            if (random == null!)
+                Throw.ArgumentNullException(Argument.random);
+
+            // NOTE: Just like Random.NextSingle, and unlike FastRandom.NextSingle or .NET 11+ Random.NextBinaryFloat<BFloat16>, this can return subnormal values.
+            // It means 2K+ possible values instead of just 256. The average of the returned values is still around 0.5, it's just that close-to-zero values
+            // are more distributed, so there are less exactly zero results (and this is also faster than NextBinaryFloat<BFloat16>).
+            // Comparison of NextBFloat16 vs. Random.NextBinaryFloat<BFloat16> for 100M values (see NextBinaryFloatTest in performance tests):
+            // NextBFloat16: 0..0.996 (2301 values); Avg: 0.49897896307837186; MinCount: 4; MaxCount: 390480
+            // NextBinaryFloat<BFloat16>: 0..0.996 (256 values); Avg: 0.4980318608984375; MinCount: 390696; MaxCount: 390544
+            while (true)
+            {
+                BFloat16 result = (BFloat16)random.NextSingle();
+                if (result < BFloat16.One)
+                    return result;
+            }
+        }
+
+        /// <summary>
+        /// Returns a non-negative random <see cref="BFloat16"/> value that is less than or equal to the specified <paramref name="maxValue"/>.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <param name="maxValue">The upper bound of the random number returned.</param>
+        /// <param name="scale">The scale to use to generate the random number. This parameter is optional.
+        /// <br/>Default value: <see cref="FloatScale.Auto"/>.</param>
+        /// <returns>A half-precision floating point number that is greater than or equal to 0.0 and less than or equal to <paramref name="maxValue"/>.</returns>
+        /// <remarks>
+        /// <para>In most cases return value is less than <paramref name="maxValue"/>. Return value can be equal to <paramref name="maxValue"/> in very edge cases,
+        /// such as using very small ranges close to the limits of <see cref="BFloat16"/>.</para>
+        /// <para>If <paramref name="scale"/> is <see cref="FloatScale.Auto"/>, then the <see cref="FloatScale.ForceLinear"/> option is used
+        /// if <paramref name="maxValue"/> is less than 65536. For larger range the <see cref="FloatScale.ForceLogarithmic"/> option is used.</para>
+        /// <para>Generating random numbers by this method on the logarithmic scale is about 3 times slower than on the linear scale.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than 0.0
+        /// <br/>-or-.
+        /// <br/><paramref name="scale"/> is not a valid value of <see cref="FloatScale"/>.</exception>
+        public static BFloat16 NextBFloat16(this Random random, BFloat16 maxValue, FloatScale scale = FloatScale.Auto)
+        {
+            if (random == null!)
+                Throw.ArgumentNullException(Argument.random);
+            if ((uint)scale > (uint)FloatScale.ForceLogarithmic)
+                Throw.EnumArgumentOutOfRange(Argument.scale, scale);
+            if (maxValue <= BFloat16.Zero)
+            {
+                if (maxValue < BFloat16.Zero)
+                    Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.ArgumentMustBeGreaterThanOrEqualTo(BFloat16.Zero));
+                return BFloat16.Zero;
+            }
+
+            if (BFloat16.IsNaN(maxValue))
+                Throw.ArgumentOutOfRangeException(Argument.maxValue);
+
+            return (BFloat16)DoGetNextSingle(random, BFloat16.IsPositiveInfinity(maxValue) ? (float)BFloat16.MaxValue : (float)maxValue, scale == FloatScale.Auto ? FloatScale.ForceLinear : scale);
+        }
+
+        /// <summary>
+        /// Returns a random <see cref="BFloat16"/> value that is within a specified range.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <param name="minValue">The lower bound of the random number returned.</param>
+        /// <param name="maxValue">The upper bound of the random number returned. Must be greater or equal to <paramref name="minValue"/>.</param>
+        /// <param name="scale">The scale to use to generate the random number. This parameter is optional.
+        /// <br/>Default value: <see cref="FloatScale.Auto"/>.</param>
+        /// <returns>A half-precision floating point number that is greater than or equal to <paramref name="minValue"/> and less than or equal to <paramref name="maxValue"/>.</returns>
+        /// <remarks>
+        /// <para>In most cases return value is less than <paramref name="maxValue"/>. Return value can be equal to <paramref name="maxValue"/> in very edge cases such as
+        /// when <paramref name="minValue"/> is equal to <paramref name="maxValue"/> or when integer parts of both limits are beyond the precision of the <see cref="BFloat16"/> type.</para>
+        /// <para>If <paramref name="scale"/> is <see cref="FloatScale.Auto"/>, then the <see cref="FloatScale.ForceLinear"/> option is used
+        /// if the absolute value of both <paramref name="minValue"/> and <paramref name="maxValue"/> are less than 65536, or when they have the same sign
+        /// and the absolute value of <paramref name="maxValue"/> is less than 16 times greater than the absolute value of <paramref name="minValue"/>.
+        /// For larger ranges the <see cref="FloatScale.ForceLogarithmic"/> option is used.</para>
+        /// <para>Generating random numbers by this method on the logarithmic scale is about 3 times slower than on the linear scale.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than <paramref name="minValue"/>
+        /// <br/>-or-
+        /// <br/><paramref name="scale"/> is not a valid value of <see cref="FloatScale"/>.</exception>
+        public static BFloat16 NextBFloat16(this Random random, BFloat16 minValue, BFloat16 maxValue, FloatScale scale = FloatScale.Auto)
+        {
+            #region Local Methods
+
+            static BFloat16 AdjustValue(BFloat16 value) => BFloat16.IsNegativeInfinity(value) ? BFloat16.MinValue : (BFloat16.IsPositiveInfinity(value) ? BFloat16.MaxValue : value);
+
+            #endregion
+
+            if (random == null!)
+                Throw.ArgumentNullException(Argument.random);
+            if (BFloat16.IsPositiveInfinity(minValue) && BFloat16.IsPositiveInfinity(maxValue) || BFloat16.IsNegativeInfinity(minValue) && BFloat16.IsNegativeInfinity(maxValue))
+                Throw.ArgumentOutOfRangeException(Argument.minValue);
+            if (BFloat16.IsNaN(minValue) || BFloat16.IsNaN(maxValue))
+                Throw.ArgumentOutOfRangeException(BFloat16.IsNaN(minValue) ? Argument.minValue : Argument.maxValue);
+            if (maxValue < minValue)
+                Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.MaxValueLessThanMinValue);
+            if ((uint)scale > (uint)FloatScale.ForceLogarithmic)
+                Throw.EnumArgumentOutOfRange(Argument.scale, scale);
+
+            return (BFloat16)DoGetNextSingle(random, (float)AdjustValue(minValue), (float)AdjustValue(maxValue), scale == FloatScale.Auto ? FloatScale.ForceLinear : scale);
         }
 
 #endif
@@ -1410,7 +1542,11 @@ namespace KGySoft.CoreLibraries
         /// <br/><paramref name="scale"/> is not a valid value of <see cref="FloatScale"/>.</exception>
         public static float NextSingle(this Random random, float minValue, float maxValue, FloatScale scale = FloatScale.Auto)
         {
+            #region Local Methods
+
             static float AdjustValue(float value) => Single.IsNegativeInfinity(value) ? Single.MinValue : (Single.IsPositiveInfinity(value) ? Single.MaxValue : value);
+            
+            #endregion
 
             if (random == null!)
                 Throw.ArgumentNullException(Argument.random);
@@ -1492,7 +1628,11 @@ namespace KGySoft.CoreLibraries
         /// <br/><paramref name="scale"/> is not a valid value of <see cref="FloatScale"/>.</exception>
         public static double NextDouble(this Random random, double minValue, double maxValue, FloatScale scale = FloatScale.Auto)
         {
+            #region Local Methods
+
             static double AdjustValue(double value) => Double.IsNegativeInfinity(value) ? Double.MinValue : (Double.IsPositiveInfinity(value) ? Double.MaxValue : value);
+
+            #endregion
 
             if (random == null!)
                 Throw.ArgumentNullException(Argument.random);
@@ -1568,7 +1708,7 @@ namespace KGySoft.CoreLibraries
 
             // if linear scaling is forced...
             if (scale == FloatScale.ForceLinear
-                // or we use auto-scaling and maximum is UInt16
+                // or we use auto-scaling and maximum is not larger than MaxUInt16
                 || (scale == FloatScale.Auto && maxValue <= UInt16.MaxValue))
             {
                 return random.NextDecimal() * maxValue;
@@ -1624,32 +1764,29 @@ namespace KGySoft.CoreLibraries
 
             if (minValue == maxValue)
                 return minValue;
+            if (scale == FloatScale.ForceLinear)
+                return NextDecimalLinear(random, minValue, maxValue);
 
             bool posAndNeg = minValue < 0m && maxValue > 0m;
             decimal minAbs = Math.Min(Math.Abs(minValue), Math.Abs(maxValue));
             decimal maxAbs = Math.Max(Math.Abs(minValue), Math.Abs(maxValue));
 
-            // if linear scaling is forced...
-            if (scale == FloatScale.ForceLinear
-                // or we use auto-scaling and maximum is UInt16 or when the difference of order of magnitude is smaller than 4
-                || (scale == FloatScale.Auto && (maxAbs <= UInt16.MaxValue || !posAndNeg && maxAbs / 16m < minAbs)))
-            {
+            // choosing linear scaling if maximum is not larger than MaxUInt16 or when the difference of order of magnitude (in binary) is smaller than 4
+            if (scale == FloatScale.Auto && (maxAbs <= UInt16.MaxValue || !posAndNeg && maxAbs / 16m < minAbs))
                 return NextDecimalLinear(random, minValue, maxValue);
-            }
 
-            int sign;
+            bool isNeg;
             if (!posAndNeg)
-                sign = minValue < 0m ? -1 : 1;
+                isNeg = minValue < 0m;
             else
             {
                 // if both negative and positive results are expected we select the sign based on the size of the ranges
                 decimal sample = (decimal)random.NextDouble(); // NextDecimal is almost always slower
                 decimal rate = minAbs / maxAbs;
                 decimal absMinValue = Math.Abs(minValue);
-                bool isNeg = absMinValue <= maxValue
+                isNeg = absMinValue <= maxValue
                     ? rate / 2m > sample
                     : rate / 2m < sample;
-                sign = isNeg ? -1 : 1;
 
                 // now adjusting the limits for 0...[selected range]
                 minAbs = 0m;
@@ -1667,11 +1804,189 @@ namespace KGySoft.CoreLibraries
             if (maxExponent < minExponent)
                 minExponent = maxExponent - 4;
 
-            decimal result = sign * 10m.Pow(NextDecimalLinear(random, minExponent, maxExponent));
+            decimal result = 10m.Pow(NextDecimalLinear(random, minExponent, maxExponent));
+            if (isNeg)
+                result = -result;
 
             // protecting ourselves against inaccurate calculations; however, in practice result is always in range.
             return result < minValue ? minValue : (result > maxValue ? maxValue : result);
         }
+
+        #endregion
+
+        #region Decimal32
+
+#if NET11_0_OR_GREATER
+        /// <summary>
+        /// Returns a random <see cref="Decimal32"/> value that is greater than or equal to 0.0 and less than 1.0.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <returns>A <see cref="Decimal32"/> floating point number that is greater than or equal to 0.0 and less than 1.0.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        public static Decimal32 NextDecimal32(this Random random)
+        {
+            if (random == null!)
+                Throw.ArgumentNullException(Argument.random);
+
+            // To generate values in range [0..1), we could just return GenerateSampleUInt32(random) / UInt32.MaxValue,
+            // but generating the sample within the max significand provides the best performance. Btw. this is similar to FastRandom's NextSingle/NextDouble approach.
+            // See also https://github.com/dotnet/runtime/blob/9e26c34ece8d75f049f6990a2a4160d0297ab949/src/libraries/System.Private.CoreLib/src/System/Number.DecimalIeee754.cs#L3612-L3618
+            return (Decimal32)random.Next(Decimal32.MaxSignificand + 1) * Decimal32.NormalizationFactor;
+        }
+
+        /// <summary>
+        /// Returns a non-negative random <see cref="Decimal32"/> value that is less than or equal to the specified <paramref name="maxValue"/>.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <param name="maxValue">The upper bound of the random number returned.</param>
+        /// <param name="scale">The scale to use to generate the random number. This parameter is optional.
+        /// <br/>Default value: <see cref="FloatScale.Auto"/>.</param>
+        /// <returns>A <see cref="Decimal32"/> floating point number that is greater than or equal to 0.0 and less than or equal to <paramref name="maxValue"/>.</returns>
+        /// <remarks>
+        /// <para>In most cases return value is less than <paramref name="maxValue"/>. Return value can be equal to <paramref name="maxValue"/> in very edge cases,
+        /// such as when <paramref name="maxValue"/> is near <see cref="Decimal32.Epsilon"/>.</para>
+        /// <para>If <paramref name="scale"/> is <see cref="FloatScale.Auto"/>, then the <see cref="FloatScale.ForceLinear"/> option is used
+        /// if <paramref name="maxValue"/> is less than or equal to 65535. For larger range the <see cref="FloatScale.ForceLogarithmic"/> option is used.</para>
+        /// <para>Generating random numbers by this method on the logarithmic scale is about 25-50 times slower than on the linear scale.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than 0.0
+        /// <br/>-or-
+        /// <br/><paramref name="scale"/> is not a valid value of <see cref="FloatScale"/>.</exception>
+        public static Decimal32 NextDecimal32(this Random random, Decimal32 maxValue, FloatScale scale = FloatScale.Auto)
+        {
+            if (random == null!)
+                Throw.ArgumentNullException(Argument.random);
+            if ((uint)scale > (uint)FloatScale.ForceLogarithmic)
+                Throw.EnumArgumentOutOfRange(Argument.scale, scale);
+            if (maxValue <= Decimal32.Zero)
+            {
+                if (maxValue < Decimal32.Zero)
+                    Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.ArgumentMustBeGreaterThanOrEqualTo(0));
+                return Decimal32.Zero;
+            }
+
+            if (Decimal32.IsNaN(maxValue))
+                Throw.ArgumentOutOfRangeException(Argument.maxValue);
+            if (Decimal32.IsPositiveInfinity(maxValue))
+                maxValue = Decimal32.MaxValue;
+
+            // if linear scaling is forced...
+            if (scale == FloatScale.ForceLinear
+                // or we use auto-scaling and maximum is not larger than MaxUInt16
+                || (scale == FloatScale.Auto && maxValue <= Decimal32.MaxUInt16))
+            {
+                return random.NextDecimal32() * maxValue;
+            }
+
+            // Possible Decimal32 exponents are -95..96, but we don't generate too small exponents for big ranges because
+            // that would cause too many almost zero results, which are much smaller than the original NextDecimal32 values.
+            Decimal32 minExponent = Decimal32.NegativeFive;
+            Decimal32 maxExponent = Decimal32.Log10(maxValue);
+
+            // We decrease exponents only if the given range is already small.
+            if (maxExponent < minExponent)
+                minExponent = maxExponent - Decimal32.Four;
+
+            Decimal32 result = Decimal32.Pow(Decimal32.Ten, NextDecimal32Linear(random, minExponent, maxExponent));
+
+            // protecting ourselves against inaccurate calculations; however, in practice result is always in range.
+            return result > maxValue ? maxValue : result;
+        }
+
+        /// <summary>
+        /// Returns a random <see cref="Decimal32"/> value that is within a specified range.
+        /// </summary>
+        /// <param name="random">The <see cref="Random"/> instance to use.</param>
+        /// <param name="minValue">The lower bound of the random number returned.</param>
+        /// <param name="maxValue">The upper bound of the random number returned. Must be greater or equal to <paramref name="minValue"/>.</param>
+        /// <param name="scale">The scale to use to generate the random number. This parameter is optional.
+        /// <br/>Default value: <see cref="FloatScale.Auto"/>.</param>
+        /// <returns>A <see cref="Decimal32"/> floating point number that is greater than or equal to <paramref name="minValue"/> and less than or equal to <paramref name="maxValue"/>.</returns>
+        /// <remarks>
+        /// <para>In most cases return value is less than <paramref name="maxValue"/>. Return value can be equal to <paramref name="maxValue"/> in very edge cases such as
+        /// when <paramref name="minValue"/> is equal to <paramref name="maxValue"/> or when the range is near <see cref="Decimal32.Epsilon"/>.</para>
+        /// <para>If <paramref name="scale"/> is <see cref="FloatScale.Auto"/>, then the <see cref="FloatScale.ForceLinear"/> option is used
+        /// if the absolute value of both <paramref name="minValue"/> and <paramref name="maxValue"/> are less than or equal to 65535, or when they have the same sign
+        /// and the absolute value of <paramref name="maxValue"/> is less than 16 times greater than the absolute value of <paramref name="minValue"/>.
+        /// For larger ranges the <see cref="FloatScale.ForceLogarithmic"/> option is used.</para>
+        /// <para>Generating random numbers by this method on the logarithmic scale is about 25-50 times slower than on the linear scale.</para>
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="random"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxValue"/> is less than <paramref name="minValue"/>
+        /// <br/>-or-
+        /// <br/><paramref name="scale"/> is not a valid value of <see cref="FloatScale"/>.</exception>
+        public static Decimal32 NextDecimal32(this Random random, Decimal32 minValue, Decimal32 maxValue, FloatScale scale = FloatScale.Auto)
+        {
+            #region Local Methods
+            
+            static Decimal32 AdjustValue(Decimal32 value) => Decimal32.IsNegativeInfinity(value) ? Decimal32.MinValue : (Decimal32.IsPositiveInfinity(value) ? Decimal32.MaxValue : value);
+            
+            #endregion
+
+            if (random == null!)
+                Throw.ArgumentNullException(Argument.random);
+            if (Decimal32.IsPositiveInfinity(minValue) && Decimal32.IsPositiveInfinity(maxValue) || Decimal32.IsNegativeInfinity(minValue) && Decimal32.IsNegativeInfinity(maxValue))
+                Throw.ArgumentOutOfRangeException(Argument.minValue);
+            if (Decimal32.IsNaN(minValue) || Decimal32.IsNaN(maxValue))
+                Throw.ArgumentOutOfRangeException(Decimal32.IsNaN(minValue) ? Argument.minValue : Argument.maxValue);
+            if (maxValue < minValue)
+                Throw.ArgumentOutOfRangeException(Argument.maxValue, Res.MaxValueLessThanMinValue);
+            if ((uint)scale > (uint)FloatScale.ForceLogarithmic)
+                Throw.EnumArgumentOutOfRange(Argument.scale, scale);
+            minValue = AdjustValue(minValue);
+            maxValue = AdjustValue(maxValue);
+
+            if (minValue == maxValue)
+                return minValue;
+            if (scale == FloatScale.ForceLinear)
+                return NextDecimal32Linear(random, minValue, maxValue);
+
+            bool posAndNeg = minValue < Decimal32.Zero && maxValue > Decimal32.Zero;
+            Decimal32 minAbs = Decimal32.Min(Decimal32.Abs(minValue), Decimal32.Abs(maxValue));
+            Decimal32 maxAbs = Decimal32.Max(Decimal32.Abs(minValue), Decimal32.Abs(maxValue));
+
+            // choosing linear scaling if maximum is not larger than MaxUInt16 or when the difference of order of magnitude (in binary) is smaller than 4
+            if (scale == FloatScale.Auto && (maxAbs <= Decimal32.MaxUInt16 || !posAndNeg && maxAbs * Decimal32.Sixteenth < minAbs))
+                return NextDecimal32Linear(random, minValue, maxValue);
+
+            bool isNeg;
+            if (!posAndNeg)
+                isNeg = minValue < Decimal32.Zero;
+            else
+            {
+                // if both negative and positive results are expected we select the sign based on the size of the ranges
+                Decimal32 sample = random.NextDecimal32();
+                Decimal32 rate = minAbs / maxAbs;
+                Decimal32 absMinValue = Decimal32.Abs(minValue);
+                isNeg = absMinValue <= maxValue
+                    ? rate * Decimal32.Half > sample
+                    : rate * Decimal32.Half < sample;
+
+                // now adjusting the limits for 0...[selected range]
+                minAbs = Decimal32.Zero;
+                maxAbs = isNeg ? absMinValue : Decimal32.Abs(maxValue);
+            }
+
+            // We don't generate too small exponents for big ranges because
+            // that would cause too many almost zero results
+            Decimal32 minExponent = minAbs == Decimal32.Zero ? Decimal32.NegativeFive : Decimal32.Log10(minAbs);
+            Decimal32 maxExponent = Decimal32.Log10(maxAbs);
+            if (minExponent.Equals(maxExponent))
+                return minValue;
+
+            // We decrease exponents only if the given range is already small.
+            if (maxExponent < minExponent)
+                minExponent = maxExponent - Decimal32.Four;
+
+            Decimal32 result = Decimal32.Pow(Decimal32.Ten, NextDecimal32Linear(random, minExponent, maxExponent));
+            if (isNeg)
+                result = -result;
+
+            // protecting ourselves against inaccurate calculations; however, in practice result is always in range.
+            return result < minValue ? minValue : (result > maxValue ? maxValue : result);
+        }
+#endif
 
         #endregion
 
@@ -2764,7 +3079,7 @@ namespace KGySoft.CoreLibraries
         {
             // if linear scaling is forced...
             if (scale == FloatScale.ForceLinear
-                // or we use auto-scaling and maximum is UInt16
+                // or we use auto-scaling and maximum is not larger than MaxUInt16
                 || (scale == FloatScale.Auto && maxValue <= UInt16.MaxValue))
             {
                 return random.NextDouble() * maxValue;
@@ -2773,7 +3088,7 @@ namespace KGySoft.CoreLibraries
             // Possible double exponents are -1022..1023, but we don't generate too small exponents for big ranges because
             // that would cause too many almost zero results, which are much smaller than the original NextDouble values.
             double minExponent = -16d;
-            double maxExponent = Math.Log(maxValue, 2d);
+            double maxExponent = Math.Log2(maxValue);
 
             // We decrease exponents only if the given range is already small. Even lower than -1022 is no problem, the result may be 0
             if (maxExponent < minExponent)
@@ -2790,32 +3105,29 @@ namespace KGySoft.CoreLibraries
         {
             if (minValue == maxValue)
                 return minValue;
+            if (scale == FloatScale.ForceLinear)
+                return NextDoubleLinear(random, minValue, maxValue);
 
             bool posAndNeg = minValue < 0d && maxValue > 0d;
             double minAbs = Math.Min(Math.Abs(minValue), Math.Abs(maxValue));
             double maxAbs = Math.Max(Math.Abs(minValue), Math.Abs(maxValue));
 
-            // if linear scaling is forced...
-            if (scale == FloatScale.ForceLinear
-                // or we use auto-scaling and maximum is UInt16 or when the difference of order of magnitude is smaller than 4
-                || (scale == FloatScale.Auto && (maxAbs <= UInt16.MaxValue || !posAndNeg && maxAbs < minAbs * 16)))
-            {
+            // choosing linear scaling if maximum is not larger than MaxUInt16 or when the difference of order of magnitude is smaller than 4
+            if (scale == FloatScale.Auto && (maxAbs <= UInt16.MaxValue || !posAndNeg && maxAbs < minAbs * 16))
                 return NextDoubleLinear(random, minValue, maxValue);
-            }
 
-            int sign;
+            bool isNeg;
             if (!posAndNeg)
-                sign = minValue < 0d ? -1 : 1;
+                isNeg = minValue < 0d;
             else
             {
                 // if both negative and positive results are expected we select the sign based on the size of the ranges
                 double sample = random.NextDouble();
                 double rate = minAbs / maxAbs;
                 double absMinValue = Math.Abs(minValue);
-                bool isNeg = absMinValue <= maxValue
+                isNeg = absMinValue <= maxValue
                     ? rate / 2d > sample
                     : rate / 2d < sample;
-                sign = isNeg ? -1 : 1;
 
                 // now adjusting the limits for 0...[selected range]
                 minAbs = 0d;
@@ -2824,8 +3136,8 @@ namespace KGySoft.CoreLibraries
 
             // Possible double exponents are -1022..1023, but we don't generate too small exponents for big ranges because
             // that would cause too many almost zero results, which are much smaller than the original NextDouble values.
-            double minExponent = minAbs == 0d ? -16d : Math.Log(minAbs, 2d);
-            double maxExponent = Math.Log(maxAbs, 2d);
+            double minExponent = minAbs == 0d ? -16d : Math.Log2(minAbs);
+            double maxExponent = Math.Log2(maxAbs);
             if (minExponent == maxExponent)
                 return minValue;
 
@@ -2833,7 +3145,9 @@ namespace KGySoft.CoreLibraries
             if (maxExponent < minExponent)
                 minExponent = maxExponent - 4;
 
-            double result = sign * Math.Pow(2d, NextDoubleLinear(random, minExponent, maxExponent));
+            double result = Math.Pow(2d, NextDoubleLinear(random, minExponent, maxExponent));
+            if (isNeg)
+                result = -result;
 
             // protecting ourselves against inaccurate calculations; however, in practice result is always in range.
             return result < minValue ? minValue : (result > maxValue ? maxValue : result);
@@ -2854,7 +3168,7 @@ namespace KGySoft.CoreLibraries
         {
             // if linear scaling is forced...
             if (scale == FloatScale.ForceLinear
-                // or we use auto-scaling and maximum is UInt16
+                // or we use auto-scaling and maximum is not larger than MaxUInt16
                 || (scale == FloatScale.Auto && maxValue <= UInt16.MaxValue))
             {
                 return random.NextSingle() * maxValue;
@@ -2863,7 +3177,7 @@ namespace KGySoft.CoreLibraries
             // Possible float exponents are -126..127, but we don't generate too small exponents for big ranges because
             // that would cause too many almost zero results, which are much smaller than the original NextSingle values.
             float minExponent = -16f;
-            float maxExponent = MathF.Log(maxValue, 2f);
+            float maxExponent = MathF.Log2(maxValue);
 
             // We decrease exponents only if the given range is already small. Even lower than -126 is no problem, the result may be 0
             if (maxExponent < minExponent)
@@ -2880,32 +3194,29 @@ namespace KGySoft.CoreLibraries
         {
             if (minValue == maxValue)
                 return minValue;
+            if (scale == FloatScale.ForceLinear)
+                return NextSingleLinear(random, minValue, maxValue);
 
             bool posAndNeg = minValue < 0f && maxValue > 0f;
             float minAbs = Math.Min(Math.Abs(minValue), Math.Abs(maxValue));
             float maxAbs = Math.Max(Math.Abs(minValue), Math.Abs(maxValue));
 
-            // if linear scaling is forced...
-            if (scale == FloatScale.ForceLinear
-                // or we use auto-scaling and maximum is UInt16 or when the difference of order of magnitude is smaller than 4
-                || (scale == FloatScale.Auto && (maxAbs <= UInt16.MaxValue || !posAndNeg && maxAbs < minAbs * 16)))
-            {
+            // choosing linear scaling if maximum is not larger than MaxUInt16 or when the difference of order of magnitude is smaller than 4
+            if (scale == FloatScale.Auto && (maxAbs <= UInt16.MaxValue || !posAndNeg && maxAbs < minAbs * 16))
                 return NextSingleLinear(random, minValue, maxValue);
-            }
 
-            int sign;
+            bool isNeg;
             if (!posAndNeg)
-                sign = minValue < 0f ? -1 : 1;
+                isNeg = minValue < 0f;
             else
             {
                 // if both negative and positive results are expected we select the sign based on the size of the ranges
                 float sample = random.NextSingle();
                 float rate = minAbs / maxAbs;
                 float absMinValue = Math.Abs(minValue);
-                bool isNeg = absMinValue <= maxValue
+                isNeg = absMinValue <= maxValue
                     ? rate / 2f > sample
                     : rate / 2f < sample;
-                sign = isNeg ? -1 : 1;
 
                 // now adjusting the limits for 0...[selected range]
                 minAbs = 0f;
@@ -2914,16 +3225,18 @@ namespace KGySoft.CoreLibraries
 
             // Possible float exponents are -126..127, but we don't generate too small exponents for big ranges because
             // that would cause too many almost zero results, which are much smaller than the original NextSingle values.
-            float minExponent = minAbs == 0f ? -16f : MathF.Log(minAbs, 2f);
-            float maxExponent = MathF.Log(maxAbs, 2f);
+            float minExponent = minAbs == 0f ? -16f : MathF.Log2(minAbs);
+            float maxExponent = MathF.Log2(maxAbs);
             if (minExponent == maxExponent)
                 return minValue;
 
-            // We decrease exponents only if the given range is already small. Even lower than -1022 is no problem, the result may be 0
+            // We decrease exponents only if the given range is already small. Even lower than -126 is no problem, the result may be 0
             if (maxExponent < minExponent)
                 minExponent = maxExponent - 4;
 
-            float result = sign * MathF.Pow(2f, NextSingleLinear(random, minExponent, maxExponent));
+            float result = MathF.Pow(2f, NextSingleLinear(random, minExponent, maxExponent));
+            if (isNeg)
+                result = -result;
 
             // protecting ourselves against inaccurate calculations; however, in practice result is always in range.
             return result < minValue ? minValue : (result > maxValue ? maxValue : result);
@@ -2949,6 +3262,18 @@ namespace KGySoft.CoreLibraries
                 // wide-range proof version (max - min can be larger than MaxValue)
                 : (maxValue * sample) + (minValue * (1m - sample));
         }
+
+#if NET11_0_OR_GREATER
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        private static Decimal32 NextDecimal32Linear(Random random, Decimal32 minValue, Decimal32 maxValue)
+        {
+            Decimal32 sample = random.NextDecimal32();
+            Decimal32 result = (maxValue * sample) + (minValue * (Decimal32.One - sample));
+
+            // protecting ourselves against inaccurate calculations; occurs only near maxValue.
+            return result < minValue ? minValue : (result > maxValue ? maxValue : result);
+        }
+#endif
 
         [SecurityCritical]
         private static void FillChars(Random random, in MutableString target, bool checkInvalid = false)
