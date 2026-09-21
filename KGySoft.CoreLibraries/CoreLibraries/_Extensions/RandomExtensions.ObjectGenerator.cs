@@ -568,27 +568,28 @@ namespace KGySoft.CoreLibraries
 
             private static object GenerateBoolean(ref GeneratorContext context) => context.Random.NextBoolean();
             private static object GenerateByte(ref GeneratorContext context) => context.Random.SampleByte();
-            private static object GenerateSbyte(ref GeneratorContext context) => context.Settings.AllowNegativeValues ? context.Random.SampleSByte() : context.Random.NextSByte(SByte.MaxValue, true);
-            private static object GenerateChar(ref GeneratorContext context) => context.Random.NextChar();
-            private static object GenerateInt16(ref GeneratorContext context) => context.Settings.AllowNegativeValues ? context.Random.SampleInt16() : context.Random.NextInt16(Int16.MaxValue, true);
+            private static object GenerateSbyte(ref GeneratorContext context) => context.Settings.AllowNegativeValues ? context.Random.SampleSByte() : (sbyte)(context.Random.SampleSByte() & SByte.MaxValue);
+            private static object GenerateChar(ref GeneratorContext context) => (char)context.Random.SampleUInt16();
+            private static object GenerateInt16(ref GeneratorContext context) => context.Settings.AllowNegativeValues ? context.Random.SampleInt16() : (short)(context.Random.SampleInt16() & Int16.MaxValue);
             private static object GenerateUInt16(ref GeneratorContext context) => context.Random.SampleUInt16();
-            private static object GenerateInt32(ref GeneratorContext context) => context.Settings.AllowNegativeValues ? context.Random.SampleInt32() : context.Random.NextInt32(Int32.MaxValue, true);
+            private static object GenerateInt32(ref GeneratorContext context) => context.Settings.AllowNegativeValues ? context.Random.SampleInt32() : context.Random.SampleInt32() & Int32.MaxValue;
             private static object GenerateUInt32(ref GeneratorContext context) => context.Random.SampleUInt32();
-            private static object GenerateInt64(ref GeneratorContext context) => context.Settings.AllowNegativeValues ? context.Random.SampleInt64() : context.Random.NextInt64(Int64.MaxValue, true);
+            private static object GenerateInt64(ref GeneratorContext context) => context.Settings.AllowNegativeValues ? context.Random.SampleInt64() : context.Random.SampleInt64() & Int64.MaxValue;
             private static object GenerateUInt64(ref GeneratorContext context) => context.Random.SampleUInt64();
             private static object GenerateIntPtr(ref GeneratorContext context) => (IntPtr)(IntPtr.Size == 4 ? (int)GenerateInt32(ref context) : (long)GenerateInt64(ref context));
             private static object GenerateUIntPtr(ref GeneratorContext context) => (UIntPtr)(UIntPtr.Size == 4 ? (uint)GenerateUInt32(ref context) : (ulong)GenerateUInt64(ref context));
 
             private static object GenerateSingle(ref GeneratorContext context) => context.Settings.AllowNegativeValues
-                ? context.Random.NextSingle(Single.MinValue, Single.MaxValue, context.Settings.FloatScale)
-                : context.Random.NextSingle(Single.MaxValue, context.Settings.FloatScale);
+                ? DoGetNextSingle(context.Random, Single.MinValue, Single.MaxValue, context.Settings.FloatScale)
+                : DoGetNextSingle(context.Random, Single.MaxValue, context.Settings.FloatScale);
 
             private static object GenerateDouble(ref GeneratorContext context) => context.Settings.AllowNegativeValues
-                ? context.Random.NextDouble(Double.MinValue, Double.MaxValue, context.Settings.FloatScale)
-                : context.Random.NextDouble(Double.MaxValue, context.Settings.FloatScale);
+                ? DoGetNextDouble(context.Random, Double.MinValue, Double.MaxValue, context.Settings.FloatScale)
+                : DoGetNextDouble(context.Random, Double.MaxValue, context.Settings.FloatScale);
 
-            private static object GenerateDecimal(ref GeneratorContext context)
-                => context.Settings.AllowNegativeValues ? context.Random.NextDecimal(Decimal.MinValue, Decimal.MaxValue, context.Settings.FloatScale) : context.Random.NextDecimal(Decimal.MaxValue, context.Settings.FloatScale);
+            private static object GenerateDecimal(ref GeneratorContext context) => context.Settings.AllowNegativeValues
+                ? DoGetNextDecimal(context.Random, Decimal.MinValue, Decimal.MaxValue, context.Settings.FloatScale)
+                : DoGetNextDecimal(context.Random, Decimal.MaxValue, context.Settings.FloatScale);
 
             private static string GenerateString(ref GeneratorContext context)
             {
@@ -1312,8 +1313,8 @@ namespace KGySoft.CoreLibraries
 
 #if NET5_0_OR_GREATER
             private static object GenerateHalf(ref GeneratorContext context) => context.Settings.AllowNegativeValues
-                ? context.Random.NextHalf(Half.MinValue, Half.MaxValue, context.Settings.FloatScale)
-                : context.Random.NextHalf(Half.MaxValue, context.Settings.FloatScale);
+                ? (Half)DoGetNextSingle(context.Random, (float)Half.MinValue, (float)Half.MaxValue, context.Settings.FloatScale)
+                : (Half)DoGetNextSingle(context.Random, (float)Half.MaxValue, context.Settings.FloatScale);
 
 #endif
 
@@ -1333,20 +1334,20 @@ namespace KGySoft.CoreLibraries
 
 #if NET11_0_OR_GREATER
             private static object GenerateBFloat16(ref GeneratorContext context) => context.Settings.AllowNegativeValues
-                ? context.Random.NextBFloat16(BFloat16.MinValue, BFloat16.MaxValue, context.Settings.FloatScale)
-                : context.Random.NextBFloat16(BFloat16.MaxValue, context.Settings.FloatScale);
+                ? (BFloat16)DoGetNextSingle(context.Random, (float)BFloat16.MinValue, (float)BFloat16.MaxValue, context.Settings.FloatScale)
+                : (BFloat16)DoGetNextSingle(context.Random, (float)BFloat16.MaxValue, context.Settings.FloatScale);
 
             private static object GenerateDecimal32(ref GeneratorContext context) => context.Settings.AllowNegativeValues
-                ? context.Random.NextDecimal32(Decimal32.MinValue, Decimal32.MaxValue, context.Settings.FloatScale)
-                : context.Random.NextDecimal32(Decimal32.MaxValue, context.Settings.FloatScale);
+                ? DoGetNextDecimal32(context.Random, Decimal32.MinValue, Decimal32.MaxValue, context.Settings.FloatScale)
+                : DoGetNextDecimal32(context.Random, Decimal32.MaxValue, context.Settings.FloatScale);
 
             private static object GenerateDecimal64(ref GeneratorContext context) => context.Settings.AllowNegativeValues
-                ? context.Random.NextDecimal64(Decimal64.MinValue, Decimal64.MaxValue, context.Settings.FloatScale)
-                : context.Random.NextDecimal64(Decimal64.MaxValue, context.Settings.FloatScale);
+                ? DoGetNextDecimal64(context.Random, Decimal64.MinValue, Decimal64.MaxValue, context.Settings.FloatScale)
+                : DoGetNextDecimal64(context.Random, Decimal64.MaxValue, context.Settings.FloatScale);
 
             private static object GenerateDecimal128(ref GeneratorContext context) => context.Settings.AllowNegativeValues
-                ? context.Random.NextDecimal128(Decimal128.MinValue, Decimal128.MaxValue, context.Settings.FloatScale)
-                : context.Random.NextDecimal128(Decimal128.MaxValue, context.Settings.FloatScale);
+                ? DoGetNextDecimal128(context.Random, Decimal128.MinValue, Decimal128.MaxValue, context.Settings.FloatScale)
+                : DoGetNextDecimal128(context.Random, Decimal128.MaxValue, context.Settings.FloatScale);
 
 #endif
 

@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.InteropServices;
 #endif
 #if NETCOREAPP3_0_OR_GREATER
 using System.Runtime.CompilerServices;
@@ -260,6 +261,36 @@ namespace KGySoft.CoreLibraries.PerformanceTests.CoreLibraries
             new PerformanceTest<BFloat16> { TestName = "BFloat16", Iterations = iterations }
                 .AddCase(rnd.NextBFloat16, "NextBFloat16")
                 .AddCase(rnd.NextBinaryFloat<BFloat16>, "NextBinaryFloat<BFloat16>")
+                .DoTest()
+                .DumpResults(Console.Out);
+        }
+
+        [TestCase<int>]
+        [TestCase<uint>]
+        [TestCase<IntPtr>]
+        [TestCase<Int128>]
+        public void NextIntegerGenericTest<T>()
+            where T : IBinaryInteger<T>, IMinMaxValue<T>
+        {
+            new RandomizedPerformanceTest<T> { TestName = $"{nameof(NextIntegerGenericTest)}<{typeof(T).Name}>" }
+                .AddCase(rnd => rnd.NextObject<T>(), nameof(RandomExtensions.NextObject))
+                .AddCase(rnd => rnd.NextInteger<T>(), nameof(Random.NextInteger))
+                .DoTest()
+                .DumpResults(Console.Out);
+        }
+
+        [TestCase<float>]
+        [TestCase<double>]
+        [TestCase<NFloat>]
+        [TestCase<Half>]
+        public void NextBinaryFloatGenericTest<T>()
+            where T : IBinaryFloatingPointIeee754<T>
+        {
+            // Note though that NextBinaryFloat generates between 0 and 1, whereas NextObject<> with default options generates between 0 and MaxValue, using logarithmic
+            // scale; except for Half, where the range is so small that linear scale is used. Therefore, only tha Half is expected to be faster by NextObject<T>.
+            new RandomizedPerformanceTest<T> { TestName = $"{nameof(NextBinaryFloatGenericTest)}<{typeof(T).Name}>" }
+                .AddCase(rnd => rnd.NextObject<T>(), nameof(RandomExtensions.NextObject))
+                .AddCase(rnd => rnd.NextBinaryFloat<T>(), nameof(Random.NextBinaryFloat))
                 .DoTest()
                 .DumpResults(Console.Out);
         }
