@@ -15,7 +15,17 @@
 
 #region Usings
 
+#if NETCOREAPP3_0_OR_GREATER
+using System;
+using System.Numerics;
+#endif
 using System.Runtime.CompilerServices;
+#if NET5_0_OR_GREATER
+using System.Runtime.Intrinsics.Arm;
+#endif
+#if NETCOREAPP3_0_OR_GREATER
+using System.Runtime.Intrinsics.X86;
+#endif
 
 #endregion
 
@@ -25,18 +35,31 @@ namespace KGySoft.CoreLibraries
     {
         #region Methods
 
+        /// <summary>
+        /// Gets a mask for generating random values excluding the upper bound.
+        /// Returns value - 1 for powers of two, or the minimal covering bit mask for other values.
+        /// </summary>
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        internal static uint GetBitMask(this uint value)
+        internal static uint GetBitMaskExclusive(this uint value)
         {
-            Debug.Assert(value != 0U);
-            // In .NET Core 3.0 and above we could use this:
-            // return value.IsSingleFlag() ? value - 1 : BitOperations.RoundUpToPowerOf2(value) - 1;
-            // But it contains an extra condition, and it cannot be always HW accelerated (e.g. 32 bit process/CPU),
-            // so it is almost always slower than the following software solution (even when HW acceleration is available).
+            // In .NET Core 3.0 and above we could use BitOperations.RoundUpToPowerOf2(value) - 1,
+            // or BitOperations.IsPow2(value) ? value - 1 : UInt64.MaxValue >> BitOperations.LeadingZeroCount(value).
+            // But as there is no BitOperations.IsAccelerated, we must check the possible HW supported ways at low level,
+            // because their SW fallback contain more unnecessary steps than our fallback below.
+            // When HW support is available, we prefer LeadingZeroCount, because RoundUpToPowerOf2 uses that in the background as well.
+            Debug.Assert(value != 0UL);
+#if NETCOREAPP3_0_OR_GREATER
+            // NOTE: that 
+            if (Lzcnt.IsSupported)
+                return BitOperations.IsPow2(value) ? value - 1 : UInt32.MaxValue >> (int)Lzcnt.LeadingZeroCount(value);
+#endif
+#if NET5_0_OR_GREATER
+            if (ArmBase.IsSupported)
+                return BitOperations.IsPow2(value) ? value - 1 : UInt32.MaxValue >> ArmBase.LeadingZeroCount(value);
+#endif
 
             // This is the SW version of RoundUpToPowerOf2, except the last step,
             // which would add +1 to the result, which we would need to undo anyway.
-            // It returns value - 1 for powers of two or the minimal covering bit mask for other values.
             --value;
             value |= value >> 1;
             value |= value >> 2;

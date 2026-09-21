@@ -225,7 +225,7 @@ namespace KGySoft.Security.Cryptography
                 return 0;
             }
 
-            uint mask = ((uint)maxValue).GetBitMask();
+            uint mask = ((uint)maxValue).GetBitMaskExclusive();
             uint result;
             do
                 result = SampleUInt32() & mask;
@@ -252,7 +252,7 @@ namespace KGySoft.Security.Cryptography
             if (range <= 1u)
                 return minValue;
 
-            uint mask = range.GetBitMask();
+            uint mask = range.GetBitMaskExclusive();
             uint result;
             do
                 result = SampleUInt32() & mask;
@@ -295,7 +295,7 @@ namespace KGySoft.Security.Cryptography
                 return 0L;
             }
 
-            ulong mask = ((ulong)maxValue).GetBitMask();
+            ulong mask = ((ulong)maxValue).GetBitMaskExclusive();
             ulong result;
             do
                 result = SampleUInt64() & mask;
@@ -322,7 +322,7 @@ namespace KGySoft.Security.Cryptography
             if (range <= 1UL)
                 return minValue;
 
-            ulong mask = range.GetBitMask();
+            ulong mask = range.GetBitMaskExclusive();
             ulong result;
             do
                 result = SampleUInt64() & mask;
