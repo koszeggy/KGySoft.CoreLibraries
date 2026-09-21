@@ -26,6 +26,8 @@
   + New NextDecimal32 methods (.NET 11.0 and above)
   + New NextDecimal64 methods (.NET 11.0 and above)
   + New NextDecimal128 methods (.NET 11.0 and above)
+  + NextObject methods: Supporting NFloat type (.NET 6.0 and above)
+  + NextObject methods: Supporting BFloat16/Decimal32/Decimal64/Decimal128 types (.NET 11.0 and above)
 
 + KGySoft.Collections namespace:
 ================================

@@ -21,11 +21,17 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+#if NET11_0_OR_GREATER
+using System.Numerics;
+#endif
 using System.Reflection;
 #if !NETSTANDARD2_0
 using System.Reflection.Emit;
 #endif
 using System.Runtime.CompilerServices;
+#if NET6_0_OR_GREATER
+using System.Runtime.InteropServices;
+#endif
 using System.Security;
 using System.Text;
 using System.Threading;
@@ -206,7 +212,7 @@ namespace KGySoft.CoreLibraries
                     { Reflector.IntPtrType, GenerateIntPtr },
                     { Reflector.UIntPtrType, GenerateUIntPtr },
 
-                    // floating point types
+                    // floating point types - and some newer types below
                     { Reflector.FloatType, GenerateSingle },
                     { Reflector.DoubleType, GenerateDouble },
                     { Reflector.DecimalType, GenerateDecimal },
@@ -219,7 +225,7 @@ namespace KGySoft.CoreLibraries
                     // guid
                     { Reflector.GuidType, GenerateGuid },
 
-                    // date and time
+                    // date and time - and some newer types below
                     { Reflector.DateTimeType, GenerateDateTime },
                     { Reflector.DateTimeOffsetType, GenerateDateTimeOffset },
                     { Reflector.TimeSpanType, GenerateTimeSpan },
@@ -241,10 +247,17 @@ namespace KGySoft.CoreLibraries
 #if NET6_0_OR_GREATER
                     { Reflector.DateOnlyType, GenerateDateOnly },
                     { Reflector.TimeOnlyType, GenerateTimeOnly },
+                    { typeof(NFloat), GenerateNFloat }, 
 #endif
 #if NET7_0_OR_GREATER
                     { Reflector.Int128Type, GenerateInt128 },
                     { Reflector.UInt128Type, GenerateUInt128 },
+#endif
+#if NET11_0_OR_GREATER
+                    { typeof(BFloat16), GenerateBFloat16 },
+                    { typeof(Decimal32), GenerateDecimal32 },
+                    { typeof(Decimal64), GenerateDecimal64 },
+                    { typeof(Decimal128), GenerateDecimal128 },
 #endif
                 };
 
@@ -566,11 +579,13 @@ namespace KGySoft.CoreLibraries
             private static object GenerateIntPtr(ref GeneratorContext context) => (IntPtr)(IntPtr.Size == 4 ? (int)GenerateInt32(ref context) : (long)GenerateInt64(ref context));
             private static object GenerateUIntPtr(ref GeneratorContext context) => (UIntPtr)(UIntPtr.Size == 4 ? (uint)GenerateUInt32(ref context) : (ulong)GenerateUInt64(ref context));
 
-            private static object GenerateSingle(ref GeneratorContext context)
-                => context.Settings.AllowNegativeValues ? context.Random.NextSingle(Single.MinValue, Single.MaxValue, context.Settings.FloatScale) : context.Random.NextSingle(Single.MaxValue, context.Settings.FloatScale);
+            private static object GenerateSingle(ref GeneratorContext context) => context.Settings.AllowNegativeValues
+                ? context.Random.NextSingle(Single.MinValue, Single.MaxValue, context.Settings.FloatScale)
+                : context.Random.NextSingle(Single.MaxValue, context.Settings.FloatScale);
 
-            private static object GenerateDouble(ref GeneratorContext context)
-                => context.Settings.AllowNegativeValues ? context.Random.NextDouble(Double.MinValue, Double.MaxValue, context.Settings.FloatScale) : context.Random.NextDouble(Double.MaxValue, context.Settings.FloatScale);
+            private static object GenerateDouble(ref GeneratorContext context) => context.Settings.AllowNegativeValues
+                ? context.Random.NextDouble(Double.MinValue, Double.MaxValue, context.Settings.FloatScale)
+                : context.Random.NextDouble(Double.MaxValue, context.Settings.FloatScale);
 
             private static object GenerateDecimal(ref GeneratorContext context)
                 => context.Settings.AllowNegativeValues ? context.Random.NextDecimal(Decimal.MinValue, Decimal.MaxValue, context.Settings.FloatScale) : context.Random.NextDecimal(Decimal.MaxValue, context.Settings.FloatScale);
@@ -1296,19 +1311,43 @@ namespace KGySoft.CoreLibraries
 #endif
 
 #if NET5_0_OR_GREATER
-            private static object GenerateHalf(ref GeneratorContext context)
-                => context.Settings.AllowNegativeValues ? context.Random.NextHalf(Half.MinValue, Half.MaxValue, context.Settings.FloatScale) : context.Random.NextHalf(Half.MaxValue, context.Settings.FloatScale);
+            private static object GenerateHalf(ref GeneratorContext context) => context.Settings.AllowNegativeValues
+                ? context.Random.NextHalf(Half.MinValue, Half.MaxValue, context.Settings.FloatScale)
+                : context.Random.NextHalf(Half.MaxValue, context.Settings.FloatScale);
 
 #endif
 
 #if NET6_0_OR_GREATER
             private static object GenerateDateOnly(ref GeneratorContext context) => DateOnly.FromDateTime((DateTime)GenerateDateTime(ref context));
             private static object GenerateTimeOnly(ref GeneratorContext context) => NextTimeOnly(context.Random);
+            private static object GenerateNFloat(ref GeneratorContext context) => (NFloat)(IntPtr.Size == 4 ? (float)GenerateSingle(ref context) : (double)GenerateDouble(ref context));
 #endif
 
 #if NET7_0_OR_GREATER
-            private static object GenerateInt128(ref GeneratorContext context) => context.Settings.AllowNegativeValues ? context.Random.SampleInt128() : context.Random.NextInt128(Int128.MaxValue, true);
+            private static object GenerateInt128(ref GeneratorContext context) => context.Settings.AllowNegativeValues
+                ? context.Random.SampleInt128()
+                : context.Random.NextInt128(Int128.MaxValue, true);
+
             private static object GenerateUInt128(ref GeneratorContext context) => context.Random.SampleUInt128();
+#endif
+
+#if NET11_0_OR_GREATER
+            private static object GenerateBFloat16(ref GeneratorContext context) => context.Settings.AllowNegativeValues
+                ? context.Random.NextBFloat16(BFloat16.MinValue, BFloat16.MaxValue, context.Settings.FloatScale)
+                : context.Random.NextBFloat16(BFloat16.MaxValue, context.Settings.FloatScale);
+
+            private static object GenerateDecimal32(ref GeneratorContext context) => context.Settings.AllowNegativeValues
+                ? context.Random.NextDecimal32(Decimal32.MinValue, Decimal32.MaxValue, context.Settings.FloatScale)
+                : context.Random.NextDecimal32(Decimal32.MaxValue, context.Settings.FloatScale);
+
+            private static object GenerateDecimal64(ref GeneratorContext context) => context.Settings.AllowNegativeValues
+                ? context.Random.NextDecimal64(Decimal64.MinValue, Decimal64.MaxValue, context.Settings.FloatScale)
+                : context.Random.NextDecimal64(Decimal64.MaxValue, context.Settings.FloatScale);
+
+            private static object GenerateDecimal128(ref GeneratorContext context) => context.Settings.AllowNegativeValues
+                ? context.Random.NextDecimal128(Decimal128.MinValue, Decimal128.MaxValue, context.Settings.FloatScale)
+                : context.Random.NextDecimal128(Decimal128.MaxValue, context.Settings.FloatScale);
+
 #endif
 
             #endregion
