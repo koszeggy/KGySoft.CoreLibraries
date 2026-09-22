@@ -36,6 +36,9 @@ using System.Reflection;
 #if NETFRAMEWORK
 using System.Runtime.CompilerServices;
 #endif
+#if NET6_0_OR_GREATER
+using System.Runtime.InteropServices;
+#endif
 #if !NET8_0_OR_GREATER
 using System.Runtime.Serialization;
 #endif
@@ -399,24 +402,21 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 (float)1,
                 (double)1,
                 (decimal)1,
-                new IntPtr(1),
-                EnvironmentHelper.IsMono ? null : new UIntPtr(1), // Mono: In compatibility mode BinaryFormatter fails: The constructor to deserialize an object of type 'System.UIntPtr' was not found.
-#if !NET35
-                new BigInteger(1),
-#endif
-#if NETCOREAPP3_0_OR_GREATER
-                Rune.GetRuneAt("🙂", 0),
-#endif
-#if NET5_0_OR_GREATER
-                (Half)1,
-#endif
-#if NET6_0_OR_GREATER
-                DateOnly.FromDateTime(DateTime.Today),
-                TimeOnly.FromDateTime(DateTime.Now),
-#endif
 #if NET7_0_OR_GREATER
+                (Half)1, // .NET 5+, but HalfConverter was added in .NET 7
+                DateOnly.FromDateTime(DateTime.Today), // .NET 6+, but DateOnlyConverter was added in .NET 7
+                TimeOnly.FromDateTime(DateTime.Now), // .NET 6+, but TimeOnlyConverter was added in .NET 7
                 (Int128)1,
                 (UInt128)1,
+#endif
+#if NET12_0_OR_GREATER
+#warning Check if the converters are already available. Adjust the #ifs here, and in the next batch.
+                Rune.GetRuneAt("🙂", 0), // .NET Core 3.0+
+                new NFloat(1), // .NET6+
+                (BFloat16)1, // .NET11+
+                (Decimal32)1, // .NET11+
+                (Decimal64)1, // .NET11+
+                (Decimal128)1, // .NET11+
 #endif
             };
 
@@ -426,9 +426,35 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
             // preloading BigInteger original identity for safe deserialization in compatibility mode
             Reflector.ResolveAssembly("System.Numerics, Version=4.0.0.0, PublicKeyToken=b77a5c561934e089");
 #endif
-#if !NET8_0_OR_GREATER
-            KGySerializeObjects(referenceObjects, true, safeMode: false);
+            KGySerializeObjects(referenceObjects, true);
+            KGySerializeObjects(referenceObjects, false);
+
+            // For these types there is no TypeConverter, so using non-compatible mode only.
+            referenceObjects =
+            [
+                new IntPtr(1),
+                new UIntPtr(1),
+#if NETCOREAPP3_0_OR_GREATER
+                Rune.GetRuneAt("🙂", 0),
 #endif
+#if NET5_0 || NET6_0 // .NET 5/6 only, because converter was added in .NET 7
+                (Half)1,
+#endif
+#if !NET6_0 // .NET 6 only, because converter was added in .NET 7
+                DateOnly.FromDateTime(DateTime.Today),
+                TimeOnly.FromDateTime(DateTime.Now),
+#endif
+#if NET6_0_OR_GREATER
+                new NFloat(1),
+#endif
+#if NET11_0_OR_GREATER
+                (BFloat16)1, // .NET11+, but there is no converter
+                (Decimal32)1, // .NET11+, but there is no converter
+                (Decimal64)1, // .NET11+, but there is no converter
+                (Decimal128)1, // .NET11+, but there is no converter 
+#endif
+            ];
+
             KGySerializeObjects(referenceObjects, false);
         }
 
@@ -502,17 +528,57 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 Half.MinValue,
                 Half.MaxValue,
 #endif
+
+#if NET11_0_OR_GREATER
+                new NFloat(+0.0f),
+                new NFloat(-0.0f),
+                NFloat.NegativeInfinity,
+                NFloat.PositiveInfinity,
+                NFloat.NaN,
+                NFloat.MinValue,
+                NFloat.MaxValue,
+#endif
+
+#if NET11_0_OR_GREATER
+                BFloat16.Zero,
+                BFloat16.NegativeZero,
+                BFloat16.NegativeInfinity,
+                BFloat16.PositiveInfinity,
+                BFloat16.NaN,
+                BFloat16.MinValue,
+                BFloat16.MaxValue,
+
+                Decimal32.Zero,
+                Decimal32.NegativeZero,
+                Decimal32.NegativeInfinity,
+                Decimal32.PositiveInfinity,
+                Decimal32.NaN,
+                Decimal32.MinValue,
+                Decimal32.MaxValue,
+
+                Decimal64.Zero,
+                Decimal64.NegativeZero,
+                Decimal64.NegativeInfinity,
+                Decimal64.PositiveInfinity,
+                Decimal64.NaN,
+                Decimal64.MinValue,
+                Decimal64.MaxValue,
+
+                Decimal128.Zero,
+                Decimal128.NegativeZero,
+                Decimal128.NegativeInfinity,
+                Decimal128.PositiveInfinity,
+                Decimal128.NaN,
+                Decimal128.MinValue,
+                Decimal128.MaxValue,
+#endif
             };
 
 #if NETFRAMEWORK
             SystemSerializeObjects(referenceObjects);
-#endif
-
-#if NET5_0 || NET6_0
-            KGySerializeObjects(referenceObjects, true, safeMode: false); // Half has no TypeConverter so uses BinaryFormatter on these platforms
-#else
             KGySerializeObjects(referenceObjects, true, false); // the system serializer cannot deserialize the -0 correctly on older platforms 
 #endif
+
             KGySerializeObjects(referenceObjects, false);
         }
 

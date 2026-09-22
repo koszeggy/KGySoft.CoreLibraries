@@ -71,7 +71,12 @@
 
 + KGySoft.Resources namespace:
 ==============================
-+ ResXDataNode class: new constructor overload
++ ResXDataNode class:
++ ResXDataNode class:
+  + New constructor overload
+  + Supporting the NFloat type natively in non-compatible mode (.NET 6.0 and above)
+  + Supporting the BFloat16 type natively in non-compatible mode (.NET 11.0 and above)
+  + Supporting the Decimal32, Decimal64 and Decima128 types natively in non-compatible mode (.NET 11.0 and above)
 
 - KGySoft.Security.Cryptography namespace:
 ==========================================
@@ -95,11 +100,9 @@
     primitive types. Non-array collections of primitive types are not affected by this change.
   + New Deserialize/DeserializeFromStream/DeserializeByReader overloads where the element type of the expectedTypes
     parameter is SerializedType for better compatibility with AOT mode.
-  + Supporting the NFloat struct natively (.NET 6.0 and above)
-  + Supporting the BFloat16 struct natively (.NET 11.0 and above)
-  + Supporting the Decimal32 struct natively (.NET 11.0 and above)
-  + Supporting the Decimal64 struct natively (.NET 11.0 and above)
-  + Supporting the Decimal128 struct natively (.NET 11.0 and above)
+  + Supporting the NFloat type natively (.NET 6.0 and above)
+  + Supporting the BFloat16 type natively (.NET 11.0 and above)
+  + Supporting the Decimal32, Decimal64 and Decima128 types natively (.NET 11.0 and above)
   + Supporting function pointer runtime types (.NET 11.0 and above)
 - WeakAssemblySerializationBinder class:
   - OmitAssemblyNameOnSerialize property: Omitting the assembly name did not work if the type had been forwarded
@@ -110,11 +113,9 @@
 + XmlSerializer class:
   + New Deserialize/DeserializeFromStream/DeserializeByReader overloads where the element type of the expectedTypes
     parameter is SerializedType for better compatibility with AOT mode.
-  + Supporting the NFloat struct natively (.NET 6.0 and above)
-  + Supporting the BFloat16 struct natively (.NET 11.0 and above)
-  + Supporting the Decimal32 struct natively (.NET 11.0 and above)
-  + Supporting the Decimal64 struct natively (.NET 11.0 and above)
-  + Supporting the Decimal128 struct natively (.NET 11.0 and above)
+  + Supporting the NFloat type natively (.NET 6.0 and above)
+  + Supporting the BFloat16 type natively (.NET 11.0 and above)
+  + Supporting the Decimal32, Decimal64 and Decima128 types natively (.NET 11.0 and above)
 
 
 ~~~~~~~~~~

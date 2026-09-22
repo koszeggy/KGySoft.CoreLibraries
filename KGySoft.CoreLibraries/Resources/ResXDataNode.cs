@@ -22,8 +22,14 @@ using System.ComponentModel.Design;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
+#if NET11_0_OR_GREATER
+using System.Numerics;
+#endif
 using System.Reflection;
 using System.Runtime.CompilerServices;
+#if NET6_0_OR_GREATER
+using System.Runtime.InteropServices;
+#endif
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Security;
@@ -469,6 +475,12 @@ namespace KGySoft.Resources
 #if NET6_0 // only in .NET 6 because starting with .NET 7 there are DateOnlyConverter and TimeOnlyConverter
             Reflector.DateOnlyType,
             Reflector.TimeOnlyType,
+#endif
+#if NET6_0_OR_GREATER
+            typeof(NFloat),
+#endif
+#if NET11_0_OR_GREATER
+            typeof(BFloat16), typeof(Decimal32), typeof(Decimal64), typeof(Decimal128),
 #endif
         };
 

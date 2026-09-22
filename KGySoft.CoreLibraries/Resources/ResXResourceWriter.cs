@@ -26,6 +26,9 @@ using System.Numerics;
 #endif
 using System.Reflection;
 using System.Resources;
+#if NET6_0_OR_GREATER
+using System.Runtime.InteropServices;
+#endif
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Xml;
@@ -39,7 +42,7 @@ using KGySoft.Serialization.Binary;
 
 #region Suppressions
 
-#if !NET7_0_OR_GREATER
+#if !NET11_0_OR_GREATER
 #pragma warning disable CS1574 // the documentation contains types that are not available in every target
 #endif
 
@@ -517,8 +520,9 @@ namespace KGySoft.Resources
         /// <item><description>Type of <see cref="ResXFileRef"/> file references.</description></item>
         /// <item><description>The placeholder type of <see langword="null"/> references.</description></item>
         /// <item><description>If <c>CompatibleFormat</c> is <see langword="false"/>, some additional types are supported natively (without a <c>mimetype</c> attribute):
-        /// <see cref="IntPtr"/>, <see cref="UIntPtr"/>, <see cref="Type"/>, <see cref="BigInteger"/>, <see cref="Rune"/>, <see cref="Half"/>,
-        /// <see cref="DateOnly"/>, <see cref="TimeOnly"/>, <see cref="Int128"/> and <see cref="UInt128"/>.</description></item>
+        /// <see cref="IntPtr"/>, <see cref="UIntPtr"/>, <see cref="Type"/>, <see cref="BigInteger"/>, <see cref="Rune"/>, <see cref="Half"/>, <see cref="BFloat16"/>,
+        /// <see cref="DateOnly"/>, <see cref="TimeOnly"/>, <see cref="Int128"/>, <see cref="UInt128"/>, <see cref="Decimal32"/>, <see cref="Decimal64"/>, <see cref="Decimal128"/>,
+        /// and <see cref="NFloat"/>.</description></item>
         /// <item><description>If <c>CompatibleFormat</c> is <see langword="false"/>, unpaired surrogate <see cref="char"/> values are supported.</description></item>
         /// <item><description>The <c>mimetype</c> and content of binary serialized elements. If <c>CompatibleFormat</c> is <see langword="false"/>, these objects are
         /// serialized by <see cref="BinarySerializationFormatter"/>, which provides a much more compact result than the default <see cref="BinaryFormatter"/>.</description></item>
