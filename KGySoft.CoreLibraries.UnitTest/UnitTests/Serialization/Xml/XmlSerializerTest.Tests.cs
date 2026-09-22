@@ -30,6 +30,9 @@ using System.Runtime.CompilerServices;
 #if !NET35
 using System.Numerics;
 #endif
+#if NET6_0_OR_GREATER
+using System.Runtime.InteropServices;
+#endif
 using System.Runtime.Serialization;
 using System.Text;
 using System.Xml;
@@ -111,10 +114,17 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 #if NET6_0_OR_GREATER
                 DateOnly.FromDateTime(DateTime.Today),
                 TimeOnly.FromDateTime(DateTime.Now),
+                new NFloat(1),
 #endif
 #if NET7_0_OR_GREATER
                 (Int128)1,
                 (UInt128)1,
+#endif
+#if NET11_0_OR_GREATER
+                (BFloat16)1,
+                (Decimal32)1,
+                (Decimal64)1,
+                (Decimal128)1,
 #endif
             };
 
@@ -166,7 +176,51 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 Half.PositiveInfinity,
                 Half.NaN,
                 Half.MinValue,
-                Half.MaxValue
+                Half.MaxValue,
+
+#if NET6_0_OR_GREATER
+                new NFloat(+0.0f),
+                new NFloat(-0.0f),
+                NFloat.NegativeInfinity,
+                NFloat.PositiveInfinity,
+                NFloat.NaN,
+                NFloat.MinValue,
+                NFloat.MaxValue,
+#endif
+
+#if NET11_0_OR_GREATER
+                BFloat16.Zero,
+                BFloat16.NegativeZero,
+                BFloat16.NegativeInfinity,
+                BFloat16.PositiveInfinity,
+                BFloat16.NaN,
+                BFloat16.MinValue,
+                BFloat16.MaxValue,
+
+                Decimal32.Zero,
+                Decimal32.NegativeZero,
+                Decimal32.NegativeInfinity,
+                Decimal32.PositiveInfinity,
+                Decimal32.NaN,
+                Decimal32.MinValue,
+                Decimal32.MaxValue,
+
+                Decimal64.Zero,
+                Decimal64.NegativeZero,
+                Decimal64.NegativeInfinity,
+                Decimal64.PositiveInfinity,
+                Decimal64.NaN,
+                Decimal64.MinValue,
+                Decimal64.MaxValue,
+
+                Decimal128.Zero,
+                Decimal128.NegativeZero,
+                Decimal128.NegativeInfinity,
+                Decimal128.PositiveInfinity,
+                Decimal128.NaN,
+                Decimal128.MinValue,
+                Decimal128.MaxValue,
+#endif
             ];
 
             SystemSerializeObjects(referenceObjects);

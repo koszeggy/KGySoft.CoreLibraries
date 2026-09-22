@@ -110,6 +110,11 @@
 + XmlSerializer class:
   + New Deserialize/DeserializeFromStream/DeserializeByReader overloads where the element type of the expectedTypes
     parameter is SerializedType for better compatibility with AOT mode.
+  + Supporting the NFloat struct natively (.NET 6.0 and above)
+  + Supporting the BFloat16 struct natively (.NET 11.0 and above)
+  + Supporting the Decimal32 struct natively (.NET 11.0 and above)
+  + Supporting the Decimal64 struct natively (.NET 11.0 and above)
+  + Supporting the Decimal128 struct natively (.NET 11.0 and above)
 
 
 ~~~~~~~~~~

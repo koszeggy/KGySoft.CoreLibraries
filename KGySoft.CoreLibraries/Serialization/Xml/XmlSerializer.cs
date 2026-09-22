@@ -29,6 +29,9 @@ using System.IO;
 #if !NET35
 using System.Numerics;
 #endif
+#if NET6_0_OR_GREATER
+using System.Runtime.InteropServices;
+#endif
 using System.Runtime.Serialization;
 using System.Text;
 using System.Xml;
@@ -221,8 +224,13 @@ namespace KGySoft.Serialization.Xml
     /// <item><see cref="Half"/> (in .NET 5.0 and above)</item>
     /// <item><see cref="DateOnly"/> (in .NET 6.0 and above)</item>
     /// <item><see cref="TimeOnly"/> (in .NET 6.0 and above)</item>
+    /// <item><see cref="NFloat"/> (in .NET 6.0 and above)</item>
     /// <item><see cref="Int128"/> (in .NET 7.0 and above)</item>
     /// <item><see cref="UInt128"/> (in .NET 7.0 and above)</item>
+    /// <item><see cref="BFloat16"/> (.NET 11.0 and above)</item>
+    /// <item><see cref="Decimal32"/> (.NET 11.0 and above)</item>
+    /// <item><see cref="Decimal64"/> (.NET 11.0 and above)</item>
+    /// <item><see cref="Decimal128"/> (.NET 11.0 and above)</item>
     /// </list></para>
     /// <para><strong>Natively supported collections</strong>:
     /// <list type="bullet">
