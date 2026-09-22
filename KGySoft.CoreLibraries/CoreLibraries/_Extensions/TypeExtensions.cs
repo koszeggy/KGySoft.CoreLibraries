@@ -22,14 +22,15 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+#if NET11_0_OR_GREATER
+using System.Numerics;
+#endif
 using System.Reflection;
 #if !NETSTANDARD2_0 && !NET9_0_OR_GREATER
 using System.Reflection.Emit;
 #endif
 using System.Runtime.CompilerServices;
-#if !NET9_0_OR_GREATER
 using System.Runtime.InteropServices;
-#endif
 using System.Security;
 #if NETCOREAPP3_0_OR_GREATER
 using System.Text;
@@ -87,9 +88,11 @@ namespace KGySoft.CoreLibraries
         // - StringExtensions.Parser.knownTypes
         // - StringExtensions.Parser.TryParseKnownValueType<T>
         //   - Test: StringExtensionsTest.ParseTest
+        //   - Docs: StringExtensions.Parse<T> Natively supported types
         // - SpanExtensions.Parser.knownTypes
         // - SpanExtensions.Parser.TryParseKnownValueType<T>
         //   - Test: SpanExtensionsTest.ParseTest
+        //   - Docs: SpanExtensions.Parse<T> Natively supported types
         // - ResXDataNode.nonCompatibleModeNativeTypes (for compatible format)
         //   - Test: ResXResourceWriterTest
         //   - Docs: ResXResourceWriter.CompatibleFormat
@@ -116,10 +119,17 @@ namespace KGySoft.CoreLibraries
 #if NET6_0_OR_GREATER
                 Reflector.DateOnlyType,
                 Reflector.TimeOnlyType,
+                typeof(NFloat),
 #endif
 #if NET7_0_OR_GREATER
                 Reflector.Int128Type,
                 Reflector.UInt128Type,
+#endif
+#if NET11_0_OR_GREATER
+                typeof(BFloat16),
+                typeof(Decimal32),
+                typeof(Decimal64),
+                typeof(Decimal128),
 #endif
             };
 

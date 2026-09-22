@@ -26,6 +26,9 @@ using System.Text;
 using KGySoft.ComponentModel;
 #endif
 using KGySoft.Reflection;
+#if NET6_0_OR_GREATER
+using System.Runtime.InteropServices;
+#endif
 
 using NUnit.Framework;
 
@@ -210,11 +213,11 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
         {
             static void Test<TTarget>(ReadOnlySpan<char> source, TTarget expectedResult)
             {
-                Console.Write($"Parse as {typeof(TTarget).GetName(TypeNameKind.ShortName)} ");
+                Console.Write($"Parse {(source == null! ? "<null>" : $"\"{source}\"")} as {typeof(TTarget).GetName(TypeNameKind.ShortName)}: ");
                 TTarget actualResult = source.Parse<TTarget>();
                 AssertDeepEquals(expectedResult, actualResult);
                 AssertDeepEquals(expectedResult, (TTarget)source.Parse(typeof(TTarget)));
-                Console.WriteLine($"({actualResult?.ToString() ?? "<null>"})");
+                Console.WriteLine(actualResult?.ToString() ?? "<null>");
             }
 
             // null
@@ -257,11 +260,6 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test("1.0", 1.0m);
             Test("1.25", 1.25m);
             Test("-0.0", -0.0m);
-#if NET5_0_OR_GREATER
-            Test("1.0", (Half)1f);
-            Test("1.25", (Half)1.25f);
-            Test("-0", (Half)(-0f));
-#endif
 
             Test("true", true);
             Test("0", false);
@@ -278,9 +276,15 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test("a", new Rune('a'));
             Test("🏯", new Rune("🏯"[0], "🏯"[1]));
 #endif
+#if NET5_0_OR_GREATER
+            Test("1.0", (Half)1f);
+            Test("1.25", (Half)1.25f);
+            Test("-0", (Half)(-0f));
+#endif
 #if NET6_0_OR_GREATER
             Test("1980-01-01", new DateOnly(1980, 01, 01));
             Test("13:13", new TimeOnly(13, 13));
+            Test("1.25", new NFloat(1.25));
 #endif
 #if NET7_0_OR_GREATER
             Test("1", (Int128)1);
@@ -289,6 +293,16 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test("1", (UInt128)1);
             Test("1.0", (UInt128)1);
             Test("1.1", (UInt128)1);
+#endif
+#if NET11_0_OR_GREATER
+            Test("1.25", (BFloat16)1.25);
+            Test("-0", BFloat16.NegativeZero);
+            Test("1.25", (Decimal32)1.25);
+            Test("-0", Decimal32.NegativeZero);
+            Test("1.25", (Decimal64)1.25);
+            Test("-0", Decimal64.NegativeZero);
+            Test("1.25", (Decimal128)1.25);
+            Test("-0", Decimal128.NegativeZero);
 #endif
 
             // Registered conversions

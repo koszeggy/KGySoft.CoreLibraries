@@ -27,6 +27,9 @@ using System.Numerics;
 #if !NET35 || !NET40
 using System.Reflection;
 #endif
+#if NET6_0_OR_GREATER
+using System.Runtime.InteropServices;
+#endif
 #if NETCOREAPP3_0_OR_GREATER
 using System.Text;
 #endif
@@ -97,10 +100,17 @@ namespace KGySoft.CoreLibraries
 #if NET6_0_OR_GREATER
                 { Reflector.DateOnlyType, TryParseDateOnly }, 
                 { Reflector.TimeOnlyType, TryParseTimeOnly }, 
+                { typeof(NFloat), TryParseNFloat },
 #endif
 #if NET7_0_OR_GREATER
                 { Reflector.Int128Type, TryParseInt128 }, 
-                { Reflector.UInt128Type, TryParseUInt128 }, 
+                { Reflector.UInt128Type, TryParseUInt128 },
+#endif
+#if NET11_0_OR_GREATER
+                { typeof(BFloat16), TryParseBFloat16 },
+                { typeof(Decimal32), TryParseDecimal32 },
+                { typeof(Decimal64), TryParseDecimal64 },
+                { typeof(Decimal128), TryParseDecimal128 },
 #endif
             };
 
@@ -286,7 +296,7 @@ namespace KGySoft.CoreLibraries
             #region Private Methods
 
             [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity",
-                Justification = "Intended, in Release build the JIT compiler will eliminate all but exactly one branch. For nice solutions see the separated object-returning methods")]
+                Justification = "Intended, in Release build the JIT/AOT compiler will eliminate all but exactly one branch. For nice solutions see the separated object-returning methods")]
             private static bool TryParseKnownValueType<T>(string s, CultureInfo culture, [MaybeNullWhen(false)]out T value)
             {
                 Debug.Assert(typeof(T).IsValueType, "T must be a value type so the branches can be optimized away by the JIT compiler");
@@ -569,14 +579,28 @@ namespace KGySoft.CoreLibraries
                         }
                     }
                 }
+
+                if (typeof(T) == typeof(NFloat))
+                {
+                    if (NFloat.TryParse(s, floatStyle, culture, out NFloat result))
+                    {
+                        value = (T)(object)result;
+                        return true;
+                    }
+                }
 #endif
 
 #if NET7_0_OR_GREATER
+#if !NET11_0_OR_GREATER
                 // Allowing float style for [U]Int128 because the fallback decimal range might not be enough
-                // Unfortunately, this will allow only .0* beyond the decimal range.
+                // Unfortunately, this will allow only .0* beyond the decimal range. 
+                const NumberStyles style = floatStyle;
+#else
+                const NumberStyles style = NumberStyles.Integer;
+#endif
                 if (typeof(T) == typeof(Int128))
                 {
-                    if (Int128.TryParse(s, floatStyle, culture, out Int128 result))
+                    if (Int128.TryParse(s, style, culture, out Int128 result))
                     {
                         value = (T)(object)result;
                         return true;
@@ -585,7 +609,45 @@ namespace KGySoft.CoreLibraries
 
                 if (typeof(T) == typeof(UInt128))
                 {
-                    if (UInt128.TryParse(s, floatStyle, culture, out UInt128 result))
+                    if (UInt128.TryParse(s, style, culture, out UInt128 result))
+                    {
+                        value = (T)(object)result;
+                        return true;
+                    }
+                }
+#endif
+
+#if NET11_0_OR_GREATER
+                if (typeof(T) == typeof(BFloat16))
+                {
+                    if (BFloat16.TryParse(s, floatStyle, culture, out BFloat16 result))
+                    {
+                        value = (T)(object)result;
+                        return true;
+                    }
+                }
+
+                if (typeof(T) == typeof(Decimal32))
+                {
+                    if (Decimal32.TryParse(s, floatStyle, culture, out Decimal32 result))
+                    {
+                        value = (T)(object)result;
+                        return true;
+                    }
+                }
+
+                if (typeof(T) == typeof(Decimal64))
+                {
+                    if (Decimal64.TryParse(s, floatStyle, culture, out Decimal64 result))
+                    {
+                        value = (T)(object)result;
+                        return true;
+                    }
+                }
+
+                if (typeof(T) == typeof(Decimal128))
+                {
+                    if (Decimal128.TryParse(s, floatStyle, culture, out Decimal128 result))
                     {
                         value = (T)(object)result;
                         return true;
@@ -603,15 +665,20 @@ namespace KGySoft.CoreLibraries
                 // This is needed to be compatible with general IConvertible behavior, which allows converting fractional numbers
                 TypeCode typeCode = Type.GetTypeCode(type);
                 if ((typeCode is >= TypeCode.SByte and <= TypeCode.UInt64 || type.In(Reflector.IntPtrType, Reflector.UIntPtrType
-#if !NET35
+#if !NET35 // .NET 11: there is no Decimal128 -> BigInteger conversion, so trying as simple decimal first TODO: && !NET12_0_OR_GREATER
+#if NET12_0_OR_GREATER
+#error Check if Decimal128 can already be directly converted to BigInteger.
+#endif
                     , Reflector.BigIntegerType
 #endif
-#if NET7_0_OR_GREATER
+#if NET7_0_OR_GREATER && !NET11_0_OR_GREATER
                     , Reflector.Int128Type, Reflector.UInt128Type
-#endif
+#endif 
                     )) && Decimal.TryParse(s, floatStyle, culture, out decimal result))
                 {
-#if !NET35
+                    result = Math.Round(result);
+
+#if !NET35 && !NET12_0_OR_GREATER // TODO: adjust NET12 if it still has no Decimal128 -> BigInteger conversion
                     if (type == Reflector.BigIntegerType)
                     {
                         value = new BigInteger(result);
@@ -619,7 +686,7 @@ namespace KGySoft.CoreLibraries
                     }
 #endif
 
-#if NET7_0_OR_GREATER
+#if NET7_0_OR_GREATER && !NET11_0_OR_GREATER
                     if (type == Reflector.Int128Type)
                     {
                         value = (Int128)result;
@@ -637,9 +704,8 @@ namespace KGySoft.CoreLibraries
                         value = (UInt128)result;
                         return true;
                     }
-#endif
+#endif 
 
-                    result = Math.Round(result);
                     var rangeInfo = RangeInfo.GetRangeInfo(type);
                     if (result >= rangeInfo.MinValue && result <= rangeInfo.MaxValue)
                     {
@@ -649,6 +715,47 @@ namespace KGySoft.CoreLibraries
                         return true;
                     }
                 }
+
+#if NET11_0_OR_GREATER
+                // In .NET11+ we try to use Decimal128 for large integer types
+                if (type.In(typeof(BigInteger), typeof(Int128), typeof(UInt128)) && Decimal128.TryParse(s, floatStyle, culture, out Decimal128 decimalValue))
+                {
+                    decimalValue = Decimal128.Round(decimalValue);
+                    if (type == typeof(Int128))
+                    {
+                        if (decimalValue < (Decimal128)Int128.MinValue || decimalValue > (Decimal128)Int128.MaxValue)
+                        {
+                            value = null;
+                            return false;
+                        }
+
+                        value = (Int128)decimalValue;
+                        return true;
+                    }
+
+                    if (type == typeof(UInt128))
+                    {
+                        if (decimalValue < Decimal128.Zero || decimalValue > (Decimal128)UInt128.MaxValue)
+                        {
+                            value = null;
+                            return false;
+                        }
+
+                        value = (UInt128)decimalValue;
+                        return true;
+                    }
+
+                    Debug.Assert(type == typeof(BigInteger));
+#if NET12_0_OR_GREATER
+                    value = (BigInteger)decimalValue; // BigInteger.CreateTruncating(decimalValue); - NOTE: compiles fine, can fail at runtime
+                    // or: Decimal128.ConvertToInteger<BigInteger>(decimalValue)  NOTE: compiles fine, can fail at runtime
+#else
+                    // NOTE: .NET 11 does not support converting Decimal128 to BigInteger, so using string as an intermediate step.
+                    // This time using invariant culture for the Decimal128 -> string -> BigInteger conversion.
+                    value = BigInteger.Parse(decimalValue.ToString("R", CultureInfo.InvariantCulture), floatStyle, CultureInfo.InvariantCulture);
+#endif
+                }
+#endif
 
                 value = null;
                 return false;
@@ -780,8 +887,8 @@ namespace KGySoft.CoreLibraries
 #if !NET35
             private static bool TryParseBigInteger(string s, CultureInfo culture, [MaybeNullWhen(false)] out object value)
             {
-                // For BigInteger, allowing float style because the fallback decimal range might not be enough
-                // Unfortunately, this will allow only .0* beyond the decimal range.
+                // For BigInteger, allowing float style, because the fallback decimal range might not be enough.
+                // Unfortunately, this will allow only .0* beyond the decimal range, but allows huge integers in exponential format without the fallback path.
                 if (BigInteger.TryParse(s, floatStyle, culture, out BigInteger result))
                 {
                     value = result;
@@ -904,7 +1011,7 @@ namespace KGySoft.CoreLibraries
             }
 
 #if NET5_0_OR_GREATER
-            private static bool TryParseHalf(string s, CultureInfo culture, [MaybeNullWhen(false)] out object value)
+            private static bool TryParseHalf(string s, CultureInfo culture, [MaybeNullWhen(false)]out object value)
             {
                 if (!Half.TryParse(s, floatStyle, culture, out Half result))
                 {
@@ -964,7 +1071,7 @@ namespace KGySoft.CoreLibraries
             }
 
 #if NET6_0_OR_GREATER
-            private static bool TryParseDateOnly(string s, CultureInfo culture, [MaybeNullWhen(false)] out object value)
+            private static bool TryParseDateOnly(string s, CultureInfo culture, [MaybeNullWhen(false)]out object value)
             {
                 if (s.Length > 0)
                 {
@@ -980,17 +1087,30 @@ namespace KGySoft.CoreLibraries
                 return false;
             }
 
-            private static bool TryParseTimeOnly(string s, CultureInfo culture, [MaybeNullWhen(false)] out object value)
+            private static bool TryParseTimeOnly(string s, CultureInfo culture, [MaybeNullWhen(false)]out object value)
             {
-                if (!TimeOnly.TryParse(s, culture, DateTimeStyles.AllowWhiteSpaces, out TimeOnly result))
+                if (TimeOnly.TryParse(s, culture, DateTimeStyles.AllowWhiteSpaces, out TimeOnly result))
                 {
-                    value = null;
-                    return false;
+                    value = result;
+                    return true;
                 }
 
-                value = result;
-                return true;
+                value = null;
+                return false;
             }
+
+            private static bool TryParseNFloat(string s, CultureInfo culture, [MaybeNullWhen(false)]out object value)
+            {
+                if (NFloat.TryParse(s, floatStyle, culture, out NFloat result))
+                {
+                    value = result;
+                    return true;
+                }
+
+                value = null;
+                return false;
+            }
+
 #endif
 
 #if NET7_0_OR_GREATER
@@ -1013,6 +1133,56 @@ namespace KGySoft.CoreLibraries
                 // Allowing float style for UInt128 because the fallback decimal range might not be enough
                 // Unfortunately, this will allow only .0* beyond the decimal range.
                 if (UInt128.TryParse(s, floatStyle, culture, out UInt128 result))
+                {
+                    value = result;
+                    return true;
+                }
+
+                value = null;
+                return false;
+            }
+#endif
+
+#if NET11_0_OR_GREATER
+            private static bool TryParseBFloat16(string s, CultureInfo culture, [MaybeNullWhen(false)]out object value)
+            {
+                if (BFloat16.TryParse(s, floatStyle, culture, out BFloat16 result))
+                {
+                    value = result;
+                    return true;
+                }
+
+                value = null;
+                return false;
+            }
+
+            private static bool TryParseDecimal32(string s, CultureInfo culture, [MaybeNullWhen(false)]out object value)
+            {
+                if (Decimal32.TryParse(s, floatStyle, culture, out Decimal32 result))
+                {
+                    value = result;
+                    return true;
+                }
+
+                value = null;
+                return false;
+            }
+
+            private static bool TryParseDecimal64(string s, CultureInfo culture, [MaybeNullWhen(false)]out object value)
+            {
+                if (Decimal64.TryParse(s, floatStyle, culture, out Decimal64 result))
+                {
+                    value = result;
+                    return true;
+                }
+
+                value = null;
+                return false;
+            }
+
+            private static bool TryParseDecimal128(string s, CultureInfo culture, [MaybeNullWhen(false)]out object value)
+            {
+                if (Decimal128.TryParse(s, floatStyle, culture, out Decimal128 result))
                 {
                     value = result;
                     return true;

@@ -27,6 +27,9 @@ using System.Linq;
 #if !NET35
 using System.Numerics;
 #endif
+#if NET6_0_OR_GREATER
+using System.Runtime.InteropServices;
+#endif
 using System.Text;
 
 using KGySoft.Collections;
@@ -175,6 +178,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test("1", 1);
             Test(1, "1");
             Test(1.0, 1);
+            Test(1.1m, 1);
             Test(-0f, -0d);
             Test("1", true); // Parse
             Test(100, 'd');
@@ -225,6 +229,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             // between non-convertibles via string
             Test(1L, new IntPtr(1));
             Test(1, new IntPtr(1));
+            Test(new IntPtr(1), 1);
             DateTime now = DateTime.Now;
             Test(now, new DateTimeOffset(now));
             Test(new DateTimeOffset(now), now);
@@ -245,7 +250,8 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test(new Rune[] { Rune.GetRuneAt("🙂", 0), new Rune('x'), Rune.GetRuneAt("🏯", 0) }, "🙂x🏯".ToCharArray());
 #endif
 #if NET5_0_OR_GREATER
-            Test(1f, (Half)1f);
+            Test(1.5f, (Half)1.5f);
+            Test((Half)1.5f, 1.5f);
             Test((Half)(-0f), -0f);
 #endif
 #if NET6_0_OR_GREATER
@@ -253,10 +259,24 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             Test(now.TimeOfDay, TimeOnly.FromTimeSpan(now.TimeOfDay));
             Test(DateOnly.FromDateTime(now), now.Date);
             Test(TimeOnly.FromDateTime(now), now.TimeOfDay);
+            Test(new NFloat(1.5f), 1.5f);
+            Test(1.5, new NFloat(1.5));
 #endif
 #if NET7_0_OR_GREATER
             Test(1, (Int128)1);
             Test(1, (UInt128)1);
+            Test("12.34", (Int128)12);
+#endif
+#if NET11_0_OR_GREATER
+            Test(1.5f, (BFloat16)1.5f);
+            Test((BFloat16)1.5, 1.5);
+            Test((BFloat16)(-0f), -0f);
+            Test((Decimal32)1.1m, 1.1m);
+            Test(1.1m, (Decimal32)1.1m);
+            Test((Decimal64)1.1m, 1.1m);
+            Test(1.1m, (Decimal32)1.1m);
+            Test((Decimal128)1.1m, 1.1m);
+            Test(1.1m, (Decimal32)1.1m);
 #endif
 
             // Registered conversions
@@ -333,10 +353,22 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
 #if NET6_0_OR_GREATER
             Test(DateOnly.FromDateTime(DateTime.Today));
             Test(TimeOnly.FromDateTime(DateTime.Now));
+            Test(new NFloat(1));
+            Test(new NFloat(-0d));
 #endif
 #if NET7_0_OR_GREATER
             Test((Int128)1);
             Test((UInt128)1);
+#endif
+#if NET11_0_OR_GREATER
+            Test((BFloat16)1);
+            Test((BFloat16)(-0f));
+            Test((Decimal32)1);
+            Test((Decimal32)(-0f));
+            Test((Decimal64)1);
+            Test((Decimal64)(-0f));
+            Test((Decimal128)1);
+            Test((Decimal128)(-0f));
 #endif
         }
 

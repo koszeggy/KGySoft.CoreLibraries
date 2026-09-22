@@ -28,6 +28,9 @@ using System.Linq;
 using System.Numerics;
 #endif
 using System.Runtime.CompilerServices;
+#if NET6_0_OR_GREATER
+using System.Runtime.InteropServices;
+#endif
 using System.Security;
 using System.Security.Cryptography;
 using System.Text;
@@ -56,7 +59,7 @@ using StringStream = KGySoft.IO.StringStream;
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
 #pragma warning disable CA2249 // Consider using 'string.Contains' instead of 'string.IndexOf' - there is no String.Contains(string, StringComparison) method in some targeted platforms  
 #endif
-#if !NET6_0_OR_GREATER
+#if !NET11_0_OR_GREATER
 #pragma warning disable CS1574 // the documentation contains types that are not available in every target
 #endif
 #if !NETCOREAPP3_0_OR_GREATER
@@ -331,6 +334,13 @@ namespace KGySoft.CoreLibraries
         /// <item><description><see cref="Half"/> (.NET 5.0 and above)</description></item>
         /// <item><description><see cref="DateOnly"/> (.NET 6.0 and above)</description></item>
         /// <item><description><see cref="TimeOnly"/> (.NET 6.0 and above)</description></item>
+        /// <item><description><see cref="NFloat"/> (.NET 6.0 and above)</description></item>
+        /// <item><description><see cref="Int128"/> (.NET 7.0 and above)</description></item>
+        /// <item><description><see cref="UInt128"/> (.NET 7.0 and above)</description></item>
+        /// <item><description><see cref="BFloat16"/> (.NET 11.0 and above)</description></item>
+        /// <item><description><see cref="Decimal32"/> (.NET 11.0 and above)</description></item>
+        /// <item><description><see cref="Decimal64"/> (.NET 11.0 and above)</description></item>
+        /// <item><description><see cref="Decimal128"/> (.NET 11.0 and above)</description></item>
         /// <item><description><see cref="Nullable{T}"/> of types above: <see langword="null"/> or empty value returns <see langword="null"/>; otherwise, <paramref name="s"/> is parsed as the underlying type</description></item>
         /// </list>
         /// </para>

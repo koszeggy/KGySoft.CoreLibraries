@@ -21,6 +21,9 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Numerics;
+#if NET6_0_OR_GREATER
+using System.Runtime.InteropServices;
+#endif
 #if NETCOREAPP3_0_OR_GREATER
 using System.Text;
 #endif
@@ -29,7 +32,7 @@ using System.Text;
 
 #region Suppressions
 
-#if !NET6_0_OR_GREATER
+#if !NET11_0_OR_GREATER
 #pragma warning disable CS1574 // the documentation contains types that are not available in every target
 #endif
 
@@ -418,6 +421,13 @@ namespace KGySoft.CoreLibraries
         /// <item><description><see cref="Half"/> (.NET 5.0 and above)</description></item>
         /// <item><description><see cref="DateOnly"/> (.NET 6.0 and above)</description></item>
         /// <item><description><see cref="TimeOnly"/> (.NET 6.0 and above)</description></item>
+        /// <item><description><see cref="NFloat"/> (.NET 6.0 and above)</description></item>
+        /// <item><description><see cref="Int128"/> (.NET 7.0 and above)</description></item>
+        /// <item><description><see cref="UInt128"/> (.NET 7.0 and above)</description></item>
+        /// <item><description><see cref="BFloat16"/> (.NET 11.0 and above)</description></item>
+        /// <item><description><see cref="Decimal32"/> (.NET 11.0 and above)</description></item>
+        /// <item><description><see cref="Decimal64"/> (.NET 11.0 and above)</description></item>
+        /// <item><description><see cref="Decimal128"/> (.NET 11.0 and above)</description></item>
         /// <item><description><see cref="Nullable{T}"/> of types above: <see langword="null"/> or empty value returns <see langword="null"/>; otherwise, <paramref name="s"/> is parsed as the underlying type</description></item>
         /// </list>
         /// <note>Apart from <see cref="Enum"/> and <see cref="Type"/> types, no string allocation occurs when parsing any of the types above.

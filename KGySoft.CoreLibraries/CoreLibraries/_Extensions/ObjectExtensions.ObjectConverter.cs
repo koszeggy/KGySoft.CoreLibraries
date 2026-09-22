@@ -218,7 +218,7 @@ namespace KGySoft.CoreLibraries
 
             [RequiresUnreferencedCode("StringExtensions.TryParse, TryConvertByTypeConverter, TryConvertCollection, TryConvertByRegisteredConversion")]
             private static bool DoConvert(ref ConversionContext context, object? obj,
-                [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMembers.Interfaces)] Type targetType,
+                [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors | DynamicallyAccessedMembers.Interfaces)]Type targetType,
                 out object? value, bool isRoot = false)
             {
                 if (targetType.IsInstanceOfType(obj))

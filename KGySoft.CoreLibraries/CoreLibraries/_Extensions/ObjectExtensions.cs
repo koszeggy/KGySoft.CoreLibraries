@@ -22,6 +22,12 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
+#if NET11_0_OR_GREATER
+using System.Numerics;
+#endif
+#if NET6_0_OR_GREATER
+using System.Runtime.InteropServices;
+#endif
 #if NETFRAMEWORK
 using System.Runtime.Remoting;
 using System.Runtime.Remoting.Messaging;
@@ -587,6 +593,11 @@ namespace KGySoft.CoreLibraries
 #if NET6_0_OR_GREATER
                 DateOnly d => d.ToString("O", culture),
                 TimeOnly t => t.ToString("O", culture),
+                NFloat nf => nf.ToString("R", culture),
+#endif
+#if NET11_0_OR_GREATER
+                // NOTE: no need to add Decimal32/64/128 here, as for DecimalIeee754 types the default and R formats are the same
+                BFloat16 bf => bf.ToString("R", culture),
 #endif
                 IConvertible c => c.ToString(culture),
                 IFormattable f => f.ToString(null, culture),

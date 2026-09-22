@@ -44,8 +44,14 @@ using System.Drawing;
 using System.Drawing.Imaging; 
 using System.IO;
 using System.Linq;
+#if NET11_0_OR_GREATER
+using System.Numerics;
+#endif
 using System.Reflection;
 using System.Runtime.CompilerServices;
+#if NET6_0_OR_GREATER
+using System.Runtime.InteropServices;
+#endif
 #if NETFRAMEWORK
 using System.Security;
 using System.Security.Permissions;
@@ -467,6 +473,22 @@ namespace KGySoft.CoreLibraries
                 if (reference is decimal decimalRef && check is decimal decimalCheck)
                     // .AsEnumerable(): to force using the Enumerable.SequenceEqual instead of MemoryExtensions.SequenceEqual, because the latter causes VerificationException (Operation could destabilize the runtime) from a partially trusted domain in .NET Framework 4.x.
                     return Check(Decimal.GetBits(decimalRef).AsEnumerable().SequenceEqual(Decimal.GetBits(decimalCheck)), $"Decimal equality failed: {decimalRef.ToRoundtripString()} <-> {decimalCheck.ToRoundtripString()}. Binary representation: 0x{Decimal.GetBits(decimalRef).Select(i => $"{i:X8}").Join(String.Empty)} <-> 0x{Decimal.GetBits(decimalCheck).Select(i => $"{i:X8}").Join(String.Empty)}", errors);
+
+#if NET6_0_OR_GREATER
+                if (reference is NFloat nfRef && check is NFloat nfCheck)
+                    return Check(BitConverter.DoubleToInt64Bits(nfRef.Value) == BitConverter.DoubleToInt64Bits(nfCheck.Value), $"NFloat equality failed: {nfRef.Value.ToRoundtripString()} <-> {nfCheck.Value.ToRoundtripString()}. Binary representation: 0x{BitConverter.GetBytes(nfRef.Value).ToHexValuesString()} <-> 0x{BitConverter.GetBytes(nfRef.Value).ToHexValuesString()}", errors);
+#endif
+
+#if NET11_0_OR_GREATER
+                if (reference is BFloat16 bf16Ref && check is BFloat16 bf16Check)
+                    return Check(bf16Ref.As<BFloat16, ushort>() == bf16Check.As<BFloat16, ushort>(), $"BFloat16 equality failed: {bf16Ref:R} <-> {bf16Check:R}. Binary representation: 0x{bf16Ref.As<BFloat16, ushort>():X4} <-> 0x{bf16Check.As<BFloat16, ushort>():X4}", errors);
+                if (reference is Decimal32 dec32Ref && check is Decimal32 dec32Check)
+                    return Check(dec32Ref.As<Decimal32, ushort>() == dec32Check.As<Decimal32, ushort>(), $"Decimal32 equality failed: {dec32Ref:R} <-> {dec32Check:R}. Binary representation: 0x{dec32Ref.As<Decimal32, ushort>():X8} <-> 0x{dec32Check.As<Decimal32, ushort>():X8}", errors);
+                if (reference is Decimal64 dec64Ref && check is Decimal64 dec64Check)
+                    return Check(dec64Ref.As<Decimal64, ulong>() == dec64Check.As<Decimal64, ulong>(), $"Decimal64 equality failed: {dec64Ref:R} <-> {dec64Check:R}. Binary representation: 0x{dec64Ref.As<Decimal64, ulong>():X16} <-> 0x{dec64Check.As<Decimal64, ulong>():X16}", errors);
+                if (reference is Decimal128 dec128Ref && check is Decimal128 dec128Check)
+                    return Check(dec128Ref.As<Decimal128, UInt128>() == dec128Check.As<Decimal128, UInt128>(), $"Decimal128 equality failed: {dec128Ref:R} <-> {dec128Check:R}. Binary representation: 0x{dec128Ref.As<Decimal128, UInt128>():X32} <-> 0x{dec128Check.As<Decimal128, UInt128>():X32}", errors);
+#endif
 
                 if (typeRef == typeof(StringBuilder))
                 {
