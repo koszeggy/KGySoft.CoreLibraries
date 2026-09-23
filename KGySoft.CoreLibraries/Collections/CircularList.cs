@@ -449,7 +449,7 @@ namespace KGySoft.Collections
         private static BinarySearchHelper<T> BinarySearchHelperInstance
         {
             [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "In AOT mode a less optimized helper may be returned.")]
-            [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(ComparableBinarySearchHelper<string>))] // it provides a shareable implementation for reference types
+            [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(ComparableBinarySearchHelper<>))]
             get
             {
                 if (binarySearchHelper == null)

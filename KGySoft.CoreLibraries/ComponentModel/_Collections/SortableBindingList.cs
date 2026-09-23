@@ -270,7 +270,7 @@ namespace KGySoft.ComponentModel
         [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "It handles if ItemGenericComparer<> cannot be instantiated.")]
         [UnconditionalSuppressMessage("TrimAnalysis", "IL2072:ParameterDynamicallyAccessedMemberTypesCannotBeDetermined", Justification = "False alarm, DynamicDependency provides all members.")]
         [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "It handles if ItemGenericComparer<> cannot be instantiated.")]
-        [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(ItemGenericComparer<string>))] // it provides a shareable implementation for reference type properties of T
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(ItemGenericComparer<>))]
         private static IComparer<(int, object?)> CreateComparer(bool ascending, [DynamicallyAccessedMembers(DynamicallyAccessedMembers.Interfaces)]Type propertyType)
         {
             if (propertyType.GetInterfaces().Any(i => i.IsGenericTypeOf(typeof(IComparable<>)) && i.GetGenericArguments()[0] == propertyType))

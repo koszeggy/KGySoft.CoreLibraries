@@ -87,7 +87,7 @@ namespace KGySoft.Threading
             internal static ISortHelper<T> Instance
             {
                 [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "In AOT mode a less optimized helper may be returned.")]
-                [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(ComparableSortHelper<string>))] // it provides a shareable implementation for reference types
+                [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(ComparableSortHelper<>))]
                 get
                 {
                     if (field == null)
@@ -1034,7 +1034,7 @@ namespace KGySoft.Threading
             internal static ISortHelper<TKey, TValue> Instance
             {
                 [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "In AOT mode a less optimized helper may be returned.")]
-                [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(ComparableSortHelper<string, string>))] // it provides a shareable implementation for reference key/value types
+                [DynamicDependency(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor, typeof(ComparableSortHelper<,>))]
                 get
                 {
                     if (field == null)

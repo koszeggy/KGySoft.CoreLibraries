@@ -254,7 +254,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             {
                 byTypeName = TypeName.Parse(typeName);
             }
-            catch (ArgumentException e)
+            catch (ArgumentException)
             {
                 // TypeName does not support generic parameters
                 return;

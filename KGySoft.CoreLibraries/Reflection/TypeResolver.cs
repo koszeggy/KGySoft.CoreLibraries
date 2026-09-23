@@ -290,7 +290,10 @@ namespace KGySoft.Reflection
         private static ConditionallyStoringLockFreeCache<(string, int), Type?>? typeCacheByString; // Key: Type name + options (as int due to faster GetHashCode)
         private static ConditionallyStoringLockFreeCache<(Assembly, string, int), Type?>? typeCacheByAssembly; // Key: Assembly + type name + options
         private static LockFreeCache<(Type, int), string>? typeNameCache; // Key: Type + kind (as int due to faster GetHashCode)
+
+#if NET11_0_OR_GREATER
         private static StringKeyedDictionary<Type>? callingConventions;
+#endif
 
         #endregion
 
@@ -351,6 +354,8 @@ namespace KGySoft.Reflection
 #if NET11_0_OR_GREATER
         private static StringKeyedDictionary<Type> CallingConventions
         {
+            [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+                Justification = "It's alright, in AOT mode only actually referenced calling conventions will be recognized.")]
             get
             {
                 if (callingConventions == null)
@@ -405,6 +410,7 @@ namespace KGySoft.Reflection
 
         #region For Building Name
 
+        [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "It's actually pretty clean.")]
         private TypeResolver(Type type, TypeNameKind kind, Func<Type, AssemblyName?>? assemblyNameResolver, Func<Type, string?>? typeNameResolver)
         {
             if (type == null!)
@@ -1794,6 +1800,7 @@ namespace KGySoft.Reflection
 #if !NET11_0_OR_GREATER
         [SuppressMessage("ReSharper", "UnusedParameter.Local", Justification = "Usage depends on targeted platform")]
 #endif
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeTypeResolver)]
         private Type? ResolveFunctionPointer(Func<AssemblyName?, string, Type?>? typeResolver)
         {
             Debug.Assert(functionPointerReturnType != null);
@@ -1841,6 +1848,7 @@ namespace KGySoft.Reflection
         }
 
 #if NET11_0_OR_GREATER
+        [RequiresUnreferencedCode(RequiresUnreferencedCodeTypeResolver)]
         private Type? ResolveCallingConvention(Func<AssemblyName?, string, Type?>? typeResolver)
         {
             Debug.Assert(rootName != null);

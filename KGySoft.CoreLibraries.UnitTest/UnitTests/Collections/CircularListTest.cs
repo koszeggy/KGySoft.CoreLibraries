@@ -59,9 +59,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
                 type = Nullable.GetUnderlyingType(type);
 
             for (int i = 0; i < count; i++)
-            {
                 result.Add((T)Convert.ChangeType(i, type));
-            }
             return result;
         }
 
@@ -1205,6 +1203,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Collections
             Assert.AreEqual(reference.BinarySearch(1, 6, "0", null), list.BinarySearch(1, 6, "0", null)); // as IComparable, not found
             Assert.AreEqual(reference.BinarySearch(1, 6, "2", StringComparer.Ordinal), list.BinarySearch(1, 6, "2", StringComparer.Ordinal)); // with IComparer, found
             Assert.AreEqual(reference.BinarySearch(1, 6, "0", StringComparer.Ordinal), list.BinarySearch(1, 6, "0", StringComparer.Ordinal)); // with IComparer, not found
+
+            // searching in wrapped area, with self helpers, value type
+            CircularList<decimal> listDec = PrepareList<decimal>(10, 6, 8);
+            var referenceDec = new List<decimal>(listDec);
+            Assert.AreEqual(referenceDec.BinarySearch(1, 6, 2m, null), listDec.BinarySearch(1, 6, 2m, null));
+            Assert.AreEqual(referenceDec.BinarySearch(1, 6, 0m, null), listDec.BinarySearch(1, 6, 0m, null));
         }
 
         [Test]

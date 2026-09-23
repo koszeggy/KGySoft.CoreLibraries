@@ -2692,6 +2692,9 @@ namespace KGySoft.Serialization.Binary
         }
 
 #if NETCOREAPP3_0_OR_GREATER
+#if !NET9_0_OR_GREATER
+        [RequiresDynamicCode("SizeOf")]
+#endif
         [MethodImpl(MethodImpl.AggressiveInlining)]
         private static byte[] EnsureEndianness(Type type, byte[] rawBytes)
         {

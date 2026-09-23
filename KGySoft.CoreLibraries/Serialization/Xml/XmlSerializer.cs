@@ -47,7 +47,7 @@ using KGySoft.Serialization.Binary;
 
 #region Suppressions
 
-#if !NET9_0_OR_GREATER
+#if !NET11_0_OR_GREATER
 #pragma warning disable CS1574 // the documentation contains types that are not available in every target
 #endif
 
