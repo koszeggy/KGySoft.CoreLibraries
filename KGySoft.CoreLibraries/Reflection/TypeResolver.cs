@@ -277,6 +277,8 @@ namespace KGySoft.Reflection
         private const TypeNameKind removeAssemblyVersions = (TypeNameKind)(-1);
         private const TypeNameKind callingConventionName = (TypeNameKind)(-2);
 
+        private const string callingConventionPrefix = "CallConv";
+
         #endregion
 
         #endregion
@@ -288,6 +290,7 @@ namespace KGySoft.Reflection
         private static ConditionallyStoringLockFreeCache<(string, int), Type?>? typeCacheByString; // Key: Type name + options (as int due to faster GetHashCode)
         private static ConditionallyStoringLockFreeCache<(Assembly, string, int), Type?>? typeCacheByAssembly; // Key: Assembly + type name + options
         private static LockFreeCache<(Type, int), string>? typeNameCache; // Key: Type + kind (as int due to faster GetHashCode)
+        private static StringKeyedDictionary<Type>? callingConventions;
 
         #endregion
 
@@ -344,6 +347,34 @@ namespace KGySoft.Reflection
                 return typeNameCache;
             }
         }
+
+#if NET11_0_OR_GREATER
+        private static StringKeyedDictionary<Type> CallingConventions
+        {
+            get
+            {
+                if (callingConventions == null)
+                {
+                    Type?[] allTypes;
+                    try
+                    {
+                        allTypes = typeof(CallConvCdecl).Assembly.GetTypes();
+                    }
+                    catch (ReflectionTypeLoadException e)
+                    {
+                        allTypes = e.Types;
+                    }
+
+                    string ns = typeof(CallConvCdecl).Namespace!;
+                    callingConventions = allTypes
+                        .Where(t => t?.Namespace == ns && t.Name.StartsWith(callingConventionPrefix, StringComparison.Ordinal))
+                        .ToStringKeyedDictionary(t => t!.Name[callingConventionPrefix.Length..])!;
+                }
+
+                return callingConventions;
+            }
+        }
+#endif
 
         #endregion
 
@@ -434,10 +465,19 @@ namespace KGySoft.Reflection
 #else
                 ?? type.FullName;
 #endif
+
+            // FullName is not expected to be null for root types, but it still can happen if type is not a RuntimeType (but a signature type, for example).
+            // As a workaround, we use Namespace.Name as root name for such types, and omit assembly, which could throw a NotSupportedException anyway.
+            if (rootName is null)
+            {
+                Debug.Assert(!type.IsRuntimeType());
+                rootName = type.Namespace is null ? type.Name : $"{type.Namespace}.{type.Name}";
+                return;
+            }
+
             assembly = type.Assembly;
             if (kind is TypeNameKind.AssemblyQualifiedName or TypeNameKind.ForcedAssemblyQualifiedName)
                 assemblyName = assemblyNameResolver?.Invoke(type)?.FullName ?? assembly.FullName;
-
         }
 
         #endregion
@@ -1396,9 +1436,9 @@ namespace KGySoft.Reflection
 
                     case callingConventionName:
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
-                        sb.Append(rootName!.StartsWith("CallConv", StringComparison.Ordinal) ? rootName.AsSpan("CallConv".Length) : rootName);
+                        sb.Append(rootName!.StartsWith(callingConventionPrefix, StringComparison.Ordinal) ? rootName.AsSpan(callingConventionPrefix.Length) : rootName);
 #else
-                        sb.Append(rootName!.StartsWith("CallConv", StringComparison.Ordinal) ? rootName.Substring("CallConv".Length) : rootName);
+                        sb.Append(rootName!.StartsWith(callingConventionPrefix, StringComparison.Ordinal) ? rootName.Substring(callingConventionPrefix.Length) : rootName);
 #endif
                         break;
 
@@ -1623,21 +1663,13 @@ namespace KGySoft.Reflection
             // 3. Applying modifiers
             foreach (int modifier in modifiers)
             {
-                switch (modifier)
+                result = modifier switch
                 {
-                    case 0: // zero based array
-                        result = result.MakeArrayType();
-                        break;
-                    case byRef:
-                        result = result.MakeByRefType();
-                        break;
-                    case pointer:
-                        result = result.MakePointerType();
-                        break;
-                    default: // array rank
-                        result = result.MakeArrayType(modifier);
-                        break;
-                }
+                    0 => result.MakeArrayType(), // zero based array
+                    byRef => result.MakeByRefType(),
+                    pointer => result.MakePointerType(),
+                    _ => result.MakeArrayType(modifier)
+                };
             }
 
             return type = result;
@@ -1646,7 +1678,7 @@ namespace KGySoft.Reflection
         [RequiresUnreferencedCode(RequiresUnreferencedCodeTypeResolver)]
         private Type? ResolveRootType(Func<AssemblyName?, string, Type?>? typeResolver)
         {
-            // It's important that typeResolver handles with standard types only, whereas extensions like generic parameters and function pointers
+            // It's important that typeResolver is called with standard types only, whereas extensions like generic parameters and function pointers
             // are handled always internally. The typeResolver is passed to them to handle the declaring type/parameters/return types.
             if (declaringType != null)
                 return ResolveGenericParameter(typeResolver);
@@ -1774,13 +1806,53 @@ namespace KGySoft.Reflection
             }
 
 #if NET11_0_OR_GREATER
-#warning Already available, implement this - https://github.com/dotnet/runtime/issues/75348
-#endif
+            // NOTE: Function pointers are supported in .NET 8.0+, but constructing a function pointer type was made possible in .NET 11 only.
+            // It turns out that a RuntimeType (e.g. by a typeof(delegate* unmanaged[Cdecl]<int, int>) expression) never returns the calling conventions,
+            // and .NET 11 did not add any API to recreate them in MakeFunctionPointerType, they present only in SignatureType instances.
+            Type? returnType = functionPointerReturnType!.Resolve(typeResolver);
+            if (returnType == null)
+                return null;
+
+            Type?[] args = new Type[typeArguments.Count];
+            for (int i = 0; i < args.Length; i++)
+            {
+                args[i] = typeArguments[i].Resolve(typeResolver);
+                if (args[i] == null)
+                    return null;
+            }
+
+            Type?[] callConvTypes = new Type[functionPointerCallingConventions.Count];
+            for (int i = 0; i < callConvTypes.Length; i++)
+            {
+                callConvTypes[i] = functionPointerCallingConventions[i].ResolveCallingConvention(typeResolver);
+                if (callConvTypes[i] == null)
+                    return null;
+            }
+
+            return callConvTypes.Length > 0
+                ? Type.MakeFunctionPointerSignatureType(returnType, args!, true, callConvTypes!)
+                : returnType.MakeFunctionPointerType(args!, rootName is FunctionPointerUnmanagedPrefix);
+#else
             if (!throwError)
                 return null;
 
             return Throw.PlatformNotSupportedException<Type?>(Res.ReflectionFunctionPointersNotSupported);
+#endif
         }
+
+#if NET11_0_OR_GREATER
+        private Type? ResolveCallingConvention(Func<AssemblyName?, string, Type?>? typeResolver)
+        {
+            Debug.Assert(rootName != null);
+
+            // By default, we resolve the known calling conventions by their short names.
+            if (CallingConventions.TryGetValue(rootName!, out Type? result))
+                return result;
+
+            // As a fallback, we resolve them as regular types. This should not be a case, but provides the usual error handling, and allows using typeResolver.
+            return Resolve(typeResolver);
+        }
+#endif
 
         #endregion
 

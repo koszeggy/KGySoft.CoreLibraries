@@ -66,6 +66,8 @@
 * KGySoft.Reflection namespace:
 ===============================
 + PropertyAccessor class: Supporting indexers with parameters passed by reference.
++ Reflector class:
+  + ResolveType methods: Supporting function pointer types (.NET 11.0 and above)
 - MethodAccessor, PropertyAccessor, CreateInstanceAccessor classes: fixed validation in some nongeneric error
   scenarios.
 

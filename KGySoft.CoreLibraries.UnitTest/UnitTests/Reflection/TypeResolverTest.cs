@@ -225,14 +225,46 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         [TestCase("System.Nullable`1[System.Collections.Generic.KeyValuePair`2[System.Nullable`1[System.Int32],System.Nullable`1[[System.Int32, mscorlib]]]][]", TypeNameKind.ShortName, "Nullable`1[KeyValuePair`2[Nullable`1[Int32],Nullable`1[Int32]]][]")]
         [TestCase("System.Nullable`1[System.Collections.Generic.KeyValuePair`2[System.Nullable`1[System.Int32],System.Nullable`1[[System.Int32, mscorlib]]]][], mscorlib", TypeNameKind.ShortName, "Nullable`1[KeyValuePair`2[Nullable`1[Int32],Nullable`1[Int32]]][]")]
 
-        // generic type/method arguments
+        // generic type/method arguments (these are not supported by System.GetType)
         [TestCase("!T:System.Collections.Generic.List`1", TypeNameKind.ShortName, "T")]
         [TestCase("!T[]&:System.Collections.Generic.List`1", TypeNameKind.ShortName, "T[]&")]
         [TestCase("!!T:Void Resize[T](T[] ByRef, Int32):System.Array", TypeNameKind.ShortName, "T")]
         [TestCase("System.Collections.Generic.Dictionary`2[System.String,!TValue:System.Collections.Generic.Dictionary`2]", TypeNameKind.ShortName, "Dictionary`2[String,TValue]")]
         [TestCase("System.Collections.Generic.List`1[!!T:Void Resize[T](T[] ByRef, Int32):System.Array]", TypeNameKind.ShortName, "List`1[T]")]
+        public void ParseTest(string typeName, TypeNameKind kind, [CanBeNull]string expected)
+        {
+            string result = TypeResolver.GetName(typeName, kind);
+            Console.WriteLine(typeName);
+            Console.WriteLine($" ==={kind}===>");
+            Console.WriteLine(result);
+            Assert.AreEqual(expected, result);
 
-        // function pointers
+            Type type = Reflector.ResolveType(typeName);
+            if (expected == null)
+            {
+                Assert.IsNull(type);
+                return;
+            }
+
+            Assert.AreEqual(TypeResolver.GetName(typeName, TypeNameKind.ShortName), type!.GetName(TypeNameKind.ShortName));
+
+#if NET9_0_OR_GREATER
+            TypeName byTypeName;
+            try
+            {
+                byTypeName = TypeName.Parse(typeName);
+            }
+            catch (ArgumentException e)
+            {
+                // TypeName does not support generic parameters
+                return;
+            }
+
+            AssertAreEqual(type, Reflector.ResolveType(byTypeName));
+#endif
+        }
+
+        // general cases
         [TestCase("&fn():System.Void", TypeNameKind.LongName, "&fn():System.Void")]
         [TestCase("&fn():[System.Void]", TypeNameKind.ShortName, "&fn():Void")]
         [TestCase("&fn(System.Int32):System.Void", TypeNameKind.LongName, "&fn(System.Int32):System.Void")]
@@ -255,7 +287,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         [TestCase("*fn[Cdecl](System.Int32)[]:System.Void", TypeNameKind.ShortName, "*fn(Int32)[]:Void")]
         [TestCase("*fn[Cdecl]([System.Int32])[]:System.Void", TypeNameKind.ShortName, "*fn(Int32)[]:Void")]
         [TestCase("*fn[Cdecl](System.Int32)[]:[System.Void]", TypeNameKind.ShortName, "*fn(Int32)[]:Void")]
-        [TestCase("*fn[Cdecl](System.List`1[System.Int32], System.String):System.Void", TypeNameKind.ShortName, "*fn(List`1[Int32],String):Void")]
+        [TestCase("*fn[Cdecl](System.Collections.Generic.List`1[System.Int32], System.String):System.Void", TypeNameKind.ShortName, "*fn(List`1[Int32],String):Void")]
         [TestCase("*fn[Cdecl]([System.Collections.Generic.List`1[System.Int32], mscorlib], System.String):System.Void", TypeNameKind.ShortName, "*fn(List`1[Int32],String):Void")]
         [TestCase("*fn[ Stdcall, SuppressGCTransition ] ( [ System.Collections.Generic.List`1[System.Int32] , mscorlib], System.String ) [,]: [System.Void] ", TypeNameKind.ShortName, "*fn(List`1[Int32],String)[,]:Void")]
 
@@ -297,7 +329,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         [TestCase("&fn(System.Int32):[&fn(System.String):System.Void*]", TypeNameKind.ShortName, "&fn(Int32):&fn(String):Void*")]
         [TestCase("&fn(System.Int32):&fn(System.String):[System.Void*]", TypeNameKind.ShortName, "&fn(Int32):&fn(String):Void*")]
         [TestCase("&fn(System.Int32):[&fn(System.String):[System.Void*]]", TypeNameKind.ShortName, "&fn(Int32):&fn(String):Void*")]
-        public void ParseTest(string typeName, TypeNameKind kind, [CanBeNull]string expected)
+        public void ParseFunctionPointersTest(string typeName, TypeNameKind kind, [CanBeNull]string expected)
         {
             string result = TypeResolver.GetName(typeName, kind);
             Console.WriteLine(typeName);
@@ -308,10 +340,12 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             Type type = Reflector.ResolveType(typeName);
             if (expected == null)
                 Assert.IsNull(type);
-
-#if NET12_0_OR_GREATER // - see https://github.com/dotnet/runtime/issues/75348
-            Assert.AreEqual(TypeResolver.GetName(typeName, TypeNameKind.ShortName), type!.GetName(TypeNameKind.ShortName));
+#if NET11_0_OR_GREATER // resolving function pointer types requires at least .NET 11.
+            else
+                Assert.AreEqual(TypeResolver.GetName(typeName, TypeNameKind.ShortName), type!.GetName(TypeNameKind.ShortName));
 #endif
+
+            //TODO: with TypeNameResolver, too
         }
 
         #endregion

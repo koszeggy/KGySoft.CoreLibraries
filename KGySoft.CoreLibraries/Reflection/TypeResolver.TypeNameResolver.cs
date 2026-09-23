@@ -126,21 +126,13 @@ namespace KGySoft.Reflection
                 // 3. Applying modifiers
                 foreach (int modifier in modifiers)
                 {
-                    switch (modifier)
+                    result = modifier switch
                     {
-                        case 0: // zero based array
-                            result = result.MakeArrayType();
-                            break;
-                        case byRef:
-                            result = result.MakeByRefType();
-                            break;
-                        case pointer:
-                            result = result.MakePointerType();
-                            break;
-                        default: // array rank
-                            result = result.MakeArrayType(modifier);
-                            break;
-                    }
+                        0 => result.MakeArrayType(), // zero based array
+                        byRef => result.MakeByRefType(),
+                        pointer => result.MakePointerType(),
+                        _ => result.MakeArrayType(modifier)
+                    };
                 }
 
                 return result;
@@ -153,6 +145,7 @@ namespace KGySoft.Reflection
             [RequiresUnreferencedCode(RequiresUnreferencedCodeTypeResolver)]
             private Type? ResolveRootType(Func<TypeName, Type?> typeResolver)
             {
+                // NOTE: Unlike when resolving from string, here we don't handle generic parameters and function pointers, because TypeName does not support them.
                 bool throwError = (options & ResolveTypeOptions.ThrowError) != ResolveTypeOptions.None;
                 bool allowIgnoreAssembly = (options & ResolveTypeOptions.AllowIgnoreAssemblyName) != ResolveTypeOptions.None;
                 bool ignoreCase = (options & ResolveTypeOptions.IgnoreCase) != ResolveTypeOptions.None;

@@ -100,7 +100,7 @@ namespace KGySoft.Serialization
                     var result = new StringKeyedDictionary<Type>();
 
                     // populating with full names only because assembly name is checked by the caller
-                    foreach (Type type in TypeExtensions.GetNativelyParsedTypes().Concat([Reflector.ObjectType, Reflector.NullableType, Reflector.GuidType, Reflector.DictionaryEntryType, Reflector.KeyValuePairType]))
+                    foreach (Type type in TypeExtensions.GetNativelyParsedTypes().Concat([Reflector.ObjectType, Reflector.NullableType, Reflector.GuidType, Reflector.DictionaryEntryType, Reflector.KeyValuePairType, Reflector.VoidType]))
                         result[type.FullName!] = type;
 
                     knownSimpleTypes = result;

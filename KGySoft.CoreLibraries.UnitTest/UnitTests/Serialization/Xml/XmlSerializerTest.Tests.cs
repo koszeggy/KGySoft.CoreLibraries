@@ -339,13 +339,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 
             static bool IsValidExpectedType(Type type)
             {
-                if (type.FullName == null)
+                if (type.FullName == null && !type.IsFunctionPointer())
                     return false;
 
                 // Normally if a type has FullName, its element type has also a full name, but this isn't always the case on Mono, e.g. for T[] where T is the type argument of List<>
                 while (type!.HasElementType)
                     type = type.GetElementType();
-                return type.FullName != null;
+                return type.FullName != null || type.IsFunctionPointer();
             }
 
             #endregion
@@ -461,16 +461,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                 typeof(delegate*<int, void*>*[]),
                 typeof(delegate* managed<int, int>),
                 typeof(delegate* unmanaged<int, int>),
-                typeof(delegate* unmanaged[Cdecl]<int, int>),
+                typeof(delegate* unmanaged[Cdecl]<int, int>), // though the calling conventions are lost, unless we use Type.MakeFunctionPointerSignatureType, which is not a RuntimeType
                 typeof(delegate* unmanaged[Cdecl, Stdcall]<int, int>),
             ];
 
-#if NET11_0_OR_GREATER // TODO: See https://github.com/dotnet/runtime/issues/75348
-            //KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
-            //KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
-
-            //KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: [typeof(Type), typeof(CallConvCdecl), typeof(CallConvStdcall)]);
-            //KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: [typeof(Type), typeof(CallConvCdecl), typeof(CallConvStdcall)]);
+#if NET11_0_OR_GREATER
+            expectedTypes = referenceObjects.Cast<Type>().Where(IsValidExpectedType).Append(Reflector.RuntimeType).ToList();
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.None, expectedTypes: expectedTypes);
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, false, expectedTypes: expectedTypes);
 #else
             AssertThrows<ReflectionException>(() => KGySerializeObject(referenceObjects, XmlSerializationOptions.None, safeMode: XmlSafeMode.Unsafe), "Could not resolve type");
             AssertThrows<ReflectionException>(() => KGySerializeObjects(referenceObjects, XmlSerializationOptions.None, false, safeMode: XmlSafeMode.Unsafe), "Could not resolve type");

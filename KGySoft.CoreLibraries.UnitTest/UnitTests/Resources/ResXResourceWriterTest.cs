@@ -738,6 +738,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 #if !AOT
                 Array.CreateInstance(typeof(object), [3], [-1]).GetType(), // nonzero based 1D array 
 #endif
+#if NET11_0_OR_GREATER // serialization works from .NET 8, but deserialization needs .NET 11
+		        typeof(delegate*<int, void>) // function pointer
+#endif
             };
 
 #if NETFRAMEWORK
@@ -753,7 +756,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
                 typeof(ICache), // custom
                 typeof(CircularList<int>), // mixed
                 typeof(CircularList<ICache>), // custom
-                typeof(List<>) // mscorlib, generic template,
+                typeof(List<>), // mscorlib, generic template,
             ];
 
 #if NETFRAMEWORK

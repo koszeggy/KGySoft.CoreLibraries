@@ -84,6 +84,17 @@ namespace KGySoft.Serialization
                 if (type == null!)
                     Throw.ArgumentException(Argument.expectedCustomTypes, Res.ArgumentContainsNull);
 
+#if NET8_0_OR_GREATER
+                if (type.IsFunctionPointer)
+                {
+                    foreach (Type parameterType in type.GetFunctionPointerParameterTypes())
+                        types.Enqueue(parameterType);
+                    foreach (Type callingConv in type.GetFunctionPointerCallingConventions())
+                        types.Enqueue(callingConv);
+                    type = type.GetFunctionPointerReturnType();
+                }
+#endif
+
                 while (type!.HasElementType)
                     type = type.GetElementType();
 
@@ -93,6 +104,8 @@ namespace KGySoft.Serialization
                         types.Enqueue(arg);
                     type = type.GetGenericTypeDefinition();
                 }
+
+
 
                 Current = type;
                 return true;
