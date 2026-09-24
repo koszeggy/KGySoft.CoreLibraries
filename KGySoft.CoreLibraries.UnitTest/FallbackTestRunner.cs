@@ -230,7 +230,7 @@ namespace KGySoft.CoreLibraries
 
                 // Shortcut: Skipping the whole class if the requested test name is not in this class.
                 // It is required to skip OneTimeSetUp and OneTimeTearDown methods of other classes, which would otherwise run even if the tests of the class are all skipped.
-                if (config.TestName != null && fixtureType.GetMethod(config.TestName) == null)
+                if (config.TestName != null && fixtureType.GetMember(config.TestName, MemberTypes.Method, BindingFlags.Instance | BindingFlags.Public).Length == 0)
                     continue;
 
                 var classResult = new TestResultContainer(new TestSuite(fixtureType));
