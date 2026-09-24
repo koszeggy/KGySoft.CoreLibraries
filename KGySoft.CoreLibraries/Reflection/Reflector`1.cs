@@ -160,7 +160,15 @@ namespace KGySoft.Reflection
 #pragma warning restore IDE0301 // Use collection expression syntax
 #endif
 
-        internal static int SizeOf => GetSize(false);
+        /// <summary>
+        /// NOTE: The result can be 0 on .NET Standard or in a partially trusted domain if the actual managed size cannot be determined.
+        /// </summary>
+        internal static int SizeOf =>
+#if NETCOREAPP3_0_OR_GREATER
+            Unsafe.SizeOf<T>();
+#else
+            GetSize(false);
+#endif
 
         internal static bool IsManaged =>
 #if NETFRAMEWORK || NETSTANDARD2_0
@@ -184,7 +192,7 @@ namespace KGySoft.Reflection
         internal static bool IsPrimitive => IsPrimitiveCache.Value;
 #endif
 
-        #endregion
+#endregion
 
         #region Methods
 
