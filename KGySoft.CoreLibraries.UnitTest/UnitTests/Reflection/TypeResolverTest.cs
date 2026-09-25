@@ -24,6 +24,9 @@ using System.Reflection.Metadata;
 #endif
 
 using KGySoft.Reflection;
+#if AOT
+using KGySoft.Serialization;
+#endif
 
 using NUnit.Framework;
 
@@ -63,6 +66,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
         #endregion
 
         #region Methods
+
+#if AOT
+        [OneTimeSetUp]
+        public void EnsureAotTests()
+        {
+            SerializedType _ = typeof(KeyValuePair<int?, int?>[]);
+        }
+#endif
 
         [Test]
         public void TestAssemblyPartialResolve()
@@ -344,8 +355,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Reflection
             else
                 Assert.AreEqual(TypeResolver.GetName(typeName, TypeNameKind.ShortName), type!.GetName(TypeNameKind.ShortName));
 #endif
-
-            //TODO: with TypeNameResolver, too
         }
 
         #endregion
