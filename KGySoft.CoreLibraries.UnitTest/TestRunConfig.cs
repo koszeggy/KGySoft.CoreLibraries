@@ -72,9 +72,7 @@ namespace KGySoft.CoreLibraries
             {
                 Console.WriteLine("Available command line arguments:");
                 Console.WriteLine("  -? or -h or --help  Displays this help message.");
-#if NETCOREAPP3_0_OR_GREATER
                 Console.WriteLine("  -f                  Forces the use of the fallback runner.");
-#endif
                 Console.WriteLine("  TestName=<name>     Runs only tests with the specified name.");
                 Console.WriteLine("  ClassName=<name>    Runs only tests in the specified class.");
                 Environment.Exit(-1);
@@ -92,10 +90,8 @@ namespace KGySoft.CoreLibraries
                     ClassName = arg.Substring(arg.IndexOf('=') + 1);
                     Console.WriteLine($"Applying class name filter: {ClassName}");
                 }
-#if NETCOREAPP3_0_OR_GREATER
                 else if (arg == "-f")
                     forceFallbackRunner = true;
-#endif
                 else
                 {
                     Console.WriteLine($"Error: Unknown argument: {arg}");
