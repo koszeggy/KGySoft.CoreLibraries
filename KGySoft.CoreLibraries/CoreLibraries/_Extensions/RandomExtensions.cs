@@ -679,7 +679,7 @@ namespace KGySoft.CoreLibraries
                 maxValue += 1;
             }
 
-            ulong mask = ((ulong)maxValue).GetBitMask();
+            ulong mask = ((ulong)maxValue).GetBitMaskExclusive();
             ulong result;
             do
                 result = GenerateSampleUInt64(random) & mask;
@@ -727,7 +727,7 @@ namespace KGySoft.CoreLibraries
                 range += 1;
             }
 
-            ulong mask = range.GetBitMask();
+            ulong mask = range.GetBitMaskExclusive();
             ulong result;
             do
                 result = GenerateSampleUInt64(random) & mask;
@@ -821,7 +821,7 @@ namespace KGySoft.CoreLibraries
                 maxValue += 1;
             }
 
-            ulong mask = maxValue.GetBitMask();
+            ulong mask = maxValue.GetBitMaskExclusive();
             ulong result;
             do
                 result = GenerateSampleUInt64(random) & mask;
@@ -877,7 +877,7 @@ namespace KGySoft.CoreLibraries
                 range += 1;
             }
 
-            ulong mask = range.GetBitMask();
+            ulong mask = range.GetBitMaskExclusive();
             ulong result;
             do
                 result = GenerateSampleUInt64(random) & mask;
