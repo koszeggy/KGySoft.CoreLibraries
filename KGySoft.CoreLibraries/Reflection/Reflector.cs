@@ -73,22 +73,22 @@ namespace KGySoft.Reflection
         #region Constants
 
         private const string instancePropertyReflectionRequiresUnreferencedCode = "When accessing an instance property by name, the property might not be available. " +
-            "In native AOT mode it is recommended to use the overloads with PropertyInfo parameter, or the PropertyAccessor class instead.";
+            "In native AOT mode it is recommended to use the generic overloads (for reference types), the overloads with PropertyInfo parameter, or the PropertyAccessor class instead.";
         private const string indexerReflectionRequiresUnreferencedCode = "When accessing an indexed property by this method, the property might not be available. " +
-            "In native AOT mode it is recommended to use the property-accessing methods with PropertyInfo parameter, or the PropertyAccessor class instead.";
+            "In native AOT mode it is recommended to use the generic overloads (for reference types), the property-accessing methods with PropertyInfo parameter, or the PropertyAccessor class instead.";
 
         private const string genericMethodReflectionByMethodInfoRequiresDynamicCode = "If the MethodInfo parameter is a generic method definition, the native code for the constructed generic method might not be available at runtime.";
         private const string genericMethodReflectionByMethodInfoRequiresUnreferencedCode = "If the MethodInfo parameter is a generic method definition, trimming can't validate if the constraints of the generic arguments are met.";
         private const string genericMethodReflectionRequiresDynamicCode = "If the method is a generic one, the native code for the constructed generic method might not be available at runtime.";
         private const string genericMethodReflectionRequiresUnreferencedCode = "If the method is a generic one, trimming can't validate if the constraints of the generic arguments are met.";
         private const string instanceMethodReflectionRequiresUnreferencedCode = "When accessing an instance method by name, the method might not be available. " +
-            "In native AOT mode it is recommended to use the overloads with MethodInfo parameter, or the MethodAccessor class instead.";
+            "In native AOT mode it is recommended to use the generic overloads (for reference types), the overloads with MethodInfo parameter, or the MethodAccessor class instead.";
 
         private const string genericTypeReflectionRequiresDynamicCode = "If the type is a generic one, the native code for the constructed generic type might not be available at runtime.";
         private const string genericTypeReflectionRequiresUnreferencedCode = "If the type is a generic one, trimming can't validate if the constraints of the generic arguments are met.";
 
         private const string instanceFieldReflectionRequiresUnreferencedCode = "When accessing an instance field by name, the field might not be available. " +
-            "In native AOT mode it is recommended to use the overloads with FieldInfo parameter, or the FieldAccessor class instead.";
+            "In native AOT mode it is recommended to use the generic overloads (for reference types), the overloads with FieldInfo parameter, or the FieldAccessor class instead.";
 
         private const string interfaceImplementationReflectionRequiresUnreferencedCode = "If the trimming removes the implemented interfaces or their implementations in the declaring type, this method may return a false negative result.";
 
@@ -250,7 +250,7 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Sets a <paramref name="property"/> represented by the specified <see cref="PropertyInfo"/>.
         /// </summary>
-        /// <param name="instance">An instance whose property is about to be set. This parameter is ignored for static properties.</param>
+        /// <param name="instance">An instance, whose property is about to be set. This parameter is ignored for static properties.</param>
         /// <param name="property">The property to set.</param>
         /// <param name="value">The value to set.</param>
         /// <param name="indexParameters">Index parameters if <paramref name="property"/> is an indexer. This parameter is ignored for non-indexed properties.</param>
@@ -292,7 +292,7 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Sets a <paramref name="property"/> represented by the specified <see cref="PropertyInfo"/>.
         /// </summary>
-        /// <param name="instance">An instance whose property is about to be set. This parameter is ignored for static properties.</param>
+        /// <param name="instance">An instance, whose property is about to be set. This parameter is ignored for static properties.</param>
         /// <param name="property">The property to set.</param>
         /// <param name="value">The value to set.</param>
         /// <param name="indexParameters">Index parameters if <paramref name="property"/> is an indexer. This parameter is ignored for non-indexed properties.</param>
@@ -311,7 +311,7 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Sets the instance property of an object represented by the specified <paramref name="propertyName"/>.
         /// </summary>
-        /// <param name="instance">An instance whose property is about to be set.</param>
+        /// <param name="instance">An instance, whose property is about to be set.</param>
         /// <param name="propertyName">The name of the property to be set.</param>
         /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="value">The value to set.</param>
@@ -342,7 +342,34 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Sets the instance property of an object represented by the specified <paramref name="propertyName"/>.
         /// </summary>
-        /// <param name="instance">An instance whose property is about to be set.</param>
+        /// <typeparam name="TInstance">The type of the <paramref name="instance"/> that has the property with the specified name.</typeparam>
+        /// <param name="instance">An instance, whose property is about to be set.</param>
+        /// <param name="propertyName">The name of the property to be set.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
+        /// <param name="value">The value to set.</param>
+        /// <param name="way">The preferred reflection way.</param>
+        /// <param name="indexParameters">Index parameters if <paramref name="propertyName"/> refers to an indexed property. This parameter is ignored for non-indexed properties.</param>
+        /// <remarks>
+        /// <para><paramref name="propertyName"/> can refer public and non-public properties. To avoid ambiguity (in case of indexers), this method gets
+        /// all the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
+        /// <para>If you already have a <see cref="PropertyInfo"/> instance use the <see cref="SetProperty(object,PropertyInfo,object,ReflectionWays,object[])"/> method
+        /// for better performance.</para>
+        /// <para>If you are not sure whether a property with the specified <paramref name="propertyName"/> exists, then you can use the
+        /// <see cref="O:KGySoft.Reflection.Reflector.TrySetProperty">TrySetProperty</see> methods instead.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.TypeDescriptor"/> way
+        /// for <see cref="ICustomTypeDescriptor"/> implementations and the <see cref="ReflectionWays.DynamicDelegate"/> way otherwise.</para>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
+        /// </remarks>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+            Justification = "False alarm, this overload is exactly for the reason to be able to omit [RequiresUnreferencedCode] as long as [DynamicallyAccessedMembers] requirements are met.")]
+        public static void SetProperty<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllProperties)]TInstance>(
+            TInstance instance, string propertyName, bool ignoreCase, object? value, ReflectionWays way, params object?[]? indexParameters)
+            where TInstance : class => SetProperty((object)instance, propertyName, ignoreCase, value, way, indexParameters);
+
+        /// <summary>
+        /// Sets the instance property of an object represented by the specified <paramref name="propertyName"/>.
+        /// </summary>
+        /// <param name="instance">An instance, whose property is about to be set.</param>
         /// <param name="propertyName">The name of the property to be set.</param>
         /// <param name="value">The value to set.</param>
         /// <param name="way">The preferred reflection way.</param>
@@ -365,7 +392,31 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Sets the instance property of an object represented by the specified <paramref name="propertyName"/>.
         /// </summary>
-        /// <param name="instance">An instance whose property is about to be set.</param>
+        /// <typeparam name="TInstance">The type of the <paramref name="instance"/> that has the property with the specified name.</typeparam>
+        /// <param name="instance">An instance, whose property is about to be set.</param>
+        /// <param name="propertyName">The name of the property to be set.</param>
+        /// <param name="value">The value to set.</param>
+        /// <param name="way">The preferred reflection way.</param>
+        /// <param name="indexParameters">Index parameters if <paramref name="propertyName"/> refers to an indexed property. This parameter is ignored for non-indexed properties.</param>
+        /// <remarks>
+        /// <para><paramref name="propertyName"/> can refer public and non-public properties. To avoid ambiguity (in case of indexers), this method gets
+        /// all the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
+        /// <para>If you already have a <see cref="PropertyInfo"/> instance use the <see cref="SetProperty(object,PropertyInfo,object,ReflectionWays,object[])"/> method
+        /// for better performance.</para>
+        /// <para>If you are not sure whether a property with the specified <paramref name="propertyName"/> exists, then you can use the
+        /// <see cref="O:KGySoft.Reflection.Reflector.TrySetProperty">TrySetProperty</see> methods instead.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.TypeDescriptor"/> way
+        /// for <see cref="ICustomTypeDescriptor"/> implementations and the <see cref="ReflectionWays.DynamicDelegate"/> way otherwise.</para>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
+        /// </remarks>
+        public static void SetProperty<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllProperties)]TInstance>(
+            TInstance instance, string propertyName, object? value, ReflectionWays way, params object?[]? indexParameters)
+            where TInstance : class => SetProperty(instance, propertyName, false, value, way, indexParameters);
+
+        /// <summary>
+        /// Sets the instance property of an object represented by the specified <paramref name="propertyName"/>.
+        /// </summary>
+        /// <param name="instance">An instance, whose property is about to be set.</param>
         /// <param name="propertyName">The name of the property to be set.</param>
         /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="value">The value to set.</param>
@@ -388,7 +439,31 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Sets the instance property of an object represented by the specified <paramref name="propertyName"/>.
         /// </summary>
-        /// <param name="instance">An instance whose property is about to be set.</param>
+        /// <typeparam name="TInstance">The type of the <paramref name="instance"/> that has the property with the specified name.</typeparam>
+        /// <param name="instance">An instance, whose property is about to be set.</param>
+        /// <param name="propertyName">The name of the property to be set.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
+        /// <param name="value">The value to set.</param>
+        /// <param name="indexParameters">Index parameters if <paramref name="propertyName"/> refers to an indexed property. This parameter is ignored for non-indexed properties.</param>
+        /// <remarks>
+        /// <para><paramref name="propertyName"/> can refer public and non-public properties. To avoid ambiguity (in case of indexers), this method gets
+        /// all the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
+        /// <para>If you already have a <see cref="PropertyInfo"/> instance use the <see cref="SetProperty(object,PropertyInfo,object,ReflectionWays,object[])"/> method
+        /// for better performance.</para>
+        /// <para>If you are not sure whether a property with the specified <paramref name="propertyName"/> exists, then you can use the
+        /// <see cref="O:KGySoft.Reflection.Reflector.TrySetProperty">TrySetProperty</see> methods instead.</para>
+        /// <para>For setting the property this method uses the <see cref="ReflectionWays.TypeDescriptor"/> way
+        /// for <see cref="ICustomTypeDescriptor"/> implementations and the <see cref="ReflectionWays.DynamicDelegate"/> way otherwise.</para>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
+        /// </remarks>
+        public static void SetProperty<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllProperties)]TInstance>(
+            TInstance instance, string propertyName, bool ignoreCase, object? value, params object?[]? indexParameters)
+            where TInstance : class => SetProperty(instance, propertyName, ignoreCase, value, ReflectionWays.Auto, indexParameters);
+
+        /// <summary>
+        /// Sets the instance property of an object represented by the specified <paramref name="propertyName"/>.
+        /// </summary>
+        /// <param name="instance">An instance, whose property is about to be set.</param>
         /// <param name="propertyName">The name of the property to be set.</param>
         /// <param name="value">The value to set.</param>
         /// <param name="indexParameters">Index parameters if <paramref name="propertyName"/> refers to an indexed property. This parameter is ignored for non-indexed properties.</param>
@@ -406,6 +481,29 @@ namespace KGySoft.Reflection
         [RequiresUnreferencedCode(instancePropertyReflectionRequiresUnreferencedCode)]
         public static void SetProperty(object instance, string propertyName, object? value, params object?[]? indexParameters)
             => SetProperty(instance, propertyName, false, value, ReflectionWays.Auto, indexParameters);
+
+        /// <summary>
+        /// Sets the instance property of an object represented by the specified <paramref name="propertyName"/>.
+        /// </summary>
+        /// <typeparam name="TInstance">The type of the <paramref name="instance"/> that has the property with the specified name.</typeparam>
+        /// <param name="instance">An instance, whose property is about to be set.</param>
+        /// <param name="propertyName">The name of the property to be set.</param>
+        /// <param name="value">The value to set.</param>
+        /// <param name="indexParameters">Index parameters if <paramref name="propertyName"/> refers to an indexed property. This parameter is ignored for non-indexed properties.</param>
+        /// <remarks>
+        /// <para><paramref name="propertyName"/> can refer public and non-public properties. To avoid ambiguity (in case of indexers), this method gets
+        /// all the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
+        /// <para>If you already have a <see cref="PropertyInfo"/> instance use the <see cref="SetProperty(object,PropertyInfo,object,ReflectionWays,object[])"/> method
+        /// for better performance.</para>
+        /// <para>If you are not sure whether a property with the specified <paramref name="propertyName"/> exists, then you can use the
+        /// <see cref="O:KGySoft.Reflection.Reflector.TrySetProperty">TrySetProperty</see> methods instead.</para>
+        /// <para>For setting the property this method uses the <see cref="ReflectionWays.TypeDescriptor"/> way
+        /// for <see cref="ICustomTypeDescriptor"/> implementations and the <see cref="ReflectionWays.DynamicDelegate"/> way otherwise.</para>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
+        /// </remarks>
+        public static void SetProperty<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllProperties)]TInstance>(
+            TInstance instance, string propertyName, object? value, params object?[]? indexParameters)
+            where TInstance : class => SetProperty(instance, propertyName, false, value, ReflectionWays.Auto, indexParameters);
 
         /// <summary>
         /// Sets the static property of a <see cref="System.Type"/> represented by the specified <paramref name="propertyName"/>.
@@ -459,7 +557,7 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Tries to set the instance property of an object represented by the specified <paramref name="propertyName"/>.
         /// </summary>
-        /// <param name="instance">An instance whose property is about to be set.</param>
+        /// <param name="instance">An instance, whose property is about to be set.</param>
         /// <param name="propertyName">The name of the property to be set.</param>
         /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="value">The value to set.</param>
@@ -490,7 +588,34 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Tries to set the instance property of an object represented by the specified <paramref name="propertyName"/>.
         /// </summary>
-        /// <param name="instance">An instance whose property is about to be set.</param>
+        /// <typeparam name="TInstance">The type of the <paramref name="instance"/> that has the property with the specified name.</typeparam>
+        /// <param name="instance">An instance, whose property is about to be set.</param>
+        /// <param name="propertyName">The name of the property to be set.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
+        /// <param name="value">The value to set.</param>
+        /// <param name="way">The preferred reflection way.</param>
+        /// <param name="indexParameters">Index parameters if <paramref name="propertyName"/> refers to an indexed property. This parameter is ignored for non-indexed properties.</param>
+        /// <returns><see langword="true"/>, if the property could be set; <see langword="false"/>, if a matching property could not be found.</returns>
+        /// <remarks>
+        /// <note>If a matching property could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
+        /// <para><paramref name="propertyName"/> can refer public and non-public properties. To avoid ambiguity (in case of indexers), this method gets
+        /// all the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
+        /// <para>If you already have a <see cref="PropertyInfo"/> instance use the <see cref="SetProperty(object,PropertyInfo,object,ReflectionWays,object[])"/> method
+        /// for better performance.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.TypeDescriptor"/> way
+        /// for <see cref="ICustomTypeDescriptor"/> implementations and the <see cref="ReflectionWays.DynamicDelegate"/> way otherwise.</para>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
+        /// </remarks>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+            Justification = "False alarm, this overload is exactly for the reason to be able to omit [RequiresUnreferencedCode] as long as [DynamicallyAccessedMembers] requirements are met.")]
+        public static bool TrySetProperty<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllProperties)]TInstance>(
+            TInstance instance, string propertyName, bool ignoreCase, object? value, ReflectionWays way, params object?[]? indexParameters)
+            where TInstance : class => TrySetProperty((object)instance, propertyName, ignoreCase, value, way, indexParameters);
+
+        /// <summary>
+        /// Tries to set the instance property of an object represented by the specified <paramref name="propertyName"/>.
+        /// </summary>
+        /// <param name="instance">An instance, whose property is about to be set.</param>
         /// <param name="propertyName">The name of the property to be set.</param>
         /// <param name="value">The value to set.</param>
         /// <param name="way">The preferred reflection way.</param>
@@ -513,7 +638,31 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Tries to set the instance property of an object represented by the specified <paramref name="propertyName"/>.
         /// </summary>
-        /// <param name="instance">An instance whose property is about to be set.</param>
+        /// <typeparam name="TInstance">The type of the <paramref name="instance"/> that has the property with the specified name.</typeparam>
+        /// <param name="instance">An instance, whose property is about to be set.</param>
+        /// <param name="propertyName">The name of the property to be set.</param>
+        /// <param name="value">The value to set.</param>
+        /// <param name="way">The preferred reflection way.</param>
+        /// <param name="indexParameters">Index parameters if <paramref name="propertyName"/> refers to an indexed property. This parameter is ignored for non-indexed properties.</param>
+        /// <returns><see langword="true"/>, if the property could be set; <see langword="false"/>, if a matching property could not be found.</returns>
+        /// <remarks>
+        /// <note>If a matching property could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
+        /// <para><paramref name="propertyName"/> can refer public and non-public properties. To avoid ambiguity (in case of indexers), this method gets
+        /// all the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
+        /// <para>If you already have a <see cref="PropertyInfo"/> instance use the <see cref="SetProperty(object,PropertyInfo,object,ReflectionWays,object[])"/> method
+        /// for better performance.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.TypeDescriptor"/> way
+        /// for <see cref="ICustomTypeDescriptor"/> implementations and the <see cref="ReflectionWays.DynamicDelegate"/> way otherwise.</para>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
+        /// </remarks>
+        public static bool TrySetProperty<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllProperties)]TInstance>(
+            TInstance instance, string propertyName, object? value, ReflectionWays way, params object?[]? indexParameters)
+            where TInstance : class => TrySetProperty(instance, propertyName, false, value, way, indexParameters);
+
+        /// <summary>
+        /// Tries to set the instance property of an object represented by the specified <paramref name="propertyName"/>.
+        /// </summary>
+        /// <param name="instance">An instance, whose property is about to be set.</param>
         /// <param name="propertyName">The name of the property to be set.</param>
         /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="value">The value to set.</param>
@@ -536,7 +685,31 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Tries to set the instance property of an object represented by the specified <paramref name="propertyName"/>.
         /// </summary>
-        /// <param name="instance">An instance whose property is about to be set.</param>
+        /// <typeparam name="TInstance">The type of the <paramref name="instance"/> that has the property with the specified name.</typeparam>
+        /// <param name="instance">An instance, whose property is about to be set.</param>
+        /// <param name="propertyName">The name of the property to be set.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
+        /// <param name="value">The value to set.</param>
+        /// <param name="indexParameters">Index parameters if <paramref name="propertyName"/> refers to an indexed property. This parameter is ignored for non-indexed properties.</param>
+        /// <returns><see langword="true"/>, if the property could be set; <see langword="false"/>, if a matching property could not be found.</returns>
+        /// <remarks>
+        /// <note>If a matching property could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
+        /// <para><paramref name="propertyName"/> can refer public and non-public properties. To avoid ambiguity (in case of indexers), this method gets
+        /// all the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
+        /// <para>If you already have a <see cref="PropertyInfo"/> instance use the <see cref="SetProperty(object,PropertyInfo,object,ReflectionWays,object[])"/> method
+        /// for better performance.</para>
+        /// <para>For setting the property this method uses the <see cref="ReflectionWays.TypeDescriptor"/> way
+        /// for <see cref="ICustomTypeDescriptor"/> implementations and the <see cref="ReflectionWays.DynamicDelegate"/> way otherwise.</para>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
+        /// </remarks>
+        public static bool TrySetProperty<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllProperties)]TInstance>(
+            TInstance instance, string propertyName, bool ignoreCase, object? value, params object?[]? indexParameters)
+            where TInstance : class => TrySetProperty(instance, propertyName, ignoreCase, value, ReflectionWays.Auto, indexParameters);
+
+        /// <summary>
+        /// Tries to set the instance property of an object represented by the specified <paramref name="propertyName"/>.
+        /// </summary>
+        /// <param name="instance">An instance, whose property is about to be set.</param>
         /// <param name="propertyName">The name of the property to be set.</param>
         /// <param name="value">The value to set.</param>
         /// <param name="indexParameters">Index parameters if <paramref name="propertyName"/> refers to an indexed property. This parameter is ignored for non-indexed properties.</param>
@@ -554,6 +727,29 @@ namespace KGySoft.Reflection
         [RequiresUnreferencedCode(instancePropertyReflectionRequiresUnreferencedCode)]
         public static bool TrySetProperty(object instance, string propertyName, object? value, params object?[]? indexParameters)
             => TrySetProperty(instance, propertyName, false, value, ReflectionWays.Auto, indexParameters);
+
+        /// <summary>
+        /// Tries to set the instance property of an object represented by the specified <paramref name="propertyName"/>.
+        /// </summary>
+        /// <typeparam name="TInstance">The type of the <paramref name="instance"/> that has the property with the specified name.</typeparam>
+        /// <param name="instance">An instance, whose property is about to be set.</param>
+        /// <param name="propertyName">The name of the property to be set.</param>
+        /// <param name="value">The value to set.</param>
+        /// <param name="indexParameters">Index parameters if <paramref name="propertyName"/> refers to an indexed property. This parameter is ignored for non-indexed properties.</param>
+        /// <returns><see langword="true"/>, if the property could be set; <see langword="false"/>, if a matching property could not be found.</returns>
+        /// <remarks>
+        /// <note>If a matching property could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
+        /// <para><paramref name="propertyName"/> can refer public and non-public properties. To avoid ambiguity (in case of indexers), this method gets
+        /// all the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
+        /// <para>If you already have a <see cref="PropertyInfo"/> instance use the <see cref="SetProperty(object,PropertyInfo,object,ReflectionWays,object[])"/> method
+        /// for better performance.</para>
+        /// <para>For setting the property this method uses the <see cref="ReflectionWays.TypeDescriptor"/> way
+        /// for <see cref="ICustomTypeDescriptor"/> implementations and the <see cref="ReflectionWays.DynamicDelegate"/> way otherwise.</para>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
+        /// </remarks>
+        public static bool TrySetProperty<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllProperties)]TInstance>(
+            TInstance instance, string propertyName, object? value, params object?[]? indexParameters)
+            where TInstance : class => TrySetProperty(instance, propertyName, false, value, ReflectionWays.Auto, indexParameters);
 
         /// <summary>
         /// Tries to set the static property of a <see cref="System.Type"/> represented by the specified <paramref name="propertyName"/>.
@@ -713,6 +909,27 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Sets the value of an indexable object. It can be either an array instance or an object with default members (indexed properties).
         /// </summary>
+        /// <typeparam name="TInstance">The type of the specified <paramref name="instance"/>.</typeparam>
+        /// <param name="instance">An instance to be set.</param>
+        /// <param name="value">The value to set.</param>
+        /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable here. This parameter is ignored for arrays.</param>
+        /// <param name="indexParameters">The index parameters.</param>
+        /// <remarks>
+        /// <para>This method ignores explicitly implemented interface properties.</para>
+        /// <para>If you already have a <see cref="PropertyInfo"/> instance of the indexed property, then use the <see cref="SetProperty(object,PropertyInfo,object,ReflectionWays,object[])"/> method
+        /// for better performance.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then the <see cref="ReflectionWays.DynamicDelegate"/> way will be used.</para>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
+        /// </remarks>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+            Justification = "False alarm, this overload is exactly for the reason to be able to omit [RequiresUnreferencedCode] as long as [DynamicallyAccessedMembers] requirements are met.")]
+        public static void SetIndexedMember<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllProperties)]TInstance>(
+            TInstance instance, object? value, ReflectionWays way, params object?[] indexParameters)
+            where TInstance : class => SetIndexedMember((object)instance, value, way, indexParameters);
+
+        /// <summary>
+        /// Sets the value of an indexable object. It can be either an array instance or an object with default members (indexed properties).
+        /// </summary>
         /// <param name="instance">An instance to be set.</param>
         /// <param name="value">The value to set.</param>
         /// <param name="indexParameters">The index parameters.</param>
@@ -726,6 +943,24 @@ namespace KGySoft.Reflection
         [RequiresUnreferencedCode(indexerReflectionRequiresUnreferencedCode)]
         public static void SetIndexedMember(object instance, object? value, params object?[] indexParameters)
             => SetIndexedMember(instance, value, ReflectionWays.Auto, indexParameters);
+
+        /// <summary>
+        /// Sets the value of an indexable object. It can be either an array instance or an object with default members (indexed properties).
+        /// </summary>
+        /// <typeparam name="TInstance">The type of the specified <paramref name="instance"/>.</typeparam>
+        /// <param name="instance">An instance to be set.</param>
+        /// <param name="value">The value to set.</param>
+        /// <param name="indexParameters">The index parameters.</param>
+        /// <remarks>
+        /// <para>This method ignores explicitly implemented interface properties.</para>
+        /// <para>If you already have a <see cref="PropertyInfo"/> instance of the indexed property, then use the <see cref="SetProperty(object,PropertyInfo,object,ReflectionWays,object[])"/> method
+        /// for better performance.</para>
+        /// <para>For setting an indexed property this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
+        /// </remarks>
+        public static void SetIndexedMember<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllProperties)]TInstance>(
+            TInstance instance, object? value, params object?[] indexParameters)
+            where TInstance : class => SetIndexedMember(instance, value, ReflectionWays.Auto, indexParameters);
 
         /// <summary>
         /// Tries to set the value of an indexable object. It can be either an array or an object with default members (indexed properties).
@@ -761,6 +996,29 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Tries to set the value of an indexable object. It can be either an array or an object with default members (indexed properties).
         /// </summary>
+        /// <typeparam name="TInstance">The type of the specified <paramref name="instance"/>.</typeparam>
+        /// <param name="instance">An instance to be set.</param>
+        /// <param name="value">The value to set.</param>
+        /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable here. This parameter is ignored for arrays.</param>
+        /// <param name="indexParameters">The index parameters.</param>
+        /// <returns><see langword="true"/>, if the indexed member could be set; <see langword="false"/>, if a matching property or array setter could not be found.</returns>
+        /// <remarks>
+        /// <para>This method ignores explicitly implemented interface properties.</para>
+        /// <note>If a matching indexed property could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
+        /// <para>If you already have a <see cref="PropertyInfo"/> instance of the indexed property, then use the <see cref="SetProperty(object,PropertyInfo,object,ReflectionWays,object[])"/> method
+        /// for better performance.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then the <see cref="ReflectionWays.DynamicDelegate"/> way will be used.</para>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
+        /// </remarks>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+            Justification = "False alarm, this overload is exactly for the reason to be able to omit [RequiresUnreferencedCode] as long as [DynamicallyAccessedMembers] requirements are met.")]
+        public static bool TrySetIndexedMember<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllProperties)]TInstance>(
+            TInstance instance, object? value, ReflectionWays way, params object?[] indexParameters)
+            where TInstance : class => TrySetIndexedMember((object)instance, value, way, indexParameters);
+
+        /// <summary>
+        /// Tries to set the value of an indexable object. It can be either an array or an object with default members (indexed properties).
+        /// </summary>
         /// <param name="instance">An instance to be set.</param>
         /// <param name="value">The value to set.</param>
         /// <param name="indexParameters">The index parameters.</param>
@@ -776,6 +1034,26 @@ namespace KGySoft.Reflection
         [RequiresUnreferencedCode(indexerReflectionRequiresUnreferencedCode)]
         public static bool TrySetIndexedMember(object instance, object? value, params object?[] indexParameters)
             => TrySetIndexedMember(instance, value, ReflectionWays.Auto, indexParameters);
+
+        /// <summary>
+        /// Tries to set the value of an indexable object. It can be either an array or an object with default members (indexed properties).
+        /// </summary>
+        /// <typeparam name="TInstance">The type of the specified <paramref name="instance"/>.</typeparam>
+        /// <param name="instance">An instance to be set.</param>
+        /// <param name="value">The value to set.</param>
+        /// <param name="indexParameters">The index parameters.</param>
+        /// <returns><see langword="true"/>, if the indexed member could be set; <see langword="false"/>, if a matching property or array setter could not be found.</returns>
+        /// <remarks>
+        /// <para>This method ignores explicitly implemented interface properties.</para>
+        /// <note>If a matching indexed property could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
+        /// <para>If you already have a <see cref="PropertyInfo"/> instance of the indexed property, then use the <see cref="SetProperty(object,PropertyInfo,object,ReflectionWays,object[])"/> method
+        /// for better performance.</para>
+        /// <para>For setting an indexed property this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
+        /// </remarks>
+        public static bool TrySetIndexedMember<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllProperties)]TInstance>(
+            TInstance instance, object? value, params object?[] indexParameters)
+            where TInstance : class => TrySetIndexedMember(instance, value, ReflectionWays.Auto, indexParameters);
 
         [RequiresUnreferencedCode("GetMember")]
         private static bool DoTrySetIndexedMember(object instance, object? value, ReflectionWays way, object?[] indexParameters, bool throwError)
@@ -862,7 +1140,7 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Gets a <paramref name="property"/> represented by the specified <see cref="PropertyInfo"/>.
         /// </summary>
-        /// <param name="instance">An instance whose property is about to be retrieved. This parameter is ignored for static properties.</param>
+        /// <param name="instance">An instance, whose property is about to be retrieved. This parameter is ignored for static properties.</param>
         /// <param name="property">The property to get.</param>
         /// <param name="indexParameters">Index parameters if <paramref name="property"/> is an indexer. This parameter is ignored for non-indexed properties.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable here.</param>
@@ -899,7 +1177,7 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Gets a <paramref name="property"/> represented by the specified <see cref="PropertyInfo"/>.
         /// </summary>
-        /// <param name="instance">An instance whose property is about to be retrieved. This parameter is ignored for static properties.</param>
+        /// <param name="instance">An instance, whose property is about to be retrieved. This parameter is ignored for static properties.</param>
         /// <param name="property">The property to get.</param>
         /// <param name="indexParameters">Index parameters if <paramref name="property"/> is an indexer. This parameter is ignored for non-indexed properties.</param>
         /// <returns>The value of the property.</returns>
@@ -917,7 +1195,7 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Gets the instance property of an object represented by the specified <paramref name="propertyName"/>.
         /// </summary>
-        /// <param name="instance">An instance whose property is about to be retrieved.</param>
+        /// <param name="instance">An instance, whose property is about to be retrieved.</param>
         /// <param name="propertyName">The name of the property to get.</param>
         /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="way">The preferred reflection way.</param>
@@ -947,7 +1225,33 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Gets the instance property of an object represented by the specified <paramref name="propertyName"/>.
         /// </summary>
-        /// <param name="instance">An instance whose property is about to be retrieved.</param>
+        /// <typeparam name="TInstance">The type of the <paramref name="instance"/> that has the property with the specified name.</typeparam>
+        /// <param name="instance">An instance, whose property is about to be retrieved.</param>
+        /// <param name="propertyName">The name of the property to get.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
+        /// <param name="way">The preferred reflection way.</param>
+        /// <param name="indexParameters">Index parameters if <paramref name="propertyName"/> refers to an indexed property. This parameter is ignored for non-indexed properties.</param>
+        /// <returns>The value of the property.</returns>
+        /// <remarks>
+        /// <para><paramref name="propertyName"/> can refer public and non-public properties. To avoid ambiguity (in case of indexers), this method gets
+        /// all the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
+        /// <para>If you already have a <see cref="PropertyInfo"/> instance use the <see cref="GetProperty(object,PropertyInfo,ReflectionWays,object[])"/> method
+        /// for better performance.</para>
+        /// <para>If you are not sure whether a property with the specified <paramref name="propertyName"/> exists, then you can use the
+        /// <see cref="O:KGySoft.Reflection.Reflector.TryGetProperty">TryGetProperty</see> methods instead.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.TypeDescriptor"/> way
+        /// for <see cref="ICustomTypeDescriptor"/> implementations and the <see cref="ReflectionWays.DynamicDelegate"/> way otherwise.</para>
+        /// </remarks>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+            Justification = "False alarm, this overload is exactly for the reason to be able to omit [RequiresUnreferencedCode] as long as [DynamicallyAccessedMembers] requirements are met.")]
+        public static object? GetProperty<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllProperties)]TInstance>(
+            TInstance instance, string propertyName, bool ignoreCase, ReflectionWays way, params object?[]? indexParameters)
+            where TInstance : class => GetProperty((object)instance, propertyName, ignoreCase, way, indexParameters);
+
+        /// <summary>
+        /// Gets the instance property of an object represented by the specified <paramref name="propertyName"/>.
+        /// </summary>
+        /// <param name="instance">An instance, whose property is about to be retrieved.</param>
         /// <param name="propertyName">The name of the property to get.</param>
         /// <param name="way">The preferred reflection way.</param>
         /// <param name="indexParameters">Index parameters if <paramref name="propertyName"/> refers to an indexed property. This parameter is ignored for non-indexed properties.</param>
@@ -969,7 +1273,30 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Gets the instance property of an object represented by the specified <paramref name="propertyName"/>.
         /// </summary>
-        /// <param name="instance">An instance whose property is about to be retrieved.</param>
+        /// <typeparam name="TInstance">The type of the <paramref name="instance"/> that has the property with the specified name.</typeparam>
+        /// <param name="instance">An instance, whose property is about to be retrieved.</param>
+        /// <param name="propertyName">The name of the property to get.</param>
+        /// <param name="way">The preferred reflection way.</param>
+        /// <param name="indexParameters">Index parameters if <paramref name="propertyName"/> refers to an indexed property. This parameter is ignored for non-indexed properties.</param>
+        /// <returns>The value of the property.</returns>
+        /// <remarks>
+        /// <para><paramref name="propertyName"/> can refer public and non-public properties. To avoid ambiguity (in case of indexers), this method gets
+        /// all the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
+        /// <para>If you already have a <see cref="PropertyInfo"/> instance use the <see cref="GetProperty(object,PropertyInfo,ReflectionWays,object[])"/> method
+        /// for better performance.</para>
+        /// <para>If you are not sure whether a property with the specified <paramref name="propertyName"/> exists, then you can use the
+        /// <see cref="O:KGySoft.Reflection.Reflector.TryGetProperty">TryGetProperty</see> methods instead.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.TypeDescriptor"/> way
+        /// for <see cref="ICustomTypeDescriptor"/> implementations and the <see cref="ReflectionWays.DynamicDelegate"/> way otherwise.</para>
+        /// </remarks>
+        public static object? GetProperty<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllProperties)]TInstance>(
+            TInstance instance, string propertyName, ReflectionWays way, params object?[]? indexParameters)
+            where TInstance : class => GetProperty(instance, propertyName, false, way, indexParameters);
+
+        /// <summary>
+        /// Gets the instance property of an object represented by the specified <paramref name="propertyName"/>.
+        /// </summary>
+        /// <param name="instance">An instance, whose property is about to be retrieved.</param>
         /// <param name="propertyName">The name of the property to get.</param>
         /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="indexParameters">Index parameters if <paramref name="propertyName"/> refers to an indexed property. This parameter is ignored for non-indexed properties.</param>
@@ -991,7 +1318,30 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Gets the instance property of an object represented by the specified <paramref name="propertyName"/>.
         /// </summary>
-        /// <param name="instance">An instance whose property is about to be retrieved.</param>
+        /// <typeparam name="TInstance">The type of the <paramref name="instance"/> that has the property with the specified name.</typeparam>
+        /// <param name="instance">An instance, whose property is about to be retrieved.</param>
+        /// <param name="propertyName">The name of the property to get.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
+        /// <param name="indexParameters">Index parameters if <paramref name="propertyName"/> refers to an indexed property. This parameter is ignored for non-indexed properties.</param>
+        /// <returns>The value of the property.</returns>
+        /// <remarks>
+        /// <para><paramref name="propertyName"/> can refer public and non-public properties. To avoid ambiguity (in case of indexers), this method gets
+        /// all the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
+        /// <para>If you already have a <see cref="PropertyInfo"/> instance use the <see cref="GetProperty(object,PropertyInfo,ReflectionWays,object[])"/> method
+        /// for better performance.</para>
+        /// <para>If you are not sure whether a property with the specified <paramref name="propertyName"/> exists, then you can use the
+        /// <see cref="O:KGySoft.Reflection.Reflector.TryGetProperty">TryGetProperty</see> methods instead.</para>
+        /// <para>For getting the property this method uses the <see cref="ReflectionWays.TypeDescriptor"/> way
+        /// for <see cref="ICustomTypeDescriptor"/> implementations and the <see cref="ReflectionWays.DynamicDelegate"/> way otherwise.</para>
+        /// </remarks>
+        public static object? GetProperty<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllProperties)]TInstance>(
+            TInstance instance, string propertyName, bool ignoreCase, params object?[]? indexParameters)
+            where TInstance : class => GetProperty(instance, propertyName, ignoreCase, ReflectionWays.Auto, indexParameters);
+
+        /// <summary>
+        /// Gets the instance property of an object represented by the specified <paramref name="propertyName"/>.
+        /// </summary>
+        /// <param name="instance">An instance, whose property is about to be retrieved.</param>
         /// <param name="propertyName">The name of the property to get.</param>
         /// <param name="indexParameters">Index parameters if <paramref name="propertyName"/> refers to an indexed property. This parameter is ignored for non-indexed properties.</param>
         /// <returns>The value of the property.</returns>
@@ -1008,6 +1358,28 @@ namespace KGySoft.Reflection
         [RequiresUnreferencedCode(instancePropertyReflectionRequiresUnreferencedCode)]
         public static object? GetProperty(object instance, string propertyName, params object?[]? indexParameters)
             => GetProperty(instance, propertyName, false, ReflectionWays.Auto, indexParameters);
+
+        /// <summary>
+        /// Gets the instance property of an object represented by the specified <paramref name="propertyName"/>.
+        /// </summary>
+        /// <typeparam name="TInstance">The type of the <paramref name="instance"/> that has the property with the specified name.</typeparam>
+        /// <param name="instance">An instance, whose property is about to be retrieved.</param>
+        /// <param name="propertyName">The name of the property to get.</param>
+        /// <param name="indexParameters">Index parameters if <paramref name="propertyName"/> refers to an indexed property. This parameter is ignored for non-indexed properties.</param>
+        /// <returns>The value of the property.</returns>
+        /// <remarks>
+        /// <para><paramref name="propertyName"/> can refer public and non-public properties. To avoid ambiguity (in case of indexers), this method gets
+        /// all the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
+        /// <para>If you already have a <see cref="PropertyInfo"/> instance use the <see cref="GetProperty(object,PropertyInfo,ReflectionWays,object[])"/> method
+        /// for better performance.</para>
+        /// <para>If you are not sure whether a property with the specified <paramref name="propertyName"/> exists, then you can use the
+        /// <see cref="O:KGySoft.Reflection.Reflector.TryGetProperty">TryGetProperty</see> methods instead.</para>
+        /// <para>For getting the property this method uses the <see cref="ReflectionWays.TypeDescriptor"/> way
+        /// for <see cref="ICustomTypeDescriptor"/> implementations and the <see cref="ReflectionWays.DynamicDelegate"/> way otherwise.</para>
+        /// </remarks>
+        public static object? GetProperty<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllProperties)]TInstance>(
+            TInstance instance, string propertyName, params object?[]? indexParameters)
+            where TInstance : class => GetProperty(instance, propertyName, false, ReflectionWays.Auto, indexParameters);
 
         /// <summary>
         /// Gets the static property of a <see cref="System.Type"/> represented by the specified <paramref name="propertyName"/>.
@@ -1061,7 +1433,7 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Tries to get the instance property of an object represented by the specified <paramref name="propertyName"/>.
         /// </summary>
-        /// <param name="instance">An instance whose property is about to be retrieved.</param>
+        /// <param name="instance">An instance, whose property is about to be retrieved.</param>
         /// <param name="propertyName">The name of the property to get.</param>
         /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="value">When this method returns with <see langword="true"/> result, then this parameter contains the value of the property.</param>
@@ -1091,7 +1463,33 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Tries to get the instance property of an object represented by the specified <paramref name="propertyName"/>.
         /// </summary>
-        /// <param name="instance">An instance whose property is about to be retrieved.</param>
+        /// <typeparam name="TInstance">The type of the <paramref name="instance"/> that has the property with the specified name.</typeparam>
+        /// <param name="instance">An instance, whose property is about to be retrieved.</param>
+        /// <param name="propertyName">The name of the property to get.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
+        /// <param name="value">When this method returns with <see langword="true"/> result, then this parameter contains the value of the property.</param>
+        /// <param name="way">The preferred reflection way.</param>
+        /// <param name="indexParameters">Index parameters if <paramref name="propertyName"/> refers to an indexed property. This parameter is ignored for non-indexed properties.</param>
+        /// <returns><see langword="true"/>, if the property could be read; <see langword="false"/>, if a matching property could not be found.</returns>
+        /// <remarks>
+        /// <note>If a matching property could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
+        /// <para><paramref name="propertyName"/> can refer public and non-public properties. To avoid ambiguity (in case of indexers), this method gets
+        /// all the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
+        /// <para>If you already have a <see cref="PropertyInfo"/> instance use the <see cref="GetProperty(object,PropertyInfo,ReflectionWays,object[])"/> method
+        /// for better performance.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.TypeDescriptor"/> way
+        /// for <see cref="ICustomTypeDescriptor"/> implementations and the <see cref="ReflectionWays.DynamicDelegate"/> way otherwise.</para>
+        /// </remarks>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+            Justification = "False alarm, this overload is exactly for the reason to be able to omit [RequiresUnreferencedCode] as long as [DynamicallyAccessedMembers] requirements are met.")]
+        public static bool TryGetProperty<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllProperties)]TInstance>(
+            TInstance instance, string propertyName, bool ignoreCase, ReflectionWays way, out object? value, params object?[]? indexParameters)
+            where TInstance : class => TryGetProperty((object)instance, propertyName, ignoreCase, way, out value, indexParameters);
+
+        /// <summary>
+        /// Tries to get the instance property of an object represented by the specified <paramref name="propertyName"/>.
+        /// </summary>
+        /// <param name="instance">An instance, whose property is about to be retrieved.</param>
         /// <param name="propertyName">The name of the property to get.</param>
         /// <param name="value">When this method returns with <see langword="true"/> result, then this parameter contains the value of the property.</param>
         /// <param name="way">The preferred reflection way.</param>
@@ -1113,7 +1511,30 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Tries to get the instance property of an object represented by the specified <paramref name="propertyName"/>.
         /// </summary>
-        /// <param name="instance">An instance whose property is about to be retrieved.</param>
+        /// <typeparam name="TInstance">The type of the <paramref name="instance"/> that has the property with the specified name.</typeparam>
+        /// <param name="instance">An instance, whose property is about to be retrieved.</param>
+        /// <param name="propertyName">The name of the property to get.</param>
+        /// <param name="value">When this method returns with <see langword="true"/> result, then this parameter contains the value of the property.</param>
+        /// <param name="way">The preferred reflection way.</param>
+        /// <param name="indexParameters">Index parameters if <paramref name="propertyName"/> refers to an indexed property. This parameter is ignored for non-indexed properties.</param>
+        /// <returns><see langword="true"/>, if the property could be read; <see langword="false"/>, if a matching property could not be found.</returns>
+        /// <remarks>
+        /// <note>If a matching property could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
+        /// <para><paramref name="propertyName"/> can refer public and non-public properties. To avoid ambiguity (in case of indexers), this method gets
+        /// all the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
+        /// <para>If you already have a <see cref="PropertyInfo"/> instance use the <see cref="GetProperty(object,PropertyInfo,ReflectionWays,object[])"/> method
+        /// for better performance.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.TypeDescriptor"/> way
+        /// for <see cref="ICustomTypeDescriptor"/> implementations and the <see cref="ReflectionWays.DynamicDelegate"/> way otherwise.</para>
+        /// </remarks>
+        public static bool TryGetProperty<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllProperties)]TInstance>(
+            TInstance instance, string propertyName, ReflectionWays way, out object? value, params object?[]? indexParameters)
+            where TInstance : class => TryGetProperty(instance, propertyName, false, way, out value, indexParameters);
+
+        /// <summary>
+        /// Tries to get the instance property of an object represented by the specified <paramref name="propertyName"/>.
+        /// </summary>
+        /// <param name="instance">An instance, whose property is about to be retrieved.</param>
         /// <param name="propertyName">The name of the property to get.</param>
         /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="value">When this method returns with <see langword="true"/> result, then this parameter contains the value of the property.</param>
@@ -1135,7 +1556,30 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Tries to get the instance property of an object represented by the specified <paramref name="propertyName"/>.
         /// </summary>
-        /// <param name="instance">An instance whose property is about to be retrieved.</param>
+        /// <typeparam name="TInstance">The type of the <paramref name="instance"/> that has the property with the specified name.</typeparam>
+        /// <param name="instance">An instance, whose property is about to be retrieved.</param>
+        /// <param name="propertyName">The name of the property to get.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
+        /// <param name="value">When this method returns with <see langword="true"/> result, then this parameter contains the value of the property.</param>
+        /// <param name="indexParameters">Index parameters if <paramref name="propertyName"/> refers to an indexed property. This parameter is ignored for non-indexed properties.</param>
+        /// <returns><see langword="true"/>, if the property could be read; <see langword="false"/>, if a matching property could not be found.</returns>
+        /// <remarks>
+        /// <note>If a matching property could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
+        /// <para><paramref name="propertyName"/> can refer public and non-public properties. To avoid ambiguity (in case of indexers), this method gets
+        /// all the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
+        /// <para>If you already have a <see cref="PropertyInfo"/> instance use the <see cref="GetProperty(object,PropertyInfo,ReflectionWays,object[])"/> method
+        /// for better performance.</para>
+        /// <para>For getting the property this method uses the <see cref="ReflectionWays.TypeDescriptor"/> way
+        /// for <see cref="ICustomTypeDescriptor"/> implementations and the <see cref="ReflectionWays.DynamicDelegate"/> way otherwise.</para>
+        /// </remarks>
+        public static bool TryGetProperty<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllProperties)]TInstance>(
+            TInstance instance, string propertyName, bool ignoreCase, out object? value, params object?[]? indexParameters)
+            where TInstance : class => TryGetProperty(instance, propertyName, ignoreCase, ReflectionWays.Auto, out value, indexParameters);
+
+        /// <summary>
+        /// Tries to get the instance property of an object represented by the specified <paramref name="propertyName"/>.
+        /// </summary>
+        /// <param name="instance">An instance, whose property is about to be retrieved.</param>
         /// <param name="propertyName">The name of the property to get.</param>
         /// <param name="value">When this method returns with <see langword="true"/> result, then this parameter contains the value of the property.</param>
         /// <param name="indexParameters">Index parameters if <paramref name="propertyName"/> refers to an indexed property. This parameter is ignored for non-indexed properties.</param>
@@ -1152,6 +1596,28 @@ namespace KGySoft.Reflection
         [RequiresUnreferencedCode(instancePropertyReflectionRequiresUnreferencedCode)]
         public static bool TryGetProperty(object instance, string propertyName, out object? value, params object?[]? indexParameters)
             => TryGetProperty(instance, propertyName, false, ReflectionWays.Auto, out value, indexParameters);
+
+        /// <summary>
+        /// Tries to get the instance property of an object represented by the specified <paramref name="propertyName"/>.
+        /// </summary>
+        /// <typeparam name="TInstance">The type of the <paramref name="instance"/> that has the property with the specified name.</typeparam>
+        /// <param name="instance">An instance, whose property is about to be retrieved.</param>
+        /// <param name="propertyName">The name of the property to get.</param>
+        /// <param name="value">When this method returns with <see langword="true"/> result, then this parameter contains the value of the property.</param>
+        /// <param name="indexParameters">Index parameters if <paramref name="propertyName"/> refers to an indexed property. This parameter is ignored for non-indexed properties.</param>
+        /// <returns><see langword="true"/>, if the property could be read; <see langword="false"/>, if a matching property could not be found.</returns>
+        /// <remarks>
+        /// <note>If a matching property could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
+        /// <para><paramref name="propertyName"/> can refer public and non-public properties. To avoid ambiguity (in case of indexers), this method gets
+        /// all the properties of the same name and chooses the first one for which the provided <paramref name="indexParameters"/> match.</para>
+        /// <para>If you already have a <see cref="PropertyInfo"/> instance use the <see cref="GetProperty(object,PropertyInfo,ReflectionWays,object[])"/> method
+        /// for better performance.</para>
+        /// <para>For getting the property this method uses the <see cref="ReflectionWays.TypeDescriptor"/> way
+        /// for <see cref="ICustomTypeDescriptor"/> implementations and the <see cref="ReflectionWays.DynamicDelegate"/> way otherwise.</para>
+        /// </remarks>
+        public static bool TryGetProperty<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllProperties)]TInstance>(
+            TInstance instance, string propertyName, out object? value, params object?[]? indexParameters)
+            where TInstance : class => TryGetProperty(instance, propertyName, false, ReflectionWays.Auto, out value, indexParameters);
 
         /// <summary>
         /// Tries to get the static property of a <see cref="System.Type"/> represented by the specified <paramref name="propertyName"/>.
@@ -1310,6 +1776,26 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Gets the value of an indexable object. It can be either an array instance or an object with default members (indexed properties).
         /// </summary>
+        /// <typeparam name="TInstance">The type of the specified <paramref name="instance"/>.</typeparam>
+        /// <param name="instance">An instance to be read.</param>
+        /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable here. This parameter is ignored for arrays.</param>
+        /// <param name="indexParameters">The index parameters.</param>
+        /// <returns>The value returned by the indexable object.</returns>
+        /// <remarks>
+        /// <para>This method ignores explicitly implemented interface properties.</para>
+        /// <para>If you already have a <see cref="PropertyInfo"/> instance of the indexed property, then use the <see cref="GetProperty(object,PropertyInfo,ReflectionWays,object[])"/> method
+        /// for better performance.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
+        /// </remarks>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+            Justification = "False alarm, this overload is exactly for the reason to be able to omit [RequiresUnreferencedCode] as long as [DynamicallyAccessedMembers] requirements are met.")]
+        public static object? GetIndexedMember<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllProperties)]TInstance>(
+            TInstance instance, ReflectionWays way, params object?[] indexParameters)
+            where TInstance : class => GetIndexedMember((object)instance, way, indexParameters);
+
+        /// <summary>
+        /// Gets the value of an indexable object. It can be either an array instance or an object with default members (indexed properties).
+        /// </summary>
         /// <param name="instance">An instance to be read.</param>
         /// <param name="indexParameters">The index parameters.</param>
         /// <returns>The value returned by the indexable object.</returns>
@@ -1322,6 +1808,23 @@ namespace KGySoft.Reflection
         [RequiresUnreferencedCode(indexerReflectionRequiresUnreferencedCode)]
         public static object? GetIndexedMember(object instance, params object?[] indexParameters)
             => GetIndexedMember(instance, ReflectionWays.Auto, indexParameters);
+
+        /// <summary>
+        /// Gets the value of an indexable object. It can be either an array instance or an object with default members (indexed properties).
+        /// </summary>
+        /// <typeparam name="TInstance">The type of the specified <paramref name="instance"/>.</typeparam>
+        /// <param name="instance">An instance to be read.</param>
+        /// <param name="indexParameters">The index parameters.</param>
+        /// <returns>The value returned by the indexable object.</returns>
+        /// <remarks>
+        /// <para>This method ignores explicitly implemented interface properties.</para>
+        /// <para>If you already have a <see cref="PropertyInfo"/> instance of the indexed property, then use the <see cref="GetProperty(object,PropertyInfo,ReflectionWays,object[])"/> method
+        /// for better performance.</para>
+        /// <para>For getting an indexed property this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
+        /// </remarks>
+        public static object? GetIndexedMember<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllProperties)]TInstance>(
+            TInstance instance, params object?[] indexParameters)
+            where TInstance : class => GetIndexedMember(instance, ReflectionWays.Auto, indexParameters);
 
         /// <summary>
         /// Tries to get the value of an indexable object. It can be either an array or an object with default members (indexed properties).
@@ -1356,6 +1859,28 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Tries to get the value of an indexable object. It can be either an array or an object with default members (indexed properties).
         /// </summary>
+        /// <typeparam name="TInstance">The type of the specified <paramref name="instance"/>.</typeparam>
+        /// <param name="instance">An instance to be set.</param>
+        /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable here. This parameter is ignored for arrays.</param>
+        /// <param name="value">When this method returns with <see langword="true"/> result, then this parameter contains the value returned by the indexable object.</param>
+        /// <param name="indexParameters">The index parameters.</param>
+        /// <returns><see langword="true"/>, if the indexed member could be read; <see langword="false"/>, if a matching property or array getter could not be found.</returns>
+        /// <remarks>
+        /// <para>This method ignores explicitly implemented interface properties.</para>
+        /// <note>If a matching indexed property could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
+        /// <para>If you already have a <see cref="PropertyInfo"/> instance of the indexed property, then use the <see cref="GetProperty(object,PropertyInfo,ReflectionWays,object[])"/> method
+        /// for better performance.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
+        /// </remarks>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+            Justification = "False alarm, this overload is exactly for the reason to be able to omit [RequiresUnreferencedCode] as long as [DynamicallyAccessedMembers] requirements are met.")]
+        public static bool TryGetIndexedMember<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllProperties)]TInstance>(
+            TInstance instance, ReflectionWays way, out object? value, params object?[] indexParameters)
+            where TInstance : class => TryGetIndexedMember((object)instance, way, out value, indexParameters);
+
+        /// <summary>
+        /// Tries to get the value of an indexable object. It can be either an array or an object with default members (indexed properties).
+        /// </summary>
         /// <param name="instance">An instance to be set.</param>
         /// <param name="value">When this method returns with <see langword="true"/> result, then this parameter contains the value returned by the indexable object.</param>
         /// <param name="indexParameters">The index parameters.</param>
@@ -1370,6 +1895,25 @@ namespace KGySoft.Reflection
         [RequiresUnreferencedCode(indexerReflectionRequiresUnreferencedCode)]
         public static bool TryGetIndexedMember(object instance, out object? value, params object?[] indexParameters)
             => TryGetIndexedMember(instance, ReflectionWays.Auto, out value, indexParameters);
+
+        /// <summary>
+        /// Tries to get the value of an indexable object. It can be either an array or an object with default members (indexed properties).
+        /// </summary>
+        /// <typeparam name="TInstance">The type of the specified <paramref name="instance"/>.</typeparam>
+        /// <param name="instance">An instance to be set.</param>
+        /// <param name="value">When this method returns with <see langword="true"/> result, then this parameter contains the value returned by the indexable object.</param>
+        /// <param name="indexParameters">The index parameters.</param>
+        /// <returns><see langword="true"/>, if the indexed member could be read; <see langword="false"/>, if a matching property or array getter could not be found.</returns>
+        /// <remarks>
+        /// <para>This method ignores explicitly implemented interface properties.</para>
+        /// <note>If a matching indexed property could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
+        /// <para>If you already have a <see cref="PropertyInfo"/> instance of the indexed property, then use the <see cref="GetProperty(object,PropertyInfo,ReflectionWays,object[])"/> method
+        /// for better performance.</para>
+        /// <para>For getting an indexed property this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
+        /// </remarks>
+        public static bool TryGetIndexedMember<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllProperties)]TInstance>(
+            TInstance instance, out object? value, params object?[] indexParameters)
+            where TInstance : class => TryGetIndexedMember(instance, ReflectionWays.Auto, out value, indexParameters);
 
         [RequiresUnreferencedCode("GetMember")]
         private static bool DoTryGetIndexedMember(object instance, ReflectionWays way, object?[] indexParameters, bool throwError, out object? value)
@@ -1455,7 +1999,7 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Invokes a <paramref name="method"/> represented by the specified <see cref="MethodInfo"/>.
         /// </summary>
-        /// <param name="instance">An instance whose method is about to be invoked. This parameter is ignored for static methods.</param>
+        /// <param name="instance">An instance, whose method is about to be invoked. This parameter is ignored for static methods.</param>
         /// <param name="method">The method to be invoked.</param>
         /// <param name="genericParameters">Type parameters if <paramref name="method"/> is a generic method definition. Otherwise, this parameter is ignored.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for invoking methods.</param>
@@ -1511,7 +2055,7 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Invokes a <paramref name="method"/> represented by the specified <see cref="MethodInfo"/>.
         /// </summary>
-        /// <param name="instance">An instance whose method is about to be invoked. This parameter is ignored for static methods.</param>
+        /// <param name="instance">An instance, whose method is about to be invoked. This parameter is ignored for static methods.</param>
         /// <param name="method">The method to be invoked.</param>
         /// <param name="genericParameters">Type parameters if <paramref name="method"/> is a generic method definition. Otherwise, this parameter is ignored.</param>
         /// <param name="parameters">The parameters to be used for invoking the method.</param>
@@ -1529,7 +2073,7 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Invokes a <paramref name="method"/> represented by the specified <see cref="MethodInfo"/>.
         /// </summary>
-        /// <param name="instance">An instance whose method is about to be invoked. This parameter is ignored for static methods.</param>
+        /// <param name="instance">An instance, whose method is about to be invoked. This parameter is ignored for static methods.</param>
         /// <param name="method">The method to be invoked.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for invoking methods.</param>
         /// <param name="parameters">The parameters to be used for invoking the method.</param>
@@ -1547,7 +2091,7 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Invokes a <paramref name="method"/> represented by the specified <see cref="MethodInfo"/>.
         /// </summary>
-        /// <param name="instance">An instance whose method is about to be invoked. This parameter is ignored for static methods.</param>
+        /// <param name="instance">An instance, whose method is about to be invoked. This parameter is ignored for static methods.</param>
         /// <param name="method">The method to be invoked.</param>
         /// <param name="parameters">The parameters to be used for invoking the method.</param>
         /// <returns>The return value of the method.</returns>
@@ -1568,7 +2112,7 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Invokes an instance method of an object represented by the specified <paramref name="methodName"/>.
         /// </summary>
-        /// <param name="instance">An instance whose method is about to be invoked.</param>
+        /// <param name="instance">An instance, whose method is about to be invoked.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
         /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="genericParameters">Type parameters if <paramref name="methodName"/> refers to a generic method definition. Otherwise, this parameter is ignored.</param>
@@ -1600,7 +2144,34 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Invokes an instance method of an object represented by the specified <paramref name="methodName"/>.
         /// </summary>
-        /// <param name="instance">An instance whose method is about to be invoked.</param>
+        /// <typeparam name="TInstance">The type of the <paramref name="instance"/> that has the method with the specified name.</typeparam>
+        /// <param name="instance">An instance, whose method is about to be invoked.</param>
+        /// <param name="methodName">The name of the method to be invoked.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
+        /// <param name="genericParameters">Type parameters if <paramref name="methodName"/> refers to a generic method definition. Otherwise, this parameter is ignored.</param>
+        /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for invoking methods.</param>
+        /// <param name="parameters">The parameters to be used for invoking the method.</param>
+        /// <returns>The return value of the method.</returns>
+        /// <remarks>
+        /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="genericParameters"/> and <paramref name="parameters"/> match.</para>
+        /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
+        /// for better performance.</para>
+        /// <para>If you are not sure whether a method with the specified <paramref name="methodName"/> exists, then you can use the
+        /// <see cref="O:KGySoft.Reflection.Reflector.TryInvokeMethod">TryInvokeMethod</see> methods instead.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then the <see cref="ReflectionWays.DynamicDelegate"/> way will be used.</para>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
+        /// </remarks>
+        [RequiresDynamicCode(genericMethodReflectionRequiresDynamicCode)]
+        [RequiresUnreferencedCode(genericMethodReflectionRequiresUnreferencedCode)]
+        public static object? InvokeMethod<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllMethods)]TInstance>(
+            TInstance instance, string methodName, bool ignoreCase, Type[]? genericParameters, ReflectionWays way, params object?[]? parameters)
+            where TInstance : class => InvokeMethod((object)instance, methodName, ignoreCase, genericParameters, way, parameters);
+
+        /// <summary>
+        /// Invokes an instance method of an object represented by the specified <paramref name="methodName"/>.
+        /// </summary>
+        /// <param name="instance">An instance, whose method is about to be invoked.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
         /// <param name="genericParameters">Type parameters if <paramref name="methodName"/> refers to a generic method definition. Otherwise, this parameter is ignored.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for invoking methods.</param>
@@ -1624,7 +2195,33 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Invokes an instance method of an object represented by the specified <paramref name="methodName"/>.
         /// </summary>
-        /// <param name="instance">An instance whose method is about to be invoked.</param>
+        /// <typeparam name="TInstance">The type of the <paramref name="instance"/> that has the method with the specified name.</typeparam>
+        /// <param name="instance">An instance, whose method is about to be invoked.</param>
+        /// <param name="methodName">The name of the method to be invoked.</param>
+        /// <param name="genericParameters">Type parameters if <paramref name="methodName"/> refers to a generic method definition. Otherwise, this parameter is ignored.</param>
+        /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for invoking methods.</param>
+        /// <param name="parameters">The parameters to be used for invoking the method.</param>
+        /// <returns>The return value of the method.</returns>
+        /// <remarks>
+        /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="genericParameters"/> and <paramref name="parameters"/> match.</para>
+        /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
+        /// for better performance.</para>
+        /// <para>If you are not sure whether a method with the specified <paramref name="methodName"/> exists, then you can use the
+        /// <see cref="O:KGySoft.Reflection.Reflector.TryInvokeMethod">TryInvokeMethod</see> methods instead.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then the <see cref="ReflectionWays.DynamicDelegate"/> way will be used.</para>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
+        /// </remarks>
+        [RequiresDynamicCode(genericMethodReflectionRequiresDynamicCode)]
+        [RequiresUnreferencedCode(genericMethodReflectionRequiresUnreferencedCode)]
+        public static object? InvokeMethod<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllMethods)]TInstance>(
+            TInstance instance, string methodName, Type[]? genericParameters, ReflectionWays way, params object?[]? parameters)
+            where TInstance : class => InvokeMethod(instance, methodName, false, genericParameters, way, parameters);
+
+        /// <summary>
+        /// Invokes an instance method of an object represented by the specified <paramref name="methodName"/>.
+        /// </summary>
+        /// <param name="instance">An instance, whose method is about to be invoked.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
         /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="genericParameters">Type parameters if <paramref name="methodName"/> refers to a generic method definition. Otherwise, this parameter is ignored.</param>
@@ -1648,7 +2245,33 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Invokes an instance method of an object represented by the specified <paramref name="methodName"/>.
         /// </summary>
-        /// <param name="instance">An instance whose method is about to be invoked.</param>
+        /// <typeparam name="TInstance">The type of the <paramref name="instance"/> that has the method with the specified name.</typeparam>
+        /// <param name="instance">An instance, whose method is about to be invoked.</param>
+        /// <param name="methodName">The name of the method to be invoked.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
+        /// <param name="genericParameters">Type parameters if <paramref name="methodName"/> refers to a generic method definition. Otherwise, this parameter is ignored.</param>
+        /// <param name="parameters">The parameters to be used for invoking the method.</param>
+        /// <returns>The return value of the method.</returns>
+        /// <remarks>
+        /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="genericParameters"/> and <paramref name="parameters"/> match.</para>
+        /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
+        /// for better performance.</para>
+        /// <para>If you are not sure whether a method with the specified <paramref name="methodName"/> exists, then you can use the
+        /// <see cref="O:KGySoft.Reflection.Reflector.TryInvokeMethod">TryInvokeMethod</see> methods instead.</para>
+        /// <para>For invoking the method this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
+        /// </remarks>
+        [RequiresDynamicCode(genericMethodReflectionRequiresDynamicCode)]
+        [RequiresUnreferencedCode(genericMethodReflectionRequiresUnreferencedCode)]
+        public static object? InvokeMethod<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllMethods)]TInstance>(
+            TInstance instance, string methodName, bool ignoreCase, Type[]? genericParameters, params object?[]? parameters)
+            where TInstance : class => InvokeMethod(instance, methodName, ignoreCase, genericParameters, ReflectionWays.Auto, parameters);
+
+        /// <summary>
+        /// Invokes an instance method of an object represented by the specified <paramref name="methodName"/>.
+        /// </summary>
+        /// <param name="instance">An instance, whose method is about to be invoked.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
         /// <param name="genericParameters">Type parameters if <paramref name="methodName"/> refers to a generic method definition. Otherwise, this parameter is ignored.</param>
         /// <param name="parameters">The parameters to be used for invoking the method.</param>
@@ -1671,7 +2294,32 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Invokes an instance method of an object represented by the specified <paramref name="methodName"/>.
         /// </summary>
-        /// <param name="instance">An instance whose method is about to be invoked.</param>
+        /// <typeparam name="TInstance">The type of the <paramref name="instance"/> that has the method with the specified name.</typeparam>
+        /// <param name="instance">An instance, whose method is about to be invoked.</param>
+        /// <param name="methodName">The name of the method to be invoked.</param>
+        /// <param name="genericParameters">Type parameters if <paramref name="methodName"/> refers to a generic method definition. Otherwise, this parameter is ignored.</param>
+        /// <param name="parameters">The parameters to be used for invoking the method.</param>
+        /// <returns>The return value of the method.</returns>
+        /// <remarks>
+        /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="genericParameters"/> and <paramref name="parameters"/> match.</para>
+        /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
+        /// for better performance.</para>
+        /// <para>If you are not sure whether a method with the specified <paramref name="methodName"/> exists, then you can use the
+        /// <see cref="O:KGySoft.Reflection.Reflector.TryInvokeMethod">TryInvokeMethod</see> methods instead.</para>
+        /// <para>For invoking the method this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
+        /// </remarks>
+        [RequiresDynamicCode(genericMethodReflectionRequiresDynamicCode)]
+        [RequiresUnreferencedCode(genericMethodReflectionRequiresUnreferencedCode)]
+        public static object? InvokeMethod<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllMethods)]TInstance>(
+            TInstance instance, string methodName, Type[]? genericParameters, params object?[]? parameters)
+            where TInstance : class => InvokeMethod(instance, methodName, false, genericParameters, ReflectionWays.Auto, parameters);
+
+        /// <summary>
+        /// Invokes an instance method of an object represented by the specified <paramref name="methodName"/>.
+        /// </summary>
+        /// <param name="instance">An instance, whose method is about to be invoked.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
         /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for invoking methods.</param>
@@ -1695,7 +2343,33 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Invokes an instance method of an object represented by the specified <paramref name="methodName"/>.
         /// </summary>
-        /// <param name="instance">An instance whose method is about to be invoked.</param>
+        /// <typeparam name="TInstance">The type of the <paramref name="instance"/> that has the method with the specified name.</typeparam>
+        /// <param name="instance">An instance, whose method is about to be invoked.</param>
+        /// <param name="methodName">The name of the method to be invoked.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
+        /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for invoking methods.</param>
+        /// <param name="parameters">The parameters to be used for invoking the method.</param>
+        /// <returns>The return value of the method.</returns>
+        /// <remarks>
+        /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="parameters"/> match.</para>
+        /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
+        /// for better performance.</para>
+        /// <para>If you are not sure whether a method with the specified <paramref name="methodName"/> exists, then you can use the
+        /// <see cref="O:KGySoft.Reflection.Reflector.TryInvokeMethod">TryInvokeMethod</see> methods instead.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then the <see cref="ReflectionWays.DynamicDelegate"/> way will be used.</para>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
+        /// </remarks>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Not using generic method arguments here.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "Not using generic method arguments here.")]
+        public static object? InvokeMethod<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllMethods)]TInstance>(
+            TInstance instance, string methodName, bool ignoreCase, ReflectionWays way, params object?[]? parameters)
+            where TInstance : class => InvokeMethod(instance, methodName, ignoreCase, null, way, parameters);
+
+        /// <summary>
+        /// Invokes an instance method of an object represented by the specified <paramref name="methodName"/>.
+        /// </summary>
+        /// <param name="instance">An instance, whose method is about to be invoked.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for invoking methods.</param>
         /// <param name="parameters">The parameters to be used for invoking the method.</param>
@@ -1718,7 +2392,32 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Invokes an instance method of an object represented by the specified <paramref name="methodName"/>.
         /// </summary>
-        /// <param name="instance">An instance whose method is about to be invoked.</param>
+        /// <typeparam name="TInstance">The type of the <paramref name="instance"/> that has the method with the specified name.</typeparam>
+        /// <param name="instance">An instance, whose method is about to be invoked.</param>
+        /// <param name="methodName">The name of the method to be invoked.</param>
+        /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for invoking methods.</param>
+        /// <param name="parameters">The parameters to be used for invoking the method.</param>
+        /// <returns>The return value of the method.</returns>
+        /// <remarks>
+        /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="parameters"/> match.</para>
+        /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
+        /// for better performance.</para>
+        /// <para>If you are not sure whether a method with the specified <paramref name="methodName"/> exists, then you can use the
+        /// <see cref="O:KGySoft.Reflection.Reflector.TryInvokeMethod">TryInvokeMethod</see> methods instead.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then the <see cref="ReflectionWays.DynamicDelegate"/> way will be used.</para>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
+        /// </remarks>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Not using generic method arguments here.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "Not using generic method arguments here.")]
+        public static object? InvokeMethod<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllMethods)]TInstance>(
+            TInstance instance, string methodName, ReflectionWays way, params object?[]? parameters)
+            where TInstance : class => InvokeMethod(instance, methodName, false, null, way, parameters);
+
+        /// <summary>
+        /// Invokes an instance method of an object represented by the specified <paramref name="methodName"/>.
+        /// </summary>
+        /// <param name="instance">An instance, whose method is about to be invoked.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
         /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="parameters">The parameters to be used for invoking the method.</param>
@@ -1741,7 +2440,32 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Invokes an instance method of an object represented by the specified <paramref name="methodName"/>.
         /// </summary>
-        /// <param name="instance">An instance whose method is about to be invoked.</param>
+        /// <typeparam name="TInstance">The type of the <paramref name="instance"/> that has the method with the specified name.</typeparam>
+        /// <param name="instance">An instance, whose method is about to be invoked.</param>
+        /// <param name="methodName">The name of the method to be invoked.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
+        /// <param name="parameters">The parameters to be used for invoking the method.</param>
+        /// <returns>The return value of the method.</returns>
+        /// <remarks>
+        /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="parameters"/> match.</para>
+        /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
+        /// for better performance.</para>
+        /// <para>If you are not sure whether a method with the specified <paramref name="methodName"/> exists, then you can use the
+        /// <see cref="O:KGySoft.Reflection.Reflector.TryInvokeMethod">TryInvokeMethod</see> methods instead.</para>
+        /// <para>For invoking the method this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
+        /// </remarks>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Not using generic method arguments here.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "Not using generic method arguments here.")]
+        public static object? InvokeMethod<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllMethods)]TInstance>(
+            TInstance instance, string methodName, bool ignoreCase, params object?[]? parameters)
+            where TInstance : class => InvokeMethod(instance, methodName, ignoreCase, null, ReflectionWays.Auto, parameters);
+
+        /// <summary>
+        /// Invokes an instance method of an object represented by the specified <paramref name="methodName"/>.
+        /// </summary>
+        /// <param name="instance">An instance, whose method is about to be invoked.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
         /// <param name="parameters">The parameters to be used for invoking the method.</param>
         /// <returns>The return value of the method.</returns>
@@ -1759,6 +2483,30 @@ namespace KGySoft.Reflection
         [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "Not using generic method arguments here.")]
         public static object? InvokeMethod(object instance, string methodName, params object?[]? parameters)
             => InvokeMethod(instance, methodName, false, null, ReflectionWays.Auto, parameters);
+
+        /// <summary>
+        /// Invokes an instance method of an object represented by the specified <paramref name="methodName"/>.
+        /// </summary>
+        /// <typeparam name="TInstance">The type of the <paramref name="instance"/> that has the method with the specified name.</typeparam>
+        /// <param name="instance">An instance, whose method is about to be invoked.</param>
+        /// <param name="methodName">The name of the method to be invoked.</param>
+        /// <param name="parameters">The parameters to be used for invoking the method.</param>
+        /// <returns>The return value of the method.</returns>
+        /// <remarks>
+        /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="parameters"/> match.</para>
+        /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
+        /// for better performance.</para>
+        /// <para>If you are not sure whether a method with the specified <paramref name="methodName"/> exists, then you can use the
+        /// <see cref="O:KGySoft.Reflection.Reflector.TryInvokeMethod">TryInvokeMethod</see> methods instead.</para>
+        /// <para>For invoking the method this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
+        /// </remarks>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Not using generic method arguments here.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "Not using generic method arguments here.")]
+        public static object? InvokeMethod<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllMethods)]TInstance>(
+            TInstance instance, string methodName, params object?[]? parameters)
+            where TInstance : class => InvokeMethod(instance, methodName, false, null, ReflectionWays.Auto, parameters);
 
         /// <summary>
         /// Invokes a static method of a <see cref="System.Type"/> represented by the specified <paramref name="methodName"/>.
@@ -1958,7 +2706,7 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Tries to invoke an instance method of an object represented by the specified <paramref name="methodName"/>.
         /// </summary>
-        /// <param name="instance">An instance whose method is about to be invoked.</param>
+        /// <param name="instance">An instance, whose method is about to be invoked.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
         /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="genericParameters">Type parameters if <paramref name="methodName"/> is a generic method definition. Otherwise, this parameter is ignored.</param>
@@ -1990,7 +2738,34 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Tries to invoke an instance method of an object represented by the specified <paramref name="methodName"/>.
         /// </summary>
-        /// <param name="instance">An instance whose method is about to be invoked.</param>
+        /// <typeparam name="TInstance">The type of the <paramref name="instance"/> that has the method with the specified name.</typeparam>
+        /// <param name="instance">An instance, whose method is about to be invoked.</param>
+        /// <param name="methodName">The name of the method to be invoked.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
+        /// <param name="genericParameters">Type parameters if <paramref name="methodName"/> is a generic method definition. Otherwise, this parameter is ignored.</param>
+        /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for invoking methods.</param>
+        /// <param name="result">When this method returns with <see langword="true"/> result, then this parameter contains the return value of the method.</param>
+        /// <param name="parameters">The parameters to be used for invoking the method.</param>
+        /// <returns><see langword="true"/>, if the method could be invoked; <see langword="false"/>, if a matching method could not be found.</returns>
+        /// <remarks>
+        /// <note>If a matching method could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
+        /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="genericParameters"/> and <paramref name="parameters"/> match.</para>
+        /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
+        /// for better performance.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then the <see cref="ReflectionWays.DynamicDelegate"/> way will be used.</para>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
+        /// </remarks>
+        [RequiresDynamicCode(genericMethodReflectionRequiresDynamicCode)]
+        [RequiresUnreferencedCode(genericMethodReflectionRequiresUnreferencedCode)]
+        public static bool TryInvokeMethod<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllMethods)]TInstance>(
+            TInstance instance, string methodName, bool ignoreCase, Type[]? genericParameters, ReflectionWays way, out object? result, params object?[]? parameters)
+            where TInstance : class => TryInvokeMethod((object)instance, methodName, ignoreCase, genericParameters, way, out result, parameters);
+
+        /// <summary>
+        /// Tries to invoke an instance method of an object represented by the specified <paramref name="methodName"/>.
+        /// </summary>
+        /// <param name="instance">An instance, whose method is about to be invoked.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
         /// <param name="genericParameters">Type parameters if <paramref name="methodName"/> is a generic method definition. Otherwise, this parameter is ignored.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for invoking methods.</param>
@@ -2014,7 +2789,33 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Tries to invoke an instance method of an object represented by the specified <paramref name="methodName"/>.
         /// </summary>
-        /// <param name="instance">An instance whose method is about to be invoked.</param>
+        /// <typeparam name="TInstance">The type of the <paramref name="instance"/> that has the method with the specified name.</typeparam>
+        /// <param name="instance">An instance, whose method is about to be invoked.</param>
+        /// <param name="methodName">The name of the method to be invoked.</param>
+        /// <param name="genericParameters">Type parameters if <paramref name="methodName"/> is a generic method definition. Otherwise, this parameter is ignored.</param>
+        /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for invoking methods.</param>
+        /// <param name="result">When this method returns with <see langword="true"/> result, then this parameter contains the return value of the method.</param>
+        /// <param name="parameters">The parameters to be used for invoking the method.</param>
+        /// <returns><see langword="true"/>, if the method could be invoked; <see langword="false"/>, if a matching method could not be found.</returns>
+        /// <remarks>
+        /// <note>If a matching method could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
+        /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="genericParameters"/> and <paramref name="parameters"/> match.</para>
+        /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
+        /// for better performance.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then the <see cref="ReflectionWays.DynamicDelegate"/> way will be used.</para>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
+        /// </remarks>
+        [RequiresDynamicCode(genericMethodReflectionRequiresDynamicCode)]
+        [RequiresUnreferencedCode(genericMethodReflectionRequiresUnreferencedCode)]
+        public static bool TryInvokeMethod<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllMethods)]TInstance>(
+            TInstance instance, string methodName, Type[]? genericParameters, ReflectionWays way, out object? result, params object?[]? parameters)
+            where TInstance : class => TryInvokeMethod(instance, methodName, false, genericParameters, way, out result, parameters);
+
+        /// <summary>
+        /// Tries to invoke an instance method of an object represented by the specified <paramref name="methodName"/>.
+        /// </summary>
+        /// <param name="instance">An instance, whose method is about to be invoked.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
         /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="genericParameters">Type parameters if <paramref name="methodName"/> is a generic method definition. Otherwise, this parameter is ignored.</param>
@@ -2038,7 +2839,33 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Tries to invoke an instance method of an object represented by the specified <paramref name="methodName"/>.
         /// </summary>
-        /// <param name="instance">An instance whose method is about to be invoked.</param>
+        /// <typeparam name="TInstance">The type of the <paramref name="instance"/> that has the method with the specified name.</typeparam>
+        /// <param name="instance">An instance, whose method is about to be invoked.</param>
+        /// <param name="methodName">The name of the method to be invoked.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
+        /// <param name="genericParameters">Type parameters if <paramref name="methodName"/> is a generic method definition. Otherwise, this parameter is ignored.</param>
+        /// <param name="result">When this method returns with <see langword="true"/> result, then this parameter contains the return value of the method.</param>
+        /// <param name="parameters">The parameters to be used for invoking the method.</param>
+        /// <returns><see langword="true"/>, if the method could be invoked; <see langword="false"/>, if a matching method could not be found.</returns>
+        /// <remarks>
+        /// <note>If a matching method could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
+        /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="genericParameters"/> and <paramref name="parameters"/> match.</para>
+        /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
+        /// for better performance.</para>
+        /// <para>For invoking the method this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
+        /// </remarks>
+        [RequiresDynamicCode(genericMethodReflectionRequiresDynamicCode)]
+        [RequiresUnreferencedCode(genericMethodReflectionRequiresUnreferencedCode)]
+        public static bool TryInvokeMethod<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllMethods)]TInstance>(
+            TInstance instance, string methodName, bool ignoreCase, Type[]? genericParameters, out object? result, params object?[]? parameters)
+            where TInstance : class => TryInvokeMethod(instance, methodName, ignoreCase, genericParameters, ReflectionWays.Auto, out result, parameters);
+
+        /// <summary>
+        /// Tries to invoke an instance method of an object represented by the specified <paramref name="methodName"/>.
+        /// </summary>
+        /// <param name="instance">An instance, whose method is about to be invoked.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
         /// <param name="genericParameters">Type parameters if <paramref name="methodName"/> is a generic method definition. Otherwise, this parameter is ignored.</param>
         /// <param name="result">When this method returns with <see langword="true"/> result, then this parameter contains the return value of the method.</param>
@@ -2061,7 +2888,32 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Tries to invoke an instance method of an object represented by the specified <paramref name="methodName"/>.
         /// </summary>
-        /// <param name="instance">An instance whose method is about to be invoked.</param>
+        /// <typeparam name="TInstance">The type of the <paramref name="instance"/> that has the method with the specified name.</typeparam>
+        /// <param name="instance">An instance, whose method is about to be invoked.</param>
+        /// <param name="methodName">The name of the method to be invoked.</param>
+        /// <param name="genericParameters">Type parameters if <paramref name="methodName"/> is a generic method definition. Otherwise, this parameter is ignored.</param>
+        /// <param name="result">When this method returns with <see langword="true"/> result, then this parameter contains the return value of the method.</param>
+        /// <param name="parameters">The parameters to be used for invoking the method.</param>
+        /// <returns><see langword="true"/>, if the method could be invoked; <see langword="false"/>, if a matching method could not be found.</returns>
+        /// <remarks>
+        /// <note>If a matching method could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
+        /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="genericParameters"/> and <paramref name="parameters"/> match.</para>
+        /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
+        /// for better performance.</para>
+        /// <para>For invoking the method this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
+        /// </remarks>
+        [RequiresDynamicCode(genericMethodReflectionRequiresDynamicCode)]
+        [RequiresUnreferencedCode(genericMethodReflectionRequiresUnreferencedCode)]
+        public static bool TryInvokeMethod<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllMethods)]TInstance>(
+            TInstance instance, string methodName, Type[]? genericParameters, out object? result, params object?[]? parameters)
+            where TInstance : class => TryInvokeMethod(instance, methodName, false, genericParameters, ReflectionWays.Auto, out result, parameters);
+
+        /// <summary>
+        /// Tries to invoke an instance method of an object represented by the specified <paramref name="methodName"/>.
+        /// </summary>
+        /// <param name="instance">An instance, whose method is about to be invoked.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
         /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for invoking methods.</param>
@@ -2085,7 +2937,33 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Tries to invoke an instance method of an object represented by the specified <paramref name="methodName"/>.
         /// </summary>
-        /// <param name="instance">An instance whose method is about to be invoked.</param>
+        /// <typeparam name="TInstance">The type of the <paramref name="instance"/> that has the method with the specified name.</typeparam>
+        /// <param name="instance">An instance, whose method is about to be invoked.</param>
+        /// <param name="methodName">The name of the method to be invoked.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
+        /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for invoking methods.</param>
+        /// <param name="result">When this method returns with <see langword="true"/> result, then this parameter contains the return value of the method.</param>
+        /// <param name="parameters">The parameters to be used for invoking the method.</param>
+        /// <returns><see langword="true"/>, if the method could be invoked; <see langword="false"/>, if a matching method could not be found.</returns>
+        /// <remarks>
+        /// <note>If a matching method could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
+        /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="parameters"/> match.</para>
+        /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
+        /// for better performance.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then the <see cref="ReflectionWays.DynamicDelegate"/> way will be used.</para>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
+        /// </remarks>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Not using generic method arguments here.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "Not using generic method arguments here.")]
+        public static bool TryInvokeMethod<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllMethods)]TInstance>(
+            TInstance instance, string methodName, bool ignoreCase, ReflectionWays way, out object? result, params object?[]? parameters)
+            where TInstance : class => TryInvokeMethod(instance, methodName, ignoreCase, null, way, out result, parameters);
+
+        /// <summary>
+        /// Tries to invoke an instance method of an object represented by the specified <paramref name="methodName"/>.
+        /// </summary>
+        /// <param name="instance">An instance, whose method is about to be invoked.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for invoking methods.</param>
         /// <param name="result">When this method returns with <see langword="true"/> result, then this parameter contains the return value of the method.</param>
@@ -2108,7 +2986,32 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Tries to invoke an instance method of an object represented by the specified <paramref name="methodName"/>.
         /// </summary>
-        /// <param name="instance">An instance whose method is about to be invoked.</param>
+        /// <typeparam name="TInstance">The type of the <paramref name="instance"/> that has the method with the specified name.</typeparam>
+        /// <param name="instance">An instance, whose method is about to be invoked.</param>
+        /// <param name="methodName">The name of the method to be invoked.</param>
+        /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for invoking methods.</param>
+        /// <param name="result">When this method returns with <see langword="true"/> result, then this parameter contains the return value of the method.</param>
+        /// <param name="parameters">The parameters to be used for invoking the method.</param>
+        /// <returns><see langword="true"/>, if the method could be invoked; <see langword="false"/>, if a matching method could not be found.</returns>
+        /// <remarks>
+        /// <note>If a matching method could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
+        /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="parameters"/> match.</para>
+        /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
+        /// for better performance.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then the <see cref="ReflectionWays.DynamicDelegate"/> way will be used.</para>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
+        /// </remarks>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Not using generic method arguments here.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "Not using generic method arguments here.")]
+        public static bool TryInvokeMethod<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllMethods)]TInstance>(
+            TInstance instance, string methodName, ReflectionWays way, out object? result, params object?[]? parameters)
+            where TInstance : class => TryInvokeMethod(instance, methodName, false, null, way, out result, parameters);
+
+        /// <summary>
+        /// Tries to invoke an instance method of an object represented by the specified <paramref name="methodName"/>.
+        /// </summary>
+        /// <param name="instance">An instance, whose method is about to be invoked.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
         /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="result">When this method returns with <see langword="true"/> result, then this parameter contains the return value of the method.</param>
@@ -2131,7 +3034,32 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Tries to invoke an instance method of an object represented by the specified <paramref name="methodName"/>.
         /// </summary>
-        /// <param name="instance">An instance whose method is about to be invoked.</param>
+        /// <typeparam name="TInstance">The type of the <paramref name="instance"/> that has the method with the specified name.</typeparam>
+        /// <param name="instance">An instance, whose method is about to be invoked.</param>
+        /// <param name="methodName">The name of the method to be invoked.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
+        /// <param name="result">When this method returns with <see langword="true"/> result, then this parameter contains the return value of the method.</param>
+        /// <param name="parameters">The parameters to be used for invoking the method.</param>
+        /// <returns><see langword="true"/>, if the method could be invoked; <see langword="false"/>, if a matching method could not be found.</returns>
+        /// <remarks>
+        /// <note>If a matching method could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
+        /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="parameters"/> match.</para>
+        /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
+        /// for better performance.</para>
+        /// <para>For invoking the method this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
+        /// </remarks>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Not using generic method arguments here.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "Not using generic method arguments here.")]
+        public static bool TryInvokeMethod<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllMethods)]TInstance>(TInstance instance,
+            string methodName, bool ignoreCase, out object? result, params object?[]? parameters)
+            where TInstance : class => TryInvokeMethod(instance, methodName, ignoreCase, null, ReflectionWays.Auto, out result, parameters);
+
+        /// <summary>
+        /// Tries to invoke an instance method of an object represented by the specified <paramref name="methodName"/>.
+        /// </summary>
+        /// <param name="instance">An instance, whose method is about to be invoked.</param>
         /// <param name="methodName">The name of the method to be invoked.</param>
         /// <param name="result">When this method returns with <see langword="true"/> result, then this parameter contains the return value of the method.</param>
         /// <param name="parameters">The parameters to be used for invoking the method.</param>
@@ -2149,6 +3077,30 @@ namespace KGySoft.Reflection
         [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "Not using generic method arguments here.")]
         public static bool TryInvokeMethod(object instance, string methodName, out object? result, params object?[]? parameters)
             => TryInvokeMethod(instance, methodName, false, null, ReflectionWays.Auto, out result, parameters);
+
+        /// <summary>
+        /// Tries to invoke an instance method of an object represented by the specified <paramref name="methodName"/>.
+        /// </summary>
+        /// <typeparam name="TInstance">The type of the <paramref name="instance"/> that has the method with the specified name.</typeparam>
+        /// <param name="instance">An instance, whose method is about to be invoked.</param>
+        /// <param name="methodName">The name of the method to be invoked.</param>
+        /// <param name="result">When this method returns with <see langword="true"/> result, then this parameter contains the return value of the method.</param>
+        /// <param name="parameters">The parameters to be used for invoking the method.</param>
+        /// <returns><see langword="true"/>, if the method could be invoked; <see langword="false"/>, if a matching method could not be found.</returns>
+        /// <remarks>
+        /// <note>If a matching method could be found and the invocation itself has thrown an exception, then this method also throws an exception instead of returning <see langword="false"/>.</note>
+        /// <para><paramref name="methodName"/> can refer public and non-public methods. To avoid ambiguity this method gets
+        /// all the methods of the same name and chooses the first one for which the provided <paramref name="parameters"/> match.</para>
+        /// <para>If you already have a <see cref="MethodInfo"/> instance use the <see cref="InvokeMethod(object,MethodInfo,System.Type[],ReflectionWays,object[])"/> method
+        /// for better performance.</para>
+        /// <para>For invoking the method this method uses the <see cref="ReflectionWays.DynamicDelegate"/> reflection way.</para>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
+        /// </remarks>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "Not using generic method arguments here.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "Not using generic method arguments here.")]
+        public static bool TryInvokeMethod<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllMethods)]TInstance>(
+            TInstance instance, string methodName, out object? result, params object?[]? parameters)
+            where TInstance : class => TryInvokeMethod(instance, methodName, false, null, ReflectionWays.Auto, out result, parameters);
 
         /// <summary>
         /// Tries to invoke a static method of a <see cref="System.Type"/> represented by the specified <paramref name="methodName"/>.
@@ -3007,7 +3959,7 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Sets a <paramref name="field"/> represented by the specified <see cref="FieldInfo"/>.
         /// </summary>
-        /// <param name="instance">An instance whose field is about to be set. This parameter is ignored for static fields.</param>
+        /// <param name="instance">An instance, whose field is about to be set. This parameter is ignored for static fields.</param>
         /// <param name="field">The field to set.</param>
         /// <param name="value">The value to set.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for fields. This parameter is optional.
@@ -3052,7 +4004,7 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Sets the instance field of an object represented by the specified <paramref name="fieldName"/>.
         /// </summary>
-        /// <param name="instance">An instance whose field is about to be set.</param>
+        /// <param name="instance">An instance, whose field is about to be set.</param>
         /// <param name="fieldName">The name of the field to be set.</param>
         /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="value">The value to set.</param>
@@ -3082,7 +4034,32 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Sets the instance field of an object represented by the specified <paramref name="fieldName"/>.
         /// </summary>
-        /// <param name="instance">An instance whose field is about to be set.</param>
+        /// <typeparam name="TInstance">The type of the <paramref name="instance"/> that has the field with the specified name.</typeparam>
+        /// <param name="instance">An instance, whose field is about to be set.</param>
+        /// <param name="fieldName">The name of the field to be set.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
+        /// <param name="value">The value to set.</param>
+        /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for fields. This parameter is optional.
+        /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.</param>
+        /// <remarks>
+        /// <para><paramref name="fieldName"/> can refer public and non-public fields.</para>
+        /// <para>If you already have a <see cref="FieldInfo"/> instance use the <see cref="SetField(object,FieldInfo,object,ReflectionWays)"/> method
+        /// for better performance.</para>
+        /// <para>If you are not sure whether a field with the specified <paramref name="fieldName"/> exists, then you can use the
+        /// <see cref="O:KGySoft.Reflection.Reflector.TrySetField">TrySetField</see> methods instead.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then the <see cref="ReflectionWays.DynamicDelegate"/> way will be used.</para>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
+        /// </remarks>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+            Justification = "False alarm, this overload is exactly for the reason to be able to omit [RequiresUnreferencedCode] as long as [DynamicallyAccessedMembers] requirements are met.")]
+        public static void SetField<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllFields)]TInstance>(
+            TInstance instance, string fieldName, bool ignoreCase, object? value, ReflectionWays way = ReflectionWays.Auto)
+            where TInstance : class => SetField((object)instance, fieldName, ignoreCase, value, way);
+
+        /// <summary>
+        /// Sets the instance field of an object represented by the specified <paramref name="fieldName"/>.
+        /// </summary>
+        /// <param name="instance">An instance, whose field is about to be set.</param>
         /// <param name="fieldName">The name of the field to be set.</param>
         /// <param name="value">The value to set.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for fields. This parameter is optional.
@@ -3099,6 +4076,28 @@ namespace KGySoft.Reflection
         [RequiresUnreferencedCode(instanceFieldReflectionRequiresUnreferencedCode)]
         public static void SetField(object instance, string fieldName, object? value, ReflectionWays way = ReflectionWays.Auto)
             => SetField(instance, fieldName, false, value, way);
+
+        /// <summary>
+        /// Sets the instance field of an object represented by the specified <paramref name="fieldName"/>.
+        /// </summary>
+        /// <typeparam name="TInstance">The type of the <paramref name="instance"/> that has the field with the specified name.</typeparam>
+        /// <param name="instance">An instance, whose field is about to be set.</param>
+        /// <param name="fieldName">The name of the field to be set.</param>
+        /// <param name="value">The value to set.</param>
+        /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for fields. This parameter is optional.
+        /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.</param>
+        /// <remarks>
+        /// <para><paramref name="fieldName"/> can refer public and non-public fields.</para>
+        /// <para>If you already have a <see cref="FieldInfo"/> instance use the <see cref="SetField(object,FieldInfo,object,ReflectionWays)"/> method
+        /// for better performance.</para>
+        /// <para>If you are not sure whether a field with the specified <paramref name="fieldName"/> exists, then you can use the
+        /// <see cref="O:KGySoft.Reflection.Reflector.TrySetField">TrySetField</see> methods instead.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then the <see cref="ReflectionWays.DynamicDelegate"/> way will be used.</para>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
+        /// </remarks>
+        public static void SetField<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllFields)]TInstance>(
+            TInstance instance, string fieldName, object? value, ReflectionWays way = ReflectionWays.Auto)
+            where TInstance : class => SetField(instance, fieldName, false, value, way);
 
         /// <summary>
         /// Sets the static field of a <see cref="System.Type"/> represented by the specified <paramref name="fieldName"/>.
@@ -3151,7 +4150,7 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Tries to set the instance field of an object represented by the specified <paramref name="fieldName"/>.
         /// </summary>
-        /// <param name="instance">An instance whose field is about to be set.</param>
+        /// <param name="instance">An instance, whose field is about to be set.</param>
         /// <param name="fieldName">The name of the field to be set.</param>
         /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="value">The value to set.</param>
@@ -3180,7 +4179,31 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Tries to set the instance field of an object represented by the specified <paramref name="fieldName"/>.
         /// </summary>
-        /// <param name="instance">An instance whose field is about to be set.</param>
+        /// <typeparam name="TInstance">The type of the <paramref name="instance"/> that has the field with the specified name.</typeparam>
+        /// <param name="instance">An instance, whose field is about to be set.</param>
+        /// <param name="fieldName">The name of the field to be set.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
+        /// <param name="value">The value to set.</param>
+        /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for fields. This parameter is optional.
+        /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.</param>
+        /// <returns><see langword="true"/>, if the field could be set; <see langword="false"/>, if a field with name <paramref name="fieldName"/> could not be found.</returns>
+        /// <remarks>
+        /// <para><paramref name="fieldName"/> can refer public and non-public fields.</para>
+        /// <para>If you already have a <see cref="FieldInfo"/> instance use the <see cref="SetField(object,FieldInfo,object,ReflectionWays)"/> method
+        /// for better performance.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then the <see cref="ReflectionWays.DynamicDelegate"/> way will be used.</para>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
+        /// </remarks>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+            Justification = "False alarm, this overload is exactly for the reason to be able to omit [RequiresUnreferencedCode] as long as [DynamicallyAccessedMembers] requirements are met.")]
+        public static bool TrySetField<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllFields)]TInstance>(
+            TInstance instance, string fieldName, bool ignoreCase, object? value, ReflectionWays way = ReflectionWays.Auto)
+            where TInstance : class => TrySetField((object)instance, fieldName, ignoreCase, value, way);
+
+        /// <summary>
+        /// Tries to set the instance field of an object represented by the specified <paramref name="fieldName"/>.
+        /// </summary>
+        /// <param name="instance">An instance, whose field is about to be set.</param>
         /// <param name="fieldName">The name of the field to be set.</param>
         /// <param name="value">The value to set.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for fields. This parameter is optional.
@@ -3196,6 +4219,27 @@ namespace KGySoft.Reflection
         [RequiresUnreferencedCode(instanceFieldReflectionRequiresUnreferencedCode)]
         public static bool TrySetField(object instance, string fieldName, object? value, ReflectionWays way = ReflectionWays.Auto)
             => TrySetField(instance, fieldName, false, value, way);
+
+        /// <summary>
+        /// Tries to set the instance field of an object represented by the specified <paramref name="fieldName"/>.
+        /// </summary>
+        /// <typeparam name="TInstance">The type of the <paramref name="instance"/> that has the field with the specified name.</typeparam>
+        /// <param name="instance">An instance, whose field is about to be set.</param>
+        /// <param name="fieldName">The name of the field to be set.</param>
+        /// <param name="value">The value to set.</param>
+        /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for fields. This parameter is optional.
+        /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.</param>
+        /// <returns><see langword="true"/>, if the field could be set; <see langword="false"/>, if a field with name <paramref name="fieldName"/> could not be found.</returns>
+        /// <remarks>
+        /// <para><paramref name="fieldName"/> can refer public and non-public fields.</para>
+        /// <para>If you already have a <see cref="FieldInfo"/> instance use the <see cref="SetField(object,FieldInfo,object,ReflectionWays)"/> method
+        /// for better performance.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then the <see cref="ReflectionWays.DynamicDelegate"/> way will be used.</para>
+        /// <note type="tip">To preserve the changes of a mutable value type embed it into a variable of <see cref="object"/> type and pass it to the <paramref name="instance"/> parameter of this method.</note>
+        /// </remarks>
+        public static bool TrySetField<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllFields)]TInstance>(
+            TInstance instance, string fieldName, object? value, ReflectionWays way = ReflectionWays.Auto)
+            where TInstance : class => TrySetField(instance, fieldName, false, value, way);
 
         /// <summary>
         /// Tries to set the static field of a <see cref="System.Type"/> represented by the specified <paramref name="fieldName"/>.
@@ -3292,7 +4336,7 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Gets a <paramref name="field"/> represented by the specified <see cref="FieldInfo"/>.
         /// </summary>
-        /// <param name="instance">An instance whose field is about to be retrieved. This parameter is ignored for static fields.</param>
+        /// <param name="instance">An instance, whose field is about to be retrieved. This parameter is ignored for static fields.</param>
         /// <param name="field">The field to get.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for fields. This parameter is optional.
         /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.</param>
@@ -3330,7 +4374,7 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Gets the instance field of an object represented by the specified <paramref name="fieldName"/>.
         /// </summary>
-        /// <param name="instance">An instance whose field is about to be retrieved.</param>
+        /// <param name="instance">An instance, whose field is about to be retrieved.</param>
         /// <param name="fieldName">The name of the field to get.</param>
         /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for fields. This parameter is optional.
@@ -3359,7 +4403,31 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Gets the instance field of an object represented by the specified <paramref name="fieldName"/>.
         /// </summary>
-        /// <param name="instance">An instance whose field is about to be retrieved.</param>
+        /// <typeparam name="TInstance">The type of the <paramref name="instance"/> that has the field with the specified name.</typeparam>
+        /// <param name="instance">An instance, whose field is about to be retrieved.</param>
+        /// <param name="fieldName">The name of the field to get.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
+        /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for fields. This parameter is optional.
+        /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.</param>
+        /// <returns>The value of the field.</returns>
+        /// <remarks>
+        /// <para><paramref name="fieldName"/> can refer public and non-public fields.</para>
+        /// <para>If you already have a <see cref="FieldInfo"/> instance use the <see cref="GetField(object,FieldInfo,ReflectionWays)"/> method
+        /// for better performance.</para>
+        /// <para>If you are not sure whether a field with the specified <paramref name="fieldName"/> exists, then you can use the
+        /// <see cref="O:KGySoft.Reflection.Reflector.TryGetField">TryGetField</see> methods instead.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way.</para>
+        /// </remarks>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+            Justification = "False alarm, this overload is exactly for the reason to be able to omit [RequiresUnreferencedCode] as long as [DynamicallyAccessedMembers] requirements are met.")]
+        public static object? GetField<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllFields)]TInstance>(
+            TInstance instance, string fieldName, bool ignoreCase, ReflectionWays way = ReflectionWays.Auto)
+            => GetField((object)instance!, fieldName, ignoreCase, way); // unlike for other members, omitting the class constrating for getting a field is alright
+
+        /// <summary>
+        /// Gets the instance field of an object represented by the specified <paramref name="fieldName"/>.
+        /// </summary>
+        /// <param name="instance">An instance, whose field is about to be retrieved.</param>
         /// <param name="fieldName">The name of the field to get.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for fields. This parameter is optional.
         /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.</param>
@@ -3375,6 +4443,27 @@ namespace KGySoft.Reflection
         [RequiresUnreferencedCode(instanceFieldReflectionRequiresUnreferencedCode)]
         public static object? GetField(object instance, string fieldName, ReflectionWays way = ReflectionWays.Auto)
             => GetField(instance, fieldName, false, way);
+
+        /// <summary>
+        /// Gets the instance field of an object represented by the specified <paramref name="fieldName"/>.
+        /// </summary>
+        /// <typeparam name="TInstance">The type of the <paramref name="instance"/> that has the field with the specified name.</typeparam>
+        /// <param name="instance">An instance, whose field is about to be retrieved.</param>
+        /// <param name="fieldName">The name of the field to get.</param>
+        /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for fields. This parameter is optional.
+        /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.</param>
+        /// <returns>The value of the field.</returns>
+        /// <remarks>
+        /// <para><paramref name="fieldName"/> can refer public and non-public fields.</para>
+        /// <para>If you already have a <see cref="FieldInfo"/> instance use the <see cref="GetField(object,FieldInfo,ReflectionWays)"/> method
+        /// for better performance.</para>
+        /// <para>If you are not sure whether a field with the specified <paramref name="fieldName"/> exists, then you can use the
+        /// <see cref="O:KGySoft.Reflection.Reflector.TryGetField">TryGetField</see> methods instead.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way.</para>
+        /// </remarks>
+        public static object? GetField<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllFields)]TInstance>(
+            TInstance instance, string fieldName, ReflectionWays way = ReflectionWays.Auto)
+            => GetField(instance, fieldName, false, way); // unlike for other members, omitting the class constrating for getting a field is alright
 
         /// <summary>
         /// Gets the static field of a <see cref="System.Type"/> represented by the specified <paramref name="fieldName"/>.
@@ -3427,7 +4516,7 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Tries to get the instance field of an object represented by the specified <paramref name="fieldName"/>.
         /// </summary>
-        /// <param name="instance">An instance whose field is about to be retrieved.</param>
+        /// <param name="instance">An instance, whose field is about to be retrieved.</param>
         /// <param name="fieldName">The name of the field to get.</param>
         /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
         /// <param name="value">When this method returns with <see langword="true"/> result, then this parameter contains the value of the field.</param>
@@ -3453,7 +4542,28 @@ namespace KGySoft.Reflection
         /// <summary>
         /// Tries to get the instance field of an object represented by the specified <paramref name="fieldName"/>.
         /// </summary>
-        /// <param name="instance">An instance whose field is about to be retrieved.</param>
+        /// <typeparam name="TInstance">The type of the <paramref name="instance"/> that has the field with the specified name.</typeparam>
+        /// <param name="instance">An instance, whose field is about to be retrieved.</param>
+        /// <param name="fieldName">The name of the field to get.</param>
+        /// <param name="ignoreCase"><see langword="true"/> to ignore case; <see langword="false"/> to regard case.</param>
+        /// <param name="value">When this method returns with <see langword="true"/> result, then this parameter contains the value of the field.</param>
+        /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for fields. This parameter is optional.
+        /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.</param>
+        /// <returns><see langword="true"/>, if the field could be read; <see langword="false"/>, if a field with name <paramref name="fieldName"/> could not be found.</returns>
+        /// <remarks>
+        /// <para><paramref name="fieldName"/> can refer public and non-public fields.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way.</para>
+        /// </remarks>
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+            Justification = "False alarm, this overload is exactly for the reason to be able to omit [RequiresUnreferencedCode] as long as [DynamicallyAccessedMembers] requirements are met.")]
+        public static bool TryGetField<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllFields)]TInstance>(
+            TInstance instance, string fieldName, bool ignoreCase, out object? value, ReflectionWays way = ReflectionWays.Auto)
+            => TryGetField((object)instance!, fieldName, ignoreCase, out value, way); // unlike for other members, omitting the class constrating for getting a field is alright
+
+        /// <summary>
+        /// Tries to get the instance field of an object represented by the specified <paramref name="fieldName"/>.
+        /// </summary>
+        /// <param name="instance">An instance, whose field is about to be retrieved.</param>
         /// <param name="fieldName">The name of the field to get.</param>
         /// <param name="value">When this method returns with <see langword="true"/> result, then this parameter contains the value of the field.</param>
         /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for fields. This parameter is optional.
@@ -3466,6 +4576,24 @@ namespace KGySoft.Reflection
         [RequiresUnreferencedCode(instanceFieldReflectionRequiresUnreferencedCode)]
         public static bool TryGetField(object instance, string fieldName, out object? value, ReflectionWays way = ReflectionWays.Auto)
             => TryGetField(instance, fieldName, false, out value, way);
+
+        /// <summary>
+        /// Tries to get the instance field of an object represented by the specified <paramref name="fieldName"/>.
+        /// </summary>
+        /// <typeparam name="TInstance">The type of the <paramref name="instance"/> that has the field with the specified name.</typeparam>
+        /// <param name="instance">An instance, whose field is about to be retrieved.</param>
+        /// <param name="fieldName">The name of the field to get.</param>
+        /// <param name="value">When this method returns with <see langword="true"/> result, then this parameter contains the value of the field.</param>
+        /// <param name="way">The preferred reflection way. <see cref="ReflectionWays.TypeDescriptor"/> way is not applicable for fields. This parameter is optional.
+        /// <br/>Default value: <see cref="ReflectionWays.Auto"/>.</param>
+        /// <returns><see langword="true"/>, if the field could be read; <see langword="false"/>, if a field with name <paramref name="fieldName"/> could not be found.</returns>
+        /// <remarks>
+        /// <para><paramref name="fieldName"/> can refer public and non-public fields.</para>
+        /// <para>If <paramref name="way"/> is <see cref="ReflectionWays.Auto"/>, then this method uses the <see cref="ReflectionWays.DynamicDelegate"/> way.</para>
+        /// </remarks>
+        public static bool TryGetField<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllFields)]TInstance>(
+            TInstance instance, string fieldName, out object? value, ReflectionWays way = ReflectionWays.Auto)
+            => TryGetField(instance, fieldName, false, out value, way); // unlike for other members, omitting the class constrating for getting a field is alright
 
         /// <summary>
         /// Tries to get the static field of a <see cref="System.Type"/> represented by the specified <paramref name="fieldName"/>.

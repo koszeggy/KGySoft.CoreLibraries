@@ -19,8 +19,8 @@ using System;
 using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
-#if !NETCOREAPP2_0
-using System.Drawing.Imaging; 
+#if !(NETCOREAPP2_0 || NETCOREAPP2_1) && WINDOWS && !AOT
+using System.Drawing.Imaging;
 #endif
 using System.Globalization;
 using System.IO;
@@ -490,7 +490,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         }
 
         [Test]
-        [DynamicDependency("ResourceSets", typeof(ResXResourceManager))]
         public void GetResourceSetTest()
         {
             var refManager = CreateResourceManager("KGySoft.CoreLibraries.Resources.TestResourceResX", enUS);
@@ -727,7 +726,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 
         #region Private Methods
 
-        [DynamicDependency("_neutralResourcesCulture", typeof(ResourceManager))]
         private ResourceManager CreateResourceManager(string name, [CanBeNull]CultureInfo neutralLang = null)
         {
             if (IsAot)

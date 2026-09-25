@@ -68,6 +68,8 @@
 + PropertyAccessor class: Supporting indexers with parameters passed by reference.
 + Reflector class:
   + ResolveType methods: Supporting function pointer types (.NET 11.0 and above)
+  + New [Try]SetProperty/[Try]GetProperty/[Try]SetIndexedMember/[Try]GetIndexedMember/[Try]InvokeMethod/
+    [Try]SetField/[Try]GetField overloads for better AOT support.
 - MethodAccessor, PropertyAccessor, CreateInstanceAccessor classes: fixed validation in some nongeneric error
   scenarios.
 

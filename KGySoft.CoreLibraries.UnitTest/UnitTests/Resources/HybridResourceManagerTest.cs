@@ -18,7 +18,6 @@
 #region Used Namespaces
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -347,7 +346,6 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
         }
 
         [Test]
-        [DynamicDependency("resourceSets", typeof(HybridResourceManager))]
         public void GetResourceSetTest()
         {
             var manager = new HybridResourceManager(CompiledBaseName, GetType().Assembly, resXBaseName);

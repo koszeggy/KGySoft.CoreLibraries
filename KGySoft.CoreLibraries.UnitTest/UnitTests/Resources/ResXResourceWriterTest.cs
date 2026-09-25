@@ -440,7 +440,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Resources
 #if NET5_0 || NET6_0 // .NET 5/6 only, because converter was added in .NET 7
                 (Half)1,
 #endif
-#if !NET6_0 // .NET 6 only, because converter was added in .NET 7
+#if NET6_0 // .NET 6 only, because converter was added in .NET 7
                 DateOnly.FromDateTime(DateTime.Today),
                 TimeOnly.FromDateTime(DateTime.Now),
 #endif
