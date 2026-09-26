@@ -115,8 +115,9 @@
 + KGySoft.Serialization.Xml namespace:
 ======================================
 + XmlSerializer class:
-  + New Deserialize/DeserializeFromStream/DeserializeByReader overloads where the element type of the expectedTypes
-    parameter is SerializedType for better compatibility with AOT mode.
+  + New Deserialize/DeserializeUnsafe/DeserializeSafe/DeserializeContent/DeserializeContentUnsafe and
+    DeserializeContentSafe overloads where the element type of the expectedTypes parameter is SerializedType for
+    better compatibility with AOT mode.
   + Supporting the NFloat type natively (.NET 6.0 and above)
   + Supporting the BFloat16 type natively (.NET 11.0 and above)
   + Supporting the Decimal32, Decimal64 and Decima128 types natively (.NET 11.0 and above)

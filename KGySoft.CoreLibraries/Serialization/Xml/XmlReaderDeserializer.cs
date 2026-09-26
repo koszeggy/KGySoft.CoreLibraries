@@ -428,7 +428,10 @@ namespace KGySoft.Serialization.Xml
                     _ => BinarySerializationOptions.SafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes
                 };
 
-                ctx.Result = BinarySerializer.Deserialize(data, 0, binaryOptions, ExpectedTypes);
+                // NOTE: passing the expected types in strict safe mode only, which is intended. In the XML serializer the expected types work differently:
+                // in non-strict safe mode the fallback resolving works even when expected types are specified, and passing them to the binary serializer
+                // in non-safe mode would be a breaking change. Btw. specifying the expected types in non-strict safe mode was added only to support AOT mode.
+                ctx.Result = BinarySerializer.Deserialize(data, 0, binaryOptions, SafeMode == XmlSafeMode.Strict ? ExpectedTypes : null);
                 ReadToNodeType(ctx.Reader, XmlNodeType.EndElement);
             }
 

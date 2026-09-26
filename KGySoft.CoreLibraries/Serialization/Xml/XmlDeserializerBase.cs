@@ -354,11 +354,18 @@ namespace KGySoft.Serialization.Xml
             if (RootType is null && expectedCustomTypes is null or ICollection<Type> { Count: 0 })
                 return;
 
+            // Adding allowed types resolved by name. Including also possible object root in case supported types were forced to be saved recursively.
+            var enumerator = new RootTypeEnumerator(rootType, expectedCustomTypes);
+            if (enumerator.IsEmpty)
+                return;
+
             expectedTypes = new StringKeyedDictionary<Type>();
 
             // Adding allowed types. Skipping possible object root type because object is parsed anyway.
-            foreach (Type type in new RootTypeEnumerator(RootType, expectedCustomTypes))
+            while (enumerator.MoveNext())
             {
+                Type type = enumerator.Current;
+
                 // Unlike in binary serialization, using only full name for expected types
                 string typeName = type.FullName!;
                 if (typeName == null!)
@@ -870,7 +877,7 @@ namespace KGySoft.Serialization.Xml
             if (resolvedTypes.TryGetValue(typeName, out Type? result))
                 return result;
 
-            // Expected types or fallback in non-strict safe modes. In strict mode flags are irrelevant because DoResolveType throws an exception on failure
+            // Expected types or fallback in non-strict safe modes. In strict mode flags are irrelevant because DoResolveType throws an exception on failure.
             // We could use ThrowError in safe mode but this way we can customize the message of the ReflectionException.
             // If there are no expected types in unsafe mode we don't specify the resolver to use the more permanent cache.
             result = TypeResolver.ResolveType(typeName, SafeMode == XmlSafeMode.Strict || expectedTypes != null ? DoResolveType : null,
@@ -902,7 +909,6 @@ namespace KGySoft.Serialization.Xml
         /// </summary>
         private Type? DoResolveType(AssemblyName? asmName, string typeName)
         {
-            Debug.Assert(SafeMode == XmlSafeMode.Strict, "If DoResolveType is used non-strict modes as well, review the SafeMode usages below.");
             if (expectedTypes?.TryGetValue(typeName, out Type? result) == true
                 || SerializationHelper.TryGetKnownSimpleType(typeName, out result)
                 || KnownCollectionTypes.TryGetValue(typeName, out result))

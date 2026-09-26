@@ -117,13 +117,17 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             try
             {
                 // XElement - as object
-                //Console.WriteLine(".....As object.....");
                 XElement xElement = KGyXmlSerializer.Serialize(obj, options);
                 Console.WriteLine(xElement);
                 object deserializedObject = safeMode switch
                 {
+#if AOT
+                    XmlSafeMode.Unsafe => KGyXmlSerializer.DeserializeUnsafe<object>(xElement, [.. expectedTypes ?? []]),
+                    XmlSafeMode.Medium => KGyXmlSerializer.Deserialize<object>(xElement, [.. expectedTypes ?? []]),
+#else
                     XmlSafeMode.Unsafe => KGyXmlSerializer.DeserializeUnsafe(xElement),
                     XmlSafeMode.Medium => KGyXmlSerializer.Deserialize(xElement),
+#endif
                     _ => KGyXmlSerializer.DeserializeSafe(xElement, expectedTypes)
                 };
 
@@ -136,13 +140,18 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                     KGyXmlSerializer.Serialize(writer, obj, options);
                 }
 
-                // deserialize by reader - if file already contains unescaped newlines: // new XmlTextReader(new StringReader(sb.ToString()));
+                // deserialize by reader - if the file contains unescaped newlines: // new XmlTextReader(new StringReader(sb.ToString()));
                 using (var reader = XmlReader.Create(new StringReader(sb.ToString()), new XmlReaderSettings { CloseInput = true }))
                 {
                     deserializedObject = safeMode switch
                     {
+#if AOT
+                        XmlSafeMode.Unsafe => KGyXmlSerializer.DeserializeUnsafe<object>(reader, [.. expectedTypes ?? []]),
+                        XmlSafeMode.Medium => KGyXmlSerializer.Deserialize<object>(reader, [.. expectedTypes ?? []]),
+#else
                         XmlSafeMode.Unsafe => KGyXmlSerializer.DeserializeUnsafe(reader),
                         XmlSafeMode.Medium => KGyXmlSerializer.Deserialize(reader),
+#endif
                         _ => KGyXmlSerializer.DeserializeSafe(reader, expectedTypes)
                     };
                 }
@@ -152,19 +161,16 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                     Assert.AreEqual(xElement.ToString(), sb.ToString(), "XElement and XmlWriter Serialize are not compatible");
 
                 // XElement - as component
-                //Console.WriteLine();
-                //Console.WriteLine(".....As component.....");
                 var xElementComp = new XElement("test");
                 KGyXmlSerializer.SerializeContent(xElementComp, obj, options);
-                //Console.WriteLine(xElementComp);
                 deserializedObject = type.IsArray ? Array.CreateInstance(type.GetElementType()!, ((Array)obj).Length) : Reflector.CreateInstance(type);
                 switch (safeMode)
                 {
                     case XmlSafeMode.Unsafe:
-                        KGyXmlSerializer.DeserializeContentUnsafe(xElementComp, deserializedObject);
+                        KGyXmlSerializer.DeserializeContentUnsafe(xElementComp, deserializedObject, [.. expectedTypes ?? []]);
                         break;
                     case XmlSafeMode.Medium:
-                        KGyXmlSerializer.DeserializeContent(xElementComp, deserializedObject);
+                        KGyXmlSerializer.DeserializeContent(xElementComp, deserializedObject, [.. expectedTypes ?? []]);
                         break;
                     case XmlSafeMode.Strict:
                         KGyXmlSerializer.DeserializeContentSafe(xElementComp, deserializedObject, expectedTypes);
@@ -191,10 +197,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
                     switch (safeMode)
                     {
                         case XmlSafeMode.Unsafe:
-                            KGyXmlSerializer.DeserializeContentUnsafe(reader, deserializedObject);
+                            KGyXmlSerializer.DeserializeContentUnsafe(reader, deserializedObject, [.. expectedTypes ?? []]);
                             break;
                         case XmlSafeMode.Medium:
-                            KGyXmlSerializer.DeserializeContent(reader, deserializedObject);
+                            KGyXmlSerializer.DeserializeContent(reader, deserializedObject, [.. expectedTypes ?? []]);
                             break;
                         case XmlSafeMode.Strict:
                             KGyXmlSerializer.DeserializeContentSafe(reader, deserializedObject, expectedTypes);
