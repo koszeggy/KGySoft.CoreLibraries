@@ -126,6 +126,7 @@ using KGySoft.Serialization.Xml;
  *    - 64..127 << 24: Extended dictionaries. If value type, must be here to support NullableExtendedCollection.
  * 2. Update serializationInfo initializer - mind the groups of 1.
  *    - If new CollectionInfo flag has to be defined, a property in CollectionSerializationInfo might be also needed
+ *    - To provide AOT compatibility, always decorate GetSpecificAddMethod, Write/RestoreSpecificPropertiesCallback and other callbacks by [DynamicDependency]
  * 3. If type is not abstract add it to supportedCollections
  *    If the added data type is abstract add the needed logic to DetermineSpecialSupport.
  * 4. Add type to DataTypeDescriptor.GetCollectionType (even abstract types) - mind groups
@@ -557,6 +558,24 @@ namespace KGySoft.Serialization.Binary
     /// <note>Please note that if a value type was serialized by the <see cref="BinarySerializationOptions.CompactSerializationOfStructures"/> option, then the method of <see cref="OnDeserializingAttribute"/> can be invoked
     /// only after restoring the whole content so fields will already be restored.</note>
     /// </para>
+    /// <h2>Ahead of Time (AOT) deployment mode support</h2>
+    /// <para>Starting with version 11.0, <see cref="BinarySerializationFormatter"/> supports AOT deployment mode. If the serialization stream references custom types,
+    /// you might need to enlist them as expected types the in the deserialization methods even in non-safe mode. Make sure you use the overloads where the element type of
+    /// the <c>expectedCustomTypes</c> parameter is <see cref="SerializedType"/>, which ensures preserving the potentially reflected members during deserialization.
+    /// When specifying the expected types, normally it is enough to specify simple element types and generic type definitions in the <c>expectedCustomTypes</c> parameter. But in AOT mode
+    /// (if the code of a trimmed application does not actually reference a type that is present in the serialization stream), you might need to specify the actual constructed generic types
+    /// and array types as well, which is not needed in JITed mode.</para>
+    /// <note type="tip">Enlisting additional types in the <c>expectedCustomTypes</c> parameter just to support AOT mode means some processing overhead, because the deserializer extracts
+    /// every possible generic argument and element type from the specified types, and includes them in the collection of expected types. Alternatively, you can use the following code
+    /// snippet in the initialization section of your application:
+    /// <br/><c><![CDATA[ReadOnlySpan<SerializedType> _ = [typeof(MyCustomType), typeof(MyGenericTypeWithValueTypeArguments<int, MyCustomValueType>) /*, ...*/];]]></c>
+    /// <br/>The code above has practically zero overhead in release build, and its only job is to notify the linker to preserve the metadata for the enlisted types.</note>
+    /// <para>For some natively supported generic types the deserialization needs to invoke generic methods by reflection (e.g. for <see cref="FrozenDictionary{TKey,TValue}"/>).
+    /// If the trimmed application does not reference the required generic method with the same type arguments, the deserialization may fail in AOT mode. But in such cases the message of
+    /// the exception will contain the code snippet that can be applied to fix the issue.</para>
+    /// <note type="warning">Resolving legacy assembly identities do not work in AOT mode, unless they refer to the <c>mscorlib</c> assembly. If you serialize natively not supported types
+    /// annotated by <see cref="TypeForwardedFromAttribute"/> in AOT mode, make sure you enable the <see cref="BinarySerializationOptions.IgnoreTypeForwardedFromAttribute"/> option on
+    /// serialization, or you use the <see cref="ForwardedTypesSerializationBinder"/> for the deserialization.</note>
     /// </example>
     /// <seealso cref="BinarySerializer"/>
     [SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Supports many types natively, which is intended. See also DataTypes enum.")]
@@ -1137,7 +1156,7 @@ namespace KGySoft.Serialization.Binary
             Justification = "CreateInstance in CreateArrayBackedCollectionInstanceFromArray, GetBackingArray. Cannot apply RequiresUnreferencedCode to a field, but the usages are annotated.")]
         [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode",
             Justification = "GetGenericType in CreateArrayBackedCollectionInstanceFromArray, CreateInstanceCallback, GetBackingArray, CreateFinalCollectionCallback. Cannot apply RequiresDynamicCode to a field, but the usages are annotated.")]
-        // NOTE: in the callback delegates avoid generic method calls in order to AOT compatibility. Whereas we can assume that the used generic types are referenced by the caller
+        // NOTE: in the callback delegates avoid generic method calls to ensure AOT compatibility. Whereas we can assume that the used generic types are referenced by the caller
         // (and even if not, it can be fixed easily by referencing the constructed types as expectedTypes), forcing the caller to reference the required generic methods should be avoided.
         private static readonly Dictionary<DataTypes, CollectionSerializationInfo> serializationInfo = new Dictionary<DataTypes, CollectionSerializationInfo>(ComparerHelper<DataTypes>.EqualityComparer)
         {

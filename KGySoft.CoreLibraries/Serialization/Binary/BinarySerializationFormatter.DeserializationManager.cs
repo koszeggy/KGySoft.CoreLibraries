@@ -1090,10 +1090,10 @@ namespace KGySoft.Serialization.Binary
                     type = result.Type!;
                     if (type.IsGenericTypeDefinition)
                         result = HandleGenericTypeDef(br, result, allowOpenTypes);
-                    else if (type == genericMethodDefinitionPlaceholderType)
+                    else if (ReferenceEquals(type, genericMethodDefinitionPlaceholderType))
                         result = HandleGenericMethodParameter(br);
-                    else if (type == managedFunctionPointerPlaceholderType || type == unmanagedFunctionPointerPlaceholderType)
-                        result = HandleFunctionPointer(br, type == managedFunctionPointerPlaceholderType, allowOpenTypes);
+                    else if (ReferenceEquals(type, managedFunctionPointerPlaceholderType) || ReferenceEquals(type, unmanagedFunctionPointerPlaceholderType))
+                        result = HandleFunctionPointer(br, ReferenceEquals(type, managedFunctionPointerPlaceholderType), allowOpenTypes);
                     return result;
                 }
 
@@ -1124,10 +1124,10 @@ namespace KGySoft.Serialization.Binary
 
                 string typeName = br.ReadString();
                 type = ResolveType(assembly, typeName);
-                if (type == managedFunctionPointerPlaceholderType || type == unmanagedFunctionPointerPlaceholderType)
+                if (ReferenceEquals(type, managedFunctionPointerPlaceholderType) || ReferenceEquals(type, unmanagedFunctionPointerPlaceholderType))
                 {
                     CachedTypes.Add(new DataTypeDescriptor(type, typeName));
-                    result = HandleFunctionPointer(br, type == managedFunctionPointerPlaceholderType, allowOpenTypes);
+                    result = HandleFunctionPointer(br, ReferenceEquals(type, managedFunctionPointerPlaceholderType), allowOpenTypes);
                 }
                 else
                 {
