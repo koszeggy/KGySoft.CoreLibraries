@@ -21,10 +21,11 @@
 
 + KGySoft.CoreLibraries namespace:
 ==================================
-+ ObjectExtensionc class:
+* ObjectExtensionc class:
   + Convert/TryConvert methods:
     + Supporting NFloat type (.NET 6.0 and above)
     + Supporting BFloat16/Decimal32/Decimal64/Decimal128 types (.NET 11.0 and above)
+  * In<T>(T, ReadOnlySpan<T>) method: the ReadOnlySpan parameter has the params modifier now.
 + RandomExtensions class:
   + New NextBFloat16 methods (.NET 11.0 and above)
   + New NextDecimal32 methods (.NET 11.0 and above)

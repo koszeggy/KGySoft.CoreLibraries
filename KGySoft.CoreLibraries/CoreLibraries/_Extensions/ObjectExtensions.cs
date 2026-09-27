@@ -153,7 +153,7 @@ namespace KGySoft.CoreLibraries
         /// <para>This overload uses generic <see cref="IEqualityComparer{T}"/> implementations to compare the items for the best performance.
         /// <note>If elements of <paramref name="set"/> are complex expressions consider to use the <see cref="In{T}(T,Func{T}[])"/> overload instead to prevent evaluating all elements until they are actually compared.</note></para>
         /// </remarks>
-        public static bool In<T>(this T item, ReadOnlySpan<T> set)
+        public static bool In<T>(this T item, params ReadOnlySpan<T> set)
         {
             if (set.Length == 0)
                 return false;
