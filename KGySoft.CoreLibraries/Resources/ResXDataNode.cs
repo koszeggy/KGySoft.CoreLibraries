@@ -1212,7 +1212,7 @@ namespace KGySoft.Resources
             if (fileRef != null)
                 return fileRef.ToString();
 
-            // Here there is no available string data. In AOT mode not generating node info for unsupported types to prevent requiring [DRC]/[RUC] for strings
+            // Here there is no available string data. In AOT mode not generating node info for unsupported types to prevent requiring [RDC]/[RUC] for strings
             if (!RuntimeFeature.IsDynamicCodeSupported && !CanConvertNatively(false))
                 return result?.ToString();
 

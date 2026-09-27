@@ -73,9 +73,16 @@
 - MethodAccessor, PropertyAccessor, CreateInstanceAccessor classes: fixed validation in some nongeneric error
   scenarios.
 
-+ KGySoft.Resources namespace:
+! KGySoft.Resources namespace:
 ==============================
-+ ResXDataNode class:
+! ResXResourceSet/ResXResourceManager/HybridResourceManager/DynamiResourceManager classes:
+  ! GetString methods: When called for natively not supported non-string resources in safe mode, the result may be
+    different in JITed and in AOT mode if the raw XML value has not been generated yet (for a newly added resource,
+    for example). It's because it's not expected for the GetString methods to throw any exception in safe mode, in
+    which case they should just return the underlying raw XML string value. But in AOT mode there is no guarantee
+    that a natively not supported type can be converted to a string, and since GetString methods are supposed to
+    work without requiring unreferenced or dynamic code, they may just return the ToString of the underlying value
+    if the raw XML value is not available.
 + ResXDataNode class:
   + New constructor overload
   + Supporting the NFloat type natively in non-compatible mode (.NET 6.0 and above)
