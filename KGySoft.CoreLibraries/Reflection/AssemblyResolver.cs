@@ -313,7 +313,7 @@ namespace KGySoft.Reflection
 
 #if NETFRAMEWORK
             // 1. In case of a system assembly, returning it from the GAC (if version does not matter)
-            if ((options & ResolveAssemblyOptions.AllowPartialMatch) != ResolveAssemblyOptions.None)
+            if (EnvironmentHelper.IsWindows && (options & ResolveAssemblyOptions.AllowPartialMatch) != ResolveAssemblyOptions.None)
             {
                 string? gacPath = Fusion.GetGacPath(assemblyName.Name);
                 if (gacPath != null)
