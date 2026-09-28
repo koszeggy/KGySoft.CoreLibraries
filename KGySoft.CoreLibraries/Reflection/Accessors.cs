@@ -1287,17 +1287,11 @@ namespace KGySoft.Reflection
         [DynamicDependency(DynamicallyAccessedMemberTypes.NonPublicFields, typeof(KeyValuePair<,>))]
         internal static void SetKeyValue(object instance, object? key, object? value)
         {
-            // Though DictionaryEntry.Key/Value have setters they must be set by reflection because of the boxed struct
             if (instance is DictionaryEntry)
             {
-                Type type = instance.GetType();
-#if NETSTANDARD2_0
-                ((PropertyInfo)GetProperty(type, nameof(DictionaryEntry.Key))!.MemberInfo).SetValue(instance, key);
-                ((PropertyInfo)GetProperty(type, nameof(DictionaryEntry.Value))!.MemberInfo).SetValue(instance, value);
-#else
-                GetProperty(type, nameof(DictionaryEntry.Key))!.Set(instance, key);
-                GetProperty(type, nameof(DictionaryEntry.Value))!.Set(instance, value);
-#endif
+                StrongBox<DictionaryEntry> box = instance.As<StrongBox<DictionaryEntry>>();
+                box.Value.Key = key!;
+                box.Value.Value = value;
                 return;
             }
 
@@ -1597,11 +1591,6 @@ namespace KGySoft.Reflection
             return true;
 #endif
         }
-
-#if NETFRAMEWORK || NETSTANDARD2_0
-        private static object GetPointerPropertyPartiallyTrusted(PropertyInfo property, object? instance)
-            => GetMethodByName(typeof(Pointer), "GetPointerValue")?.InvokeInstanceFunction<Pointer, object>((Pointer)property.GetValue(instance, null))!;
-#endif
 
         private static TypesKey ToTypesKey(this Type[] types) => new TypesKey(types);
 
