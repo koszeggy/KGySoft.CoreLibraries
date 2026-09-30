@@ -1,4 +1,4 @@
-﻿#if !NETCOREAPP3_0_OR_GREATER
+﻿#if !NETCOREAPP3_0_OR_GREATER || NET10_0_OR_GREATER
 #region Copyright
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -17,7 +17,18 @@
 #region Usings
 
 using System;
+#if NET10_0_OR_GREATER
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+#endif
+#if !NETCOREAPP3_0_OR_GREATER
 using System.Security;
+#endif
+
+#if NET10_0_OR_GREATER
+using KGySoft.CoreLibraries;
+using KGySoft.Reflection;
+#endif
 
 #endregion
 
@@ -27,7 +38,9 @@ namespace KGySoft
     {
         #region Fields
 
+#if !NETCOREAPP3_0_OR_GREATER
         internal static readonly uint PointerSizeMask = (uint)IntPtr.Size - 1u;
+#endif
 
         #endregion
 
@@ -35,6 +48,7 @@ namespace KGySoft
 
         #region Internal Methods
 
+#if !NETCOREAPP3_0_OR_GREATER
         [SecurityCritical]
         internal static unsafe void CopyMemory(void* source, void* target, long length)
         {
@@ -44,6 +58,15 @@ namespace KGySoft
             Buffer.MemoryCopy(source, target, length, length);
 #endif
         }
+#endif
+
+#if NET10_0_OR_GREATER
+        internal static bool CopyWithReferences(Type elementType, object source, int sourceIndex, object target, int targetIndex, int count)
+        {
+            Debug.Assert(elementType.IsManaged());
+            return Accessors.TryInvokeMethod(typeof(MemoryHelper), nameof(SpanCopyToInvoker), elementType, source, sourceIndex, target, targetIndex, count);
+        }
+#endif
 
         #endregion
 
@@ -191,6 +214,24 @@ namespace KGySoft
                 src += 1;
             }
         }
+#endif
+
+#if NET10_0_OR_GREATER
+        /// <summary>
+        /// A helper method to call Span.CopyTo for managed value T types.
+        /// Called by reflection from CopyWithWriteBarrier, so the parameters must not be Span or ref byte types.
+        /// </summary>
+        private static void SpanCopyToInvoker<T>(object source, int sourceIndex, object target, int targetIndex, int count)
+        {
+            Debug.Assert(RuntimeHelpers.IsReferenceOrContainsReferences<T>(), "For unmanaged element types the simple byte copying APIs can be used.");
+            int elementSize = Unsafe.SizeOf<T>();
+            
+            ref byte src = ref Reflector.GetRawData(source).At(sourceIndex * elementSize);
+            ref byte dst = ref Reflector.GetRawData(target).At(targetIndex * elementSize);
+
+            MemoryMarshal.CreateSpan(ref src.As<byte, T>(), count).CopyTo(MemoryMarshal.CreateSpan(ref dst.As<byte, T>(), count));
+        }
+
 #endif
 
         #endregion

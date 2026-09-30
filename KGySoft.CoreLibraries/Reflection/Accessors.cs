@@ -600,7 +600,7 @@ namespace KGySoft.Reflection
             static MethodAccessor? GetMethodAccessor((Type DeclaringType, Type T, string MethodName) key)
             {
                 // Unlike in GetMethodByName, here result is not nullable because we invoke public methods only
-                MethodInfo? method = key.DeclaringType.GetMethod(key.MethodName, BindingFlags.Static | BindingFlags.Public)?.GetGenericMethod(key.T);
+                MethodInfo? method = key.DeclaringType.GetMethod(key.MethodName, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)?.GetGenericMethod(key.T);
                 return method == null ? null : MethodAccessor.GetAccessor(method);
             }
 

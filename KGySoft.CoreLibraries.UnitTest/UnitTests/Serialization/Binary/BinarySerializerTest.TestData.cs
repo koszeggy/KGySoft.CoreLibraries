@@ -1034,6 +1034,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             private readonly ImmutableArray<T>.Builder valueImmutableArrayBuilder;
             private readonly ImmutableList<T> valueImmutableList;
             private readonly ImmutableList<T>.Builder valueImmutableListBuilder;
+            private readonly ImmutableQueue<T> valueImmutableQueue;
 #endif
 #if NET8_0_OR_GREATER
             private readonly FrozenSet<T> valueFrozenSet;
@@ -1045,6 +1046,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             private readonly OrderedDictionary<T, T> keyValueUsageOrderedDictionary;
             private readonly OrderedDictionary<T, string> keyUsageOrderedDictionary;
             private readonly OrderedDictionary<string, T> valueUsageOrderedDictionary;
+#endif
+#if NET10_0_OR_GREATER
+            private readonly InlineArray2<T> inlineArray;
 #endif
 
             #endregion
@@ -1085,6 +1089,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 {
                     valueImmutableArray = ImmutableArray.Create(value);
                     valueImmutableList = ImmutableList.Create(value);
+                    valueImmutableQueue = ImmutableQueue.Create(value);
                 }
 #endif
 #if NET8_0_OR_GREATER
@@ -1100,6 +1105,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 keyValueUsageOrderedDictionary = new OrderedDictionary<T, T>(1) { { value, value } };
                 keyUsageOrderedDictionary = new OrderedDictionary<T, string>(1) { { value, value.ToString() } };
                 valueUsageOrderedDictionary = new OrderedDictionary<string, T>(3) { { "First", default }, { value.ToString(), value }, { "Last", default } };
+#endif
+#if NET10_0_OR_GREATER
+                if (useProxyBuilderCollections)
+                    inlineArray[0] = value;
 #endif
             }
 
@@ -1137,6 +1146,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                     && valueImmutableArrayBuilder.AreDefaultOrSequenceEqual(other.valueImmutableArrayBuilder)
                     && valueImmutableList.AreDefaultOrSequenceEqual(other.valueImmutableList)
                     && valueImmutableListBuilder.AreDefaultOrSequenceEqual(other.valueImmutableListBuilder)
+                    && valueImmutableQueue.AreDefaultOrSequenceEqual(other.valueImmutableQueue)
 #endif
 #if NET8_0_OR_GREATER
                     && valueFrozenSet.AreDefaultOrSequenceEqual(other.valueFrozenSet)
@@ -1148,6 +1158,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                     && Equals(keyValueUsageOrderedDictionary[Value], other.keyValueUsageOrderedDictionary[other.Value])
                     && Equals(keyUsageOrderedDictionary[Value], other.keyUsageOrderedDictionary[other.Value])
                     && valueUsageOrderedDictionary.SequenceEqual(other.valueUsageOrderedDictionary)
+#endif
+#if NET10_0_OR_GREATER
+                    && ((ReadOnlySpan<T>)inlineArray).SequenceEqual(other.inlineArray)
 #endif
                     ;
             }

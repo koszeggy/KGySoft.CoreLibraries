@@ -25,6 +25,9 @@ using System.Linq;
 #endif
 using System.Reflection;
 using System.Runtime.CompilerServices;
+#if NET10_0_OR_GREATER
+using System.Runtime.InteropServices;
+#endif
 using System.Security;
 using System.Threading;
 
@@ -57,6 +60,17 @@ namespace KGySoft.Serialization.Binary
 
 #if !NET35
             internal static readonly CollectionSerializationInfo Tuple = new() { Info = CollectionInfo.IsGeneric | CollectionInfo.IsTuple };
+#endif
+#if NET10_0_OR_GREATER
+            // Single-type tuple-like types are value types with two or more elements of the same element type inlined in the struct, e.g. Complex<>, Argb<>, InlineArray##<>.
+            internal static readonly CollectionSerializationInfo TupleSingleType = new()
+            {
+                Info = CollectionInfo.IsGeneric | CollectionInfo.BackingArrayHasKnownSize,
+                GetBackingArray = SingleTypeTupleToArray,
+                CreateArrayBackedCollectionInstanceFromArray = RuntimeFeature.IsDynamicCodeSupported ? ArrayToSingleTypeTuple : null,
+                CreateInstanceCallback = RuntimeFeature.IsDynamicCodeSupported ? null : (_, _) => new List<object>(),
+                CreateFinalCollectionCallback = RuntimeFeature.IsDynamicCodeSupported ? null : ObjectListToSingleTypeTuple,
+            };
 #endif
 
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
@@ -99,7 +113,9 @@ namespace KGySoft.Serialization.Binary
             /// <summary>
             /// Should be specified if the collection is a value type, and it has a publicly exposed backing array that can have more elements than the wrapper type (e.g. ArraySegment),
             /// or, if it does not expose or wrap any array, but it can be represented as a (fixed size) array (e.g. Vector128).
-            /// If the collection does not actually wrap the array, then it must not contain any direct circular reference to the object itself because it makes proper deserialization impossible (e.g. object element type must not be supported by the collection)
+            /// If the collection does not actually wrap the array, then it must not contain any direct circular reference to the object itself because it makes proper deserialization impossible (e.g. object element type must not be supported by the collection).
+            /// For deserialization <see cref="CreateArrayBackedCollectionInstanceFromArray"/> must be used if the array is actually stored.
+            /// Otherwise, <see cref="CreateInstanceCallback"/> with <see cref="CreateFinalCollectionCallback"/> also can be used to restore the collection.
             /// </summary>
             internal Func<object, Array?>? GetBackingArray
             {
@@ -125,6 +141,9 @@ namespace KGySoft.Serialization.Binary
 
             /// <summary>
             /// Should be specified to instantiate an array backed collection. Should also read specific properties written by <see cref="WriteSpecificPropertiesCallback"/>.
+            /// Must be used when the collection actually stores the underlying array. Can also be used when the non-stored array can be represented as a known array type (e.g. byte[]).
+            /// If the array is used for serialization only, but is not actually stored and can have any element type, use <see cref="CreateInstanceCallback"/>
+            /// and <see cref="CreateFinalCollectionCallback"/> instead to support AOT mode so no actual array has to be created with an arbitrary element type.
             /// </summary>
             internal Func<BinaryReader, Type, Array, object>? CreateArrayBackedCollectionInstanceFromArray
             {
@@ -354,6 +373,19 @@ namespace KGySoft.Serialization.Binary
                 }
 
                 // 1.) Count
+#if NET10_0_OR_GREATER
+                if (descriptor.IsTupleSingleType)
+                {
+                    count = descriptor.FixedItemsSize;
+                    Debug.Assert(CreateInstanceCallback != null, $"{nameof(CreateInstanceCallback)} must be specified for single type tuples");
+                    result = CreateInstanceCallback!.Invoke(descriptor.GetTypeToCreate(), Reflector.EmptyObjects);
+                    if (addToCache)
+                        manager.AddObjectToCache(result, out id);
+
+                    return result;
+                }
+#endif
+
                 count = Read7BitInt(br);
 
                 // 2.) Capacity
@@ -589,6 +621,185 @@ namespace KGySoft.Serialization.Binary
                     Interlocked.CompareExchange(ref ctorCache, new LockFreeCache<Type, CreateInstanceAccessor>(GetCtorAccessor, null, LockFreeCacheOptions.Profile128), null);
                 return ctorCache[descriptor.Type!];
             }
+
+#if NET10_0_OR_GREATER
+            /// <summary>
+            /// Copies a single-type tuple-like struct (e.g. Complex`1, InlineArray##`1) into a real array.
+            /// Primitive generic arguments produce a byte[] (with adjusted endianness), which is processed very quickly by the caller.
+            /// Otherwise, the element type of the array matches the generic argument, except in AOT mode, in which case an object[] is returned.
+            /// </summary>
+            private static Array SingleTypeTupleToArray(object obj)
+            {
+                Debug.Assert(obj is ValueType);
+                Type type = obj.GetType();
+                Type elementType = type.GenericTypeArguments[0];
+
+                int size = type.SizeOf(false);
+                int elementSize = elementType.SizeOf(false);
+                int length = size / elementSize;
+                Debug.Assert(size % elementSize == 0, "Bad tuple or element size");
+
+                if (elementType.IsValueType)
+                {
+                    // primitive element type: as byte[] with proper endianness
+                    if (elementType.IsPrimitive)
+                    {
+                        byte[] result = BinarySerializer.SerializeValueTypeInternal((ValueType)obj);
+                        EnsureEndianness(type, result);
+                        return result;
+                    }
+
+                    // non-primitive value element type: in non-AOT mode returning a strongly typed array of the elements
+                    if (RuntimeFeature.IsDynamicCodeSupported)
+                    {
+                        Array result = Array.CreateInstance(elementType, length);
+#if NET12_0_OR_GREATER
+#error check if already available - see https://github.com/dotnet/runtime/issues/135159
+                        RuntimeHelpers.Copy(ref Reflector.GetRawData(obj), ref Reflector.GetRawData(result), elementType.TypeHandle, length);
+#else
+                        // If the element type has references, we must copy the element with a write barrier, but the Buffer.BulkMoveWithWriteBarrier is not public
+                        if (!elementType.IsManaged())
+                            Unsafe.CopyBlock(ref Reflector.GetRawData(result), ref Reflector.GetRawData(obj), (uint)size);
+                        else if (!MemoryHelper.CopyWithReferences(elementType, obj, 0, result, 0, length))
+                            Throw.NotSupportedException(Res.BinarySerializationInlineArrayNotSupportedAot(elementType));
+#endif
+                        return result;
+                    }
+                }
+
+                // reference type: just copying as span of objects
+                object[] asObjArray = new object[length];
+                if (!elementType.IsValueType)
+                {
+                    MemoryMarshal.CreateSpan(ref obj.As<StrongBox<object>>().Value!, length).CopyTo(asObjArray);
+                    return asObjArray;
+                }
+
+                // Value type in AOT mode: creating a copy of each element in the result object array.
+                // If element size is 1, just assigning the bytes directly instead of bulk copying.
+                Span<byte> rawBytes = Reflector.GetRawBytes(obj);
+                if (elementSize == 1)
+                {
+                    for (int i = 0; i < length; i++)
+                    {
+                        object item = RuntimeHelpers.GetUninitializedObject(elementType);
+                        Reflector.GetRawData(item) = rawBytes[i];
+                        asObjArray[i] = item;
+                    }
+
+                    return asObjArray;
+                }
+
+                bool isNullable = elementType.IsNullable();
+                Type underlyingElementType = isNullable ? Nullable.GetUnderlyingType(elementType)! : elementType;
+                int underlyingElementSize = underlyingElementType.SizeOf(false);
+                int nullableOffset = isNullable ? elementSize - underlyingElementType.SizeOf(false) : 0;
+                bool isUnmanaged = !elementType.IsManaged();
+                for (int i = 0; i < length; i++)
+                {
+                    // skipping null elements: checking Nullable<T>.hasValue
+                    if (isNullable && rawBytes[i * elementSize] == 0)
+                        continue;
+
+                    // asObjArray[i] = (object)obj<elementType>[i]
+                    object item = RuntimeHelpers.GetUninitializedObject(underlyingElementType);
+#if NET12_0_OR_GREATER
+                    TODO: RuntimeHelpers.Copy; // see https://github.com/dotnet/runtime/issues/135159
+#endif
+                    if (isUnmanaged)
+                        Unsafe.CopyBlockUnaligned(ref Reflector.GetRawData(item), ref rawBytes[i * elementSize + nullableOffset], (uint)underlyingElementSize);
+                    else if (isNullable || !MemoryHelper.CopyWithReferences(elementType, obj, i, item, 0, 1))
+                        Throw.NotSupportedException(Res.BinarySerializationInlineArrayNotSupportedAot(elementType));
+
+                    asObjArray[i] = item;
+                }
+
+                return asObjArray;
+            }
+
+            private static object ArrayToSingleTypeTuple(BinaryReader _, Type type, Array array)
+            {
+                Type elementType = type.GenericTypeArguments[0];
+                Debug.Assert(array.GetType().GetElementType() == elementType);
+
+                object result = RuntimeHelpers.GetUninitializedObject(type);
+#if NET12_0_OR_GREATER
+                    TODO: RuntimeHelpers.Copy; // see https://github.com/dotnet/runtime/issues/135159
+#endif
+                if (!elementType.IsValueType)
+                {
+                    Span<object> src = MemoryMarshal.CreateSpan(ref Unsafe.As<byte, object>(ref MemoryMarshal.GetArrayDataReference(array)), array.Length);
+                    Span<object> dst = MemoryMarshal.CreateSpan(ref Unsafe.As<StrongBox<object>>(result).Value!, src.Length);
+                    src.CopyTo(dst);
+                }
+                else if (!elementType.IsManaged())
+                    Unsafe.CopyBlock(ref Reflector.GetRawData(result), ref Reflector.GetRawData(array), (uint)type.SizeOf(false));
+                else if (!MemoryHelper.CopyWithReferences(elementType, array, 0, result, 0, array.Length))
+                    Throw.NotSupportedException(Res.BinarySerializationInlineArrayNotSupportedAot(elementType));
+
+                return result;
+            }
+
+            private static object ObjectListToSingleTypeTuple(Type type, object list)
+            {
+                Debug.Assert(!RuntimeFeature.IsDynamicCodeSupported && type.IsValueType && type.IsGenericType);
+                Type elementType = type.GenericTypeArguments[0];
+                var items = (List<object?>)list;
+                int elementSize = elementType.SizeOf(false);
+                Debug.Assert(type.SizeOf(false) % elementSize == 0 && items.Count == type.SizeOf(false) / elementSize);
+                object result = RuntimeHelpers.GetUninitializedObject(type);
+
+                // reference element type: simply copying the list elements into the result
+                if (!elementType.IsValueType)
+                {
+                    CollectionsMarshal.AsSpan(items).CopyTo(MemoryMarshal.CreateSpan(ref result.As<StrongBox<object?>>().Value, items.Count));
+                    return result;
+                }
+
+                Span<byte> rawBytes = Reflector.GetRawBytes(result);
+
+                // shortcut: assigning the bytes directly, instead of bulk copying the items
+                if (elementSize == 1)
+                {
+                    Debug.Assert(!items.Contains(null));
+                    for (int i = 0; i < items.Count; i++)
+                        rawBytes[i] = Reflector.GetRawData(items[i]!);
+
+                    return result;
+                }
+
+                bool isNullable = elementType.IsNullable();
+                Type underlyingElementType = isNullable ? Nullable.GetUnderlyingType(elementType)! : elementType;
+                int underlyingElementSize = underlyingElementType.SizeOf(false);
+                int nullableOffset = isNullable ? elementSize - underlyingElementType.SizeOf(false) : 0;
+                bool isUnmanaged = !elementType.IsManaged();
+
+                // Copying the item data in the result tuple. Nullable items with null value are null references in the object list, but are Nullable<elementType> items in result.
+                for (int i = 0; i < items.Count; i++)
+                {
+                    object? item = items[i];
+                    if (item == null)
+                    {
+                        // skipping nullable null values (no need to zero out the element, RuntimeHelpers.GetUninitializedObject returns a bitwise-zero instance)
+                        Debug.Assert(isNullable);
+                        continue;
+                    }
+
+                    if (isNullable)
+                        rawBytes[i * elementSize] = Convert.ToByte(true); // setting Nullable<elementType>.hasValue to true
+
+#if NET12_0_OR_GREATER
+                    TODO: RuntimeHelpers.Copy; // see https://github.com/dotnet/runtime/issues/135159
+#endif
+                    if (isUnmanaged)
+                        Unsafe.CopyBlockUnaligned(ref rawBytes[i * elementSize + nullableOffset], ref Reflector.GetRawData(item), (uint)underlyingElementSize);
+                    else if (isNullable || !MemoryHelper.CopyWithReferences(elementType, item, 0, result, i, 1))
+                        Throw.NotSupportedException(Res.BinarySerializationInlineArrayNotSupportedAot(elementType));
+                }
+
+                return result;
+            }
+#endif
 
             #endregion
 

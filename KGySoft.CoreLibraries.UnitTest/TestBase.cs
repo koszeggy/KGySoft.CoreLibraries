@@ -534,6 +534,16 @@ namespace KGySoft.CoreLibraries
                 }  
 #endif
 
+#if NET10_0_OR_GREATER
+                if (typeRef.IsDefined(typeof(InlineArrayAttribute)))
+                {
+                    if (typeRef.GenericTypeArguments[0].IsValueType)
+                        return Check(Reflector.GetRawBytes(reference).SequenceEqual(Reflector.GetRawBytes(check)), $"Equality check failed at type {typeRef.GetName(TypeNameKind.ShortName)}: {Reflector.GetRawBytes(reference).ToArray().ToHexValuesString()} <-> {Reflector.GetRawBytes(check).ToArray().ToHexValuesString()}", errors);
+                    int length = typeRef.SizeOf(false) / IntPtr.Size;
+                    return CheckItemsEqual(MemoryMarshal.CreateSpan(ref reference.As<StrongBox<object>>().Value, length).ToArray(), MemoryMarshal.CreateSpan(ref check.As<StrongBox<object>>().Value, length).ToArray(), forceEqualityByMembers, errors, checkedObjects);
+                }
+#endif
+
                 bool simpleEquals = typeRef.IsEnum || typeof(Encoding).IsAssignableFrom(typeRef) || typeRef.IsPrimitive || typeof(IComparable).IsAssignableFrom(typeRef);
 
                 // Structural equality if forced for non-primitive types or when Equals is not overridden

@@ -113,8 +113,11 @@
   + New Deserialize/DeserializeFromStream/DeserializeByReader overloads where the element type of the expectedTypes
     parameter is SerializedType for better compatibility with AOT mode.
   + Supporting the NFloat type natively (.NET 6.0 and above)
+  + Supporting the ValueArray2..16<> structs natively (.NET 10.0 and above)
   + Supporting the BFloat16 type natively (.NET 11.0 and above)
   + Supporting the Decimal32, Decimal64 and Decima128 types natively (.NET 11.0 and above)
+  + Supporting the Complex<T> type natively (.NET 11.0 and above)
+  + Supporting the Argb<T> and Rgba<T> types natively (.NET 11.0 and above)
   + Supporting function pointer runtime types (.NET 11.0 and above)
 - WeakAssemblySerializationBinder class:
   - OmitAssemblyNameOnSerialize property: Omitting the assembly name did not work if the type had been forwarded

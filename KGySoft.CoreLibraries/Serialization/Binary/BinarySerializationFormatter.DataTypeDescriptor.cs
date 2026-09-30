@@ -35,6 +35,9 @@ using System.Linq;
 #if !NET35
 using System.Numerics;
 #endif
+#if NET11_0_OR_GREATER
+using System.Numerics.Colors;
+#endif
 using System.Runtime.CompilerServices;
 #if NET6_0_OR_GREATER
 using System.Runtime.InteropServices;
@@ -88,8 +91,6 @@ namespace KGySoft.Serialization.Binary
             internal bool IsGenericCollection => CollectionDataType != DataTypes.Null && CollectionSerializationInfo.IsGeneric;
 #endif
             internal bool IsReadOnly { get; set; }
-            internal bool IsSingleElement => CollectionSerializationInfo.IsSingleElement;
-            internal bool IsComparer => CollectionSerializationInfo.IsComparer;
             internal bool IsStrongBox => CollectionDataType is DataTypes.StrongBox;
             internal bool IsNullable { get; private set; }
 
@@ -98,7 +99,11 @@ namespace KGySoft.Serialization.Binary
             internal bool HasBackingArray => CollectionSerializationInfo.CreateArrayBackedCollectionInstanceFromArray != null;
 
             internal bool IsBackingArrayActuallyStored => CollectionSerializationInfo.IsBackingArrayActuallyStored;
-            internal bool IsTuple => UnderlyingCollectionDataType is >= DataTypes.Tuple1 and <= DataTypes.Tuple8 or >= DataTypes.ValueTuple1 and <= DataTypes.ValueTuple8;
+
+            internal bool IsTuplePerItemType => IsTuplePerItemType(dataType);
+#if NET10_0_OR_GREATER
+            internal bool IsTupleSingleType => IsTupleSingleType(dataType);
+#endif
             internal bool CreateResultFromByteArray => CollectionSerializationInfo.CreateResultFromByteArray;
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             internal bool IsMemory => UnderlyingCollectionDataType is DataTypes.Memory or DataTypes.ReadOnlyMemory;
@@ -109,7 +114,7 @@ namespace KGySoft.Serialization.Binary
                 get
                 {
                     DataTypes dt = UnderlyingCollectionDataType;
-                    if (IsTuple(dt))
+                    if (IsTuple)
                         return GetNumberOfTupleElements(dt);
                     return dt switch
                     {
@@ -147,6 +152,12 @@ namespace KGySoft.Serialization.Binary
             #endregion
 
             #region Private Properties
+
+            private bool IsTuple => IsTuplePerItemType
+#if NET10_0_OR_GREATER
+                || IsTupleSingleType
+#endif
+            ;
 
             /// <summary>
             /// Descriptors for generic arguments or non-generic elements.
@@ -381,7 +392,7 @@ namespace KGySoft.Serialization.Binary
 
             internal DataTypeDescriptor GetTupleItemDescriptor(int index)
             {
-                Debug.Assert(IsTuple);
+                Debug.Assert(IsTuplePerItemType);
                 return ArgumentDescriptors[index];
             }
 
@@ -888,6 +899,70 @@ namespace KGySoft.Serialization.Binary
 #else
                     case DataTypes.FrozenSet:
                     case DataTypes.FrozenDictionary:
+                        return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationCollectionPlatformNotSupported(DataTypeToString(collectionDataType)));
+#endif
+
+#if NET10_0_OR_GREATER
+                    case DataTypes.InlineArray2:
+                        return typeof(InlineArray2<>);
+                    case DataTypes.InlineArray3:
+                        return typeof(InlineArray3<>);
+                    case DataTypes.InlineArray4:
+                        return typeof(InlineArray4<>);
+                    case DataTypes.InlineArray5:
+                        return typeof(InlineArray5<>);
+                    case DataTypes.InlineArray6:
+                        return typeof(InlineArray6<>);
+                    case DataTypes.InlineArray7:
+                        return typeof(InlineArray7<>);
+                    case DataTypes.InlineArray8:
+                        return typeof(InlineArray8<>);
+                    case DataTypes.InlineArray9:
+                        return typeof(InlineArray9<>);
+                    case DataTypes.InlineArray10:
+                        return typeof(InlineArray10<>);
+                    case DataTypes.InlineArray11:
+                        return typeof(InlineArray11<>);
+                    case DataTypes.InlineArray12:
+                        return typeof(InlineArray12<>);
+                    case DataTypes.InlineArray13:
+                        return typeof(InlineArray13<>);
+                    case DataTypes.InlineArray14:
+                        return typeof(InlineArray14<>);
+                    case DataTypes.InlineArray15:
+                        return typeof(InlineArray15<>);
+                    case DataTypes.InlineArray16:
+                        return typeof(InlineArray16<>);
+#else
+                    case DataTypes.InlineArray2:
+                    case DataTypes.InlineArray3:
+                    case DataTypes.InlineArray4:
+                    case DataTypes.InlineArray5:
+                    case DataTypes.InlineArray6:
+                    case DataTypes.InlineArray7:
+                    case DataTypes.InlineArray8:
+                    case DataTypes.InlineArray9:
+                    case DataTypes.InlineArray10:
+                    case DataTypes.InlineArray11:
+                    case DataTypes.InlineArray12:
+                    case DataTypes.InlineArray13:
+                    case DataTypes.InlineArray14:
+                    case DataTypes.InlineArray15:
+                    case DataTypes.InlineArray16:
+                        return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationCollectionPlatformNotSupported(DataTypeToString(collectionDataType)));
+#endif
+
+#if NET11_0_OR_GREATER
+                    case DataTypes.ComplexGeneric:
+                        return typeof(Complex<>);
+                    case DataTypes.Argb:
+                        return typeof(Argb<>);
+                    case DataTypes.Rgba:
+                        return typeof(Rgba<>);
+#else
+                    case DataTypes.ComplexGeneric:
+                    case DataTypes.Argb:
+                    case DataTypes.Rgba:
                         return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationCollectionPlatformNotSupported(DataTypeToString(collectionDataType)));
 #endif
 

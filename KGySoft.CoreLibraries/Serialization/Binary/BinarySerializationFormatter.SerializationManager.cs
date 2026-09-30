@@ -1374,12 +1374,14 @@ namespace KGySoft.Serialization.Binary
 
                 Type type = obj.GetType();
 
+#if !NET35
                 // II. Tuple
                 if (serInfo.IsTuple)
                 {
                     WriteTuple(bw, obj, collectionDataTypes);
                     return;
                 }
+#endif
 
                 // III. Array backed type
                 if (serInfo.GetBackingArray != null)
@@ -1453,7 +1455,7 @@ namespace KGySoft.Serialization.Binary
             [SecurityCritical]
             [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
             [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
-            private void WriteArray(BinaryWriter bw, Array array, DataTypesEnumerator collectionDataTypes, bool writeSize)
+            private void WriteArray(BinaryWriter bw, Array array, DataTypesEnumerator collectionDataTypes, bool writeSize, Type? actualElementType = null)
             {
                 var type = array.GetType();
 
@@ -1547,12 +1549,14 @@ namespace KGySoft.Serialization.Binary
                 }
 
                 // 2.b. Complex array or non-byte primitive array on a big endian architecture
+                elementType = actualElementType ?? elementType;
                 if (elementType.IsPointer())
                     Throw.NotSupportedException(Res.SerializationPointerArrayTypeNotSupported(type));
                 collectionDataTypes.MoveNextExtracted();
                 WriteCollectionElements(bw, array, collectionDataTypes, elementType);
             }
 
+#if !NET35
             [SecurityCritical]
             [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
             [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
@@ -1566,6 +1570,7 @@ namespace KGySoft.Serialization.Binary
                 for (int i = 0; i < fields.Length; i++)
                     WriteElement(bw, fields[i].Get(tuple), itemDataTypes.ReadToNextSegment(), itemTypes[i]);
             }
+#endif
 
             [SecurityCritical]
             [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
@@ -1580,7 +1585,7 @@ namespace KGySoft.Serialization.Binary
                 if (array == null)
                     return;
                 if (!knownArray)
-                    WriteArray(bw, array, collectionDataTypes, !serInfo.HasKnownSizedBackingArray);
+                    WriteArray(bw, array, collectionDataTypes, !serInfo.HasKnownSizedBackingArray, array is object[] ? obj.GetType().GetGenericArguments()[0] : null);
 
                 serInfo.WriteSpecificPropertiesCallback?.Invoke(bw, obj);
             }

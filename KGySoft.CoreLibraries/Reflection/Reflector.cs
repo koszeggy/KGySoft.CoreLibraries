@@ -36,6 +36,9 @@ using System.Reflection.Metadata;
 #endif
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
+#if NET10_0_OR_GREATER
+using System.Runtime.InteropServices;
+#endif
 using System.Security;
 #if NETCOREAPP3_0_OR_GREATER
 using System.Text;
@@ -5299,9 +5302,26 @@ namespace KGySoft.Reflection
 
         #region TypedReference/Raw data access reflection
 
+#if NET10_0_OR_GREATER // the reliable SizeOf is available from .NET 9.0, but the single-type tuple-like types (InlineArray##<>) that require this method have been added in .NET 10
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        [SecurityCritical]
+        internal static ref byte GetRawData(object obj)
+        {
+            if (obj is Array array)
+                return ref GetRawData(array);
+            return ref obj.As<StrongBox<byte>>().Value;
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        [SecurityCritical]
+        internal static ref byte GetRawData(Array array) => ref MemoryMarshal.GetArrayDataReference(array);
+
+        internal static Span<byte> GetRawBytes(object obj) => MemoryMarshal.CreateSpan(ref GetRawData(obj), obj.GetType().SizeOf(false));
+#else
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [SecurityCritical]
         internal static ref byte GetRawData(object obj) => ref obj.As<StrongBox<byte>>().Value;
+#endif
 
 #if !NETSTANDARD2_0
         /// <summary>

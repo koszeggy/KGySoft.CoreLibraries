@@ -38,6 +38,9 @@ using System.Linq;
 #if !NET35
 using System.Numerics;
 #endif
+#if NET11_0_OR_GREATER
+using System.Numerics.Colors;
+#endif
 using System.Reflection;
 using System.Runtime.CompilerServices;
 #if NET6_0_OR_GREATER
@@ -445,6 +448,9 @@ namespace KGySoft.Serialization.Binary
     /// <item><see cref="Decimal32"/> (in .NET 11.0 and above)</item>
     /// <item><see cref="Decimal64"/> (in .NET 11.0 and above)</item>
     /// <item><see cref="Decimal128"/> (in .NET 11.0 and above)</item>
+    /// <item><see cref="Complex{T}"/> (in .NET 11.0 and above)</item>
+    /// <item><see cref="Argb{T}"/> (in .NET 11.0 and above)</item>
+    /// <item><see cref="Rgba{T}"/> (in .NET 11.0 and above)</item>
     /// <item><see cref="Tuple"/> types if generic arguments are any of the supported types (in .NET Framework 4.0 and above)</item>
     /// <item><see cref="ValueTuple"/> types if generic arguments are any of the supported types (in .NET Standard 2.0 and above)</item>
     /// <item>Any object that implements the <see cref="IBinarySerializable"/> interface.</item>
@@ -511,6 +517,7 @@ namespace KGySoft.Serialization.Binary
     /// <item><see cref="FrozenSet{T}"/> (in .NET 8.0 and above)</item>
     /// <item><see cref="FrozenDictionary{TKey,TValue}"/> (in .NET 8.0 and above)</item>
     /// <item><see cref="OrderedDictionary{TKey,TValue}"/> (in .NET 9.0 and above)</item>
+    /// <item><see cref="InlineArray2{T}"/>..<see cref="InlineArray16{T}"/> (in .NET 10.0 and above)</item>
     /// </list>
     /// <note>
     /// <list type="bullet">
@@ -870,6 +877,26 @@ namespace KGySoft.Serialization.Binary
             // ..... memory (backed by array/string/manager/none): ..... - NOTE: the backing object has to be perfectly serialized (unlike in XML/Json serialization)
             Memory = 36 << 24,
             ReadOnlyMemory = 37 << 24,
+
+            // ...... special tuple types of a single generic argument
+            InlineArray2 = 38 << 24,
+            InlineArray3 = 39 << 24,
+            InlineArray4 = 40 << 24,
+            InlineArray5 = 41 << 24,
+            InlineArray6 = 42 << 24,
+            InlineArray7 = 43 << 24,
+            InlineArray8 = 44 << 24,
+            InlineArray9 = 45 << 24,
+            InlineArray10 = 46 << 24,
+            InlineArray11 = 47 << 24,
+            InlineArray12 = 48 << 24,
+            InlineArray13 = 49 << 24,
+            InlineArray14 = 50 << 24,
+            InlineArray15 = 51 << 24,
+            InlineArray16 = 52 << 24,
+            ComplexGeneric = 53 << 24,
+            Argb = 54 << 24,
+            Rgba = 55 << 24,
 
             // ...... generic dictionaries:
             ExtendedDictionary = 0b01000000 << 24, // serves only as a flag
@@ -1617,6 +1644,8 @@ namespace KGySoft.Serialization.Binary
 
 #if NETCOREAPP3_0_OR_GREATER
             {
+                // NOTE: For generic Vector* types we could just use CollectionSerializationInfo.TupleSameType,
+                //       but we can boost the performance by utilizing that the element type is always a primitive value type.
                 DataTypes.Vector64, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.BackingArrayHasKnownSize | CollectionInfo.CreateResultFromByteArray,
@@ -1996,6 +2025,29 @@ namespace KGySoft.Serialization.Binary
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             { DataTypes.Memory, CollectionSerializationInfo.Memory },
             { DataTypes.ReadOnlyMemory, CollectionSerializationInfo.Memory },
+#endif
+#if NET10_0_OR_GREATER
+            // We can't always use the same trick as for Vector*<T> types, because the element type can be anything.
+            { DataTypes.InlineArray2, CollectionSerializationInfo.TupleSingleType }, 
+            { DataTypes.InlineArray3, CollectionSerializationInfo.TupleSingleType }, 
+            { DataTypes.InlineArray4, CollectionSerializationInfo.TupleSingleType }, 
+            { DataTypes.InlineArray5, CollectionSerializationInfo.TupleSingleType }, 
+            { DataTypes.InlineArray6, CollectionSerializationInfo.TupleSingleType }, 
+            { DataTypes.InlineArray7, CollectionSerializationInfo.TupleSingleType }, 
+            { DataTypes.InlineArray8, CollectionSerializationInfo.TupleSingleType }, 
+            { DataTypes.InlineArray9, CollectionSerializationInfo.TupleSingleType }, 
+            { DataTypes.InlineArray10, CollectionSerializationInfo.TupleSingleType }, 
+            { DataTypes.InlineArray11, CollectionSerializationInfo.TupleSingleType }, 
+            { DataTypes.InlineArray12, CollectionSerializationInfo.TupleSingleType }, 
+            { DataTypes.InlineArray13, CollectionSerializationInfo.TupleSingleType }, 
+            { DataTypes.InlineArray14, CollectionSerializationInfo.TupleSingleType }, 
+            { DataTypes.InlineArray15, CollectionSerializationInfo.TupleSingleType }, 
+            { DataTypes.InlineArray16, CollectionSerializationInfo.TupleSingleType }, 
+#endif
+#if NET11_0_OR_GREATER
+            { DataTypes.ComplexGeneric, CollectionSerializationInfo.TupleSingleType }, // The element type can be non-primitive, e.g. Half
+            { DataTypes.Argb, CollectionSerializationInfo.TupleSingleType }, // The element type can be any struct, even a managed one
+            { DataTypes.Rgba, CollectionSerializationInfo.TupleSingleType }, // The element type can be any struct, even a managed one
 #endif
 
             #endregion
@@ -2397,6 +2449,26 @@ namespace KGySoft.Serialization.Binary
             { typeof(Memory<>), DataTypes.Memory },
             { typeof(ReadOnlyMemory<>), DataTypes.ReadOnlyMemory },
 #endif
+#if NET11_0_OR_GREATER
+            { typeof(Complex<>), DataTypes.ComplexGeneric },
+            { typeof(Argb<>), DataTypes.Argb },
+            { typeof(Rgba<>), DataTypes.Rgba },
+            { typeof(InlineArray2<>), DataTypes.InlineArray2 },
+            { typeof(InlineArray3<>), DataTypes.InlineArray3 },
+            { typeof(InlineArray4<>), DataTypes.InlineArray4 },
+            { typeof(InlineArray5<>), DataTypes.InlineArray5 },
+            { typeof(InlineArray6<>), DataTypes.InlineArray6 },
+            { typeof(InlineArray7<>), DataTypes.InlineArray7 },
+            { typeof(InlineArray8<>), DataTypes.InlineArray8 },
+            { typeof(InlineArray9<>), DataTypes.InlineArray9 },
+            { typeof(InlineArray10<>), DataTypes.InlineArray10 },
+            { typeof(InlineArray11<>), DataTypes.InlineArray11 },
+            { typeof(InlineArray12<>), DataTypes.InlineArray12 },
+            { typeof(InlineArray13<>), DataTypes.InlineArray13 },
+            { typeof(InlineArray14<>), DataTypes.InlineArray14 },
+            { typeof(InlineArray15<>), DataTypes.InlineArray15 },
+            { typeof(InlineArray16<>), DataTypes.InlineArray16 },
+#endif
         };
 
         #endregion
@@ -2519,7 +2591,8 @@ namespace KGySoft.Serialization.Binary
         private static bool IsImpureTypeButEnum(DataTypes dt) => (dt & DataTypes.ImpureType) == DataTypes.ImpureType;
         private static bool IsImpureType(DataTypes dt) => IsEnum(dt) || IsImpureTypeButEnum(dt);
         private static bool IsExtended(DataTypes dt) => (dt & DataTypes.Extended) != DataTypes.Null;
-        private static bool IsTuple(DataTypes dt) => GetUnderlyingCollectionDataType(dt) is >= DataTypes.Tuple1 and <= DataTypes.Tuple8 or >= DataTypes.ValueTuple1 and <= DataTypes.ValueTuple8;
+        private static bool IsTuplePerItemType(DataTypes dt) => GetUnderlyingCollectionDataType(dt) is >= DataTypes.Tuple1 and <= DataTypes.Tuple8 or >= DataTypes.ValueTuple1 and <= DataTypes.ValueTuple8;
+        private static bool IsTupleSingleType(DataTypes dt) => GetUnderlyingCollectionDataType(dt) is DataTypes.ComplexGeneric or DataTypes.Argb or DataTypes.Rgba or >= DataTypes.InlineArray2 and <= DataTypes.InlineArray16;
         private static bool IsReinterpretedCollection(DataTypes dt) => GetUnderlyingCollectionDataType(dt) is >= DataTypes.CastArray and <= DataTypes.CastArray3D;
 
         private static bool IsNullable(DataTypes dt) => IsCollectionType(dt)
@@ -2533,18 +2606,26 @@ namespace KGySoft.Serialization.Binary
         private static int GetNumberOfTupleElements(DataTypes dt) => GetUnderlyingCollectionDataType(dt) switch
         {
             DataTypes.Tuple1 or DataTypes.ValueTuple1 => 1,
-            DataTypes.Tuple2 or DataTypes.ValueTuple2 => 2,
-            DataTypes.Tuple3 or DataTypes.ValueTuple3 => 3,
-            DataTypes.Tuple4 or DataTypes.ValueTuple4 => 4,
-            DataTypes.Tuple5 or DataTypes.ValueTuple5 => 5,
-            DataTypes.Tuple6 or DataTypes.ValueTuple6 => 6,
-            DataTypes.Tuple7 or DataTypes.ValueTuple7 => 7,
-            DataTypes.Tuple8 or DataTypes.ValueTuple8 => 8,
+            DataTypes.Tuple2 or DataTypes.ValueTuple2 or DataTypes.InlineArray2 or DataTypes.ComplexGeneric => 2,
+            DataTypes.Tuple3 or DataTypes.ValueTuple3 or DataTypes.InlineArray3 => 3,
+            DataTypes.Tuple4 or DataTypes.ValueTuple4 or DataTypes.InlineArray4 or DataTypes.Argb or DataTypes.Rgba => 4,
+            DataTypes.Tuple5 or DataTypes.ValueTuple5 or DataTypes.InlineArray5 => 5,
+            DataTypes.Tuple6 or DataTypes.ValueTuple6 or DataTypes.InlineArray6 => 6,
+            DataTypes.Tuple7 or DataTypes.ValueTuple7 or DataTypes.InlineArray7 => 7,
+            DataTypes.Tuple8 or DataTypes.ValueTuple8 or DataTypes.InlineArray8 => 8,
+            DataTypes.InlineArray9 => 9,
+            DataTypes.InlineArray10 => 10,
+            DataTypes.InlineArray11 => 11,
+            DataTypes.InlineArray12 => 12,
+            DataTypes.InlineArray13 => 13,
+            DataTypes.InlineArray14 => 14,
+            DataTypes.InlineArray15 => 15,
+            DataTypes.InlineArray16 => 16,
             _ => 0,
         };
 
         private static int GetNumberOfElementDataTypes(DataTypes dt) => IsDictionary(dt) ? HasNonGenericItemOrKey(dt) ? 1 : 2
-            : IsTuple(dt) ? GetNumberOfTupleElements(dt)
+            : IsTuplePerItemType(dt) ? GetNumberOfTupleElements(dt)
             : IsCollectionType(dt) ? IsReinterpretedCollection(dt) ? 2 : 1
             : dt is DataTypes.Pointer or DataTypes.ByRef ? 1
             : 0;

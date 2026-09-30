@@ -500,6 +500,9 @@ Hit rate: {8:P2}</value>
   <data name="BinarySerialization_ValueTypeSizeNotAvailableAotFormat" xml:space="preserve">
     <value>Could not determine the managed size of type '{0}' in a nongeneric way. In native AOT mode it requires targeting .NET 9.0 or later.</value>
   </data>
+  <data name="BinarySerialization_InlineArrayNotSupportedAotFormat" xml:space="preserve">
+    <value>In native AOT mode it is not supported to safely copy the elements of an inline array of element type {0}, because it contains managed references, and the safe access requires dynamic code.</value>
+  </data>
   <data name="Serialization_FunctionPointerTypeNotSupported" xml:space="preserve">
     <value>Serialization of function pointer types is not supported on this platform.</value>
   </data>
@@ -558,7 +561,7 @@ Hit rate: {8:P2}</value>
     <value>Type '{0}' cannot be the type argument of this method because it contains references.</value>
   </data>
   <data name="General_GenericMethodMissingAotFormat" xml:space="preserve">
-    <value>Native code of the generic method '{0}' is missing for the followng type argument(s): {2}.
+    <value>Native code of the generic method '{0}' is missing for the following type argument(s): {2}.
 In native AOT mode you need to reference the constructed method in your code. You can fix it by adding the following snippet to your application initialization (apply the type arguments):
 {1}</value>
   </data>
@@ -636,9 +639,6 @@ In native AOT mode you need to reference the constructed method in your code. Yo
   </data>
   <data name="BinarySerialization_TypePlatformNotSupportedFormat" xml:space="preserve">
     <value>Cannot deserialize type on this platform: {0}</value>
-  </data>
-  <data name="BinarySerialization_IEnumerableExpectedFormat" xml:space="preserve">
-    <value>An IEnumerable type expected but {0} found during deserialization.</value>
   </data>
   <data name="BinarySerialization_InvalidEnumBaseFormat" xml:space="preserve">
     <value>Invalid enum base type: {0}. Serialization stream corrupted?</value>
@@ -792,8 +792,7 @@ If assembly has a partial name or its identity has changed since the serializati
     <value>Deserialization of an IObjectReference instance has an unresolvable circular reference to itself as an element in a collection of type '{0}'. Either try to use the ForceRecursiveSerializationOfSupportedTypes option on serialization, or avoid serializing circular references in the container object.</value>
   </data>
   <data name="BinarySerialization_CircularBuilderReferenceCollectionFormat" xml:space="preserve">
-    <value>Could not deserialize the collection of type '{0}' because it has a circular reference to itself as an element and the collection requires a proxy builder to populate.
-Either try to use the ForceRecursiveSerializationOfSupportedTypes option on serialization, or avoid serializing circular references in the container collection.</value>
+    <value>Could not deserialize the collection of type '{0}' because it has a circular reference to itself as an element and the collection requires a proxy builder to populate.</value>
   </data>
   <data name="BinarySerialization_CollectionPlatformNotSupportedFormat" xml:space="preserve">
     <value>The stream contains a collection of type '{0}', which is not supported on this platform.</value>

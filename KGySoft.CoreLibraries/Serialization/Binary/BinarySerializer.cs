@@ -1453,6 +1453,10 @@ namespace KGySoft.Serialization.Binary
 
         #region Internal Methods
 
+#if NET10_0_OR_GREATER
+        internal static byte[] SerializeValueTypeInternal(ValueType obj) => SerializeValueTypeRaw(obj)!;
+#endif
+
         /// <summary>
         /// This method is used to avoid calling the nongeneric SizeOf in AOT mode.
         /// </summary>
@@ -1524,7 +1528,7 @@ namespace KGySoft.Serialization.Binary
         [RequiresUnreferencedCode("obj.GetType().IsManaged()")] // though in DEBUG build only (Assert)
         [SuppressMessage("ReSharper", "ReturnTypeCanBeNotNullable", Justification = "Depends on target")]
         [SuppressMessage("ReSharper", "UnusedParameter.Local", Justification = "Needed for specific targets")]
-        private static byte[]? SerializeValueTypeRaw(ValueType obj, bool throwOnSizeIssue)
+        private static byte[]? SerializeValueTypeRaw(ValueType obj, bool throwOnSizeIssue = true)
         {
             Debug.Assert(!obj.GetType().IsManaged(), "Unmanaged type expected");
             Type type = obj.GetType();

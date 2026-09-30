@@ -41,8 +41,7 @@ namespace KGySoft.CoreLibraries
         [SecurityCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
         internal static ref TTarget As<TSource, TTarget>(this ref TSource source)
-            where TSource : struct
-            where TTarget : struct
+            where TSource : struct // just for the "this ref"
         {
 #if NETCOREAPP3_0_OR_GREATER
             return ref Unsafe.As<TSource, TTarget>(ref source);

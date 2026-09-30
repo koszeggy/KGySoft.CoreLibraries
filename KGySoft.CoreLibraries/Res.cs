@@ -638,7 +638,7 @@ namespace KGySoft
         /// <summary>Type '{0}' cannot be the type argument of this method because it contains references.</summary>
         internal static string UnmanagedMethodTypeArgumentExpected<T>() => Get("General_UnmanagedMethodTypeArgumentExpectedFormat", typeof(T).GetName(TypeNameKind.LongName));
 
-        /// <summary>Native code of the generic method '{0}' is missing for the followng type argument(s): {2}.
+        /// <summary>Native code of the generic method '{0}' is missing for the following type argument(s): {2}.
         /// In native AOT mode you need to reference the constructed method in your code. You can fix it by adding the following snippet to your application initialization (apply the type arguments):
         /// {1}</summary>
         internal static string GenericMethodMissingAot(string methodName, string preserveExample, string typeArguments)
@@ -651,9 +651,6 @@ namespace KGySoft
         /// <summary>Serialization of type {0} is not supported with following serialization options: {1}.
         /// You can try to enable the RecursiveSerializationAsFallback flag, though the serialized data will possibly not be able to be deserialized using the SafeMode flag.</summary>
         internal static string BinarySerializationNotSupported(Type type, BinarySerializationOptions options) => Get("BinarySerialization_NotSupportedFormat", type.GetName(TypeNameKind.LongName), options.ToString<BinarySerializationOptions>());
-
-        /// <summary>An IEnumerable type expected but {0} found during deserialization.</summary>
-        internal static string BinarySerializationIEnumerableExpected(Type type) => Get("BinarySerialization_IEnumerableExpectedFormat", type.GetName(TypeNameKind.LongName));
 
         /// <summary>Invalid enum base type: {0}. Serialization stream corrupted?</summary>
         internal static string BinarySerializationInvalidEnumBase(string dataType) => Get("BinarySerialization_InvalidEnumBaseFormat", dataType);
@@ -753,7 +750,7 @@ namespace KGySoft
         internal static string BinarySerializationCannotCreateUninitializedObject(Type type) => Get("BinarySerialization_CannotCreateUninitializedObjectFormat", type.GetName(TypeNameKind.LongName));
 
         /// <summary>Could not create an empty instance of type "{0}" because the metadata is missing in AOT mode.
-        /// You can prevent trimming the metafata of a type by adding the following snippet to your application initialization:
+        /// You can prevent trimming the metadata of a type by adding the following snippet to your application initialization:
         /// SerializedType _ = typeof(MySerializedType);
         ///
         /// Alternatively, you can include the type in the expectedTypes parameter at the deserialization methods, using the overloads where the element type of expectedTypes is SerializedType.
@@ -775,8 +772,7 @@ namespace KGySoft
         /// <summary>Deserialization of an IObjectReference instance has an unresolvable circular reference to itself as an element in a collection of type '{0}'. Either try to use the ForceRecursiveSerializationOfSupportedTypes option on serialization, or avoid serializing circular references in the container object.</summary>
         internal static string BinarySerializationCircularIObjectReferenceCollection(Type type) => Get("BinarySerialization_CircularIObjectReferenceCollectionFormat", type.GetName(TypeNameKind.LongName));
 
-        /// <summary>Could not deserialize the collection of type '{0}' because it has a circular reference to itself as an element and the collection requires a proxy builder to populate.
-        /// Either try to use the ForceRecursiveSerializationOfSupportedTypes option on serialization, or avoid serializing circular references in the container collection.</summary>
+        /// <summary>Could not deserialize the collection of type '{0}' because it has a circular reference to itself as an element, and the collection requires a proxy builder to populate.</summary>
         internal static string BinarySerializationCircularBuilderReferenceCollection(Type type) => Get("BinarySerialization_CircularBuilderReferenceCollectionFormat", type.GetName(TypeNameKind.LongName));
 
         /// <summary>The stream contains a collection of type '{0}', which is not supported on this platform.</summary>
@@ -793,6 +789,9 @@ namespace KGySoft
 
         /// <summary>Could not determine the managed size of type '{0}' in a nongeneric way. In native AOT mode it requires targeting .NET 9.0 or later.</summary>
         internal static string BinarySerializationValueTypeSizeNotAvailableAot(Type t) => Get("BinarySerialization_ValueTypeSizeNotAvailableAotFormat", t.GetName(TypeNameKind.LongName));
+
+        /// <summary>In native AOT mode it is not supported to safely copy the elements of an inline array of element type {0}, because it contains managed references, and the safe access requires dynamic code.</summary>
+        internal static string BinarySerializationInlineArrayNotSupportedAot(Type type) => Get("BinarySerialization_InlineArrayNotSupportedAotFormat", type.GetName(TypeNameKind.LongName));
 
         #endregion
 

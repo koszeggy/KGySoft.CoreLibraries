@@ -934,13 +934,15 @@ namespace KGySoft.Serialization.Binary
 #endif
 
             [RequiresUnreferencedCode("SetValue")]
-            private static void ApplyPendingUsages(UsageReferences usages, object origObject, object? finalObject)
+            private static void ApplyPendingUsages(UsageReferences usages, object origObject, object? finalObject, bool bySurrogate = false)
             {
                 if (!usages.CanBeReplaced && origObject != finalObject)
                 {
                     if (origObject is IObjectReference)
                         Throw.SerializationException(Res.BinarySerializationCircularIObjectReference);
-                    Throw.SerializationException(Res.BinarySerializationSurrogateChangedObject(finalObject!.GetType()));
+                    if (bySurrogate)
+                        Throw.SerializationException(Res.BinarySerializationSurrogateChangedObject(finalObject!.GetType()));
+                    Throw.SerializationException(Res.BinarySerializationCircularBuilderReferenceCollection(finalObject!.GetType()));
                 }
 
                 if (usages.Count == 0)
@@ -1028,7 +1030,7 @@ namespace KGySoft.Serialization.Binary
                     return CreateArray(br, addToCache, descriptor);
 
                 // 3/b.) tuple
-                if (descriptor.IsTuple)
+                if (descriptor.IsTuplePerItemType)
                     return CreateTuple(br, addToCache, descriptor);
 
                 // 3/c.) array-backed collection
@@ -1259,7 +1261,7 @@ namespace KGySoft.Serialization.Binary
                     return CreateArray(br, addToCache, descriptor);
 
                 // 3/b.) tuple
-                if (descriptor.IsTuple)
+                if (descriptor.IsTuplePerItemType)
                     return CreateTuple(br, addToCache, descriptor);
 
                 // 3/c.) array-backed collection
@@ -1399,7 +1401,7 @@ namespace KGySoft.Serialization.Binary
             [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private object CreateTuple(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor)
             {
-                Debug.Assert(descriptor.IsTuple);
+                Debug.Assert(descriptor.IsTuplePerItemType);
                 Type type = descriptor.GetTypeToCreate();
                 object result = CreateKnownEmptyObject(type);
 
@@ -1453,10 +1455,8 @@ namespace KGySoft.Serialization.Binary
                     return result;
                 }
 
-                // Unlike in CreateArray we always use a new object as a proxy here because the array is not the final object
+                // Unlike in CreateArray, we always use a new object as a proxy here because the array is not the final object,
                 // and if the builder returns a real array its reference could mean both the final object and its backing array.
-                // CanHaveRecursion is expected to return false if the backing array is just used to create the final object but does it not wrap the array
-                // (i.e. if it can be an object[] it must be an actual backing array in the result)
                 bool trackUsages = addToCache && descriptor.CanHaveRecursion;
                 UsageReferences? usages = null;
                 if (trackUsages)
@@ -1535,10 +1535,6 @@ namespace KGySoft.Serialization.Binary
             [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private object CreateCollection(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor)
             {
-                Type type = descriptor.GetTypeToCreate();
-                if (!(descriptor.IsSingleElement || descriptor.IsComparer) && !Reflector.IEnumerableType.IsAssignableFrom(type))
-                    Throw.SerializationException(Res.BinarySerializationIEnumerableExpected(type));
-
                 DataTypes dataType = descriptor.CollectionDataType;
                 CollectionSerializationInfo serInfo = serializationInfo[dataType];
                 object result = serInfo.InitializeCollection(br, addToCache, descriptor, this, SafeMode, out int count, out int id);
@@ -1666,9 +1662,7 @@ namespace KGySoft.Serialization.Binary
                     if (result != actualResult && addToCache)
                         ReplaceObjectInCache(id, actualResult);
 
-                    if (usages!.Count > 0)
-                        Throw.SerializationException(Res.BinarySerializationCircularBuilderReferenceCollection(type));
-
+                    ApplyPendingUsages(usages!, resultProxy, actualResult);
                     ObjectsBeingDeserialized.Remove(resultProxy);
                 }
 
@@ -2202,7 +2196,7 @@ namespace KGySoft.Serialization.Binary
                 // some post administration if the object was registered for tracking usages
                 if (trackUsages)
                 {
-                    ApplyPendingUsages(usages!, obj, result);
+                    ApplyPendingUsages(usages!, obj, result, useSurrogate);
 
                     if (result != obj && addToCache)
                         ReplaceObjectInCache(id, result);
@@ -2572,7 +2566,7 @@ namespace KGySoft.Serialization.Binary
                     return;
                 }
 
-                // List is a proxy: adding if item is compatible, its reference cannot be replaced anymore
+                // List is a proxy: adding if item is compatible, its reference cannot be replaced anymore.
                 if (!listDescriptor.GetElementDescriptor().Type!.CanAcceptValue(value))
                     Throw.SerializationException(Res.BinarySerializationCircularIObjectReferenceCollection(listDescriptor.GetTypeToCreate()));
 

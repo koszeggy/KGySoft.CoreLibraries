@@ -40,6 +40,9 @@ using System.Linq;
 #if !NET35
 using System.Numerics;
 #endif
+#if NET11_0_OR_GREATER
+using System.Numerics.Colors;
+#endif
 #if NETFRAMEWORK
 using System.Reflection;
 #endif
@@ -64,7 +67,9 @@ using System.Text;
 
 using KGySoft.Collections;
 using KGySoft.Reflection;
+#if AOT
 using KGySoft.Serialization;
+#endif
 using KGySoft.Serialization.Binary;
 
 using NUnit.Framework;
@@ -298,7 +303,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 (UInt128)1,
 #endif
 #if NET11_0_OR_GREATER
-		        (Decimal32)1,
+                (Decimal32)1,
                 (Decimal64)1,
                 (Decimal128)1,
                 (BFloat16)1,
@@ -1296,11 +1301,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new Memory<byte>?[] { new byte[10].AsMemory(1, 2), null },
                 new Memory<byte?>?[] { new byte?[10].AsMemory(1, 2), null },
 #endif
+
 #if NET11_0_OR_GREATER
                new BFloat16?[] { BFloat16.One, null },
                new Decimal32?[] { Decimal32.One, null },
                new Decimal64?[] { Decimal64.One, null },
                new Decimal128?[] { Decimal128.One, null },
+               new Complex<float>?[] { new Complex<float>(1.2f, 3.4f), null },
+               new Argb<byte>?[] { new(1, 2, 3, 4), null },
+               new Rgba<ushort>?[] { new(1, 2, 3, 4), null },
 #endif
            };
 
@@ -1569,7 +1578,51 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                Enumerable.Range(0, 3).ToFrozenDictionary(i => $"{i}"), // LengthBucketsFrozenDictionary
                Enumerable.Range(0, 3).ToFrozenDictionary(i => $"{i}", StringComparer.InvariantCulture), // SmallFrozenDictionary
 #endif
+
+#if NET11_0_OR_GREATER
+                // these are encoded as fixed-size collections
+                new Complex<float>(1.2f, 3.4f),
+                new Argb<byte>(1, 2, 3, 4),
+                new Rgba<ushort>(1, 2, 3, 4),
+#endif
+
+#if NET10_0_OR_GREATER // Must be the last block because of the initialization below
+                new InlineArray2<ulong>(), // primitive element type
+                new InlineArray3<string>(), // reference element type
+                new InlineArray4<uint>(),
+                new InlineArray5<decimal>(), // non-primitive unmanaged value element type
+                new InlineArray6<DictionaryEntry>(), // managed value element type
+                new InlineArray7<decimal?>(), // nullable value element type
+                new InlineArray8<ushort>(),
+                new InlineArray9<byte>(),
+                new InlineArray10<byte>(),
+                new InlineArray11<byte>(),
+                new InlineArray12<byte>(),
+                new InlineArray13<byte>(),
+                new InlineArray14<byte>(),
+                new InlineArray15<byte>(),
+                new InlineArray16<byte>(), 
+#endif
             };
+
+#if NET10_0_OR_GREATER
+            // initializing inline arrays
+            referenceObjects[^1].As<StrongBox<Guid>>().Value = Guid.NewGuid(); // InlineArray16<byte>
+            referenceObjects[^2].As<StrongBox<InlineArray15<byte>>>().Value[^1] = 15; // InlineArray15<byte>
+            referenceObjects[^3].As<StrongBox<InlineArray14<byte>>>().Value[^1] = 14; // InlineArray14<byte>
+            referenceObjects[^4].As<StrongBox<InlineArray13<byte>>>().Value[^1] = 13; // InlineArray13<byte>
+            referenceObjects[^5].As<StrongBox<InlineArray12<byte>>>().Value[^1] = 12; // InlineArray12<byte>
+            referenceObjects[^6].As<StrongBox<InlineArray11<byte>>>().Value[^1] = 11; // InlineArray11<byte>
+            referenceObjects[^7].As<StrongBox<InlineArray10<byte>>>().Value[^1] = 10; // InlineArray10<byte>
+            referenceObjects[^8].As<StrongBox<InlineArray9<byte>>>().Value[^1] = 9; // InlineArray9<byte>
+            referenceObjects[^9].As<StrongBox<Guid>>().Value = Guid.NewGuid(); // InlineArray8<ushort>
+            referenceObjects[^10].As<StrongBox<InlineArray7<decimal?>>>().Value[^1] = Decimal.MaxValue; // InlineArray7<decimal?>
+            referenceObjects[^1/*1*/].As<StrongBox<InlineArray6<DictionaryEntry>>>().Value[^1] = new DictionaryEntry(typeof(int), DBNull.Value); // InlineArray6<DictionaryEntry> - NOTE: using singletons in DictionaryEntry to help the comparison by raw bytes
+            referenceObjects[^12].As<StrongBox<InlineArray5<decimal>>>().Value[^1] = 1.2345m; // InlineArray5<decimal>
+            referenceObjects[^13].As<StrongBox<Guid>>().Value = Guid.NewGuid(); // InlineArray4<uint>
+            referenceObjects[^14].As<StrongBox<InlineArray3<string>>>().Value[^1] = "abc"; // InlineArray3<string>
+            referenceObjects[^15].As<StrongBox<Guid>>().Value = Guid.NewGuid(); // InlineArray3<ulong>
+#endif
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
@@ -1881,6 +1934,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #endif
 #if NET9_0_OR_GREATER
                 new Dictionary<int, OrderedDictionary<int, int>> { { 1, new OrderedDictionary<int, int> { { 0, 0 }, { 1, 1 } } } },
+#endif
+#if NET11_0_OR_GREATER
+                new Dictionary<int, Complex<float>> { { 1, new Complex<float>(1.2f, 3.4f) } },
 #endif
 
                 // other generic dictionary types as outer objects
@@ -2858,11 +2914,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             // Constructed indirect self references
             referenceObjects =
             [
-                false, // grand-grandchild is root again
-                false, // DictionaryEntry referencing the referenceObjects and thus itself
-                false, // KeyValuePair referencing the referenceObjects and thus itself
-                false, // indirect tuple self-reference
-                false // ArraySegment
+                0, // grand-grandchild is root again
+                1, // DictionaryEntry referencing the referenceObjects and thus itself
+                2, // KeyValuePair referencing the referenceObjects and thus itself
+                3, // indirect tuple self-reference
+                4, // ArraySegment
+                5, // ImmutableQueue
+                6, // InlineArray2
             ];
 
             var root = new CircularReferenceClass { Name = "root" }.AddChild("child").AddChild("grandchild").Parent.Parent;
@@ -2879,6 +2937,17 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             segment.Array![0] = segmentRef;
             segment.Array![1] = segment.Array;
             referenceObjects[4] = segmentRef;
+
+#if NETCOREAPP && !NETSTANDARD_TEST
+            var queue = ImmutableQueue.Create(referenceObjects);
+            referenceObjects[5] = queue;
+#endif
+
+#if NET10_0_OR_GREATER
+            var inlineArray = new InlineArray2<object>();
+            inlineArray[0] = referenceObjects;
+            referenceObjects[6] = inlineArray;
+#endif
 
             SystemSerializeObject(referenceObjects, safeCompare: true);
             SystemSerializeObjects(referenceObjects, safeCompare: true);
@@ -2899,22 +2968,22 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             //       To test updating tracked replaced object see Box<T> in SelfReferencerIndirect.
             referenceObjects =
             [
-                false, // tuple
-                false, // value tuple
-                false, // DictionaryEntry
-                false, // KeyValuePair
-                false, // array
-                false, // ImmutableArray
-                false, // ImmutableArray.Builder
-                false, // ImmutableList.Builder
-                false, // ImmutableHashSet.Builder
-                false, // ImmutableSortedSet.Builder
-                false, // ImmutableDictionary.Builder/Key
-                false, // ImmutableDictionary.Builder/Value
-                false, // ImmutableDictionary.Builder/Key+Value
-                false, // OrderedDictionary<,>/Key
-                false, // OrderedDictionary<,>/Value
-                false // OrderedDictionary<,>/Key+Value
+                0, // tuple
+                1, // value tuple
+                2, // DictionaryEntry
+                3, // KeyValuePair
+                4, // array
+                5, // ImmutableArray
+                6, // ImmutableArray.Builder
+                7, // ImmutableList.Builder
+                8, // ImmutableHashSet.Builder
+                9, // ImmutableSortedSet.Builder
+                10, // ImmutableDictionary.Builder/Key
+                11, // ImmutableDictionary.Builder/Value
+                12, // ImmutableDictionary.Builder/Key+Value
+                13, // OrderedDictionary<,>/Key
+                14, // OrderedDictionary<,>/Value
+                15, // OrderedDictionary<,>/Key+Value
             ];
 #if !NET35
             // tuple
@@ -3028,15 +3097,22 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new SelfReferencerIndirect("Default") { UseCustomDeserializer = false, UseValidWay = false },
                 new SelfReferencerIndirect("Custom") { UseCustomDeserializer = true, UseValidWay = false },
                 new SelfReferencerInvalid("Default") { UseCustomDeserializer = false },
-                new SelfReferencerInvalid("Custom") { UseCustomDeserializer = true }
+                new SelfReferencerInvalid("Custom") { UseCustomDeserializer = true },
+#if NET10_0_OR_GREATER
+                new InlineArray2<object>(),
+#endif
             ];
+
+#if NET10_0_OR_GREATER
+            referenceObjects[^1].As<StrongBox<InlineArray2<object>>>().Value[0] = referenceObjects[^1];
+#endif
 
             //// Field in TypedReferences cannot be static or init only (SelfReferencerIndirect); StrongBox is not serializable
             //foreach (object referenceObject in referenceObjects)
             //    SystemSerializeObject(referenceObject);
 
             foreach (object referenceObject in referenceObjects)
-                AssertThrows<SerializationException>(() => KGySerializeObject(referenceObject, BinarySerializationOptions.None), Res.BinarySerializationCircularIObjectReference);
+                AssertThrows<SerializationException>(() => KGySerializeObject(referenceObject, BinarySerializationOptions.None), "circular reference");
         }
 
         [Test]
