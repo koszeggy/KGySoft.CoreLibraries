@@ -1617,7 +1617,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             referenceObjects[^8].As<StrongBox<InlineArray9<byte>>>().Value[^1] = 9; // InlineArray9<byte>
             referenceObjects[^9].As<StrongBox<Guid>>().Value = Guid.NewGuid(); // InlineArray8<ushort>
             referenceObjects[^10].As<StrongBox<InlineArray7<decimal?>>>().Value[^1] = Decimal.MaxValue; // InlineArray7<decimal?>
-            referenceObjects[^1/*1*/].As<StrongBox<InlineArray6<DictionaryEntry>>>().Value[^1] = new DictionaryEntry(typeof(int), DBNull.Value); // InlineArray6<DictionaryEntry> - NOTE: using singletons in DictionaryEntry to help the comparison by raw bytes
+            referenceObjects[^11].As<StrongBox<InlineArray6<DictionaryEntry>>>().Value[^1] = new DictionaryEntry(typeof(int), DBNull.Value); // InlineArray6<DictionaryEntry> - NOTE: using singletons in DictionaryEntry to help the comparison by raw bytes
             referenceObjects[^12].As<StrongBox<InlineArray5<decimal>>>().Value[^1] = 1.2345m; // InlineArray5<decimal>
             referenceObjects[^13].As<StrongBox<Guid>>().Value = Guid.NewGuid(); // InlineArray4<uint>
             referenceObjects[^14].As<StrongBox<InlineArray3<string>>>().Value[^1] = "abc"; // InlineArray3<string>

@@ -657,10 +657,10 @@ namespace KGySoft.Serialization.Binary
 #error check if already available - see https://github.com/dotnet/runtime/issues/135159
                         RuntimeHelpers.Copy(ref Reflector.GetRawData(obj), ref Reflector.GetRawData(result), elementType.TypeHandle, length);
 #else
-                        // If the element type has references, we must copy the element with a write barrier, but the Buffer.BulkMoveWithWriteBarrier is not public
+                        // If the element type has references, we must copy the element with a write barrier, but Buffer.BulkMoveWithWriteBarrier is not public
                         if (!elementType.IsManaged())
                             Unsafe.CopyBlock(ref Reflector.GetRawData(result), ref Reflector.GetRawData(obj), (uint)size);
-                        else if (!MemoryHelper.CopyWithReferences(elementType, obj, 0, result, 0, length))
+                        else if (!MemoryHelper.CopyManagedSpan(elementType, obj, result, length))
                             Throw.NotSupportedException(Res.BinarySerializationInlineArrayNotSupportedAot(elementType));
 #endif
                         return result;
@@ -708,7 +708,7 @@ namespace KGySoft.Serialization.Binary
 #endif
                     if (isUnmanaged)
                         Unsafe.CopyBlockUnaligned(ref Reflector.GetRawData(item), ref rawBytes[i * elementSize + nullableOffset], (uint)underlyingElementSize);
-                    else if (isNullable || !MemoryHelper.CopyWithReferences(elementType, obj, i, item, 0, 1))
+                    else if (!MemoryHelper.CopyManagedItem(underlyingElementType, obj, i * elementSize + nullableOffset, item, 0))
                         Throw.NotSupportedException(Res.BinarySerializationInlineArrayNotSupportedAot(elementType));
 
                     asObjArray[i] = item;
@@ -734,7 +734,7 @@ namespace KGySoft.Serialization.Binary
                 }
                 else if (!elementType.IsManaged())
                     Unsafe.CopyBlock(ref Reflector.GetRawData(result), ref Reflector.GetRawData(array), (uint)type.SizeOf(false));
-                else if (!MemoryHelper.CopyWithReferences(elementType, array, 0, result, 0, array.Length))
+                else if (!MemoryHelper.CopyManagedSpan(elementType, array, result, array.Length))
                     Throw.NotSupportedException(Res.BinarySerializationInlineArrayNotSupportedAot(elementType));
 
                 return result;
@@ -793,7 +793,7 @@ namespace KGySoft.Serialization.Binary
 #endif
                     if (isUnmanaged)
                         Unsafe.CopyBlockUnaligned(ref rawBytes[i * elementSize + nullableOffset], ref Reflector.GetRawData(item), (uint)underlyingElementSize);
-                    else if (isNullable || !MemoryHelper.CopyWithReferences(elementType, item, 0, result, i, 1))
+                    else if (!MemoryHelper.CopyManagedItem(elementType, item, 0, result, i * elementSize + nullableOffset))
                         Throw.NotSupportedException(Res.BinarySerializationInlineArrayNotSupportedAot(elementType));
                 }
 

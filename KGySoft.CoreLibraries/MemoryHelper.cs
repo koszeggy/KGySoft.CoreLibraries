@@ -61,10 +61,17 @@ namespace KGySoft
 #endif
 
 #if NET10_0_OR_GREATER
-        internal static bool CopyWithReferences(Type elementType, object source, int sourceIndex, object target, int targetIndex, int count)
+        internal static bool CopyManagedSpan(Type elementType, object source, object target, int count)
         {
             Debug.Assert(elementType.IsManaged());
-            return Accessors.TryInvokeMethod(typeof(MemoryHelper), nameof(SpanCopyToInvoker), elementType, source, sourceIndex, target, targetIndex, count);
+            return Accessors.TryInvokeMethod(typeof(MemoryHelper), nameof(SpanCopyTo), elementType, source, target, count);
+        }
+
+        internal static bool CopyManagedItem(Type type, object source, int sourceOffset, object target, int targetOffset)
+        {
+            Debug.Assert(type.IsManaged());
+            Debug.Assert(!type.IsNullable(), "For nullable span items the underlying type with an adjusted offset is expected");
+            return Accessors.TryInvokeMethod(typeof(MemoryHelper), nameof(AssignValueInvoker), type, source, sourceOffset, target, targetOffset);
         }
 #endif
 
@@ -219,19 +226,27 @@ namespace KGySoft
 #if NET10_0_OR_GREATER
         /// <summary>
         /// A helper method to call Span.CopyTo for managed value T types.
-        /// Called by reflection from CopyWithWriteBarrier, so the parameters must not be Span or ref byte types.
+        /// Called by reflection from CopyManagedSpan, so the parameters must not be Span or ref byte types.
         /// </summary>
-        private static void SpanCopyToInvoker<T>(object source, int sourceIndex, object target, int targetIndex, int count)
+        private static void SpanCopyTo<T>(object source, object target, int count)
         {
             Debug.Assert(RuntimeHelpers.IsReferenceOrContainsReferences<T>(), "For unmanaged element types the simple byte copying APIs can be used.");
-            int elementSize = Unsafe.SizeOf<T>();
-            
-            ref byte src = ref Reflector.GetRawData(source).At(sourceIndex * elementSize);
-            ref byte dst = ref Reflector.GetRawData(target).At(targetIndex * elementSize);
+           
+            ref byte src = ref Reflector.GetRawData(source);
+            ref byte dst = ref Reflector.GetRawData(target);
 
             MemoryMarshal.CreateSpan(ref src.As<byte, T>(), count).CopyTo(MemoryMarshal.CreateSpan(ref dst.As<byte, T>(), count));
         }
 
+        /// <summary>
+        /// A helper method to assign a managed value T instance.
+        /// Called by reflection from CopyManagedItem, so the parameters cannot be ref byte types.
+        /// </summary>
+        private static void AssignValueInvoker<T>(object source, int sourceOffset, object target, int targetOffset)
+        {
+            Debug.Assert(RuntimeHelpers.IsReferenceOrContainsReferences<T>(), "For unmanaged element types the simple byte copying APIs can be used.");
+            Reflector.GetRawData(target).At(targetOffset).As<byte, T>() = Reflector.GetRawData(source).At(sourceOffset).As<byte, T>();
+        }
 #endif
 
         #endregion
