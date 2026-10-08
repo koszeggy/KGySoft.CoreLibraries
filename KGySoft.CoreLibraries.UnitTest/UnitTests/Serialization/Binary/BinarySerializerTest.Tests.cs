@@ -1559,24 +1559,27 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new Dictionary<ConsoleColor, string> { { ConsoleColor.Red, "R" }, { ConsoleColor.Green, "G" }, { ConsoleColor.Blue, "B" } }.ToImmutableSortedDictionary(EnumComparer<ConsoleColor>.Comparer).ToBuilder(),
                 new Dictionary<ConsoleColor, string> { { ConsoleColor.Red, "R" }, { ConsoleColor.Green, "G" }, { ConsoleColor.Blue, "B" } }.ToImmutableSortedDictionary(EnumComparer<ConsoleColor>.Comparer, StringComparer.OrdinalIgnoreCase).ToBuilder(),
 #endif
+#if NET6_0_OR_GREATER
+                new PriorityQueue<string, int>([("alpha", 1), ("beta", 2)]),
+#endif
 #if NET8_0_OR_GREATER
-               FrozenSet<int>.Empty, // EmptyFrozenSet
-               Enumerable.Range(0, 3).ToFrozenSet(), // SmallValueTypeComparableFrozenSet
-               Enumerable.Range(0, 15).ToFrozenSet(), // Int32FrozenSet
-               Enumerable.Range(0, 15).Convert<byte[]>().ToFrozenSet(), // ValueTypeDefaultComparerFrozenSet
-               Enumerable.Range(0, 3).Convert<string[]>().ToFrozenSet(), // LengthBucketsFrozenSet
-               Enumerable.Range(0, 3).Convert<string[]>().ToFrozenSet(StringComparer.InvariantCulture), // SmallFrozenSet
-               Enumerable.Range(0, 15).Convert<string[]>().ToFrozenSet(), // OrdinalStringFrozenSet_Full
-               Enumerable.Range(0, 15).Convert<string[]>().ToFrozenSet(StringComparer.InvariantCulture), // DefaultFrozenSet
-               Enumerable.Range(0, 15).Select(i => $"{i}.").ToFrozenSet(), // OrdinalStringFrozenSet_LeftJustifiedSubstring
-               Enumerable.Range(0, 15).Select(i => $"#{i}").ToFrozenSet(), // OrdinalStringFrozenSet_RightJustifiedSubstring
-
-               FrozenDictionary<int, string>.Empty.ToFrozenDictionary(), // EmptyFrozenDictionary (.ToFrozenDictionary is to ensure the ToFrozenDictionary<int, string> method for AOT mode)
-               Enumerable.Range(0, 3).ToFrozenDictionary(i => i), // SmallValueTypeComparableFrozenDictionary
-               Enumerable.Range(0, 15).ToFrozenDictionary(i => i), // Int32FrozenDictionary
-               Enumerable.Range(0, 15).ToFrozenDictionary(i => (byte)i), // ValueTypeDefaultComparerFrozenDictionary
-               Enumerable.Range(0, 3).ToFrozenDictionary(i => $"{i}"), // LengthBucketsFrozenDictionary
-               Enumerable.Range(0, 3).ToFrozenDictionary(i => $"{i}", StringComparer.InvariantCulture), // SmallFrozenDictionary
+                FrozenSet<int>.Empty, // EmptyFrozenSet
+                Enumerable.Range(0, 3).ToFrozenSet(), // SmallValueTypeComparableFrozenSet
+                Enumerable.Range(0, 15).ToFrozenSet(), // Int32FrozenSet
+                Enumerable.Range(0, 15).Convert<byte[]>().ToFrozenSet(), // ValueTypeDefaultComparerFrozenSet
+                Enumerable.Range(0, 3).Convert<string[]>().ToFrozenSet(), // LengthBucketsFrozenSet
+                Enumerable.Range(0, 3).Convert<string[]>().ToFrozenSet(StringComparer.InvariantCulture), // SmallFrozenSet
+                Enumerable.Range(0, 15).Convert<string[]>().ToFrozenSet(), // OrdinalStringFrozenSet_Full
+                Enumerable.Range(0, 15).Convert<string[]>().ToFrozenSet(StringComparer.InvariantCulture), // DefaultFrozenSet
+                Enumerable.Range(0, 15).Select(i => $"{i}.").ToFrozenSet(), // OrdinalStringFrozenSet_LeftJustifiedSubstring
+                Enumerable.Range(0, 15).Select(i => $"#{i}").ToFrozenSet(), // OrdinalStringFrozenSet_RightJustifiedSubstring
+          
+                FrozenDictionary<int, string>.Empty.ToFrozenDictionary(), // EmptyFrozenDictionary (.ToFrozenDictionary is to ensure the ToFrozenDictionary<int, string> method for AOT mode)
+                Enumerable.Range(0, 3).ToFrozenDictionary(i => i), // SmallValueTypeComparableFrozenDictionary
+                Enumerable.Range(0, 15).ToFrozenDictionary(i => i), // Int32FrozenDictionary
+                Enumerable.Range(0, 15).ToFrozenDictionary(i => (byte)i), // ValueTypeDefaultComparerFrozenDictionary
+                Enumerable.Range(0, 3).ToFrozenDictionary(i => $"{i}"), // LengthBucketsFrozenDictionary
+                Enumerable.Range(0, 3).ToFrozenDictionary(i => $"{i}", StringComparer.InvariantCulture), // SmallFrozenDictionary
 #endif
 
 #if NET11_0_OR_GREATER
@@ -1896,8 +1899,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                     Reflector.ResolveType("KGySoft.CoreLibraries.EnumComparer`1+SerializationUnityHolder"),
                     Reflector.ResolveType("System.Collections.Specialized.ListDictionary+DictionaryNode"),
                     Reflector.ResolveType("System.Collections.Generic.NullableEqualityComparer`1") });
-                KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.SafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes, expectedTypes:expectedTypes);
-                KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.SafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes, expectedTypes:expectedTypes);
+                KGySerializeObject(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.SafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes, expectedTypes: expectedTypes);
+                KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.SafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes, expectedTypes: expectedTypes);
             }
 #endif
 
@@ -1928,6 +1931,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new Dictionary<int, ImmutableDictionary<int, int>> { { 1, new Dictionary<int, int> { { 1, 2 } }.ToImmutableDictionary() }, { 2, null } }, // ImmutableDictionary 
                 new Dictionary<int, ImmutableSortedDictionary<int, int>> { { 1, new Dictionary<int, int> { { 1, 2 } }.ToImmutableSortedDictionary() }, { 2, null } }, // ImmutableSortedDictionary 
 #endif
+#if NET6_0_OR_GREATER
+                new Dictionary<int, PriorityQueue<string, int>> { { 1, new PriorityQueue<string, int>([("alpha", 1), ("beta", 2)]) }, { 2,  null } },
+#endif
 #if NET8_0_OR_GREATER
                 new Dictionary<int, FrozenSet<int>> { { 1, new[] { 1, 2, 3, 4 }.ToFrozenSet() } },
                 new Dictionary<int, FrozenDictionary<int, int>> { { 1, new Dictionary<int, int> { { 1, 2 } }.ToFrozenDictionary() }, { 2, null } },
@@ -1946,6 +1952,9 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
 #if NETCOREAPP && !NETSTANDARD_TEST
                 new Dictionary<int, int[]> { { 1, [1, 2] }, { 2, null } }.ToImmutableDictionary(), // ImmutableDictionary
                 new Dictionary<int, int[]> { { 1, [1, 2] }, { 2, null } }.ToImmutableSortedDictionary(), // ImmutableSortedDictionary
+#endif
+#if NET6_0_OR_GREATER
+                  new PriorityQueue<string, int>([("alpha", 1), ("beta", 2)]),
 #endif
 #if NET9_0_OR_GREATER
                 new OrderedDictionary<int, int> { { 0, 0 }, { 1, 1 } },

@@ -37,7 +37,6 @@ using System.Runtime.Serialization;
 using System.Security;
 using System.Text;
 
-using KGySoft.Annotations;
 using KGySoft.CoreLibraries;
 using KGySoft.Collections;
 using KGySoft.Reflection;
@@ -234,7 +233,7 @@ namespace KGySoft.Serialization.Binary
             {
                 #region Fields
 
-                private readonly IEnumerable target;
+                private readonly object target;
                 private readonly object referenceNode;
                 private readonly Type genericArg;
 
@@ -244,7 +243,7 @@ namespace KGySoft.Serialization.Binary
 
                 [DynamicDependency(nameof(LinkedList<>.AddAfter), typeof(LinkedList<>))] // actually it should be applied for SetValue, but that is virtual, and the base is not annotated
                 [DynamicDependency(nameof(LinkedList<>.Remove), typeof(LinkedList<>))]
-                internal LinkedListUsage(IEnumerable target, object referenceNode)
+                internal LinkedListUsage(object target, object referenceNode)
                 {
                     this.target = target;
                     this.referenceNode = referenceNode;
@@ -957,7 +956,7 @@ namespace KGySoft.Serialization.Binary
             }
 
             [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
-            private static object? GetPlaceholderValue(object? value, [NoEnumeration]IEnumerable collection)
+            private static object? GetPlaceholderValue(object? value, object collection)
                 => value is IObjectReference ? collection.GetType().GetCollectionElementType()!.GetDefaultValue() : value;
 
             #endregion
@@ -1556,14 +1555,11 @@ namespace KGySoft.Serialization.Binary
                     return result;
                 }
 
-                if (result is not IEnumerable collection)
-                    return Throw.InternalError<object>($"Not an IEnumerable: {result.GetType()}");
-
                 // Unlike in CreateArrayBackedCollection we can assume that the final result never can actually contain the temp collection
                 // so we can use the builder as a proxy. This is needed only if we use a proxy builder so not the final result is created.
                 bool trackUsages = addToCache && result.GetType() != descriptor.GetTypeToCreate() && descriptor.CanHaveRecursion;
                 UsageReferences? usages = null;
-                object resultProxy = collection;
+                object resultProxy = result;
                 if (trackUsages)
                     ObjectsBeingDeserialized.Add(resultProxy, usages = []);
 
@@ -1572,7 +1568,7 @@ namespace KGySoft.Serialization.Binary
                 {
                     if (descriptor.IsOrdered)
                     {
-                        IDictionary dict = (IDictionary)collection;
+                        IDictionary dict = (IDictionary)result;
                         for (int i = 0; i < count; i++)
                         {
                             object? key = ReadElement(br, descriptor.GetKeyDescriptor());
@@ -1586,12 +1582,12 @@ namespace KGySoft.Serialization.Binary
                         {
                             object? key = ReadElement(br, descriptor.GetKeyDescriptor());
                             object? value = ReadElement(br, descriptor.GetValueDescriptor());
-                            AddDictionaryElement(collection, addMethod, key, value, descriptor, trackUsages);
+                            AddDictionaryElement(result, addMethod, key, value, descriptor, trackUsages);
                         }
                     }
                     else
                     {
-                        IDictionary dict = (IDictionary)collection;
+                        IDictionary dict = (IDictionary)result;
                         for (int i = 0; i < count; i++)
                         {
                             object? key = ReadElement(br, descriptor.GetKeyDescriptor());
@@ -1611,7 +1607,7 @@ namespace KGySoft.Serialization.Binary
                             addMethod = MethodAccessor.GetAccessor(Reflector.IDictionaryGenType
                                 .GetGenericType(descriptor.GetKeyDescriptor().Type!, descriptor.GetValueDescriptor().Type!)
                                 .GetMethod(nameof(IDictionary<,>.Add))!);
-                            AddDictionaryElement(collection, addMethod, key, null, descriptor, trackUsages);
+                            AddDictionaryElement(result, addMethod, key, null, descriptor, trackUsages);
                             continue;
 #endif
                         }
@@ -1624,11 +1620,11 @@ namespace KGySoft.Serialization.Binary
                         object? element = ReadElement(br, descriptor.GetElementDescriptor());
                         if (addMethod != null)
                         {
-                            AddCollectionElement(collection, descriptor, addMethod, element, trackUsages);
+                            AddCollectionElement(result, descriptor, addMethod, element, trackUsages);
                             continue;
                         }
 
-                        if (collection is IList list)
+                        if (result is IList list)
                         {
 #if NET35
                             if (element != null || !descriptor.IsGenericCollection)
@@ -1641,12 +1637,14 @@ namespace KGySoft.Serialization.Binary
 #if NET35
                             // generic collection with null value: calling generic Add because non-generic one may fail in .NET Runtime 2.x
                             addMethod = MethodAccessor.GetAccessor(Reflector.ICollectionGenType.GetGenericType(descriptor.GetElementDescriptor().Type!).GetMethod(nameof(ICollection<>.Add))!);
-                            AddCollectionElement(collection, descriptor, addMethod, null, trackUsages);
+                            AddCollectionElement(result, descriptor, addMethod, null, trackUsages);
                             continue;
 #endif
                         }
 
                         Debug.Fail($"Define an Add method for type {descriptor.Type} for better performance and to handle indirect circular references");
+                        if (result is not IEnumerable collection)
+                            return Throw.InternalError<object>($"Not an IEnumerable: {result.GetType()}");
                         collection.TryAdd(element, false);
                     }
                 }
@@ -2576,7 +2574,7 @@ namespace KGySoft.Serialization.Binary
 
             [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
             [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
-            private void AddCollectionElement([NoEnumeration]IEnumerable collection, DataTypeDescriptor collectionDescriptor, MethodAccessor addMethod, object? value, bool isTrackedProxyCollection)
+            private void AddCollectionElement(object collection, DataTypeDescriptor collectionDescriptor, MethodAccessor addMethod, object? value, bool isTrackedProxyCollection)
             {
                 #region Local Methods
 

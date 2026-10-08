@@ -269,8 +269,53 @@ namespace KGySoft.Serialization.Xml
 
         [RequiresDynamicCode(XmlSerializer.RequiresDynamicCodeMessage)]
         [RequiresUnreferencedCode(XmlSerializer.RequiresUnreferencedCodeMessage)]
-        private protected static ComparerType? GetComparer([NoEnumeration]IEnumerable collection)
+        private protected static ComparerType? GetComparerType([NoEnumeration]IEnumerable collection)
         {
+            #region Local Methods
+
+            [RequiresUnreferencedCode("TryGetPropertyValue, GetFieldValue")]
+            [DynamicDependency(nameof(HashSet<>.Count), typeof(HashSet<>))]
+            [DynamicDependency(nameof(ThreadSafeHashSet<>.Comparer), typeof(ThreadSafeHashSet<>))]
+            [DynamicDependency(nameof(Dictionary<,>.Comparer), typeof(Dictionary<,>))]
+            [DynamicDependency(nameof(SortedList<,>.Comparer), typeof(SortedList<,>))]
+            [DynamicDependency(nameof(SortedDictionary<,>.Comparer), typeof(SortedDictionary<,>))]
+            [DynamicDependency(nameof(CircularSortedList<,>.Comparer), typeof(CircularSortedList<,>))]
+            [DynamicDependency(nameof(ThreadSafeDictionary<,>.Comparer), typeof(ThreadSafeDictionary<,>))]
+            [DynamicDependency(nameof(StringKeyedDictionary<>.Comparer), typeof(StringKeyedDictionary<>))]
+            [DynamicDependency(nameof(AllowNullDictionary<,>.Comparer), typeof(AllowNullDictionary<,>))]
+            [DynamicDependency("EqualityComparer", typeof(Hashtable))]
+            [DynamicDependency("comparer", typeof(SortedList))]
+            [DynamicDependency("comparer", typeof(ListDictionary))]
+            [DynamicDependency("_comparer", typeof(OrderedDictionary))]
+            [DynamicDependency(nameof(StringKeyedDictionary<>.Comparer), typeof(StringKeyedDictionary<>))]
+#if !NET35
+            [DynamicDependency(nameof(SortedSet<>.Comparer), typeof(SortedSet<>))]
+#endif
+#if NET6_0_OR_GREATER
+            [DynamicDependency(nameof(ConcurrentDictionary<,>.Comparer), typeof(ConcurrentDictionary<,>))]
+#elif !NET35
+            [DynamicDependency("_comparer", typeof(ConcurrentDictionary<,>))]
+#endif
+            static object? GetComparer([NoEnumeration]IEnumerable collection)
+            {
+                // 1.) By Comparer/EqualityComparer/KeyComparer property
+                Type type = collection.GetType();
+                string propertyName = type.Name switch
+                {
+                    nameof(Hashtable) => "EqualityComparer",
+                    "ImmutableHashSet`1" or "ImmutableSortedSet`1" or "ImmutableDictionary`2" or "ImmutableSortedDictionary`2" or "Builder" => "KeyComparer",
+                    _ => "Comparer" // Dictionary<TKey, TValue>, HashSet<T>, SortedSet<T>, SortedList<TKey, TValue>, SortedDictionary<TKey, TValue>, CircularSortedList<TKey, TValue>, ThreadSafeHashSet<T>, ThreadSafeDictionary<TKey, TValue>, StringKeyedDictionary<TValue>
+                };
+
+                if (Accessors.TryGetPropertyValue(type, propertyName, out object? comparer))
+                    return comparer;
+
+                // 2.) By *comparer* field
+                return Accessors.GetFieldValue(collection, "comparer");
+            }
+
+            #endregion
+
             Type type = collection.GetType();
 
             bool isGeneric = type.IsGenericType;
@@ -281,7 +326,7 @@ namespace KGySoft.Serialization.Xml
             if (type == typeof(HybridDictionary))
                 return collection.IsCaseInsensitive() ? ComparerType.CaseInsensitive : ComparerType.None;
 
-            object? comparer = collection.GetComparer();
+            object? comparer = GetComparer(collection);
             ComparerType comparerType = ToComparerType(comparer, isGeneric ? type.GetGenericArguments()[0] : null);
 #if NETFRAMEWORK
             if (comparerType == ComparerType.EnumComparer && type.Assembly == typeof(XmlSerializerBase).Assembly)

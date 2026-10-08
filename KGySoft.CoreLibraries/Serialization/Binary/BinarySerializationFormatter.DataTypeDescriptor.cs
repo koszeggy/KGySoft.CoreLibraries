@@ -726,6 +726,13 @@ namespace KGySoft.Serialization.Binary
                     case DataTypes.OrderedDictionaryGeneric:
                         return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationCollectionPlatformNotSupported(DataTypeToString(collectionDataType)));
 #endif
+#if NET6_0_OR_GREATER
+                    case DataTypes.PriorityQueue:
+                        return typeof(PriorityQueue<,>);
+#else
+                    case DataTypes.PriorityQueue:
+                        return Throw.PlatformNotSupportedException<Type>(Res.BinarySerializationCollectionPlatformNotSupported(DataTypeToString(collectionDataType)));
+#endif
 
                     case DataTypes.SortedListNonGeneric:
                         return typeof(SortedList);

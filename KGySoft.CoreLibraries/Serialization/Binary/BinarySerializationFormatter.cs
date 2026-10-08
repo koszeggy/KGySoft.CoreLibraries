@@ -134,7 +134,9 @@ using KGySoft.Serialization.Xml;
  *    If the added data type is abstract add the needed logic to DetermineSpecialSupport.
  * 4. Add type to DataTypeDescriptor.GetCollectionType (even abstract types) - mind groups
  *    - If collection has a known fixed size and is deserialized by a backing array then DataTypeDescriptor.FixedItemsSize might be needed to adjusted, too.
- * 5. If needed, update CollectionSerializationInfo.WriteSpecificProperties and InitializeCollection (e.g. new flag in 2.)
+ * 5. For special collections, if needed
+ *    - Update CollectionSerializationInfo.WriteSpecificProperties and InitializeCollection (e.g. new flag in 2.)
+ *    - Adjust GetCollectionToSerialize
  *    - If new CtorArguments were added to 2., then check also GetInitializer and CreateCollection
  * 6. If collection type is an ordered non-IList collection, or an unordered non-ICollection<T> collection,
  *    then handle it in AddCollectionElement/AddDictionaryElement. Add new usage reference if needed.
@@ -514,6 +516,7 @@ namespace KGySoft.Serialization.Binary
     /// <item><see cref="Vector128{T}"/> (in .NET Core 3.0 and above)</item>
     /// <item><see cref="Vector256{T}"/> (in .NET Core 3.0 and above)</item>
     /// <item><see cref="Vector512{T}"/> (in .NET 8.0 and above)</item>
+    /// <item><see cref="PriorityQueue{TElement,TPriority}"/> (in .NET 6.0 and above)</item>
     /// <item><see cref="FrozenSet{T}"/> (in .NET 8.0 and above)</item>
     /// <item><see cref="FrozenDictionary{TKey,TValue}"/> (in .NET 8.0 and above)</item>
     /// <item><see cref="OrderedDictionary{TKey,TValue}"/> (in .NET 9.0 and above)</item>
@@ -762,8 +765,9 @@ namespace KGySoft.Serialization.Binary
             ThreadSafeDictionary = 37 << 8,
             AllowNullDictionary = 38 << 8,
             OrderedDictionaryGeneric = 39 << 8, // .NET 9 and above
-            
-            // 40-45 << 8 : 6 reserved generic dictionaries
+            PriorityQueue = 40 << 8, // not an actual dictionary, but encoded similarly
+
+            // 41-45 << 8 : 5 reserved generic dictionaries
             // TODO: candidate: TwoWayDictionary if it will be implemented
 
             KeyValuePair = 46 << 8, // Defined as a collection type so can be encoded the same way as dictionaries
@@ -778,7 +782,7 @@ namespace KGySoft.Serialization.Binary
             StringDictionary = 53 << 8,
             StringKeyedDictionary = 54 << 8, // actually generic but has only a TValue argument
 
-            // 55-60 << 8 : 6 reserved non-generic dictionaries
+            // 55-60 << 8 : 6 reserved non-generic or single-generic-argument dictionaries (has special handling by HasNonGenericItemOrKey)
 
             DictionaryEntry = 61 << 8, // Could be a simple type but keeping consistency with KeyValuePair
             DictionaryEntryNullable = 62 << 8, // The Nullable flag would be used for the key (which is invalid for this type) so this is the nullable version of DictionaryEntry.
@@ -1029,6 +1033,11 @@ namespace KGySoft.Serialization.Binary
             /// Indicates that the collection is a [ReadOnly]Memory struct.
             /// </summary>
             IsMemory = 1 << 21,
+
+            /// <summary>
+            /// Indicates that the type of a generic collection's comparer uses the 2nd generic argument. Now used only by PriorityQueue.
+            /// </summary>
+            ComparerUsesSecondArgument = 1 << 22,
         }
 
         /// <summary>
@@ -1375,7 +1384,13 @@ namespace KGySoft.Serialization.Binary
                 }
             },
             { DataTypes.StringCollection, new CollectionSerializationInfo { Info = CollectionInfo.HasStringItemsOrKeys } },
-            { DataTypes.StrongBox, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.IsSingleElement } },
+            {
+                DataTypes.StrongBox, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.IsSingleElement,
+                    GetCollectionToSerialize = (o, _) => new[] { ((IStrongBox)o).Value }
+                }
+            },
 #if !NET35
             { DataTypes.Tuple1, CollectionSerializationInfo.Tuple },
             { DataTypes.Tuple2, CollectionSerializationInfo.Tuple },
@@ -1412,8 +1427,8 @@ namespace KGySoft.Serialization.Binary
                     CtorArguments = [CollectionCtorArguments.Comparer]
                 }
             },
-            { DataTypes.KeyValuePair, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.IsSingleElement } },
-            { DataTypes.KeyValuePairNullable, new CollectionSerializationInfo { Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.IsSingleElement } },
+            { DataTypes.KeyValuePair, CollectionSerializationInfo.KeyValuePair },
+            { DataTypes.KeyValuePairNullable, CollectionSerializationInfo.KeyValuePair },
             {
                 DataTypes.CircularSortedList, new CollectionSerializationInfo
                 {
@@ -1532,8 +1547,11 @@ namespace KGySoft.Serialization.Binary
                     CtorArguments = [CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer]
                 }
             },
-            { DataTypes.DictionaryEntry, new CollectionSerializationInfo { Info = CollectionInfo.IsDictionary | CollectionInfo.IsSingleElement } },
-            { DataTypes.DictionaryEntryNullable, new CollectionSerializationInfo { Info = CollectionInfo.IsDictionary | CollectionInfo.IsSingleElement } },
+#if NET6_0_OR_GREATER
+            { DataTypes.PriorityQueue, CollectionSerializationInfo.PriorityQueue },
+#endif
+            { DataTypes.DictionaryEntry, CollectionSerializationInfo.DictionaryEntry },
+            { DataTypes.DictionaryEntryNullable, CollectionSerializationInfo.DictionaryEntry },
 
             #endregion
 
@@ -1926,11 +1944,11 @@ namespace KGySoft.Serialization.Binary
                         (t) => MethodAccessor.GetAccessor(t.GetMethod(nameof(HashSet<>.Add))!),
                     CreateInstanceCallback = (t, args) => // Using a HashSet<T> as a builder with the actual comparer
                     {
-                            
                         Type genericArg = t.GetGenericArguments()[0];
                         return typeof(HashSet<>).GetGenericType(genericArg).CreateInstance([Reflector.IntType, typeof(IEqualityComparer<>).GetGenericType(genericArg)], args);
                     },
                     CreateFinalCollectionCallback = // unfortunately we must use the ToFrozenSet<> generic method, so we handle the possible exception in AOT mode
+                        [DynamicDependency(nameof(HashSet<>.Comparer), typeof(HashSet<>))]
                         [DynamicDependency(nameof(FrozenSet.ToFrozenSet), typeof(FrozenSet))]
                         (t, o) =>
                         {
@@ -1940,7 +1958,7 @@ namespace KGySoft.Serialization.Binary
                                 return typeof(FrozenSet).InvokeMethod(nameof(FrozenSet.ToFrozenSet),
                                     [genericArg],
                                     [Reflector.IEnumerableGenType.GetGenericType(genericArg), typeof(IEqualityComparer<>).GetGenericType(genericArg)],
-                                    o, ((IEnumerable)o).GetComparer())!;
+                                    o, Accessors.GetPropertyValue(o, nameof(HashSet<>.Comparer)))!;
                             }
                             catch (NotSupportedException e) when (!RuntimeFeature.IsDynamicCodeSupported)
                             {
@@ -2150,6 +2168,7 @@ namespace KGySoft.Serialization.Binary
                         return typeof(Dictionary<,>).GetGenericType(genericArgs).CreateInstance([Reflector.IntType, typeof(IEqualityComparer<>).GetGenericType(genericArgs[0])], args);
                     },
                     CreateFinalCollectionCallback = // unfortunately we must use the ToFrozenDictionary<,> generic method, so we handle the possible exception in AOT mode
+                        [DynamicDependency(nameof(Dictionary<,>.Comparer), typeof(Dictionary<,>))]
                         [DynamicDependency(nameof(FrozenDictionary.ToFrozenDictionary), typeof(FrozenDictionary))]
                         (t, o) =>
                         {
@@ -2159,7 +2178,7 @@ namespace KGySoft.Serialization.Binary
                                 return typeof(FrozenDictionary).InvokeMethod(nameof(FrozenDictionary.ToFrozenDictionary),
                                     genericArgs,
                                     [Reflector.IEnumerableGenType.GetGenericType(Reflector.KeyValuePairType.GetGenericType(genericArgs)), typeof(IEqualityComparer<>).GetGenericType(genericArgs[0])],
-                                    o, ((IDictionary)o).GetComparer())!;
+                                    o, Accessors.GetPropertyValue(o, nameof(Dictionary<,>.Comparer)))!;
                             }
                             catch (NotSupportedException e) when (!RuntimeFeature.IsDynamicCodeSupported)
                             {
@@ -2371,6 +2390,9 @@ namespace KGySoft.Serialization.Binary
             { typeof(AllowNullDictionary<,>), DataTypes.AllowNullDictionary },
 #if NET9_0_OR_GREATER
             { typeof(OrderedDictionary<,>), DataTypes.OrderedDictionaryGeneric },
+#endif
+#if NET6_0_OR_GREATER
+            { typeof(PriorityQueue<,>), DataTypes.PriorityQueue},
 #endif
 
             { typeof(Hashtable), DataTypes.Hashtable },

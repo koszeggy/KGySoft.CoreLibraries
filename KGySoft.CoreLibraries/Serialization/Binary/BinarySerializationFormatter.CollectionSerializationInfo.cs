@@ -17,10 +17,20 @@
 
 using System;
 using System.Collections;
+#if !NET35
+using System.Collections.Concurrent;
+#endif
+#if NET8_0_OR_GREATER
+using System.Collections.Frozen;
+#endif
 using System.Collections.Generic;
+#if NETCOREAPP
+using System.Collections.Immutable;
+#endif
+using System.Collections.Specialized;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
-#if !NET10_0_OR_GREATER
+#if NET6_0_OR_GREATER || !NET10_0_OR_GREATER
 using System.Linq;
 #endif
 using System.Reflection;
@@ -48,6 +58,52 @@ namespace KGySoft.Serialization.Binary
         [SuppressMessage("ReSharper", "MemberHidesStaticFromOuterClass", Justification = "Properties vs the similarly named methods with DataTypes parameter in parent class.")]
         private sealed class CollectionSerializationInfo
         {
+            #region Nested Classes
+
+            private sealed class CollectionWrapper : IEnumerable
+            {
+                #region Fields
+
+                private readonly object wrappedCollection;
+                private readonly IEnumerable asEnumerable;
+
+                #endregion
+
+                #region Properties
+
+                internal Type ActualType => wrappedCollection.GetType();
+                internal int Count { get; }
+                internal int Capacity { get; }
+                internal object? Comparer { get; }
+
+                #endregion
+
+                #region Constructors
+
+                [RequiresUnreferencedCode("GetPropertyValue")]
+                internal CollectionWrapper(object obj, CollectionInfo info, Func<object, IEnumerable> toCollection)
+                {
+                    Debug.Assert(obj is not IEnumerable, "Wrapper is not needed for enumerable collections");
+                    wrappedCollection = obj;
+                    Count = (int)Accessors.GetPropertyValue(obj, "Count")!;
+                    asEnumerable = toCollection.Invoke(obj);
+                    if ((info & CollectionInfo.HasCapacity) != 0)
+                        Capacity = (int)Accessors.GetPropertyValue(obj, "Capacity")!;
+                    if ((info & CollectionInfo.HasComparer) != 0)
+                        Comparer = Accessors.GetPropertyValue(obj, "Comparer")!;
+                }
+
+                #endregion
+
+                #region Methods
+
+                public IEnumerator GetEnumerator() => asEnumerable.GetEnumerator();
+
+                #endregion
+            }
+
+            #endregion
+
             #region Constants
 
             private const int capacityThreshold = 1 << 13;
@@ -58,11 +114,29 @@ namespace KGySoft.Serialization.Binary
 
             #region Static Fields
 
+            internal static readonly CollectionSerializationInfo DictionaryEntry = new()
+            {
+                Info = CollectionInfo.IsDictionary | CollectionInfo.IsSingleElement,
+                GetCollectionToSerialize = (o, _) => new[] { o }
+            };
+
+            internal static readonly CollectionSerializationInfo KeyValuePair = new()
+            {
+                Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.IsSingleElement,
+                GetCollectionToSerialize = (o, _) => new[] { o }
+            };
+
 #if !NET35
             internal static readonly CollectionSerializationInfo Tuple = new() { Info = CollectionInfo.IsGeneric | CollectionInfo.IsTuple };
 #endif
 #if NET10_0_OR_GREATER
             // Single-type tuple-like types are value types with two or more elements of the same element type inlined in the struct, e.g. Complex<>, Argb<>, InlineArray##<>.
+            [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+                Justification = "ArrayToSingleTypeTuple and ObjectListToSingleTypeTuple are used only in non-AOT mode; ObjectListToSingleTypeTuple handles missing metadata")]
+            [UnconditionalSuppressMessage("TrimAnalysis", "IL2111:DynamicallyAccessedMembersAttributeViaReflection",
+                Justification = "ArrayToSingleTypeTuple and ObjectListToSingleTypeTuple are used only in non-AOT mode; ObjectListToSingleTypeTuple handles missing metadata")]
+            [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode",
+                Justification = "ObjectListToSingleTypeTuple handles if dynamic code cannot be used.")]
             internal static readonly CollectionSerializationInfo TupleSingleType = new()
             {
                 Info = CollectionInfo.IsGeneric | CollectionInfo.BackingArrayHasKnownSize,
@@ -75,6 +149,29 @@ namespace KGySoft.Serialization.Binary
 
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             internal static readonly CollectionSerializationInfo Memory = new() { Info = CollectionInfo.IsGeneric | CollectionInfo.IsMemory };
+#endif
+
+#if NET6_0_OR_GREATER
+            [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "See the [DynamicDependency] attributes.")]
+            [UnconditionalSuppressMessage("TrimAnalysis", "IL2070:TypeDynamicallyAccessedMemberTypesAnnotationMismatch", Justification = "See the [DynamicDependency] attributes")]
+            internal static readonly CollectionSerializationInfo PriorityQueue = new CollectionSerializationInfo
+            {
+                Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasCapacity | CollectionInfo.HasComparer | CollectionInfo.ComparerUsesSecondArgument,
+                CtorArguments = [CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer],
+                GetCollectionToSerialize =
+                    [DynamicDependency(nameof(PriorityQueue<,>.Count), typeof(PriorityQueue<,>))]
+                    [DynamicDependency(nameof(PriorityQueue<,>.Capacity), typeof(PriorityQueue<,>))]
+                    [DynamicDependency(nameof(PriorityQueue<,>.Comparer), typeof(PriorityQueue<,>))]
+                    [DynamicDependency(nameof(PriorityQueue<,>.UnorderedItems), typeof(PriorityQueue<,>))]
+                    (o, info) => new CollectionWrapper(o, info, queue =>
+                    {
+                        var items = (IEnumerable)Accessors.GetPropertyValue(queue, nameof(PriorityQueue<,>.UnorderedItems))!;
+                        return items.Cast<ITuple>().Select(t => new DictionaryEntry(t[0]!, t[1]));
+                    }),
+                GetSpecificAddMethod =
+                    [DynamicDependency(nameof(PriorityQueue<,>.Enqueue), typeof(PriorityQueue<,>))]
+                    (t) => MethodAccessor.GetAccessor(t.GetMethod(nameof(PriorityQueue<,>.Enqueue))!),
+            };
 #endif
 
             #endregion
@@ -95,7 +192,7 @@ namespace KGySoft.Serialization.Binary
 
             #region Internal Properties
 
-            internal CollectionInfo Info { private get; set; }
+            internal CollectionInfo Info { get; set; }
 
             /// <summary>
             /// Specifies the constructor arguments to be used. Order matters!
@@ -124,6 +221,8 @@ namespace KGySoft.Serialization.Binary
                 get;
                 set;
             }
+
+            internal Func<object, CollectionInfo, IEnumerable>? GetCollectionToSerialize { get; set; }
 
             /// <summary>
             /// Should be specified for any custom data for array backed collections.
@@ -215,6 +314,7 @@ namespace KGySoft.Serialization.Binary
             private bool HasCaseInsensitivity => (Info & CollectionInfo.HasCaseInsensitivity) == CollectionInfo.HasCaseInsensitivity;
             private bool HasReadOnly => (Info & CollectionInfo.HasReadOnly) == CollectionInfo.HasReadOnly;
             private bool UsesComparerHelper => (Info & CollectionInfo.UsesComparerHelper) == CollectionInfo.UsesComparerHelper;
+            private bool ComparerUsesSecondArgument => (Info & CollectionInfo.ComparerUsesSecondArgument) == CollectionInfo.ComparerUsesSecondArgument;
             private bool IsNonNullDefaultComparer => (Info & CollectionInfo.NonNullDefaultComparer) == CollectionInfo.NonNullDefaultComparer;
             private bool HasBitwiseAndHash => (Info & CollectionInfo.HasBitwiseAndHash) == CollectionInfo.HasBitwiseAndHash;
 
@@ -231,13 +331,6 @@ namespace KGySoft.Serialization.Binary
             #endregion
 
             #region Internal Methods
-
-            internal IEnumerable GetCollectionToSerialize(object obj)
-            {
-                if (IsSingleElement)
-                    return new[] { obj is IStrongBox strongBox ? strongBox.Value : obj };
-                return (IEnumerable)obj;
-            }
 
             internal DataTypesEnumerator GetKeyDataTypes(DataTypesEnumerator dictionaryDataTypes)
             {
@@ -264,15 +357,128 @@ namespace KGySoft.Serialization.Binary
             [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             internal bool WriteSpecificProperties(BinaryWriter bw, [NoEnumeration]IEnumerable collection, SerializationManager manager)
             {
+                #region Local Methods
+
+                [RequiresUnreferencedCode("TryGetPropertyValue, GetFieldValue")]
+                [DynamicDependency(nameof(HashSet<>.Count), typeof(HashSet<>))]
+#if NETCOREAPP
+                [DynamicDependency(nameof(ImmutableArray<>.Builder.Count), typeof(ImmutableArray<>.Builder))]
+                [DynamicDependency(nameof(ImmutableHashSet<>.Builder.Count), typeof(ImmutableHashSet<>.Builder))]
+#endif
+                [DynamicDependency(nameof(StringDictionary.Count), typeof(StringDictionary))]
+                static void WriteCount(BinaryWriter bw, [NoEnumeration]IEnumerable collection)
+                {
+                    int count = collection switch
+                    {
+                        ICollection coll => coll.Count,
+                        CollectionWrapper wrapper => wrapper.Count,
+                        _ => (int)Accessors.GetPropertyValue(collection, "Count")!
+                    };
+
+                    Write7BitInt(bw, count);
+                }
+
+                [RequiresUnreferencedCode("GetPropertyValue")]
+                [DynamicDependency(nameof(List<>.Capacity), typeof(List<>))]
+                [DynamicDependency(nameof(CircularList<>.Capacity), typeof(CircularList<>))]
+                [DynamicDependency(nameof(SortedList<,>.Capacity), typeof(SortedList<,>))]
+                [DynamicDependency(nameof(SortedList.Capacity), typeof(SortedList))]
+                [DynamicDependency(nameof(CircularSortedList<,>.Capacity), typeof(CircularSortedList<,>))]
+                [DynamicDependency(nameof(ArrayList.Capacity), typeof(ArrayList))]
+#if NET9_0_OR_GREATER
+                [DynamicDependency(nameof(OrderedDictionary<,>.Capacity), typeof(OrderedDictionary<,>))]
+#endif
+#if NETCOREAPP
+                [DynamicDependency(nameof(ImmutableArray<>.Builder.Capacity), typeof(ImmutableArray<>.Builder))]
+#endif
+                static void WriteCapacity(BinaryWriter bw, [NoEnumeration]IEnumerable collection)
+                {
+                    int capacity = collection is CollectionWrapper wrapper
+                        ? wrapper.Capacity
+                        : (int)Accessors.GetPropertyValue(collection, "Capacity")!;
+                    Write7BitInt(bw, capacity);
+                }
+
+                [RequiresUnreferencedCode("GetProperty, GetField")]
+                [DynamicDependency(nameof(HashSet<>.Comparer), typeof(HashSet<>))]
+                [DynamicDependency(nameof(ThreadSafeHashSet<>.Comparer), typeof(ThreadSafeHashSet<>))]
+#if !NET35
+                [DynamicDependency(nameof(SortedSet<>.Comparer), typeof(SortedSet<>))]
+#endif
+                [DynamicDependency(nameof(Dictionary<,>.Comparer), typeof(Dictionary<,>))]
+                [DynamicDependency(nameof(SortedList<,>.Comparer), typeof(SortedList<,>))]
+                [DynamicDependency(nameof(SortedDictionary<,>.Comparer), typeof(SortedDictionary<,>))]
+                [DynamicDependency(nameof(CircularSortedList<,>.Comparer), typeof(CircularSortedList<,>))]
+#if NET6_0_OR_GREATER
+                [DynamicDependency(nameof(ConcurrentDictionary<,>.Comparer), typeof(ConcurrentDictionary<,>))]
+#elif !NET35
+                [DynamicDependency("_comparer", typeof(ConcurrentDictionary<,>))]
+#endif
+                [DynamicDependency(nameof(ThreadSafeDictionary<,>.Comparer), typeof(ThreadSafeDictionary<,>))]
+                [DynamicDependency(nameof(AllowNullDictionary<,>.Comparer), typeof(AllowNullDictionary<,>))]
+#if NET9_0_OR_GREATER
+                [DynamicDependency(nameof(OrderedDictionary<,>.Comparer), typeof(OrderedDictionary<,>))]
+#endif
+                [DynamicDependency("EqualityComparer", typeof(Hashtable))]
+                [DynamicDependency("comparer", typeof(SortedList))]
+                [DynamicDependency("comparer", typeof(ListDictionary))]
+                [DynamicDependency("_comparer", typeof(OrderedDictionary))]
+                [DynamicDependency(nameof(StringKeyedDictionary<>.Comparer), typeof(StringKeyedDictionary<>))]
+#if NETCOREAPP
+                [DynamicDependency(nameof(ImmutableHashSet<>.KeyComparer), typeof(ImmutableHashSet<>))]
+                [DynamicDependency(nameof(ImmutableHashSet<>.Builder.KeyComparer), typeof(ImmutableHashSet<>.Builder))]
+                [DynamicDependency(nameof(ImmutableSortedSet<>.KeyComparer), typeof(ImmutableSortedSet<>))]
+                [DynamicDependency(nameof(ImmutableSortedSet<>.Builder.KeyComparer), typeof(ImmutableSortedSet<>.Builder))]
+                [DynamicDependency(nameof(ImmutableDictionary<,>.KeyComparer), typeof(ImmutableDictionary<,>))]
+                [DynamicDependency(nameof(ImmutableDictionary<,>.Builder.KeyComparer), typeof(ImmutableDictionary<,>.Builder))]
+                [DynamicDependency(nameof(ImmutableSortedDictionary<,>.KeyComparer), typeof(ImmutableSortedDictionary<,>))]
+                [DynamicDependency(nameof(ImmutableSortedDictionary<,>.Builder.KeyComparer), typeof(ImmutableSortedDictionary<,>.Builder))]
+#endif
+#if NET8_0_OR_GREATER
+                [DynamicDependency(nameof(FrozenSet<>.Comparer), typeof(FrozenSet<>))]
+                [DynamicDependency(nameof(FrozenDictionary<,>.Comparer), typeof(FrozenDictionary<,>))]
+#endif
+                static object? GetComparer([NoEnumeration]IEnumerable collection)
+                {
+                    if (collection is CollectionWrapper wrapper)
+                        return wrapper.Comparer;
+
+                    // by Comparer/EqualityComparer/KeyComparer property
+                    Type type = collection.GetType();
+                    string propertyName = type.Name switch
+                    {
+                        nameof(Hashtable) => "EqualityComparer",
+                        "ImmutableHashSet`1" or "ImmutableSortedSet`1" or "ImmutableDictionary`2" or "ImmutableSortedDictionary`2" or "Builder" => "KeyComparer",
+                        _ => "Comparer" // Dictionary<TKey, TValue>, HashSet<T>, SortedSet<T>, SortedList<TKey, TValue>, SortedDictionary<TKey, TValue>, CircularSortedList<TKey, TValue>, ThreadSafeHashSet<T>, ThreadSafeDictionary<TKey, TValue>, StringKeyedDictionary<TValue>
+                    };
+
+                    if (Accessors.TryGetPropertyValue(collection, propertyName, out object? comparer))
+                        return comparer;
+
+                    // by *comparer* field
+                    return Accessors.GetFieldValue(collection, "comparer");
+                }
+
+                [RequiresUnreferencedCode("GetPropertyValue")]
+#if NETCOREAPP
+                [DynamicDependency(nameof(ImmutableDictionary<,>.ValueComparer), typeof(ImmutableDictionary<,>))]
+                [DynamicDependency(nameof(ImmutableDictionary<,>.Builder.ValueComparer), typeof(ImmutableDictionary<,>.Builder))]
+                [DynamicDependency(nameof(ImmutableSortedDictionary<,>.ValueComparer), typeof(ImmutableSortedDictionary<,>))]
+                [DynamicDependency(nameof(ImmutableSortedDictionary<,>.Builder.ValueComparer), typeof(ImmutableSortedDictionary<,>.Builder))]
+#endif
+                static object? GetValueComparer([NoEnumeration]IEnumerable collection) => Accessors.GetPropertyValue(collection, "ValueComparer");
+
+                #endregion
+
                 if (IsSingleElement)
                     return false;
 
                 // 1.) Count
-                Write7BitInt(bw, collection.Count());
+                WriteCount(bw, collection);
 
                 // 2.) Capacity - public property in all cases
                 if (HasCapacity)
-                    Write7BitInt(bw, collection.Capacity());
+                    WriteCapacity(bw, collection);
 
                 // 3.) Case sensitivity - only HybridDictionary
                 if (HasCaseInsensitivity)
@@ -304,7 +510,7 @@ namespace KGySoft.Serialization.Binary
                 // 6.) Comparer
                 if (HasAnyComparer)
                 {
-                    object? comparer = collection.GetComparer();
+                    object? comparer = GetComparer(collection);
                     bool isDefaultComparer = comparer == null || IsDefaultComparer(collection, comparer);
                     bw.Write(isDefaultComparer);
                     if (!isDefaultComparer)
@@ -312,7 +518,7 @@ namespace KGySoft.Serialization.Binary
 
                     if (HasValueComparer)
                     {
-                        comparer = collection.GetValueComparer();
+                        comparer = GetValueComparer(collection);
                         isDefaultComparer = comparer == null || IsDefaultValueComparer(collection, comparer);
                         bw.Write(isDefaultComparer);
                         if (!isDefaultComparer)
@@ -474,7 +680,7 @@ namespace KGySoft.Serialization.Binary
             [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private bool IsDefaultComparer([NoEnumeration]IEnumerable collection, object? comparer)
             {
-                object? defaultComparer = GetDefaultComparer(collection.GetType());
+                object? defaultComparer = GetDefaultComparer((collection as CollectionWrapper)?.ActualType ?? collection.GetType());
                 if (Equals(defaultComparer, comparer))
                     return true;
 
@@ -502,14 +708,14 @@ namespace KGySoft.Serialization.Binary
             {
                 if (!IsGeneric)
                     return HasEqualityComparer ? null : Comparer.Default;
+                if (HasStringSegmentComparer)
+                    return StringSegmentComparer.Ordinal;
 
-                Type elementType = GetElementType(type);
+                Type elementType = ComparerUsesSecondArgument ? GetValueType(type) : GetElementType(type);
                 if (UsesComparerHelper)
                     return HasEqualityComparer
                         ? typeof(ComparerHelper<>).GetPropertyValue(elementType, nameof(ComparerHelper<>.EqualityComparer))
                         : typeof(ComparerHelper<>).GetPropertyValue(elementType, nameof(ComparerHelper<>.Comparer));
-                if (HasStringSegmentComparer)
-                    return StringSegmentComparer.Ordinal;
                 return HasEqualityComparer
                     ? typeof(EqualityComparer<>).GetPropertyValue(elementType, nameof(EqualityComparer<>.Default))
                     : typeof(Comparer<>).GetPropertyValue(elementType, nameof(Comparer<>.Default));
@@ -591,12 +797,15 @@ namespace KGySoft.Serialization.Binary
                                 args[i] = Reflector.BoolType;
                                 break;
                             case CollectionCtorArguments.Comparer:
+                                Type? typeArg = !type.IsGenericType
+                                    ? null
+                                    : type.GetGenericArguments()[ComparerUsesSecondArgument ? 1 : 0];
                                 args[i] = IsGeneric
                                     ? HasEqualityComparer
-                                        ? typeof(IEqualityComparer<>).GetGenericType(type.GetGenericArguments()[0])
+                                        ? typeof(IEqualityComparer<>).GetGenericType(typeArg!)
                                         : HasStringSegmentComparer
                                             ? typeof(StringSegmentComparer)
-                                            : typeof(IComparer<>).GetGenericType(type.GetGenericArguments()[0])
+                                            : typeof(IComparer<>).GetGenericType(typeArg!)
                                     : HasEqualityComparer
                                         ? typeof(IEqualityComparer)
                                         : typeof(IComparer);
@@ -628,6 +837,8 @@ namespace KGySoft.Serialization.Binary
             /// Primitive generic arguments produce a byte[] (with adjusted endianness), which is processed very quickly by the caller.
             /// Otherwise, the element type of the array matches the generic argument, except in AOT mode, in which case an object[] is returned.
             /// </summary>
+            [RequiresDynamicCode("CopyManagedSpan, CopyManagedItem")]
+            [RequiresUnreferencedCode("IsManaged, CopyManagedSpan, CopyManagedItem")]
             private static Array SingleTypeTupleToArray(object obj)
             {
                 Debug.Assert(obj is ValueType);
@@ -717,7 +928,9 @@ namespace KGySoft.Serialization.Binary
                 return asObjArray;
             }
 
-            private static object ArrayToSingleTypeTuple(BinaryReader _, Type type, Array array)
+            [RequiresDynamicCode("CopyManagedSpan")]
+            [RequiresUnreferencedCode("IsManaged, CopyManagedSpan")]
+            private static object ArrayToSingleTypeTuple(BinaryReader _, [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors)]Type type, Array array)
             {
                 Type elementType = type.GenericTypeArguments[0];
                 Debug.Assert(array.GetType().GetElementType() == elementType);
@@ -740,6 +953,8 @@ namespace KGySoft.Serialization.Binary
                 return result;
             }
 
+            [RequiresDynamicCode("CopyManagedItem")]
+            [RequiresUnreferencedCode("IsManaged, CopyManagedItem")]
             private static object ObjectListToSingleTypeTuple(Type type, object list)
             {
                 Debug.Assert(!RuntimeFeature.IsDynamicCodeSupported && type.IsValueType && type.IsGenericType);

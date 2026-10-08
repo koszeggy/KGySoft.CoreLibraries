@@ -1454,6 +1454,7 @@ namespace KGySoft.Serialization.Binary
         #region Internal Methods
 
 #if NET10_0_OR_GREATER
+        [RequiresUnreferencedCode("obj.GetType().IsManaged()")] // though in DEBUG build only (Assert)
         internal static byte[] SerializeValueTypeInternal(ValueType obj) => SerializeValueTypeRaw(obj)!;
 #endif
 

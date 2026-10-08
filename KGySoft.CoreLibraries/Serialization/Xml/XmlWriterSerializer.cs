@@ -354,7 +354,7 @@ namespace KGySoft.Serialization.Xml
                         // or deserialization can only use the pre-created known collection (so the comparer can be ignored)
                         || ctx.IsReadOnlyProperty && IsKnownCollection(ctx.Type)
                         // or the known collection uses a supported comparer
-                        || (!ctx.IsReadOnlyProperty && ((comparer = GetComparer(enumerable)) ?? ComparerType.Unknown) != ComparerType.Unknown)
+                        || (!ctx.IsReadOnlyProperty && ((comparer = GetComparerType(enumerable)) ?? ComparerType.Unknown) != ComparerType.Unknown)
                         // or recursive serialization is requested
                         || ((ctx.Visibility == DesignerSerializationVisibility.Content || RecursiveSerializationAsFallback)
                             // and is a supported collection or serialization is forced

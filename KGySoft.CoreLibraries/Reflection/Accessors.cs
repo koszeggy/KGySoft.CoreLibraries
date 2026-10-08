@@ -22,13 +22,6 @@ using System.Collections;
 #if !NET35
 using System.Collections.Concurrent;
 #endif
-#if NET8_0_OR_GREATER
-using System.Collections.Frozen;
-#endif
-#if NETCOREAPP
-using System.Collections.Immutable;
-#endif
-using System.Collections.Specialized;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
@@ -941,8 +934,8 @@ namespace KGySoft.Reflection
         #endregion
 
         #region For Non-Public Members
-        // In this region non-public accessors need conditions only if they are not applicable for every supported framework.
-        // The #else-#error branches for open-ended versions are in the factories.
+// In this region non-public accessors need conditions only if they are not applicable for every supported framework.
+// The #else-#error branches for open-ended versions are in the factories.
 
         #region Exception
 
@@ -958,7 +951,7 @@ namespace KGySoft.Reflection
         #region Point
 
 #if !NETCOREAPP || NETCOREAPP3_0_OR_GREATER
-        [RequiresUnreferencedCode("GetPropertyValue")]
+[RequiresUnreferencedCode("GetPropertyValue")]
         internal static int Point_GetX(object? point) => point == null ? 0 : (int)GetPropertyValue(point, "X")!;
         
         [RequiresUnreferencedCode("GetPropertyValue")]
@@ -1102,44 +1095,6 @@ namespace KGySoft.Reflection
 
         #region IEnumerable
 
-        [RequiresUnreferencedCode("GetProperty")]
-        [DynamicDependency(nameof(HashSet<>.Count), typeof(HashSet<>))]
-#if NETCOREAPP
-        [DynamicDependency(nameof(ImmutableArray<>.Builder.Count), typeof(ImmutableArray<>.Builder))]
-        [DynamicDependency(nameof(ImmutableHashSet<>.Builder.Count), typeof(ImmutableHashSet<>.Builder))]
-#endif
-        [DynamicDependency(nameof(StringDictionary.Count), typeof(StringDictionary))]
-        internal static int Count([NoEnumeration]this IEnumerable collection)
-        {
-            if (collection is ICollection c)
-                return c.Count;
-            PropertyAccessor? property = GetProperty(collection.GetType(), "Count");
-            if (property == null)
-                Throw.InvalidOperationException(Res.ReflectionInstancePropertyDoesNotExist("Count", collection.GetType()));
-            return (int)property.Get(collection)!;
-        }
-
-        [RequiresUnreferencedCode("GetProperty")]
-        [DynamicDependency(nameof(List<>.Capacity), typeof(List<>))]
-        [DynamicDependency(nameof(CircularList<>.Capacity), typeof(CircularList<>))]
-        [DynamicDependency(nameof(SortedList<,>.Capacity), typeof(SortedList<,>))]
-        [DynamicDependency(nameof(SortedList.Capacity), typeof(SortedList))]
-        [DynamicDependency(nameof(CircularSortedList<,>.Capacity), typeof(CircularSortedList<,>))]
-        [DynamicDependency(nameof(ArrayList.Capacity), typeof(ArrayList))]
-#if NET9_0_OR_GREATER
-        [DynamicDependency(nameof(OrderedDictionary<,>.Capacity), typeof(OrderedDictionary<,>))]
-#endif
-#if NETCOREAPP
-        [DynamicDependency(nameof(ImmutableArray<>.Builder.Capacity), typeof(ImmutableArray<>.Builder))]
-#endif
-        internal static int Capacity([NoEnumeration]this IEnumerable collection)
-        {
-            PropertyAccessor? property = GetProperty(collection.GetType(), "Capacity");
-            if (property == null)
-                Throw.InvalidOperationException(Res.ReflectionInstancePropertyDoesNotExist("Capacity", collection.GetType()));
-            return (int)property.Get(collection)!;
-        }
-
         [RequiresUnreferencedCode("GetFieldValueOrDefault")]
         internal static bool IsCaseInsensitive([NoEnumeration]this IEnumerable collection)
             => GetFieldValueOrDefault<bool>(collection, false, "caseInsensitive"); // HybridDictionary
@@ -1152,77 +1107,6 @@ namespace KGySoft.Reflection
             Debug.Assert(collection.GetType().IsGenericTypeOf(typeof(ThreadSafeHashSet<>)) || collection.GetType().IsGenericTypeOf(typeof(ThreadSafeDictionary<,>)));
             return (bool)GetFieldValue(collection, "bitwiseAndHash")!; // ThreadSafeHashSet<T>, ThreadSafeDictionary<TKey, TValue>
         }
-
-        [RequiresUnreferencedCode("GetProperty, GetField")]
-        [DynamicDependency(nameof(HashSet<>.Comparer), typeof(HashSet<>))]
-        [DynamicDependency(nameof(ThreadSafeHashSet<>.Comparer), typeof(ThreadSafeHashSet<>))]
-#if !NET35
-        [DynamicDependency(nameof(SortedSet<>.Comparer), typeof(SortedSet<>))]
-#endif
-        [DynamicDependency(nameof(Dictionary<,>.Comparer), typeof(Dictionary<,>))]
-        [DynamicDependency(nameof(SortedList<,>.Comparer), typeof(SortedList<,>))]
-        [DynamicDependency(nameof(SortedDictionary<,>.Comparer), typeof(SortedDictionary<,>))]
-        [DynamicDependency(nameof(CircularSortedList<,>.Comparer), typeof(CircularSortedList<,>))]
-#if NET6_0_OR_GREATER
-        [DynamicDependency(nameof(ConcurrentDictionary<,>.Comparer), typeof(ConcurrentDictionary<,>))]
-#elif !NET35
-        [DynamicDependency("_comparer", typeof(ConcurrentDictionary<,>))]
-#endif
-        [DynamicDependency(nameof(ThreadSafeDictionary<,>.Comparer), typeof(ThreadSafeDictionary<,>))]
-        [DynamicDependency(nameof(AllowNullDictionary<,>.Comparer), typeof(AllowNullDictionary<,>))]
-#if NET9_0_OR_GREATER
-        [DynamicDependency(nameof(OrderedDictionary<,>.Comparer), typeof(OrderedDictionary<,>))]
-#endif
-        [DynamicDependency("EqualityComparer", typeof(Hashtable))]
-        [DynamicDependency("comparer", typeof(SortedList))]
-        [DynamicDependency("comparer", typeof(ListDictionary))]
-        [DynamicDependency("_comparer", typeof(OrderedDictionary))]
-        [DynamicDependency(nameof(StringKeyedDictionary<>.Comparer), typeof(StringKeyedDictionary<>))]
-#if NETCOREAPP
-        [DynamicDependency(nameof(ImmutableHashSet<>.KeyComparer), typeof(ImmutableHashSet<>))]
-        [DynamicDependency(nameof(ImmutableHashSet<>.Builder.KeyComparer), typeof(ImmutableHashSet<>.Builder))]
-        [DynamicDependency(nameof(ImmutableSortedSet<>.KeyComparer), typeof(ImmutableSortedSet<>))]
-        [DynamicDependency(nameof(ImmutableSortedSet<>.Builder.KeyComparer), typeof(ImmutableSortedSet<>.Builder))]
-        [DynamicDependency(nameof(ImmutableDictionary<,>.KeyComparer), typeof(ImmutableDictionary<,>))]
-        [DynamicDependency(nameof(ImmutableDictionary<,>.Builder.KeyComparer), typeof(ImmutableDictionary<,>.Builder))]
-        [DynamicDependency(nameof(ImmutableSortedDictionary<,>.KeyComparer), typeof(ImmutableSortedDictionary<,>))]
-        [DynamicDependency(nameof(ImmutableSortedDictionary<,>.Builder.KeyComparer), typeof(ImmutableSortedDictionary<,>.Builder))]
-#endif
-#if NET8_0_OR_GREATER
-        [DynamicDependency(nameof(FrozenSet<>.Comparer), typeof(FrozenSet<>))]
-        [DynamicDependency(nameof(FrozenDictionary<,>.Comparer), typeof(FrozenDictionary<,>))]
-#endif
-        internal static object? GetComparer([NoEnumeration]this IEnumerable collection)
-        {
-            // 1.) By Comparer/EqualityComparer/KeyComparer property
-            Type type = collection.GetType();
-            PropertyAccessor? property =  GetProperty(type, type.Name switch
-            {
-                nameof(Hashtable) => "EqualityComparer",
-                "ImmutableHashSet`1" or "ImmutableSortedSet`1" or "ImmutableDictionary`2" or "ImmutableSortedDictionary`2" or "Builder" => "KeyComparer",
-                _ => "Comparer" // Dictionary<TKey, TValue>, HashSet<T>, SortedSet<T>, SortedList<TKey, TValue>, SortedDictionary<TKey, TValue>, CircularSortedList<TKey, TValue>, ThreadSafeHashSet<T>, ThreadSafeDictionary<TKey, TValue>, StringKeyedDictionary<TValue>
-            }); 
-
-            if (property != null)
-                return property.Get(collection);
-
-            // 2.) By *comparer* field
-            FieldAccessor? field = GetField(type, null, "comparer");
-            if (field != null)
-                return field.Get(collection); // SortedList, ListDictionary, OrderedDictionary, ConcurrentDictionary (< .NET 6)
-
-            return Throw.SerializationException<object>(Res.ReflectionInstanceFieldDoesNotExist("comparer", type));
-        }
-
-        [RequiresUnreferencedCode("GetPropertyValue")]
-#if NETCOREAPP
-        [DynamicDependency(nameof(ImmutableDictionary<,>.ValueComparer), typeof(ImmutableDictionary<,>))]
-        [DynamicDependency(nameof(ImmutableDictionary<,>.Builder.ValueComparer), typeof(ImmutableDictionary<,>.Builder))]
-        [DynamicDependency(nameof(ImmutableSortedDictionary<,>.ValueComparer), typeof(ImmutableSortedDictionary<,>))]
-        [DynamicDependency(nameof(ImmutableSortedDictionary<,>.Builder.ValueComparer), typeof(ImmutableSortedDictionary<,>.Builder))]
-#endif
-        internal static object? GetValueComparer([NoEnumeration]this IEnumerable collection)
-            => GetPropertyValue(collection, "ValueComparer");
 
         #endregion
 
@@ -1376,6 +1260,18 @@ namespace KGySoft.Reflection
             if (property == null)
                 Throw.InvalidOperationException(Res.ReflectionInstancePropertyDoesNotExist(propertyName, instance.GetType()));
             return property.Get(instance);
+        }
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        [RequiresUnreferencedCode("GetProperty")]
+        internal static bool TryGetPropertyValue(object instance, string propertyName, out object? value)
+        {
+            value = null;
+            PropertyAccessor? property = GetProperty(instance.GetType(), propertyName);
+            if (property == null)
+                return false;
+            value = property.Get(instance);
+            return true;
         }
 
         [RequiresUnreferencedCode("GetProperty")]

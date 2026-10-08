@@ -1400,8 +1400,8 @@ namespace KGySoft.Serialization.Binary
 #endif
 
                 // V. Other collection
-                // 1. Obtaining the elements to write. Handles special cases such as DictionaryEntry, KeyValuePair, ArraySegment, etc.
-                IEnumerable collection = serInfo.GetCollectionToSerialize(obj);
+                // 1. Obtaining the elements to write. Handles special cases such as DictionaryEntry, KeyValuePair, PriorityQueue, etc.
+                IEnumerable collection = serInfo.GetCollectionToSerialize?.Invoke(obj, serInfo.Info) ?? (IEnumerable)obj;
 
                 // 2. Write specific properties
                 if (serInfo.WriteSpecificProperties(bw, collection, this))
