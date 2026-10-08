@@ -1321,7 +1321,7 @@ namespace KGySoft.CoreLibraries
 #if NET6_0_OR_GREATER
             private static object GenerateDateOnly(ref GeneratorContext context) => DateOnly.FromDateTime((DateTime)GenerateDateTime(ref context));
             private static object GenerateTimeOnly(ref GeneratorContext context) => NextTimeOnly(context.Random);
-            private static object GenerateNFloat(ref GeneratorContext context) => (NFloat)(IntPtr.Size == 4 ? (float)GenerateSingle(ref context) : (double)GenerateDouble(ref context));
+            private static object GenerateNFloat(ref GeneratorContext context) => IntPtr.Size == 4 ? new NFloat((float)GenerateSingle(ref context)) : new NFloat((double)GenerateDouble(ref context));
 #endif
 
 #if NET7_0_OR_GREATER

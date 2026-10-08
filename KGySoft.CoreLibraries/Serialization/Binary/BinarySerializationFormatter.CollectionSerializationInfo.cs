@@ -87,8 +87,7 @@ namespace KGySoft.Serialization.Binary
                     wrappedCollection = obj;
                     Count = (int)Accessors.GetPropertyValue(obj, "Count")!;
                     asEnumerable = toCollection.Invoke(obj);
-                    if ((info & CollectionInfo.HasCapacity) != 0)
-                        Capacity = (int)Accessors.GetPropertyValue(obj, "Capacity")!;
+                    Capacity = (info & CollectionInfo.HasCapacity) != 0 ? (int)Accessors.GetPropertyValue(obj, "Capacity")! : Count;
                     if ((info & CollectionInfo.HasComparer) != 0)
                         Comparer = Accessors.GetPropertyValue(obj, "Comparer")!;
                 }
@@ -156,14 +155,23 @@ namespace KGySoft.Serialization.Binary
             [UnconditionalSuppressMessage("TrimAnalysis", "IL2070:TypeDynamicallyAccessedMemberTypesAnnotationMismatch", Justification = "See the [DynamicDependency] attributes")]
             internal static readonly CollectionSerializationInfo PriorityQueue = new CollectionSerializationInfo
             {
+                // NOTE: a public PriorityQueue<,>.Capacity property has only been added in .NET10. For binary compatibility, storing capacity even in lower versions.
                 Info = CollectionInfo.IsGeneric | CollectionInfo.IsDictionary | CollectionInfo.HasCapacity | CollectionInfo.HasComparer | CollectionInfo.ComparerUsesSecondArgument,
                 CtorArguments = [CollectionCtorArguments.Capacity, CollectionCtorArguments.Comparer],
                 GetCollectionToSerialize =
                     [DynamicDependency(nameof(PriorityQueue<,>.Count), typeof(PriorityQueue<,>))]
+#if NET10_0_OR_GREATER
                     [DynamicDependency(nameof(PriorityQueue<,>.Capacity), typeof(PriorityQueue<,>))]
+#endif
                     [DynamicDependency(nameof(PriorityQueue<,>.Comparer), typeof(PriorityQueue<,>))]
                     [DynamicDependency(nameof(PriorityQueue<,>.UnorderedItems), typeof(PriorityQueue<,>))]
-                    (o, info) => new CollectionWrapper(o, info, queue =>
+                    (o, info) => new CollectionWrapper(o,
+#if NET10_0_OR_GREATER
+                        info,
+#else
+                        info & ~CollectionInfo.HasCapacity,
+#endif
+                        queue =>
                     {
                         var items = (IEnumerable)Accessors.GetPropertyValue(queue, nameof(PriorityQueue<,>.UnorderedItems))!;
                         return items.Cast<ITuple>().Select(t => new DictionaryEntry(t[0]!, t[1]));

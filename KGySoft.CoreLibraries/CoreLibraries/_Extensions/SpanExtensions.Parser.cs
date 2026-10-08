@@ -508,11 +508,30 @@ namespace KGySoft.CoreLibraries
 
                 if (typeof(T) == typeof(NFloat))
                 {
+#if NET7_0_OR_GREATER
                     if (NFloat.TryParse(s, floatStyle, culture, out NFloat result))
                     {
                         value = (T)(object)result;
                         return true;
                     }
+#else
+                    if (IntPtr.Size == 4)
+                    {
+                        if (Single.TryParse(s, floatStyle, culture, out float result))
+                        {
+                            value = (T)(object)new NFloat(result);
+                            return true;
+                        }
+                    }
+                    else
+                    {
+                        if (Double.TryParse(s, floatStyle, culture, out double result))
+                        {
+                            value = (T)(object)new NFloat(result);
+                            return true;
+                        }
+                    }
+#endif
                 }
 #endif
 
@@ -1022,11 +1041,30 @@ namespace KGySoft.CoreLibraries
 
             private static bool TryParseNFloat(ReadOnlySpan<char> s, CultureInfo culture, [MaybeNullWhen(false)]out object value)
             {
+#if NET7_0_OR_GREATER
                 if (NFloat.TryParse(s, floatStyle, culture, out NFloat result))
                 {
                     value = result;
                     return true;
                 }
+#else
+                if (IntPtr.Size == 4)
+                {
+                    if (Single.TryParse(s, floatStyle, culture, out float result))
+                    {
+                        value = new NFloat(result);
+                        return true;
+                    }
+                }
+                else
+                {
+                    if (Double.TryParse(s, floatStyle, culture, out double result))
+                    {
+                        value = new NFloat(result);
+                        return true;
+                    }
+                }
+#endif
 
                 value = null;
                 return false;

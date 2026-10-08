@@ -3017,9 +3017,9 @@ namespace KGySoft.CoreLibraries
 #endif
 #if NET6_0_OR_GREATER
             if (typeof(T) == typeof(NFloat))
-                return (T)(object)(NFloat)(settings?.AllowNegativeValues == true
-                    ? IntPtr.Size == 4 ? DoGetNextSingle(random, Single.MinValue, Single.MaxValue, settings.FloatScale) : DoGetNextDouble(random, Double.MinValue, Double.MaxValue, settings.FloatScale)
-                    : IntPtr.Size == 4 ? DoGetNextSingle(random, Single.MaxValue, settings?.FloatScale ?? FloatScale.ForceLogarithmic) : DoGetNextDouble(random, Double.MaxValue, settings?.FloatScale ?? FloatScale.ForceLogarithmic));
+                return (T)(object)(settings?.AllowNegativeValues == true
+                    ? IntPtr.Size == 4 ? new NFloat(DoGetNextSingle(random, Single.MinValue, Single.MaxValue, settings.FloatScale)) : new NFloat(DoGetNextDouble(random, Double.MinValue, Double.MaxValue, settings.FloatScale))
+                    : IntPtr.Size == 4 ? new NFloat(DoGetNextSingle(random, Single.MaxValue, settings?.FloatScale ?? FloatScale.ForceLogarithmic)) : new NFloat(DoGetNextDouble(random, Double.MaxValue, settings?.FloatScale ?? FloatScale.ForceLogarithmic)));
 #endif
 #if NET11_0_OR_GREATER
             if (typeof(T) == typeof(BFloat16))

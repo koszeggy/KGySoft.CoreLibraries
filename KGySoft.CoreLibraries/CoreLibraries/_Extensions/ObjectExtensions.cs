@@ -593,7 +593,7 @@ namespace KGySoft.CoreLibraries
 #if NET6_0_OR_GREATER
                 DateOnly d => d.ToString("O", culture),
                 TimeOnly t => t.ToString("O", culture),
-                NFloat nf => nf.ToString("R", culture),
+                NFloat nf => nf.Value.ToString("R", culture),
 #endif
 #if NET11_0_OR_GREATER
                 // NOTE: no need to add Decimal32/64/128 here, as for DecimalIeee754 types the default and R formats are the same
