@@ -429,6 +429,7 @@ namespace KGySoft.Serialization.Binary
                 
                 internal readonly int TotalLength;
                 internal Dictionary<object, UsageReferences>? ObjectsBeingDeserialized;
+                internal bool IsTrackedProxyArray;
 
                 #endregion
 
@@ -645,6 +646,7 @@ namespace KGySoft.Serialization.Binary
                         return;
                     }
 
+                    Debug.Assert(!IsTrackedProxyArray, "Multi dimensional arrays are not expected to be proxies");
                     trackedUsages.Add(new ArrayUsage(array!, indices));
                 }
 
@@ -657,7 +659,18 @@ namespace KGySoft.Serialization.Binary
                         return;
                     }
 
-                    trackedUsages.Add(new ListUsage(array!, index));
+                    if (!IsTrackedProxyArray)
+                    {
+                        trackedUsages.Add(new ListUsage(array!, index));
+                        return;
+                    }
+
+                    // proxy array: adding if item is compatible, its reference cannot be replaced anymore. Occurs for the backing array of InlineArrays, for example.
+                    if (!array!.GetType().GetElementType()!.CanAcceptValue(value))
+                        Throw.SerializationException(Res.BinarySerializationCircularIObjectReferenceCollection(descriptor.GetTypeToCreate()));
+
+                    array!.SetValue(value, index);
+                    trackedUsages.CanBeReplaced = false;
                 }
 
                 #endregion
@@ -1344,17 +1357,18 @@ namespace KGySoft.Serialization.Binary
             [SecurityCritical]
             [RequiresDynamicCode(BinarySerializer.RequiresDynamicCodeMessage)]
             [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
-            private Array CreateArray(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor)
+            private Array CreateArray(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor, bool isProxyArray = false)
             {
                 // using a builder to prevent possible OutOfMemoryException attacks in SafeMode
                 var builder = new ArrayBuilder(br, descriptor, SafeMode);
                 object arrayProxy = builder.ArrayProxy;
 
                 // if the builder uses a proxy, then the references of the array must be tracked because it will be replaced in the end
-                bool trackUsages = addToCache && arrayProxy is not Array && descriptor.CanHaveRecursion;
+                bool trackUsages = (addToCache && arrayProxy is not Array || isProxyArray) && descriptor.CanHaveRecursion;
                 UsageReferences? usages = null;
                 if (trackUsages)
                     ObjectsBeingDeserialized.Add(arrayProxy, usages = []);
+                builder.IsTrackedProxyArray = trackUsages;
                 builder.ObjectsBeingDeserialized = objectsBeingDeserialized; // using the field here is intended so no unnecessary instance is created
 
                 int id = 0;
@@ -1461,7 +1475,7 @@ namespace KGySoft.Serialization.Binary
                 if (trackUsages)
                     ObjectsBeingDeserialized.Add(resultProxy!, usages = []);
                 
-                backingArray = CreateArray(br, addArrayToCache, descriptor);
+                backingArray = CreateArray(br, addArrayToCache, descriptor, !descriptor.IsBackingArrayActuallyStored);
 
                 // creating the actual result
                 result = createFinalResultCallback.Invoke(br, type, backingArray);
@@ -1534,8 +1548,7 @@ namespace KGySoft.Serialization.Binary
             [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private object CreateCollection(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor)
             {
-                DataTypes dataType = descriptor.CollectionDataType;
-                CollectionSerializationInfo serInfo = serializationInfo[dataType];
+                CollectionSerializationInfo serInfo = serializationInfo[descriptor.UnderlyingCollectionDataType];
                 object result = serInfo.InitializeCollection(br, addToCache, descriptor, this, SafeMode, out int count, out int id);
 
                 if (serInfo.IsComparer)

@@ -965,6 +965,7 @@ namespace KGySoft.Serialization.Binary
             [RequiresUnreferencedCode("IsManaged, CopyManagedItem")]
             private static object ObjectListToSingleTypeTuple(Type type, object list)
             {
+                type = Nullable.GetUnderlyingType(type) ?? type;
                 Debug.Assert(!RuntimeFeature.IsDynamicCodeSupported && type.IsValueType && type.IsGenericType);
                 Type elementType = type.GenericTypeArguments[0];
                 var items = (List<object?>)list;

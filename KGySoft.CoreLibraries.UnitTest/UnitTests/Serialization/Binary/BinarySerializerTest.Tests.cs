@@ -1594,7 +1594,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new InlineArray3<string>(), // reference element type
                 new InlineArray4<uint>(),
                 new InlineArray5<decimal>(), // non-primitive unmanaged value element type
-                new InlineArray6<DictionaryEntry>(), // managed value element type
+#if AOT
+                new InlineArray6<ConsoleColor>(), // non-primitive unmanaged value element type 
+#else
+                new InlineArray6<DictionaryEntry>(), // managed value element type 
+#endif
                 new InlineArray7<decimal?>(), // nullable value element type
                 new InlineArray8<ushort>(),
                 new InlineArray9<byte>(),
@@ -1620,7 +1624,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             referenceObjects[^8].As<StrongBox<InlineArray9<byte>>>().Value[^1] = 9; // InlineArray9<byte>
             referenceObjects[^9].As<StrongBox<Guid>>().Value = Guid.NewGuid(); // InlineArray8<ushort>
             referenceObjects[^10].As<StrongBox<InlineArray7<decimal?>>>().Value[^1] = Decimal.MaxValue; // InlineArray7<decimal?>
+#if AOT
+            referenceObjects[^11].As<StrongBox<InlineArray6<ConsoleColor>>>().Value[^1] = ConsoleColor.Blue; // InlineArray6<ConsoleColor>
+#else
             referenceObjects[^11].As<StrongBox<InlineArray6<DictionaryEntry>>>().Value[^1] = new DictionaryEntry(typeof(int), DBNull.Value); // InlineArray6<DictionaryEntry> - NOTE: using singletons in DictionaryEntry to help the comparison by raw bytes
+#endif
             referenceObjects[^12].As<StrongBox<InlineArray5<decimal>>>().Value[^1] = 1.2345m; // InlineArray5<decimal>
             referenceObjects[^13].As<StrongBox<Guid>>().Value = Guid.NewGuid(); // InlineArray4<uint>
             referenceObjects[^14].As<StrongBox<InlineArray3<string>>>().Value[^1] = "abc"; // InlineArray3<string>

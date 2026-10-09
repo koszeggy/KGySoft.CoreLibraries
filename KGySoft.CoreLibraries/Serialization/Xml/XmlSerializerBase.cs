@@ -307,7 +307,7 @@ namespace KGySoft.Serialization.Xml
                     _ => "Comparer" // Dictionary<TKey, TValue>, HashSet<T>, SortedSet<T>, SortedList<TKey, TValue>, SortedDictionary<TKey, TValue>, CircularSortedList<TKey, TValue>, ThreadSafeHashSet<T>, ThreadSafeDictionary<TKey, TValue>, StringKeyedDictionary<TValue>
                 };
 
-                if (Accessors.TryGetPropertyValue(type, propertyName, out object? comparer))
+                if (Accessors.TryGetPropertyValue(collection, propertyName, out object? comparer))
                     return comparer;
 
                 // 2.) By *comparer* field
@@ -532,7 +532,7 @@ namespace KGySoft.Serialization.Xml
             _ => collectionGenericArgument is null ? ComparerType.Unknown
                 : Equals(comparer, typeof(EqualityComparer<>).GetPropertyValue(collectionGenericArgument, nameof(EqualityComparer<>.Default)))
                     || Equals(comparer, typeof(Comparer<>).GetPropertyValue(collectionGenericArgument, nameof(Comparer<>.Default))) ? ComparerType.Default
-                : Equals(comparer, typeof(EnumComparer<>).GetPropertyValue(collectionGenericArgument, nameof(EnumComparer<>.Comparer))) ? ComparerType.EnumComparer
+                : collectionGenericArgument.IsEnum && Equals(comparer, typeof(EnumComparer<>).GetPropertyValue(collectionGenericArgument, nameof(EnumComparer<>.Comparer))) ? ComparerType.EnumComparer
                 : ComparerType.Unknown
         };
 

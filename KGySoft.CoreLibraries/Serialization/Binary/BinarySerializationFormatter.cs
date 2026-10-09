@@ -132,6 +132,7 @@ using KGySoft.Serialization.Xml;
  *    - To provide AOT compatibility, always decorate GetSpecificAddMethod, Write/RestoreSpecificPropertiesCallback and other callbacks by [DynamicDependency]
  * 3. If type is not abstract add it to supportedCollections
  *    If the added data type is abstract add the needed logic to DetermineSpecialSupport.
+ *    - Maintain [DynamicDependency] on supportedCollections
  * 4. Add type to DataTypeDescriptor.GetCollectionType (even abstract types) - mind groups
  *    - If collection has a known fixed size and is deserialized by a backing array then DataTypeDescriptor.FixedItemsSize might be needed to adjusted, too.
  * 5. For special collections, if needed
@@ -2357,6 +2358,9 @@ namespace KGySoft.Serialization.Binary
         [DynamicDependency(DynamicallyAccessedMemberTypes.NonPublicConstructors, typeof(ImmutableArray))]
         [DynamicDependency(DynamicallyAccessedMemberTypes.NonPublicConstructors, typeof(ImmutableArray<>.Builder))]
 #endif
+#if NET6_0_OR_GREATER
+        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(PriorityQueue<,>))]
+#endif
         private static readonly Dictionary<Type, DataTypes> supportedCollections = new()
         {
             // Array is not here because that is an abstract type. Arrays are handled separately.
@@ -2471,10 +2475,7 @@ namespace KGySoft.Serialization.Binary
             { typeof(Memory<>), DataTypes.Memory },
             { typeof(ReadOnlyMemory<>), DataTypes.ReadOnlyMemory },
 #endif
-#if NET11_0_OR_GREATER
-            { typeof(Complex<>), DataTypes.ComplexGeneric },
-            { typeof(Argb<>), DataTypes.Argb },
-            { typeof(Rgba<>), DataTypes.Rgba },
+#if NET10_0_OR_GREATER
             { typeof(InlineArray2<>), DataTypes.InlineArray2 },
             { typeof(InlineArray3<>), DataTypes.InlineArray3 },
             { typeof(InlineArray4<>), DataTypes.InlineArray4 },
@@ -2490,6 +2491,11 @@ namespace KGySoft.Serialization.Binary
             { typeof(InlineArray14<>), DataTypes.InlineArray14 },
             { typeof(InlineArray15<>), DataTypes.InlineArray15 },
             { typeof(InlineArray16<>), DataTypes.InlineArray16 },
+	#endif
+#if NET11_0_OR_GREATER
+            { typeof(Complex<>), DataTypes.ComplexGeneric },
+            { typeof(Argb<>), DataTypes.Argb },
+            { typeof(Rgba<>), DataTypes.Rgba },
 #endif
         };
 
