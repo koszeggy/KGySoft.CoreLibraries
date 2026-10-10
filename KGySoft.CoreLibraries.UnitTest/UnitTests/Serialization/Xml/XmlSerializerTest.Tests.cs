@@ -628,11 +628,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // BinarySerializableStruct, NonSerializableStruct
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // BinarySerializableStruct, NonSerializableStruct
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); //  NonSerializableStruct
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // NonSerializableStruct
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures, safeMode: XmlSafeMode.Unsafe); //  NonSerializableStruct
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures, safeMode: XmlSafeMode.Unsafe); // NonSerializableStruct
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures | XmlSerializationOptions.OmitCrcAttribute); // BinarySerializableStruct, NonSerializableStruct
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures | XmlSerializationOptions.OmitCrcAttribute); // BinarySerializableStruct, NonSerializableStruct
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures | XmlSerializationOptions.OmitCrcAttribute, safeMode: XmlSafeMode.Unsafe); // BinarySerializableStruct, NonSerializableStruct
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures | XmlSerializationOptions.OmitCrcAttribute, safeMode: XmlSafeMode.Unsafe); // BinarySerializableStruct, NonSerializableStruct
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); // everything
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback); // every element
@@ -656,11 +656,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // BinarySerializableStruct, NonSerializableStruct
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback); // BinarySerializableStruct, NonSerializableStruct
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); //  NonSerializableStruct
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // NonSerializableStruct
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures, safeMode: XmlSafeMode.Unsafe); //  NonSerializableStruct
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures, safeMode: XmlSafeMode.Unsafe); // NonSerializableStruct
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures | XmlSerializationOptions.OmitCrcAttribute); // BinarySerializableStruct, NonSerializableStruct
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures | XmlSerializationOptions.OmitCrcAttribute); // BinarySerializableStruct, NonSerializableStruct
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures | XmlSerializationOptions.OmitCrcAttribute, safeMode: XmlSafeMode.Unsafe); // BinarySerializableStruct, NonSerializableStruct
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures | XmlSerializationOptions.OmitCrcAttribute, safeMode: XmlSafeMode.Unsafe); // BinarySerializableStruct, NonSerializableStruct
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, safeMode: XmlSafeMode.Medium); // everything
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback, safeMode: XmlSafeMode.Medium); // every element
@@ -895,13 +895,13 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 
 #if !(AOT && NETCOREAPP3_0_OR_GREATER && !NET9_0_OR_GREATER) // AOT .NET 9-: Could not determine the managed size of type 'KGySoft.CoreLibraries.UnitTests.Serialization.Xml.XmlSerializerTest+SystemSerializableStruct'.
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // as content, SystemSerializableStruct; otherwise, all
-                | XmlSerializationOptions.CompactSerializationOfStructures); // as content, BinarySerializableStruct, NonSerializableStruct; otherwise, all
+                | XmlSerializationOptions.CompactSerializationOfStructures, safeMode: XmlSafeMode.Unsafe); // as content, BinarySerializableStruct, NonSerializableStruct; otherwise, all
 #endif
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // SystemSerializableStruct
-                | XmlSerializationOptions.CompactSerializationOfStructures); // BinarySerializableStruct, NonSerializableStruct
+                | XmlSerializationOptions.CompactSerializationOfStructures, safeMode: XmlSafeMode.Unsafe); // BinarySerializableStruct, NonSerializableStruct
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // SystemSerializableStruct
-                | XmlSerializationOptions.CompactSerializationOfStructures); // // BinarySerializableStruct, NonSerializableStruct
+                | XmlSerializationOptions.CompactSerializationOfStructures, safeMode: XmlSafeMode.Unsafe); // // BinarySerializableStruct, NonSerializableStruct
 
             // these types cannot be serialized by system serializer
             referenceObjects =
@@ -928,8 +928,8 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback);
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // non-null array elements
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // non-null array elements
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures, safeMode: XmlSafeMode.Unsafe); // non-null array elements
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures, safeMode: XmlSafeMode.Unsafe); // non-null array elements
         }
 
         [Test]
@@ -1015,14 +1015,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             KGySerializeObject(referenceObjects, XmlSerializationOptions.None);
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.None);
 
-            KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // NonSerializableStruct
-            KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures); // NonSerializableStruct
+            KGySerializeObject(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures, safeMode: XmlSafeMode.Unsafe); // NonSerializableStruct
+            KGySerializeObjects(referenceObjects, XmlSerializationOptions.CompactSerializationOfStructures, safeMode: XmlSafeMode.Unsafe); // NonSerializableStruct
 
 #if !(AOT && NETCOREAPP3_0_OR_GREATER && !NET9_0_OR_GREATER) // AOT .NET 9-: Could not determine the managed size of type 'KGySoft.CoreLibraries.UnitTests.Serialization.Xml.XmlSerializerTest+NonSerializableStruct'.
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // everything
-                | XmlSerializationOptions.CompactSerializationOfStructures); // nothing
+                | XmlSerializationOptions.CompactSerializationOfStructures, safeMode: XmlSafeMode.Unsafe); // nothing
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // as content, non-structs; otherwise everything
-                | XmlSerializationOptions.CompactSerializationOfStructures); // as content, NonSerializableStruct; otherwise, nothing
+                | XmlSerializationOptions.CompactSerializationOfStructures, safeMode: XmlSafeMode.Unsafe); // as content, NonSerializableStruct; otherwise, nothing
 #endif
 
             // These collections cannot be serialized with system serializer
@@ -1045,15 +1045,15 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback, expectedTypes: expectedTypes); // BinarySerializableStruct, NonSerializableStruct, SystemSerializableStruct
 
             KGySerializeObject(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // SystemSerializableStruct
-                | XmlSerializationOptions.CompactSerializationOfStructures, expectedTypes: expectedTypes); // BinarySerializableStruct, NonSerializableStruct
+                | XmlSerializationOptions.CompactSerializationOfStructures, safeMode: XmlSafeMode.Unsafe, expectedTypes: expectedTypes); // BinarySerializableStruct, NonSerializableStruct
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.RecursiveSerializationAsFallback // SystemSerializableStruct
-                | XmlSerializationOptions.CompactSerializationOfStructures, expectedTypes: expectedTypes); // BinarySerializableStruct, NonSerializableStruct
+                | XmlSerializationOptions.CompactSerializationOfStructures, safeMode: XmlSafeMode.Unsafe, expectedTypes: expectedTypes); // BinarySerializableStruct, NonSerializableStruct
 
 #if !(AOT && NETCOREAPP3_0_OR_GREATER && !NET9_0_OR_GREATER) // AOT .NET 9-: Could not determine the managed size of type 'KGySoft.CoreLibraries.UnitTests.Serialization.Xml.XmlSerializerTest+SystemSerializableStruct'.
             KGySerializeObject(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // everything
-                | XmlSerializationOptions.CompactSerializationOfStructures, expectedTypes: expectedTypes); // NonSerializableStruct by the binary serializer
+                | XmlSerializationOptions.CompactSerializationOfStructures, safeMode: XmlSafeMode.Unsafe, expectedTypes: expectedTypes); // NonSerializableStruct by the binary serializer
             KGySerializeObjects(referenceObjects, XmlSerializationOptions.BinarySerializationAsFallback // as content, non-structs; otherwise everything
-                | XmlSerializationOptions.CompactSerializationOfStructures, expectedTypes:expectedTypes); // as content, structs; otherwise, nothing
+                | XmlSerializationOptions.CompactSerializationOfStructures, safeMode: XmlSafeMode.Unsafe, expectedTypes:expectedTypes); // as content, structs; otherwise, nothing
 #endif
         }
 
@@ -1681,8 +1681,11 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
 
 #if !AOT || NET9_0_OR_GREATER // in pre-.NET 8 AOT mode the compact struct serialization is not applied because nongeneric SizeOf is not reliable, and the fallback just works without throwing
             // But as a compact struct, pointer fields are not supported at all in safe mode
-            AssertThrows<ArgumentException>(() => KGySerializeObject(referenceObjects[0], XmlSerializationOptions.CompactSerializationOfStructures, safeMode: XmlSafeMode.Medium), Res.XmlSerializationValueTypeContainsReferenceOrPointerSafe(unsafeTypeStruct));
-            AssertThrows<ArgumentException>(() => KGySerializeObject(referenceObjects[0], XmlSerializationOptions.CompactSerializationOfStructures, safeMode: XmlSafeMode.Strict, expectedTypes: [unsafeTypeStruct]), Res.XmlSerializationValueTypeContainsReferenceOrPointerSafe(unsafeTypeStruct));
+            if (IsAot)
+                AssertThrows<NotSupportedException>(() => KGySerializeObject(referenceObjects[0], XmlSerializationOptions.CompactSerializationOfStructures, safeMode: XmlSafeMode.Medium), Res.XmlSerializationValueTypeSafeAot(unsafeTypeStruct));
+            else
+                AssertThrows<ArgumentException>(() => KGySerializeObject(referenceObjects[0], XmlSerializationOptions.CompactSerializationOfStructures, safeMode: XmlSafeMode.Medium), Res.XmlSerializationValueTypeContainsReferenceOrPointerSafe(unsafeTypeStruct));
+            AssertThrows<ArgumentException>(() => KGySerializeObject(referenceObjects[0], XmlSerializationOptions.CompactSerializationOfStructures, safeMode: XmlSafeMode.Strict, expectedTypes: [unsafeTypeStruct]), Res.XmlSerializationValueTypeRawSafe(unsafeTypeStruct));
 #endif
 
             int intValue = 1;

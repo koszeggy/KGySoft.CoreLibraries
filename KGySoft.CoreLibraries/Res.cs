@@ -777,9 +777,15 @@ namespace KGySoft
 
         /// <summary>The stream contains a collection of type '{0}', which is not supported on this platform.</summary>
         internal static string BinarySerializationCollectionPlatformNotSupported(string dataType) => Get("BinarySerialization_CollectionPlatformNotSupportedFormat", dataType);
-        
-        /// <summary>Value type '{0}' cannot be deserialized from raw data in safe mode because it contains references or unmanaged pointers. If the serialization stream is from a trusted source you may try to disable safe mode to attempt the deserialization with marshaling.</summary>
+
+        /// <summary>Value type '{0}' cannot be deserialized from raw data in safe mode, because it contains references or unmanaged pointers. If the serialization stream is from a trusted source you may try to disable safe mode to attempt the deserialization anyway.</summary>
         internal static string BinarySerializationValueTypeContainsReferenceOrPointerSafe(Type type) => Get("BinarySerialization_ValueTypeContainsReferenceOrPointerSafeFormat", type.GetName(TypeNameKind.LongName));
+
+        /// <summary>Value type '{0}' cannot be deserialized from raw data in safe mode. To avoid this exception in safe mode, disable the CompactSerializationOfStructures option on serialization. If the serialization stream belongs to an identical CPU architecture, you may try to enable the LegacySafeMode option instead of SafeMode.</summary>
+        internal static string BinarySerializationValueTypeRawSafe(Type type) => Get("BinarySerialization_ValueTypeRawSafeFormat", type.GetName(TypeNameKind.LongName));
+
+        /// <summary>In native AOT mode it is not supported to deserialize value type '{0}' from raw data in safe mode, because it cannot be determined if the operation is safe.</summary>
+        internal static string BinarySerializationValueTypeSafeAot(Type type) => Get("BinarySerialization_ValueTypeSafeAotFormat", type.GetName(TypeNameKind.LongName));
 
         /// <summary>In safe mode it is not supported to set pointer field '{0}.{1}' to a non-null value by default object graph deserialization.</summary>
         internal static string BinarySerializationPointerFieldSafe(Type type, string fieldName) => Get("BinarySerialization_PointerFieldSafeFormat", type.GetName(TypeNameKind.LongName), fieldName);
@@ -787,7 +793,7 @@ namespace KGySoft
         /// <summary>Type is not a simple runtime element type or generic type definition: {0}</summary>
         internal static string SerializationRootTypeExpected(Type t) => Get("Serialization_RootTypeExpectedFormat", t.GetName(TypeNameKind.LongName));
 
-        /// <summary>Could not determine the managed size of type '{0}' in a nongeneric way. In native AOT mode it requires targeting .NET 9.0 or later.</summary>
+        /// <summary>Could not determine the managed size of type '{0}' in a non-generic way. In native AOT mode it requires targeting .NET 9.0 or later.</summary>
         internal static string BinarySerializationValueTypeSizeNotAvailableAot(Type t) => Get("BinarySerialization_ValueTypeSizeNotAvailableAotFormat", t.GetName(TypeNameKind.LongName));
 
         /// <summary>In native AOT mode it is not supported to safely copy the elements of an inline array of element type {0}, because it contains managed references, and the safe access requires dynamic code.</summary>
@@ -1342,8 +1348,14 @@ namespace KGySoft
         /// <summary>Circular reference found during serialization. Object is already serialized: "{0}". To avoid circular references use DesignerSerializationVisibilityAttribute with Hidden value on members directly or indirectly reference themselves.</summary>
         internal static string XmlSerializationCircularReference(object obj) => Get("XmlSerialization_CircularReferenceFormat", obj);
 
-        /// <summary>Value type "{0}" cannot be deserialized from raw data in safe mode because it contains references or unmanaged pointers. If the XML data is from a trusted source you may try to use unsafe mode to attempt the deserialization with marshaling.</summary>
+        /// <summary>Value type "{0}" cannot be deserialized from raw data in safe mode because it contains references or unmanaged pointers. If the XML data is from a trusted source you may try to use unsafe mode to attempt the deserialization anyway.</summary>
         internal static string XmlSerializationValueTypeContainsReferenceOrPointerSafe(Type type) => Get("XmlSerialization_ValueTypeContainsReferenceOrPointerSafeFormat", type.GetName(TypeNameKind.LongName));
+
+        /// <summary>Value type '{0}' cannot be deserialized from raw data in safe mode. To avoid this exception in safe mode, disable the CompactSerializationOfStructures option on serialization. If the XML data belongs to an identical CPU architecture, you might try to attempt the deserialization in non-safe mode.</summary>
+        internal static string XmlSerializationValueTypeRawSafe(Type type) => Get("XmlSerialization_ValueTypeRawSafeFormat", type.GetName(TypeNameKind.LongName));
+
+        /// <summary>In native AOT mode it is supported to deserialize value type '{0}' from raw data only in unsafe mode, because it cannot be determined if the operation is safe.</summary>
+        internal static string XmlSerializationValueTypeSafeAot(Type type) => Get("XmlSerialization_ValueTypeSafeAotFormat", type.GetName(TypeNameKind.LongName));
 
         /// <summary>Invalid comparer for collection type "{0}": {1}</summary>
         internal static string XmlSerializationInvalidComparer(Type type, string name) => Get("XmlSerialization_InvalidComparerFormat", type.GetName(TypeNameKind.LongName), name);

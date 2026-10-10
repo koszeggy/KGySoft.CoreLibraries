@@ -851,27 +851,21 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             // non-serializable types
             referenceObjects =
             [
-                new NonSerializableClass{ IntProp = 3, StringProp = "gamma" },
+                new NonSerializableClass { IntProp = 3, StringProp = "gamma" },
                 new NonSerializableSealedClass(1, "alpha") { IntProp = 1, StringProp = "alpha" },
-                new NonSerializableStruct{ Bytes3 = [1, 2, 3], IntProp = 1, Str10 = "alpha" },
+                new NonSerializableStruct { Bytes3 = [1, 2, 3], IntProp = 1, Str10 = "alpha" },
                 (new NonSerializableStruct { IntProp = 1, Str10 = "alpha", Bytes3 = [1, 2, 3] }, 1)
             ];
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures);
-
             expectedTypes = GetExpectedTypes(referenceObjects);
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.SafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes, expectedTypes: expectedTypes);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.SafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes, expectedTypes: expectedTypes);
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.SafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes, expectedTypes: expectedTypes);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.SafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes, expectedTypes: expectedTypes);
 
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.OmitAssemblyQualifiedNames);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.OmitAssemblyQualifiedNames);
-
-            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.OmitAssemblyQualifiedNames | BinarySerializationOptions.SafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes, expectedTypes: expectedTypes);
-            KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.OmitAssemblyQualifiedNames | BinarySerializationOptions.SafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes, expectedTypes: expectedTypes);
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.OmitAssemblyQualifiedNames | BinarySerializationOptions.SafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes, expectedTypes: expectedTypes);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.OmitAssemblyQualifiedNames | BinarySerializationOptions.SafeMode | BinarySerializationOptions.AllowNonSerializableExpectedCustomTypes, expectedTypes: expectedTypes);
         }
 
         [Test]
@@ -3277,8 +3271,10 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             AssertThrows<SerializationException>(() => KGySerializeObject(referenceObjects[1], BinarySerializationOptions.SafeMode, expectedTypes: [unsafeTypeStruct]));
 
             // But as a compact struct, pointer fields are not supported at all in safe mode
-            AssertThrows<SerializationException>(() => KGySerializeObject(referenceObjects[0], BinarySerializationOptions.LegacySafeMode | BinarySerializationOptions.CompactSerializationOfStructures), Res.BinarySerializationValueTypeContainsReferenceOrPointerSafe(unsafeTypeStruct));
-            AssertThrows<SerializationException>(() => KGySerializeObject(referenceObjects[0], BinarySerializationOptions.SafeMode | BinarySerializationOptions.CompactSerializationOfStructures, expectedTypes: [unsafeTypeStruct]), Res.BinarySerializationValueTypeContainsReferenceOrPointerSafe(unsafeTypeStruct));
+            AssertThrows<SerializationException>(() => KGySerializeObject(referenceObjects[0], BinarySerializationOptions.LegacySafeMode | BinarySerializationOptions.CompactSerializationOfStructures), IsAot
+                ? Res.BinarySerializationValueTypeSafeAot(unsafeTypeStruct)
+                : Res.BinarySerializationValueTypeContainsReferenceOrPointerSafe(unsafeTypeStruct));
+            AssertThrows<SerializationException>(() => KGySerializeObject(referenceObjects[0], BinarySerializationOptions.SafeMode | BinarySerializationOptions.CompactSerializationOfStructures, expectedTypes: [unsafeTypeStruct]), Res.BinarySerializationValueTypeRawSafe(unsafeTypeStruct));
 
             int intValue = 1;
             referenceObjects =

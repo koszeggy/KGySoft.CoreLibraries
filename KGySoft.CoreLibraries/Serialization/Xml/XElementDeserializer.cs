@@ -485,7 +485,7 @@ namespace KGySoft.Serialization.Xml
             }
 
             // e.) ValueType as binary
-            if (type != null && format == XmlSerializer.AttributeValueStructBinary && type.IsValueType)
+            if (type != null && format == XmlSerializer.AttributeValueStructBinary)
             {
                 DeserializeStructBinary(ref context);
                 result = context.Result;
@@ -569,8 +569,18 @@ namespace KGySoft.Serialization.Xml
         [RequiresUnreferencedCode(BinarySerializer.ValueTypeSerializationRequiresUnreferencedCodeMessage)]
         private void DeserializeStructBinary(ref TryDeserializeObjectContext ctx)
         {
-            if (SafeMode != XmlSafeMode.Unsafe && ctx.Type!.HasReferenceOrPointer())
+            if (!ctx.Type!.IsValueType)
+                Throw.ArgumentException(Res.BinarySerializationNotAValueType(ctx.Type));
+            if (SafeMode == XmlSafeMode.Strict)
+                Throw.ArgumentException(Res.XmlSerializationValueTypeRawSafe(ctx.Type!));
+            if (SafeMode == XmlSafeMode.Medium)
+            {
+                if (!RuntimeFeature.IsDynamicCodeSupported) // AOT: HasPointer cannot be determined for sure
+                    Throw.NotSupportedException(Res.XmlSerializationValueTypeSafeAot(ctx.Type!));
+                if (ctx.Type!.HasReferenceOrPointer())
                 Throw.ArgumentException(Res.XmlSerializationValueTypeContainsReferenceOrPointerSafe(ctx.Type!));
+            }
+
             byte[] data = Convert.FromBase64String(ctx.Element.Value);
             XAttribute? attrCrc = ctx.Element.Attribute(XmlSerializer.AttributeCrc);
             if (attrCrc != null)

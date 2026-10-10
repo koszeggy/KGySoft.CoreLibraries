@@ -154,6 +154,7 @@ namespace KGySoft.Serialization.Binary
         /// <note type="caution">Enabling this flag makes the serialization architecture-dependent in terms of endianness, auto-packing and native integer sizes.
         /// If you enable this flag, make sure you perform the serialization and deserialization on the same architecture, preferably in the same process
         /// (which is the generally recommended usage of binary serialization anyway).</note>
+        /// <para>If this flag is enabled, the deserialization might not work when <see cref="SafeMode"/> is enabled.</para>
         /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
         /// </summary>
         CompactSerializationOfStructures = 1 << 10,
@@ -218,6 +219,7 @@ namespace KGySoft.Serialization.Binary
         /// respected). With no specified expected types, this option only prevents loading assemblies during deserialization,
         /// so all the assemblies that are referred by the serialization stream must be preloaded before starting the deserialization
         /// (though this restriction can be worked around by setting a custom binder that still can load assemblies, for example).</para>
+        /// <para>This flag allows to deserialize streams containing compact raw value types produced by the <see cref="CompactSerializationOfStructures"/> flag.</para>
         /// <para>All the other restrictions of <see cref="SafeMode"/> are effective in <see cref="LegacySafeMode"/> as well.
         /// When both flags are set, the stricter <see cref="SafeMode"/> will be used.</para>
         /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>

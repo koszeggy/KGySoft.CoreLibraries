@@ -2447,8 +2447,18 @@ namespace KGySoft.Serialization.Binary
                 Type structType = Nullable.GetUnderlyingType(descriptor.Type!) ?? descriptor.Type!;
                 if (!structType.IsValueType)
                     Throw.SerializationException(Res.BinarySerializationNotAValueType(structType));
-                if (SafeMode && structType.HasReferenceOrPointer())
+                if (SafeModeStrict)
+                    Throw.SerializationException(Res.BinarySerializationValueTypeRawSafe(structType));
+                if (SafeMode)
+                {
+                    // AOT mode: HasPointer cannot be determined for sure, because the fields might have been trimmed.
+                    // Even passing the expectedTypes as SerializedType instances is not a guarantee if the user did not use typeof(), and ignored the warnings.
+                    if (!RuntimeFeature.IsDynamicCodeSupported)
+                        Throw.SerializationException(Res.BinarySerializationValueTypeSafeAot(structType));
+                    if (structType.HasReferenceOrPointer())
                     Throw.SerializationException(Res.BinarySerializationValueTypeContainsReferenceOrPointerSafe(structType));
+                }
+
                 byte[] rawData = br.ReadBytes(Read7BitInt(br));
                 object result = BinarySerializer.DeserializeValueType(structType, rawData);
                 OnDeserializing(result);

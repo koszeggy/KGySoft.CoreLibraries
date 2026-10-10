@@ -126,6 +126,7 @@ namespace KGySoft.Serialization.Xml
         /// This option affects only instances, which have no reference fields at all.</note>
         /// <note type="caution">Enabling this flag makes the serialization architecture-dependent in terms of endianness, auto-packing and native integer sizes.
         /// If you enable this flag, make sure you perform the serialization and deserialization on the same architecture, preferably in the same process.</note></para>
+        /// <para>If this flag is enabled, the deserialization might not work in safe mode deserialization.</para>
         /// <para>Default state at serialization methods: <strong>Disabled</strong></para>
         /// </summary>
         CompactSerializationOfStructures = 1 << 3,

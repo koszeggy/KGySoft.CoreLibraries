@@ -110,6 +110,8 @@
     May be a breaking change on big endian platforms when deserializing a stream produced by a previous version.
     Affects the serialization of some non-primitive types (e.g. Int128/UInt128, Vector<T>), and arrays of non-byte
     primitive types. Non-array collections of primitive types are not affected by this change.
+  ! Deserializing value types from raw binary format (produced by the CompactSerializationOfStructures option) is
+    no longer supported in safe mode.
   + New Deserialize/DeserializeFromStream/DeserializeByReader overloads where the element type of the expectedTypes
     parameter is SerializedType for better compatibility with AOT mode.
   + Supporting the NFloat type natively (.NET 6.0 and above)
@@ -124,9 +126,11 @@
   - OmitAssemblyNameOnSerialize property: Omitting the assembly name did not work if the type had been forwarded
     into the core assembly from a non-core one.
 
-+ KGySoft.Serialization.Xml namespace:
+! KGySoft.Serialization.Xml namespace:
 ======================================
-+ XmlSerializer class:
+! XmlSerializer class:
+  ! Deserializing value types from raw binary format (produced by the CompactSerializationOfStructures option) is
+    no longer supported in safe mode.
   + New Deserialize/DeserializeUnsafe/DeserializeSafe/DeserializeContent/DeserializeContentUnsafe and
     DeserializeContentSafe overloads where the element type of the expectedTypes parameter is SerializedType for
     better compatibility with AOT mode.

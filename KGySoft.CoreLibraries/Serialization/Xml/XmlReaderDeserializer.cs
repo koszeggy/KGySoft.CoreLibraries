@@ -563,7 +563,7 @@ namespace KGySoft.Serialization.Xml
             }
 
             // e.) ValueType as binary
-            if (type != null && format == XmlSerializer.AttributeValueStructBinary && type.IsValueType)
+            if (type != null && format == XmlSerializer.AttributeValueStructBinary)
             {
                 DeserializeStructBinary(ref context);
                 result = context.Result;
@@ -659,15 +659,24 @@ namespace KGySoft.Serialization.Xml
 
         [SecuritySafeCritical]
         [RequiresDynamicCode(BinarySerializer.ValueTypeSerializationRequiresDynamicCodeMessage)]
-        [RequiresUnreferencedCode(BinarySerializer.ValueTypeSerializationRequiresUnreferencedCodeMessage)]
-        private void DeserializeStructBinary(ref TryDeserializeObjectContext context)
+        private void DeserializeStructBinary(ref TryDeserializeObjectContext ctx)
         {
-            if (SafeMode != XmlSafeMode.Unsafe && context.Type!.HasReferenceOrPointer())
-                Throw.ArgumentException(Res.XmlSerializationValueTypeContainsReferenceOrPointerSafe(context.Type!));
-            string? attrCrc = context.Reader[XmlSerializer.AttributeCrc];
-            ReadToNodeType(context.Reader, XmlNodeType.Text, XmlNodeType.EndElement);
-            byte[] data = context.Reader.NodeType == XmlNodeType.Text
-                ? Convert.FromBase64String(context.Reader.Value)
+            if (!ctx.Type!.IsValueType)
+                Throw.ArgumentException(Res.BinarySerializationNotAValueType(ctx.Type));
+            if (SafeMode == XmlSafeMode.Strict)
+                Throw.ArgumentException(Res.XmlSerializationValueTypeRawSafe(ctx.Type!));
+            if (SafeMode == XmlSafeMode.Medium)
+            {
+                if (!RuntimeFeature.IsDynamicCodeSupported) // AOT: HasPointer cannot be determined for sure
+                    Throw.NotSupportedException(Res.XmlSerializationValueTypeSafeAot(ctx.Type!));
+                if (ctx.Type!.HasReferenceOrPointer())
+                    Throw.ArgumentException(Res.XmlSerializationValueTypeContainsReferenceOrPointerSafe(ctx.Type!));
+            }
+
+            string? attrCrc = ctx.Reader[XmlSerializer.AttributeCrc];
+            ReadToNodeType(ctx.Reader, XmlNodeType.Text, XmlNodeType.EndElement);
+            byte[] data = ctx.Reader.NodeType == XmlNodeType.Text
+                ? Convert.FromBase64String(ctx.Reader.Value)
                 : Reflector.EmptyArray<byte>();
             if (attrCrc != null)
             {
@@ -675,9 +684,9 @@ namespace KGySoft.Serialization.Xml
                     Throw.ArgumentException(Res.XmlSerializationCrcError);
             }
 
-            context.Result = BinarySerializer.DeserializeValueType(context.Type!, data);
+            ctx.Result = BinarySerializer.DeserializeValueType(ctx.Type!, data);
             if (data.Length > 0)
-                ReadToNodeType(context.Reader, XmlNodeType.EndElement);
+                ReadToNodeType(ctx.Reader, XmlNodeType.EndElement);
         }
 
         #endregion
