@@ -19,6 +19,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Security;
 
 using KGySoft.Reflection;
@@ -55,7 +56,7 @@ namespace KGySoft.CoreLibraries
 
             #region Internal Methods
 
-            [RequiresUnreferencedCode("IsDeepCloned may return a false negative result if a value type is mistakenly considered as an unmanaged one.")]
+            [RequiresUnreferencedCode("CreateClone")]
             [return:NotNullIfNotNull("obj")]internal static object? Clone(object? obj, Func<object, object?>? customClone)
             {
                 if (obj == null)
@@ -79,14 +80,14 @@ namespace KGySoft.CoreLibraries
 
             #region Private Methods
 
-            [RequiresUnreferencedCode("IsManaged may return a false negative result.")]
+            [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "IsManaged is not called in AOT mode.")]
             private static bool IsDeepCloned([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllFields)]Type type)
                 => !type.IsPrimitive
                 && type != Reflector.StringType
                 && !type.IsEnum
                 && !type.IsDelegate()
                 && !type.IsRuntimeType()
-                && type.IsManaged();
+                && (!RuntimeFeature.IsDynamicCodeSupported || type.IsManaged()); // in AOT mode not checking IsManaged because IsReferenceOrContainsReferences<T> may fail for internal types
 
             #endregion
 
@@ -95,7 +96,7 @@ namespace KGySoft.CoreLibraries
             #region Instance Methods
 
             [SecuritySafeCritical]
-            [RequiresUnreferencedCode("IsDeepCloned")]
+            [RequiresUnreferencedCode("CloneFields")]
             private object CreateClone(object obj, bool handleReference, bool isRoot = false)
             {
                 var type = obj.GetType();

@@ -146,7 +146,8 @@ namespace KGySoft.CoreLibraries
 #if !NET9_0_OR_GREATER
         private static LockFreeCache<Type, int>? sizeOfCache;
 #endif
-        private static LockFreeCache<(Type Type, bool IncludePointers), bool>? hasReferenceOrPointerCache;
+        private static LockFreeCache<Type, bool>? hasReferenceCache;
+        private static LockFreeCache<Type, bool>? hasPointerCache;
         private static LockFreeCache<(Type GenTypeDef, TypesKey TypeArgs), Type>? genericTypeCache;
         private static LockFreeCache<(MethodInfo GenMethodDef, TypesKey TypeArgs), MethodInfo>? genericMethodsCache;
         private static LockFreeCache<Type, ConstructorInfo?>? defaultCtorCache;
@@ -739,21 +740,27 @@ namespace KGySoft.CoreLibraries
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        [RequiresUnreferencedCode("Fields of recursively accessed complex types might be trimmed. Omitted fields may cause a false negative result in native AOT mode.")]
-        internal static bool IsManaged([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllFields)]this Type type)
+        [RequiresDynamicCode("In native AOT mode the generic RuntimeHelpers.IsReferenceOrContainsReferences<T>() is called by reflection for non-primitive types.")]
+        internal static bool IsManaged(this Type type)
         {
-            if (hasReferenceOrPointerCache == null)
-                Interlocked.CompareExchange(ref hasReferenceOrPointerCache, new LockFreeCache<(Type, bool), bool>(GetHasReferenceOrPointer, null, LockFreeCacheOptions.Profile128), null);
-            return hasReferenceOrPointerCache[(type, false)];
+            if (hasReferenceCache == null)
+                Interlocked.CompareExchange(ref hasReferenceCache, new LockFreeCache<Type, bool>(GetHasReference, null, LockFreeCacheOptions.Profile128), null);
+            return hasReferenceCache[type];
         }
 
         [MethodImpl(MethodImpl.AggressiveInlining)]
-        [RequiresUnreferencedCode("Fields of recursively accessed complex types might be trimmed. Omitted fields may cause a false negative result in native AOT mode.")]
-        internal static bool HasReferenceOrPointer([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllFields)]this Type type)
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "This method is not called in AOT mode.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2067:TargetArgumentDynamicallyAccessedMemberTypesAnnotationMismatch", Justification = "This method is not called in AOT mode.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "This method is not called in AOT mode.")]
+        internal static bool HasReferenceOrPointer(this Type type)
         {
-            if (hasReferenceOrPointerCache == null)
-                Interlocked.CompareExchange(ref hasReferenceOrPointerCache, new LockFreeCache<(Type, bool), bool>(GetHasReferenceOrPointer, null, LockFreeCacheOptions.Profile128), null);
-            return hasReferenceOrPointerCache[(type, true)];
+            Debug.Assert(RuntimeFeature.IsDynamicCodeSupported, "In AOT mode HasReferenceOrPointer should not be used");
+            if (type.IsManaged())
+                return true;
+
+            if (hasPointerCache == null)
+                Interlocked.CompareExchange(ref hasPointerCache, new LockFreeCache<Type, bool>(GetHasPointer, null, LockFreeCacheOptions.Profile16), null);
+            return hasPointerCache[type];
         }
 
         internal static IList<Delegate> GetConversions([DynamicallyAccessedMembers(DynamicallyAccessedMembers.Interfaces)]this Type sourceType,
@@ -1467,20 +1474,63 @@ namespace KGySoft.CoreLibraries
         }
 #endif
 
-        [RequiresUnreferencedCode("Even if key.Type fields are preserved, fields of recursively accessed complex types might be trimmed.")]
-        private static bool GetHasReferenceOrPointer((Type Type, bool IncludePointers) key)
+        [DynamicDependency(nameof(RuntimeHelpers.IsReferenceOrContainsReferences), typeof(RuntimeHelpers))]
+        [RequiresDynamicCode("In native AOT mode making the generic method IsReferenceOrContainsReferences<type> may fail.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+            Justification = "Though Accessors.InvokeMethod calls MakeReferenceMethod, IsReferenceOrContainsReferences<T>() has no negative constraints, just allows ref struct")]
+        private static bool GetHasReference(Type type)
         {
-            if (key.Type.IsPrimitive || !key.IncludePointers && key.Type.IsPointer() || key.Type.IsEnum)
+            if (type.IsPrimitive || type.IsEnum || type.IsPointer())
                 return false;
-            if (!key.Type.IsValueType || key.IncludePointers && key.Type.IsPointer())
+            if (!type.IsValueType)
                 return true;
 
-            FieldInfo[] fields = key.Type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
-
-            // ReSharper disable once ForCanBeConvertedToForeach - performance
-            for (var i = 0; i < fields.Length; i++)
+#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
+            try
             {
-                if (GetHasReferenceOrPointer((fields[i].FieldType, key.IncludePointers)))
+                return (bool)Accessors.InvokeMethod(typeof(RuntimeHelpers), nameof(RuntimeHelpers.IsReferenceOrContainsReferences), type)!;
+            }
+            catch (Exception e) when (!e.IsCriticalOr(RuntimeFeature.IsDynamicCodeSupported))
+            {
+                // AOT mode: calling the generic IsReferenceOrContainsReferences<T> method by reflection may fail.
+                // TODO: if it will throw because IsReferenceOrContainsReferences has a non-generic overload, simply call that one from IsManaged in an #if instead of this cached method
+                return Throw.NotSupportedException<bool>(Res.GenericMethodMissingAot($"{typeof(RuntimeHelpers)}.{nameof(RuntimeHelpers.IsReferenceOrContainsReferences)}<T>",
+                    /*lang=c#*/"""
+                                   using System.Runtime.CompilerServices;
+                                   using KGySoft.Reflection;
+                                   // [...]
+                                   _ = Reflector.MemberOf(() => RuntimeHelpers.IsReferenceOrContainsReferences<MyType>());
+                               """,
+                    type.GetName(TypeNameKind.LongName)));
+            }
+#else
+            FieldInfo[] fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+            foreach (FieldInfo field in fields)
+            {
+                if (GetHasReference(field.FieldType))
+                    return true;
+            }
+
+            return false;
+#endif
+        }
+
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2067:TargetArgumentDynamicallyAccessedMemberTypesAnnotationMismatch", Justification = "This method is not called in AOT mode.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2070:TypeDynamicallyAccessedMemberTypesAnnotationMismatch", Justification = "This method is not called in AOT mode.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode", Justification = "This method is not called in AOT mode.")]
+        private static bool GetHasPointer(Type type)
+        {
+            Debug.Assert(RuntimeFeature.IsDynamicCodeSupported, "GetHasPointer should not be called in AOT mode, because it could return a false negative result.");
+            Debug.Assert(!type.IsManaged(), "GetHasPointer is expected to be called for unmanaged types only");
+            if (type.IsPrimitive || type.IsEnum)
+                return false;
+            if (type.IsPointer())
+                return true;
+
+            FieldInfo[] fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+            foreach (FieldInfo field in fields)
+            {
+                if (GetHasPointer(field.FieldType))
                     return true;
             }
 

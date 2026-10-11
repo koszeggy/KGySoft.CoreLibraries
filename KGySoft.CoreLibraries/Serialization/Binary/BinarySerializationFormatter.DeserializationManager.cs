@@ -2440,8 +2440,8 @@ namespace KGySoft.Serialization.Binary
             }
 
             [SecurityCritical]
-            [RequiresDynamicCode(BinarySerializer.ValueTypeSerializationRequiresDynamicCodeMessage)]
-            [RequiresUnreferencedCode(BinarySerializer.ValueTypeSerializationRequiresUnreferencedCodeMessage)]
+            [RequiresDynamicCode("DeserializeValueType")]
+            [RequiresUnreferencedCode("OnDeserializing, OnDeserialized")]
             private object ReadValueType(BinaryReader br, DataTypeDescriptor descriptor)
             {
                 Type structType = Nullable.GetUnderlyingType(descriptor.Type!) ?? descriptor.Type!;
@@ -2456,7 +2456,7 @@ namespace KGySoft.Serialization.Binary
                     if (!RuntimeFeature.IsDynamicCodeSupported)
                         Throw.SerializationException(Res.BinarySerializationValueTypeSafeAot(structType));
                     if (structType.HasReferenceOrPointer())
-                    Throw.SerializationException(Res.BinarySerializationValueTypeContainsReferenceOrPointerSafe(structType));
+                        Throw.SerializationException(Res.BinarySerializationValueTypeContainsReferenceOrPointerSafe(structType));
                 }
 
                 byte[] rawData = br.ReadBytes(Read7BitInt(br));

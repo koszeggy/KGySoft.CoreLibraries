@@ -717,6 +717,7 @@ namespace KGySoft.Reflection
 
         #region CollectionExtensions
 
+        [DynamicDependency(nameof(CollectionExtensions.AddRange), typeof(CollectionExtensions))]
         [RequiresDynamicCode("InvokeMethod/GetStaticGenericMethodByName")]
         [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
             Justification = "MakeGenericMethod has RequiresUnreferencedCode because the constraints cannot be validated, but CollectionExtensions.AddRange has no constraints.")]
@@ -727,18 +728,21 @@ namespace KGySoft.Reflection
 
         #region ListExtensions
 
+        [DynamicDependency(nameof(ListExtensions.InsertRange), typeof(ListExtensions))]
         [RequiresDynamicCode("InvokeMethod/GetStaticGenericMethodByName")]
         [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
             Justification = "MakeGenericMethod has RequiresUnreferencedCode because the constraints cannot be validated, but ListExtensions.InsertRange has no constraints.")]
         internal static bool DoTryInsertRange([NoEnumeration]this IEnumerable target, Type genericArgument, int index, IEnumerable collection)
             => typeof(ListExtensions).TryInvokeMethod(nameof(ListExtensions.InsertRange), genericArgument, target, index, collection);
 
+        [DynamicDependency(nameof(ListExtensions.RemoveRange), typeof(ListExtensions))]
         [RequiresDynamicCode("InvokeMethod/GetStaticGenericMethodByName")]
         [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
             Justification = "MakeGenericMethod has RequiresUnreferencedCode because the constraints cannot be validated, but ListExtensions.RemoveRange has no constraints.")]
         internal static bool DoTryRemoveRange([NoEnumeration]this IEnumerable collection, Type genericArgument, int index, int count)
             => typeof(ListExtensions).TryInvokeMethod(nameof(ListExtensions.RemoveRange), genericArgument, collection, index, count);
 
+        [DynamicDependency(nameof(ListExtensions.ReplaceRange), typeof(ListExtensions))]
         [RequiresDynamicCode("InvokeMethod/GetStaticGenericMethodByName")]
         [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
             Justification = "MakeGenericMethod has RequiresUnreferencedCode because the constraints cannot be validated, but ListExtensions.ReplaceRange has no constraints.")]
@@ -1377,28 +1381,50 @@ namespace KGySoft.Reflection
         }
 
         /// <summary>
-        /// For unambiguous generic static methods by name that must exist. Throws an exception in AOT mode if the method is not found.
+        /// For unambiguous generic public static methods by name that must exist.
+        /// Throws an exception in AOT mode if the method is not found or the generic method cannot be created.
+        /// Note that type is not annotated by PublicMethods, because the callers are supposed to use known members, using [DynamicDependency] for the exact method.
         /// </summary>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [RequiresDynamicCode("GetStaticGenericMethodByName")]
         [RequiresUnreferencedCode("GetStaticGenericMethodByName")]
-        internal static object? InvokeMethod([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]this Type type,
-            string methodName, Type genericArgument, params object?[] parameters)
-            => GetStaticGenericMethodByName(type, genericArgument, methodName)?.Invoke(null, parameters);
-
-        /// <summary>
-        /// For unambiguous generic static methods by name. The method may be missing in AOT mode only.
-        /// All callers use it for void methods now. If a non-void method will be required, change the return value to StrongBox{object?}? and return null if the method is missing.
-        /// </summary>
-        [MethodImpl(MethodImpl.AggressiveInlining)]
-        [RequiresDynamicCode("GetStaticGenericMethodByName")]
-        [RequiresUnreferencedCode("GetStaticGenericMethodByName")]
-        internal static bool TryInvokeMethod([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]this Type type,
-            string methodName, Type genericArgument, params object?[] parameters)
+        internal static object? InvokeMethod(this Type type, string methodName, Type genericArgument, params object?[] parameters)
         {
+            // getting the method returns null in AOT mode if it was trimmed, and throws if the method was found, but the generic method could not be created
             MethodAccessor? method = GetStaticGenericMethodByName(type, genericArgument, methodName);
             if (method == null)
+                Throw.InvalidOperationException<MethodAccessor>(Res.ReflectionStaticMethodNotFound(methodName, type.DeclaringType!));
+            return method.Invoke(null, parameters);
+        }
+
+        /// <summary>
+        /// For unambiguous generic public static methods by name. The method may be missing in AOT mode only.
+        /// All callers use it for void methods now. If a non-void method will be required, change the return value to StrongBox{object?}? and return null instead of false.
+        /// Note that type is not annotated by PublicMethods, because the callers are supposed to use known members, using [DynamicDependency] for the exact method.
+        /// </summary>
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        [RequiresDynamicCode("GetStaticGenericMethodByName")]
+        [RequiresUnreferencedCode("GetStaticGenericMethodByName")]
+        internal static bool TryInvokeMethod(this Type type, string methodName, Type genericArgument, params object?[] parameters)
+        {
+            MethodAccessor? method;
+            try
+            {
+                method = GetStaticGenericMethodByName(type, genericArgument, methodName);
+
+                // the method was trimmed
+                if (method == null)
+                {
+                    Debug.Assert(!RuntimeFeature.IsDynamicCodeSupported);
+                    return false;
+                }
+            }
+            catch (Exception e) when (!e.IsCriticalOr(RuntimeFeature.IsDynamicCodeSupported))
+            {
+                // the generic method could not be created
                 return false;
+            }
+
             method.Invoke(null, parameters);
             return true;
         }
@@ -1419,22 +1445,22 @@ namespace KGySoft.Reflection
 
         /// <summary>
         /// For generic static methods by name and parameter type. All callers expect the method to exist. Throws an exception in AOT mode if the method is not found.
+        /// Note that type is not annotated by PublicMethods, because the callers either don't call this in AOT mode, or use [DynamicDependency] for the exact method.
         /// </summary>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [RequiresDynamicCode("InvokeMethod/GetStaticGenericMethodByTypes")]
         [RequiresUnreferencedCode("InvokeMethod/GetStaticGenericMethodByTypes")]
-        internal static object? InvokeMethod([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]this Type type,
-            string methodName, Type genericArgument, Type parameterType, params object?[] parameters)
+        internal static object? InvokeMethod(this Type type, string methodName, Type genericArgument, Type parameterType, params object?[] parameters)
             => InvokeMethod(type, methodName, [genericArgument], [parameterType], parameters);
 
         /// <summary>
         /// For generic static methods by name and parameter type. All callers expect the method to exist. Throws an exception in AOT mode if the method is not found.
+        /// Note that type is not annotated by PublicMethods, because the callers are supposed to use known members, using [DynamicDependency] for the exact method.
         /// </summary>
         [MethodImpl(MethodImpl.AggressiveInlining)]
         [RequiresDynamicCode("InvokeMethod/GetStaticGenericMethodByTypes")]
         [RequiresUnreferencedCode("InvokeMethod/GetStaticGenericMethodByTypes")]
-        internal static object? InvokeMethod([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]this Type type,
-            string methodName, Type genericArgument, Type[] parameterTypes, params object?[] parameters)
+        internal static object? InvokeMethod(this Type type, string methodName, Type genericArgument, Type[] parameterTypes, params object?[] parameters)
             => InvokeMethod(type, methodName, [genericArgument], parameterTypes, parameters);
 
         /// <summary>

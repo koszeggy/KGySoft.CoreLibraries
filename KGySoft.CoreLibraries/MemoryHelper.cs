@@ -62,16 +62,18 @@ namespace KGySoft
 #endif
 
 #if NET10_0_OR_GREATER
-        [RequiresDynamicCode("TryInvokeMethod")]
-        [RequiresUnreferencedCode("IsManaged, TryInvokeMethod")]
+        [DynamicDependency(nameof(SpanCopyTo), typeof(MemoryHelper))]
+        [RequiresDynamicCode("IsManaged, TryInvokeMethod")]
+        [RequiresUnreferencedCode("TryInvokeMethod")]
         internal static bool CopyManagedSpan(Type elementType, object source, object target, int count)
         {
             Debug.Assert(elementType.IsManaged());
             return Accessors.TryInvokeMethod(typeof(MemoryHelper), nameof(SpanCopyTo), elementType, source, target, count);
         }
 
-        [RequiresDynamicCode("TryInvokeMethod")]
-        [RequiresUnreferencedCode("IsManaged, TryInvokeMethod")]
+        [DynamicDependency(nameof(AssignValueInvoker), typeof(MemoryHelper))]
+        [RequiresDynamicCode("IsManaged, TryInvokeMethod")]
+        [RequiresUnreferencedCode("TryInvokeMethod")]
         internal static bool CopyManagedItem(Type type, object source, int sourceOffset, object target, int targetOffset)
         {
             Debug.Assert(type.IsManaged());

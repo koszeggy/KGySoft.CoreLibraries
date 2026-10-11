@@ -161,6 +161,14 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             Reflector.MemberOf(() => TrySerializeValueTypeGenericTest<LargeUnmanagedStruct>(default));
             Reflector.MemberOf(() => TrySerializeValueTypeGenericTest<KeyValuePair<int, int>>(default));
             Reflector.MemberOf(() => TrySerializeValueTypeGenericTest<(int, int)>(default));
+
+            Reflector.MemberOf(() => RuntimeHelpers.IsReferenceOrContainsReferences<NonSerializableStruct>()); // SerializeComplexArrays
+            Reflector.MemberOf(() => RuntimeHelpers.IsReferenceOrContainsReferences<SystemSerializableStruct>()); // SerializeComplexArrays
+            Reflector.MemberOf(() => RuntimeHelpers.IsReferenceOrContainsReferences<UnsafeStruct>()); // SerializePointers
+            Reflector.MemberOf(() => RuntimeHelpers.IsReferenceOrContainsReferences<decimal>()); // SerializeSimpleGenericCollections, SerializeValueTypeNonGenericTest
+            Reflector.MemberOf(() => RuntimeHelpers.IsReferenceOrContainsReferences<KeyValuePair<int, int>>()); // SerializeValueTypeNonGenericTest
+            Reflector.MemberOf(() => RuntimeHelpers.IsReferenceOrContainsReferences<(int, int)>()); // SerializeValueTypeNonGenericTest
+            Reflector.MemberOf(() => RuntimeHelpers.IsReferenceOrContainsReferences<LargeUnmanagedStruct>()); // SerializeValueTypeNonGenericTest
         }
 #endif
 

@@ -69,11 +69,8 @@ namespace KGySoft.Serialization.Binary
         internal const string RequiresDynamicCodeMessage = "Binary serialization may use dynamic code generation, the type of objects being processed cannot be statically discovered.";
         internal const string RequiresUnreferencedCodeMessage = "Binary serialization may not be trim compatible if natively non-supported types are serialized.";
 
-        internal const string ValueTypeSerializationRequiresDynamicCodeMessage = "Serializing value types in the non-generic way require either size calculation or marshalling, for which the code might not be available. " +
-            "In Native AOT mode try to use the generic overload instead.";
-
-        internal const string ValueTypeSerializationRequiresUnreferencedCodeMessage = "In native AOT mode the operation may unexpectedly succeed for managed types if the trimming removes fields with reference types. " +
-            "In Native AOT mode try to use the generic overload instead.";
+        internal const string ValueTypeSerializationRequiresDynamicCodeMessage = "Serializing value types in the non-generic way requires determining if the type contains references, " +
+            "as well as size calculation or marshalling, for which the code might not be available. In Native AOT mode try to use the generic overload instead.";
 
         internal const DynamicallyAccessedMemberTypes NeededMembers = DynamicallyAccessedMembers.AllConstructors // parameterless constructors, special constructors
             | DynamicallyAccessedMembers.AllFields // default object graph
@@ -836,7 +833,6 @@ namespace KGySoft.Serialization.Binary
         /// <exception cref="NotSupportedException">The method is called from a restricted <see cref="AppDomain"/> with insufficient permissions.</exception>
         [SecurityCritical]
         [RequiresDynamicCode(ValueTypeSerializationRequiresDynamicCodeMessage)]
-        [RequiresUnreferencedCode(ValueTypeSerializationRequiresUnreferencedCodeMessage)]
         public static byte[] SerializeValueType(ValueType obj)
         {
             if (obj == null!)
@@ -871,10 +867,7 @@ namespace KGySoft.Serialization.Binary
         /// <exception cref="ArgumentNullException"><paramref name="obj"/> is <see langword="null"/>.</exception>
         /// <exception cref="NotSupportedException">The method is called from a restricted <see cref="AppDomain"/> with insufficient permissions.</exception>
         [SecuritySafeCritical]
-        [RequiresUnreferencedCode(ValueTypeSerializationRequiresUnreferencedCodeMessage)]
-#if !NET9_0_OR_GREATER
-        [RequiresDynamicCode(ValueTypeSerializationRequiresDynamicCodeMessage)] // SerializeValueTypeRaw
-#endif
+        [RequiresDynamicCode(ValueTypeSerializationRequiresDynamicCodeMessage)] // IsManaged, SerializeValueTypeRaw
         public static bool TrySerializeValueType(ValueType obj, [MaybeNullWhen(false)]out byte[] result)
         {
             result = null;
@@ -1078,9 +1071,7 @@ namespace KGySoft.Serialization.Binary
         /// <br/>-or-
         /// <br/>The specified <paramref name="type"/> contains references, and it cannot be deserialized even by using the <see cref="Marshal"/> class.</exception>
         [RequiresDynamicCode(ValueTypeSerializationRequiresDynamicCodeMessage)]
-        [RequiresUnreferencedCode(ValueTypeSerializationRequiresUnreferencedCodeMessage)]
-        public static object DeserializeValueType([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]Type type, byte[] data)
-            => DeserializeValueType(type, data, 0);
+        public static object DeserializeValueType(Type type, byte[] data) => DeserializeValueType(type, data, 0);
 
         /// <summary>
         /// Deserializes a <see cref="ValueType"/> object from a byte array that was previously serialized by <see cref="SerializeValueType">SerializeValueType</see> method
@@ -1100,9 +1091,7 @@ namespace KGySoft.Serialization.Binary
         /// <br/>The specified <paramref name="type"/> contains references, and it cannot be deserialized even by using the <see cref="Marshal"/> class.</exception>
         [SecuritySafeCritical] // it wouldn't be necessarily safe in AOT mode, but this attribute is effective in .NET Framework only
         [RequiresDynamicCode(ValueTypeSerializationRequiresDynamicCodeMessage)]
-        [RequiresUnreferencedCode(ValueTypeSerializationRequiresUnreferencedCodeMessage)]
-        public static object DeserializeValueType([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor | DynamicallyAccessedMembers.AllFields)]Type type,
-            byte[] data, int offset)
+        public static object DeserializeValueType(Type type, byte[] data, int offset)
         {
             // IsNullable validates type against null as well
             if (type.IsNullable() || !type.IsValueType)
@@ -1454,7 +1443,7 @@ namespace KGySoft.Serialization.Binary
         #region Internal Methods
 
 #if NET10_0_OR_GREATER
-        [RequiresUnreferencedCode("obj.GetType().IsManaged()")] // though in DEBUG build only (Assert)
+        [RequiresDynamicCode("SerializeValueTypeRaw")]
         internal static byte[] SerializeValueTypeInternal(ValueType obj) => SerializeValueTypeRaw(obj)!;
 #endif
 
@@ -1462,9 +1451,7 @@ namespace KGySoft.Serialization.Binary
         /// This method is used to avoid calling the nongeneric SizeOf in AOT mode.
         /// </summary>
         [SecuritySafeCritical]
-#if !NET9_0_OR_GREATER
         [RequiresDynamicCode("DeserializeValueTypeRaw")]
-#endif
         [RequiresUnreferencedCode("DeserializeValueTypeRaw")]
         internal static object DeserializeValueTypeInternal([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor | DynamicallyAccessedMembers.AllFields)]Type type,
             byte[] data, int byteLength) => DeserializeValueTypeRaw(type, data, 0, byteLength);
@@ -1523,12 +1510,12 @@ namespace KGySoft.Serialization.Binary
 
         [SecurityCritical]
         [MethodImpl(MethodImpl.AggressiveInlining)]
-#if !NET9_0_OR_GREATER
-        [RequiresDynamicCode("obj.GetType().SizeOf()")]
-#endif
-        [RequiresUnreferencedCode("obj.GetType().IsManaged()")] // though in DEBUG build only (Assert)
+        [DynamicDependency(nameof(SerializeValueType), typeof(BinarySerializer))]
+        [RequiresDynamicCode("IsManaged, obj.GetType().SizeOf()")]
         [SuppressMessage("ReSharper", "ReturnTypeCanBeNotNullable", Justification = "Depends on target")]
         [SuppressMessage("ReSharper", "UnusedParameter.Local", Justification = "Needed for specific targets")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+            Justification = "The constraints of SerializeValueType<T> are validated by the caller, and are asserted here.")]
         private static byte[]? SerializeValueTypeRaw(ValueType obj, bool throwOnSizeIssue = true)
         {
             Debug.Assert(!obj.GetType().IsManaged(), "Unmanaged type expected");
@@ -1582,11 +1569,13 @@ namespace KGySoft.Serialization.Binary
         }
 
         [SecurityCritical]
-#if !NET9_0_OR_GREATER
-        [RequiresDynamicCode("type.SizeOf()")]
-#endif
-        [RequiresUnreferencedCode("type.IsManaged()")] // though in DEBUG build only (Assert)
-        private static object DeserializeValueTypeRaw([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]Type type, byte[] data, int offset, int byteLength = 0)
+        [RequiresDynamicCode("type.IsManaged(), SizeOf")]
+        [DynamicDependency(nameof(DeserializeValueType), typeof(BinarySerializer))]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
+            Justification = "The constraints of DeserializeValueType<T> are validated by the caller, and are asserted here.")]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2067:TargetArgumentDynamicallyAccessedMemberTypesAnnotationMismatch",
+            Justification = "Activator.CreateInstance is called with a value type, so trimmed constructors are alright.")]
+        private static object DeserializeValueTypeRaw(Type type, byte[] data, int offset, int byteLength = 0)
         {
             Debug.Assert(!type.IsManaged(), "Unmanaged type expected");
             Debug.Assert(offset >= 0);

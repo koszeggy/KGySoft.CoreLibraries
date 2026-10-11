@@ -566,7 +566,6 @@ namespace KGySoft.Serialization.Xml
 
         [SecuritySafeCritical]
         [RequiresDynamicCode(BinarySerializer.ValueTypeSerializationRequiresDynamicCodeMessage)]
-        [RequiresUnreferencedCode(BinarySerializer.ValueTypeSerializationRequiresUnreferencedCodeMessage)]
         private void DeserializeStructBinary(ref TryDeserializeObjectContext ctx)
         {
             if (!ctx.Type!.IsValueType)
@@ -578,7 +577,7 @@ namespace KGySoft.Serialization.Xml
                 if (!RuntimeFeature.IsDynamicCodeSupported) // AOT: HasPointer cannot be determined for sure
                     Throw.NotSupportedException(Res.XmlSerializationValueTypeSafeAot(ctx.Type!));
                 if (ctx.Type!.HasReferenceOrPointer())
-                Throw.ArgumentException(Res.XmlSerializationValueTypeContainsReferenceOrPointerSafe(ctx.Type!));
+                    Throw.ArgumentException(Res.XmlSerializationValueTypeContainsReferenceOrPointerSafe(ctx.Type!));
             }
 
             byte[] data = Convert.FromBase64String(ctx.Element.Value);

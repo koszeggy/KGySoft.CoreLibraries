@@ -121,7 +121,7 @@ namespace KGySoft.CoreLibraries
 
         internal static void Main(string[] args)
         {
-            //args = ["TestName=GenerateDynamicDependencies", /*"ClassName=BinarySerializerTest"*/];
+            //args = ["TestName=SerializeComplexTypes", "ClassName=BinarySerializerTest"];
 
             // This executes all tests. Can be useful for .NET 3.5, which is executed on .NET 4.x runtime otherwise.
             // It is useful also for testing the library in AOT mode after publishing with the PublishAot option.

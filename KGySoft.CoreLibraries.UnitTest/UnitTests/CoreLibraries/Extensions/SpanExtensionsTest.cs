@@ -214,7 +214,7 @@ namespace KGySoft.CoreLibraries.UnitTests.CoreLibraries.Extensions
             static void Test<TTarget>(ReadOnlySpan<char> source, TTarget expectedResult)
             {
 #pragma warning disable CA2265 // Comparing a span to 'null' might be redundant, the 'null' literal will be implicitly converted to a 'Span<T>.Empty' - false alarm, we differentiate null and empty backing string
-                Console.Write($"Parse {(source == null! ? "<null>" : $"\"{source}\"")} as {typeof(TTarget).GetName(TypeNameKind.ShortName)}: ");
+                Console.Write($"Parse {(source == null! ? "<null>" : source.ToString())} as {typeof(TTarget).GetName(TypeNameKind.ShortName)}: ");
 #pragma warning restore CA2265
                 TTarget actualResult = source.Parse<TTarget>();
                 AssertDeepEquals(expectedResult, actualResult);

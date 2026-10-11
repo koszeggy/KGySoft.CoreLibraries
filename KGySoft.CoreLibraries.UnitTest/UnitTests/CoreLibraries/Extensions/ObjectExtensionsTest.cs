@@ -27,6 +27,11 @@ using System.Linq;
 #if !NET35
 using System.Numerics;
 #endif
+#if AOT
+using System.Runtime.CompilerServices;
+
+using KGySoft.Reflection;
+#endif
 #if NET6_0_OR_GREATER
 using System.Runtime.InteropServices;
 #endif

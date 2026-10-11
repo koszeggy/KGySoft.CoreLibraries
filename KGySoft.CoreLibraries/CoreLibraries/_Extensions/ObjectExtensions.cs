@@ -25,6 +25,7 @@ using System.IO;
 #if NET11_0_OR_GREATER
 using System.Numerics;
 #endif
+using System.Runtime.CompilerServices;
 #if NET6_0_OR_GREATER
 using System.Runtime.InteropServices;
 #endif
@@ -35,6 +36,7 @@ using System.Runtime.Remoting.Messaging;
 using System.Runtime.Serialization;
 using System.Security;
 
+using KGySoft.Reflection;
 using KGySoft.Serialization.Binary;
 
 #endregion
@@ -287,7 +289,7 @@ namespace KGySoft.CoreLibraries
         public static T DeepClone<[DynamicallyAccessedMembers(BinarySerializer.NeededMembers)]T>(this T obj, bool ignoreCustomSerialization)
         {
             ISurrogateSelector? surrogate = null;
-            var formatter = new BinarySerializationFormatter(BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.CompactSerializationOfStructures | BinarySerializationOptions.IgnoreTypeForwardedFromAttribute);
+            var formatter = new BinarySerializationFormatter(BinarySerializationOptions.RecursiveSerializationAsFallback | BinarySerializationOptions.IgnoreTypeForwardedFromAttribute);
 #if NETFRAMEWORK
             if (RemotingServices.IsTransparentProxy(obj))
                 surrogate = new RemotingSurrogateSelector();
@@ -298,6 +300,9 @@ namespace KGySoft.CoreLibraries
                 formatter.Options |= BinarySerializationOptions.IgnoreSerializationMethods | BinarySerializationOptions.IgnoreIObjectReference | BinarySerializationOptions.IgnoreIBinarySerializable;
                 surrogate = new CustomSerializerSurrogateSelector { IgnoreISerializable = true, IgnoreNonSerializedAttribute = true };
             }
+
+            if (RuntimeFeature.IsDynamicCodeSupported)
+                formatter.Options |= BinarySerializationOptions.CompactSerializationOfStructures;
 
             formatter.SurrogateSelector = surrogate;
 
@@ -329,7 +334,11 @@ namespace KGySoft.CoreLibraries
         [return:NotNullIfNotNull(nameof(obj))]
         [RequiresUnreferencedCode("Fields of nested types might be removed by the trimmer.")]
         public static T DeepClone<[DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllFields)]T>(this T obj, Func<object, object?>? customClone = null)
-            => (T)ObjectCloner.Clone(obj, customClone)!;
+        {
+            if (!Reflector<T>.IsManaged)
+                return obj;
+            return (T)ObjectCloner.Clone(obj, customClone)!;
+        }
 
         /// <summary>
         /// Converts an <see cref="object"/> specified in the <paramref name="obj"/> parameter to the desired <typeparamref name="TTarget"/>.

@@ -59,6 +59,19 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Xml
     {
         #region Methods
 
+#if AOT
+        [OneTimeSetUp]
+        public void EnsureAotTests()
+        {
+            Reflector.MemberOf(() => RuntimeHelpers.IsReferenceOrContainsReferences<BinarySerializableStruct>()); // SerializeComplexTypes, SerializeNullableArrays, SerializeComplexArrays
+            Reflector.MemberOf(() => RuntimeHelpers.IsReferenceOrContainsReferences<SystemSerializableStruct>()); // SerializeComplexArrays
+            Reflector.MemberOf(() => RuntimeHelpers.IsReferenceOrContainsReferences<NonSerializableStruct>()); // SerializeComplexTypes, SerializeComplexArrays
+            Reflector.MemberOf(() => RuntimeHelpers.IsReferenceOrContainsReferences<BitVector32>()); // SerializeNullableArrays
+            Reflector.MemberOf(() => RuntimeHelpers.IsReferenceOrContainsReferences<BitVector32.Section>()); // SerializeNullableArrays
+            Reflector.MemberOf(() => RuntimeHelpers.IsReferenceOrContainsReferences<UnsafeStruct>()); // SerializePointers
+        }
+#endif
+
         [Test]
         public void SerializeSimpleTypes()
         {

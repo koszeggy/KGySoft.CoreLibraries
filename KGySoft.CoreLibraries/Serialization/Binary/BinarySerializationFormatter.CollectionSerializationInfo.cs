@@ -845,8 +845,8 @@ namespace KGySoft.Serialization.Binary
             /// Primitive generic arguments produce a byte[] (with adjusted endianness), which is processed very quickly by the caller.
             /// Otherwise, the element type of the array matches the generic argument, except in AOT mode, in which case an object[] is returned.
             /// </summary>
-            [RequiresDynamicCode("CopyManagedSpan, CopyManagedItem")]
-            [RequiresUnreferencedCode("IsManaged, CopyManagedSpan, CopyManagedItem")]
+            [RequiresDynamicCode("IsManaged, CopyManagedSpan, CopyManagedItem, SerializeValueTypeInternal")]
+            [RequiresUnreferencedCode("CopyManagedSpan, CopyManagedItem")]
             private static Array SingleTypeTupleToArray(object obj)
             {
                 Debug.Assert(obj is ValueType);
@@ -877,7 +877,7 @@ namespace KGySoft.Serialization.Binary
                         RuntimeHelpers.Copy(ref Reflector.GetRawData(obj), ref Reflector.GetRawData(result), elementType.TypeHandle, length);
 #else
                         // If the element type has references, we must copy the element with a write barrier, but Buffer.BulkMoveWithWriteBarrier is not public
-                        if (!elementType.IsManaged())
+                        if (!(Nullable.GetUnderlyingType(elementType) ?? elementType).IsManaged())
                             Unsafe.CopyBlock(ref Reflector.GetRawData(result), ref Reflector.GetRawData(obj), (uint)size);
                         else if (!MemoryHelper.CopyManagedSpan(elementType, obj, result, length))
                             Throw.NotSupportedException(Res.BinarySerializationInlineArrayNotSupportedAot(elementType));
@@ -913,7 +913,7 @@ namespace KGySoft.Serialization.Binary
                 Type underlyingElementType = isNullable ? Nullable.GetUnderlyingType(elementType)! : elementType;
                 int underlyingElementSize = underlyingElementType.SizeOf(false);
                 int nullableOffset = isNullable ? elementSize - underlyingElementType.SizeOf(false) : 0;
-                bool isUnmanaged = !elementType.IsManaged();
+                bool isUnmanaged = !underlyingElementType.IsManaged();
                 for (int i = 0; i < length; i++)
                 {
                     // skipping null elements: checking Nullable<T>.hasValue
@@ -936,8 +936,8 @@ namespace KGySoft.Serialization.Binary
                 return asObjArray;
             }
 
-            [RequiresDynamicCode("CopyManagedSpan")]
-            [RequiresUnreferencedCode("IsManaged, CopyManagedSpan")]
+            [RequiresDynamicCode("IsManaged, CopyManagedSpan")]
+            [RequiresUnreferencedCode("CopyManagedSpan")]
             private static object ArrayToSingleTypeTuple(BinaryReader _, [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors)]Type type, Array array)
             {
                 Type elementType = type.GenericTypeArguments[0];
@@ -961,8 +961,8 @@ namespace KGySoft.Serialization.Binary
                 return result;
             }
 
-            [RequiresDynamicCode("CopyManagedItem")]
-            [RequiresUnreferencedCode("IsManaged, CopyManagedItem")]
+            [RequiresDynamicCode("IsManaged, CopyManagedItem")]
+            [RequiresUnreferencedCode("CopyManagedItem")]
             private static object ObjectListToSingleTypeTuple(Type type, object list)
             {
                 type = Nullable.GetUnderlyingType(type) ?? type;
@@ -996,7 +996,7 @@ namespace KGySoft.Serialization.Binary
                 Type underlyingElementType = isNullable ? Nullable.GetUnderlyingType(elementType)! : elementType;
                 int underlyingElementSize = underlyingElementType.SizeOf(false);
                 int nullableOffset = isNullable ? elementSize - underlyingElementType.SizeOf(false) : 0;
-                bool isUnmanaged = !elementType.IsManaged();
+                bool isUnmanaged = !underlyingElementType.IsManaged();
 
                 // Copying the item data in the result tuple. Nullable items with null value are null references in the object list, but are Nullable<elementType> items in result.
                 for (int i = 0; i < items.Count; i++)
