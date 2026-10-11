@@ -43,7 +43,7 @@ using System.Numerics.Colors;
 #endif
 using System.Reflection;
 using System.Runtime.CompilerServices;
-#if NET6_0_OR_GREATER
+#if NETCOREAPP3_0_OR_GREATER
 using System.Runtime.InteropServices;
 #endif
 #if NETCOREAPP3_0_OR_GREATER

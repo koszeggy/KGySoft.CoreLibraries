@@ -23,7 +23,7 @@ using System.Runtime.CompilerServices;
 #if NET5_0_OR_GREATER
 using System.Runtime.Intrinsics.Arm;
 #endif
-#if NETCOREAPP3_0_OR_GREATER
+#if NET6_0_OR_GREATER
 using System.Runtime.Intrinsics.X86;
 #endif
 using System.Security;
@@ -71,7 +71,7 @@ namespace KGySoft.CoreLibraries
             // because their SW fallback contain more unnecessary steps than our fallback below.
             // When HW support is available, we prefer LeadingZeroCount, because RoundUpToPowerOf2 uses that in the background as well.
             Debug.Assert(value != 0UL);
-#if NETCOREAPP3_0_OR_GREATER
+#if NET6_0_OR_GREATER
             if (Lzcnt.X64.IsSupported)
                 return BitOperations.IsPow2(value) ? value - 1 : UInt64.MaxValue >> (int)Lzcnt.X64.LeadingZeroCount(value);
 #endif
