@@ -129,20 +129,17 @@ namespace KGySoft.Serialization.Binary
             internal static readonly CollectionSerializationInfo Tuple = new() { Info = CollectionInfo.IsGeneric | CollectionInfo.IsTuple };
 #endif
 #if NET10_0_OR_GREATER
-            // Single-type tuple-like types are value types with two or more elements of the same element type inlined in the struct, e.g. Complex<>, Argb<>, InlineArray##<>.
             [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
                 Justification = "ArrayToSingleTypeTuple and ObjectListToSingleTypeTuple are used only in non-AOT mode; ObjectListToSingleTypeTuple handles missing metadata")]
             [UnconditionalSuppressMessage("TrimAnalysis", "IL2111:DynamicallyAccessedMembersAttributeViaReflection",
                 Justification = "ArrayToSingleTypeTuple and ObjectListToSingleTypeTuple are used only in non-AOT mode; ObjectListToSingleTypeTuple handles missing metadata")]
             [UnconditionalSuppressMessage("TrimAnalysis", "IL3050:RequiresDynamicCode",
                 Justification = "ObjectListToSingleTypeTuple handles if dynamic code cannot be used.")]
-            internal static readonly CollectionSerializationInfo TupleSingleType = new()
+            internal static readonly CollectionSerializationInfo InlineArray = new()
             {
                 Info = CollectionInfo.IsGeneric | CollectionInfo.BackingArrayHasKnownSize,
-                GetBackingArray = SingleTypeTupleToArray,
-                CreateArrayBackedCollectionInstanceFromArray = RuntimeFeature.IsDynamicCodeSupported ? ArrayToSingleTypeTuple : null,
-                CreateInstanceCallback = RuntimeFeature.IsDynamicCodeSupported ? null : (_, _) => new List<object>(),
-                CreateFinalCollectionCallback = RuntimeFeature.IsDynamicCodeSupported ? null : ObjectListToSingleTypeTuple,
+                GetBackingArray = InlineArrayToArray,
+                CreateArrayBackedCollectionInstanceFromArray = ArrayToInlineArray,
             };
 #endif
 
@@ -219,7 +216,7 @@ namespace KGySoft.Serialization.Binary
             /// Should be specified if the collection is a value type, and it has a publicly exposed backing array that can have more elements than the wrapper type (e.g. ArraySegment),
             /// or, if it does not expose or wrap any array, but it can be represented as a (fixed size) array (e.g. Vector128).
             /// If the collection does not actually wrap the array, then it must not contain any direct circular reference to the object itself because it makes proper deserialization impossible (e.g. object element type must not be supported by the collection).
-            /// For deserialization <see cref="CreateArrayBackedCollectionInstanceFromArray"/> must be used if the array is actually stored.
+            /// For deserialization <see cref="CreateArrayBackedCollectionInstanceFromArray"/> must be used if the array is actually stored, or when the collection has a known size.
             /// Otherwise, <see cref="CreateInstanceCallback"/> with <see cref="CreateFinalCollectionCallback"/> also can be used to restore the collection.
             /// </summary>
             internal Func<object, Array?>? GetBackingArray
@@ -249,8 +246,8 @@ namespace KGySoft.Serialization.Binary
             /// <summary>
             /// Should be specified to instantiate an array backed collection. Should also read specific properties written by <see cref="WriteSpecificPropertiesCallback"/>.
             /// Must be used when the collection actually stores the underlying array. Can also be used when the non-stored array can be represented as a known array type (e.g. byte[]).
-            /// If the array is used for serialization only, but is not actually stored and can have any element type, use <see cref="CreateInstanceCallback"/>
-            /// and <see cref="CreateFinalCollectionCallback"/> instead to support AOT mode so no actual array has to be created with an arbitrary element type.
+            /// If the array is used for serialization only, the element type on deserialization will be byte if <see cref="CreateResultFromByteArray"/> is <see langword="true"/>,
+            /// and it will be object in AOT mode. Otherwise, the element type matches the generic type argument of the type to return.
             /// </summary>
             internal Func<BinaryReader, Type, Array, object>? CreateArrayBackedCollectionInstanceFromArray
             {
@@ -587,19 +584,6 @@ namespace KGySoft.Serialization.Binary
                 }
 
                 // 1.) Count
-#if NET10_0_OR_GREATER
-                if (descriptor.IsTupleSingleType)
-                {
-                    count = descriptor.FixedItemsSize;
-                    Debug.Assert(CreateInstanceCallback != null, $"{nameof(CreateInstanceCallback)} must be specified for single type tuples");
-                    result = CreateInstanceCallback!.Invoke(descriptor.GetTypeToCreate(), Reflector.EmptyObjects);
-                    if (addToCache)
-                        manager.AddObjectToCache(result, out id);
-
-                    return result;
-                }
-#endif
-
                 count = Read7BitInt(br);
 
                 // 2.) Capacity
@@ -841,13 +825,11 @@ namespace KGySoft.Serialization.Binary
 
 #if NET10_0_OR_GREATER
             /// <summary>
-            /// Copies a single-type tuple-like struct (e.g. Complex`1, InlineArray##`1) into a real array.
-            /// Primitive generic arguments produce a byte[] (with adjusted endianness), which is processed very quickly by the caller.
-            /// Otherwise, the element type of the array matches the generic argument, except in AOT mode, in which case an object[] is returned.
+            /// The element type of the array matches the generic argument, except in AOT mode, in which case an object[] is returned.
             /// </summary>
             [RequiresDynamicCode("IsManaged, CopyManagedSpan, CopyManagedItem, SerializeValueTypeInternal")]
             [RequiresUnreferencedCode("CopyManagedSpan, CopyManagedItem")]
-            private static Array SingleTypeTupleToArray(object obj)
+            private static Array InlineArrayToArray(object obj)
             {
                 Debug.Assert(obj is ValueType);
                 Type type = obj.GetType();
@@ -938,60 +920,49 @@ namespace KGySoft.Serialization.Binary
 
             [RequiresDynamicCode("IsManaged, CopyManagedSpan")]
             [RequiresUnreferencedCode("CopyManagedSpan")]
-            private static object ArrayToSingleTypeTuple(BinaryReader _, [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors)]Type type, Array array)
+            private static object ArrayToInlineArray(BinaryReader _, [DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllConstructors)]Type type, Array array)
             {
                 Type elementType = type.GenericTypeArguments[0];
-                Debug.Assert(array.GetType().GetElementType() == elementType);
-
                 object result = RuntimeHelpers.GetUninitializedObject(type);
-#if NET12_0_OR_GREATER
-                    TODO: RuntimeHelpers.Copy; // see https://github.com/dotnet/runtime/issues/135159
-#endif
+
+                // reference type items
                 if (!elementType.IsValueType)
                 {
                     Span<object> src = MemoryMarshal.CreateSpan(ref Unsafe.As<byte, object>(ref MemoryMarshal.GetArrayDataReference(array)), array.Length);
                     Span<object> dst = MemoryMarshal.CreateSpan(ref Unsafe.As<StrongBox<object>>(result).Value!, src.Length);
                     src.CopyTo(dst);
+                    return result;
                 }
-                else if (!elementType.IsManaged())
-                    Unsafe.CopyBlock(ref Reflector.GetRawData(result), ref Reflector.GetRawData(array), (uint)type.SizeOf(false));
-                else if (!MemoryHelper.CopyManagedSpan(elementType, array, result, array.Length))
-                    Throw.NotSupportedException(Res.BinarySerializationInlineArrayNotSupportedAot(elementType));
-
-                return result;
-            }
-
-            [RequiresDynamicCode("IsManaged, CopyManagedItem")]
-            [RequiresUnreferencedCode("CopyManagedItem")]
-            private static object ObjectListToSingleTypeTuple(Type type, object list)
-            {
-                type = Nullable.GetUnderlyingType(type) ?? type;
-                Debug.Assert(!RuntimeFeature.IsDynamicCodeSupported && type.IsValueType && type.IsGenericType);
-                Type elementType = type.GenericTypeArguments[0];
-                var items = (List<object?>)list;
-                int elementSize = elementType.SizeOf(false);
-                Debug.Assert(type.SizeOf(false) % elementSize == 0 && items.Count == type.SizeOf(false) / elementSize);
-                object result = RuntimeHelpers.GetUninitializedObject(type);
-
-                // reference element type: simply copying the list elements into the result
-                if (!elementType.IsValueType)
+                
+                // array type matches actual element type
+                if (array.GetType().GetElementType() == elementType)
                 {
-                    CollectionsMarshal.AsSpan(items).CopyTo(MemoryMarshal.CreateSpan(ref result.As<StrongBox<object?>>().Value, items.Count));
+#if NET12_0_OR_GREATER
+                    TODO: RuntimeHelpers.Copy; // see https://github.com/dotnet/runtime/issues/135159
+#endif
+                    if (!elementType.IsManaged())
+                        Unsafe.CopyBlock(ref Reflector.GetRawData(result), ref Reflector.GetRawData(array), (uint)type.SizeOf(false));
+                    else if (!MemoryHelper.CopyManagedSpan(elementType, array, result, array.Length))
+                        Throw.NotSupportedException(Res.BinarySerializationInlineArrayNotSupportedAot(elementType));
                     return result;
                 }
 
+                // AOT mode: value elements from object[]
                 Span<byte> rawBytes = Reflector.GetRawBytes(result);
+                int elementSize = elementType.SizeOf(false);
 
                 // shortcut: assigning the bytes directly, instead of bulk copying the items
                 if (elementSize == 1)
                 {
-                    Debug.Assert(!items.Contains(null));
-                    for (int i = 0; i < items.Count; i++)
-                        rawBytes[i] = Reflector.GetRawData(items[i]!);
+                    Debug.Assert(Array.IndexOf(array, null) < 0);
+                    Debug.Assert(!elementType.IsManaged());
+                    for (int i = 0; i < array.Length; i++)
+                        rawBytes[i] = Reflector.GetRawData(array.GetValue(i)!);
 
                     return result;
                 }
 
+                Debug.Assert(!RuntimeFeature.IsDynamicCodeSupported && array is object[]);
                 bool isNullable = elementType.IsNullable();
                 Type underlyingElementType = isNullable ? Nullable.GetUnderlyingType(elementType)! : elementType;
                 int underlyingElementSize = underlyingElementType.SizeOf(false);
@@ -999,9 +970,9 @@ namespace KGySoft.Serialization.Binary
                 bool isUnmanaged = !underlyingElementType.IsManaged();
 
                 // Copying the item data in the result tuple. Nullable items with null value are null references in the object list, but are Nullable<elementType> items in result.
-                for (int i = 0; i < items.Count; i++)
+                for (int i = 0; i < array.Length; i++)
                 {
-                    object? item = items[i];
+                    object? item = array.GetValue(i);
                     if (item == null)
                     {
                         // skipping nullable null values (no need to zero out the element, RuntimeHelpers.GetUninitializedObject returns a bitwise-zero instance)

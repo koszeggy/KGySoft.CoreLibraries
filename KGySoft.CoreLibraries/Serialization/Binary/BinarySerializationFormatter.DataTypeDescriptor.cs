@@ -99,11 +99,8 @@ namespace KGySoft.Serialization.Binary
             internal bool HasBackingArray => CollectionSerializationInfo.CreateArrayBackedCollectionInstanceFromArray != null;
 
             internal bool IsBackingArrayActuallyStored => CollectionSerializationInfo.IsBackingArrayActuallyStored;
-
-            internal bool IsTuplePerItemType => IsTuplePerItemType(dataType);
-#if NET10_0_OR_GREATER
-            internal bool IsTupleSingleType => IsTupleSingleType(dataType);
-#endif
+            internal bool BackingArrayHasKnownSize => CollectionSerializationInfo.HasKnownSizedBackingArray;
+            internal bool IsTuple => IsTuple(dataType);
             internal bool CreateResultFromByteArray => CollectionSerializationInfo.CreateResultFromByteArray;
 #if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             internal bool IsMemory => UnderlyingCollectionDataType is DataTypes.Memory or DataTypes.ReadOnlyMemory;
@@ -114,8 +111,8 @@ namespace KGySoft.Serialization.Binary
                 get
                 {
                     DataTypes dt = UnderlyingCollectionDataType;
-                    if (IsTuple)
-                        return GetNumberOfTupleElements(dt);
+                    if (IsTuple(dt) || IsInlineArray(dt))
+                        return GetNumberOfTupleOrInlineArrayElements(dt);
                     return dt switch
                     {
 #if NETCOREAPP3_0_OR_GREATER
@@ -126,6 +123,8 @@ namespace KGySoft.Serialization.Binary
 #if NET8_0_OR_GREATER
                         DataTypes.Vector512 => Vector512<byte>.Count,
 #endif
+                        DataTypes.ComplexGeneric => 2,
+                        DataTypes.Argb or DataTypes.Rgba => 4,
                         _ => -1,
                     };
                 }
@@ -152,12 +151,6 @@ namespace KGySoft.Serialization.Binary
             #endregion
 
             #region Private Properties
-
-            private bool IsTuple => IsTuplePerItemType
-#if NET10_0_OR_GREATER
-                || IsTupleSingleType
-#endif
-            ;
 
             /// <summary>
             /// Descriptors for generic arguments or non-generic elements.
@@ -392,7 +385,7 @@ namespace KGySoft.Serialization.Binary
 
             internal DataTypeDescriptor GetTupleItemDescriptor(int index)
             {
-                Debug.Assert(IsTuplePerItemType);
+                Debug.Assert(IsTuple);
                 return ArgumentDescriptors[index];
             }
 

@@ -883,25 +883,29 @@ namespace KGySoft.Serialization.Binary
             Memory = 36 << 24,
             ReadOnlyMemory = 37 << 24,
 
-            // ...... special tuple types of a single generic argument
-            InlineArray2 = 38 << 24,
-            InlineArray3 = 39 << 24,
-            InlineArray4 = 40 << 24,
-            InlineArray5 = 41 << 24,
-            InlineArray6 = 42 << 24,
-            InlineArray7 = 43 << 24,
-            InlineArray8 = 44 << 24,
-            InlineArray9 = 45 << 24,
-            InlineArray10 = 46 << 24,
-            InlineArray11 = 47 << 24,
-            InlineArray12 = 48 << 24,
-            InlineArray13 = 49 << 24,
-            InlineArray14 = 50 << 24,
-            InlineArray15 = 51 << 24,
-            InlineArray16 = 52 << 24,
-            ComplexGeneric = 53 << 24,
-            Argb = 54 << 24,
-            Rgba = 55 << 24,
+            // ...... special tuple-like types of a single generic argument - could be handled as inline arrays, but accessing managed value type elements in a non-generic way could be problematic
+            ComplexGeneric = 38 << 24,
+            Argb = 39 << 24,
+            Rgba = 40 << 24,
+            // 41: reserved (just to align the inline array indices)
+
+            // ...... inline arrays
+            InlineArray2 = 42 << 24,
+            InlineArray3 = 43 << 24,
+            InlineArray4 = 44 << 24,
+            InlineArray5 = 45 << 24,
+            InlineArray6 = 46 << 24,
+            InlineArray7 = 47 << 24,
+            InlineArray8 = 48 << 24,
+            InlineArray9 = 49 << 24,
+            InlineArray10 = 50 << 24,
+            InlineArray11 = 51 << 24,
+            InlineArray12 = 52 << 24,
+            InlineArray13 = 53 << 24,
+            InlineArray14 = 54 << 24,
+            InlineArray15 = 55 << 24,
+            InlineArray16 = 56 << 24,
+            // 57..63: Reserved
 
             // ...... generic dictionaries:
             ExtendedDictionary = 0b01000000 << 24, // serves only as a flag
@@ -2046,27 +2050,95 @@ namespace KGySoft.Serialization.Binary
             { DataTypes.ReadOnlyMemory, CollectionSerializationInfo.Memory },
 #endif
 #if NET10_0_OR_GREATER
-            // We can't always use the same trick as for Vector*<T> types, because the element type can be anything.
-            { DataTypes.InlineArray2, CollectionSerializationInfo.TupleSingleType }, 
-            { DataTypes.InlineArray3, CollectionSerializationInfo.TupleSingleType }, 
-            { DataTypes.InlineArray4, CollectionSerializationInfo.TupleSingleType }, 
-            { DataTypes.InlineArray5, CollectionSerializationInfo.TupleSingleType }, 
-            { DataTypes.InlineArray6, CollectionSerializationInfo.TupleSingleType }, 
-            { DataTypes.InlineArray7, CollectionSerializationInfo.TupleSingleType }, 
-            { DataTypes.InlineArray8, CollectionSerializationInfo.TupleSingleType }, 
-            { DataTypes.InlineArray9, CollectionSerializationInfo.TupleSingleType }, 
-            { DataTypes.InlineArray10, CollectionSerializationInfo.TupleSingleType }, 
-            { DataTypes.InlineArray11, CollectionSerializationInfo.TupleSingleType }, 
-            { DataTypes.InlineArray12, CollectionSerializationInfo.TupleSingleType }, 
-            { DataTypes.InlineArray13, CollectionSerializationInfo.TupleSingleType }, 
-            { DataTypes.InlineArray14, CollectionSerializationInfo.TupleSingleType }, 
-            { DataTypes.InlineArray15, CollectionSerializationInfo.TupleSingleType }, 
-            { DataTypes.InlineArray16, CollectionSerializationInfo.TupleSingleType }, 
+            // We can't use the same trick as for Vector*<T> types, because the element type can be anything.
+            { DataTypes.InlineArray2, CollectionSerializationInfo.InlineArray }, 
+            { DataTypes.InlineArray3, CollectionSerializationInfo.InlineArray }, 
+            { DataTypes.InlineArray4, CollectionSerializationInfo.InlineArray }, 
+            { DataTypes.InlineArray5, CollectionSerializationInfo.InlineArray }, 
+            { DataTypes.InlineArray6, CollectionSerializationInfo.InlineArray }, 
+            { DataTypes.InlineArray7, CollectionSerializationInfo.InlineArray }, 
+            { DataTypes.InlineArray8, CollectionSerializationInfo.InlineArray }, 
+            { DataTypes.InlineArray9, CollectionSerializationInfo.InlineArray }, 
+            { DataTypes.InlineArray10, CollectionSerializationInfo.InlineArray }, 
+            { DataTypes.InlineArray11, CollectionSerializationInfo.InlineArray }, 
+            { DataTypes.InlineArray12, CollectionSerializationInfo.InlineArray }, 
+            { DataTypes.InlineArray13, CollectionSerializationInfo.InlineArray }, 
+            { DataTypes.InlineArray14, CollectionSerializationInfo.InlineArray }, 
+            { DataTypes.InlineArray15, CollectionSerializationInfo.InlineArray }, 
+            { DataTypes.InlineArray16, CollectionSerializationInfo.InlineArray }, 
 #endif
 #if NET11_0_OR_GREATER
-            { DataTypes.ComplexGeneric, CollectionSerializationInfo.TupleSingleType }, // The element type can be non-primitive, e.g. Half
-            { DataTypes.Argb, CollectionSerializationInfo.TupleSingleType }, // The element type can be any struct, even a managed one
-            { DataTypes.Rgba, CollectionSerializationInfo.TupleSingleType }, // The element type can be any struct, even a managed one
+            {
+                DataTypes.ComplexGeneric, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.BackingArrayHasKnownSize,
+                    GetBackingArray =
+                        [DynamicDependency(nameof(Complex<>.Real), typeof(Complex<>))]
+                        [DynamicDependency(nameof(Complex<>.Imaginary), typeof(Complex<>))]
+                        (o) =>
+                        {
+                            Array result = RuntimeFeature.IsDynamicCodeSupported ? Array.CreateInstance(o.GetType().GenericTypeArguments[0], 2) : new object[2];
+                            result.SetValue(Accessors.GetPropertyValue(o, nameof(Complex<>.Real)), 0);
+                            result.SetValue(Accessors.GetPropertyValue(o, nameof(Complex<>.Imaginary)), 1);
+                            return result;
+                        },
+                    CreateArrayBackedCollectionInstanceFromArray =
+                        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(Complex<>))]
+                        (_, t, a) =>
+                        {
+                            Type typeArg = t.GenericTypeArguments[0];
+                            return Accessors.CreateInstance(t, [typeArg, typeArg], a.GetValue(0), a.GetValue(1));
+                        }
+                }
+            },
+            {
+                DataTypes.Argb, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.BackingArrayHasKnownSize,
+                    GetBackingArray =
+                        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(Argb<>))]
+                        (o) =>
+                        {
+                            Array result = RuntimeFeature.IsDynamicCodeSupported ? Array.CreateInstance(o.GetType().GenericTypeArguments[0], 4) : new object[4];
+                            result.SetValue(Accessors.GetPropertyValue(o, nameof(Argb<>.A)), 0);
+                            result.SetValue(Accessors.GetPropertyValue(o, nameof(Argb<>.R)), 1);
+                            result.SetValue(Accessors.GetPropertyValue(o, nameof(Argb<>.G)), 2);
+                            result.SetValue(Accessors.GetPropertyValue(o, nameof(Argb<>.B)), 3);
+                            return result;
+                        },
+                    CreateArrayBackedCollectionInstanceFromArray =
+                        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(Argb<>))]
+                        (_, t, a) =>
+                        {
+                            Type typeArg = t.GenericTypeArguments[0];
+                            return Accessors.CreateInstance(t, [typeArg, typeArg, typeArg, typeArg], a.GetValue(0), a.GetValue(1), a.GetValue(2), a.GetValue(3));
+                        }
+                }
+            },
+            {
+                DataTypes.Rgba, new CollectionSerializationInfo
+                {
+                    Info = CollectionInfo.IsGeneric | CollectionInfo.BackingArrayHasKnownSize,
+                    GetBackingArray =
+                        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(Rgba<>))]
+                        (o) =>
+                        {
+                            Array result = RuntimeFeature.IsDynamicCodeSupported ? Array.CreateInstance(o.GetType().GenericTypeArguments[0], 4) : new object[4];
+                            result.SetValue(Accessors.GetPropertyValue(o, nameof(Rgba<>.R)), 0);
+                            result.SetValue(Accessors.GetPropertyValue(o, nameof(Rgba<>.G)), 1);
+                            result.SetValue(Accessors.GetPropertyValue(o, nameof(Rgba<>.B)), 2);
+                            result.SetValue(Accessors.GetPropertyValue(o, nameof(Rgba<>.A)), 3);
+                            return result;
+                        },
+                    CreateArrayBackedCollectionInstanceFromArray =
+                        [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(Rgba<>))]
+                        (_, t, a) =>
+                        {
+                            Type typeArg = t.GenericTypeArguments[0];
+                            return Accessors.CreateInstance(t, [typeArg, typeArg, typeArg, typeArg], a.GetValue(0), a.GetValue(1), a.GetValue(2), a.GetValue(3));
+                        }
+                }
+            },
 #endif
 
             #endregion
@@ -2619,8 +2691,8 @@ namespace KGySoft.Serialization.Binary
         private static bool IsImpureTypeButEnum(DataTypes dt) => (dt & DataTypes.ImpureType) == DataTypes.ImpureType;
         private static bool IsImpureType(DataTypes dt) => IsEnum(dt) || IsImpureTypeButEnum(dt);
         private static bool IsExtended(DataTypes dt) => (dt & DataTypes.Extended) != DataTypes.Null;
-        private static bool IsTuplePerItemType(DataTypes dt) => GetUnderlyingCollectionDataType(dt) is >= DataTypes.Tuple1 and <= DataTypes.Tuple8 or >= DataTypes.ValueTuple1 and <= DataTypes.ValueTuple8;
-        private static bool IsTupleSingleType(DataTypes dt) => GetUnderlyingCollectionDataType(dt) is DataTypes.ComplexGeneric or DataTypes.Argb or DataTypes.Rgba or >= DataTypes.InlineArray2 and <= DataTypes.InlineArray16;
+        private static bool IsTuple(DataTypes dt) => GetUnderlyingCollectionDataType(dt) is >= DataTypes.Tuple1 and <= DataTypes.Tuple8 or >= DataTypes.ValueTuple1 and <= DataTypes.ValueTuple8;
+        private static bool IsInlineArray(DataTypes dt) => GetUnderlyingCollectionDataType(dt) is >= DataTypes.InlineArray2 and <= DataTypes.InlineArray16;
         private static bool IsReinterpretedCollection(DataTypes dt) => GetUnderlyingCollectionDataType(dt) is >= DataTypes.CastArray and <= DataTypes.CastArray3D;
 
         private static bool IsNullable(DataTypes dt) => IsCollectionType(dt)
@@ -2631,12 +2703,12 @@ namespace KGySoft.Serialization.Binary
             or >= DataTypes.ArrayList and <= DataTypes.StringCollection
             or >= DataTypes.Hashtable and <= DataTypes.DictionaryEntryNullable;
 
-        private static int GetNumberOfTupleElements(DataTypes dt) => GetUnderlyingCollectionDataType(dt) switch
+        private static int GetNumberOfTupleOrInlineArrayElements(DataTypes dt) => GetUnderlyingCollectionDataType(dt) switch
         {
             DataTypes.Tuple1 or DataTypes.ValueTuple1 => 1,
-            DataTypes.Tuple2 or DataTypes.ValueTuple2 or DataTypes.InlineArray2 or DataTypes.ComplexGeneric => 2,
+            DataTypes.Tuple2 or DataTypes.ValueTuple2 or DataTypes.InlineArray2 => 2,
             DataTypes.Tuple3 or DataTypes.ValueTuple3 or DataTypes.InlineArray3 => 3,
-            DataTypes.Tuple4 or DataTypes.ValueTuple4 or DataTypes.InlineArray4 or DataTypes.Argb or DataTypes.Rgba => 4,
+            DataTypes.Tuple4 or DataTypes.ValueTuple4 or DataTypes.InlineArray4 => 4,
             DataTypes.Tuple5 or DataTypes.ValueTuple5 or DataTypes.InlineArray5 => 5,
             DataTypes.Tuple6 or DataTypes.ValueTuple6 or DataTypes.InlineArray6 => 6,
             DataTypes.Tuple7 or DataTypes.ValueTuple7 or DataTypes.InlineArray7 => 7,
@@ -2653,7 +2725,7 @@ namespace KGySoft.Serialization.Binary
         };
 
         private static int GetNumberOfElementDataTypes(DataTypes dt) => IsDictionary(dt) ? HasNonGenericItemOrKey(dt) ? 1 : 2
-            : IsTuplePerItemType(dt) ? GetNumberOfTupleElements(dt)
+            : IsTuple(dt) ? GetNumberOfTupleOrInlineArrayElements(dt)
             : IsCollectionType(dt) ? IsReinterpretedCollection(dt) ? 2 : 1
             : dt is DataTypes.Pointer or DataTypes.ByRef ? 1
             : 0;

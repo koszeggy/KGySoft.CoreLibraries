@@ -488,10 +488,12 @@ namespace KGySoft.Serialization.Binary
                     }
 
                     // trying to allocate the result array at once if possible
-                    Type elementType = descriptor.CreateResultFromByteArray ? Reflector.ByteType : descriptor.GetElementDescriptor().Type!;
+                    Type elementType = descriptor.CreateResultFromByteArray ? Reflector.ByteType
+                        : !RuntimeFeature.IsDynamicCodeSupported && descriptor.HasBackingArray && !descriptor.IsBackingArrayActuallyStored ? typeof(object) // AOT mode
+                        : descriptor.GetElementDescriptor().Type!;
 
                     int elementSize;
-                    if (!safeMode || ((elementSize = elementType.SizeOf(true)) * (long)TotalLength) <= ArrayAllocationThreshold)
+                    if (!safeMode || descriptor.BackingArrayHasKnownSize || ((elementSize = elementType.SizeOf(true)) * (long)TotalLength) <= ArrayAllocationThreshold)
                     {
                         array = CreateInstance(elementType);
                         if (rank > 1)
@@ -538,7 +540,7 @@ namespace KGySoft.Serialization.Binary
                         return true;
                     }
 
-                    if (!BitConverter.IsLittleEndian && (elementType != typeof(byte) || elementType != typeof(sbyte)))
+                    if (array is object[] || !BitConverter.IsLittleEndian && (elementType != typeof(byte) || elementType != typeof(sbyte)))
                         return false;
 
                     int byteLength = Buffer.ByteLength(array);
@@ -1042,7 +1044,7 @@ namespace KGySoft.Serialization.Binary
                     return CreateArray(br, addToCache, descriptor);
 
                 // 3/b.) tuple
-                if (descriptor.IsTuplePerItemType)
+                if (descriptor.IsTuple)
                     return CreateTuple(br, addToCache, descriptor);
 
                 // 3/c.) array-backed collection
@@ -1273,7 +1275,7 @@ namespace KGySoft.Serialization.Binary
                     return CreateArray(br, addToCache, descriptor);
 
                 // 3/b.) tuple
-                if (descriptor.IsTuplePerItemType)
+                if (descriptor.IsTuple)
                     return CreateTuple(br, addToCache, descriptor);
 
                 // 3/c.) array-backed collection
@@ -1414,7 +1416,7 @@ namespace KGySoft.Serialization.Binary
             [RequiresUnreferencedCode(BinarySerializer.RequiresUnreferencedCodeMessage)]
             private object CreateTuple(BinaryReader br, bool addToCache, DataTypeDescriptor descriptor)
             {
-                Debug.Assert(descriptor.IsTuplePerItemType);
+                Debug.Assert(descriptor.IsTuple);
                 Type type = descriptor.GetTypeToCreate();
                 object result = CreateKnownEmptyObject(type);
 

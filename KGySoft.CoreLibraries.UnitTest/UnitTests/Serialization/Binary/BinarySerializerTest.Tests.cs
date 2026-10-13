@@ -1590,52 +1590,7 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
                 new Argb<byte>(1, 2, 3, 4),
                 new Rgba<ushort>(1, 2, 3, 4),
 #endif
-
-#if NET10_0_OR_GREATER // Must be the last block because of the initialization below
-                new InlineArray2<ulong>(), // primitive element type
-                new InlineArray3<string>(), // reference element type
-                new InlineArray4<uint>(),
-                new InlineArray5<decimal>(), // non-primitive unmanaged value element type
-#if AOT
-                new InlineArray6<ConsoleColor>(), // non-primitive unmanaged value element type 
-#else
-                new InlineArray6<DictionaryEntry>(), // managed value element type 
-#endif
-                new InlineArray7<decimal?>(), // nullable value element type
-                new InlineArray8<ushort>(),
-                new InlineArray9<byte>(),
-                new InlineArray10<byte>(),
-                new InlineArray11<byte>(),
-                new InlineArray12<byte>(),
-                new InlineArray13<byte>(),
-                new InlineArray14<byte>(),
-                new InlineArray15<byte>(),
-                new InlineArray16<byte>(), 
-#endif
             };
-
-#if NET10_0_OR_GREATER
-            // initializing inline arrays
-            referenceObjects[^1].As<StrongBox<Guid>>().Value = Guid.NewGuid(); // InlineArray16<byte>
-            referenceObjects[^2].As<StrongBox<InlineArray15<byte>>>().Value[^1] = 15; // InlineArray15<byte>
-            referenceObjects[^3].As<StrongBox<InlineArray14<byte>>>().Value[^1] = 14; // InlineArray14<byte>
-            referenceObjects[^4].As<StrongBox<InlineArray13<byte>>>().Value[^1] = 13; // InlineArray13<byte>
-            referenceObjects[^5].As<StrongBox<InlineArray12<byte>>>().Value[^1] = 12; // InlineArray12<byte>
-            referenceObjects[^6].As<StrongBox<InlineArray11<byte>>>().Value[^1] = 11; // InlineArray11<byte>
-            referenceObjects[^7].As<StrongBox<InlineArray10<byte>>>().Value[^1] = 10; // InlineArray10<byte>
-            referenceObjects[^8].As<StrongBox<InlineArray9<byte>>>().Value[^1] = 9; // InlineArray9<byte>
-            referenceObjects[^9].As<StrongBox<Guid>>().Value = Guid.NewGuid(); // InlineArray8<ushort>
-            referenceObjects[^10].As<StrongBox<InlineArray7<decimal?>>>().Value[^1] = Decimal.MaxValue; // InlineArray7<decimal?>
-#if AOT
-            referenceObjects[^11].As<StrongBox<InlineArray6<ConsoleColor>>>().Value[^1] = ConsoleColor.Blue; // InlineArray6<ConsoleColor>
-#else
-            referenceObjects[^11].As<StrongBox<InlineArray6<DictionaryEntry>>>().Value[^1] = new DictionaryEntry(typeof(int), DBNull.Value); // InlineArray6<DictionaryEntry> - NOTE: using singletons in DictionaryEntry to help the comparison by raw bytes
-#endif
-            referenceObjects[^12].As<StrongBox<InlineArray5<decimal>>>().Value[^1] = 1.2345m; // InlineArray5<decimal>
-            referenceObjects[^13].As<StrongBox<Guid>>().Value = Guid.NewGuid(); // InlineArray4<uint>
-            referenceObjects[^14].As<StrongBox<InlineArray3<string>>>().Value[^1] = "abc"; // InlineArray3<string>
-            referenceObjects[^15].As<StrongBox<Guid>>().Value = Guid.NewGuid(); // InlineArray3<ulong>
-#endif
 
             KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
@@ -1670,6 +1625,65 @@ namespace KGySoft.CoreLibraries.UnitTests.Serialization.Binary
             KGySerializeObjects(referenceObjects, BinarySerializationOptions.ForceRecursiveSerializationOfSupportedTypes | BinarySerializationOptions.RecursiveSerializationAsFallback, forceEqualityByMembers: true);
 #endif
         }
+
+#if NET10_0_OR_GREATER // Must be the last block because of the initialization below
+        [Test]
+        public void SerializeInlineArrays()
+        {
+            var referenceObjects = new object[]
+            {
+                // a couple of filler items for the better index values at the initialization below
+                null,
+                null,
+                new InlineArray2<ulong>(), // primitive element type
+                new InlineArray3<string>(), // reference element type
+                new InlineArray4<uint>(),
+                new InlineArray5<decimal>(), // non-primitive unmanaged value element type
+                new InlineArray6<ConsoleColor>(), // non-primitive unmanaged value element type 
+                new InlineArray7<decimal?>(), // nullable value element type
+                new InlineArray8<ushort>(),
+                new InlineArray9<TestEnumByte>(), // one byte long non-primitive element type
+                new InlineArray10<byte>(),
+                new InlineArray11<byte>(),
+                new InlineArray12<byte>(),
+                new InlineArray13<byte>(),
+                new InlineArray14<byte>(),
+                new InlineArray15<byte>(),
+                new InlineArray16<byte>(), 
+            };
+
+            // initializing inline arrays
+            referenceObjects[2].As<StrongBox<Guid>>().Value = Guid.NewGuid(); // InlineArray2<ulong>
+            referenceObjects[3].As<StrongBox<InlineArray3<string>>>().Value[^1] = "abc"; // InlineArray3<string>
+            referenceObjects[4].As<StrongBox<Guid>>().Value = Guid.NewGuid(); // InlineArray4<uint>
+            referenceObjects[5].As<StrongBox<InlineArray5<decimal>>>().Value[^1] = 1.2345m; // InlineArray5<decimal>
+            referenceObjects[6].As<StrongBox<InlineArray6<ConsoleColor>>>().Value[^1] = ConsoleColor.Blue; // InlineArray6<ConsoleColor>
+            referenceObjects[7].As<StrongBox<InlineArray7<decimal?>>>().Value[^1] = Decimal.MaxValue; // InlineArray7<decimal?>
+            referenceObjects[8].As<StrongBox<Guid>>().Value = Guid.NewGuid(); // InlineArray8<ushort>
+            referenceObjects[9].As<StrongBox<InlineArray9<TestEnumByte>>>().Value[^1] = TestEnumByte.Max; // InlineArray9<TestEnumByte>
+            referenceObjects[10].As<StrongBox<InlineArray10<byte>>>().Value[^1] = 10; // InlineArray10<byte>
+            referenceObjects[11].As<StrongBox<InlineArray11<byte>>>().Value[^1] = 11; // InlineArray11<byte>
+            referenceObjects[12].As<StrongBox<InlineArray12<byte>>>().Value[^1] = 12; // InlineArray12<byte>
+            referenceObjects[13].As<StrongBox<InlineArray13<byte>>>().Value[^1] = 13; // InlineArray13<byte>
+            referenceObjects[14].As<StrongBox<InlineArray14<byte>>>().Value[^1] = 14; // InlineArray14<byte>
+            referenceObjects[15].As<StrongBox<InlineArray15<byte>>>().Value[^1] = 15; // InlineArray15<byte>
+            referenceObjects[16].As<StrongBox<Guid>>().Value = Guid.NewGuid(); // InlineArray16<byte>
+
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.None);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.None);
+
+            IEnumerable<Type> expectedTypes = [typeof(TestEnumByte), typeof(ConsoleColor)];
+            KGySerializeObject(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: expectedTypes);
+            KGySerializeObjects(referenceObjects, BinarySerializationOptions.SafeMode, expectedTypes: expectedTypes);
+
+#if !AOT
+            var inlineArrayWithManagedValueType = new InlineArray2<Color>();
+            inlineArrayWithManagedValueType[0] = Color.Red;
+            inlineArrayWithManagedValueType[1] = Color.Blue;
+            KGySerializeObject(inlineArrayWithManagedValueType, BinarySerializationOptions.None);
+#endif
+        }
+#endif
 
         [Test]
         public void SerializeSimpleNonGenericCollections()
