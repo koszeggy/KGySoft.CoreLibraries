@@ -52,8 +52,8 @@ namespace KGySoft.Serialization.Binary
     /// assemblies works automatically if at least a chunk version of the assembly exists on the current platform containing nothing but a bunch
     /// of <see cref="TypeForwardedToAttribute"/> attributes (this is the case for the original .NET Framework assemblies on .NET Core and .NET Standard).</para>
     /// <para>To resolve types that are not forwarded by the <see cref="TypeForwardedToAttribute"/> from an existing assembly with the
-    /// given identity you can use this binder for deserialization. Add the types to be handled by the <see cref="AddType">AddType</see> or
-    /// <see cref="AddTypes">AddTypes</see> methods.</para>
+    /// given identity you can use this binder for deserialization. Add the types to be handled by the <see cref="AddType">AddType</see>
+    /// or <see cref="O:KGySoft.Serialization.Binary.ForwardedTypesSerializationBinder.AddTypes">AddTypes</see> methods.</para>
     /// <para>If <see cref="WriteLegacyIdentity"/> is set to <see langword="true"/>, then mapping works also on serialization.
     /// For types without an explicitly set mapping the value of the <see cref="TypeForwardedFromAttribute"/> attribute will be written if it is defined.
     /// <note>By default, both <see cref="BinaryFormatter"/> and <see cref="BinarySerializationFormatter"/> dumps legacy identities on serialization
@@ -187,7 +187,7 @@ namespace KGySoft.Serialization.Binary
         /// then on serialization the first specified name will be returned as the assembly name of the <paramref name="type"/>.</para>
         /// <para>For generic types you should specify the generic type definition only.</para>
         /// </remarks>
-        public void AddType(Type type, params AssemblyName[] assemblyIdentities)
+        public void AddType([DynamicallyAccessedMembers(BinarySerializer.NeededMembers)]Type type, params AssemblyName[] assemblyIdentities)
         {
             if (type == null!)
                 Throw.ArgumentNullException(Argument.type);
@@ -226,16 +226,22 @@ namespace KGySoft.Serialization.Binary
         }
 
         /// <summary>
-        /// Adds the <paramref name="types"/> to this binder without any specific assembly identity. Each <see cref="Type"/>
-        /// that have the same full name as one of the given types, will be able to be resolved from any assembly.
+        /// Adds the <paramref name="types"/> to this binder without any specific assembly identity.
         /// </summary>
         /// <param name="types">The types to be added to the handled types by this binder.</param>
         /// <remarks>
+        /// <para>Every <see cref="Type"/> in the serialization stream that has the same full name as one of the specified <paramref name="types"/>,
+        /// will be able to be resolved from any assembly.</para>
         /// <para>To resolve types from specific assemblies only use the <see cref="AddType">AddType</see> method.</para>
         /// <para>If <see cref="WriteLegacyIdentity"/> is <see langword="true"/>, then on serialization a legacy assembly name
         /// will be used only for those types, which are decorated by the <see cref="TypeForwardedFromAttribute"/> attribute.</para>
         /// <para>For generic types it is enough to specify the generic type definition only.</para>
+        /// <note>When using native AOT deployment mode it is recommended to use the <see cref="AddTypes(IEnumerable{SerializedType})"/> overload,
+        /// where the elements of the <paramref name="types"/> parameter is <see cref="SerializedType"/>.
+        /// See the <strong>Remarks</strong> section of the <see cref="SerializedType"/> struct for details.</note>
         /// </remarks>
+        [RequiresUnreferencedCode("Using this overload may trim the members required by serializers in native AOT mode. " +
+            "To prevent trimming the expected type members, use the overload where the element type of the types parameter is SerializedType.")]
         public void AddTypes(params Type[] types)
         {
             if (types == null!)
@@ -250,6 +256,17 @@ namespace KGySoft.Serialization.Binary
                 AddType(type);
             }
         }
+
+        /// <summary>
+        /// Adds the <paramref name="types"/> to this binder without any specific assembly identity.
+        /// <br/>See the <strong>Remarks</strong> section of the <see cref="AddTypes(Type[])"/> overload for details.
+        /// </summary>
+        /// <param name="types">The types to be added to the handled types by this binder.</param>
+        [OverloadResolutionPriority(BinarySerializer.SerializedTypePriority)]
+        [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "SerializedType is annotated")]
+        public void AddTypes(params IEnumerable<SerializedType> types)
+            // ReSharper disable once ConditionalAccessQualifierIsNonNullableAccordingToAPIContract - it CAN be null (though must not be), null handling is in the Type[] overload
+            => AddTypes(types?.Select(t => t.Type).ToArray()!);
 
         /// <summary>
         /// When <see cref="WriteLegacyIdentity"/> is <see langword="true"/>, then tries to return a legacy assembly identity
@@ -315,7 +332,7 @@ namespace KGySoft.Serialization.Binary
         /// <summary>
         /// Retrieves a type by its <paramref name="assemblyName"/> and <paramref name="typeName"/>.
         /// If <see cref="SafeMode"/> is <see langword="true"/>, then an explicit mapping must exist that can be added by
-        /// the <see cref="AddType">AddType</see> or <see cref="AddTypes">AddTypes</see> methods.
+        /// the <see cref="AddType">AddType</see> or <see cref="O:KGySoft.Serialization.Binary.ForwardedTypesSerializationBinder.AddTypes">AddTypes</see> methods.
         /// </summary>
         /// <returns>The type of the resolved object to create.</returns>
         /// <param name="assemblyName">Specifies the <see cref="Assembly"/> name of the serialized object.</param>

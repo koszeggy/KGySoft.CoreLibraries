@@ -122,6 +122,9 @@
   + Supporting the Complex<T> type natively (.NET 11.0 and above)
   + Supporting the Argb<T> and Rgba<T> types natively (.NET 11.0 and above)
   + Supporting function pointer runtime types (.NET 11.0 and above)
++ ForwardedTypesSerializationBinder class:
+  + New AddTypes overload where the element type of the types parameter is SerializedType for better compatibility
+    with AOT mode.
 - WeakAssemblySerializationBinder class:
   - OmitAssemblyNameOnSerialize property: Omitting the assembly name did not work if the type had been forwarded
     into the core assembly from a non-core one.
