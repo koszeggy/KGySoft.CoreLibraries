@@ -155,6 +155,7 @@ namespace KGySoft.Serialization.Xml
                     Throw.ArgumentException(Res.XmlSerializationInconsistentArrayLength(TotalLength, count));
 
                 array ??= Array.CreateInstance(ElementType, lengths, lowerBounds);
+                data.EnsureEndianness(ElementType);
                 Buffer.BlockCopy(data, 0, array, 0, data.Length);
                 current = TotalLength - 1;
             }

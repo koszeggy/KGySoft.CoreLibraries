@@ -16,7 +16,13 @@
 #region Usings
 
 using System;
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+using System.Buffers.Binary;
+#endif
 using System.Runtime.CompilerServices;
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+using System.Runtime.InteropServices;
+#endif
 
 using KGySoft.Collections;
 using KGySoft.Reflection;
@@ -31,12 +37,73 @@ namespace KGySoft.CoreLibraries
 
     public static class ArrayExtensions
     {
+        #region Nested Structs
+
+#if !(NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER)
+        private struct WordReverser
+        {
+            #region Fields
+
+            private ushort value;
+
+            #endregion
+
+            #region Methods
+
+            internal void ReverseEndianness() => value = (ushort)((value >> 8) + (value << 8));
+
+            #endregion
+        }
+
+        private struct DWordReverser
+        {
+            #region Fields
+
+            private uint value;
+
+            #endregion
+
+            #region Methods
+
+            internal void ReverseEndianness() => value = (value >> 24)
+                | ((value >> 8) & 0x0000FF00)
+                | ((value << 8) & 0x00FF0000)
+                | (value << 24);
+
+            #endregion
+        }
+
+        private struct QWordReverser
+        {
+            #region Fields
+
+            private ulong value;
+
+            #endregion
+
+            #region Methods
+
+            internal void Reverse() => value = (value >> 56)
+                | ((value >> 40) & 0x000000000000FF00UL)
+                | ((value >> 24) & 0x0000000000FF0000UL)
+                | ((value >> 8) & 0x00000000FF000000UL)
+                | ((value << 8) & 0x000000FF00000000UL)
+                | ((value << 24) & 0x0000FF0000000000UL)
+                | ((value << 40) & 0x00FF000000000000UL)
+                | (value << 56);
+
+            #endregion
+        }
+#endif
+
+        #endregion
+
         #region Methods
 
         #region Public Methods
 
         #region ArraySection/Array2D/Array3D
-        
+
         /// <summary>
         /// Gets an <see cref="ArraySection{T}"/> instance, which represents a section of the specified <paramref name="array"/>.
         /// No heap allocation occurs when using this method.
@@ -286,6 +353,54 @@ namespace KGySoft.CoreLibraries
             }
 
             Array.Copy(source, sourceIndex, dest, destIndex, count);
+        }
+
+
+        [MethodImpl(MethodImpl.AggressiveInlining)]
+        internal static byte[] EnsureEndianness(this byte[] rawBytes, Type elementType)
+        {
+            Debug.Assert(elementType.IsPrimitive);
+            if (BitConverter.IsLittleEndian)
+                return rawBytes;
+
+            switch (elementType.SizeOf(false))
+            {
+                case 1:
+                    return rawBytes;
+#if NETCOREAPP2_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+                case 2:
+                    Span<ushort> words = MemoryMarshal.Cast<byte, ushort>(rawBytes.AsSpan());
+                    BinaryPrimitives.ReverseEndianness(words, words);
+                    return rawBytes;
+                case 4:
+                    Span<uint> dWords = MemoryMarshal.Cast<byte, uint>(rawBytes.AsSpan());
+                    BinaryPrimitives.ReverseEndianness(dWords, dWords);
+                    return rawBytes;
+                case 8:
+                    Span<ulong> qWords = MemoryMarshal.Cast<byte, ulong>(rawBytes.AsSpan());
+                    BinaryPrimitives.ReverseEndianness(qWords, qWords);
+                    return rawBytes;
+#else
+                case 2:
+                    CastArray<byte, WordReverser> words = rawBytes.Cast<byte, WordReverser>();
+                    for (int i = 0; i < words.Length; i++)
+                        words.GetElementReferenceInternal(i).ReverseEndianness();
+                    return rawBytes;
+                case 4:
+                    CastArray<byte, DWordReverser> dWords = rawBytes.Cast<byte, DWordReverser>();
+                    for (int i = 0; i < dWords.Length; i++)
+                        dWords.GetElementReferenceInternal(i).ReverseEndianness();
+                    return rawBytes;
+                case 8:
+                    CastArray<byte, QWordReverser> qWords = rawBytes.Cast<byte, QWordReverser>();
+                    for (int i = 0; i < qWords.Length; i++)
+                        qWords.GetElementReferenceInternal(i).Reverse();
+                    return rawBytes;
+
+#endif
+                default:
+                    return Throw.InvalidOperationException<byte[]>(Res.InternalError($"Unexpected element type in EnsureEndianness: {elementType}"));
+            }
         }
 
         #endregion

@@ -1474,7 +1474,9 @@ namespace KGySoft.CoreLibraries
         }
 #endif
 
+#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
         [DynamicDependency(nameof(RuntimeHelpers.IsReferenceOrContainsReferences), typeof(RuntimeHelpers))]
+#endif
         [RequiresDynamicCode("In native AOT mode making the generic method IsReferenceOrContainsReferences<type> may fail.")]
         [UnconditionalSuppressMessage("TrimAnalysis", "IL2026:RequiresUnreferencedCode",
             Justification = "Though Accessors.InvokeMethod calls MakeReferenceMethod, IsReferenceOrContainsReferences<T>() has no negative constraints, just allows ref struct")]

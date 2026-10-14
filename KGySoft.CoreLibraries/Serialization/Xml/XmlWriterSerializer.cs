@@ -211,6 +211,7 @@ namespace KGySoft.Serialization.Xml
                 {
                     byte[] data = new byte[Buffer.ByteLength(array)];
                     Buffer.BlockCopy(array, 0, data, 0, data.Length);
+                    data.EnsureEndianness(elementType);
                     if ((Options & XmlSerializationOptions.OmitCrcAttribute) == XmlSerializationOptions.None)
                         writer.WriteAttributeString(XmlSerializer.AttributeCrc, Crc32.CalculateHash(data).ToString("X8", CultureInfo.InvariantCulture));
                     writer.WriteString(Convert.ToBase64String(data));

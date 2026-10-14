@@ -16,9 +16,6 @@
 #region Usings
 
 using System;
-#if NETCOREAPP3_0_OR_GREATER
-using System.Buffers.Binary;
-#endif
 using System.Collections;
 #if !NET35
 using System.Collections.Concurrent;
@@ -1672,24 +1669,24 @@ namespace KGySoft.Serialization.Binary
                 DataTypes.Vector64, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.BackingArrayHasKnownSize | CollectionInfo.CreateResultFromByteArray,
-                    GetBackingArray = o => EnsureEndianness(o.GetType(), BinarySerializer.SerializeValueType(o.As<StrongBox<Vector64<byte>>>().Value)),
-                    CreateArrayBackedCollectionInstanceFromArray = (_, t, a) => BinarySerializer.DeserializeValueTypeInternal(t, EnsureEndianness(t, (byte[])a), Vector64<byte>.Count)
+                    GetBackingArray = o => BinarySerializer.SerializeValueType(o.As<StrongBox<Vector64<byte>>>().Value).EnsureEndianness(o.GetType().GenericTypeArguments[0]),
+                    CreateArrayBackedCollectionInstanceFromArray = (_, t, a) => BinarySerializer.DeserializeValueTypeInternal(t, ((byte[])a).EnsureEndianness(t.GenericTypeArguments[0]), Vector64<byte>.Count)
                 }
             },
             {
                 DataTypes.Vector128, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.BackingArrayHasKnownSize | CollectionInfo.CreateResultFromByteArray,
-                    GetBackingArray = o => EnsureEndianness(o.GetType(), BinarySerializer.SerializeValueType(o.As<StrongBox<Vector128<byte>>>().Value)),
-                    CreateArrayBackedCollectionInstanceFromArray = (_, t, a) => BinarySerializer.DeserializeValueTypeInternal(t, EnsureEndianness(t, (byte[])a), Vector128<byte>.Count)
+                    GetBackingArray = o => BinarySerializer.SerializeValueType(o.As<StrongBox<Vector128<byte>>>().Value).EnsureEndianness(o.GetType().GenericTypeArguments[0]),
+                    CreateArrayBackedCollectionInstanceFromArray = (_, t, a) => BinarySerializer.DeserializeValueTypeInternal(t, ((byte[])a).EnsureEndianness(t.GenericTypeArguments[0]), Vector128<byte>.Count)
                 }
             },
             {
                 DataTypes.Vector256, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.BackingArrayHasKnownSize | CollectionInfo.CreateResultFromByteArray,
-                    GetBackingArray = o => EnsureEndianness(o.GetType(), BinarySerializer.SerializeValueType(o.As<StrongBox<Vector256<byte>>>().Value)),
-                    CreateArrayBackedCollectionInstanceFromArray = (_, t, a) => BinarySerializer.DeserializeValueTypeInternal(t, EnsureEndianness(t, (byte[])a), Vector256<byte>.Count)
+                    GetBackingArray = o => BinarySerializer.SerializeValueType(o.As<StrongBox<Vector256<byte>>>().Value).EnsureEndianness(o.GetType().GenericTypeArguments[0]),
+                    CreateArrayBackedCollectionInstanceFromArray = (_, t, a) => BinarySerializer.DeserializeValueTypeInternal(t, ((byte[])a).EnsureEndianness(t.GenericTypeArguments[0]), Vector256<byte>.Count)
                 }
             },
 #endif
@@ -1698,8 +1695,8 @@ namespace KGySoft.Serialization.Binary
                 DataTypes.Vector512, new CollectionSerializationInfo
                 {
                     Info = CollectionInfo.IsGeneric | CollectionInfo.BackingArrayHasKnownSize | CollectionInfo.CreateResultFromByteArray,
-                    GetBackingArray = o => EnsureEndianness(o.GetType(), BinarySerializer.SerializeValueType(o.As<StrongBox<Vector512<byte>>>().Value)),
-                    CreateArrayBackedCollectionInstanceFromArray = (_, t, a) => BinarySerializer.DeserializeValueTypeInternal(t, EnsureEndianness(t, (byte[])a), Vector512<byte>.Count)
+                    GetBackingArray = o => BinarySerializer.SerializeValueType(o.As<StrongBox<Vector512<byte>>>().Value).EnsureEndianness(o.GetType().GenericTypeArguments[0]),
+                    CreateArrayBackedCollectionInstanceFromArray = (_, t, a) => BinarySerializer.DeserializeValueTypeInternal(t, ((byte[])a).EnsureEndianness(t.GenericTypeArguments[0]), Vector512<byte>.Count)
                 }
             },
 #endif
@@ -2890,40 +2887,6 @@ namespace KGySoft.Serialization.Binary
 
             return result;
         }
-
-#if NETCOREAPP3_0_OR_GREATER
-#if !NET9_0_OR_GREATER
-        [RequiresDynamicCode("SizeOf")]
-#endif
-        [MethodImpl(MethodImpl.AggressiveInlining)]
-        private static byte[] EnsureEndianness(Type type, byte[] rawBytes)
-        {
-            Debug.Assert(type.IsGenericType);
-            if (BitConverter.IsLittleEndian)
-                return rawBytes;
-
-            Type elementType = type.GenericTypeArguments[0];
-            switch (elementType.SizeOf(false))
-            {
-                case 1:
-                    return rawBytes;
-                case 2:
-                    var words = MemoryMarshal.Cast<byte, ushort>(rawBytes.AsSpan());
-                    BinaryPrimitives.ReverseEndianness(words, words);
-                    return rawBytes;
-                case 4:
-                    var dWords = MemoryMarshal.Cast<byte, uint>(rawBytes.AsSpan());
-                    BinaryPrimitives.ReverseEndianness(dWords, dWords);
-                    return rawBytes;
-                case 8:
-                    var qWords = MemoryMarshal.Cast<byte, ulong>(rawBytes.AsSpan());
-                    BinaryPrimitives.ReverseEndianness(qWords, qWords);
-                    return rawBytes;
-                default:
-                    return Throw.InvalidOperationException<byte[]>(Res.InternalError($"Unexpected element type in EnsureEndianness: {elementType}"));
-            }
-        }
-#endif
 
         /// <summary>
         /// Converts a <see cref="DataTypes"/> enumeration into the corresponding string representation.

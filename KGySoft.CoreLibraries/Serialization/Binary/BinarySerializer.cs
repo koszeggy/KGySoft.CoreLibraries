@@ -1453,8 +1453,7 @@ namespace KGySoft.Serialization.Binary
         [SecuritySafeCritical]
         [RequiresDynamicCode("DeserializeValueTypeRaw")]
         [RequiresUnreferencedCode("DeserializeValueTypeRaw")]
-        internal static object DeserializeValueTypeInternal([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor | DynamicallyAccessedMembers.AllFields)]Type type,
-            byte[] data, int byteLength) => DeserializeValueTypeRaw(type, data, 0, byteLength);
+        internal static object DeserializeValueTypeInternal(Type type, byte[] data, int byteLength) => DeserializeValueTypeRaw(type, data, 0, byteLength);
 
         #endregion
 
