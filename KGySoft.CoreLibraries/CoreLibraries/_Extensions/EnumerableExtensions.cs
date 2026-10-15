@@ -1850,8 +1850,8 @@ namespace KGySoft.CoreLibraries
             if (valueSelector == null!)
                 Throw.ArgumentNullException(nameof(valueSelector));
 
-            StringKeyedDictionary<TValue> result = source is ICollection<TSource> coll
-                ? new StringKeyedDictionary<TValue>(coll.Count, comparer)
+            StringKeyedDictionary<TValue> result = source.TryGetCount(out int count)
+                ? new StringKeyedDictionary<TValue>(count, comparer)
                 : new StringKeyedDictionary<TValue>(comparer);
             foreach (TSource item in source)
                 result.Add(keySelector.Invoke(item), valueSelector.Invoke(item));
@@ -1875,8 +1875,8 @@ namespace KGySoft.CoreLibraries
             if (keySelector == null!)
                 Throw.ArgumentNullException(nameof(keySelector));
 
-            StringKeyedDictionary<TValue> result = source is ICollection<TValue> coll
-                ? new StringKeyedDictionary<TValue>(coll.Count, comparer)
+            StringKeyedDictionary<TValue> result = source.TryGetCount(out int count)
+                ? new StringKeyedDictionary<TValue>(count, comparer)
                 : new StringKeyedDictionary<TValue>(comparer);
             foreach (TValue item in source)
                 result.Add(keySelector.Invoke(item), item);
