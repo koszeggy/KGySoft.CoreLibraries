@@ -1423,9 +1423,10 @@ namespace KGySoft.Serialization.Binary
                 if (addToCache)
                     AddObjectToCache(result);
 
-                FieldInfo[] fields = SerializationHelper.GetSerializableFields(type);
-                for (int i = 0; i < fields.Length; i++)
-                    SetField(fields[i], result, ReadElement(br, descriptor.GetTupleItemDescriptor(i)));
+                ICollection<FieldInfo> fields = SerializationHelper.GetSerializableFieldsInDeclarationOrder(type, true);
+                int i = 0;
+                foreach (FieldInfo field in fields)
+                    SetField(field, result, ReadElement(br, descriptor.GetTupleItemDescriptor(i++)));
 
                 return result;
             }
@@ -2249,14 +2250,18 @@ namespace KGySoft.Serialization.Binary
                     }
 
                     // reading fields of current level
+                    StringKeyedDictionary<FieldInfo> fields = SerializationHelper.GetSerializableFields(t);
                     int count = Read7BitInt(br);
+
+                    // The tracked actually deserialized fields for validation. We could use fields.TryRemove instead (which is an extension now, calculating the hash code twice),
+                    // but actual removing is rarely needed, and RtFieldInfo.GetHashCode is much faster than string's (which is used if Except is called in the end).
+                    List<FieldInfo>? deserializedFields = SafeModeStrict && !IgnoreObjectChanges ? new List<FieldInfo>(count) : null;
                     for (int i = 0; i < count; i++)
                     {
                         string name = ReadName(br);
                         object? value = ReadWithType(br);
 
-                        FieldInfo? field = t.GetField(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
-                        if (field == null)
+                        if (!fields.TryGetValue(name, out FieldInfo? field))
                         {
                             if (!IgnoreObjectChanges)
                             {
@@ -2270,10 +2275,18 @@ namespace KGySoft.Serialization.Binary
                             continue;
                         }
 
-                        if (field.IsNotSerialized)
-                            continue;
-
+                        Debug.Assert(!field.IsNotSerialized);
                         SetField(field, obj, value);
+                        deserializedFields?.Add(field);
+                    }
+
+                    if (deserializedFields != null && deserializedFields.Count != fields.Count
+                        && fields.Values.Except(deserializedFields).FirstOrDefault(f => !f.IsDefined(typeof(OptionalFieldAttribute), false)) is FieldInfo addedField)
+                    {
+                        Debug.Assert(SafeModeStrict && !IgnoreObjectChanges);
+                        if (t == type)
+                            Throw.SerializationException(Res.BinarySerializationAddedField(type, addedField.Name));
+                        Throw.SerializationException(Res.BinarySerializationAddedFieldBase(type, addedField.Name, t));
                     }
                 }
 
@@ -2422,6 +2435,7 @@ namespace KGySoft.Serialization.Binary
 
                 // Reading the custom content and trying to identify them as fields
                 int count = Read7BitInt(br);
+                List<FieldInfo>? deserializedFields = SafeModeStrict && !IgnoreObjectChanges ? new List<FieldInfo>(count) : null;
                 for (int i = 0; i < count; i++)
                 {
                     string name = ReadName(br);
@@ -2430,14 +2444,20 @@ namespace KGySoft.Serialization.Binary
 
                     if (fields.TryGetValue(name, out FieldInfo? field))
                     {
-                        if (field.IsNotSerialized)
-                            continue;
+                        Debug.Assert(!field.IsNotSerialized);
+                        deserializedFields?.Add(field);
                         SetField(field, obj, value);
                         continue;
                     }
 
                     if (!IgnoreObjectChanges)
                         Throw.SerializationException(Res.BinarySerializationMissingField(obj.GetType(), name));
+                }
+
+                if (deserializedFields != null && deserializedFields.Count != fields.Count
+                    && fields.Values.Except(deserializedFields).FirstOrDefault(f => !f.IsDefined(typeof(OptionalFieldAttribute), false)) is FieldInfo addedField)
+                {
+                    Throw.SerializationException(Res.BinarySerializationAddedField(obj.GetType(), addedField.Name));
                 }
             }
 

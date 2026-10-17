@@ -1566,11 +1566,11 @@ namespace KGySoft.Serialization.Binary
             {
                 Type type = tuple.GetType();
                 Type[] itemTypes = type.GetGenericArguments();
-                FieldInfo[] fields = SerializationHelper.GetSerializableFields(type);
-
+                ICollection<FieldInfo> fields = SerializationHelper.GetSerializableFieldsInDeclarationOrder(type, true);
                 itemDataTypes.MoveNextExtracted();
-                for (int i = 0; i < fields.Length; i++)
-                    WriteElement(bw, fields[i].Get(tuple), itemDataTypes.ReadToNextSegment(), itemTypes[i]);
+                int i = 0;
+                foreach (FieldInfo field in fields)
+                    WriteElement(bw, field.Get(tuple), itemDataTypes.ReadToNextSegment(), itemTypes[i++]);
             }
 #endif
 
@@ -1782,16 +1782,16 @@ namespace KGySoft.Serialization.Binary
                 for (Type t = type; t != Reflector.ObjectType; t = t.BaseType!)
                 {
                     // writing fields of current level
-                    FieldInfo[] fields = SerializationHelper.GetSerializableFields(t);
+                    ICollection<FieldInfo> fields = SerializationHelper.GetSerializableFields(t).Values;
 
-                    if (fields.Length != 0 || t == type)
+                    if (fields.Count != 0 || t == type)
                     {
                         // writing name of base type
                         if (t != type)
                             WriteName(bw, t.Name);
 
                         // writing the fields
-                        Write7BitInt(bw, fields.Length);
+                        Write7BitInt(bw, fields.Count);
                         foreach (FieldInfo field in fields)
                         {
                             WriteName(bw, field.Name);

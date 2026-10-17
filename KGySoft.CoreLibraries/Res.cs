@@ -477,6 +477,9 @@ namespace KGySoft
         /// <summary>In native AOT mode it is not supported to deserialize arrays with non-zero lower bounds.</summary>
         internal static string SerializationNonZeroBasedArrayAotNotSupported => Get("Serialization_NonZeroBasedArrayAotNotSupported");
 
+        /// <summary>The selected way of serialization requires to target .NET 7.0 or later in native AOT mode.</summary>
+        internal static string SerializationOrderedFieldsNotSupportedAot => Get("Serialization_OrderedFieldsNotSupportedAot");
+        
         #endregion
 
         #region StreamExtensions
@@ -670,6 +673,9 @@ namespace KGySoft
         /// <summary>Type "{0}" cannot be deserialized because it has no field "{1}". To call the deserialization constructor implement the ISerializable interface. Use IgnoreObjectChanges option to suppress this exception.</summary>
         internal static string BinarySerializationMissingField(Type type, string field) => Get("BinarySerialization_MissingFieldFormat", type.GetName(TypeNameKind.LongName), field);
 
+        /// <summary>Type "{0}" cannot be deserialized in safe mode, because the serialization stream contains no data for field "{1}". If the field has been newly added since producing the serialization stream, and it is safe to omit this field, you can mark the field by the [OptionalField] attribute. To handle this issue in the deserialization constructor implement the ISerializable interface. Use IgnoreObjectChanges option to suppress this exception.</summary>
+        internal static string BinarySerializationAddedField(Type type, string field) => Get("BinarySerialization_AddedFieldFormat", type.GetName(TypeNameKind.LongName), field);
+
         /// <summary>Type "{0}" cannot be deserialized because field "{1}" is missing. Use the IgnoreObjectChanges option to suppress this exception.
         /// You can prevent trimming the fields of a type by adding the following snippet to your application initialization:
         /// SerializedType _ = typeof(MySerializedType);
@@ -680,6 +686,9 @@ namespace KGySoft
 
         /// <summary>Type "{0}" cannot be deserialized because field "{1}" not found in type "{2}". Use IgnoreObjectChanges option to suppress this exception.</summary>
         internal static string BinarySerializationMissingFieldBase(Type type, string field, Type baseType) => Get("BinarySerialization_MissingFieldBaseFormat", type.GetName(TypeNameKind.LongName), field, baseType);
+
+        /// <summary>Type "{0}" cannot be deserialized in safe mode, because the serialization stream contains no data for field "{1}" in type "{2}". If the field has been newly added since producing the serialization stream, and it is safe to omit this field, you can mark the field by the [OptionalField] attribute. To handle this issue in the deserialization constructor implement the ISerializable interface. Use IgnoreObjectChanges option to suppress this exception.</summary>
+        internal static string BinarySerializationAddedFieldBase(Type type, string field, Type baseType) => Get("BinarySerialization_AddedFieldBaseFormat", type.GetName(TypeNameKind.LongName), field, baseType);
 
         /// <summary>Type "{0}" does not have a special constructor to deserialize it as ISerializable.</summary>
         internal static string BinarySerializationMissingISerializableCtor(Type type) => Get("BinarySerialization_MissingISerializableCtorFormat", type.GetName(TypeNameKind.LongName));

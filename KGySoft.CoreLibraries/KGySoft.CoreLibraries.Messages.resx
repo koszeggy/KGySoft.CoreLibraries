@@ -509,6 +509,9 @@ Hit rate: {8:P2}</value>
   <data name="Serialization_NonZeroBasedArrayAotNotSupported" xml:space="preserve">
     <value>In native AOT mode it is not supported to deserialize arrays with non-zero lower bounds</value>
   </data>
+  <data name="Serialization_OrderedFieldsNotSupportedAot" xml:space="preserve">
+    <value>The selected way of serialization requires to target .NET 7.0 or later in native AOT mode.</value>
+  </data>
   <data name="Serialization_MissingFieldFormat" xml:space="preserve">
     <value>Type "{0}" cannot be deserialized because it has no field "{1}". Set IgnoreNonExistingFields to true to suppress this exception.</value>
   </data>
@@ -649,6 +652,9 @@ In native AOT mode you need to reference the constructed method in your code. Yo
   <data name="BinarySerialization_MissingFieldFormat" xml:space="preserve">
     <value>Type "{0}" cannot be deserialized because it has no field "{1}". To call the deserialization constructor implement the ISerializable interface. Use IgnoreObjectChanges option to suppress this exception.</value>
   </data>
+  <data name="BinarySerialization_AddedFieldFormat" xml:space="preserve">
+    <value>Type "{0}" cannot be deserialized in safe mode, because the serialization stream contains no data for field "{1}". If the field has been newly added since producing the serialization stream, and it is safe to omit this field, you can mark the field by the [OptionalField] attribute. To handle this issue in the deserialization constructor implement the ISerializable interface. Use IgnoreObjectChanges option to suppress this exception.</value>
+  </data>
   <data name="BinarySerialization_MissingFieldAotFormat" xml:space="preserve">
     <value>Type "{0}" cannot be deserialized because field "{1}" is missing. Use the IgnoreObjectChanges option to suppress this exception. You can prevent trimming the fields of a type by adding the following snippet to your application initialization:
 SerializedType _ = typeof(MySerializedType);
@@ -657,6 +663,9 @@ Alternatively, you can include the type in the expectedTypes parameter at the de
   </data>
   <data name="BinarySerialization_MissingFieldBaseFormat" xml:space="preserve">
     <value>Type "{0}" cannot be deserialized because field "{1}" not found in type "{2}". Use IgnoreObjectChanges option to suppress this exception.</value>
+  </data>
+  <data name="BinarySerialization_AddedFieldBaseFormat" xml:space="preserve">
+    <value>Type "{0}" cannot be deserialized in safe mode, because the serialization stream contains no data for field "{1}" in type "{2}". If the field has been newly added since producing the serialization stream, and it is safe to omit this field, you can mark the field by the [OptionalField] attribute. To handle this issue in the deserialization constructor implement the ISerializable interface. Use IgnoreObjectChanges option to suppress this exception.</value>
   </data>
   <data name="BinarySerialization_MissingISerializableCtorFormat" xml:space="preserve">
     <value>Type "{0}" does not have a special constructor to deserialize it as ISerializable.</value>

@@ -16,8 +16,10 @@
 #region Usings
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Security;
@@ -131,11 +133,12 @@ namespace KGySoft.Serialization.Binary
             int level = 0;
             for (Type t = type; t != Reflector.ObjectType; t = t.BaseType!)
             {
-                FieldInfo[] fields = SerializationHelper.GetSerializableFields(t);
-                for (int i = 0; i < fields.Length; i++)
+                ICollection<FieldInfo> fields = SerializationHelper.GetSerializableFieldsInDeclarationOrder(t);
+                int i = 0;
+                foreach (FieldInfo field in fields)
                 {
-                    info.AddValue($"{level.ToString("X", NumberFormatInfo.InvariantInfo)}:{i.ToString("X", NumberFormatInfo.InvariantInfo)}",
-                        fields[i].Get(obj), fields[i].FieldType.IsPointer() ? typeof(IntPtr) : fields[i].FieldType);
+                    info.AddValue($"{level.ToString("X", NumberFormatInfo.InvariantInfo)}:{i++.ToString("X", NumberFormatInfo.InvariantInfo)}",
+                        field.Get(obj), field.FieldType.IsPointer() ? typeof(IntPtr) : field.FieldType);
                 }
 
                 // marking end of level
@@ -189,7 +192,7 @@ namespace KGySoft.Serialization.Binary
                     Throw.SerializationException(Res.BinarySerializationUnexpectedSerializationInfoElement(entry.Name));
             }
 
-            FieldInfo[] fields = SerializationHelper.GetSerializableFields(type);
+            FieldInfo[] fields = SerializationHelper.GetSerializableFieldsInDeclarationOrder(type).ToArray();
             level = 0;
             fieldIndex = 0;
             foreach (SerializationEntry entry in list.Values)
@@ -214,7 +217,7 @@ namespace KGySoft.Serialization.Binary
                 {
                     level += 1;
                     type = type.BaseType!;
-                    fields = SerializationHelper.GetSerializableFields(type);
+                    fields = SerializationHelper.GetSerializableFieldsInDeclarationOrder(type).ToArray();
                     fieldIndex = 0;
                 }
                 else

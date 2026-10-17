@@ -106,7 +106,10 @@
 =========================================
 ! BinarySerializer/BinarySerializationFormatter classes:
   ! Deserializing value types from raw binary format (produced by the CompactSerializationOfStructures option) is
-    no longer supported in safe mode.
+    no longer supported in safe mode (LegacySafeMode still allows it though).
+  ! From now on, custom object graph deserialization throws an exception in safe mode if new serializable fields
+    have been added to a type since producing the serialization stream. The exception can be avoided by marking the
+    new fields by the [OptionalField] attribute, or by enabling the IgnoreObjectChanges option.
   ! Ensuring binary compatibility between little and big endian CPU architectures (does not apply when the
     CompactSerializationOfStructures option is enabled, or when a custom-serialized type ignores endianness).
     May be a breaking change on big endian platforms when deserializing a stream produced by a previous version.

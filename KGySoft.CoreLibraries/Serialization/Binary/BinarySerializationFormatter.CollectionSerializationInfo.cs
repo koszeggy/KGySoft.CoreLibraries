@@ -846,7 +846,7 @@ namespace KGySoft.Serialization.Binary
                     if (elementType.IsPrimitive)
                     {
                         byte[] result = BinarySerializer.SerializeValueTypeInternal((ValueType)obj);
-                        result.EnsureEndianness(type);
+                        result.EnsureEndianness(elementType);
                         return result;
                     }
 

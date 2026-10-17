@@ -41,7 +41,6 @@ using KGySoft.Reflection;
 #region Used Aliases
 
 using TypeExtensions = KGySoft.CoreLibraries.TypeExtensions;
-using System.Runtime.CompilerServices;
 
 #endregion
 
@@ -67,7 +66,7 @@ namespace KGySoft.Serialization
             Justification = "Accessed via GetSerializableFields, where the type parameter is annotated.")]
         [UnconditionalSuppressMessage("TrimAnalysis", "IL2111:DynamicallyAccessedMembersAttributeViaReflection",
             Justification = "Cannot apply RequiresUnreferencedCode to a field, but it's used in GetSerializableFields, which is annotated.")]
-        private static readonly LockFreeCache<Type, FieldInfo[]> serializableFieldsCache = new(DoGetSerializableFields, null, LockFreeCacheOptions.Profile1K);
+        private static readonly LockFreeCache<Type, StringKeyedDictionary<FieldInfo>> serializableFieldsCache = new(DoGetSerializableFields, null, LockFreeCacheOptions.Profile256);
 
         private static readonly HashSet<Type> unsafeTypes =
         [
@@ -116,7 +115,24 @@ namespace KGySoft.Serialization
         
         #region Internal Methods
 
-        internal static FieldInfo[] GetSerializableFields([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllFields)]Type t) => serializableFieldsCache[t];
+        internal static StringKeyedDictionary<FieldInfo> GetSerializableFields([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllFields)]Type t) => serializableFieldsCache[t];
+
+        internal static ICollection<FieldInfo> GetSerializableFieldsInDeclarationOrder([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllFields)]Type t, bool allowAlphabeticalOrder = false)
+        {
+#if (NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER) && !NET7_0_OR_GREATER
+            if (RuntimeFeature.IsDynamicCodeSupported)
+                return serializableFieldsCache[t].Values;
+
+            if (!allowAlphabeticalOrder)
+                Throw.PlatformNotSupportedException(Res.SerializationOrderedFieldsNotSupportedAot);
+
+            FieldInfo[] result = serializableFieldsCache[t].Values.ToArray();
+            Array.Sort(result, StringComparer.Ordinal);
+            return result;
+#else
+            return serializableFieldsCache[t].Values;
+#endif
+        }
 
         [UnconditionalSuppressMessage("TrimAnalysis", "IL2072:ParameterDynamicallyAccessedMemberTypesCannotBeDetermined", Justification = "False alarm, t can only be the base types of type.")]
         [UnconditionalSuppressMessage("TrimAnalysis", "IL2075:DynamicallyAccessedMembersReturnValueAnnotationMismatch", Justification = "False alarm, t can only be the base types of type.")]
@@ -128,8 +144,8 @@ namespace KGySoft.Serialization
             for (Type t = type; t != Reflector.ObjectType; t = t.BaseType!)
             {
                 // ReSharper disable once PossibleNullReferenceException
-                FieldInfo[] fields = considerNonSerialized
-                        ? GetSerializableFields(t)
+                ICollection<FieldInfo> fields = considerNonSerialized
+                        ? GetSerializableFields(t).Values
                         : t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
 
                 foreach (FieldInfo field in fields)
@@ -206,20 +222,26 @@ namespace KGySoft.Serialization
 
         #region Private Methods
 
-        private static FieldInfo[] DoGetSerializableFields([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllFields)]Type t)
+        private static StringKeyedDictionary<FieldInfo> DoGetSerializableFields([DynamicallyAccessedMembers(DynamicallyAccessedMembers.AllFields)]Type t)
         {
             IEnumerable<FieldInfo> fields = t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly)
                 .Where(f => !f.IsNotSerialized);
 
+#if !NET7_0_OR_GREATER
 #if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
             // In native AOT mode the MetadataToken property throws an InvalidOperationException.
             // Starting with .NET 7 the ordering is deterministic based upon the metadata ordering anyway.
-            // When trimming is used between .NET Core 3.0 and .NET 6, the ordering not deterministic. This is not necessarily a problem,
+            // When trimming is used between .NET Core 3.0 and .NET 6, the ordering is not deterministic. This is not necessarily a problem,
             // because fields are identified by name, but the output of the serialization stream might not be identical between different builds.
-            if (!RuntimeFeature.IsDynamicCodeSupported)
-                return fields.ToArray();
+            if (RuntimeFeature.IsDynamicCodeSupported)
 #endif
-            return fields.OrderBy(f => f.MetadataToken).ToArray();
+            {
+                fields = fields.OrderBy(f => f.MetadataToken);
+            }
+#endif
+
+            // utilizing the StringKeyedDictionary preserves ordering as long as items are not deleted
+            return fields.ToStringKeyedDictionary(f => f.Name);
         }
 
         #endregion

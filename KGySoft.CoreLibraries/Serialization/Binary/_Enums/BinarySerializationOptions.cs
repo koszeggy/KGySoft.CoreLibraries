@@ -108,8 +108,7 @@ namespace KGySoft.Serialization.Binary
 
         /// <summary>
         /// <para>This option makes possible to deserialize an object, which has been changed since last serialization.
-        /// When this option is enabled, names of the base classes, and fields that have been serialized but have been since then
-        /// removed, will be ignored.
+        /// When this option is enabled, names of the base classes, removed or added fields since producing the serialization stream will be ignored.
         /// <note type="caution">When this flag is enabled, an erroneous deserialization may silently succeed. When a field has
         /// been renamed or relocated into another base class, use an <see cref="ISurrogateSelector"/> implementation to apply mappings instead
         /// (but note that surrogate selectors cannot be used in safe mode).</note></para>
@@ -174,6 +173,8 @@ namespace KGySoft.Serialization.Binary
         /// possible attacks that can cause <see cref="OutOfMemoryException"/>. Deserializing an invalid stream still may cause to throw a <see cref="SerializationException"/>.</para>
         /// <para>It also disallows deserializing the natively not supported non-serializable types, though this can be relaxed by enabling
         /// the <see cref="AllowNonSerializableExpectedCustomTypes"/> flag.</para>
+        /// <para>When a type is deserialized as a default object graph, not just missing fields, but also newly added non-optional fields produce
+        /// a <see cref="SerializationException"/> in safe mode, unless the <see cref="IgnoreObjectChanges"/> options is also set.</para>
         /// <note>In safe mode no version mismatch is tolerated even for system assemblies. If you want to deserialize a stream in safe mode that contains
         /// different assembly identities from the loaded ones, then use <see cref="ForwardedTypesSerializationBinder"/>, and set
         /// its <see cref="ForwardedTypesSerializationBinder.SafeMode"/> property to <see langword="true"/>.</note>
@@ -219,7 +220,8 @@ namespace KGySoft.Serialization.Binary
         /// respected). With no specified expected types, this option only prevents loading assemblies during deserialization,
         /// so all the assemblies that are referred by the serialization stream must be preloaded before starting the deserialization
         /// (though this restriction can be worked around by setting a custom binder that still can load assemblies, for example).</para>
-        /// <para>This flag allows to deserialize streams containing compact raw value types produced by the <see cref="CompactSerializationOfStructures"/> flag.</para>
+        /// <para>Legacy safe mode also allows deserializing streams that contain compact raw value types produced by the <see cref="CompactSerializationOfStructures"/> flag,
+        /// and it tolerates if a type has newly added non-optional fields since producing the serialization stream.</para>
         /// <para>All the other restrictions of <see cref="SafeMode"/> are effective in <see cref="LegacySafeMode"/> as well.
         /// When both flags are set, the stricter <see cref="SafeMode"/> will be used.</para>
         /// <para>Default state at serialization methods in <see cref="BinarySerializer"/>: <strong>Disabled</strong></para>
